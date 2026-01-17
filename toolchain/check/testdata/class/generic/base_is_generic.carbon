@@ -236,7 +236,7 @@ fn H() {
 // CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DoubleFieldAccess(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @DoubleFieldAccess(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.6d8 = name_ref x, @Base.%.loc5 [concrete = @Base.%.loc5]
@@ -406,7 +406,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.6d8 = name_ref x, imports.%Main.import_ref.568 [concrete = imports.%.bef]
@@ -689,13 +689,13 @@ fn H() {
 // CHECK:STDOUT:   %X.G: @X.G.%X.G.type (%X.G.type.20eb90.1) = struct_value () [symbolic = %X.G (constants.%X.G.f9f685.1)]
 // CHECK:STDOUT:   %X.G.specific_fn.loc5_24.2: <specific function> = specific_function %X.G, @X.G(%U) [symbolic = %X.G.specific_fn.loc5_24.2 (constants.%X.G.specific_fn.974)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @X.G.%U (%U) {
+// CHECK:STDOUT:   fn() -> out %return.param: @X.G.%U (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_24: @X.G.%X.G.type (%X.G.type.20eb90.1) = specific_constant @X.%X.G.decl, @X(constants.%U) [symbolic = %X.G (constants.%X.G.f9f685.1)]
 // CHECK:STDOUT:     %G.ref: @X.G.%X.G.type (%X.G.type.20eb90.1) = name_ref G, %.loc5_24 [symbolic = %X.G (constants.%X.G.f9f685.1)]
 // CHECK:STDOUT:     %X.G.specific_fn.loc5_24.1: <specific function> = specific_function %G.ref, @X.G(constants.%U) [symbolic = %X.G.specific_fn.loc5_24.2 (constants.%X.G.specific_fn.974)]
 // CHECK:STDOUT:     %.loc5_13.1: ref @X.G.%U (%U) = splice_block %return.param {}
-// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) = call %X.G.specific_fn.loc5_24.1() to %.loc5_13.1
+// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) to %.loc5_13.1 = call %X.G.specific_fn.loc5_24.1()
 // CHECK:STDOUT:     return %X.G.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

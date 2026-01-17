@@ -61,9 +61,9 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.3: %struct_type.discriminant = struct_literal (%.loc16_1.2) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc16_1.4: ref @Always.%Always (%Always) = temporary_storage
 // CHECK:STDOUT:     %.loc16_1.5: ref %empty_tuple.type = class_element_access %.loc16_1.4, element0
-// CHECK:STDOUT:     %.loc16_1.6: init %empty_tuple.type = tuple_init () to %.loc16_1.5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_1.6: init %empty_tuple.type to %.loc16_1.5 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_1.7: init %empty_tuple.type = converted %.loc16_1.2, %.loc16_1.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_1.8: init @Always.%Always (%Always) = class_init (%.loc16_1.7), %.loc16_1.4 [symbolic = %Always.val (constants.%Always.val)]
+// CHECK:STDOUT:     %.loc16_1.8: init @Always.%Always (%Always) to %.loc16_1.4 = class_init (%.loc16_1.7) [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %.loc16_1.9: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.8
 // CHECK:STDOUT:     %.loc16_1.10: ref @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9
 // CHECK:STDOUT:     %.loc16_1.11: @Always.%Always (%Always) = acquire_value %.loc16_1.10

@@ -1081,7 +1081,6 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.1ea478.1: type = fn_type @cpp_operator.1 [concrete]
 // CHECK:STDOUT:   %cpp_operator.0a3797.1: %cpp_operator.type.1ea478.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.1ea478.2: type = fn_type @cpp_operator.2 [concrete]
@@ -1141,7 +1140,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_3: ref %C = splice_block %c.var {}
 // CHECK:STDOUT:   %addr.loc8: %ptr.d9e = addr_of %.loc8_3
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_26: init %C = in_place_init %C__carbon_thunk.call, %.loc8_3
+// CHECK:STDOUT:   %.loc8_26: init %C to %.loc8_3 = in_place_init %C__carbon_thunk.call
 // CHECK:STDOUT:   assign %c.var, %.loc8_26
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %C.ref.loc8_13 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1149,9 +1148,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc11: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %cpp_operator.call.loc11: init %const = call imports.%cpp_operator.decl.4206c9.1(%c.ref.loc11)
+// CHECK:STDOUT:   %cpp_operator.call.loc11: ref %C = call imports.%cpp_operator.decl.4206c9.1(%c.ref.loc11)
 // CHECK:STDOUT:   %c.ref.loc12: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %cpp_operator.call.loc12: init %const = call imports.%cpp_operator.decl.4206c9.2(%c.ref.loc12)
+// CHECK:STDOUT:   %cpp_operator.call.loc12: ref %C = call imports.%cpp_operator.decl.4206c9.2(%c.ref.loc12)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %minus.patt: %pattern_type.217 = value_binding_pattern minus [concrete]
 // CHECK:STDOUT:   }
@@ -1162,7 +1161,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc15_22.1: %ptr.d9e = addr_of %.loc15_23.2
 // CHECK:STDOUT:   %addr.loc15_22.2: %ptr.d9e = addr_of %.loc15_22.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc15_22.1, %addr.loc15_22.2)
-// CHECK:STDOUT:   %.loc15_22.2: init %C = in_place_init %operator_Minus__carbon_thunk.call, %.loc15_22.1
+// CHECK:STDOUT:   %.loc15_22.2: init %C to %.loc15_22.1 = in_place_init %operator_Minus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_17: type = splice_block %C.ref.loc15 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1180,7 +1179,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc18_27.1: %ptr.d9e = addr_of %.loc18_28.2
 // CHECK:STDOUT:   %addr.loc18_27.2: %ptr.d9e = addr_of %.loc18_27.1
 // CHECK:STDOUT:   %operator_Tilde__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Tilde__carbon_thunk.decl(%addr.loc18_27.1, %addr.loc18_27.2)
-// CHECK:STDOUT:   %.loc18_27.2: init %C = in_place_init %operator_Tilde__carbon_thunk.call, %.loc18_27.1
+// CHECK:STDOUT:   %.loc18_27.2: init %C to %.loc18_27.1 = in_place_init %operator_Tilde__carbon_thunk.call
 // CHECK:STDOUT:   %.loc18_22: type = splice_block %C.ref.loc18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1252,7 +1251,6 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.005: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %bound_method.e9d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
-// CHECK:STDOUT:   %const.7c5: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.type: type = fn_type @operator_PlusEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk: %operator_PlusEqual__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator_MinusEqual__carbon_thunk.type: type = fn_type @operator_MinusEqual__carbon_thunk [concrete]
@@ -1468,7 +1466,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_3: ref %C = splice_block %c1.var {}
 // CHECK:STDOUT:   %addr.loc8: %ptr.d9e = addr_of %.loc8_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_27: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_3
+// CHECK:STDOUT:   %.loc8_27: init %C to %.loc8_3 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   assign %c1.var, %.loc8_27
 // CHECK:STDOUT:   %.loc8_14: type = splice_block %C.ref.loc8_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1486,7 +1484,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %.loc9_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_27: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_3
+// CHECK:STDOUT:   %.loc9_27: init %C to %.loc9_3 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   assign %c2.var, %.loc9_27
 // CHECK:STDOUT:   %.loc9_14: type = splice_block %C.ref.loc9_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1507,7 +1505,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc12_28.2: %ptr.d9e = addr_of %.loc12_30.2
 // CHECK:STDOUT:   %addr.loc12_28.3: %ptr.d9e = addr_of %.loc12_28.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc12_28.1, %addr.loc12_28.2, %addr.loc12_28.3)
-// CHECK:STDOUT:   %.loc12_28.2: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc12_28.1
+// CHECK:STDOUT:   %.loc12_28.2: init %C to %.loc12_28.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc12_20: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1529,7 +1527,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc13_31.2: %ptr.d9e = addr_of %.loc13_33.2
 // CHECK:STDOUT:   %addr.loc13_31.3: %ptr.d9e = addr_of %.loc13_31.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc13_31.1, %addr.loc13_31.2, %addr.loc13_31.3)
-// CHECK:STDOUT:   %.loc13_31.2: init %C = in_place_init %operator_Minus__carbon_thunk.call, %.loc13_31.1
+// CHECK:STDOUT:   %.loc13_31.2: init %C to %.loc13_31.1 = in_place_init %operator_Minus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc13_23: type = splice_block %C.ref.loc13 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1551,7 +1549,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc14_34.2: %ptr.d9e = addr_of %.loc14_36.2
 // CHECK:STDOUT:   %addr.loc14_34.3: %ptr.d9e = addr_of %.loc14_34.1
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Star__carbon_thunk.decl(%addr.loc14_34.1, %addr.loc14_34.2, %addr.loc14_34.3)
-// CHECK:STDOUT:   %.loc14_34.2: init %C = in_place_init %operator_Star__carbon_thunk.call, %.loc14_34.1
+// CHECK:STDOUT:   %.loc14_34.2: init %C to %.loc14_34.1 = in_place_init %operator_Star__carbon_thunk.call
 // CHECK:STDOUT:   %.loc14_26: type = splice_block %C.ref.loc14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1573,7 +1571,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc15_28.2: %ptr.d9e = addr_of %.loc15_30.2
 // CHECK:STDOUT:   %addr.loc15_28.3: %ptr.d9e = addr_of %.loc15_28.1
 // CHECK:STDOUT:   %operator_Slash__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Slash__carbon_thunk.decl(%addr.loc15_28.1, %addr.loc15_28.2, %addr.loc15_28.3)
-// CHECK:STDOUT:   %.loc15_28.2: init %C = in_place_init %operator_Slash__carbon_thunk.call, %.loc15_28.1
+// CHECK:STDOUT:   %.loc15_28.2: init %C to %.loc15_28.1 = in_place_init %operator_Slash__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_20: type = splice_block %C.ref.loc15 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1595,7 +1593,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc16_26.2: %ptr.d9e = addr_of %.loc16_28.2
 // CHECK:STDOUT:   %addr.loc16_26.3: %ptr.d9e = addr_of %.loc16_26.1
 // CHECK:STDOUT:   %operator_Percent__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Percent__carbon_thunk.decl(%addr.loc16_26.1, %addr.loc16_26.2, %addr.loc16_26.3)
-// CHECK:STDOUT:   %.loc16_26.2: init %C = in_place_init %operator_Percent__carbon_thunk.call, %.loc16_26.1
+// CHECK:STDOUT:   %.loc16_26.2: init %C to %.loc16_26.1 = in_place_init %operator_Percent__carbon_thunk.call
 // CHECK:STDOUT:   %.loc16_18: type = splice_block %C.ref.loc16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1617,7 +1615,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc19_31.2: %ptr.d9e = addr_of %.loc19_33.2
 // CHECK:STDOUT:   %addr.loc19_31.3: %ptr.d9e = addr_of %.loc19_31.1
 // CHECK:STDOUT:   %operator_Amp__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Amp__carbon_thunk.decl(%addr.loc19_31.1, %addr.loc19_31.2, %addr.loc19_31.3)
-// CHECK:STDOUT:   %.loc19_31.2: init %C = in_place_init %operator_Amp__carbon_thunk.call, %.loc19_31.1
+// CHECK:STDOUT:   %.loc19_31.2: init %C to %.loc19_31.1 = in_place_init %operator_Amp__carbon_thunk.call
 // CHECK:STDOUT:   %.loc19_23: type = splice_block %C.ref.loc19 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1639,7 +1637,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc20_30.2: %ptr.d9e = addr_of %.loc20_32.2
 // CHECK:STDOUT:   %addr.loc20_30.3: %ptr.d9e = addr_of %.loc20_30.1
 // CHECK:STDOUT:   %operator_Pipe__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Pipe__carbon_thunk.decl(%addr.loc20_30.1, %addr.loc20_30.2, %addr.loc20_30.3)
-// CHECK:STDOUT:   %.loc20_30.2: init %C = in_place_init %operator_Pipe__carbon_thunk.call, %.loc20_30.1
+// CHECK:STDOUT:   %.loc20_30.2: init %C to %.loc20_30.1 = in_place_init %operator_Pipe__carbon_thunk.call
 // CHECK:STDOUT:   %.loc20_22: type = splice_block %C.ref.loc20 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1661,7 +1659,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc21_31.2: %ptr.d9e = addr_of %.loc21_33.2
 // CHECK:STDOUT:   %addr.loc21_31.3: %ptr.d9e = addr_of %.loc21_31.1
 // CHECK:STDOUT:   %operator_Caret__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Caret__carbon_thunk.decl(%addr.loc21_31.1, %addr.loc21_31.2, %addr.loc21_31.3)
-// CHECK:STDOUT:   %.loc21_31.2: init %C = in_place_init %operator_Caret__carbon_thunk.call, %.loc21_31.1
+// CHECK:STDOUT:   %.loc21_31.2: init %C to %.loc21_31.1 = in_place_init %operator_Caret__carbon_thunk.call
 // CHECK:STDOUT:   %.loc21_23: type = splice_block %C.ref.loc21 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1687,7 +1685,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc22_30.1: %ptr.d9e = addr_of %.loc22_27.2
 // CHECK:STDOUT:   %addr.loc22_30.2: %ptr.d9e = addr_of %.loc22_30.1
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessLess__carbon_thunk.decl(%addr.loc22_30.1, %.loc22_33.2, %addr.loc22_30.2)
-// CHECK:STDOUT:   %.loc22_30.2: init %C = in_place_init %operator_LessLess__carbon_thunk.call, %.loc22_30.1
+// CHECK:STDOUT:   %.loc22_30.2: init %C to %.loc22_30.1 = in_place_init %operator_LessLess__carbon_thunk.call
 // CHECK:STDOUT:   %.loc22_22: type = splice_block %C.ref.loc22 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1713,7 +1711,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc23_31.1: %ptr.d9e = addr_of %.loc23_28.2
 // CHECK:STDOUT:   %addr.loc23_31.2: %ptr.d9e = addr_of %.loc23_31.1
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_GreaterGreater__carbon_thunk.decl(%addr.loc23_31.1, %.loc23_34.2, %addr.loc23_31.2)
-// CHECK:STDOUT:   %.loc23_31.2: init %C = in_place_init %operator_GreaterGreater__carbon_thunk.call, %.loc23_31.1
+// CHECK:STDOUT:   %.loc23_31.2: init %C to %.loc23_31.1 = in_place_init %operator_GreaterGreater__carbon_thunk.call
 // CHECK:STDOUT:   %.loc23_23: type = splice_block %C.ref.loc23 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1726,49 +1724,49 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_9.1: %C = acquire_value %c2.ref.loc26
 // CHECK:STDOUT:   %.loc26_9.2: ref %C = value_as_ref %.loc26_9.1
 // CHECK:STDOUT:   %addr.loc26: %ptr.d9e = addr_of %.loc26_9.2
-// CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_PlusEqual__carbon_thunk.decl(%c1.ref.loc26, %addr.loc26)
+// CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.call: ref %C = call imports.%operator_PlusEqual__carbon_thunk.decl(%c1.ref.loc26, %addr.loc26)
 // CHECK:STDOUT:   %c1.ref.loc27: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc27: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc27_9.1: %C = acquire_value %c2.ref.loc27
 // CHECK:STDOUT:   %.loc27_9.2: ref %C = value_as_ref %.loc27_9.1
 // CHECK:STDOUT:   %addr.loc27: %ptr.d9e = addr_of %.loc27_9.2
-// CHECK:STDOUT:   %operator_MinusEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_MinusEqual__carbon_thunk.decl(%c1.ref.loc27, %addr.loc27)
+// CHECK:STDOUT:   %operator_MinusEqual__carbon_thunk.call: ref %C = call imports.%operator_MinusEqual__carbon_thunk.decl(%c1.ref.loc27, %addr.loc27)
 // CHECK:STDOUT:   %c1.ref.loc28: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc28: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc28_9.1: %C = acquire_value %c2.ref.loc28
 // CHECK:STDOUT:   %.loc28_9.2: ref %C = value_as_ref %.loc28_9.1
 // CHECK:STDOUT:   %addr.loc28: %ptr.d9e = addr_of %.loc28_9.2
-// CHECK:STDOUT:   %operator_StarEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_StarEqual__carbon_thunk.decl(%c1.ref.loc28, %addr.loc28)
+// CHECK:STDOUT:   %operator_StarEqual__carbon_thunk.call: ref %C = call imports.%operator_StarEqual__carbon_thunk.decl(%c1.ref.loc28, %addr.loc28)
 // CHECK:STDOUT:   %c1.ref.loc29: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc29: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc29_9.1: %C = acquire_value %c2.ref.loc29
 // CHECK:STDOUT:   %.loc29_9.2: ref %C = value_as_ref %.loc29_9.1
 // CHECK:STDOUT:   %addr.loc29: %ptr.d9e = addr_of %.loc29_9.2
-// CHECK:STDOUT:   %operator_SlashEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_SlashEqual__carbon_thunk.decl(%c1.ref.loc29, %addr.loc29)
+// CHECK:STDOUT:   %operator_SlashEqual__carbon_thunk.call: ref %C = call imports.%operator_SlashEqual__carbon_thunk.decl(%c1.ref.loc29, %addr.loc29)
 // CHECK:STDOUT:   %c1.ref.loc30: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc30: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc30_9.1: %C = acquire_value %c2.ref.loc30
 // CHECK:STDOUT:   %.loc30_9.2: ref %C = value_as_ref %.loc30_9.1
 // CHECK:STDOUT:   %addr.loc30: %ptr.d9e = addr_of %.loc30_9.2
-// CHECK:STDOUT:   %operator_PercentEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_PercentEqual__carbon_thunk.decl(%c1.ref.loc30, %addr.loc30)
+// CHECK:STDOUT:   %operator_PercentEqual__carbon_thunk.call: ref %C = call imports.%operator_PercentEqual__carbon_thunk.decl(%c1.ref.loc30, %addr.loc30)
 // CHECK:STDOUT:   %c1.ref.loc33: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc33: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc33_9.1: %C = acquire_value %c2.ref.loc33
 // CHECK:STDOUT:   %.loc33_9.2: ref %C = value_as_ref %.loc33_9.1
 // CHECK:STDOUT:   %addr.loc33: %ptr.d9e = addr_of %.loc33_9.2
-// CHECK:STDOUT:   %operator_AmpEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_AmpEqual__carbon_thunk.decl(%c1.ref.loc33, %addr.loc33)
+// CHECK:STDOUT:   %operator_AmpEqual__carbon_thunk.call: ref %C = call imports.%operator_AmpEqual__carbon_thunk.decl(%c1.ref.loc33, %addr.loc33)
 // CHECK:STDOUT:   %c1.ref.loc34: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc34: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc34_9.1: %C = acquire_value %c2.ref.loc34
 // CHECK:STDOUT:   %.loc34_9.2: ref %C = value_as_ref %.loc34_9.1
 // CHECK:STDOUT:   %addr.loc34: %ptr.d9e = addr_of %.loc34_9.2
-// CHECK:STDOUT:   %operator_PipeEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_PipeEqual__carbon_thunk.decl(%c1.ref.loc34, %addr.loc34)
+// CHECK:STDOUT:   %operator_PipeEqual__carbon_thunk.call: ref %C = call imports.%operator_PipeEqual__carbon_thunk.decl(%c1.ref.loc34, %addr.loc34)
 // CHECK:STDOUT:   %c1.ref.loc35: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc35: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc35_9.1: %C = acquire_value %c2.ref.loc35
 // CHECK:STDOUT:   %.loc35_9.2: ref %C = value_as_ref %.loc35_9.1
 // CHECK:STDOUT:   %addr.loc35: %ptr.d9e = addr_of %.loc35_9.2
-// CHECK:STDOUT:   %operator_CaretEqual__carbon_thunk.call: init %const.7c5 = call imports.%operator_CaretEqual__carbon_thunk.decl(%c1.ref.loc35, %addr.loc35)
+// CHECK:STDOUT:   %operator_CaretEqual__carbon_thunk.call: ref %C = call imports.%operator_CaretEqual__carbon_thunk.decl(%c1.ref.loc35, %addr.loc35)
 // CHECK:STDOUT:   %c1.ref.loc36: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_3.loc36: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc36: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -1778,7 +1776,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_10.2(%int_3.loc36) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc36_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc36_10.2: %i32 = converted %int_3.loc36, %.loc36_10.1 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %cpp_operator.call.loc36: init %const.7c5 = call imports.%cpp_operator.decl.4206c9.19(%c1.ref.loc36, %.loc36_10.2)
+// CHECK:STDOUT:   %cpp_operator.call.loc36: ref %C = call imports.%cpp_operator.decl.4206c9.19(%c1.ref.loc36, %.loc36_10.2)
 // CHECK:STDOUT:   %c1.ref.loc37: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_5.loc37: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0.loc37: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -1788,7 +1786,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37: init %i32 = call %bound_method.loc37_10.2(%int_5.loc37) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc37_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc37_10.2: %i32 = converted %int_5.loc37, %.loc37_10.1 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %cpp_operator.call.loc37: init %const.7c5 = call imports.%cpp_operator.decl.4206c9.20(%c1.ref.loc37, %.loc37_10.2)
+// CHECK:STDOUT:   %cpp_operator.call.loc37: ref %C = call imports.%cpp_operator.decl.4206c9.20(%c1.ref.loc37, %.loc37_10.2)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
 // CHECK:STDOUT:   }
@@ -2024,7 +2022,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.d9e = addr_of %.loc8_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_27.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_27.1
+// CHECK:STDOUT:   %.loc8_27.2: init %C to %.loc8_27.1 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_14: type = splice_block %C.ref.loc8_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2041,7 +2039,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %.loc9_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_27.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_27.1
+// CHECK:STDOUT:   %.loc9_27.2: init %C to %.loc9_27.1 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_14: type = splice_block %C.ref.loc9_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2061,7 +2059,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_22.2: %ptr.d9e = addr_of %.loc10_24
 // CHECK:STDOUT:   %addr.loc10_22.3: %ptr.d9e = addr_of %.loc10_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_22.1, %addr.loc10_22.2, %addr.loc10_22.3)
-// CHECK:STDOUT:   %.loc10_22.2: init %C = in_place_init %operator_Plus__carbon_thunk.call.loc10, %.loc10_22.1
+// CHECK:STDOUT:   %.loc10_22.2: init %C to %.loc10_22.1 = in_place_init %operator_Plus__carbon_thunk.call.loc10
 // CHECK:STDOUT:   %.loc10_14: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2081,7 +2079,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc11_22.2: %ptr.d9e = addr_of %.loc11_24
 // CHECK:STDOUT:   %addr.loc11_22.3: %ptr.d9e = addr_of %.loc11_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_22.1, %addr.loc11_22.2, %addr.loc11_22.3)
-// CHECK:STDOUT:   %.loc11_22.2: init %C = in_place_init %operator_Plus__carbon_thunk.call.loc11, %.loc11_22.1
+// CHECK:STDOUT:   %.loc11_22.2: init %C to %.loc11_22.1 = in_place_init %operator_Plus__carbon_thunk.call.loc11
 // CHECK:STDOUT:   %.loc11_14: type = splice_block %C.ref.loc11 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2101,7 +2099,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc12_22.2: %ptr.d9e = addr_of %.loc12_24
 // CHECK:STDOUT:   %addr.loc12_22.3: %ptr.d9e = addr_of %.loc12_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc12_22.1, %addr.loc12_22.2, %addr.loc12_22.3)
-// CHECK:STDOUT:   %.loc12_22.2: init %C = in_place_init %operator_Plus__carbon_thunk.call.loc12, %.loc12_22.1
+// CHECK:STDOUT:   %.loc12_22.2: init %C to %.loc12_22.1 = in_place_init %operator_Plus__carbon_thunk.call.loc12
 // CHECK:STDOUT:   %.loc12_14: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2184,7 +2182,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_3: ref %C = splice_block %c1.var {}
 // CHECK:STDOUT:   %addr.loc15: %ptr.d9e = addr_of %.loc15_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc15)
-// CHECK:STDOUT:   %.loc15_27: init %C = in_place_init %C__carbon_thunk.call.loc15, %.loc15_3
+// CHECK:STDOUT:   %.loc15_27: init %C to %.loc15_3 = in_place_init %C__carbon_thunk.call.loc15
 // CHECK:STDOUT:   assign %c1.var, %.loc15_27
 // CHECK:STDOUT:   %.loc15_14: type = splice_block %C.ref.loc15_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc15_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2202,7 +2200,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc16: %ptr.d9e = addr_of %.loc16_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc16)
-// CHECK:STDOUT:   %.loc16_27: init %C = in_place_init %C__carbon_thunk.call.loc16, %.loc16_3
+// CHECK:STDOUT:   %.loc16_27: init %C to %.loc16_3 = in_place_init %C__carbon_thunk.call.loc16
 // CHECK:STDOUT:   assign %c2.var, %.loc16_27
 // CHECK:STDOUT:   %.loc16_14: type = splice_block %C.ref.loc16_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2339,7 +2337,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_3: ref %C = splice_block %c1.var {}
 // CHECK:STDOUT:   %addr.loc12: %ptr.d9e = addr_of %.loc12_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc12)
-// CHECK:STDOUT:   %.loc12_27: init %C = in_place_init %C__carbon_thunk.call.loc12, %.loc12_3
+// CHECK:STDOUT:   %.loc12_27: init %C to %.loc12_3 = in_place_init %C__carbon_thunk.call.loc12
 // CHECK:STDOUT:   assign %c1.var, %.loc12_27
 // CHECK:STDOUT:   %.loc12_14: type = splice_block %C.ref.loc12_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2357,7 +2355,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc13: %ptr.d9e = addr_of %.loc13_3
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc13)
-// CHECK:STDOUT:   %.loc13_27: init %C = in_place_init %C__carbon_thunk.call.loc13, %.loc13_3
+// CHECK:STDOUT:   %.loc13_27: init %C to %.loc13_3 = in_place_init %C__carbon_thunk.call.loc13
 // CHECK:STDOUT:   assign %c2.var, %.loc13_27
 // CHECK:STDOUT:   %.loc13_14: type = splice_block %C.ref.loc13_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc13_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2459,7 +2457,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.838 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_31.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_31.1
+// CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2478,7 +2476,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.838 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_31.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_31.1
+// CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2499,7 +2497,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_24.2: %ptr.838 = addr_of %.loc10_26
 // CHECK:STDOUT:   %addr.loc10_24.3: %ptr.838 = addr_of %.loc10_24.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_24.1, %addr.loc10_24.2, %addr.loc10_24.3)
-// CHECK:STDOUT:   %.loc10_24.2: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_24.1
+// CHECK:STDOUT:   %.loc10_24.2: init %C to %.loc10_24.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc10_16: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2599,7 +2597,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_36.1: ref %C1 = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.087 = addr_of %.loc8_36.1
 // CHECK:STDOUT:   %C1__carbon_thunk.call: init %empty_tuple.type = call imports.%C1__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_36.2: init %C1 = in_place_init %C1__carbon_thunk.call, %.loc8_36.1
+// CHECK:STDOUT:   %.loc8_36.2: init %C1 to %.loc8_36.1 = in_place_init %C1__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_17: type = splice_block %C1.ref.loc8_17 [concrete = constants.%C1] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N1.ref.loc8_14: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
@@ -2618,7 +2616,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_36.1: ref %C2 = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.51f = addr_of %.loc9_36.1
 // CHECK:STDOUT:   %C2__carbon_thunk.call: init %empty_tuple.type = call imports.%C2__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_36.2: init %C2 = in_place_init %C2__carbon_thunk.call, %.loc9_36.1
+// CHECK:STDOUT:   %.loc9_36.2: init %C2 to %.loc9_36.1 = in_place_init %C2__carbon_thunk.call
 // CHECK:STDOUT:   %.loc9_17: type = splice_block %C2.ref.loc9_17 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc9_14: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
@@ -2639,7 +2637,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_26.2: %ptr.51f = addr_of %.loc10_28
 // CHECK:STDOUT:   %addr.loc10_26.3: %ptr.51f = addr_of %.loc10_26.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_26.1, %addr.loc10_26.2, %addr.loc10_26.3)
-// CHECK:STDOUT:   %.loc10_26.2: init %C2 = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_26.1
+// CHECK:STDOUT:   %.loc10_26.2: init %C2 to %.loc10_26.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc10_17: type = splice_block %C2.ref.loc10 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc10: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
@@ -2660,7 +2658,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc11_26.2: %ptr.087 = addr_of %.loc11_28
 // CHECK:STDOUT:   %addr.loc11_26.3: %ptr.51f = addr_of %.loc11_26.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc11_26.1, %addr.loc11_26.2, %addr.loc11_26.3)
-// CHECK:STDOUT:   %.loc11_26.2: init %C2 = in_place_init %operator_Minus__carbon_thunk.call, %.loc11_26.1
+// CHECK:STDOUT:   %.loc11_26.2: init %C2 to %.loc11_26.1 = in_place_init %operator_Minus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc11_17: type = splice_block %C2.ref.loc11 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc11: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
@@ -2729,7 +2727,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.838 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_31.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_31.1
+// CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2748,7 +2746,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.838 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_31.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_31.1
+// CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2827,7 +2825,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.de2 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_31.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_31.1
+// CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc8_14: type = name_ref O, imports.%O.decl [concrete = constants.%O]
@@ -2846,7 +2844,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.de2 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_31.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_31.1
+// CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc9_14: type = name_ref O, imports.%O.decl [concrete = constants.%O]
@@ -2867,7 +2865,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_24.2: %ptr.de2 = addr_of %.loc10_26
 // CHECK:STDOUT:   %addr.loc10_24.3: %ptr.de2 = addr_of %.loc10_24.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_24.1, %addr.loc10_24.2, %addr.loc10_24.3)
-// CHECK:STDOUT:   %.loc10_24.2: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_24.1
+// CHECK:STDOUT:   %.loc10_24.2: init %C to %.loc10_24.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc10_16: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc10: type = name_ref O, imports.%O.decl [concrete = constants.%O]
@@ -2942,7 +2940,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_35.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.4b2 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_35.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_35.1
+// CHECK:STDOUT:   %.loc8_35.2: init %C to %.loc8_35.1 = in_place_init %C__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_18: type = splice_block %C.ref.loc8_18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2963,7 +2961,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_35.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9: %ptr.4b2 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_35.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_35.1
+// CHECK:STDOUT:   %.loc9_35.2: init %C to %.loc9_35.1 = in_place_init %C__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_18: type = splice_block %C.ref.loc9_18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2985,7 +2983,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_26.2: %ptr.4b2 = addr_of %.loc10_28
 // CHECK:STDOUT:   %addr.loc10_26.3: %ptr.4b2 = addr_of %.loc10_26.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_26.1, %addr.loc10_26.2, %addr.loc10_26.3)
-// CHECK:STDOUT:   %.loc10_26.2: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_26.1
+// CHECK:STDOUT:   %.loc10_26.2: init %C to %.loc10_26.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc10_18: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -3084,7 +3082,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_3: ref %C = splice_block %c1.var {}
 // CHECK:STDOUT:   %addr.loc8: %ptr.d9e = addr_of %.loc8_3
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_27: init %C = in_place_init %C__carbon_thunk.call, %.loc8_3
+// CHECK:STDOUT:   %.loc8_27: init %C to %.loc8_3 = in_place_init %C__carbon_thunk.call
 // CHECK:STDOUT:   assign %c1.var, %.loc8_27
 // CHECK:STDOUT:   %.loc8_14: type = splice_block %C.ref.loc8_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -3101,7 +3099,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %.loc9_3
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%c1.ref.loc9, %addr.loc9)
-// CHECK:STDOUT:   %.loc9_19: init %C = in_place_init %operator_Minus__carbon_thunk.call, %.loc9_3
+// CHECK:STDOUT:   %.loc9_19: init %C to %.loc9_3 = in_place_init %operator_Minus__carbon_thunk.call
 // CHECK:STDOUT:   assign %c2.var, %.loc9_19
 // CHECK:STDOUT:   %.loc9_14: type = splice_block %C.ref.loc9 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -3122,7 +3120,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_22.1: %ptr.d9e = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %addr.loc10_22.2: %ptr.d9e = addr_of %.loc10_3
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%c1.ref.loc10, %addr.loc10_22.1, %addr.loc10_22.2)
-// CHECK:STDOUT:   %.loc10_22: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_3
+// CHECK:STDOUT:   %.loc10_22: init %C to %.loc10_3 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   assign %c3.var, %.loc10_22
 // CHECK:STDOUT:   %.loc10_14: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -3159,7 +3157,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %B) -> %i32 {
+// CHECK:STDOUT: fn @F(%x.param: %B) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc14_10: %B = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc14_14: %B = name_ref x, %x
@@ -3212,7 +3210,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_22.2: %ptr.d9e = addr_of %.loc10_24
 // CHECK:STDOUT:   %addr.loc10_22.3: %ptr.d9e = addr_of %.loc10_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_22.1, %addr.loc10_22.2, %addr.loc10_22.3)
-// CHECK:STDOUT:   %.loc10_22.2: init %C = in_place_init %operator_Plus__carbon_thunk.call, %.loc10_22.1
+// CHECK:STDOUT:   %.loc10_22.2: init %C to %.loc10_22.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   %.loc10_14: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]

@@ -94,7 +94,7 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %struct_type.v {
+// CHECK:STDOUT: fn @G() -> out %return.param: %struct_type.v {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, imports.%Main.x [concrete = imports.%x.var]
 // CHECK:STDOUT:   %.loc7_10.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]

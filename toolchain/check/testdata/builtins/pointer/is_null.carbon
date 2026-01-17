@@ -166,7 +166,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEmptyStruct(%s.param: %.b2d) -> bool {
+// CHECK:STDOUT: fn @TestEmptyStruct(%s.param: %.b2d) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNullEmptyStruct.ref: %IsNullEmptyStruct.type = name_ref IsNullEmptyStruct, file.%IsNullEmptyStruct.decl [concrete = constants.%IsNullEmptyStruct]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
@@ -174,7 +174,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   return %IsNullEmptyStruct.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
+// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNullC.ref: %IsNullC.type = name_ref IsNullC, file.%IsNullC.decl [concrete = constants.%IsNullC]
 // CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c
@@ -263,7 +263,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEmptyStruct(%s.param: %.b2d) -> bool {
+// CHECK:STDOUT: fn @TestEmptyStruct(%s.param: %.b2d) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
@@ -272,7 +272,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   return %IsNull.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
+// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c

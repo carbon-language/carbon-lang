@@ -302,7 +302,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:   %.loc25_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc25_5.3: init %Point = class_init (), %.loc25_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc25_5.3: init %Point to %.loc25_5.2 = class_init () [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %.loc25_5.4: ref %Point = temporary %.loc25_5.2, %.loc25_5.3
 // CHECK:STDOUT:   %.loc25_7: ref %Point = converted %.loc25_5.1, %.loc25_5.4
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0.aba]

@@ -85,7 +85,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc12: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
 // CHECK:STDOUT:   %.loc12: ref %C.082 = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %False.call.loc12: init %C.082 = call %False.ref.loc12() to %.loc12
+// CHECK:STDOUT:   %False.call.loc12: init %C.082 to %.loc12 = call %False.ref.loc12()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc12
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -141,7 +141,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc10: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
 // CHECK:STDOUT:   %.loc10: ref %C.082 = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %False.call.loc10: init %C.082 = call %False.ref.loc10() to %.loc10
+// CHECK:STDOUT:   %False.call.loc10: init %C.082 to %.loc10 = call %False.ref.loc10()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc10
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

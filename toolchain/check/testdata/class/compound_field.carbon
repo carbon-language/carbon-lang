@@ -234,7 +234,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessDerived(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @AccessDerived(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc29_10: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Derived.ref.loc29: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
@@ -249,7 +249,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBase(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @AccessBase(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
@@ -266,7 +266,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessDerivedIndirect(%p.param: %ptr.f74) -> %ptr.235 {
+// CHECK:STDOUT: fn @AccessDerivedIndirect(%p.param: %ptr.f74) -> out %return.param: %ptr.235 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %Derived.ref.loc37: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
@@ -282,7 +282,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBaseIndirect(%p.param: %ptr.f74) -> %ptr.235 {
+// CHECK:STDOUT: fn @AccessBaseIndirect(%p.param: %ptr.f74) -> out %return.param: %ptr.235 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]

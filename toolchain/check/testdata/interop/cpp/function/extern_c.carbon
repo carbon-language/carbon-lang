@@ -191,7 +191,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() -> %i32 {
+// CHECK:STDOUT: fn @MyF() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
@@ -223,7 +223,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%a.param: %X, %b.param: %X) -> %return.param: %X {
+// CHECK:STDOUT: fn @MyF(%a.param: %X, %b.param: %X) -> out %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %X = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %X = name_ref b, %b
@@ -234,7 +234,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %addr.loc11_12.2: %ptr.1f9 = addr_of %.loc11_14
 // CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_34.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
-// CHECK:STDOUT:   %.loc11_12: init %X = in_place_init %operator_Plus__carbon_thunk.call, %.loc9_34.1
+// CHECK:STDOUT:   %.loc11_12: init %X to %.loc9_34.1 = in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc11_12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

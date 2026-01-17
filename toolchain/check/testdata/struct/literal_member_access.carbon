@@ -103,14 +103,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param: %struct_type.x.y.z;
+// CHECK:STDOUT: fn @G() -> out %return.param: %struct_type.x.y.z;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc18_26.1: ref %struct_type.x.y.z = temporary_storage
-// CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref() to %.loc18_26.1
+// CHECK:STDOUT:   %G.call: init %struct_type.x.y.z to %.loc18_26.1 = call %G.ref()
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc18_35.1: %struct_type.a.b.c.4ca = struct_literal (%int_1, %G.call, %int_3)
 // CHECK:STDOUT:   %.loc18_26.2: ref %struct_type.x.y.z = temporary %.loc18_26.1, %G.call

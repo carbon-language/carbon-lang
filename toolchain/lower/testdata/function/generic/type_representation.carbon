@@ -262,7 +262,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !30 = !DILocation(line: 44, column: 3, scope: !26)
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.61ea2aba74ab3bf1:Copy.Main", scope: null, file: !3, line: 48, type: !32, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
-// CHECK:STDOUT: !33 = !{!19}
+// CHECK:STDOUT: !33 = !{null}
 // CHECK:STDOUT: !34 = !DILocation(line: 49, column: 5, scope: !31)
 // CHECK:STDOUT: !35 = distinct !DISubprogram(name: "F_empty_tuple", linkageName: "_CF_empty_tuple.Main", scope: null, file: !3, line: 53, type: !32, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !36 = !DILocation(line: 54, column: 10, scope: !35)

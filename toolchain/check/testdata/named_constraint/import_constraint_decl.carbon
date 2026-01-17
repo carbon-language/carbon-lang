@@ -95,7 +95,7 @@ impl C as B {}
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//b, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require48000000.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.e33: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//b, loc4_14, unloaded
@@ -133,12 +133,12 @@ impl C as B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.require48000000 {
+// CHECK:STDOUT:   @B.Self.binding.as_type.impls.I.type.require {
 // CHECK:STDOUT:     require imports.%Main.import_ref.67f impls imports.%Main.import_ref.72a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.require48000000(imports.%Main.import_ref.e33: %B.type) [from "b.carbon"] {
+// CHECK:STDOUT: generic require @B.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.e33: %B.type) [from "b.carbon"] {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f45)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
@@ -154,7 +154,7 @@ impl C as B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.require48000000(constants.%Self.f45) {
+// CHECK:STDOUT: specific @B.Self.binding.as_type.impls.I.type.require(constants.%Self.f45) {
 // CHECK:STDOUT:   %Self => constants.%Self.f45
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }

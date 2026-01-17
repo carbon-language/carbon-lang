@@ -82,7 +82,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> %struct_type.a.ba9 {
+// CHECK:STDOUT: fn @Main() -> out %return.param: %struct_type.a.ba9 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc16_17.1: %struct_type.a.a6c = struct_literal (%int_3) [concrete = constants.%struct.001]

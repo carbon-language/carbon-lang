@@ -62,7 +62,7 @@ fn Convert(t: ()) {
 // CHECK:STDOUT:   %.loc12_3.1: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15.2: %empty_tuple.type = converted %.loc12_15.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X = call %bound_method(%.loc12_15.2) to %.loc12_3.1
+// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X to %.loc12_3.1 = call %bound_method(%.loc12_15.2)
 // CHECK:STDOUT:   %.loc12_3.2: init %X = converted %.loc12_15.1, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   assign %x.var, %.loc12_3.2
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]

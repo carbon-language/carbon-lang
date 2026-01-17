@@ -230,7 +230,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: %Class.805) -> %i32 {
+// CHECK:STDOUT: fn @F(%c.param: %Class.805) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.805 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %Class.elem.927 = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
@@ -261,7 +261,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.3 (%.72e61c.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.07b224.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_11.2: <specific function> = specific_impl_function %impl.elem0.loc14_11.2, @Copy.Op(%T.loc13_6.1) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.2c9874.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_31.1 (%Class.3168aa.1)) -> %return.param: @G.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_31.1 (%Class.3168aa.1)) -> out %return.param: @G.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.loc13_31.1 (%Class.3168aa.1) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.7657d6.1) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
@@ -272,7 +272,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %specific_impl_fn.loc14_11.1: <specific function> = specific_impl_function %impl.elem0.loc14_11.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.2c9874.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.2, %specific_impl_fn.loc14_11.1
 // CHECK:STDOUT:     %.loc13_37.1: ref @G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.Op.call: init @G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc14_11.2(%.loc14_11.2) to %.loc13_37.1
+// CHECK:STDOUT:     %Copy.Op.call: init @G.%T.binding.as_type (%T.binding.as_type) to %.loc13_37.1 = call %bound_method.loc14_11.2(%.loc14_11.2)
 // CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -294,7 +294,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.3 (%.72e61c.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.07b224.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @Copy.Op(%U.loc17_6.1) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.2c9874.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_31.1 (%Class.3168aa.2)) -> %return.param: @H.%U.binding.as_type (%U.binding.as_type.14b) {
+// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_31.1 (%Class.3168aa.2)) -> out %return.param: @H.%U.binding.as_type (%U.binding.as_type.14b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.loc17_31.1 (%Class.3168aa.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.7657d6.2) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
@@ -305,7 +305,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %specific_impl_fn.loc18_11.1: <specific function> = specific_impl_function %impl.elem0.loc18_11.1, @Copy.Op(constants.%U.035) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.2c9874.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_impl_fn.loc18_11.1
 // CHECK:STDOUT:     %.loc17_37.1: ref @H.%U.binding.as_type (%U.binding.as_type.14b) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.Op.call: init @H.%U.binding.as_type (%U.binding.as_type.14b) = call %bound_method.loc18_11.2(%.loc18_11.2) to %.loc17_37.1
+// CHECK:STDOUT:     %Copy.Op.call: init @H.%U.binding.as_type (%U.binding.as_type.14b) to %.loc17_37.1 = call %bound_method.loc18_11.2(%.loc18_11.2)
 // CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

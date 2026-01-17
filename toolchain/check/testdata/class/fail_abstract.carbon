@@ -596,7 +596,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Derived {
+// CHECK:STDOUT: fn @Make() -> out %return.param: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc22_29: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -680,7 +680,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> %Abstract {
+// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> out %return.param: %Abstract {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error>
@@ -770,7 +770,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%d.param: %Derived) -> %empty_struct_type {
+// CHECK:STDOUT: fn @Access(%d.param: %Derived) -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.032 = name_ref base, @Derived.%.loc9 [concrete = @Derived.%.loc9]
@@ -878,12 +878,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnAbstract() -> %Abstract;
+// CHECK:STDOUT: fn @ReturnAbstract() -> out %return.param: %Abstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [concrete = constants.%ReturnAbstract]
-// CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref(<invalid return info>)
+// CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

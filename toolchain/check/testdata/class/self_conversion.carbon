@@ -214,7 +214,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base) -> %i32 {
+// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base) -> out %return.param.loc26: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc26
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
@@ -244,7 +244,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%p.param: %ptr.f74) -> %i32 {
+// CHECK:STDOUT: fn @Call(%p.param: %ptr.f74) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref.loc35: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %.loc35_4.1: ref %Derived = deref %p.ref.loc35

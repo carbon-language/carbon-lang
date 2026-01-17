@@ -71,7 +71,13 @@ fn F() {
 
 // operators
 
-fn ArithmeticOperatorsLong() {
+// --- arithmetic_homogeneous_long.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn ArithmeticHomogeneousLong() {
   //@dump-sem-ir-begin
   let x: Cpp.long = 1;
   let y: Cpp.long = 1;
@@ -85,22 +91,115 @@ fn ArithmeticOperatorsLong() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_bitwise_long.carbon
+// --- fail_todo_arithmetic_heterogeneous_long.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn BitWiseOperatorsLong() {
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLong() {
+  let x: Cpp.long = 1;
+
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSameType(x + (1 as i32), x);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSameType[T:! type](a: T, b: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AssertSameType(x + (1 as i32), x);
+
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSameType((1 as i32) + x, x);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE-17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSameType[T:! type](a: T, b: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AssertSameType((1 as i32) + x, x);
+
+  let y: i64 = 1;
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(x + y, y);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(x + y, y);
+
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i64` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(y + x, y);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(y + x, y);
+}
+
+// --- bitwise_homogeneous_long.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn BitWiseHomogeneousLong() {
   //@dump-sem-ir-begin
   let a: Cpp.long = 1;
   let b: Cpp.long = 1;
+  let c: Cpp.long = 1;
 
-  // CHECK:STDERR: fail_todo_bitwise_long.carbon:[[@LINE+4]]:21: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let c: Cpp.long = a & b;
-  // CHECK:STDERR:                     ^~~~~
+  AssertSameType(^a, c);
+  AssertSameType(a & b, c);
+  AssertSameType(a | b, c);
+  AssertSameType(a ^ b, c);
+  AssertSameType(a << b, c);
+  AssertSameType(a >> b, c);
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_bitwise_heterogeneous_long.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn BitWiseHeterogeneousLong() {
+  //@dump-sem-ir-begin
+  let a: Cpp.long = 1;
+
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSameType(a & (1 as i32), a);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSameType[T:! type](a: T, b: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let c: Cpp.long = a & b;
+  AssertSameType(a & (1 as i32), a);
+
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSameType((1 as i32) & a, a);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE-18]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSameType[T:! type](a: T, b: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AssertSameType((1 as i32) & a, a);
+
+  let b: i64 = 1;
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(a & b, b);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(a & b, b);
+
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `i64` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(b & a, b);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(b & a, b);
+
   //@dump-sem-ir-end
 }
 
@@ -264,8 +363,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_48.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_48.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_48.4: init %f32.97e = initialize_from %.loc11_48.2 to %.loc11_48.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_48.5: init %array_type = array_init (%.loc11_48.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_48.4: init %f32.97e to %.loc11_48.3 = initialize_from %.loc11_48.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_48.5: init %array_type to %a.var = array_init (%.loc11_48.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_48.1, %.loc11_48.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_39: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -430,8 +529,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_57.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_57.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_57.4: init %f32.97e = initialize_from %.loc11_57.2 to %.loc11_57.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_57.5: init %array_type = array_init (%.loc11_57.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_57.4: init %f32.97e to %.loc11_57.3 = initialize_from %.loc11_57.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_57.5: init %array_type to %a.var = array_init (%.loc11_57.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_57.1, %.loc11_57.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_48: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -555,58 +654,6 @@ fn F() {
 // CHECK:STDOUT:   %IntResult.cpp_destructor: %IntResult.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor: %LongResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
-// CHECK:STDOUT:   %Negate.Op.type: type = fn_type @Negate.Op [concrete]
-// CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness imports.%Negate.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %Cpp.long, (%Negate.impl_witness) [concrete]
-// CHECK:STDOUT:   %.494: type = fn_type_with_self_type %Negate.Op.type, %Negate.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.type: type = fn_type @Cpp.long.as.Negate.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op: %Cpp.long.as.Negate.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %AddWith.type.e05: type = generic_interface_type @AddWith [concrete]
-// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.e05 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddWith.type.9c2: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %AddWith.Op.type.9a6: type = fn_type @AddWith.Op, @AddWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness imports.%AddWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.9c2 = facet_value %Cpp.long, (%AddWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.a81: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type: type = fn_type @Cpp.long.as.AddWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op: %Cpp.long.as.AddWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %SubWith.type.378: type = generic_interface_type @SubWith [concrete]
-// CHECK:STDOUT:   %SubWith.generic: %SubWith.type.378 = struct_value () [concrete]
-// CHECK:STDOUT:   %SubWith.type.e8e: type = facet_type <@SubWith, @SubWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %SubWith.Op.type.533: type = fn_type @SubWith.Op, @SubWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %SubWith.impl_witness: <witness> = impl_witness imports.%SubWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %SubWith.facet: %SubWith.type.e8e = facet_value %Cpp.long, (%SubWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.70d: type = fn_type_with_self_type %SubWith.Op.type.533, %SubWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type: type = fn_type @Cpp.long.as.SubWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op: %Cpp.long.as.SubWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %MulWith.type.8b4: type = generic_interface_type @MulWith [concrete]
-// CHECK:STDOUT:   %MulWith.generic: %MulWith.type.8b4 = struct_value () [concrete]
-// CHECK:STDOUT:   %MulWith.type.a32: type = facet_type <@MulWith, @MulWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %MulWith.Op.type.44b: type = fn_type @MulWith.Op, @MulWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %MulWith.impl_witness: <witness> = impl_witness imports.%MulWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.a32 = facet_value %Cpp.long, (%MulWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.0a7: type = fn_type_with_self_type %MulWith.Op.type.44b, %MulWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type: type = fn_type @Cpp.long.as.MulWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op: %Cpp.long.as.MulWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DivWith.type.fc9: type = generic_interface_type @DivWith [concrete]
-// CHECK:STDOUT:   %DivWith.generic: %DivWith.type.fc9 = struct_value () [concrete]
-// CHECK:STDOUT:   %DivWith.type.0c0: type = facet_type <@DivWith, @DivWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %DivWith.Op.type.494: type = fn_type @DivWith.Op, @DivWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness imports.%DivWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.0c0 = facet_value %Cpp.long, (%DivWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.22b: type = fn_type_with_self_type %DivWith.Op.type.494, %DivWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type: type = fn_type @Cpp.long.as.DivWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op: %Cpp.long.as.DivWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ModWith.type.ff8: type = generic_interface_type @ModWith [concrete]
-// CHECK:STDOUT:   %ModWith.generic: %ModWith.type.ff8 = struct_value () [concrete]
-// CHECK:STDOUT:   %ModWith.type.2fc: type = facet_type <@ModWith, @ModWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %ModWith.Op.type.c13: type = fn_type @ModWith.Op, @ModWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness imports.%ModWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.2fc = facet_value %Cpp.long, (%ModWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.300: type = fn_type_with_self_type %ModWith.Op.type.c13, %ModWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type: type = fn_type @Cpp.long.as.ModWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op: %Cpp.long.as.ModWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -617,12 +664,6 @@ fn F() {
 // CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     .Destroy = %Core.Destroy
-// CHECK:STDOUT:     .Negate = %Core.Negate
-// CHECK:STDOUT:     .AddWith = %Core.AddWith
-// CHECK:STDOUT:     .SubWith = %Core.SubWith
-// CHECK:STDOUT:     .MulWith = %Core.MulWith
-// CHECK:STDOUT:     .DivWith = %Core.DivWith
-// CHECK:STDOUT:     .ModWith = %Core.ModWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -668,30 +709,6 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.38a: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.02f) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.1f0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.31a = impl_witness_table (%Core.import_ref.38a), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.Negate: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [concrete = constants.%Negate.type]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.1 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.412: %Cpp.long.as.Negate.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.Negate.impl.Op]
-// CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.1, %Core.import_ref.412), @Cpp.long.as.Negate.impl [concrete]
-// CHECK:STDOUT:   %Core.AddWith: %AddWith.type.e05 = import_ref Core//prelude/operators/arithmetic, AddWith, loaded [concrete = constants.%AddWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.2 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.437: %Cpp.long.as.AddWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
-// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.2, %Core.import_ref.437), @Cpp.long.as.AddWith.impl [concrete]
-// CHECK:STDOUT:   %Core.SubWith: %SubWith.type.378 = import_ref Core//prelude/operators/arithmetic, SubWith, loaded [concrete = constants.%SubWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.3 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.51f: %Cpp.long.as.SubWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
-// CHECK:STDOUT:   %SubWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.3, %Core.import_ref.51f), @Cpp.long.as.SubWith.impl [concrete]
-// CHECK:STDOUT:   %Core.MulWith: %MulWith.type.8b4 = import_ref Core//prelude/operators/arithmetic, MulWith, loaded [concrete = constants.%MulWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ec4: %Cpp.long.as.MulWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
-// CHECK:STDOUT:   %MulWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.ec4), @Cpp.long.as.MulWith.impl [concrete]
-// CHECK:STDOUT:   %Core.DivWith: %DivWith.type.fc9 = import_ref Core//prelude/operators/arithmetic, DivWith, loaded [concrete = constants.%DivWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.d85: %Cpp.long.as.DivWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
-// CHECK:STDOUT:   %DivWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.5, %Core.import_ref.d85), @Cpp.long.as.DivWith.impl [concrete]
-// CHECK:STDOUT:   %Core.ModWith: %ModWith.type.ff8 = import_ref Core//prelude/operators/arithmetic, ModWith, loaded [concrete = constants.%ModWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.6 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.394: %Cpp.long.as.ModWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
-// CHECK:STDOUT:   %ModWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.6, %Core.import_ref.394), @Cpp.long.as.ModWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -719,7 +736,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_62.1: ref %LongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc16: %ptr.305 = addr_of %.loc16_62.1
 // CHECK:STDOUT:   %PassLong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassLong__carbon_thunk.decl.d16229.1(%cpp_long.ref.loc16, %addr.loc16)
-// CHECK:STDOUT:   %.loc16_62.2: init %LongResult = in_place_init %PassLong__carbon_thunk.call.loc16, %.loc16_62.1
+// CHECK:STDOUT:   %.loc16_62.2: init %LongResult to %.loc16_62.1 = in_place_init %PassLong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_27: type = splice_block %LongResult.ref.loc16 [concrete = constants.%LongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref.loc16: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
@@ -746,7 +763,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_76.1: ref %LongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc19: %ptr.305 = addr_of %.loc19_76.1
 // CHECK:STDOUT:   %PassLong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassLong__carbon_thunk.decl.d16229.1(%cpp_compat_long.ref, %addr.loc19)
-// CHECK:STDOUT:   %.loc19_76.2: init %LongResult = in_place_init %PassLong__carbon_thunk.call.loc19, %.loc19_76.1
+// CHECK:STDOUT:   %.loc19_76.2: init %LongResult to %.loc19_76.1 = in_place_init %PassLong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_34: type = splice_block %LongResult.ref.loc19 [concrete = constants.%LongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc19_31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref.loc19: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
@@ -777,7 +794,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_65.1: ref %IntResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc22: %ptr.3cb = addr_of %.loc22_65.1
 // CHECK:STDOUT:   %PassLong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassLong__carbon_thunk.decl.d16229.2(%carbon_i32.ref, %addr.loc22)
-// CHECK:STDOUT:   %.loc22_65.2: init %IntResult = in_place_init %PassLong__carbon_thunk.call.loc22, %.loc22_65.1
+// CHECK:STDOUT:   %.loc22_65.2: init %IntResult to %.loc22_65.1 = in_place_init %PassLong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_29: type = splice_block %IntResult.ref [concrete = constants.%IntResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IntResult.ref: type = name_ref IntResult, imports.%IntResult.decl [concrete = constants.%IntResult]
@@ -800,8 +817,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_43.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_43.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_43.4: init %f32.97e = initialize_from %.loc24_43.2 to %.loc24_43.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_43.5: init %array_type = array_init (%.loc24_43.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_43.4: init %f32.97e to %.loc24_43.3 = initialize_from %.loc24_43.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_43.5: init %array_type to %a.var = array_init (%.loc24_43.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_43.1, %.loc24_43.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_34: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -840,129 +857,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %LongResult) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ArithmeticOperatorsLong() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.68c = value_binding_pattern x [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc32: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc32_13: type = splice_block %long.ref.loc32 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc32: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc32: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
-// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %int_1.loc32, %impl.elem0.loc32 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32: init %Cpp.long = call %bound_method.loc32(%int_1.loc32) [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %.loc32_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %.loc32_21.2: %Cpp.long = converted %int_1.loc32, %.loc32_21.1 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc32_21.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.68c = value_binding_pattern y [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc33_13: type = splice_block %long.ref.loc33 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc33: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc33: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
-// CHECK:STDOUT:   %bound_method.loc33: <bound method> = bound_method %int_1.loc33, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33: init %Cpp.long = call %bound_method.loc33(%int_1.loc33) [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %.loc33_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %.loc33_21.2: %Cpp.long = converted %int_1.loc33, %.loc33_21.1 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %y: %Cpp.long = value_binding y, %.loc33_21.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.68c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc35: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %impl.elem1.loc35: %.494 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Cpp.long.as.Negate.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc35: <bound method> = bound_method %x.ref.loc35, %impl.elem1.loc35
-// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.call: init %Cpp.long = call %bound_method.loc35(%x.ref.loc35)
-// CHECK:STDOUT:   %.loc35_13: type = splice_block %long.ref.loc35 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc35: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc35_21.1: %Cpp.long = value_of_initializer %Cpp.long.as.Negate.impl.Op.call
-// CHECK:STDOUT:   %.loc35_21.2: %Cpp.long = converted %Cpp.long.as.Negate.impl.Op.call, %.loc35_21.1
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc35_21.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.68c = value_binding_pattern b [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc36: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %y.ref.loc36: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc36: %.a81 = impl_witness_access constants.%AddWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc36: <bound method> = bound_method %x.ref.loc36, %impl.elem1.loc36
-// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call: init %Cpp.long = call %bound_method.loc36(%x.ref.loc36, %y.ref.loc36)
-// CHECK:STDOUT:   %.loc36_13: type = splice_block %long.ref.loc36 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc36: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc36_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call
-// CHECK:STDOUT:   %.loc36_23.2: %Cpp.long = converted %Cpp.long.as.AddWith.impl.Op.call, %.loc36_23.1
-// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc36_23.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.68c = value_binding_pattern c [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc37: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %y.ref.loc37: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc37: %.70d = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc37: <bound method> = bound_method %x.ref.loc37, %impl.elem1.loc37
-// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call: init %Cpp.long = call %bound_method.loc37(%x.ref.loc37, %y.ref.loc37)
-// CHECK:STDOUT:   %.loc37_13: type = splice_block %long.ref.loc37 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc37: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc37_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call
-// CHECK:STDOUT:   %.loc37_23.2: %Cpp.long = converted %Cpp.long.as.SubWith.impl.Op.call, %.loc37_23.1
-// CHECK:STDOUT:   %c: %Cpp.long = value_binding c, %.loc37_23.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.68c = value_binding_pattern d [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc38: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %y.ref.loc38: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc38: %.0a7 = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc38: <bound method> = bound_method %x.ref.loc38, %impl.elem1.loc38
-// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call: init %Cpp.long = call %bound_method.loc38(%x.ref.loc38, %y.ref.loc38)
-// CHECK:STDOUT:   %.loc38_13: type = splice_block %long.ref.loc38 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc38: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc38_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call
-// CHECK:STDOUT:   %.loc38_23.2: %Cpp.long = converted %Cpp.long.as.MulWith.impl.Op.call, %.loc38_23.1
-// CHECK:STDOUT:   %d: %Cpp.long = value_binding d, %.loc38_23.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.68c = value_binding_pattern e [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc39: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %y.ref.loc39: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc39: %.22b = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc39: <bound method> = bound_method %x.ref.loc39, %impl.elem1.loc39
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call: init %Cpp.long = call %bound_method.loc39(%x.ref.loc39, %y.ref.loc39)
-// CHECK:STDOUT:   %.loc39_13: type = splice_block %long.ref.loc39 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc39: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc39_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call
-// CHECK:STDOUT:   %.loc39_23.2: %Cpp.long = converted %Cpp.long.as.DivWith.impl.Op.call, %.loc39_23.1
-// CHECK:STDOUT:   %e: %Cpp.long = value_binding e, %.loc39_23.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.68c = value_binding_pattern f [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc40: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %y.ref.loc40: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc40: %.300 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc40: <bound method> = bound_method %x.ref.loc40, %impl.elem1.loc40
-// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call: init %Cpp.long = call %bound_method.loc40(%x.ref.loc40, %y.ref.loc40)
-// CHECK:STDOUT:   %.loc40_13: type = splice_block %long.ref.loc40 [concrete = constants.%Cpp.long] {
-// CHECK:STDOUT:     %Cpp.ref.loc40: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %long.ref.loc40: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call
-// CHECK:STDOUT:   %.loc40_23.2: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call, %.loc40_23.1
-// CHECK:STDOUT:   %f: %Cpp.long = value_binding f, %.loc40_23.2
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_bitwise_long.carbon
+// CHECK:STDOUT: --- arithmetic_homogeneous_long.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
@@ -977,6 +872,48 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
+// CHECK:STDOUT:   %Negate.Op.type: type = fn_type @Negate.Op [concrete]
+// CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness imports.%Negate.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %Cpp.long, (%Negate.impl_witness) [concrete]
+// CHECK:STDOUT:   %.494: type = fn_type_with_self_type %Negate.Op.type, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.type: type = fn_type @Cpp.long.as.Negate.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op: %Cpp.long.as.Negate.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.type.9c2: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.9a6: type = fn_type @AddWith.Op, @AddWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness imports.%AddWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.9c2 = facet_value %Cpp.long, (%AddWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.a81: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type: type = fn_type @Cpp.long.as.AddWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op: %Cpp.long.as.AddWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SubWith.type.e8e: type = facet_type <@SubWith, @SubWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %SubWith.Op.type.533: type = fn_type @SubWith.Op, @SubWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness: <witness> = impl_witness imports.%SubWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %SubWith.facet: %SubWith.type.e8e = facet_value %Cpp.long, (%SubWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.70d: type = fn_type_with_self_type %SubWith.Op.type.533, %SubWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type: type = fn_type @Cpp.long.as.SubWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op: %Cpp.long.as.SubWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.type.a32: type = facet_type <@MulWith, @MulWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %MulWith.Op.type.44b: type = fn_type @MulWith.Op, @MulWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness: <witness> = impl_witness imports.%MulWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.a32 = facet_value %Cpp.long, (%MulWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.0a7: type = fn_type_with_self_type %MulWith.Op.type.44b, %MulWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type: type = fn_type @Cpp.long.as.MulWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op: %Cpp.long.as.MulWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DivWith.type.0c0: type = facet_type <@DivWith, @DivWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %DivWith.Op.type.494: type = fn_type @DivWith.Op, @DivWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness imports.%DivWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.0c0 = facet_value %Cpp.long, (%DivWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.22b: type = fn_type_with_self_type %DivWith.Op.type.494, %DivWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type: type = fn_type @Cpp.long.as.DivWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op: %Cpp.long.as.DivWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ModWith.type.2fc: type = facet_type <@ModWith, @ModWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ModWith.Op.type.c13: type = fn_type @ModWith.Op, @ModWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness imports.%ModWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.2fc = facet_value %Cpp.long, (%ModWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.300: type = fn_type_with_self_type %ModWith.Op.type.c13, %ModWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type: type = fn_type @Cpp.long.as.ModWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op: %Cpp.long.as.ModWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -986,12 +923,30 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.1 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.412: %Cpp.long.as.Negate.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.Negate.impl.Op]
+// CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.1, %Core.import_ref.412), @Cpp.long.as.Negate.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.2 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.437: %Cpp.long.as.AddWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
+// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.2, %Core.import_ref.437), @Cpp.long.as.AddWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.3 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.51f: %Cpp.long.as.SubWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
+// CHECK:STDOUT:   %SubWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.3, %Core.import_ref.51f), @Cpp.long.as.SubWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.ec4: %Cpp.long.as.MulWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
+// CHECK:STDOUT:   %MulWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.ec4), @Cpp.long.as.MulWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.d85: %Cpp.long.as.DivWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %DivWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.5, %Core.import_ref.d85), @Cpp.long.as.DivWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.6 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.394: %Cpp.long.as.ModWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
+// CHECK:STDOUT:   %ModWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.6, %Core.import_ref.394), @Cpp.long.as.ModWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BitWiseOperatorsLong() {
+// CHECK:STDOUT: fn @ArithmeticHomogeneousLong() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.68c = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.68c = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref.loc8 [concrete = constants.%Cpp.long] {
@@ -1003,9 +958,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %Cpp.long = call %bound_method.loc8(%int_1.loc8) [concrete = constants.%int_1.5a4]
 // CHECK:STDOUT:   %.loc8_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.5a4]
 // CHECK:STDOUT:   %.loc8_21.2: %Cpp.long = converted %int_1.loc8, %.loc8_21.1 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc8_21.2
+// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc8_21.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.68c = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.68c = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_13: type = splice_block %long.ref.loc9 [concrete = constants.%Cpp.long] {
@@ -1017,17 +972,517 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %Cpp.long = call %bound_method.loc9(%int_1.loc9) [concrete = constants.%int_1.5a4]
 // CHECK:STDOUT:   %.loc9_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.5a4]
 // CHECK:STDOUT:   %.loc9_21.2: %Cpp.long = converted %int_1.loc9, %.loc9_21.1 [concrete = constants.%int_1.5a4]
-// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc9_21.2
+// CHECK:STDOUT:   %y: %Cpp.long = value_binding y, %.loc9_21.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.68c = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref.loc11: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc11: %.494 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Cpp.long.as.Negate.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %x.ref.loc11, %impl.elem1.loc11
+// CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.call: init %Cpp.long = call %bound_method.loc11(%x.ref.loc11)
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %long.ref.loc11 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc11: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11_21.1: %Cpp.long = value_of_initializer %Cpp.long.as.Negate.impl.Op.call
+// CHECK:STDOUT:   %.loc11_21.2: %Cpp.long = converted %Cpp.long.as.Negate.impl.Op.call, %.loc11_21.1
+// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc11_21.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.68c = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref.loc12: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc12: %Cpp.long = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc12: %.a81 = impl_witness_access constants.%AddWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %x.ref.loc12, %impl.elem1.loc12
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call: init %Cpp.long = call %bound_method.loc12(%x.ref.loc12, %y.ref.loc12)
+// CHECK:STDOUT:   %.loc12_13: type = splice_block %long.ref.loc12 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc12: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call
+// CHECK:STDOUT:   %.loc12_23.2: %Cpp.long = converted %Cpp.long.as.AddWith.impl.Op.call, %.loc12_23.1
+// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc12_23.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.68c = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.ref: %Cpp.long = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %Cpp.long = name_ref b, %b
-// CHECK:STDOUT:   %.loc15: type = splice_block %long.ref.loc15 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:   %x.ref.loc13: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc13: %Cpp.long = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc13: %.70d = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %x.ref.loc13, %impl.elem1.loc13
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call: init %Cpp.long = call %bound_method.loc13(%x.ref.loc13, %y.ref.loc13)
+// CHECK:STDOUT:   %.loc13_13: type = splice_block %long.ref.loc13 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc13: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call
+// CHECK:STDOUT:   %.loc13_23.2: %Cpp.long = converted %Cpp.long.as.SubWith.impl.Op.call, %.loc13_23.1
+// CHECK:STDOUT:   %c: %Cpp.long = value_binding c, %.loc13_23.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.68c = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref.loc14: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc14: %Cpp.long = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc14: %.0a7 = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %x.ref.loc14, %impl.elem1.loc14
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call: init %Cpp.long = call %bound_method.loc14(%x.ref.loc14, %y.ref.loc14)
+// CHECK:STDOUT:   %.loc14_13: type = splice_block %long.ref.loc14 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc14: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call
+// CHECK:STDOUT:   %.loc14_23.2: %Cpp.long = converted %Cpp.long.as.MulWith.impl.Op.call, %.loc14_23.1
+// CHECK:STDOUT:   %d: %Cpp.long = value_binding d, %.loc14_23.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.68c = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref.loc15: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc15: %Cpp.long = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc15: %.22b = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %x.ref.loc15, %impl.elem1.loc15
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call: init %Cpp.long = call %bound_method.loc15(%x.ref.loc15, %y.ref.loc15)
+// CHECK:STDOUT:   %.loc15_13: type = splice_block %long.ref.loc15 [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc15: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %Cpp.long = value_binding c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call
+// CHECK:STDOUT:   %.loc15_23.2: %Cpp.long = converted %Cpp.long.as.DivWith.impl.Op.call, %.loc15_23.1
+// CHECK:STDOUT:   %e: %Cpp.long = value_binding e, %.loc15_23.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.68c = value_binding_pattern f [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref.loc16: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc16: %Cpp.long = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc16: %.300 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %x.ref.loc16, %impl.elem1.loc16
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call: init %Cpp.long = call %bound_method.loc16(%x.ref.loc16, %y.ref.loc16)
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %long.ref.loc16 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc16: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call
+// CHECK:STDOUT:   %.loc16_23.2: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call, %.loc16_23.1
+// CHECK:STDOUT:   %f: %Cpp.long = value_binding f, %.loc16_23.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- bitwise_homogeneous_long.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %AssertSameType.type: type = fn_type @AssertSameType [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %AssertSameType: %AssertSameType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [concrete]
+// CHECK:STDOUT:   %BitComplement.Op.type: type = fn_type @BitComplement.Op [concrete]
+// CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness imports.%BitComplement.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %Cpp.long, (%BitComplement.impl_witness) [concrete]
+// CHECK:STDOUT:   %.788: type = fn_type_with_self_type %BitComplement.Op.type, %BitComplement.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitComplement.impl.Op.type: type = fn_type @Cpp.long.as.BitComplement.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitComplement.impl.Op: %Cpp.long.as.BitComplement.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AssertSameType.specific_fn: <specific function> = specific_function %AssertSameType, @AssertSameType(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitAndWith.type.0b5: type = facet_type <@BitAndWith, @BitAndWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.Op.type.e13: type = fn_type @BitAndWith.Op, @BitAndWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.0b5 = facet_value %Cpp.long, (%BitAndWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.78c: type = fn_type_with_self_type %BitAndWith.Op.type.e13, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitAndWith.impl.Op.type: type = fn_type @Cpp.long.as.BitAndWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitAndWith.impl.Op: %Cpp.long.as.BitAndWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitOrWith.type.b22: type = facet_type <@BitOrWith, @BitOrWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitOrWith.Op.type.a1b: type = fn_type @BitOrWith.Op, @BitOrWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitOrWith.impl_witness: <witness> = impl_witness imports.%BitOrWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitOrWith.facet: %BitOrWith.type.b22 = facet_value %Cpp.long, (%BitOrWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.ee7: type = fn_type_with_self_type %BitOrWith.Op.type.a1b, %BitOrWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitOrWith.impl.Op.type: type = fn_type @Cpp.long.as.BitOrWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitOrWith.impl.Op: %Cpp.long.as.BitOrWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitXorWith.type.87f: type = facet_type <@BitXorWith, @BitXorWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitXorWith.Op.type.5cf: type = fn_type @BitXorWith.Op, @BitXorWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitXorWith.impl_witness: <witness> = impl_witness imports.%BitXorWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitXorWith.facet: %BitXorWith.type.87f = facet_value %Cpp.long, (%BitXorWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.e9a: type = fn_type_with_self_type %BitXorWith.Op.type.5cf, %BitXorWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitXorWith.impl.Op.type: type = fn_type @Cpp.long.as.BitXorWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitXorWith.impl.Op: %Cpp.long.as.BitXorWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShiftWith.type.3f9: type = facet_type <@LeftShiftWith, @LeftShiftWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %LeftShiftWith.Op.type.224: type = fn_type @LeftShiftWith.Op, @LeftShiftWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %LeftShiftWith.impl_witness: <witness> = impl_witness imports.%LeftShiftWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %LeftShiftWith.facet: %LeftShiftWith.type.3f9 = facet_value %Cpp.long, (%LeftShiftWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.864: type = fn_type_with_self_type %LeftShiftWith.Op.type.224, %LeftShiftWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftWith.impl.Op.type: type = fn_type @Cpp.long.as.LeftShiftWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftWith.impl.Op: %Cpp.long.as.LeftShiftWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %RightShiftWith.type.995: type = facet_type <@RightShiftWith, @RightShiftWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %RightShiftWith.Op.type.fd9: type = fn_type @RightShiftWith.Op, @RightShiftWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %RightShiftWith.impl_witness: <witness> = impl_witness imports.%RightShiftWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %RightShiftWith.facet: %RightShiftWith.type.995 = facet_value %Cpp.long, (%RightShiftWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.398: type = fn_type_with_self_type %RightShiftWith.Op.type.fd9, %RightShiftWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftWith.impl.Op.type: type = fn_type @Cpp.long.as.RightShiftWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftWith.impl.Op: %Cpp.long.as.RightShiftWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.1 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.454: %Cpp.long.as.BitComplement.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitComplement.impl.Op]
+// CHECK:STDOUT:   %BitComplement.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.1, %Core.import_ref.454), @Cpp.long.as.BitComplement.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.2 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.f38: %Cpp.long.as.BitAndWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.2, %Core.import_ref.f38), @Cpp.long.as.BitAndWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.3 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.a17: %Cpp.long.as.BitOrWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitOrWith.impl.Op]
+// CHECK:STDOUT:   %BitOrWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.3, %Core.import_ref.a17), @Cpp.long.as.BitOrWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.4fd: %Cpp.long.as.BitXorWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitXorWith.impl.Op]
+// CHECK:STDOUT:   %BitXorWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.4fd), @Cpp.long.as.BitXorWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.c09: %Cpp.long.as.LeftShiftWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.LeftShiftWith.impl.Op]
+// CHECK:STDOUT:   %LeftShiftWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.5, %Core.import_ref.c09), @Cpp.long.as.LeftShiftWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.6 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.6c0: %Cpp.long.as.RightShiftWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.RightShiftWith.impl.Op]
+// CHECK:STDOUT:   %RightShiftWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.6, %Core.import_ref.6c0), @Cpp.long.as.RightShiftWith.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @BitWiseHomogeneousLong() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.68c = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc10_13: type = splice_block %long.ref.loc10 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc10: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc10: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %Cpp.long = call %bound_method.loc10(%int_1.loc10) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.2: %Cpp.long = converted %int_1.loc10, %.loc10_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc10_21.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.68c = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %long.ref.loc11 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc11: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc11: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %Cpp.long = call %bound_method.loc11(%int_1.loc11) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc11_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc11_21.2: %Cpp.long = converted %int_1.loc11, %.loc11_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc11_21.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.68c = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc12_13: type = splice_block %long.ref.loc12 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc12: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc12: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12: init %Cpp.long = call %bound_method.loc12(%int_1.loc12) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_21.2: %Cpp.long = converted %int_1.loc12, %.loc12_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %c: %Cpp.long = value_binding c, %.loc12_21.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc14: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc14: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %impl.elem1.loc14: %.788 = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%Cpp.long.as.BitComplement.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %a.ref.loc14, %impl.elem1.loc14
+// CHECK:STDOUT:   %Cpp.long.as.BitComplement.impl.Op.call: init %Cpp.long = call %bound_method.loc14(%a.ref.loc14)
+// CHECK:STDOUT:   %c.ref.loc14: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc14: <specific function> = specific_function %AssertSameType.ref.loc14, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc14_18.1: %Cpp.long = value_of_initializer %Cpp.long.as.BitComplement.impl.Op.call
+// CHECK:STDOUT:   %.loc14_18.2: %Cpp.long = converted %Cpp.long.as.BitComplement.impl.Op.call, %.loc14_18.1
+// CHECK:STDOUT:   %AssertSameType.call.loc14: init %empty_tuple.type = call %AssertSameType.specific_fn.loc14(%.loc14_18.2, %c.ref.loc14)
+// CHECK:STDOUT:   %AssertSameType.ref.loc15: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc15: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc15: %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem1.loc15: %.78c = impl_witness_access constants.%BitAndWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %a.ref.loc15, %impl.elem1.loc15
+// CHECK:STDOUT:   %Cpp.long.as.BitAndWith.impl.Op.call: init %Cpp.long = call %bound_method.loc15(%a.ref.loc15, %b.ref.loc15)
+// CHECK:STDOUT:   %c.ref.loc15: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc15: <specific function> = specific_function %AssertSameType.ref.loc15, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc15_20.1: %Cpp.long = value_of_initializer %Cpp.long.as.BitAndWith.impl.Op.call
+// CHECK:STDOUT:   %.loc15_20.2: %Cpp.long = converted %Cpp.long.as.BitAndWith.impl.Op.call, %.loc15_20.1
+// CHECK:STDOUT:   %AssertSameType.call.loc15: init %empty_tuple.type = call %AssertSameType.specific_fn.loc15(%.loc15_20.2, %c.ref.loc15)
+// CHECK:STDOUT:   %AssertSameType.ref.loc16: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc16: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc16: %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem1.loc16: %.ee7 = impl_witness_access constants.%BitOrWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.BitOrWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %a.ref.loc16, %impl.elem1.loc16
+// CHECK:STDOUT:   %Cpp.long.as.BitOrWith.impl.Op.call: init %Cpp.long = call %bound_method.loc16(%a.ref.loc16, %b.ref.loc16)
+// CHECK:STDOUT:   %c.ref.loc16: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc16: <specific function> = specific_function %AssertSameType.ref.loc16, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc16_20.1: %Cpp.long = value_of_initializer %Cpp.long.as.BitOrWith.impl.Op.call
+// CHECK:STDOUT:   %.loc16_20.2: %Cpp.long = converted %Cpp.long.as.BitOrWith.impl.Op.call, %.loc16_20.1
+// CHECK:STDOUT:   %AssertSameType.call.loc16: init %empty_tuple.type = call %AssertSameType.specific_fn.loc16(%.loc16_20.2, %c.ref.loc16)
+// CHECK:STDOUT:   %AssertSameType.ref.loc17: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc17: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc17: %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem1.loc17: %.e9a = impl_witness_access constants.%BitXorWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.BitXorWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %a.ref.loc17, %impl.elem1.loc17
+// CHECK:STDOUT:   %Cpp.long.as.BitXorWith.impl.Op.call: init %Cpp.long = call %bound_method.loc17(%a.ref.loc17, %b.ref.loc17)
+// CHECK:STDOUT:   %c.ref.loc17: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc17: <specific function> = specific_function %AssertSameType.ref.loc17, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc17_20.1: %Cpp.long = value_of_initializer %Cpp.long.as.BitXorWith.impl.Op.call
+// CHECK:STDOUT:   %.loc17_20.2: %Cpp.long = converted %Cpp.long.as.BitXorWith.impl.Op.call, %.loc17_20.1
+// CHECK:STDOUT:   %AssertSameType.call.loc17: init %empty_tuple.type = call %AssertSameType.specific_fn.loc17(%.loc17_20.2, %c.ref.loc17)
+// CHECK:STDOUT:   %AssertSameType.ref.loc18: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc18: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc18: %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem1.loc18: %.864 = impl_witness_access constants.%LeftShiftWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.LeftShiftWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %a.ref.loc18, %impl.elem1.loc18
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftWith.impl.Op.call: init %Cpp.long = call %bound_method.loc18(%a.ref.loc18, %b.ref.loc18)
+// CHECK:STDOUT:   %c.ref.loc18: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc18: <specific function> = specific_function %AssertSameType.ref.loc18, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc18_20.1: %Cpp.long = value_of_initializer %Cpp.long.as.LeftShiftWith.impl.Op.call
+// CHECK:STDOUT:   %.loc18_20.2: %Cpp.long = converted %Cpp.long.as.LeftShiftWith.impl.Op.call, %.loc18_20.1
+// CHECK:STDOUT:   %AssertSameType.call.loc18: init %empty_tuple.type = call %AssertSameType.specific_fn.loc18(%.loc18_20.2, %c.ref.loc18)
+// CHECK:STDOUT:   %AssertSameType.ref.loc19: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc19: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc19: %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem1.loc19: %.398 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.RightShiftWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %a.ref.loc19, %impl.elem1.loc19
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftWith.impl.Op.call: init %Cpp.long = call %bound_method.loc19(%a.ref.loc19, %b.ref.loc19)
+// CHECK:STDOUT:   %c.ref.loc19: %Cpp.long = name_ref c, %c
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc19: <specific function> = specific_function %AssertSameType.ref.loc19, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc19_20.1: %Cpp.long = value_of_initializer %Cpp.long.as.RightShiftWith.impl.Op.call
+// CHECK:STDOUT:   %.loc19_20.2: %Cpp.long = converted %Cpp.long.as.RightShiftWith.impl.Op.call, %.loc19_20.1
+// CHECK:STDOUT:   %AssertSameType.call.loc19: init %empty_tuple.type = call %AssertSameType.specific_fn.loc19(%.loc19_20.2, %c.ref.loc19)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_bitwise_heterogeneous_long.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %AssertSameType.type: type = fn_type @AssertSameType [concrete]
+// CHECK:STDOUT:   %AssertSameType: %AssertSameType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %Int.fc6021.1: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.2ad: type = facet_type <@ImplicitAs, @ImplicitAs(%i64)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.94e: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.eed: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.eed [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %As.type.047: type = facet_type <@As, @As(%i32)> [concrete]
+// CHECK:STDOUT:   %As.Convert.type.99b: type = fn_type @As.Convert, @As(%i32) [concrete]
+// CHECK:STDOUT:   %To.fe9: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.09e: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.dbe: %Core.IntLiteral.as.As.impl.Convert.type.09e = struct_value () [symbolic]
+// CHECK:STDOUT:   %As.impl_witness.ab6: <witness> = impl_witness imports.%As.impl_witness_table.9fc, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.8ec: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.29b: %Core.IntLiteral.as.As.impl.Convert.type.8ec = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.047 = facet_value Core.IntLiteral, (%As.impl_witness.ab6) [concrete]
+// CHECK:STDOUT:   %.97a: type = fn_type_with_self_type %As.Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.29b [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.29b, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.290: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %BitAndWith.type.0fb: type = facet_type <@BitAndWith, @BitAndWith(%i32)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.Op.type.e35: type = fn_type @BitAndWith.Op, @BitAndWith(%i32) [concrete]
+// CHECK:STDOUT:   %BitAndWith.type.0b5: type = facet_type <@BitAndWith, @BitAndWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.Op.type.e13: type = fn_type @BitAndWith.Op, @BitAndWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.39a54f.1: type = facet_type <@ImplicitAs, @ImplicitAs(%Int.fc6021.1)> [symbolic]
+// CHECK:STDOUT:   %U.354: %ImplicitAs.type.39a54f.1 = symbolic_binding U, 1 [symbolic]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.type.1b6537.1: type = fn_type @Int.as.BitAndWith.impl.Op.2, @Int.as.BitAndWith.impl.4ac(%N, %U.354) [symbolic]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.b9569a.1: %Int.as.BitAndWith.impl.Op.type.1b6537.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.type.1b6537.2: type = fn_type @Int.as.BitAndWith.impl.Op.3, @Int.as.BitAndWith.impl.4ac(%N, %U.354) [symbolic]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.b9569a.2: %Int.as.BitAndWith.impl.Op.type.1b6537.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.354: %ImplicitAs.type.39a54f.1 = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.1: type = fn_type @T.binding.as_type.as.BitAndWith.impl.Op.1, @T.binding.as_type.as.BitAndWith.impl(%N, %T.354) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.892c6d.1: %T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.2: type = fn_type @T.binding.as_type.as.BitAndWith.impl.Op.2, @T.binding.as_type.as.BitAndWith.impl(%N, %T.354) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.892c6d.2: %T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.925: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.c80 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.96f: %ImplicitAs.type.e8c = facet_value %Cpp.long, (%ImplicitAs.impl_witness.925) [concrete]
+// CHECK:STDOUT:   %BitAndWith.impl_witness.e95: <witness> = impl_witness imports.%BitAndWith.impl_witness_table.5e7, @T.binding.as_type.as.BitAndWith.impl(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.1: type = fn_type @T.binding.as_type.as.BitAndWith.impl.Op.2, @T.binding.as_type.as.BitAndWith.impl(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.9361e8.1: %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.2: type = fn_type @T.binding.as_type.as.BitAndWith.impl.Op.1, @T.binding.as_type.as.BitAndWith.impl(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.9361e8.2: %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet.817: %BitAndWith.type.0fb = facet_value %Cpp.long, (%BitAndWith.impl_witness.e95) [concrete]
+// CHECK:STDOUT:   %.62a: type = fn_type_with_self_type %BitAndWith.Op.type.e35, %BitAndWith.facet.817 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.specific_fn.96bc97.1: <specific function> = specific_function %T.binding.as_type.as.BitAndWith.impl.Op.9361e8.2, @T.binding.as_type.as.BitAndWith.impl.Op.1(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.specific_fn.96bc97.2: <specific function> = specific_function %T.binding.as_type.as.BitAndWith.impl.Op.9361e8.1, @T.binding.as_type.as.BitAndWith.impl.Op.2(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %.79c: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.96f [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.type: type = fn_type @Cpp.long.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert: %Cpp.long.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAndWith.impl_witness.8f0: <witness> = impl_witness imports.%BitAndWith.impl_witness_table.ebf, @Int.as.BitAndWith.impl.4ac(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.type.ed3819.1: type = fn_type @Int.as.BitAndWith.impl.Op.3, @Int.as.BitAndWith.impl.4ac(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.9e5f79.1: %Int.as.BitAndWith.impl.Op.type.ed3819.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.type.ed3819.2: type = fn_type @Int.as.BitAndWith.impl.Op.2, @Int.as.BitAndWith.impl.4ac(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.9e5f79.2: %Int.as.BitAndWith.impl.Op.type.ed3819.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet.fcf: %BitAndWith.type.0b5 = facet_value %i32, (%BitAndWith.impl_witness.8f0) [concrete]
+// CHECK:STDOUT:   %.775: type = fn_type_with_self_type %BitAndWith.Op.type.e13, %BitAndWith.facet.fcf [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.bound.621b36.1: <bound method> = bound_method %int_1.5d2, %Int.as.BitAndWith.impl.Op.9e5f79.2 [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.specific_fn.0f118d.1: <specific function> = specific_function %Int.as.BitAndWith.impl.Op.9e5f79.2, @Int.as.BitAndWith.impl.Op.2(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %bound_method.2c0104.1: <bound method> = bound_method %int_1.5d2, %Int.as.BitAndWith.impl.Op.specific_fn.0f118d.1 [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.bound.621b36.2: <bound method> = bound_method %int_1.5d2, %Int.as.BitAndWith.impl.Op.9e5f79.1 [concrete]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.specific_fn.0f118d.2: <specific function> = specific_function %Int.as.BitAndWith.impl.Op.9e5f79.1, @Int.as.BitAndWith.impl.Op.3(%int_32, %ImplicitAs.facet.96f) [concrete]
+// CHECK:STDOUT:   %bound_method.2c0104.2: <bound method> = bound_method %int_1.5d2, %Int.as.BitAndWith.impl.Op.specific_fn.0f118d.2 [concrete]
+// CHECK:STDOUT:   %pattern_type.95b: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.556: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b78: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b78 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.d48: %ImplicitAs.type.2ad = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.556) [concrete]
+// CHECK:STDOUT:   %.567: type = fn_type_with_self_type %ImplicitAs.Convert.type.94e, %ImplicitAs.facet.d48 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.102: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(%int_64) [concrete]
+// CHECK:STDOUT:   %bound_method.288: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.41a: %i64 = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.475cb3.2 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.611: @Int.as.BitAndWith.impl.4ac.%Int.as.BitAndWith.impl.Op.type.2 (%Int.as.BitAndWith.impl.Op.type.1b6537.1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.BitAndWith.impl.4ac.%Int.as.BitAndWith.impl.Op.2 (constants.%Int.as.BitAndWith.impl.Op.b9569a.1)]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table.ebf = impl_witness_table (%Core.import_ref.475cb3.2, %Core.import_ref.611), @Int.as.BitAndWith.impl.4ac [concrete]
+// CHECK:STDOUT:   %Core.Op.36f: @Int.as.BitAndWith.impl.4ac.%Int.as.BitAndWith.impl.Op.type.1 (%Int.as.BitAndWith.impl.Op.type.1b6537.2) = import_ref Core//prelude/types/int, Op, loaded [symbolic = @Int.as.BitAndWith.impl.4ac.%Int.as.BitAndWith.impl.Op.1 (constants.%Int.as.BitAndWith.impl.Op.b9569a.2)]
+// CHECK:STDOUT:   %Core.import_ref.475cb3.3 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.29d: @T.binding.as_type.as.BitAndWith.impl.%T.binding.as_type.as.BitAndWith.impl.Op.type.2 (%T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.BitAndWith.impl.%T.binding.as_type.as.BitAndWith.impl.Op.2 (constants.%T.binding.as_type.as.BitAndWith.impl.Op.892c6d.1)]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table.5e7 = impl_witness_table (%Core.import_ref.475cb3.3, %Core.import_ref.29d), @T.binding.as_type.as.BitAndWith.impl [concrete]
+// CHECK:STDOUT:   %Core.Op.944: @T.binding.as_type.as.BitAndWith.impl.%T.binding.as_type.as.BitAndWith.impl.Op.type.1 (%T.binding.as_type.as.BitAndWith.impl.Op.type.e95062.2) = import_ref Core//prelude/types/int, Op, loaded [symbolic = @T.binding.as_type.as.BitAndWith.impl.%T.binding.as_type.as.BitAndWith.impl.Op.1 (constants.%T.binding.as_type.as.BitAndWith.impl.Op.892c6d.2)]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl.b2d [concrete]
+// CHECK:STDOUT:   %Core.import_ref.946: %Cpp.long.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.c80 = impl_witness_table (%Core.import_ref.946), @Cpp.long.as.ImplicitAs.impl.9f8 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @BitWiseHeterogeneousLong() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.68c = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc10_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc10: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %Cpp.long = call %bound_method.loc10(%int_1.loc10) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.2: %Cpp.long = converted %int_1.loc10, %.loc10_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc10_21.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc19: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc19_18: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc19_25: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc19_25.1: <bound method> = bound_method %int_1.loc19, %impl.elem0.loc19_25 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc19_25: <specific function> = specific_function %impl.elem0.loc19_25, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc19_25.2: <bound method> = bound_method %int_1.loc19, %specific_fn.loc19_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc19: init %i32 = call %bound_method.loc19_25.2(%int_1.loc19) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc19 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_25.2: %i32 = converted %int_1.loc19, %.loc19_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc19: %.62a = impl_witness_access constants.%BitAndWith.impl_witness.e95, element1 [concrete = constants.%T.binding.as_type.as.BitAndWith.impl.Op.9361e8.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.1: <bound method> = bound_method %a.ref.loc19_18, %impl.elem1.loc19
+// CHECK:STDOUT:   %specific_fn.loc19_20: <specific function> = specific_function %impl.elem1.loc19, @T.binding.as_type.as.BitAndWith.impl.Op.1(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%T.binding.as_type.as.BitAndWith.impl.Op.specific_fn.96bc97.1]
+// CHECK:STDOUT:   %bound_method.loc19_20.2: <bound method> = bound_method %a.ref.loc19_18, %specific_fn.loc19_20
+// CHECK:STDOUT:   %.loc19_20: %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.1 = specific_constant imports.%Core.Op.944, @T.binding.as_type.as.BitAndWith.impl(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%T.binding.as_type.as.BitAndWith.impl.Op.9361e8.1]
+// CHECK:STDOUT:   %Op.ref.loc19: %T.binding.as_type.as.BitAndWith.impl.Op.type.126f9c.1 = name_ref Op, %.loc19_20 [concrete = constants.%T.binding.as_type.as.BitAndWith.impl.Op.9361e8.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc19_18, %Op.ref.loc19
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc19, @T.binding.as_type.as.BitAndWith.impl.Op.2(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%T.binding.as_type.as.BitAndWith.impl.Op.specific_fn.96bc97.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.3: <bound method> = bound_method %a.ref.loc19_18, %T.binding.as_type.as.BitAndWith.impl.Op.specific_fn
+// CHECK:STDOUT:   %impl.elem0.loc19_18: %.79c = impl_witness_access constants.%ImplicitAs.impl_witness.925, element0 [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc19_18: <bound method> = bound_method %a.ref.loc19_18, %impl.elem0.loc19_18
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.call.loc19: init %i32 = call %bound_method.loc19_18(%a.ref.loc19_18)
+// CHECK:STDOUT:   %.loc19_18.1: %i32 = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc19
+// CHECK:STDOUT:   %.loc19_18.2: %i32 = converted %a.ref.loc19_18, %.loc19_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.BitAndWith.impl.Op.call: init %i32 = call %bound_method.loc19_20.3(%.loc19_18.2, %.loc19_25.2)
+// CHECK:STDOUT:   %a.ref.loc19_34: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %AssertSameType.ref.loc28: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc28: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc28_21: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc28_21.1: <bound method> = bound_method %int_1.loc28, %impl.elem0.loc28_21 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc28_21: <specific function> = specific_function %impl.elem0.loc28_21, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_21.2: <bound method> = bound_method %int_1.loc28, %specific_fn.loc28_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc28: init %i32 = call %bound_method.loc28_21.2(%int_1.loc28) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc28_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc28 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc28_21.2: %i32 = converted %int_1.loc28, %.loc28_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %a.ref.loc28_31: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %impl.elem1.loc28: %.775 = impl_witness_access constants.%BitAndWith.impl_witness.8f0, element1 [concrete = constants.%Int.as.BitAndWith.impl.Op.9e5f79.2]
+// CHECK:STDOUT:   %bound_method.loc28_29.1: <bound method> = bound_method %.loc28_21.2, %impl.elem1.loc28 [concrete = constants.%Int.as.BitAndWith.impl.Op.bound.621b36.1]
+// CHECK:STDOUT:   %specific_fn.loc28_29: <specific function> = specific_function %impl.elem1.loc28, @Int.as.BitAndWith.impl.Op.2(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%Int.as.BitAndWith.impl.Op.specific_fn.0f118d.1]
+// CHECK:STDOUT:   %bound_method.loc28_29.2: <bound method> = bound_method %.loc28_21.2, %specific_fn.loc28_29 [concrete = constants.%bound_method.2c0104.1]
+// CHECK:STDOUT:   %.loc28_29: %Int.as.BitAndWith.impl.Op.type.ed3819.1 = specific_constant imports.%Core.Op.36f, @Int.as.BitAndWith.impl.4ac(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%Int.as.BitAndWith.impl.Op.9e5f79.1]
+// CHECK:STDOUT:   %Op.ref.loc28: %Int.as.BitAndWith.impl.Op.type.ed3819.1 = name_ref Op, %.loc28_29 [concrete = constants.%Int.as.BitAndWith.impl.Op.9e5f79.1]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %.loc28_21.2, %Op.ref.loc28 [concrete = constants.%Int.as.BitAndWith.impl.Op.bound.621b36.2]
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc28, @Int.as.BitAndWith.impl.Op.3(constants.%int_32, constants.%ImplicitAs.facet.96f) [concrete = constants.%Int.as.BitAndWith.impl.Op.specific_fn.0f118d.2]
+// CHECK:STDOUT:   %bound_method.loc28_29.3: <bound method> = bound_method %.loc28_21.2, %Int.as.BitAndWith.impl.Op.specific_fn [concrete = constants.%bound_method.2c0104.2]
+// CHECK:STDOUT:   %impl.elem0.loc28_31: %.79c = impl_witness_access constants.%ImplicitAs.impl_witness.925, element0 [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc28_31: <bound method> = bound_method %a.ref.loc28_31, %impl.elem0.loc28_31
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.call.loc28: init %i32 = call %bound_method.loc28_31(%a.ref.loc28_31)
+// CHECK:STDOUT:   %.loc28_31.1: %i32 = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc28
+// CHECK:STDOUT:   %.loc28_31.2: %i32 = converted %a.ref.loc28_31, %.loc28_31.1
+// CHECK:STDOUT:   %Int.as.BitAndWith.impl.Op.call: init %i32 = call %bound_method.loc28_29.3(%.loc28_21.2, %.loc28_31.2)
+// CHECK:STDOUT:   %a.ref.loc28_34: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.95b = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc30: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc30_10: type = splice_block %i64 [concrete = constants.%i64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc30: %.567 = impl_witness_access constants.%ImplicitAs.impl_witness.556, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.57d]
+// CHECK:STDOUT:   %bound_method.loc30_16.1: <bound method> = bound_method %int_1.loc30, %impl.elem0.loc30 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.102]
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(constants.%int_64) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc30_16.2: <bound method> = bound_method %int_1.loc30, %specific_fn.loc30 [concrete = constants.%bound_method.288]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc30: init %i64 = call %bound_method.loc30_16.2(%int_1.loc30) [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc30_16.1: %i64 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc30 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc30_16.2: %i64 = converted %int_1.loc30, %.loc30_16.1 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %b: %i64 = value_binding b, %.loc30_16.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc35: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %a.ref.loc35: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc35_22: %i64 = name_ref b, %b
+// CHECK:STDOUT:   %b.ref.loc35_25: %i64 = name_ref b, %b
+// CHECK:STDOUT:   %AssertSameType.ref.loc41: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %b.ref.loc41_18: %i64 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref.loc41: %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc41_25: %i64 = name_ref b, %b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1204,7 +1659,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_82.1: ref %ULongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc16: %ptr.f5e = addr_of %.loc16_82.1
 // CHECK:STDOUT:   %PassULong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassULong__carbon_thunk.decl.108234.1(%cpp_unsigned_long.ref.loc16, %addr.loc16)
-// CHECK:STDOUT:   %.loc16_82.2: init %ULongResult = in_place_init %PassULong__carbon_thunk.call.loc16, %.loc16_82.1
+// CHECK:STDOUT:   %.loc16_82.2: init %ULongResult to %.loc16_82.1 = in_place_init %PassULong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_36: type = splice_block %ULongResult.ref.loc16 [concrete = constants.%ULongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref.loc16: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
@@ -1231,7 +1686,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_80.1: ref %ULongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc19: %ptr.f5e = addr_of %.loc19_80.1
 // CHECK:STDOUT:   %PassULong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassULong__carbon_thunk.decl.108234.1(%cpp_compat_ulong.ref, %addr.loc19)
-// CHECK:STDOUT:   %.loc19_80.2: init %ULongResult = in_place_init %PassULong__carbon_thunk.call.loc19, %.loc19_80.1
+// CHECK:STDOUT:   %.loc19_80.2: init %ULongResult to %.loc19_80.1 = in_place_init %PassULong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_35: type = splice_block %ULongResult.ref.loc19 [concrete = constants.%ULongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc19_32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref.loc19: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
@@ -1262,7 +1717,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_67.1: ref %UIntResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc22: %ptr.059 = addr_of %.loc22_67.1
 // CHECK:STDOUT:   %PassULong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassULong__carbon_thunk.decl.108234.2(%carbon_u32.ref, %addr.loc22)
-// CHECK:STDOUT:   %.loc22_67.2: init %UIntResult = in_place_init %PassULong__carbon_thunk.call.loc22, %.loc22_67.1
+// CHECK:STDOUT:   %.loc22_67.2: init %UIntResult to %.loc22_67.1 = in_place_init %PassULong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_29: type = splice_block %UIntResult.ref [concrete = constants.%UIntResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UIntResult.ref: type = name_ref UIntResult, imports.%UIntResult.decl [concrete = constants.%UIntResult]
@@ -1285,8 +1740,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_52.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_52.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_52.4: init %f32.97e = initialize_from %.loc24_52.2 to %.loc24_52.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_52.5: init %array_type = array_init (%.loc24_52.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_52.4: init %f32.97e to %.loc24_52.3 = initialize_from %.loc24_52.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_52.5: init %array_type to %a.var = array_init (%.loc24_52.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_52.1, %.loc24_52.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_43: type = splice_block %array_type [concrete = constants.%array_type] {

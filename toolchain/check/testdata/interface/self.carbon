@@ -75,7 +75,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:   %.loc16_25.1: form = init_form %Self.binding.as_type, call_param1 [symbolic = %.loc16_25.1 (constants.%.2b5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type);
+// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.F(constants.%Self) {

@@ -31,7 +31,7 @@ fn F() -> () {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @F() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a

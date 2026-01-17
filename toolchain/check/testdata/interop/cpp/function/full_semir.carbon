@@ -370,7 +370,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo_short() -> %i16;
+// CHECK:STDOUT: fn @foo_short() -> out %return.param: %i16;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short__carbon_thunk(%return.param: %ptr);
 // CHECK:STDOUT:

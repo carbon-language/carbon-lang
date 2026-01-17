@@ -70,5 +70,5 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a.param: %i32, %b.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @Add(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 = "int.sadd";
 // CHECK:STDOUT:

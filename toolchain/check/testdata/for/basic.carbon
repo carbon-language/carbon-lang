@@ -121,7 +121,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc18_18.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %TrivialRange.ref: type = name_ref TrivialRange, file.%TrivialRange.decl [concrete = constants.%TrivialRange]
 // CHECK:STDOUT:   %.loc18_18.2: ref %TrivialRange = temporary_storage
-// CHECK:STDOUT:   %.loc18_18.3: init %TrivialRange = class_init (), %.loc18_18.2 [concrete = constants.%TrivialRange.val]
+// CHECK:STDOUT:   %.loc18_18.3: init %TrivialRange to %.loc18_18.2 = class_init () [concrete = constants.%TrivialRange.val]
 // CHECK:STDOUT:   %.loc18_18.4: ref %TrivialRange = temporary %.loc18_18.2, %.loc18_18.3
 // CHECK:STDOUT:   %.loc18_20.1: ref %TrivialRange = converted %.loc18_18.1, %.loc18_18.4
 // CHECK:STDOUT:   %impl.elem2: %.d38 = impl_witness_access constants.%Iterate.impl_witness, element2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.c71f42.2]
@@ -140,7 +140,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc18_35.2: <bound method> = bound_method %.loc18_20.1, %impl.elem3
 // CHECK:STDOUT:   %.loc18_35.1: ref %Optional.311 = temporary_storage
 // CHECK:STDOUT:   %.loc18_20.3: %TrivialRange = acquire_value %.loc18_20.1
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.call: init %Optional.311 = call %bound_method.loc18_35.2(%.loc18_20.3, %addr) to %.loc18_35.1
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.call: init %Optional.311 to %.loc18_35.1 = call %bound_method.loc18_35.2(%.loc18_20.3, %addr)
 // CHECK:STDOUT:   %.loc18_35.2: ref %Optional.311 = temporary %.loc18_35.1, %TrivialRange.as.Iterate.impl.Next.call
 // CHECK:STDOUT:   %.loc18_35.3: %Optional.HasValue.type.4db = specific_constant imports.%Core.import_ref.228, @Optional(constants.%Copy.facet) [concrete = constants.%Optional.HasValue.4fc]
 // CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.4db = name_ref HasValue, %.loc18_35.3 [concrete = constants.%Optional.HasValue.4fc]

@@ -263,14 +263,14 @@ fn G() {
 // CHECK:STDOUT:   %.loc13_26: %tuple.type = converted %.loc13_25, %tuple [concrete = constants.%tuple.1f1]
 // CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple.1f1) [concrete = constants.%HoldsType.a31]
 // CHECK:STDOUT:   %.loc13_6.2: ref %HoldsType.a31 = temporary_storage
-// CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.a31 = class_init (), %.loc13_6.2 [concrete = constants.%HoldsType.val]
+// CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.a31 to %.loc13_6.2 = class_init () [concrete = constants.%HoldsType.val]
 // CHECK:STDOUT:   %.loc13_6.4: ref %HoldsType.a31 = temporary %.loc13_6.2, %.loc13_6.3
 // CHECK:STDOUT:   %.loc13_8.1: ref %HoldsType.a31 = converted %.loc13_6.1, %.loc13_6.4
 // CHECK:STDOUT:   %.loc13_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple.1f1) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc13_8.2: %HoldsType.a31 = acquire_value %.loc13_8.1
 // CHECK:STDOUT:   %.loc13_30.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc13_30.3: init %C = class_init (), %.loc13_30.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_30.3: init %C to %.loc13_30.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_30.4: ref %C = temporary %.loc13_30.2, %.loc13_30.3
 // CHECK:STDOUT:   %.loc13_30.5: ref %C = converted %.loc13_30.1, %.loc13_30.4
 // CHECK:STDOUT:   %.loc13_30.6: %C = acquire_value %.loc13_30.5
@@ -464,14 +464,14 @@ fn G() {
 // CHECK:STDOUT:   %.loc13_29: %struct_type.t = converted %.loc13_28, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%struct) [concrete = constants.%HoldsType.673]
 // CHECK:STDOUT:   %.loc13_6.2: ref %HoldsType.673 = temporary_storage
-// CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.673 = class_init (), %.loc13_6.2 [concrete = constants.%HoldsType.val]
+// CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.673 to %.loc13_6.2 = class_init () [concrete = constants.%HoldsType.val]
 // CHECK:STDOUT:   %.loc13_6.4: ref %HoldsType.673 = temporary %.loc13_6.2, %.loc13_6.3
 // CHECK:STDOUT:   %.loc13_8.1: ref %HoldsType.673 = converted %.loc13_6.1, %.loc13_6.4
 // CHECK:STDOUT:   %.loc13_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%struct) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc13_8.2: %HoldsType.673 = acquire_value %.loc13_8.1
 // CHECK:STDOUT:   %.loc13_33.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc13_33.3: init %C = class_init (), %.loc13_33.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_33.3: init %C to %.loc13_33.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_33.4: ref %C = temporary %.loc13_33.2, %.loc13_33.3
 // CHECK:STDOUT:   %.loc13_33.5: ref %C = converted %.loc13_33.1, %.loc13_33.4
 // CHECK:STDOUT:   %.loc13_33.6: %C = acquire_value %.loc13_33.5
@@ -714,7 +714,7 @@ fn G() {
 // CHECK:STDOUT:     %c.ref: %Class = name_ref c, %c.loc25_6.2 [symbolic = %c.loc25_6.1 (constants.%c)]
 // CHECK:STDOUT:     %HoldsType.loc26_22.1: type = class_type @HoldsType, @HoldsType(constants.%c) [symbolic = %HoldsType.loc26_22.2 (constants.%HoldsType.47b504.2)]
 // CHECK:STDOUT:     %.loc26_6.2: ref @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) = temporary_storage
-// CHECK:STDOUT:     %.loc26_6.3: init @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) = class_init (), %.loc26_6.2 [symbolic = %HoldsType.val (constants.%HoldsType.val)]
+// CHECK:STDOUT:     %.loc26_6.3: init @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) to %.loc26_6.2 = class_init () [symbolic = %HoldsType.val (constants.%HoldsType.val)]
 // CHECK:STDOUT:     %.loc26_6.4: ref @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) = temporary %.loc26_6.2, %.loc26_6.3
 // CHECK:STDOUT:     %.loc26_8: ref @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) = converted %.loc26_6.1, %.loc26_6.4
 // CHECK:STDOUT:     %.loc26_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -736,8 +736,8 @@ fn G() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%C.ref) [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc37_12.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc37_12.3: ref type = class_element_access %.loc37_12.2, element0
-// CHECK:STDOUT:   %.loc37_12.4: init type = initialize_from %type.as.Copy.impl.Op.call to %.loc37_12.3 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc37_12.5: init %Class = class_init (%.loc37_12.4), %.loc37_12.2 [concrete = constants.%Class.val]
+// CHECK:STDOUT:   %.loc37_12.4: init type to %.loc37_12.3 = initialize_from %type.as.Copy.impl.Op.call [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc37_12.5: init %Class to %.loc37_12.2 = class_init (%.loc37_12.4) [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc37_12.6: ref %Class = temporary %.loc37_12.2, %.loc37_12.5
 // CHECK:STDOUT:   %.loc37_13.1: ref %Class = converted %.loc37_12.1, %.loc37_12.6
 // CHECK:STDOUT:   %.loc37_13.2: %Class = acquire_value %.loc37_13.1
@@ -963,8 +963,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc24_25.2: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc24_25.3: ref type = array_index %.loc24_25.2, %int_0
-// CHECK:STDOUT:   %.loc24_25.4: init type = initialize_from %type.as.Copy.impl.Op.call to %.loc24_25.3 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_25.5: init %array_type = array_init (%.loc24_25.4) to %.loc24_25.2 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_25.4: init type to %.loc24_25.3 = initialize_from %type.as.Copy.impl.Op.call [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc24_25.5: init %array_type to %.loc24_25.2 = array_init (%.loc24_25.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.1: init %array_type = converted %.loc24_25.1, %.loc24_25.5 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.2: ref %array_type = temporary %.loc24_25.2, %.loc24_27.1
 // CHECK:STDOUT:   %.loc24_27.3: %array_type = acquire_value %.loc24_27.2

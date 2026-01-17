@@ -497,5 +497,5 @@ fn F() -> {} {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %empty_struct_type;
+// CHECK:STDOUT: fn @F() -> out %return.param: %empty_struct_type;
 // CHECK:STDOUT:

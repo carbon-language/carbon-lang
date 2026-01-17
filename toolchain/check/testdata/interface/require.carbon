@@ -287,7 +287,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require60000000.decl = require_decl @Z.require60000000 [concrete] {
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -301,17 +301,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require60000000 {
-// CHECK:STDOUT:     require @Z.require60000000.%Self.as_type impls @Z.require60000000.%Y.ref
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y.type.require.%Self.as_type impls @Z.Self.binding.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require60000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require60000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -334,7 +334,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require50000000.decl = require_decl @Z.require50000000 [concrete] {
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -347,17 +347,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require50000000 {
-// CHECK:STDOUT:     require @Z.require50000000.%Self.as_type impls @Z.require50000000.%Y.ref
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y.type.require.%Self.as_type impls @Z.Self.binding.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require50000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require50000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -380,7 +380,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require70000000.decl = require_decl @Z.require70000000 [concrete] {
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %.loc9 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
@@ -395,17 +395,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require70000000 {
-// CHECK:STDOUT:     require @Z.require70000000.%.loc9 impls @Z.require70000000.%Y.ref
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y.type.require.%.loc9 impls @Z.Self.binding.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require70000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require70000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -431,7 +431,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require58000000.decl = require_decl @Z.require58000000 [concrete] {
+// CHECK:STDOUT:   %Z.C.impls.Y.type.require.decl = require_decl @Z.C.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %C.loc9_17.1 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -449,18 +449,18 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require58000000 {
-// CHECK:STDOUT:     require @Z.require58000000.%C.loc9_17.1 impls @Z.require58000000.%Y.ref
+// CHECK:STDOUT:   @Z.C.impls.Y.type.require {
+// CHECK:STDOUT:     require @Z.C.impls.Y.type.require.%C.loc9_17.1 impls @Z.C.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require58000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.C.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %C.loc9_17.2: type = class_type @C, @C(%Self.binding.as_type) [symbolic = %C.loc9_17.2 (constants.%C.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require58000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.C.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.42e
@@ -493,7 +493,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require78000000.decl = require_decl @Z.require78000000 [concrete] {
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y_where.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y_where.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %.loc7_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -518,17 +518,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require78000000 {
-// CHECK:STDOUT:     require @Z.require78000000.%Self.as_type impls @Z.require78000000.%.loc7_19
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y_where.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y_where.type.require.%Self.as_type impls @Z.Self.binding.as_type.impls.Y_where.type.require.%.loc7_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require78000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y_where.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require78000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y_where.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -567,13 +567,13 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
-// CHECK:STDOUT:     %Z.require44000000.decl = require_decl @Z.require44000000 [concrete] {
+// CHECK:STDOUT:     %Z.T.impls.Z.type.require.decl = require_decl @Z.T.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:       require %T.ref impls %Z.type.loc5_25.1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Z.%T.loc4_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Z.ref: %Z.type.352 = name_ref Z, file.%Z.decl [concrete = constants.%Z.generic]
-// CHECK:STDOUT:       %.loc5_21: @Z.require44000000.%Z.type.loc5_21 (%Z.type.0ed) = specific_constant @Z.%Self.loc4_23.1, @Z(constants.%T) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.ref: @Z.require44000000.%Z.type.loc5_21 (%Z.type.0ed) = name_ref Self, %.loc5_21 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc5_21: @Z.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.0ed) = specific_constant @Z.%Self.loc4_23.1, @Z(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref: @Z.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.0ed) = name_ref Self, %.loc5_21 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_25: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %Z.type.loc5_25.1: type = facet_type <@Z, @Z(constants.%Self.binding.as_type)> [symbolic = %Z.type.loc5_25.2 (constants.%Z.type.6aa)]
@@ -586,16 +586,16 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     @Z.require44000000 {
-// CHECK:STDOUT:       require @Z.require44000000.%T.ref impls @Z.require44000000.%Z.type.loc5_25.1
+// CHECK:STDOUT:     @Z.T.impls.Z.type.require {
+// CHECK:STDOUT:       require @Z.T.impls.Z.type.require.%T.ref impls @Z.T.impls.Z.type.require.%Z.type.loc5_25.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require44000000(@Z.%T.loc4_13.2: type, @Z.%Self.loc4_23.1: @Z.%Z.type (%Z.type.0ed)) {
+// CHECK:STDOUT: generic require @Z.T.impls.Z.type.require(@Z.%T.loc4_13.2: type, @Z.%Self.loc4_23.1: @Z.%Z.type (%Z.type.0ed)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Z.type.loc5_21: type = facet_type <@Z, @Z(%T)> [symbolic = %Z.type.loc5_21 (constants.%Z.type.0ed)]
-// CHECK:STDOUT:   %Self: @Z.require44000000.%Z.type.loc5_21 (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: @Z.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Z.type.loc5_25.2: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic = %Z.type.loc5_25.2 (constants.%Z.type.6aa)]
 // CHECK:STDOUT: }
@@ -608,7 +608,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require44000000(constants.%T, constants.%Self) {
+// CHECK:STDOUT: specific @Z.T.impls.Z.type.require(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Z.type.loc5_21 => constants.%Z.type.0ed
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -641,7 +641,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.require7C000000.decl = require_decl @Z.require7C000000 [concrete] {
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y_where.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y_where.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type.loc10_11 impls %.loc10_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc10_11: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -667,18 +667,18 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require7C000000 {
-// CHECK:STDOUT:     require @Z.require7C000000.%Self.as_type.loc10_11 impls @Z.require7C000000.%.loc10_19
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y_where.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y_where.type.require.%Self.as_type.loc10_11 impls @Z.Self.binding.as_type.impls.Y_where.type.require.%.loc10_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require7C000000(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y_where.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require7C000000(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y_where.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type
@@ -717,7 +717,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc8_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.822)]
-// CHECK:STDOUT:     %Z.require42000001.decl = require_decl @Z.require42000001 [concrete] {
+// CHECK:STDOUT:     %Z.Self.binding.as_type.impls.Z.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %Z.type.loc11_20
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type @Z.%Self.loc8_23.1 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b37)]
@@ -733,16 +733,16 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     @Z.require42000001 {
-// CHECK:STDOUT:       require @Z.require42000001.%Self.as_type impls @Z.require42000001.%Z.type.loc11_20
+// CHECK:STDOUT:     @Z.Self.binding.as_type.impls.Z.type.require {
+// CHECK:STDOUT:       require @Z.Self.binding.as_type.impls.Z.type.require.%Self.as_type impls @Z.Self.binding.as_type.impls.Z.type.require.%Z.type.loc11_20
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require42000001(@Z.%T.loc8_13.2: type, @Z.%Self.loc8_23.1: @Z.%Z.type (%Z.type.0ed)) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Z.type.require(@Z.%T.loc8_13.2: type, @Z.%Self.loc8_23.1: @Z.%Z.type (%Z.type.0ed)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Z.type.loc11_11: type = facet_type <@Z, @Z(%T)> [symbolic = %Z.type.loc11_11 (constants.%Z.type.0ed)]
-// CHECK:STDOUT:   %Self: @Z.require42000001.%Z.type.loc11_11 (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.822)]
+// CHECK:STDOUT:   %Self: @Z.Self.binding.as_type.impls.Z.type.require.%Z.type.loc11_11 (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.822)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b37)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -750,7 +750,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %T.loc8_13.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require42000001(constants.%T, constants.%Self.822) {
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Z.type.require(constants.%T, constants.%Self.822) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Z.type.loc11_11 => constants.%Z.type.0ed
 // CHECK:STDOUT:   %Self => constants.%Self.822

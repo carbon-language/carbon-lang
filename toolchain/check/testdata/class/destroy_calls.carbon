@@ -261,17 +261,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %Make.ref.loc12: %A.Make.type = name_ref Make, @A.%A.Make.decl [concrete = constants.%A.Make]
 // CHECK:STDOUT:   %.loc12_10.1: ref %A = temporary_storage
-// CHECK:STDOUT:   %A.Make.call: init %A = call %Make.ref.loc12() to %.loc12_10.1
+// CHECK:STDOUT:   %A.Make.call: init %A to %.loc12_10.1 = call %Make.ref.loc12()
 // CHECK:STDOUT:   %.loc12_10.2: ref %A = temporary %.loc12_10.1, %A.Make.call
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Make.ref.loc13: %B.Make.type = name_ref Make, @B.%B.Make.decl [concrete = constants.%B.Make]
 // CHECK:STDOUT:   %.loc13_10.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %B.Make.call: init %B = call %Make.ref.loc13() to %.loc13_10.1
+// CHECK:STDOUT:   %B.Make.call: init %B to %.loc13_10.1 = call %Make.ref.loc13()
 // CHECK:STDOUT:   %.loc13_10.2: ref %B = temporary %.loc13_10.1, %B.Make.call
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Make.ref.loc14: %C.Make.type = name_ref Make, @C.%C.Make.decl [concrete = constants.%C.Make]
 // CHECK:STDOUT:   %.loc14_10.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %C.Make.call: init %C = call %Make.ref.loc14() to %.loc14_10.1
+// CHECK:STDOUT:   %C.Make.call: init %C to %.loc14_10.1 = call %Make.ref.loc14()
 // CHECK:STDOUT:   %.loc14_10.2: ref %C = temporary %.loc14_10.1, %C.Make.call
 // CHECK:STDOUT:   %DestroyOp.bound.loc14: <bound method> = bound_method %.loc14_10.2, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc14: init %empty_tuple.type = call %DestroyOp.bound.loc14(%.loc14_10.2)

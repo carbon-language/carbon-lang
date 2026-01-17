@@ -133,7 +133,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.loc18();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> %i32 {
+// CHECK:STDOUT: fn @B() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc24: %A.type.b86 = name_ref A, file.%A.decl.loc18 [concrete = constants.%A.b64]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc24()

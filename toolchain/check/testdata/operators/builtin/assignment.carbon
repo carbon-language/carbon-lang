@@ -196,7 +196,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_28.1: init %i32 = call %bound_method.loc19_28.2(%int_1.loc19) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_28.2: init %i32 = converted %int_1.loc19, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_28.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %tuple.elem0.loc19: ref %i32 = tuple_access %b.var, element0
-// CHECK:STDOUT:   %.loc19_28.3: init %i32 = initialize_from %.loc19_28.2 to %tuple.elem0.loc19 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_28.3: init %i32 to %tuple.elem0.loc19 = initialize_from %.loc19_28.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc19_28.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc19_28.3: <bound method> = bound_method %int_2.loc19, %impl.elem0.loc19_28.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc19_28.2: <specific function> = specific_function %impl.elem0.loc19_28.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -204,8 +204,8 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_28.2: init %i32 = call %bound_method.loc19_28.4(%int_2.loc19) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc19_28.4: init %i32 = converted %int_2.loc19, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_28.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %tuple.elem1.loc19: ref %i32 = tuple_access %b.var, element1
-// CHECK:STDOUT:   %.loc19_28.5: init %i32 = initialize_from %.loc19_28.4 to %tuple.elem1.loc19 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc19_28.6: init %tuple.type.d07 = tuple_init (%.loc19_28.3, %.loc19_28.5) to %b.var [concrete = constants.%tuple.21c]
+// CHECK:STDOUT:   %.loc19_28.5: init %i32 to %tuple.elem1.loc19 = initialize_from %.loc19_28.4 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc19_28.6: init %tuple.type.d07 to %b.var = tuple_init (%.loc19_28.3, %.loc19_28.5) [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   %.loc19_3: init %tuple.type.d07 = converted %.loc19_28.1, %.loc19_28.6 [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   assign %b.var, %.loc19_3
 // CHECK:STDOUT:   %.loc19_19.1: type = splice_block %.loc19_19.3 [concrete = constants.%tuple.type.d07] {
@@ -254,7 +254,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23_46.1: init %i32 = call %bound_method.loc23_46.2(%int_1.loc23) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc23_46.2: init %i32 = converted %int_1.loc23, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23_46.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc23_46.3: ref %i32 = struct_access %c.var, element0
-// CHECK:STDOUT:   %.loc23_46.4: init %i32 = initialize_from %.loc23_46.2 to %.loc23_46.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc23_46.4: init %i32 to %.loc23_46.3 = initialize_from %.loc23_46.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc23_46.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc23_46.3: <bound method> = bound_method %int_2.loc23, %impl.elem0.loc23_46.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc23_46.2: <specific function> = specific_function %impl.elem0.loc23_46.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -262,8 +262,8 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23_46.2: init %i32 = call %bound_method.loc23_46.4(%int_2.loc23) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc23_46.5: init %i32 = converted %int_2.loc23, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23_46.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc23_46.6: ref %i32 = struct_access %c.var, element1
-// CHECK:STDOUT:   %.loc23_46.7: init %i32 = initialize_from %.loc23_46.5 to %.loc23_46.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc23_46.8: init %struct_type.a.b.501 = struct_init (%.loc23_46.4, %.loc23_46.7) to %c.var [concrete = constants.%struct.ed5]
+// CHECK:STDOUT:   %.loc23_46.7: init %i32 to %.loc23_46.6 = initialize_from %.loc23_46.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc23_46.8: init %struct_type.a.b.501 to %c.var = struct_init (%.loc23_46.4, %.loc23_46.7) [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   %.loc23_3: init %struct_type.a.b.501 = converted %.loc23_46.1, %.loc23_46.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign %c.var, %.loc23_3
 // CHECK:STDOUT:   %.loc23_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {

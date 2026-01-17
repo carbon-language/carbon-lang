@@ -130,7 +130,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @B() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %b.ref.loc11: ref %empty_tuple.type = name_ref b, %b
@@ -140,7 +140,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = ref_binding_pattern c [concrete]

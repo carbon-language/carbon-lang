@@ -50,7 +50,7 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream),
       functions_(LoweredFunctionStore::MakeForOverwrite(sem_ir.functions())),
-      specific_functions_(sem_ir.specifics(), nullptr),
+      specific_functions_(sem_ir.specifics(), std::nullopt),
       types_(LoweredTypeStore::MakeWithExplicitSize(
           sem_ir.constant_values().ConcreteStoreSize(),
           sem_ir.constant_values().GetTypeIdTag(), {nullptr, nullptr})),
@@ -147,12 +147,12 @@ auto FileContext::LowerDefinitions() -> void {
   // variables.
   if (auto global_ctor_id = sem_ir().global_ctor_id();
       global_ctor_id.has_value()) {
-    auto* llvm_function = BuildFunctionDecl(global_ctor_id);
+    auto llvm_function = BuildFunctionDecl(global_ctor_id);
     functions_.Set(global_ctor_id, llvm_function);
     const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
     BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
                       *this, global_ctor);
-    llvm::appendToGlobalCtors(llvm_module(), llvm_function,
+    llvm::appendToGlobalCtors(llvm_module(), llvm_function->llvm_function,
                               /*Priority=*/0);
   }
 }
@@ -245,128 +245,359 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
   return global_variable;
 }
 
-auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
-                                      SemIR::SpecificId specific_id)
-    -> llvm::Function* {
+auto FileContext::GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
+                                          SemIR::SpecificId specific_id)
+    -> std::optional<FunctionInfo>& {
   // If we have already lowered a declaration of this function, just return it.
-  auto** result = GetFunctionAddr(function_id, specific_id);
-  if (!*result) {
-    *result = BuildFunctionDecl(function_id, specific_id);
+  auto& result = GetFunctionInfo(function_id, specific_id);
+  if (!result) {
+    result = BuildFunctionDecl(function_id, specific_id);
   }
-  return *result;
+  return result;
 }
 
-auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
-                                        SemIR::SpecificId specific_id)
-    -> FunctionTypeInfo {
-  const auto return_info =
-      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
+// State machine for building a FunctionTypeInfo from SemIR.
+//
+// The main difficulty this class encapsulates is that each abstraction level
+// has different expectations about how the return is reflected in the parameter
+// list.
+// - In SemIR, if the function has an initializing return form, it has a
+//   corresponding output parameter at the end of the parameter list.
+// - In LLVM IR, if the SemIR has an output parameter _and_ that parameter's
+//   type has an in-place initializing representation, we emit a corresponding
+//   `sret` output parameter (and the function's return type is void). By
+//   convention the output parameter goes at the start of the parameter list.
+// - In LLVM debug info, the list of parameter types always starts with the
+//   return type (which doubles as the type of the return parameter, if there
+//   is one).
+//
+// Furthermore, SemIR is designed to eventually support compound return forms,
+// in which case there can be multiple output parameters for different pieces of
+// the return form, but it's not yet clear how we will lower such functions.
+class FileContext::FunctionTypeInfoBuilder {
+ public:
+  // Creates a FunctionTypeInfoBuilder that uses the given FileContext, and
+  // the given specific of the function.
+  FunctionTypeInfoBuilder(FileContext* context, SemIR::SpecificId specific_id)
+      : context_(*context), specific_id_(specific_id) {}
 
-  if (!return_info.is_valid()) {
-    // The return type has not been completed, create a trivial type instead.
-    return {.type =
-                llvm::FunctionType::get(llvm::Type::getVoidTy(llvm_context()),
-                                        /*isVarArg=*/false)};
+  // Retrieves various features of `function`'s type useful for constructing the
+  // `llvm::Type` and `llvm::DISubroutineType` for the `llvm::Function`. If any
+  // part of the type can't be manifest (eg: incomplete return or parameter
+  // types), then the result is as if the type was `void()`. Should only be
+  // called once on a given builder.
+  auto Build(const SemIR::Function& function) && -> FunctionTypeInfo;
+
+ private:
+  // By convention, state transition methods return false to indicate that
+  // `Abort` was called. As a convenience, that applies even to methods that
+  // never call `Abort`, and to `Abort` itself, so that their callers can easily
+  // propagate the failure.
+
+  // Resets the builder to the fallback state `void()`. This puts the builder in
+  // a state where Finalize can be called, and no other operation should be
+  // called.
+  auto Abort() -> bool {
+    lowered_param_pattern_ids_.clear();
+    param_types_.clear();
+    param_di_types_.clear();
+    return_type_ = nullptr;
+    SetReturnByCopy(SemIR::TypeId::None);
+    return false;
   }
 
-  auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
-    if (!type_id.has_value()) {
-      return nullptr;
-    }
-    return GetType(type_id);
-  };
+  // Handles the function's return form. The argument can be None, indicating
+  // that there was no explicitly declared return form.
+  //
+  // This should be called before HandleParameter. It delegates to exactly one
+  // of SetReturnByCopy, SetReturnByReference, SetReturnInPlace, or Abort, and
+  // returns false if Abort was called.
+  auto HandleReturnForm(SemIR::InstId return_form_inst_id) -> bool;
 
-  // TODO: expose the `Call` parameter patterns in `Function`, and use them here
-  // instead of reconstructing them via the syntactic parameter lists.
-  auto implicit_param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
+  // Records that the LLVM function returns by copy, with type `return_type_id`.
+  // `return_type_id` can be `None`, which is treated as equivalent to the
+  // default return type `()`.
+  auto SetReturnByCopy(SemIR::TypeId return_type_id) -> bool {
+    CARBON_CHECK(return_type_ == nullptr);
+    CARBON_CHECK(param_di_types_.empty());
+    auto lowered_return_types = GetLoweredTypes(return_type_id);
+    return_type_ = lowered_return_types.llvm_ir_type;
+    param_di_types_.push_back(lowered_return_types.llvm_di_type);
+    return true;
+  }
 
-  auto* return_type = get_llvm_type(return_info.type_id);
+  // Records that the LLVM function returns by reference, with type
+  // `return_type_id`.
+  auto SetReturnByReference(SemIR::TypeId /*return_type_id*/) -> bool {
+    return_type_ =
+        llvm::PointerType::get(context_.llvm_context(), /*AddressSpace=*/0);
+    // TODO: replace this with a reference type.
+    param_di_types_.push_back(
+        context_.context().di_builder().createPointerType(nullptr, 8));
+    return true;
+  }
 
-  llvm::SmallVector<llvm::Type*> param_types;
-  // Compute the return type to use for the LLVM function. If the initializing
-  // representation doesn't produce a value, set the return type to void.
+  // Records that the LLVM function returns in place, with type
+  // `return_type_id`.
+  auto SetReturnInPlace(SemIR::TypeId return_type_id) -> bool {
+    return_type_ = llvm::Type::getVoidTy(context_.llvm_context());
+    sret_type_ = context_.GetType(return_type_id);
+    // We don't add to param_di_types_ because that will be handled by the
+    // loop over the SemIR parameters.
+    return true;
+  }
+
+  // Handles the given `Call` parameter, which must be a *ParamPattern inst.
+  // This should be called on parameter patterns in the order that they should
+  // appear in the LLVM IR parameter list, so in particular it should be called
+  // on the `OutParamPattern` (if any) first. It should be called on all `Call`
+  // parameters; it will determine which parameters belong in the LLVM IR
+  // parameter list.
+  //
+  // This delegates to exactly one of AddLoweredParam, IgnoreParam, or Abort,
+  // and returns false if Abort was called.
+  auto HandleParameter(SemIR::InstId param_pattern_id) -> bool;
+
+  // Records that the given parameter pattern is lowered to the given
+  // IR and DI types.
+  auto AddLoweredParam(SemIR::InstId param_pattern_id, LoweredTypes param_types)
+      -> bool {
+    lowered_param_pattern_ids_.push_back(param_pattern_id);
+    param_types_.push_back(param_types.llvm_ir_type);
+    param_di_types_.push_back(param_types.llvm_di_type);
+    return true;
+  }
+
+  // Records that the given parameter pattern is not lowered to an LLVM
+  // parameter.
+  auto IgnoreParam(SemIR::InstId param_pattern_id) -> bool {
+    unused_param_pattern_ids_.push_back(param_pattern_id);
+    return true;
+  }
+
+  // Builds and returns a FunctionTypeInfo from the accumulated information.
+  auto Finalize() -> FunctionTypeInfo;
+
+  // Returns LLVM IR and DI types for the given SemIR type. This is not a state
+  // transition. It mostly delegates to context_.GetTypeAndDIType, but treats
+  // TypeId::None as equivalent to the unit type, and uses an untyped pointer as
+  // a placeholder DI type if context_ doesn't provide one.
+  auto GetLoweredTypes(SemIR::TypeId type_id) -> LoweredTypes;
+
+  FileContext& context_;
+  const SemIR::SpecificId specific_id_;
+
+  // The types of the parameters in the LLVM IR function. Each one corresponds
+  // to a SemIR `Call` parameter, but some `Call` parameters may be omitted
+  // (e.g. if they are stateless) or reordered (e.g. the return parameter, if
+  // any, always goes first).
+  llvm::SmallVector<llvm::Type*> param_types_;
+
+  // The LLLVM DI representation of the parameter list. As required by LLVM DI
+  // convention, this starts with the function's return type, and ends with the
+  // DI representations of param_types_ (in the same order). Note that those
+  // two ranges may overlap: if the first element of param_types_ represents
+  // a return parameter, the first element of param_di_types_ corresponds to it
+  // while also representing the return type.
+  llvm::SmallVector<llvm::Metadata*> param_di_types_;
+
+  // The SemIR function's `Call` param patterns that correspond to param_types_,
+  // in the same order.
+  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids_;
+
+  // Any `Call` param patterns that aren't present in
+  // reordered_param_pattern_ids_.
+  llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids_;
+
+  // The `index` member of the SemIR function's return parameter, or -1 if it
+  // has no return parameter. Note that even if the SemIR function has a return
+  // parameter, the LLVM IR function might not.
+  int semir_return_param_index_ = -1;
+
+  // The LLVM function's return type.
+  llvm::Type* return_type_ = nullptr;
+
+  // If not null, the LLVM function's first parameter should have a `sret`
+  // attribute with this type.
+  llvm::Type* sret_type_ = nullptr;
+};
+
+auto FileContext::FunctionTypeInfoBuilder::Build(
+    const SemIR::Function& function) && -> FunctionTypeInfo {
   // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
   // return a value.
-  llvm::Type* function_return_type =
-      (return_info.is_valid() &&
-       return_info.init_repr.kind == SemIR::InitRepr::ByCopy)
-          ? return_type
-          : llvm::Type::getVoidTy(llvm_context());
 
-  // TODO: Consider either storing `param_inst_ids` somewhere so that we can
-  // reuse it from `BuildFunctionDefinition` and when building calls, or factor
-  // out a mechanism to compute the mapping between parameters and arguments on
-  // demand.
-  llvm::SmallVector<SemIR::InstId> param_inst_ids;
-  auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
-                         implicit_param_patterns.size() + param_patterns.size();
-  param_types.reserve(max_llvm_params);
-  param_inst_ids.reserve(max_llvm_params);
-  auto return_param_id = SemIR::InstId::None;
-  if (return_info.has_return_slot()) {
-    param_types.push_back(
-        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
-    auto return_patterns =
-        sem_ir_->inst_blocks().Get(function.return_patterns_id);
-    CARBON_CHECK(return_patterns.size() == 1,
-                 "TODO: implement support for multiple return params");
-    return_param_id = return_patterns[0];
-    param_inst_ids.push_back(return_param_id);
+  auto call_param_pattern_ids =
+      context_.sem_ir().inst_blocks().Get(function.call_param_patterns_id);
+  lowered_param_pattern_ids_.reserve(call_param_pattern_ids.size());
+  param_types_.reserve(call_param_pattern_ids.size());
+  param_di_types_.reserve(call_param_pattern_ids.size());
+
+  if (!HandleReturnForm(function.return_form_inst_id)) {
+    return Finalize();
   }
-  for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
-    // TODO: Handle a general pattern here, rather than assuming that each
-    // parameter pattern contains at most one binding.
-    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
-        sem_ir(), param_pattern_id);
-    if (!param_pattern_info) {
-      continue;
-    }
-    // TODO: Use a more general mechanism to determine if the binding is a
-    // reference binding.
-    if (param_pattern_info->inst.kind == SemIR::RefParamPattern::Kind ||
-        param_pattern_info->inst.kind == SemIR::VarParamPattern::Kind) {
-      param_types.push_back(
-          llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
-      param_inst_ids.push_back(param_pattern_id);
-      continue;
-    }
-    auto param_type_id = ExtractScrutineeType(
-        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
-                                                 param_pattern_info->inst_id));
-    CARBON_CHECK(
-        !param_type_id.AsConstantId().is_symbolic(),
-        "Found symbolic type id after resolution when lowering type {0}.",
-        param_pattern_info->inst.type_id);
-    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
-            value_rep.kind) {
-      case SemIR::ValueRepr::Unknown:
-        // This parameter type is incomplete. Fallback to describing the
-        // function type as `void()`.
-        return {.type = llvm::FunctionType::get(
-                    llvm::Type::getVoidTy(llvm_context()),
-                    /*isVarArg=*/false)};
-      case SemIR::ValueRepr::Dependent:
-        CARBON_FATAL("Lowering function with dependent parameter type");
-      case SemIR::ValueRepr::None:
-        break;
-      case SemIR::ValueRepr::Copy:
-      case SemIR::ValueRepr::Custom:
-      case SemIR::ValueRepr::Pointer:
-        auto* param_types_to_add = get_llvm_type(value_rep.type_id);
-        param_types.push_back(param_types_to_add);
-        param_inst_ids.push_back(param_pattern_id);
-        break;
+  if (semir_return_param_index_ >= 0) {
+    CARBON_CHECK(semir_return_param_index_ ==
+                     static_cast<int>(call_param_pattern_ids.size()) - 1,
+                 "Unexpected parameter order");
+    // Handle the return parameter first, because it goes first in the LLVM
+    // convention. We remove it from call_param_pattern_ids so we don't revisit
+    // it in the subsequent loop.
+    if (!HandleParameter(call_param_pattern_ids.consume_back())) {
+      return Finalize();
     }
   }
-  return {.type = llvm::FunctionType::get(function_return_type, param_types,
+  for (auto param_pattern_id : call_param_pattern_ids) {
+    if (!HandleParameter(param_pattern_id)) {
+      return Finalize();
+    }
+  }
+
+  return Finalize();
+}
+
+auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
+    SemIR::InstId return_form_inst_id) -> bool {
+  if (!return_form_inst_id.has_value()) {
+    return SetReturnByCopy(SemIR::TypeId::None);
+  }
+
+  auto return_form_const_id = SemIR::GetConstantValueInSpecific(
+      context_.sem_ir(), specific_id_, return_form_inst_id);
+  auto return_form_inst = context_.sem_ir().insts().Get(
+      context_.sem_ir().constant_values().GetInstId(return_form_const_id));
+  CARBON_KIND_SWITCH(return_form_inst) {
+    case CARBON_KIND(SemIR::InitForm init_form): {
+      CARBON_CHECK(
+          std::exchange(semir_return_param_index_, init_form.index.index) == -1,
+          "TODO: Generalize this to support compound return forms");
+      auto return_type_id =
+          context_.sem_ir().types().GetTypeIdForTypeConstantId(
+              SemIR::GetConstantValueInSpecific(
+                  context_.sem_ir(), specific_id_,
+                  init_form.type_component_inst_id));
+      switch (
+          SemIR::InitRepr::ForType(context_.sem_ir(), return_type_id).kind) {
+        case SemIR::InitRepr::InPlace: {
+          return SetReturnInPlace(return_type_id);
+        }
+        case SemIR::InitRepr::ByCopy: {
+          return SetReturnByCopy(return_type_id);
+        }
+        case SemIR::InitRepr::None:
+          return SetReturnByCopy(SemIR::TypeId::None);
+        case SemIR::InitRepr::Dependent:
+        case SemIR::InitRepr::Incomplete:
+        case SemIR::InitRepr::Abstract:
+          return Abort();
+      }
+    }
+    case CARBON_KIND(SemIR::RefForm ref_form): {
+      auto return_type_id =
+          context_.sem_ir().types().GetTypeIdForTypeConstantId(
+              SemIR::GetConstantValueInSpecific(
+                  context_.sem_ir(), specific_id_,
+                  ref_form.type_component_inst_id));
+      return SetReturnByReference(return_type_id);
+    }
+    default:
+      CARBON_FATAL("Unexpected inst kind: {0}", return_form_inst);
+  }
+}
+
+auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
+    SemIR::InstId param_pattern_id) -> bool {
+  auto param_pattern = context_.sem_ir().insts().Get(param_pattern_id);
+  auto param_type_id = ExtractScrutineeType(
+      context_.sem_ir(),
+      SemIR::GetTypeOfInstInSpecific(context_.sem_ir(), specific_id_,
+                                     param_pattern_id));
+
+  // Returns the appropriate LoweredTypes for reference-like parameters.
+  auto ref_lowered_types = [&]() -> LoweredTypes {
+    return {.llvm_ir_type = llvm::PointerType::get(context_.llvm_context(),
+                                                   /*AddressSpace=*/0),
+            // TODO: replace this with a reference type.
+            .llvm_di_type = GetLoweredTypes(param_type_id).llvm_di_type};
+  };
+
+  CARBON_CHECK(
+      !param_type_id.AsConstantId().is_symbolic(),
+      "Found symbolic type id after resolution when lowering type {0}.",
+      param_pattern.type_id());
+  CARBON_KIND_SWITCH(param_pattern) {
+    case SemIR::RefParamPattern::Kind:
+    case SemIR::VarParamPattern::Kind: {
+      return AddLoweredParam(param_pattern_id, ref_lowered_types());
+    }
+    case SemIR::OutParamPattern::Kind: {
+      switch (SemIR::InitRepr::ForType(context_.sem_ir(), param_type_id).kind) {
+        case SemIR::InitRepr::InPlace:
+          return AddLoweredParam(param_pattern_id, ref_lowered_types());
+        case SemIR::InitRepr::ByCopy:
+        case SemIR::InitRepr::None:
+          return IgnoreParam(param_pattern_id);
+        case SemIR::InitRepr::Dependent:
+        case SemIR::InitRepr::Incomplete:
+        case SemIR::InitRepr::Abstract:
+          return Abort();
+      }
+    }
+    case SemIR::ValueParamPattern::Kind: {
+      switch (auto value_rep =
+                  SemIR::ValueRepr::ForType(context_.sem_ir(), param_type_id);
+              value_rep.kind) {
+        case SemIR::ValueRepr::Unknown:
+          return Abort();
+        case SemIR::ValueRepr::Dependent:
+          CARBON_FATAL("Lowering function parameter with dependent type: {0}",
+                       param_pattern);
+        case SemIR::ValueRepr::None:
+          return IgnoreParam(param_pattern_id);
+        case SemIR::ValueRepr::Copy:
+        case SemIR::ValueRepr::Custom:
+        case SemIR::ValueRepr::Pointer: {
+          if (value_rep.type_id.has_value()) {
+            return AddLoweredParam(param_pattern_id,
+                                   GetLoweredTypes(value_rep.type_id));
+          } else {
+            return IgnoreParam(param_pattern_id);
+          }
+        }
+      }
+    }
+    default:
+      CARBON_FATAL("Unexpected inst kind: {0}", param_pattern);
+  }
+}
+
+auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
+  CARBON_CHECK(!param_di_types_.empty());
+  auto& di_builder = context_.context().di_builder();
+  return {.type = llvm::FunctionType::get(return_type_, param_types_,
                                           /*isVarArg=*/false),
-          .param_inst_ids = std::move(param_inst_ids),
-          .return_type = return_type,
-          .return_param_id = return_param_id};
+          .di_type = di_builder.createSubroutineType(
+              di_builder.getOrCreateTypeArray(param_di_types_),
+              llvm::DINode::FlagZero),
+          .lowered_param_pattern_ids = std::move(lowered_param_pattern_ids_),
+          .unused_param_pattern_ids = std::move(unused_param_pattern_ids_),
+          .sret_type = sret_type_};
+}
+
+auto FileContext::FunctionTypeInfoBuilder::GetLoweredTypes(
+    SemIR::TypeId type_id) -> LoweredTypes {
+  if (!type_id.has_value()) {
+    return {.llvm_ir_type = llvm::Type::getVoidTy(context_.llvm_context()),
+            .llvm_di_type = nullptr};
+  }
+  auto result = context_.GetTypeAndDIType(type_id);
+  if (result.llvm_di_type == nullptr) {
+    // TODO: figure out what type should go here, or ensure this doesn't
+    // happen.
+    result.llvm_di_type =
+        context_.context().di_builder().createPointerType(nullptr, 8);
+  }
+  return result;
 }
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
@@ -408,18 +639,18 @@ auto FileContext::HandleReferencedSpecificFunction(
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id)
-    -> llvm::Function* {
+    -> std::optional<FunctionInfo> {
   const auto& function = sem_ir().functions().Get(function_id);
 
   // Don't lower generic functions. Note that associated functions in interfaces
   // have `Self` in scope, so are implicitly generic functions.
   if (function.generic_id.has_value() && !specific_id.has_value()) {
-    return nullptr;
+    return std::nullopt;
   }
 
   // Don't lower builtins.
   if (function.builtin_function_kind() != SemIR::BuiltinFunctionKind::None) {
-    return nullptr;
+    return std::nullopt;
   }
 
   // Don't lower C++ functions that use a thunk. We will never reference them
@@ -427,13 +658,14 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // corresponding C++ function anyway.
   if (function.special_function_kind ==
       SemIR::Function::SpecialFunctionKind::HasCppThunk) {
-    return nullptr;
+    return std::nullopt;
   }
 
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
-  auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
+  auto function_type_info =
+      FunctionTypeInfoBuilder(this, specific_id).Build(function);
 
   // TODO: For an imported inline function, consider generating an
   // `available_externally` definition.
@@ -456,7 +688,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     // diagnosed by check if detected, but it's not clear that check will always
     // be able to see this problem. In theory, name collisions could also occur
     // due to fingerprint collision.
-    return existing;
+    return {{.type = function_type_info.type,
+             .di_type = function_type_info.di_type,
+             .lowered_param_pattern_ids =
+                 std::move(function_type_info.lowered_param_pattern_ids),
+             .unused_param_pattern_ids =
+                 std::move(function_type_info.unused_param_pattern_ids),
+             .llvm_function = existing}};
   }
 
   // If this is a C++ function, tell Clang that we referenced it.
@@ -484,20 +722,25 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                "Mangled name collision: {0}", mangled_name);
 
   // Set up parameters and the return slot.
-  for (auto [inst_id, arg] : llvm::zip_equal(function_type_info.param_inst_ids,
-                                             llvm_function->args())) {
-    auto name_id = SemIR::NameId::None;
-    if (inst_id == function_type_info.return_param_id) {
-      name_id = SemIR::NameId::ReturnSlot;
-      arg.addAttr(llvm::Attribute::getWithStructRetType(
-          llvm_context(), function_type_info.return_type));
-    } else {
-      name_id = SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id);
-    }
-    arg.setName(sem_ir().names().GetIRBaseName(name_id));
+  for (auto [inst_id, arg] :
+       llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
+                       llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(
+        SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
+  }
+  if (function_type_info.sret_type != nullptr) {
+    auto& return_arg = *llvm_function->args().begin();
+    return_arg.addAttr(llvm::Attribute::getWithStructRetType(
+        llvm_context(), function_type_info.sret_type));
   }
 
-  return llvm_function;
+  return {{.type = function_type_info.type,
+           .di_type = function_type_info.di_type,
+           .lowered_param_pattern_ids =
+               std::move(function_type_info.lowered_param_pattern_ids),
+           .unused_param_pattern_ids =
+               std::move(function_type_info.unused_param_pattern_ids),
+           .llvm_function = llvm_function}};
 }
 
 // Find the file and function ID describing the definition of a function.
@@ -576,8 +819,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // instead of our context.
   const auto& definition_ir = definition_context.sem_ir();
 
-  auto* llvm_function = GetFunction(function_id, specific_id);
-  CARBON_CHECK(llvm_function,
+  auto function_info = GetFunctionInfo(function_id, specific_id);
+  CARBON_CHECK(function_info && function_info->llvm_function,
                "Attempting to define function that was not declared");
 
   const auto& body_block_ids = definition_function.body_block_ids;
@@ -619,78 +862,45 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       // TODO: Should we generate an InlineHint for some functions? Perhaps for
       // those defined in the API file?
     }
-    llvm_function->addFnAttrs(attr_builder);
+    function_info->llvm_function->addFnAttrs(attr_builder);
   }
 
-  auto* subprogram =
-      BuildDISubprogram(declaration_function, specific_id, llvm_function);
+  auto* subprogram = BuildDISubprogram(declaration_function, *function_info);
   FunctionContext function_lowering(
-      definition_context, llvm_function, *this, specific_id,
+      definition_context, function_info->llvm_function, *this, specific_id,
       coalescer_.InitializeFingerprintForSpecific(specific_id), subprogram,
       vlog_stream_);
 
-  // Add parameters to locals.
-  // TODO: This duplicates the mapping between sem_ir instructions and LLVM
-  // function parameters that was already computed in BuildFunctionDecl.
-  // We should only do that once.
   auto call_param_ids = definition_ir.inst_blocks().GetOrEmpty(
       definition_function.call_params_id);
-  int param_index = 0;
 
-  // TODO: Find a way to ensure this code and the function-call lowering use
-  // the same parameter ordering.
-
-  // Lowers the given parameter. Must be called in LLVM calling convention
-  // parameter order.
-  auto lower_param = [&](SemIR::InstId param_id) {
-    // Get the value of the parameter from the function argument.
-    llvm::Value* param_value;
-
-    // The `type_id` of a parameter tracks the parameter's type.
-    CARBON_CHECK(definition_ir.insts().Is<SemIR::AnyParam>(param_id));
-    auto param_type = function_lowering.GetTypeIdOfInst(param_id);
-    if (function_lowering.GetValueRepr(param_type).repr.kind !=
-        SemIR::ValueRepr::None) {
-      param_value = llvm_function->getArg(param_index);
-      ++param_index;
-    } else {
-      param_value =
-          llvm::PoisonValue::get(function_lowering.GetType(param_type));
-    }
-    // The value of the parameter is the value of the argument.
-    function_lowering.SetLocal(param_id, param_value);
+  // Returns the AnyParam inst with the same index as param_pattern_id
+  // (which must be an AnyParamPattern).
+  auto param_for_param_pattern =
+      [&](SemIR::InstId param_pattern_id) -> SemIR::InstId {
+    auto sem_ir_index = sem_ir()
+                            .insts()
+                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
+                            .index.index;
+    return call_param_ids[sem_ir_index];
   };
 
-  // Lower to the return slot parameter.
-  auto return_patterns = sem_ir_->inst_blocks().GetOrEmpty(
-      declaration_function.return_patterns_id);
-  if (!return_patterns.empty()) {
-    CARBON_CHECK(sem_ir_->inst_blocks()
-                         .Get(declaration_function.return_patterns_id)
-                         .size() == 1,
-                 "TODO: implement support for multiple return patterns");
-    auto call_param_id = call_param_ids.consume_back();
-    // The LLVM calling convention has the return slot first rather than last.
-    // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `return_patterns.empty()` queries whether there are any output
-    // parameters at the SemIR level.
-    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
-                                           specific_id)
-            .has_return_slot()) {
-      lower_param(call_param_id);
-    } else {
-      // The return slot might still be mentioned as a destination location, but
-      // shouldn't actually be used for anything, so we can use a poison value
-      // for it.
-      function_lowering.SetLocal(call_param_id,
-                                 llvm::PoisonValue::get(llvm::PointerType::get(
-                                     llvm_context(), /*AddressSpace=*/0)));
-    }
+  // Add local variables for the parameters.
+  for (auto [llvm_index, param_pattern_id] :
+       llvm::enumerate(function_info->lowered_param_pattern_ids)) {
+    function_lowering.SetLocal(
+        param_for_param_pattern(param_pattern_id),
+        function_info->llvm_function->getArg(llvm_index));
   }
 
-  // Lower the remaining call parameters.
-  for (auto param_id : call_param_ids) {
-    lower_param(param_id);
+  // Add local variables for the SemIR parameters that aren't LLVM parameters.
+  // These shouldn't actually be used, so they're set to poison values.
+  for (auto [llvm_index, param_pattern_id] :
+       llvm::enumerate(function_info->unused_param_pattern_ids)) {
+    auto param_id = param_for_param_pattern(param_pattern_id);
+    function_lowering.SetLocal(
+        param_id,
+        llvm::PoisonValue::get(function_lowering.GetTypeOfInst(param_id)));
   }
 
   auto decl_block_id = SemIR::InstBlockId::None;
@@ -709,7 +919,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
     // Keep the LLVM blocks in lexical order.
-    llvm_block->moveBefore(llvm_function->end());
+    llvm_block->moveBefore(function_info->llvm_function->end());
     function_lowering.builder().SetInsertPoint(llvm_block);
     function_lowering.LowerBlockContents(block_id);
   };
@@ -734,10 +944,10 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   }
 
   // LLVM requires that the entry block has no predecessors.
-  auto* entry_block = &llvm_function->getEntryBlock();
+  auto* entry_block = &function_info->llvm_function->getEntryBlock();
   if (entry_block->hasNPredecessorsOrMore(1)) {
     auto* new_entry_block = llvm::BasicBlock::Create(
-        llvm_context(), "entry", llvm_function, entry_block);
+        llvm_context(), "entry", function_info->llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
 
@@ -746,77 +956,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   context().di_builder().finalizeSubprogram(subprogram);
 }
 
-auto FileContext::BuildDISubroutineType(const SemIR::Function& function,
-                                        SemIR::SpecificId specific_id)
-    -> llvm::DISubroutineType* {
-  auto implicit_param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
-
-  auto* void_pointer_debug_type =
-      context().di_builder().createPointerType(nullptr, 8);
-
-  auto get_debug_type = [&](SemIR::TypeId type_id) -> llvm::DIType* {
-    CARBON_CHECK(type_id.has_value());
-    if (auto* type = GetTypeAndDIType(type_id).llvm_di_type) {
-      return type;
-    }
-    return void_pointer_debug_type;
-  };
-
-  auto return_info =
-      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
-  if (function.return_type_inst_id.has_value()) {
-    // TODO: If int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
-    // type is tagged with indirect calling convention.
-  }
-
-  // TODO: Expose the `Call` parameter patterns in `Function`, and use them
-  // here.
-  llvm::SmallVector<llvm::Metadata*, 16> element_types;
-  element_types.push_back(return_info.type_id.has_value()
-                              ? get_debug_type(return_info.type_id)
-                              : nullptr);
-
-  for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
-    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
-        sem_ir(), param_pattern_id);
-    if (!param_pattern_info) {
-      continue;
-    }
-    if (param_pattern_info->inst.kind == SemIR::RefParamPattern::Kind) {
-      // TODO: Maybe make the parameter type a reference type.
-    }
-    auto param_type_id = ExtractScrutineeType(
-        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
-                                                 param_pattern_info->inst_id));
-    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
-            value_rep.kind) {
-      case SemIR::ValueRepr::Unknown:
-        CARBON_FATAL("Lowering function with incomplete parameter type");
-      case SemIR::ValueRepr::Dependent:
-        CARBON_FATAL("Lowering function with dependent parameter type");
-      case SemIR::ValueRepr::None:
-        break;
-      case SemIR::ValueRepr::Copy:
-      case SemIR::ValueRepr::Custom:
-      case SemIR::ValueRepr::Pointer:
-        auto* param_type = get_debug_type(value_rep.type_id);
-        element_types.push_back(param_type);
-        break;
-    }
-  }
-
-  return context().di_builder().createSubroutineType(
-      context().di_builder().getOrCreateTypeArray(element_types),
-      llvm::DINode::FlagZero);
-}
-
 auto FileContext::BuildDISubprogram(const SemIR::Function& function,
-                                    SemIR::SpecificId specific_id,
-                                    const llvm::Function* llvm_function)
+                                    const FunctionInfo& function_info)
     -> llvm::DISubprogram* {
   if (!context().di_compile_unit()) {
     return nullptr;
@@ -825,16 +966,18 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   CARBON_CHECK(name, "Unexpected special name for function: {0}",
                function.name_id);
   auto loc = GetLocForDI(function.definition_id);
-  llvm::DISubroutineType* subroutine_type =
-      BuildDISubroutineType(function, specific_id);
+  llvm::DISubroutineType* subroutine_type = function_info.di_type;
   auto* subprogram = context().di_builder().createFunction(
-      context().di_compile_unit(), *name, llvm_function->getName(),
+      context().di_compile_unit(), *name,
+      function_info.llvm_function->getName(),
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
   // Add a variable for each parameter, as that is where DWARF debug information
   // comes from.
+  // TODO: this doesn't declare a variable for the output parameter. Is that
+  // what we want?
   for (auto [argument_number, type] :
        llvm::enumerate(llvm::drop_begin(subroutine_type->getTypeArray()))) {
     context().di_builder().createParameterVariable(
@@ -1106,7 +1249,8 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(
         llvm::ConstantExpr::getSub(
             llvm::ConstantExpr::getPtrToInt(
-                GetOrCreateFunction(fn_id, fn_specific_id), i64_type),
+                GetOrCreateFunctionInfo(fn_id, fn_specific_id)->llvm_function,
+                i64_type),
             vtable_const_int),
         i32_type));
   }

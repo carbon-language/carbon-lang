@@ -52,6 +52,14 @@ for dep in deps:
             # While this is in a `third_party` directory, its code is documented
             # as part of LLVM and for use in compiler-rt.
             "third-party/siphash",
+        ) and (
+            package == "third-party"
+            and rule
+            not in (
+                # LLVM wrappers for zlib-ng and zstd, which are fine as linked.
+                "zlib",
+                "zstd",
+            )
         ):
             sys.exit(
                 "ERROR: unexpected dependency into the LLVM project: %s" % dep
@@ -79,10 +87,10 @@ for dep in deps:
     if repo in ("@@rules_cc+", "@@bazel_tools"):
         continue
 
-    # These are stubs wrapping system libraries for LLVM. They aren't
-    # distributed and so should be fine.
+    # These libraries have compatible licenses and are linked in without copying
+    # source, so fine for our binaries.
     if repo in (
-        "@@zlib+",
+        "@@zlib-ng+",
         "@@zstd+",
     ):
         continue

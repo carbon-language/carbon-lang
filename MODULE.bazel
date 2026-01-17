@@ -95,7 +95,7 @@ http_archive(
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "33.1", repo_name = "com_google_protobuf")
-bazel_dep(name = "zlib", version = "1.3.1.bcr.6", repo_name = "llvm_zlib")
+bazel_dep(name = "zlib-ng", version = "2.0.7", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
 
 ###############################################################################
@@ -104,23 +104,20 @@ bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2025-11-22.
-llvm_project_version = "20ebc7ea8209cb8f1ff3916706b6e7d8232c9f3f"
+# HEAD as of 2026-01-08.
+llvm_project_version = "21a1e6e6a70d70635c68b9aaa54f816ae36a6416"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
-    integrity = "sha256-/LVv96+cMl0CE3AxLZKzSE97CwbB1G2ic8h/Agqeafo=",
+    integrity = "sha256-ouWG2d4Cob9P6+dxCLZnV4RldSOqZp7mtwd6vd+ZK3Q=",
     patch_args = ["-p1"],
     patches = [
         "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "@carbon//bazel/llvm_project:0003_Comment_out_unloaded_proto_library_dependencies.patch",
         "@carbon//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "@carbon//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
-        "@carbon//bazel/llvm_project:0006_Add_a_filegroup_containing__all__sources_to_the_libc_build_rules.patch",
-        "@carbon//bazel/llvm_project:0007_Remove_target_compatibility_restrictions_for_float128.patch",
         "@carbon//bazel/llvm_project:0008_Add_filegroups_for_installed_compiler-rt_headers.patch",
     ],
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),

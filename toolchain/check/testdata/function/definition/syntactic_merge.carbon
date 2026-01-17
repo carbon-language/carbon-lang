@@ -814,10 +814,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> %return.param.loc8: %C {
+// CHECK:STDOUT: fn @Foo() -> out %return.param.loc8: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.param.loc8 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_25.2: init %C to %return.param.loc8 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc8_26 to %return.param.loc8
 // CHECK:STDOUT: }

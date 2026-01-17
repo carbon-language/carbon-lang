@@ -523,7 +523,7 @@ fn CallF() {
 // CHECK:STDOUT:   %impl.elem0.loc18_13: %.697 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method constants.%empty_tuple, %impl.elem0.loc18_13 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc18_13.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %C = call %bound_method(constants.%empty_tuple) to %.loc18_13.2
+// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %C to %.loc18_13.2 = call %bound_method(constants.%empty_tuple)
 // CHECK:STDOUT:   %.loc18_13.3: init %C = converted constants.%empty_tuple, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc18_13.4: ref %C = temporary %.loc18_13.2, %.loc18_13.3
 // CHECK:STDOUT:   %.loc18_13.5: %C = acquire_value %.loc18_13.4
@@ -541,10 +541,10 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @empty_tuple.type.as.ImplicitAs.impl.Convert(%self.param: %empty_tuple.type) -> %return.param: %C {
+// CHECK:STDOUT: fn @empty_tuple.type.as.ImplicitAs.impl.Convert(%self.param: %empty_tuple.type) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc11_41.2: init %C = class_init (), %return.param [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc11_41.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc11_42: init %C = converted %.loc11_41.1, %.loc11_41.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc11_42 to %return.param
 // CHECK:STDOUT: }

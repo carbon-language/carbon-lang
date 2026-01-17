@@ -255,7 +255,9 @@ class Context {
 
   // Data about a form expression.
   struct FormExpr {
-    // The inst ID of the form expression itself.
+    // The inst ID of the form expression itself. This is always a form inst,
+    // such as InitForm or RefForm.
+    // TODO: Consider creating an AnyForm inst category to refer to those insts.
     SemIR::InstId form_inst_id;
     // The inst ID of the form expression's type component.
     SemIR::TypeInstId type_component_id;

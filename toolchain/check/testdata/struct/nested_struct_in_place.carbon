@@ -79,7 +79,7 @@ fn G() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %tuple.type.189;
+// CHECK:STDOUT: fn @F() -> out %return.param: %tuple.type.189;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -90,12 +90,12 @@ fn G() {
 // CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2f9 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc18_61: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc18_74.1: ref %tuple.type.189 = struct_access %v.var, element0
-// CHECK:STDOUT:   %F.call.loc18_63: init %tuple.type.189 = call %F.ref.loc18_61() to %.loc18_74.1
+// CHECK:STDOUT:   %F.call.loc18_63: init %tuple.type.189 to %.loc18_74.1 = call %F.ref.loc18_61()
 // CHECK:STDOUT:   %F.ref.loc18_71: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc18_74.2: ref %tuple.type.189 = struct_access %v.var, element1
-// CHECK:STDOUT:   %F.call.loc18_73: init %tuple.type.189 = call %F.ref.loc18_71() to %.loc18_74.2
+// CHECK:STDOUT:   %F.call.loc18_73: init %tuple.type.189 to %.loc18_74.2 = call %F.ref.loc18_71()
 // CHECK:STDOUT:   %.loc18_74.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc18_63, %F.call.loc18_73)
-// CHECK:STDOUT:   %.loc18_74.4: init %struct_type.a.b.2f9 = struct_init (%F.call.loc18_63, %F.call.loc18_73) to %v.var
+// CHECK:STDOUT:   %.loc18_74.4: init %struct_type.a.b.2f9 to %v.var = struct_init (%F.call.loc18_63, %F.call.loc18_73)
 // CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.2f9 = converted %.loc18_74.3, %.loc18_74.4
 // CHECK:STDOUT:   assign %v.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_51: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {

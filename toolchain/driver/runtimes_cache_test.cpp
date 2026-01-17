@@ -114,7 +114,7 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   constexpr const char* HomeEnv = "HOME";
   const char* orig_xdg_cache = getenv(XdgCacheEnv);
   const char* orig_home = getenv(HomeEnv);
-  auto restore_env = llvm::make_scope_exit([&] {
+  auto restore_env = llvm::scope_exit([&] {
     for (const auto [env, orig] : {std::pair{XdgCacheEnv, orig_xdg_cache},
                                    std::pair{HomeEnv, orig_home}}) {
       if (orig) {
@@ -337,7 +337,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
   // Use a scoped join to avoid leaking the thread as some platforms don't have
   // `std::jthread`.
   auto scoped_join =
-      llvm::make_scope_exit([&build2_thread] { build2_thread.join(); });
+      llvm::scope_exit([&build2_thread] { build2_thread.join(); });
 
   // Commit the first built runtime.
   auto commit_result = std::move(builder1).Commit();
@@ -435,7 +435,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   // Use a scoped join to avoid leaking the thread as some platforms don't have
   // `std::jthread`.
   auto scoped_join =
-      llvm::make_scope_exit([&build2_thread] { build2_thread.join(); });
+      llvm::scope_exit([&build2_thread] { build2_thread.join(); });
 
   // As soon as the second thread notifies that its build is started and ready
   // to commit, also commit the first built runtime.

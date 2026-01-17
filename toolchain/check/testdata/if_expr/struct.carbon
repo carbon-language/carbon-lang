@@ -136,7 +136,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.1: init %i32 = call %bound_method.loc18_46.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_46.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_46.3: ref %i32 = struct_access %a.var, element0
-// CHECK:STDOUT:   %.loc18_46.4: init %i32 = initialize_from %.loc18_46.2 to %.loc18_46.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_46.4: init %i32 to %.loc18_46.3 = initialize_from %.loc18_46.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc18_46.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc18_46.3: <bound method> = bound_method %int_2, %impl.elem0.loc18_46.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc18_46.2: <specific function> = specific_function %impl.elem0.loc18_46.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -144,8 +144,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.2: init %i32 = call %bound_method.loc18_46.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_46.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_46.6: ref %i32 = struct_access %a.var, element1
-// CHECK:STDOUT:   %.loc18_46.7: init %i32 = initialize_from %.loc18_46.5 to %.loc18_46.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.501 = struct_init (%.loc18_46.4, %.loc18_46.7) to %a.var [concrete = constants.%struct.ed5]
+// CHECK:STDOUT:   %.loc18_46.7: init %i32 to %.loc18_46.6 = initialize_from %.loc18_46.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.501 to %a.var = struct_init (%.loc18_46.4, %.loc18_46.7) [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.501 = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign %a.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {

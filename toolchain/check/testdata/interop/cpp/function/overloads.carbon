@@ -1633,11 +1633,11 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.1(%a.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @foo.1(%a.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.2(%a.param: %i64) -> %i64;
+// CHECK:STDOUT: fn @foo.2(%a.param: %i64) -> out %return.param: %i64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.3(%a.param: %i128) -> %i128;
+// CHECK:STDOUT: fn @foo.3(%a.param: %i128) -> out %return.param: %i128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.974, %return.param: %ptr.974);
 // CHECK:STDOUT:
@@ -2074,7 +2074,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> %f64.d77;
+// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> out %return.param: %f64.d77;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.bcc, %return.param: %ptr.bcc);
 // CHECK:STDOUT:
@@ -2124,6 +2124,8 @@ fn F() {
 // CHECK:STDOUT:   %.c41: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.f05, @Float.as.Copy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2200,16 +2202,18 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc15_11.2: <specific function> = specific_function %impl.elem0.loc15_11.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_11.4: <bound method> = bound_method %.loc15_11.2, %specific_fn.loc15_11.2 [concrete = <error>]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc15_11.4(%.loc15_11.2) [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_11.4: ref %f64.d77 = temporary %.loc15_11.3, %Float.as.Copy.impl.Op.call [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc15_19.1: %ptr.bcc = addr_of %.loc15_11.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_11.4: ref %f64.d77 = temporary %.loc15_11.3, %Float.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %addr.loc15_19.1: %ptr.bcc = addr_of %.loc15_11.4
 // CHECK:STDOUT:   %.loc15_19.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc15_19.2: %ptr.bcc = addr_of %.loc15_19.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc15_19.1, %addr.loc15_19.2)
 // CHECK:STDOUT:   %.loc15_19.2: init %f64.d77 = in_place_init %foo__carbon_thunk.call, %.loc15_19.1
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc15_11.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc15_11.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> %f64.d77;
+// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> out %return.param: %f64.d77;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.bcc, %return.param: %ptr.bcc);
 // CHECK:STDOUT:
@@ -2286,7 +2290,7 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields.ref: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc7_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_21.2: ref %NoFields = temporary_storage
-// CHECK:STDOUT:   %.loc7_21.3: init %NoFields = class_init (), %.loc7_21.2 [concrete = constants.%NoFields.val]
+// CHECK:STDOUT:   %.loc7_21.3: init %NoFields to %.loc7_21.2 = class_init () [concrete = constants.%NoFields.val]
 // CHECK:STDOUT:   %.loc7_21.4: ref %NoFields = temporary %.loc7_21.2, %.loc7_21.3
 // CHECK:STDOUT:   %.loc7_21.5: ref %NoFields = converted %.loc7_21.1, %.loc7_21.4
 // CHECK:STDOUT:   %.loc7_21.6: %NoFields = acquire_value %.loc7_21.5

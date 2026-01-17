@@ -150,10 +150,10 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%Other.import_ref.751
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %A {
+// CHECK:STDOUT: fn @F() -> out %return.param: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return.param [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc8_27.2: init %A to %return.param = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   return %.loc8_28 to %return.param
 // CHECK:STDOUT: }
@@ -223,7 +223,7 @@ fn Run() {
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
-// CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
+// CHECK:STDOUT:   %F.call.loc7: init %A to %.loc7_11.1 = call %F.ref.loc7()
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.272 = ref_binding_pattern a [concrete]
@@ -240,7 +240,7 @@ fn Run() {
 // CHECK:STDOUT:   %Other.ref.loc13: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc13: ref %A = splice_block %a.ref {}
-// CHECK:STDOUT:   %F.call.loc13: init %A = call %F.ref.loc13() to %.loc13
+// CHECK:STDOUT:   %F.call.loc13: init %A to %.loc13 = call %F.ref.loc13()
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13
 // CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%a.var)

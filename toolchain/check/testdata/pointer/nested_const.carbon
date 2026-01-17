@@ -99,7 +99,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: %const.fa2) -> %const.20a {
+// CHECK:STDOUT: fn @F(%p.param: %const.fa2) -> out %return.param: %const.20a {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.fa2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_11.1: ref %const.58f = deref %p.ref

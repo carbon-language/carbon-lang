@@ -757,7 +757,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: generic fn @T.as.I.impl.C(@T.as.I.impl.f7b5a3.2.%T.loc15_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -773,7 +773,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %T.as.I.impl.C: @T.as.I.impl.D.%T.as.I.impl.C.type (%T.as.I.impl.C.type) = struct_value () [symbolic = %T.as.I.impl.C (constants.%T.as.I.impl.C)]
 // CHECK:STDOUT:   %T.as.I.impl.C.specific_fn.loc21_12.2: <specific function> = specific_function %T.as.I.impl.C, @T.as.I.impl.C(%T) [symbolic = %T.as.I.impl.C.specific_fn.loc21_12.2 (constants.%T.as.I.impl.C.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc21: @T.as.I.impl.D.%T.as.I.impl.C.type (%T.as.I.impl.C.type) = specific_constant @T.as.I.impl.f7b5a3.2.%T.as.I.impl.C.decl, @T.as.I.impl.f7b5a3.2(constants.%T) [symbolic = %T.as.I.impl.C (constants.%T.as.I.impl.C)]
 // CHECK:STDOUT:     %C.ref: @T.as.I.impl.D.%T.as.I.impl.C.type (%T.as.I.impl.C.type) = name_ref C, %.loc21 [symbolic = %T.as.I.impl.C (constants.%T.as.I.impl.C)]

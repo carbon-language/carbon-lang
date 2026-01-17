@@ -173,7 +173,7 @@ class Class {
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc11: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc11: %Class) -> out %return.param.loc11: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
@@ -187,7 +187,7 @@ class Class {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%self.param.loc15: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.G(%self.param.loc15: %Class) -> out %return.param.loc15: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self.loc15
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
@@ -251,5 +251,5 @@ class Class {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param: %Class);
+// CHECK:STDOUT: fn @Class.F(%self.param: %Class) -> <error>;
 // CHECK:STDOUT:

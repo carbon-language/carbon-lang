@@ -556,7 +556,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc8_12.3: init %U to %.loc8_12.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
 // CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
 // CHECK:STDOUT:   %.loc8_14.2: %U = acquire_value %.loc8_14.1
@@ -678,7 +678,7 @@ fn F() {
 // CHECK:STDOUT:   %N.ref.loc8: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %U.ref.loc8: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc8_12.3: init %U to %.loc8_12.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
 // CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
 // CHECK:STDOUT:   %.loc8_14.2: %U = acquire_value %.loc8_14.1
@@ -756,7 +756,7 @@ fn F() {
 // CHECK:STDOUT:   %N2.ref: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
 // CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_15.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_15.3: init %U = class_init (), %.loc8_15.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc8_15.3: init %U to %.loc8_15.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_15.4: ref %U = temporary %.loc8_15.2, %.loc8_15.3
 // CHECK:STDOUT:   %.loc8_17.1: ref %U = converted %.loc8_15.1, %.loc8_15.4
 // CHECK:STDOUT:   %.loc8_17.2: %U = acquire_value %.loc8_17.1
@@ -816,7 +816,7 @@ fn F() {
 // CHECK:STDOUT:   %O.ref.loc8: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc8_12.3: init %U to %.loc8_12.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
 // CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
 // CHECK:STDOUT:   %.loc8_14.2: %U = acquire_value %.loc8_14.1
@@ -894,7 +894,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %U.ref.loc9: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc9_12.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc9_12.3: init %U = class_init (), %.loc9_12.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc9_12.3: init %U to %.loc9_12.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc9_12.4: ref %U = temporary %.loc9_12.2, %.loc9_12.3
 // CHECK:STDOUT:   %.loc9_14.1: ref %U = converted %.loc9_12.1, %.loc9_12.4
 // CHECK:STDOUT:   %.loc9_14.2: %U = acquire_value %.loc9_14.1
@@ -954,7 +954,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %U.ref.loc8: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
+// CHECK:STDOUT:   %.loc8_12.3: init %U to %.loc8_12.2 = class_init () [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
 // CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
 // CHECK:STDOUT:   %.loc8_14.2: %U = acquire_value %.loc8_14.1
@@ -1078,7 +1078,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.1: ref %U = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.86f = addr_of %.loc8_11.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_11.2: init %U = in_place_init %foo__carbon_thunk.call, %.loc8_11.1
+// CHECK:STDOUT:   %.loc8_11.2: init %U to %.loc8_11.1 = in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %U = temporary %.loc8_11.1, %.loc8_11.2
 // CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%U.cpp_destructor
 // CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%.loc8_11.3)

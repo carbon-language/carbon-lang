@@ -143,7 +143,7 @@ fn A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_implicit_only.carbon
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ fn A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_arrow_body.carbon
 // CHECK:STDOUT:

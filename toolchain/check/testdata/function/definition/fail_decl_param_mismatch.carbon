@@ -224,7 +224,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @I.loc42();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @I.loc50() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @I.loc50() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc50_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc50_24.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -232,16 +232,16 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   return %.loc50_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @J.loc52() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @J.loc52() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @J.loc60() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @K.loc62() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @K.loc62() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @K.loc70() -> %empty_struct_type {
+// CHECK:STDOUT: fn @K.loc70() -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc70_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc70_24.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]

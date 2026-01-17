@@ -180,7 +180,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %impl.elem0.loc7_12.2: @Class.F.%.loc7 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_12.2: <specific function> = specific_impl_function %impl.elem0.loc7_12.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param: @Class.F.%T.binding.as_type (%T.binding.as_type)) -> %return.param: @Class.F.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%n.param: @Class.F.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @Class.F.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Class.F.%T.binding.as_type (%T.binding.as_type) = name_ref n, %n
 // CHECK:STDOUT:     %impl.elem0.loc7_12.1: @Class.F.%.loc7 (%.72e) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.07b)]
@@ -188,7 +188,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:     %specific_impl_fn.loc7_12.1: <specific function> = specific_impl_function %impl.elem0.loc7_12.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc7_12.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc7_12.1
 // CHECK:STDOUT:     %.loc6_17.1: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_12.2(%n.ref) to %.loc6_17.1
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) to %.loc6_17.1 = call %bound_method.loc7_12.2(%n.ref)
 // CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -210,7 +210,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.G.%.loc11_16.3 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_16.2: <specific function> = specific_impl_function %impl.elem0.loc11_16.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.G.%Class (%Class)) -> %return.param: @Class.G.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%self.param: @Class.G.%Class (%Class)) -> out %return.param: @Class.G.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
@@ -221,7 +221,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:     %specific_impl_fn.loc11_16.1: <specific function> = specific_impl_function %impl.elem0.loc11_16.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc11_16.2: <bound method> = bound_method %.loc11_16.2, %specific_impl_fn.loc11_16.1
 // CHECK:STDOUT:     %.loc10_25.1: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2) to %.loc10_25.1
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) to %.loc10_25.1 = call %bound_method.loc11_16.2(%.loc11_16.2)
 // CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -341,21 +341,21 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.431)]
 // CHECK:STDOUT:   %.loc16_32.1: form = init_form %Self.binding.as_type, call_param2 [symbolic = %.loc16_32.1 (constants.%.712)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %x.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d)) -> @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d);
+// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %x.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d)) -> out %return.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.UseSelf.impl.F(%self.param: %C, %x.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @C.as.UseSelf.impl.F(%self.param: %C, %x.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc24_38.2: init %C = class_init (), %return.param [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc24_38.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc24_39: init %C = converted %.loc24_38.1, %.loc24_38.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc24_39 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D) -> %return.param: %D {
+// CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc28_47.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc28_47.2: init %D = class_init (), %return.param [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc28_47.2: init %D to %return.param = class_init () [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc28_48: init %D = converted %.loc28_47.1, %.loc28_47.2 [concrete = constants.%D.val]
 // CHECK:STDOUT:   return %.loc28_48 to %return.param
 // CHECK:STDOUT: }

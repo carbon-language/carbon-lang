@@ -204,7 +204,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %impl.elem0.loc14_12.2: @A.as.I.impl.F.%.loc14_12.2 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_12.2: <specific function> = specific_impl_function %impl.elem0.loc14_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @A.as.I.impl.F.%A (%A.95c0c7.2)) -> @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
+// CHECK:STDOUT:   fn(%self.param: @A.as.I.impl.F.%A (%A.95c0c7.2)) -> out %return.param: @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @A.as.I.impl.F.%A (%A.95c0c7.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.8a20fa.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
@@ -237,7 +237,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @I.F(%W.loc19_16.1, %I.facet) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.898)]
 // CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %A.loc19_32.1 [symbolic = %require_complete.loc21_11 (constants.%require_complete.fd656a.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da)) -> @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4) {
+// CHECK:STDOUT:   fn(%a.param: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da)) -> out %return.param: @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -255,7 +255,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestSpecific(%a.param: %ptr.ed2) -> %ptr.c28 {
+// CHECK:STDOUT: fn @TestSpecific(%a.param: %ptr.ed2) -> out %return.param: %ptr.c28 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.ed2 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]

@@ -163,17 +163,6 @@ struct Function : public EntityWithParamsBase,
                : InstId::None;
   }
 
-  // Given the ID of an instruction from `param_patterns_id` or
-  // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
-  // the underlying binding pattern, or std::nullopt if there is no
-  // corresponding `Call` parameter.
-  // TODO: Remove this, by exposing `Call` parameter patterns instead of `Call`
-  // parameters in EntityWithParams.
-  static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
-                                               InstId param_pattern_id)
-      -> std::optional<ParamPatternInfo>;
-
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which

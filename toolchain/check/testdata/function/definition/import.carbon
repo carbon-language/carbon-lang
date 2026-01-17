@@ -222,7 +222,7 @@ fn D() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B(%b.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -233,7 +233,7 @@ fn D() {}
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c {
+// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> out %return.param: %struct_type.c {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %tuple.type.a1c = name_ref c, %c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]

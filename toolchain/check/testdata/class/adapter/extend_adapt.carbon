@@ -445,7 +445,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %SomeClassAdapter) -> %i32 {
+// CHECK:STDOUT: fn @F(%a.param: %SomeClassAdapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%.loc6 [concrete = @SomeClass.%.loc6]
@@ -521,7 +521,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   extend %struct_type.a.b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %StructAdapter) -> %i32 {
+// CHECK:STDOUT: fn @F(%a.param: %StructAdapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %StructAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [concrete = <error>]
@@ -598,7 +598,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   extend %.loc5_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %TupleAdapter) -> %i32 {
+// CHECK:STDOUT: fn @F(%a.param: %TupleAdapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %TupleAdapter = name_ref a, %a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
@@ -702,9 +702,9 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   extend %.loc7_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeInt(%N.param: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @MakeInt(%N.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %IntAdapter) -> %i32 {
+// CHECK:STDOUT: fn @F(%a.param: %IntAdapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %IntAdapter = name_ref a, %a
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]

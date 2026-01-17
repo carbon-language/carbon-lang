@@ -132,13 +132,13 @@ class A {
 // CHECK:STDOUT:   %.loc16_16.1: form = init_form %Self.binding.as_type, call_param0 [symbolic = %.loc16_16.1 (constants.%.bfa)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.b09)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @DefaultConstructible.Make.%Self.binding.as_type (%Self.binding.as_type);
+// CHECK:STDOUT:   fn() -> out %return.param: @DefaultConstructible.Make.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make() -> %return.param: %C {
+// CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc25_33.2: init %C = class_init (), %return.param [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc25_33.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc25_34: init %C = converted %.loc25_33.1, %.loc25_33.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc25_34 to %return.param
 // CHECK:STDOUT: }

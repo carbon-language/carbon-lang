@@ -113,7 +113,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:   %.loc5_37.1: form = init_form %Self.binding.as_type, call_param2 [symbolic = %.loc5_37.1 (constants.%.b66)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type), %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type)) -> @Add.Op.%Self.binding.as_type (%Self.binding.as_type);
+// CHECK:STDOUT:   fn(%self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type), %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Self) {
@@ -257,7 +257,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.Add.impl.Op(%self.param: %C, %other.param: %C) -> %C {
+// CHECK:STDOUT: fn @C.as.Add.impl.Op(%self.param: %C, %other.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_52: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple.af4]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -271,7 +271,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   return %.loc9_58.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %C, %y.param: %C) -> %C {
+// CHECK:STDOUT: fn @F(%x.param: %C, %y.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]

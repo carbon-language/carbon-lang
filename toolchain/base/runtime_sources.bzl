@@ -167,7 +167,7 @@ generate_runtime_sources_h = rule(
     },
 )
 
-def generate_runtime_sources_cc_library(name, **kwargs):
+def generate_runtime_sources_cc_library(name, deps = [], **kwargs):
     """Generates a `runtime_sources.h` header and a `cc_library` rule for it.
 
     This first generates the header file with variables describing the runtime
@@ -181,5 +181,9 @@ def generate_runtime_sources_cc_library(name, **kwargs):
     cc_library(
         name = name,
         hdrs = ["runtime_sources.h"],
+        deps = [
+            # For StringRef.h
+            "@llvm-project//llvm:Support",
+        ] + deps,
         **kwargs
     )

@@ -169,8 +169,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_26.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.3: ref %i32 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc8_26.4: init %i32 = initialize_from %.loc8_26.2 to %.loc8_26.3 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc8_26.5: init %C.d45 = class_init (%.loc8_26.4), %v.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_26.4: init %i32 to %.loc8_26.3 = initialize_from %.loc8_26.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc8_26.5: init %C.d45 to %v.var = class_init (%.loc8_26.4) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_3: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %v.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_15: type = splice_block %C [concrete = constants.%C.d45] {
