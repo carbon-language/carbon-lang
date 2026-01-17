@@ -313,7 +313,7 @@ auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
 namespace {
 // Information about the form of an expression.
 struct FormInfo {
-  enum Kind {
+  enum Kind : int8_t {
     None,
     Error,
     Primitive,
@@ -321,48 +321,35 @@ struct FormInfo {
     Struct,
   };
 
-  // TODO: Unify this with ExprCategory.
-  enum Category {
-    None,
-    Value,
-    DurableReference,
-    EphemeralReference,
-    Initializing,
-  };
-
   // The kind of the form.
   Kind kind;
-  // The category component of the form. For a composite form,
-  // if this is not `None` it represents the category component of
-  // all primitive sub-forms of this form.
-  Category category;
+  // The category component of the form. For a composite form, if this is not
+  // `Mixed` it represents the category component of all primitive sub-forms
+  // of this form.
+  SemIR::ExprCategory category;
   // The type component of the form.
   SemIR::TypeId type_id;
-  // The constant value of the form.
+  // The constant value component of the form.
   SemIR::ConstantId constant_id;
   // The location of the expression whose form this is.
   SemIR::LocId loc_id;
-  // The instruction. Will be present unless this form was created by form
-  // decomposition, in which case there is no corresponding instruction and
-  // this field is `None`.
+  // The underlying instruction, if there is one. This is only present in order
+  // to support lazy form decomposition, and should not be used for other
+  // purposes. May be `None` if this is not the form of a tuple or struct
+  // literal that can be decomposed further.
   SemIR::InstId inst_id;
 
-  // Returns whether this is a primitive form.
-  auto is_primitive() const -> bool {
-    return category == Value || category == DurableReference ||
-           category == EphemeralReference || category == Initializing;
-  }
   // Returns whether this is a compound form.
   auto is_compound() const -> bool {
-    return category == Struct || category == Tuple;
+    return kind == Tuple || kind == Struct;
   }
 };
 }  // namespace
 
 // Given a type, determines the corresponding category of compound form if there
 // is one. Otherwise returns None.
-static auto GetCompoundCategoryForType(Context& context, SemIR::TypeId type_id)
-    -> FormInfo::Category {
+static auto GetCompoundFormKindForType(Context& context, SemIR::TypeId type_id)
+    -> FormInfo::Kind {
   if (context.types().Is<SemIR::TupleType>(type_id)) {
     return FormInfo::Tuple;
   }
@@ -375,48 +362,42 @@ static auto GetCompoundCategoryForType(Context& context, SemIR::TypeId type_id)
 // Gets information about the form of an instruction.
 static auto GetFormInfo(Context& context, SemIR::InstId inst_id) -> FormInfo {
   auto inst = context.insts().Get(inst_id);
-  FormInfo::Category category;
+  SemIR::ExprCategory category =
+      SemIR::GetExprCategory(context.sem_ir(), inst_id);
+
+  FormInfo::Kind kind;
   if (inst.type_id() == SemIR::ErrorInst::TypeId) {
-    category = FormInfo::Error;
+    kind = FormInfo::Error;
   } else {
-    switch (SemIR::GetExprCategory(context.sem_ir(), inst_id)) {
+    switch (category) {
       case SemIR::ExprCategory::NotExpr:
       case SemIR::ExprCategory::Pattern: {
-        category = FormInfo::None;
+        kind = FormInfo::None;
         break;
       }
       case SemIR::ExprCategory::Error: {
-        category = FormInfo::Error;
+        kind = FormInfo::Error;
         break;
       }
-      case SemIR::ExprCategory::Value: {
-        category = FormInfo::Value;
-        break;
-      }
+      case SemIR::ExprCategory::Value:
       case SemIR::ExprCategory::DurableRef:
-      case SemIR::ExprCategory::RefTagged: {
-        category = FormInfo::DurableReference;
-        break;
-      }
-      case SemIR::ExprCategory::EphemeralRef: {
-        category = FormInfo::EphemeralReference;
-        break;
-      }
+      case SemIR::ExprCategory::RefTagged:
+      case SemIR::ExprCategory::EphemeralRef:
       case SemIR::ExprCategory::Initializing: {
-        category = FormInfo::Initializing;
+        kind = FormInfo::Primitive;
         break;
       }
       case SemIR::ExprCategory::Mixed: {
-        category = GetCompoundCategoryForType(context, inst.type_id());
-        CARBON_CHECK(category != FormInfo::None,
+        kind = GetCompoundFormKindForType(context, inst.type_id());
+        CARBON_CHECK(kind != FormInfo::None,
                      "Unexpected type {0} for mixed category",
                      context.types().GetAsInst(inst.type_id()));
         break;
       }
     }
   }
-  return {.category = category,
-          .outer_category = category,
+  return {.kind = kind,
+          .category = category,
           .type_id = inst.type_id(),
           .constant_id = context.constant_values().Get(inst_id),
           .loc_id = SemIR::LocId(inst_id),
@@ -424,16 +405,15 @@ static auto GetFormInfo(Context& context, SemIR::InstId inst_id) -> FormInfo {
 }
 
 // Given a form, attempts to perform form decomposition, converting it from a
-// primitive form into a compound form if possible. Otherwise, returns
-// the form unchanged.
+// primitive form into a compound form if possible. Otherwise, returns the form
+// unchanged.
 static auto DecomposeForm(Context& context, FormInfo form) -> FormInfo {
-  if (form.is_primitive()) {
-    auto compound_cat = GetCompoundCategoryForType(context, form.type_id);
-    if (compound_cat != FormInfo::None) {
-      // TODO: Should we replace an outer_category of Initializing with
+  if (form.kind == FormInfo::Primitive) {
+    auto compound_kind = GetCompoundFormKindForType(context, form.type_id);
+    if (compound_kind != FormInfo::None) {
+      // TODO: Should we replace a category of Initializing with
       // EphemeralReference here to model temporary materialization?
-      form.category = compound_cat;
-      form.inst_id = SemIR::InstId::None;
+      form.kind = compound_kind;
     }
   }
   return form;
@@ -451,89 +431,81 @@ static auto GetFormInfos(Context& context, SemIR::InstBlockId inst_block_id)
   return result;
 }
 
-// Given a compound form, returns the forms of the elements.
-static auto GetElementForms(Context& context, FormInfo form)
+// Given a tuple form, returns the forms of the elements.
+static auto GetTupleElementForms(Context& context, FormInfo form)
     -> llvm::SmallVector<FormInfo> {
+  // If we have a tuple literal, directly grab the forms of its elements.
+  if (auto tuple_lit_inst =
+          context.insts().TryGetAsIfValid<SemIR::TupleLiteral>(form.inst_id)) {
+    return GetFormInfos(context, tuple_lit_inst->elements_id);
+  }
+
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto tuple_type = context.types().GetAs<SemIR::TupleType>(form.type_id);
+  auto element_type_inst_ids =
+      context.inst_blocks().Get(tuple_type.type_elements_id);
+
   llvm::SmallVector<FormInfo> result;
+  result.reserve(element_type_inst_ids.size());
 
-  if (form.category == FormInfo::Tuple) {
-    // If we have a tuple literal, directly grab the forms of its elements.
-    if (auto tuple_lit_inst =
-            context.insts().TryGetAsIfValid<SemIR::TupleLiteral>(
-                form.inst_id)) {
-      return GetFormInfos(context, tuple_lit_inst->elements_id);
-    }
+  auto tuple_const_inst = context.insts().TryGetAsIfValid<SemIR::TupleValue>(
+      context.constant_values().GetInstIdIfValid(form.constant_id));
+  auto tuple_const_inst_ids =
+      tuple_const_inst
+          ? context.inst_blocks().Get(tuple_const_inst->elements_id)
+          : llvm::ArrayRef<SemIR::InstId>();
 
-    // Otherwise, decompose the type and, if available, the constant value.
-    auto tuple_type = context.types().GetAs<SemIR::TupleType>(form.type_id);
-    auto element_type_inst_ids =
-        context.inst_blocks().Get(tuple_type.type_elements_id);
+  for (auto [type_inst_id, const_inst_id] :
+       llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
+    result.push_back(
+        {.kind = FormInfo::Primitive,
+         .category = form.category,
+         .type_id = context.types().GetTypeIdForTypeInstId(*type_inst_id),
+         .constant_id = const_inst_id
+                            ? context.constant_values().Get(*const_inst_id)
+                            : SemIR::ConstantId::NotConstant,
+         .loc_id = form.loc_id,
+         .inst_id = SemIR::InstId::None});
+  }
+  return result;
+}
 
-    llvm::SmallVector<FormInfo> result;
-    result.reserve(element_type_inst_ids.size());
-
-    auto tuple_const_inst = context.insts().TryGetAsIfValid<SemIR::TupleValue>(
-        context.constant_values().GetInstIdIfValid(form.constant_id));
-    auto tuple_const_inst_ids =
-        tuple_const_inst
-            ? context.inst_blocks().Get(tuple_const_inst->elements_id)
-            : llvm::ArrayRef<SemIR::InstId>();
-
-    for (auto [type_inst_id, const_inst_id] :
-         llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
-      result.push_back(
-          {.category = form.outer_category,
-           .outer_category = form.outer_category,
-           .type_id = context.types().GetTypeIdForTypeInstId(*type_inst_id),
-           .constant_id = const_inst_id
-                              ? context.constant_values().Get(*const_inst_id)
-                              : SemIR::ConstantId::NotConstant,
-           .loc_id = form.loc_id,
-           .inst_id = SemIR::InstId::None});
-    }
-    return result;
+// Given a struct form, returns the forms of the elements.
+static auto GetStructElementForms(Context& context, FormInfo form)
+    -> llvm::SmallVector<FormInfo> {
+  // If we have a struct literal, directly grab the forms of its elements.
+  if (auto struct_lit_inst =
+          context.insts().TryGetAsIfValid<SemIR::StructLiteral>(form.inst_id)) {
+    return GetFormInfos(context, struct_lit_inst->elements_id);
   }
 
-  if (form.category == FormInfo::Struct) {
-    // If we have a struct literal, directly grab the forms of its elements.
-    if (auto struct_lit_inst =
-            context.insts().TryGetAsIfValid<SemIR::StructLiteral>(
-                form.inst_id)) {
-      return GetFormInfos(context, struct_lit_inst->elements_id);
-    }
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto struct_type = context.types().GetAs<SemIR::StructType>(form.type_id);
+  auto fields = context.struct_type_fields().Get(struct_type.fields_id);
 
-    // Otherwise, decompose the type and, if available, the constant value.
-    auto struct_type = context.types().GetAs<SemIR::StructType>(form.type_id);
-    auto fields = context.struct_type_fields().Get(struct_type.fields_id);
+  llvm::SmallVector<FormInfo> result;
+  result.reserve(fields.size());
 
-    llvm::SmallVector<FormInfo> result;
-    result.reserve(fields.size());
+  auto struct_const_inst = context.insts().TryGetAsIfValid<SemIR::StructValue>(
+      context.constant_values().GetInstIdIfValid(form.constant_id));
+  auto struct_const_inst_ids =
+      struct_const_inst
+          ? context.inst_blocks().Get(struct_const_inst->elements_id)
+          : llvm::ArrayRef<SemIR::InstId>();
 
-    auto struct_const_inst =
-        context.insts().TryGetAsIfValid<SemIR::StructValue>(
-            context.constant_values().GetInstIdIfValid(form.constant_id));
-    auto struct_const_inst_ids =
-        struct_const_inst
-            ? context.inst_blocks().Get(struct_const_inst->elements_id)
-            : llvm::ArrayRef<SemIR::InstId>();
-
-    for (auto [field, const_inst_id] :
-         llvm::zip_longest(fields, struct_const_inst_ids)) {
-      result.push_back(
-          {.category = form.outer_category,
-           .outer_category = form.outer_category,
-           .type_id =
-               context.types().GetTypeIdForTypeInstId(field->type_inst_id),
-           .constant_id = const_inst_id
-                              ? context.constant_values().Get(*const_inst_id)
-                              : SemIR::ConstantId::NotConstant,
-           .loc_id = form.loc_id,
-           .inst_id = SemIR::InstId::None});
-    }
-    return result;
+  for (auto [field, const_inst_id] :
+       llvm::zip_longest(fields, struct_const_inst_ids)) {
+    result.push_back(
+        {.kind = FormInfo::Primitive,
+         .category = form.category,
+         .type_id = context.types().GetTypeIdForTypeInstId(field->type_inst_id),
+         .constant_id = const_inst_id
+                            ? context.constant_values().Get(*const_inst_id)
+                            : SemIR::ConstantId::NotConstant,
+         .loc_id = form.loc_id,
+         .inst_id = SemIR::InstId::None});
   }
-
-  CARBON_FATAL("Cannot get elements of non-compound form");
+  return result;
 }
 
 // Invent a primitive Clang argument given the form of the corresponding Carbon
@@ -542,32 +514,35 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
     -> clang::Expr* {
   clang::ExprValueKind value_kind;
   switch (form.category) {
-    case FormInfo::None:
+    case SemIR::ExprCategory::Error:
+      // The argument error has already been diagnosed.
+      return nullptr;
+
+    case SemIR::ExprCategory::Pattern:
+      CARBON_FATAL("Passing a pattern as a function argument");
+
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::RefTagged:
+      value_kind = clang::ExprValueKind::VK_LValue;
+      break;
+
+    case SemIR::ExprCategory::EphemeralRef:
+      value_kind = clang::ExprValueKind::VK_XValue;
+      break;
+
+    case SemIR::ExprCategory::NotExpr:
       // A call using this expression as an argument won't be valid, but we
       // don't diagnose that until we convert the expression to the parameter
       // type.
       value_kind = clang::ExprValueKind::VK_PRValue;
       break;
 
-    case FormInfo::Error:
-      // The argument error has already been diagnosed.
-      return nullptr;
-
-    case FormInfo::DurableReference:
-      value_kind = clang::ExprValueKind::VK_LValue;
-      break;
-
-    case FormInfo::EphemeralReference:
-      value_kind = clang::ExprValueKind::VK_XValue;
-      break;
-
-    case FormInfo::Value:
-    case FormInfo::Initializing:
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::Initializing:
       value_kind = clang::ExprValueKind::VK_PRValue;
       break;
 
-    case FormInfo::Tuple:
-    case FormInfo::Struct:
+    case SemIR::ExprCategory::Mixed:
       CARBON_FATAL("Argument does not have primitive form");
   }
 
@@ -625,55 +600,62 @@ static auto InventCompoundClangArg(Context& context, FormInfo form,
     return init_list;
   };
 
-  if (form.category == FormInfo::Tuple) {
-    // For a tuple, form a non-designated init list containing the corresponding
-    // initializers.
-    auto num_elements = context.inst_blocks()
-                            .Get(context.types()
-                                     .GetAs<SemIR::TupleType>(form.type_id)
-                                     .type_elements_id)
-                            .size();
-    CARBON_CHECK(results.size() >= num_elements);
+  switch (form.kind) {
+    case FormInfo::None:
+    case FormInfo::Error:
+    case FormInfo::Primitive:
+      CARBON_FATAL("Not a compound form");
 
-    auto* init_list =
-        make_init_list(llvm::ArrayRef(results).take_back(num_elements));
-    results.truncate(results.size() - num_elements);
-    return init_list;
-  }
+    case FormInfo::Tuple: {
+      // For a tuple, form a non-designated init list containing the
+      // corresponding initializers.
+      auto num_elements = context.inst_blocks()
+                              .Get(context.types()
+                                       .GetAs<SemIR::TupleType>(form.type_id)
+                                       .type_elements_id)
+                              .size();
+      CARBON_CHECK(results.size() >= num_elements);
 
-  // For a struct, form a designated initializer list, converting the struct
-  // field names into designator names.
-  CARBON_CHECK(form.category == FormInfo::Struct);
-
-  auto fields = context.struct_type_fields().Get(
-      context.types().GetAs<SemIR::StructType>(form.type_id).fields_id);
-  llvm::SmallVector<clang::Expr*> field_inits;
-  field_inits.reserve(fields.size());
-
-  for (auto [field, init] :
-       llvm::zip(fields, llvm::ArrayRef(results).take_back(fields.size()))) {
-    auto loc = init->getExprLoc();
-    auto* field_name = GetClangIdentifierInfo(context, field.name_id);
-    if (!field_name) {
-      CARBON_DIAGNOSTIC(CppCallFieldNameNotSupported, Error,
-                        "field name `{0}` cannot be mapped into C++",
-                        SemIR::NameId);
-      context.emitter().Emit(form.loc_id, CppCallFieldNameNotSupported,
-                             field.name_id);
-      return nullptr;
+      auto* init_list =
+          make_init_list(llvm::ArrayRef(results).take_back(num_elements));
+      results.truncate(results.size() - num_elements);
+      return init_list;
     }
 
-    auto designator =
-        clang::DesignatedInitExpr::Designator::CreateFieldDesignator(
-            field_name, /*DotLoc=*/loc, /*FieldLoc=*/loc);
-    field_inits.push_back(clang::DesignatedInitExpr::Create(
-        context.ast_context(), designator, /*IndexExprs*/ {},
-        /*EqualOrColonLoc=*/loc, /*GNUSyntax=*/false, init));
+    case FormInfo::Struct: {
+      // For a struct, form a designated initializer list, converting the struct
+      // field names into designator names.
+      auto fields = context.struct_type_fields().Get(
+          context.types().GetAs<SemIR::StructType>(form.type_id).fields_id);
+      llvm::SmallVector<clang::Expr*> field_inits;
+      field_inits.reserve(fields.size());
+
+      for (auto [field, init] : llvm::zip(
+               fields, llvm::ArrayRef(results).take_back(fields.size()))) {
+        auto loc = init->getExprLoc();
+        auto* field_name = GetClangIdentifierInfo(context, field.name_id);
+        if (!field_name) {
+          CARBON_DIAGNOSTIC(CppCallFieldNameNotSupported, Error,
+                            "field name `{0}` cannot be mapped into C++",
+                            SemIR::NameId);
+          context.emitter().Emit(form.loc_id, CppCallFieldNameNotSupported,
+                                 field.name_id);
+          return nullptr;
+        }
+
+        auto designator =
+            clang::DesignatedInitExpr::Designator::CreateFieldDesignator(
+                field_name, /*DotLoc=*/loc, /*FieldLoc=*/loc);
+        field_inits.push_back(clang::DesignatedInitExpr::Create(
+            context.ast_context(), designator, /*IndexExprs*/ {},
+            /*EqualOrColonLoc=*/loc, /*GNUSyntax=*/false, init));
+      }
+
+      results.truncate(results.size() - fields.size());
+
+      return make_init_list(field_inits);
+    }
   }
-
-  results.truncate(results.size() - fields.size());
-
-  return make_init_list(field_inits);
 }
 
 auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
@@ -685,27 +667,50 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
   while (!worklist.empty()) {
     auto [form, phase] = worklist.pop_back_val();
 
-    if (phase == Initial) {
-      form = DecomposeForm(context, form);
-      if (form.is_compound()) {
-        worklist.push_back({form, AfterSubexpressions});
-        auto element_forms = GetElementForms(context, form);
-        for (auto element : llvm::reverse(element_forms)) {
-          worklist.push_back({element, Initial});
+    switch (phase) {
+      case Initial: {
+        form = DecomposeForm(context, form);
+        switch (form.kind) {
+          case FormInfo::Error: {
+            return nullptr;
+          }
+          case FormInfo::None:
+          case FormInfo::Primitive: {
+            auto* expr = InventPrimitiveClangArg(context, form);
+            if (!expr) {
+              return nullptr;
+            }
+            pending_results.push_back(expr);
+            break;
+          }
+          case FormInfo::Tuple: {
+            worklist.push_back({form, AfterSubexpressions});
+            auto element_forms = GetTupleElementForms(context, form);
+            for (auto element : llvm::reverse(element_forms)) {
+              worklist.push_back({element, Initial});
+            }
+            break;
+          }
+          case FormInfo::Struct: {
+            worklist.push_back({form, AfterSubexpressions});
+            auto element_forms = GetStructElementForms(context, form);
+            for (auto element : llvm::reverse(element_forms)) {
+              worklist.push_back({element, Initial});
+            }
+            break;
+          }
         }
-      } else {
-        auto* expr = InventPrimitiveClangArg(context, form);
+        break;
+      }
+
+      case AfterSubexpressions: {
+        auto* expr = InventCompoundClangArg(context, form, pending_results);
         if (!expr) {
           return nullptr;
         }
         pending_results.push_back(expr);
+        break;
       }
-    } else {
-      auto* expr = InventCompoundClangArg(context, form, pending_results);
-      if (!expr) {
-        return nullptr;
-      }
-      pending_results.push_back(expr);
     }
   }
 
