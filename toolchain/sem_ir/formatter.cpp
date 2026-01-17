@@ -1268,21 +1268,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(InPlaceInit in_place): {
-      // Omit dest_id if it will be part of the expression form.
-      //
-      // FIXME: should it always be part of the expression form? If so, fix
-      // FindReturnSlotArgForInitializer to always return it, and then
-      // FormatInstRhsDefault will do the right thing.
-      if (SemIR::InitRepr::ForType(*sem_ir_, in_place.type_id)
-              .MightBeInPlace()) {
-        FormatArgs(in_place.src_id);
-      } else {
-        FormatArgs(in_place.src_id, in_place.dest_id);
-      }
-      return;
-    }
-
     default:
       FormatInstRhsDefault(inst);
       return;

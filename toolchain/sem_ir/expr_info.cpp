@@ -137,9 +137,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
-// FIXME rename
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
-                                     bool allow_transitive) -> InstId {
+                                  bool allow_transitive) -> InstId {
   while (true) {
     Inst init_untyped = sem_ir.insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -173,10 +172,6 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(InPlaceInit init): {
-        // FIXME delete this
-        if (!InitRepr::ForType(sem_ir, init.type_id).MightBeInPlace()) {
-          return InstId::None;
-        }
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
