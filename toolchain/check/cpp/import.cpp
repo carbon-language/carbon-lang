@@ -2181,7 +2181,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     return SemIR::ScopeLookupResult::MakeError();
   }
 
-  clang::IdentifierInfo* identifier_info = GetClangIdentifierInfo(context, name_id);
+  clang::IdentifierInfo* identifier_info =
+      GetClangIdentifierInfo(context, name_id);
   if (!identifier_info) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
