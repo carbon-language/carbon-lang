@@ -313,22 +313,30 @@ auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
 namespace {
 // Information about the form of an expression.
 struct FormInfo {
+  enum Kind {
+    None,
+    Error,
+    Primitive,
+    Tuple,
+    Struct,
+  };
+
   // TODO: Unify this with ExprCategory.
   enum Category {
     None,
-    Error,
     Value,
     DurableReference,
     EphemeralReference,
     Initializing,
-    Tuple,
-    Struct,
   };
-  // The category of the form.
+
+  // The kind of the form.
+  Kind kind;
+  // The category component of the form. For a composite form,
+  // if this is not `None` it represents the category component of
+  // all primitive sub-forms of this form.
   Category category;
-  // The category prior to form decomposition.
-  Category outer_category;
-  // The type of the form.
+  // The type component of the form.
   SemIR::TypeId type_id;
   // The constant value of the form.
   SemIR::ConstantId constant_id;
@@ -416,7 +424,8 @@ static auto GetFormInfo(Context& context, SemIR::InstId inst_id) -> FormInfo {
 }
 
 // Given a form, attempts to perform form decomposition, converting it from a
-// primitive form into a compound form if possible.
+// primitive form into a compound form if possible. Otherwise, returns
+// the form unchanged.
 static auto DecomposeForm(Context& context, FormInfo form) -> FormInfo {
   if (form.is_primitive()) {
     auto compound_cat = GetCompoundCategoryForType(context, form.type_id);
