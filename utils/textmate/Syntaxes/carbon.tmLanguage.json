@@ -168,6 +168,8 @@
           "end": "(?=[;{])",
           "patterns": [
             { "include": "#reserved" },
+            { "include": "#variables" },
+            { "include": "#parameter-bindings" },
             {
               "name": "support.type.carbon",
               "match": "\\w+"
