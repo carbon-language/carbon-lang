@@ -314,8 +314,6 @@ namespace {
 // Information about the form of an expression.
 struct FormInfo {
   enum Kind : int8_t {
-    None,
-    Error,
     Primitive,
     Tuple,
     Struct,
@@ -344,9 +342,11 @@ struct FormInfo {
 };
 }  // namespace
 
-// Given a type, determines the corresponding category of compound form if there
-// is one. Otherwise returns None.
-static auto GetCompoundFormKindForType(Context& context, SemIR::TypeId type_id)
+// Given a type, determines the category of the decomposed form of an expression
+// of that type. This is Primitive if the type does not support form
+// decomposition.
+static auto GetDecomposedFormKindForType(Context& context,
+                                         SemIR::TypeId type_id)
     -> FormInfo::Kind {
   if (context.types().Is<SemIR::TupleType>(type_id)) {
     return FormInfo::Tuple;
@@ -354,46 +354,28 @@ static auto GetCompoundFormKindForType(Context& context, SemIR::TypeId type_id)
   if (context.types().Is<SemIR::StructType>(type_id)) {
     return FormInfo::Struct;
   }
-  return FormInfo::None;
+  return FormInfo::Primitive;
 }
 
 // Gets information about the form of an instruction.
 static auto GetFormInfo(Context& context, SemIR::InstId inst_id) -> FormInfo {
   auto inst = context.insts().Get(inst_id);
+
   SemIR::ExprCategory category =
       SemIR::GetExprCategory(context.sem_ir(), inst_id);
-
-  FormInfo::Kind kind;
   if (inst.type_id() == SemIR::ErrorInst::TypeId) {
-    kind = FormInfo::Error;
-  } else {
-    switch (category) {
-      case SemIR::ExprCategory::NotExpr:
-      case SemIR::ExprCategory::Pattern: {
-        kind = FormInfo::None;
-        break;
-      }
-      case SemIR::ExprCategory::Error: {
-        kind = FormInfo::Error;
-        break;
-      }
-      case SemIR::ExprCategory::Value:
-      case SemIR::ExprCategory::DurableRef:
-      case SemIR::ExprCategory::RefTagged:
-      case SemIR::ExprCategory::EphemeralRef:
-      case SemIR::ExprCategory::Initializing: {
-        kind = FormInfo::Primitive;
-        break;
-      }
-      case SemIR::ExprCategory::Mixed: {
-        kind = GetCompoundFormKindForType(context, inst.type_id());
-        CARBON_CHECK(kind != FormInfo::None,
-                     "Unexpected type {0} for mixed category",
-                     context.types().GetAsInst(inst.type_id()));
-        break;
-      }
-    }
+    // TODO: Should `GetExprCategory` do this?
+    category = SemIR::ExprCategory::Error;
   }
+
+  FormInfo::Kind kind = FormInfo::Primitive;
+  if (category == SemIR::ExprCategory::Mixed) {
+    kind = GetDecomposedFormKindForType(context, inst.type_id());
+    CARBON_CHECK(kind != FormInfo::Primitive,
+                 "Unexpected type {0} for mixed category",
+                 context.types().GetAsInst(inst.type_id()));
+  }
+
   return {.kind = kind,
           .category = category,
           .type_id = inst.type_id(),
@@ -407,12 +389,10 @@ static auto GetFormInfo(Context& context, SemIR::InstId inst_id) -> FormInfo {
 // unchanged.
 static auto DecomposeForm(Context& context, FormInfo form) -> FormInfo {
   if (form.kind == FormInfo::Primitive) {
-    auto compound_kind = GetCompoundFormKindForType(context, form.type_id);
-    if (compound_kind != FormInfo::None) {
-      // TODO: Should we replace a category of Initializing with
-      // EphemeralReference here to model temporary materialization?
-      form.kind = compound_kind;
-    }
+    form.kind = GetDecomposedFormKindForType(context, form.type_id);
+    // TODO: Should we replace a category of Initializing with
+    // EphemeralReference here to model temporary materialization if we
+    // performed decomposition?
   }
   return form;
 }
@@ -597,8 +577,6 @@ static auto InventCompoundClangArg(Context& context, FormInfo form,
   };
 
   switch (form.kind) {
-    case FormInfo::None:
-    case FormInfo::Error:
     case FormInfo::Primitive:
       CARBON_FATAL("Not a compound form");
 
@@ -667,11 +645,6 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
       case Initial: {
         form = DecomposeForm(context, form);
         switch (form.kind) {
-          case FormInfo::Error: {
-            return nullptr;
-          }
-
-          case FormInfo::None:
           case FormInfo::Primitive: {
             auto* expr = InventPrimitiveClangArg(context, form);
             if (!expr) {
