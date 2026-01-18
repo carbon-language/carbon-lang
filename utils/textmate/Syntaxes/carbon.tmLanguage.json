@@ -116,7 +116,7 @@
       "name": "meta.type.carbon",
       "patterns": [
         {
-          "comment": "Matches type declarations.",
+          "comment": "Matches type, constraint, and implementation declarations, and explicit casts.",
           "begin": "\\b((adapt|alias|class|constraint|interface|impl)|(as|impls))\\b",
           "beginCaptures": {
             "2": { "name": "storage.type.carbon" },
@@ -160,7 +160,7 @@
           ]
         },
         {
-          "comment": "Matches where clause.",
+          "comment": "Matches types in where clause.",
           "begin": "\\bwhere\\b",
           "beginCaptures": {
             "0": { "name": "keyword.control.carbon" }
