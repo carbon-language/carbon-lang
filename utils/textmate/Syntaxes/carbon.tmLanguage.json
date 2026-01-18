@@ -13,13 +13,19 @@
       "include": "#strings"
     },
     {
+      "include": "#types"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#variables"
+    },
+    {
       "include": "#operators"
     },
     {
       "include": "#special-keywords"
-    },
-    {
-      "include": "#numbers"
     },
     {
       "include": "#introducer-keywords"
@@ -43,13 +49,13 @@
       "include": "#type-literals"
     },
     {
+      "include": "#numbers"
+    },
+    {
+      "include": "#parameter-bindings"
+    },
+    {
       "include": "#customs"
-    },
-    {
-      "include": "#functions"
-    },
-    {
-      "include": "#variables"
     }
   ],
   "repository": {
@@ -101,6 +107,139 @@
           "patterns": [
             {
               "include": "#string_escapes"
+            }
+          ]
+        }
+      ]
+    },
+    "types": {
+      "name": "meta.type.carbon",
+      "patterns": [
+        {
+          "comment": "Matches type declarations.",
+          "begin": "\\b((adapt|alias|class|constraint|interface|impl)|(as|impls))\\b",
+          "beginCaptures": {
+            "2": { "name": "storage.type.carbon" },
+            "3": { "name": "keyword.control.carbon" }
+          },
+          "end": "(?=[;{])",
+          "patterns": [
+            { "include": "#reserved" },
+            { "include": "#variables" },
+            { "include": "#parameter-bindings" },
+            {
+              "name": "support.type.carbon",
+              "match": "\\w+"
+            }
+          ]
+        },
+        {
+          "comment": "Matches types in bindings.",
+          "begin": ":!?",
+          "end": "(?=([;{=]|->|in|where))",
+          "patterns": [
+            { "include": "#reserved" },
+            { "include": "#variables" },
+            { "include": "#parameter-bindings" },
+            {
+              "name": "support.type.carbon",
+              "match": "\\w+"
+            }
+          ]
+        },
+        {
+          "comment": "Matches function return types.",
+          "begin": "->",
+          "end": "(?=[;{])",
+          "patterns": [
+            { "include": "#reserved" },
+            {
+              "name": "support.type.carbon",
+              "match": "\\w+"
+            }
+          ]
+        },
+        {
+          "comment": "Matches where clause.",
+          "begin": "\\bwhere\\b",
+          "beginCaptures": {
+            "0": { "name": "keyword.control.carbon" }
+          },
+          "end": "(?=[;{])",
+          "patterns": [
+            { "include": "#reserved" },
+            {
+              "name": "support.type.carbon",
+              "match": "\\w+"
+            }
+          ]
+        },
+        {
+          "comment": "Matches chioces.",
+          "begin": "\\bchoice\\b",
+          "beginCaptures": {
+            "0": { "name": "storage.type.carbon" }
+          },
+          "end": "(?=[;}])",
+          "patterns": [
+            { "include": "#reserved" },
+            { "include": "#variables" },
+            { "include": "#parameter-bindings" },
+            {
+              "name": "support.type.carbon",
+              "match": "\\w+"
+            },
+            {
+              "comment": "Matches the choice values.",
+              "begin": "\\{",
+              "end": "(?=})",
+              "patterns": [
+                { "include": "#reserved" },
+                {
+                  "name": "variable.other.enummember.carbon",
+                  "match": "\\w+"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "functions": {
+      "name": "meta.function.carbon",
+      "patterns": [
+        {
+          "comment": "Matches function declarations.",
+          "begin": "\\bfn\\b",
+          "beginCaptures": {
+            "0": { "name": "storage.type.carbon" }
+          },
+          "end": "(?=[\\[\\(])",
+          "patterns": [
+            { "include": "#reserved" },
+            {
+              "name": "support.function.carbon",
+              "match": "\\w+"
+            }
+          ]
+        }
+      ]
+    },
+    "variables": {
+      "name": "meta.variable.carbon",
+      "patterns": [
+        {
+          "comment": "Matches variable declarations.",
+          "begin": "\\b(var|let)\\b",
+          "beginCaptures": {
+            "0": { "name": "storage.type.carbon" }
+          },
+          "end": "(?=:)",
+          "patterns": [
+            { "include": "#reserved" },
+            {
+              "name": "support.variable.carbon",
+              "match": "\\w+"
             }
           ]
         }
@@ -227,65 +366,6 @@
         }
       ]
     },
-    "customs": {
-      "patterns": [
-        {
-          "name": "support.variable.carbon",
-          "match": "\\w+(?=\\s*:)"
-        },
-        {
-          "name": "support.variable.carbon",
-          "match": "(?<=\\blet\\s)\\w+"
-        },
-        {
-          "name": "support.variable.carbon",
-          "match": "(?<=\\bvar\\s)\\w+"
-        },
-        {
-          "name": "support.function.carbon",
-          "match": "(?<=\\bfn\\s)\\w+"
-        },
-        {
-          "name": "support.type.property-name.carbon",
-          "match": "(?<=\\bimport\\s)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "match": "(?<=\\b(package|Core)\\s)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "comment": "Matches identifiers in declarations `class A`, `interface I(A, B, Ns.C)`, etc.",
-          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*[\\w\\.]*(\\([\\s\\w\\(\\),\\.]*)?)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "comment": "Matches function return types. `) -> T`",
-          "match": "(?<=\\)\\s*->\\s*)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "comment": "Matches type definitions. `x: C`, `x:! I(A, Ns.B)`, etc.",
-          "match": "(?<=\\w+:!?[\\s\\(]*[\\w\\.]*(\\([\\s\\w\\(\\),\\.]*)?)\\w+"
-        }
-      ]
-    },
-    "functions": {
-      "patterns": [
-        {
-          "name": "support.function.carbon",
-          "match": "\\b[a-zA-Z]([_0-9a-zA-Z]+)?\\("
-        }
-      ]
-    },
-    "variables": {
-      "patterns": [
-        {
-          "name": "support.variable.carbon",
-          "match": "\\b[_a-zA-Z]([_0-9a-zA-Z]+)?"
-        }
-      ]
-    },
     "numbers": {
       "comment": "Invalid formats are also highlighted, language server handles error highlighting",
       "patterns": [
@@ -301,6 +381,60 @@
           "name": "constant.numeric.carbon",
           "match": "[0-9][_0-9]*(\\.[_0-9]+([eE][-+]?[0-9][0-9]*)?)?"
         }
+      ]
+    },
+    "parameter-bindings": {
+      "patterns": [
+        {
+          "comment": "Matches parameter bindings.",
+          "match": "\\b(\\w+)\\s*(?=:)",
+          "captures": {
+            "1": { "name": "support.variable.carbon" }
+          }
+        }
+      ]
+    },
+    "customs": {
+      "comment": "For rules that should be checked last.",
+      "patterns": [
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\b(package|Core)\\s)\\w+"
+        },
+        {
+          "name": "support.type.property-name.carbon",
+          "match": "(?<=\\bimport\\s)\\w+"
+        },
+        {
+          "comment": "Matches function calls.",
+          "name": "support.function.carbon",
+          "match": "\\b\\w+\\s*\\("
+        },
+        {
+          "comment": "Matches unidentified words as variables.",
+          "name": "support.variable.carbon",
+          "match": "\\b\\w+\\b"
+        }
+      ]
+    },
+    "reserved": {
+      "comments": [
+        "For including comments, operators, keywords, literals, and language constants ",
+        "in other rules that use begin/end. This way we do not accidentally override their ",
+        "highlighting in complex rules."
+      ],
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#operators" },
+        { "include": "#special-keywords" },
+        { "include": "#introducer-keywords" },
+        { "include": "#modifier-keywords" },
+        { "include": "#misc-keywords" },
+        { "include": "#self-keywords" },
+        { "include": "#true-false" },
+        { "include": "#type-literals" },
+        { "include": "#numbers" }
       ]
     }
   }
