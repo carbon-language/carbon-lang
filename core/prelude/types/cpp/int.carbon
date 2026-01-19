@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/cpp/int";
 
+import library "prelude/copy";
 import library "prelude/operators";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
@@ -27,7 +28,13 @@ class CppCompat.ULongLong64 {
   adapt u64;
 }
 
-// TODO: Copy.
+// Copy
+
+impl CppCompat.Long32 as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
+}
+
+// TODO: Copy for ULong32, LongLong64, ULongLong64.
 
 // Conversions.
 
