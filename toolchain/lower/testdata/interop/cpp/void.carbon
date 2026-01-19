@@ -73,7 +73,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z13take_void_ptrPv(ptr)
+// CHECK:STDOUT: declare void @_Z13take_void_ptrPv(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassIntPtr.Main(ptr %a) #0 !dbg !21 {
@@ -99,7 +99,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z19take_const_void_ptrPKv(ptr)
+// CHECK:STDOUT: declare void @_Z19take_const_void_ptrPKv(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassConstIntPtrToConstVoidPtr.Main(ptr %a) #0 !dbg !33 {
@@ -120,7 +120,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.63e244d930b21b2a"(ptr %self) #0 !dbg !47 {
@@ -168,7 +168,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #2 !dbg !79 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self) #3 !dbg !79 {
 // CHECK:STDOUT:   ret ptr %self, !dbg !83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,8 +187,9 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: uselistorder ptr @_CSome.Optional.Core.d2075df181ac34c1, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -197,7 +198,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -297,7 +298,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT:   ret ptr %return_void_ptr.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare ptr @_Z15return_void_ptrv()
+// CHECK:STDOUT: declare noundef ptr @_Z15return_void_ptrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvertFromVoidPtr.Main(ptr %p) #0 !dbg !18 {
@@ -312,6 +313,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -320,7 +322,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)

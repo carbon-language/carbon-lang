@@ -1195,9 +1195,26 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 // are treated as returning a class instance.
 // TODO: Support more return types.
 static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
-                              clang::FunctionDecl* clang_decl) -> TypeExpr {
+                              clang::FunctionDecl* clang_decl)
+    -> Context::FormExpr {
+  auto make_init_form = [&](SemIR::TypeInstId type_component_inst_id) {
+    SemIR::InitForm inst = {
+        .type_id = SemIR::FormType::TypeId,
+        .type_component_inst_id = type_component_inst_id,
+        .index = context.full_pattern_stack().NextCallParamIndex()};
+    return context.constant_values().GetInstId(TryEvalInst(context, inst));
+  };
+  auto make_ref_form = [&](SemIR::TypeInstId type_component_inst_id) {
+    SemIR::RefForm inst = {.type_id = SemIR::FormType::TypeId,
+                           .type_component_inst_id = type_component_inst_id};
+    return context.constant_values().GetInstId(TryEvalInst(context, inst));
+  };
   clang::QualType orig_ret_type = clang_decl->getReturnType();
   if (!orig_ret_type->isVoidType()) {
+    bool is_reference = orig_ret_type->isReferenceType();
+    if (is_reference) {
+      orig_ret_type = orig_ret_type->getPointeeType();
+    }
     // TODO: We should eventually map reference returns to non-pointer types
     // here. We should return by `ref` for `T&` return types once `ref` return
     // is implemented.
@@ -1205,24 +1222,33 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                          orig_ret_type.getAsString()));
-      return {.inst_id = SemIR::ErrorInst::TypeInstId,
+      return {.form_inst_id = SemIR::ErrorInst::InstId,
+              .type_component_id = SemIR::ErrorInst::TypeInstId,
               .type_id = SemIR::ErrorInst::TypeId};
     }
+    Context::FormExpr result = {
+        .form_inst_id = is_reference ? make_ref_form(orig_type_inst_id)
+                                     : make_init_form(orig_type_inst_id),
+        .type_component_id = orig_type_inst_id,
+        .type_id = type_id};
 
-    return {orig_type_inst_id, type_id};
+    return result;
   }
 
   auto* ctor = dyn_cast<clang::CXXConstructorDecl>(clang_decl);
   if (!ctor) {
     // void.
-    return TypeExpr::None;
+    return {.form_inst_id = SemIR::InstId::None,
+            .type_component_id = SemIR::TypeInstId::None,
+            .type_id = SemIR::TypeId::None};
   }
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
       LookupClangDeclInstId(context, SemIR::ClangDeclKey(ctor->getParent())));
   return {
-      .inst_id = record_type_inst_id,
+      .form_inst_id = make_init_form(record_type_inst_id),
+      .type_component_id = record_type_inst_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
@@ -1240,16 +1266,17 @@ struct ReturnInfo {
 // Constructors are treated as returning a class instance.
 static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
                           clang::FunctionDecl* clang_decl) -> ReturnInfo {
-  auto [type_inst_id, type_id] = GetReturnTypeExpr(context, loc_id, clang_decl);
-  if (!type_inst_id.has_value()) {
+  auto [form_inst_id, type_inst_id, type_id] =
+      GetReturnTypeExpr(context, loc_id, clang_decl);
+  if (!form_inst_id.has_value()) {
     // void.
-    return {.return_type_inst_id = type_inst_id,
+    return {.return_type_inst_id = SemIR::TypeInstId::None,
             .return_form_inst_id = SemIR::InstId::None,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
-  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
-    return {.return_type_inst_id = type_inst_id,
-            .return_form_inst_id = SemIR::InstId::None,
+  if (form_inst_id == SemIR::ErrorInst::InstId) {
+    return {.return_type_inst_id = SemIR::ErrorInst::TypeInstId,
+            .return_form_inst_id = SemIR::ErrorInst::InstId,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
@@ -1264,30 +1291,25 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   }
   SemIR::ImportIRInstId return_type_import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), return_type_loc);
-  SemIR::InstId return_slot_pattern_id = AddPatternInst(
-      context, MakeImportedLocIdAndInst(
-                   context, return_type_import_ir_inst_id,
-                   SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
-                                             .type_inst_id = type_inst_id})));
-  auto return_index = context.full_pattern_stack().NextCallParamIndex();
-  SemIR::InstId param_pattern_id = AddPatternInst(
-      context,
-      MakeImportedLocIdAndInst(
-          context, return_type_import_ir_inst_id,
-          SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                  .subpattern_id = return_slot_pattern_id,
-                                  .index = return_index})));
-  auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
-
-  // For consistency with how C++ import handles types, we use TryEvalInst to
-  // directly create a constant rather than adding it to insts() first.
-  auto return_form_const_id = TryEvalInst(
-      context, SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
-                               .type_component_inst_id = type_inst_id,
-                               .index = return_index});
+  auto return_patterns_id = SemIR::InstBlockId::Empty;
+  if (auto init_form =
+          context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
+    SemIR::InstId return_slot_pattern_id = AddPatternInst(
+        context, MakeImportedLocIdAndInst(
+                     context, return_type_import_ir_inst_id,
+                     SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
+                                               .type_inst_id = type_inst_id})));
+    auto param_pattern_id = AddPatternInst(
+        context,
+        MakeImportedLocIdAndInst(
+            context, return_type_import_ir_inst_id,
+            SemIR::OutParamPattern({.type_id = pattern_type_id,
+                                    .subpattern_id = return_slot_pattern_id,
+                                    .index = init_form->index})));
+    return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+  }
   return {.return_type_inst_id = type_inst_id,
-          .return_form_inst_id =
-              context.constant_values().GetInstId(return_form_const_id),
+          .return_form_inst_id = form_inst_id,
           .return_patterns_id = return_patterns_id};
 }
 

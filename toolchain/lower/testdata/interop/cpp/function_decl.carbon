@@ -144,9 +144,10 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3foov()
+// CHECK:STDOUT: declare void @_Z3foov() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -155,7 +156,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -199,7 +200,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -222,24 +223,24 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @llvm.compiler.used = appending global [1 x ptr] [ptr @_Z3foov], section "llvm.metadata"
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #0 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CMyF.Main() #1 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z3foov(), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #1 comdat {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z3foov, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -248,7 +249,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -310,7 +311,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -366,7 +367,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -385,8 +386,46 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk0() #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef 1, i32 noundef 2)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z13NoReturnValueii(i32 noundef, i32 noundef) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk1(i32 noundef %a) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %a.addr = alloca i32, align 4
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef %0, i32 noundef 2)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local noundef i32 @_Z17SimpleReturnValueii.carbon_thunk0() #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef 1, i32 noundef 2)
+// CHECK:STDOUT:   ret i32 %call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare noundef i32 @_Z17SimpleReturnValueii(i32 noundef, i32 noundef) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local noundef i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 noundef %a) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %a.addr = alloca i32, align 4
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef %0, i32 noundef 2)
+// CHECK:STDOUT:   ret i32 %call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CMyF.Main() #2 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %value.var = alloca i32, align 4, !dbg !16
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk0(), !dbg !17
@@ -403,50 +442,13 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z13NoReturnValueii(i32, i32)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_Z17SimpleReturnValueii(i32, i32)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk0() #2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef 1, i32 noundef 2)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk1(i32 noundef %a) #2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !8
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !8
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef %0, i32 noundef 2)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef i32 @_Z17SimpleReturnValueii.carbon_thunk0() #2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef 1, i32 noundef 2)
-// CHECK:STDOUT:   ret i32 %call
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 noundef %a) #2 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !8
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !8
-// CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef %0, i32 noundef 2)
-// CHECK:STDOUT:   ret i32 %call
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -455,7 +457,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)

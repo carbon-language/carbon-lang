@@ -33,29 +33,29 @@ fn Call() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z1fv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: noinline nounwind optnone
-// CHECK:STDOUT: define i32 @_CCall.Main() #0 !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %g.call = call i32 @_Z1gv(), !dbg !16
-// CHECK:STDOUT:   ret i32 %g.call, !dbg !17
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef i32 @_Z1gv() #1 {
+// CHECK:STDOUT: define dso_local noundef i32 @_Z1gv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call noundef i32 @_Z1fv()
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef i32 @_Z1fv() #2 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef i32 @_Z1fv() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { noinline nounwind optnone }
-// CHECK:STDOUT: attributes #1 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: ; Function Attrs: noinline nounwind optnone
+// CHECK:STDOUT: define i32 @_CCall.Main() #2 !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %g.call = call i32 @_Z1gv(), !dbg !16
+// CHECK:STDOUT:   ret i32 %g.call, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { noinline nounwind optnone }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -64,7 +64,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)

@@ -207,6 +207,43 @@ impl CppCompat.Long32 as SubAssignWith(CppCompat.Long32) {
   fn Op[ref self: Self](other: Self) = "int.ssub_assign";
 }
 
+impl CppCompat.Long32 as MulAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.smul_assign";
+}
+
+impl CppCompat.Long32 as DivAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.sdiv_assign";
+}
+
+impl CppCompat.Long32 as ModAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.smod_assign";
+}
+
+// Compound bitwise assignments.
+
+impl CppCompat.Long32 as BitAndAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.and_assign";
+}
+
+impl CppCompat.Long32 as BitOrAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.or_assign";
+}
+
+impl CppCompat.Long32 as BitXorAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.xor_assign";
+}
+
+impl CppCompat.Long32 as LeftShiftAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.left_shift_assign";
+}
+
+impl CppCompat.Long32 as RightShiftAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
+}
+
+// TODO: ULong32, LongLong64, ULongLong64: compound assignments.
+// TODO: Long32: heterogeneous compound assignments.
+
 // Increment and decrement.
 impl CppCompat.Long32 as Dec {
   fn Op[ref self: Self]() {

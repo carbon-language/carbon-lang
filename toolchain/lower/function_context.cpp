@@ -314,15 +314,6 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   return result;
 }
 
-auto FunctionContext::GetReturnTypeInfo(InstInFile callee)
-    -> ReturnTypeInfoInFile {
-  ReturnTypeInfoInFile result = {
-      .file = callee.file,
-      .info = SemIR::ReturnTypeInfo::ForCallee(*callee.file, callee.inst_id)};
-  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
-  return result;
-}
-
 // Given a type used for an LLVM value, return the type that we use to store
 // that value in memory. This is the same type unless the type is a
 // non-multiple-of-8 integer type, which we explicitly widen to a multiple of 8

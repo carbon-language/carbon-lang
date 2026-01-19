@@ -180,7 +180,8 @@ class FileContext {
  private:
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
-  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl) -> void;
+  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+      -> llvm::Function*;
 
   // Notes that a specific function has been referenced for the first time.
   // Updates the fingerprint to include the function's type, and adds the

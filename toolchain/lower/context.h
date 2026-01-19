@@ -49,8 +49,9 @@ class Context {
       llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      llvm::StringRef module_name, int total_ir_count,
-      Lower::OptimizationLevel opt_level, llvm::raw_ostream* vlog_stream);
+      clang::CodeGenerator* code_generator, llvm::StringRef module_name,
+      int total_ir_count, Lower::OptimizationLevel opt_level,
+      llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -145,7 +146,9 @@ class Context {
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
-  std::unique_ptr<llvm::Module> llvm_module_;
+  clang::CodeGenerator* clang_code_generator_;
+  std::unique_ptr<llvm::Module> llvm_module_owner_;
+  llvm::Module* llvm_module_;
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> file_system_;
