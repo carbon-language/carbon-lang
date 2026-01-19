@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "common/raw_string_ostream.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
@@ -23,8 +24,8 @@ namespace Carbon::Check {
 
 auto AddNameToLookup(Context& context, SemIR::NameId name_id,
                      SemIR::InstId target_id, ScopeIndex scope_index) -> void {
-  if (auto existing = context.scope_stack().LookupOrAddName(name_id, target_id,
-                                                            scope_index);
+  if (auto existing = context.scope_stack().LookupOrAddName(
+          name_id, target_id, scope_index, IsCurrentPositionReachable(context));
       existing.has_value()) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
@@ -69,10 +70,11 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
     //      class C(C:! type);
     //    }
     //
-    //    In this case, the class C is not a redeclaration of its parameter, but
-    //    we find the parameter in order to diagnose a redeclaration error.
+    // In this case, the class C is not a redeclaration of its parameter, but
+    // we find the parameter in order to diagnose a redeclaration error.
     return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
-        context.scope_stack().LookupInLexicalScopesWithin(name_id, scope_index),
+        context.scope_stack().LookupInLexicalScopesWithin(
+            name_id, scope_index, /*is_reachable=*/false),
         SemIR::AccessKind::Public);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
@@ -98,7 +100,11 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   // Find the results from ancestor lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
   auto [lexical_result, non_lexical_scopes] =
-      context.scope_stack().LookupInLexicalScopes(name_id);
+      context.scope_stack().LookupInLexicalScopes(
+          name_id, IsCurrentPositionReachable(context));
+  if (lexical_result.has_value() && IsCurrentPositionReachable(context)) {
+    context.scope_stack().MarkUsed(name_id, loc_id);
+  }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :

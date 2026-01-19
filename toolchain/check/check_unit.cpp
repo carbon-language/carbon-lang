@@ -31,6 +31,7 @@
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_structure.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -594,7 +595,9 @@ auto CheckUnit::FinishRun() -> void {
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
-  context_.scope_stack().Pop();
+  context_.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context_, scope);
+  });
 
   // Finalizes the list of exports on the IR.
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,

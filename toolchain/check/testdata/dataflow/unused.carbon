@@ -80,10 +80,6 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: local_var_shadowed_not_used.carbon:[[@LINE+4]]:7: warning: binding `x` is unused [UnusedBinding]
-  // CHECK:STDERR:   var x: i32 = 0;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
   var x: i32 = 0;
   if (true) {
     // CHECK:STDERR: local_var_shadowed_not_used.carbon:[[@LINE+4]]:9: warning: binding `x` is unused [UnusedBinding]

@@ -4,13 +4,9 @@
 
 #include "toolchain/check/facet_type.h"
 
-#include <compare>
-
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/check/convert.h"
-#include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -417,8 +413,9 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
                    // `None` because there is no equivalent non-symbolic value.
                    .value_id = SemIR::InstId::None,
                }));
-  auto existing =
-      context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
+  auto existing = context.scope_stack().LookupOrAddName(
+      SemIR::NameId::PeriodSelf, inst_id, ScopeIndex::None,
+      IsCurrentPositionReachable(context));
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.has_value());
   return inst_id;

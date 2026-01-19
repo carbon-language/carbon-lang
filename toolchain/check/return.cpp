@@ -65,7 +65,7 @@ static auto NoteReturnedVar(DiagnosticBuilder& diag,
 
 auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
-                         SemIR::InstId bind_id) -> void {
+                         SemIR::InstId bind_id, SemIR::NameId name_id) -> void {
   auto& function = GetCurrentFunctionForReturn(context);
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
@@ -97,7 +97,8 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
     diag.Emit();
   }
 
-  auto existing_id = context.scope_stack().SetReturnedVarOrGetExisting(bind_id);
+  auto existing_id =
+      context.scope_stack().SetReturnedVarOrGetExisting(bind_id, name_id);
   if (existing_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "cannot declare a `returned var` in the scope of "
@@ -105,6 +106,9 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
     auto diag = context.emitter().Build(bind_id, ReturnedVarShadowed);
     NoteReturnedVar(diag, existing_id);
     diag.Emit();
+  } else {
+    // A `returned var` is always "used" by the return slot.
+    context.scope_stack().MarkUsed(name_id, SemIR::LocId(bind_id));
   }
 }
 

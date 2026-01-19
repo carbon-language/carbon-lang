@@ -29,6 +29,12 @@ class LexicalLookup {
     SemIR::InstId inst_id;
     // The scope in which the instruction was added.
     ScopeIndex scope_index;
+    // Whether the name has been used.
+    bool is_used = false;
+    // Whether the name was declared in a reachable position.
+    bool is_declared_reachable = true;
+    // The location of the first use of the name, if any.
+    SemIR::LocId first_use_loc = SemIR::LocId::None;
   };
 
   // A lookup result that has been temporarily removed from scope.
@@ -38,6 +44,12 @@ class LexicalLookup {
     uint32_t index;
     // The lookup result.
     SemIR::InstId inst_id;
+    // Whether the name has been used.
+    bool is_used;
+    // Whether the name was declared in a reachable position.
+    bool is_declared_reachable;
+    // The location of the first use of the name, if any.
+    SemIR::LocId first_use_loc;
   };
 
   explicit LexicalLookup(const SharedValueStores::IdentifierStore& identifiers)
@@ -65,14 +77,22 @@ class LexicalLookup {
                  name_id);
     CARBON_CHECK(index <= std::numeric_limits<uint32_t>::max(),
                  "Unexpectedly large index {0} for name ID", index);
+    auto result = results.pop_back_val();
     return {.index = static_cast<uint32_t>(index),
-            .inst_id = results.pop_back_val().inst_id};
+            .inst_id = result.inst_id,
+            .is_used = result.is_used,
+            .is_declared_reachable = result.is_declared_reachable,
+            .first_use_loc = result.first_use_loc};
   }
 
   // Restore a previously-suspended lookup result.
   auto Restore(SuspendedResult sus, ScopeIndex index) -> void {
     lookup_[sus.index].push_back(
-        {.inst_id = sus.inst_id, .scope_index = index});
+        {.inst_id = sus.inst_id,
+         .scope_index = index,
+         .is_used = sus.is_used,
+         .is_declared_reachable = sus.is_declared_reachable,
+         .first_use_loc = sus.first_use_loc});
   }
 
  private:

@@ -16,6 +16,7 @@
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -283,7 +284,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                              .bind_name_id;
           RegisterReturnedVar(context,
                               introducer.modifier_node_id(ModifierOrder::Decl),
-                              type_node, cast_type_id, bind_id);
+                              type_node, cast_type_id, bind_id, name_id);
         }
       }
       context.node_stack().Push(node_id, binding_pattern_id);
@@ -331,7 +332,9 @@ auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
   // Pop the `.Self` facet value name introduced by the
   // CompileTimeBindingPatternStart.
-  context.scope_stack().Pop();
+  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context, scope);
+  });
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   const DeclIntroducerState& introducer =

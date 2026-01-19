@@ -70,6 +70,7 @@ cc_library(
         "type.cpp",
         "type_completion.cpp",
         "type_structure.cpp",
+        "unused.cpp",
     ],
     hdrs = [
         "action.h",
@@ -132,6 +133,7 @@ cc_library(
         "type.h",
         "type_completion.h",
         "type_structure.h",
+        "unused.h",
     ],
     deps = [
         ":core_identifier",
@@ -207,8 +209,6 @@ cc_library(
         "check.cpp",
         "check_unit.cpp",
         "check_unit.h",
-        "dataflow_analysis.cpp",
-        "dataflow_analysis.h",
         "handle.h",
         "node_id_traversal.cpp",
         "node_id_traversal.h",

@@ -14,6 +14,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -85,10 +86,16 @@ auto DeclNameStack::FinishImplName() -> NameContext {
   return result;
 }
 
-auto DeclNameStack::PopScope() -> void {
+auto DeclNameStack::PopScope(bool check_unused) -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished,
                "Missing call to FinishName before PopScope");
-  context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index);
+  auto on_pop = [&](ScopeStack::ScopeView scope) {
+    if (check_unused) {
+      CheckUnusedBindings(*context_, scope);
+    }
+  };
+  context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index,
+                                on_pop);
   decl_name_stack_.pop_back();
 }
 
@@ -215,7 +222,9 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
                                    bool has_error = false) -> void {
   // If the qualifier has no parameters, we don't need to keep around a
   // parameter scope.
-  context.scope_stack().PopIfEmpty();
+  context.scope_stack().PopIfEmpty([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context, scope);
+  });
 
   auto self_specific_id = SemIR::SpecificId::None;
   if (generic_id.has_value()) {

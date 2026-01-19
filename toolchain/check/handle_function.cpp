@@ -9,24 +9,20 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/dataflow_analysis.h"
 #include "toolchain/check/decl_introducer_state.h"
-#include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
-#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
-#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
-#include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -631,16 +627,16 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   }
 
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-  context.decl_name_stack().PopScope();
+  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context, scope);
+  });
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
 
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
-
-  RunDataflowAnalysis(context, function_id);
 
   return true;
 }

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/unused.h"
 
 namespace Carbon::Check {
 
@@ -15,7 +16,9 @@ auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
-  context.scope_stack().Pop();
+  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context, scope);
+  });
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();
   return true;

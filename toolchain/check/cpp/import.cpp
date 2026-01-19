@@ -52,6 +52,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
@@ -1359,7 +1360,9 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
+    CheckUnusedBindings(context, scope);
+  });
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;
