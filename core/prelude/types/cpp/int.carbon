@@ -208,18 +208,15 @@ impl CppCompat.Long32 as SubAssignWith(CppCompat.Long32) {
 }
 
 // Increment and decrement.
-
 impl CppCompat.Long32 as Dec {
   fn Op[ref self: Self]() {
-    fn AsInt(n: IntLiteral()) -> CppCompat.Long32 = "int.convert_checked";
-    self -= AsInt(1);
+    self -= (1 as CppCompat.Long32);
   }
 }
 
 impl CppCompat.Long32 as Inc {
   fn Op[ref self: Self]() {
-    fn AsInt(n: IntLiteral()) -> CppCompat.Long32 = "int.convert_checked";
-    self += AsInt(1);
+    self += (1 as CppCompat.Long32);
   }
 }
 

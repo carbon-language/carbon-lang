@@ -559,8 +559,8 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.import_ref.91c: %Cpp.long_long.as.ImplicitAs.impl.Convert.type.194 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long_long.as.ImplicitAs.impl.Convert.c03]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.563 = impl_witness_table (%Core.import_ref.91c), @Cpp.long_long.as.ImplicitAs.impl.034 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.91c3: %Cpp.long_long.as.ImplicitAs.impl.Convert.type.194 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long_long.as.ImplicitAs.impl.Convert.c03]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.563 = impl_witness_table (%Core.import_ref.91c3), @Cpp.long_long.as.ImplicitAs.impl.034 [concrete]
 // CHECK:STDOUT:   %LongResult.decl: type = class_decl @LongResult [concrete = constants.%LongResult] {} {}
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.decl.139b1c.2: %PassLongLong__carbon_thunk.type.aa8bde.2 = fn_decl @PassLongLong__carbon_thunk.2 [concrete = constants.%PassLongLong__carbon_thunk.9998b6.2] {
 // CHECK:STDOUT:     <elided>
