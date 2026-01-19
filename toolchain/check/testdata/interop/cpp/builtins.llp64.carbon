@@ -234,7 +234,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn CompoundAssignmentHeterogeneousN32Long() {
+fn CompoundAssignmentHeterogeneousI32Long() {
   var a: Cpp.long = 1;
 
   // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_i32.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i32)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
@@ -250,7 +250,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn CompoundAssignmentHeterogeneousN64Long() {
+fn CompoundAssignmentHeterogeneousI64Long() {
   var a: Cpp.long = 1;
   // CHECK:STDERR: fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   a += (1 as i64);
