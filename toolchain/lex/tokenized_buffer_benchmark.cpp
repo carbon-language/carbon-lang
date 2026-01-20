@@ -141,7 +141,8 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
 
   // Build a list of StringRefs from the different types with the desired
   // distribution, then shuffle that list.
-  llvm::SmallVector<llvm::StringRef> tokens(NumTokens);
+  llvm::SmallVector<llvm::StringRef> tokens;
+  tokens.reserve(NumTokens);
 
   int num_symbols = (NumTokens / 100) * options.symbol_percent;
   int num_keywords = (NumTokens / 100) * options.keyword_percent;
@@ -154,14 +155,14 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
       Testing::SourceGen::Global().GetIdentifiers(num_identifiers);
 
   for (int i : llvm::seq(num_symbols)) {
-    tokens[i] = symbols[i % symbols.size()].fixed_spelling();
+    tokens.push_back(symbols[i % symbols.size()].fixed_spelling());
   }
   for (int i : llvm::seq(num_keywords)) {
-    tokens[num_symbols + i] = keywords[i % keywords.size()].fixed_spelling();
+    tokens.push_back(keywords[i % keywords.size()].fixed_spelling());
   }
   for (int i : llvm::seq(num_identifiers)) {
     // We always have enough identifiers, so no need to mod here.
-    tokens[num_symbols + num_keywords + i] = ids[i];
+    tokens.push_back(ids[i]);
   }
   std::shuffle(tokens.begin(), tokens.end(), absl::BitGen());
 
