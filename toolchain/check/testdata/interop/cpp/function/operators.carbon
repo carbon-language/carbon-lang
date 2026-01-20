@@ -1295,6 +1295,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c83: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %bound_method.cb9: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc45 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1809,8 +1811,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc40_14.2: type = value_of_initializer %Bool.call.loc40 [concrete = bool]
 // CHECK:STDOUT:     %.loc40_14.3: type = converted %Bool.call.loc40, %.loc40_14.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40_24.3: bool = value_of_initializer %.loc40_24.2
-// CHECK:STDOUT:   %.loc40_24.4: bool = converted %.loc40_24.2, %.loc40_24.3
+// CHECK:STDOUT:   %.loc40_24.3: ref bool = temporary %.loc40_24.1, %.loc40_24.2
+// CHECK:STDOUT:   %.loc40_24.4: bool = acquire_value %.loc40_24.3
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc40_24.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
@@ -1832,8 +1834,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc41_18.2: type = value_of_initializer %Bool.call.loc41 [concrete = bool]
 // CHECK:STDOUT:     %.loc41_18.3: type = converted %Bool.call.loc41, %.loc41_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc41_28.3: bool = value_of_initializer %.loc41_28.2
-// CHECK:STDOUT:   %.loc41_28.4: bool = converted %.loc41_28.2, %.loc41_28.3
+// CHECK:STDOUT:   %.loc41_28.3: ref bool = temporary %.loc41_28.1, %.loc41_28.2
+// CHECK:STDOUT:   %.loc41_28.4: bool = acquire_value %.loc41_28.3
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, %.loc41_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
@@ -1855,8 +1857,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc42_21.2: type = value_of_initializer %Bool.call.loc42 [concrete = bool]
 // CHECK:STDOUT:     %.loc42_21.3: type = converted %Bool.call.loc42, %.loc42_21.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc42_31.3: bool = value_of_initializer %.loc42_31.2
-// CHECK:STDOUT:   %.loc42_31.4: bool = converted %.loc42_31.2, %.loc42_31.3
+// CHECK:STDOUT:   %.loc42_31.3: ref bool = temporary %.loc42_31.1, %.loc42_31.2
+// CHECK:STDOUT:   %.loc42_31.4: bool = acquire_value %.loc42_31.3
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc42_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
@@ -1878,8 +1880,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc43_18.2: type = value_of_initializer %Bool.call.loc43 [concrete = bool]
 // CHECK:STDOUT:     %.loc43_18.3: type = converted %Bool.call.loc43, %.loc43_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc43_28.3: bool = value_of_initializer %.loc43_28.2
-// CHECK:STDOUT:   %.loc43_28.4: bool = converted %.loc43_28.2, %.loc43_28.3
+// CHECK:STDOUT:   %.loc43_28.3: ref bool = temporary %.loc43_28.1, %.loc43_28.2
+// CHECK:STDOUT:   %.loc43_28.4: bool = acquire_value %.loc43_28.3
 // CHECK:STDOUT:   %less_than: bool = value_binding less_than, %.loc43_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
@@ -1901,8 +1903,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc44_30.2: type = value_of_initializer %Bool.call.loc44 [concrete = bool]
 // CHECK:STDOUT:     %.loc44_30.3: type = converted %Bool.call.loc44, %.loc44_30.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc44_40.3: bool = value_of_initializer %.loc44_40.2
-// CHECK:STDOUT:   %.loc44_40.4: bool = converted %.loc44_40.2, %.loc44_40.3
+// CHECK:STDOUT:   %.loc44_40.3: ref bool = temporary %.loc44_40.1, %.loc44_40.2
+// CHECK:STDOUT:   %.loc44_40.4: bool = acquire_value %.loc44_40.3
 // CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, %.loc44_40.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
@@ -1924,8 +1926,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc45_27.2: type = value_of_initializer %Bool.call.loc45 [concrete = bool]
 // CHECK:STDOUT:     %.loc45_27.3: type = converted %Bool.call.loc45, %.loc45_27.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc45_37.3: bool = value_of_initializer %.loc45_37.2
-// CHECK:STDOUT:   %.loc45_37.4: bool = converted %.loc45_37.2, %.loc45_37.3
+// CHECK:STDOUT:   %.loc45_37.3: ref bool = temporary %.loc45_37.1, %.loc45_37.2
+// CHECK:STDOUT:   %.loc45_37.4: bool = acquire_value %.loc45_37.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc45_37.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %index.patt: %pattern_type.7ce = value_binding_pattern index [concrete]
@@ -1948,6 +1950,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc48_25.1: %i32 = value_of_initializer %C.cpp_operator.call
 // CHECK:STDOUT:   %.loc48_25.2: %i32 = converted %C.cpp_operator.call, %.loc48_25.1
 // CHECK:STDOUT:   %index: %i32 = value_binding index, %.loc48_25.2
+// CHECK:STDOUT:   %DestroyOp.bound.loc45: <bound method> = bound_method %.loc45_37.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc45: init %empty_tuple.type = call %DestroyOp.bound.loc45(%.loc45_37.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc44: <bound method> = bound_method %.loc44_40.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc44: init %empty_tuple.type = call %DestroyOp.bound.loc44(%.loc44_40.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc43: <bound method> = bound_method %.loc43_28.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc43: init %empty_tuple.type = call %DestroyOp.bound.loc43(%.loc43_28.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc42: <bound method> = bound_method %.loc42_31.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc42: init %empty_tuple.type = call %DestroyOp.bound.loc42(%.loc42_31.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc41: <bound method> = bound_method %.loc41_28.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc41: init %empty_tuple.type = call %DestroyOp.bound.loc41(%.loc41_28.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc40: <bound method> = bound_method %.loc40_24.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc40: init %empty_tuple.type = call %DestroyOp.bound.loc40(%.loc40_24.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc23: <bound method> = bound_method %.loc23_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc23: init %empty_tuple.type = call %C.cpp_destructor.bound.loc23(%.loc23_31.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_30.3, constants.%C.cpp_destructor
@@ -1975,7 +1989,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc45(%self.param: bool) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_calls.carbon
 // CHECK:STDOUT:
@@ -2143,6 +2159,8 @@ fn F() {
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk: %operator_Greater__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.type: type = fn_type @operator_LessEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc36 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2229,8 +2247,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc19_21.2: type = value_of_initializer %Bool.call.loc19 [concrete = bool]
 // CHECK:STDOUT:     %.loc19_21.3: type = converted %Bool.call.loc19, %.loc19_21.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_31.3: bool = value_of_initializer %.loc19_31.2
-// CHECK:STDOUT:   %.loc19_31.4: bool = converted %.loc19_31.2, %.loc19_31.3
+// CHECK:STDOUT:   %.loc19_31.3: ref bool = temporary %.loc19_31.1, %.loc19_31.2
+// CHECK:STDOUT:   %.loc19_31.4: bool = acquire_value %.loc19_31.3
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc19_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
@@ -2274,9 +2292,13 @@ fn F() {
 // CHECK:STDOUT:     %.loc36_27.2: type = value_of_initializer %Bool.call.loc36 [concrete = bool]
 // CHECK:STDOUT:     %.loc36_27.3: type = converted %Bool.call.loc36, %.loc36_27.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc36_37.3: bool = value_of_initializer %.loc36_37.2
-// CHECK:STDOUT:   %.loc36_37.4: bool = converted %.loc36_37.2, %.loc36_37.3
+// CHECK:STDOUT:   %.loc36_37.3: ref bool = temporary %.loc36_37.1, %.loc36_37.2
+// CHECK:STDOUT:   %.loc36_37.4: bool = acquire_value %.loc36_37.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc36_37.4
+// CHECK:STDOUT:   %DestroyOp.bound.loc36: <bound method> = bound_method %.loc36_37.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc36: init %empty_tuple.type = call %DestroyOp.bound.loc36(%.loc36_37.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc19: <bound method> = bound_method %.loc19_31.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc19: init %empty_tuple.type = call %DestroyOp.bound.loc19(%.loc19_31.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc16: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc16: init %empty_tuple.type = call %C.cpp_destructor.bound.loc16(%c2.var)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
@@ -2284,7 +2306,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc36(%self.param: bool) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
@@ -2303,6 +2327,8 @@ fn F() {
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk: %operator_EqualEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc16 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2384,8 +2410,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc16_14.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
 // CHECK:STDOUT:     %.loc16_14.3: type = converted %Bool.call.loc16, %.loc16_14.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_24.3: bool = value_of_initializer %.loc16_24.2
-// CHECK:STDOUT:   %.loc16_24.4: bool = converted %.loc16_24.2, %.loc16_24.3
+// CHECK:STDOUT:   %.loc16_24.3: ref bool = temporary %.loc16_24.1, %.loc16_24.2
+// CHECK:STDOUT:   %.loc16_24.4: bool = acquire_value %.loc16_24.3
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc16_24.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
@@ -2398,6 +2424,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc23_18.3: type = converted %Bool.call.loc23, %.loc23_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, <error> [concrete = <error>]
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc16_24.3, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc16_24.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc13: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc13: init %empty_tuple.type = call %C.cpp_destructor.bound.loc13(%c2.var)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc12: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
@@ -2405,7 +2433,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: bool) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_single_namespace.carbon
 // CHECK:STDOUT:

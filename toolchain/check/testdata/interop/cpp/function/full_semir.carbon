@@ -309,11 +309,15 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %foo_short__carbon_thunk.type: type = fn_type @foo_short__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_short__carbon_thunk: %foo_short__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -334,6 +338,7 @@ fn F() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %return: %ptr = value_binding r#return, %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -364,13 +369,17 @@ fn F() {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_30.3: %i16 = value_of_initializer %.loc7_30.2
-// CHECK:STDOUT:   %.loc7_30.4: %i16 = converted %.loc7_30.2, %.loc7_30.3
+// CHECK:STDOUT:   %.loc7_30.3: ref %i16 = temporary %.loc7_30.1, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.4: %i16 = acquire_value %.loc7_30.3
 // CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc7_30.4
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc7_30.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc7_30.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short() -> out %return.param: %i16;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short__carbon_thunk(%return.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
 // CHECK:STDOUT:

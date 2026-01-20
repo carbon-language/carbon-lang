@@ -1275,8 +1275,8 @@ fn F() {
 // CHECK:STDOUT:     %int_128.loc22: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc22: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_44.3: %i128 = value_of_initializer %.loc22_44.2
-// CHECK:STDOUT:   %.loc22_44.4: %i128 = converted %.loc22_44.2, %.loc22_44.3
+// CHECK:STDOUT:   %.loc22_44.3: ref %i128 = temporary %.loc22_44.1, %.loc22_44.2
+// CHECK:STDOUT:   %.loc22_44.4: %i128 = acquire_value %.loc22_44.3
 // CHECK:STDOUT:   %d: %i128 = value_binding d, %.loc22_44.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.57d = value_binding_pattern e [concrete]
@@ -1307,8 +1307,8 @@ fn F() {
 // CHECK:STDOUT:     %int_128.loc25: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc25: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc25_45.3: %i128 = value_of_initializer %.loc25_45.2
-// CHECK:STDOUT:   %.loc25_45.4: %i128 = converted %.loc25_45.2, %.loc25_45.3
+// CHECK:STDOUT:   %.loc25_45.3: ref %i128 = temporary %.loc25_45.1, %.loc25_45.2
+// CHECK:STDOUT:   %.loc25_45.4: %i128 = acquire_value %.loc25_45.3
 // CHECK:STDOUT:   %e: %i128 = value_binding e, %.loc25_45.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.57d = value_binding_pattern f [concrete]
@@ -1339,8 +1339,8 @@ fn F() {
 // CHECK:STDOUT:     %int_128.loc28: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc28: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28_45.3: %i128 = value_of_initializer %.loc28_45.2
-// CHECK:STDOUT:   %.loc28_45.4: %i128 = converted %.loc28_45.2, %.loc28_45.3
+// CHECK:STDOUT:   %.loc28_45.3: ref %i128 = temporary %.loc28_45.1, %.loc28_45.2
+// CHECK:STDOUT:   %.loc28_45.4: %i128 = acquire_value %.loc28_45.3
 // CHECK:STDOUT:   %f: %i128 = value_binding f, %.loc28_45.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: %pattern_type.57d = value_binding_pattern g [concrete]
@@ -1371,17 +1371,25 @@ fn F() {
 // CHECK:STDOUT:     %int_128.loc31: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc31: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc31_64.3: %i128 = value_of_initializer %.loc31_64.2
-// CHECK:STDOUT:   %.loc31_64.4: %i128 = converted %.loc31_64.2, %.loc31_64.3
+// CHECK:STDOUT:   %.loc31_64.3: ref %i128 = temporary %.loc31_64.1, %.loc31_64.2
+// CHECK:STDOUT:   %.loc31_64.4: %i128 = acquire_value %.loc31_64.3
 // CHECK:STDOUT:   %g: %i128 = value_binding g, %.loc31_64.4
-// CHECK:STDOUT:   %DestroyOp.bound.loc31: <bound method> = bound_method %.loc31_25.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc31: init %empty_tuple.type = call %DestroyOp.bound.loc31(%.loc31_25.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc28: <bound method> = bound_method %.loc28_25.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc28: init %empty_tuple.type = call %DestroyOp.bound.loc28(%.loc28_25.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc25: <bound method> = bound_method %.loc25_25.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc25: init %empty_tuple.type = call %DestroyOp.bound.loc25(%.loc25_25.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc22: <bound method> = bound_method %.loc22_25.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc22: init %empty_tuple.type = call %DestroyOp.bound.loc22(%.loc22_25.4)
+// CHECK:STDOUT:   %DestroyOp.bound.loc31_64: <bound method> = bound_method %.loc31_64.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc31_64: init %empty_tuple.type = call %DestroyOp.bound.loc31_64(%.loc31_64.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc31_25: <bound method> = bound_method %.loc31_25.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc31_25: init %empty_tuple.type = call %DestroyOp.bound.loc31_25(%.loc31_25.4)
+// CHECK:STDOUT:   %DestroyOp.bound.loc28_45: <bound method> = bound_method %.loc28_45.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc28_45: init %empty_tuple.type = call %DestroyOp.bound.loc28_45(%.loc28_45.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc28_25: <bound method> = bound_method %.loc28_25.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc28_25: init %empty_tuple.type = call %DestroyOp.bound.loc28_25(%.loc28_25.4)
+// CHECK:STDOUT:   %DestroyOp.bound.loc25_45: <bound method> = bound_method %.loc25_45.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc25_45: init %empty_tuple.type = call %DestroyOp.bound.loc25_45(%.loc25_45.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc25_25: <bound method> = bound_method %.loc25_25.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc25_25: init %empty_tuple.type = call %DestroyOp.bound.loc25_25(%.loc25_25.4)
+// CHECK:STDOUT:   %DestroyOp.bound.loc22_44: <bound method> = bound_method %.loc22_44.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc22_44: init %empty_tuple.type = call %DestroyOp.bound.loc22_44(%.loc22_44.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc22_25: <bound method> = bound_method %.loc22_25.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc22_25: init %empty_tuple.type = call %DestroyOp.bound.loc22_25(%.loc22_25.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1818,11 +1826,13 @@ fn F() {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_27.3: %f64.d77 = value_of_initializer %.loc7_27.2
-// CHECK:STDOUT:   %.loc7_27.4: %f64.d77 = converted %.loc7_27.2, %.loc7_27.3
+// CHECK:STDOUT:   %.loc7_27.3: ref %f64.d77 = temporary %.loc7_27.1, %.loc7_27.2
+// CHECK:STDOUT:   %.loc7_27.4: %f64.d77 = acquire_value %.loc7_27.3
 // CHECK:STDOUT:   %d: %f64.d77 = value_binding d, %.loc7_27.4
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc7_24.4)
+// CHECK:STDOUT:   %DestroyOp.bound.loc7_27: <bound method> = bound_method %.loc7_27.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc7_27: init %empty_tuple.type = call %DestroyOp.bound.loc7_27(%.loc7_27.3)
+// CHECK:STDOUT:   %DestroyOp.bound.loc7_24: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc7_24: init %empty_tuple.type = call %DestroyOp.bound.loc7_24(%.loc7_24.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
