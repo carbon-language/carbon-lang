@@ -66,10 +66,10 @@ auto operator<<(llvm::raw_ostream& output, CommandKind kind)
 }
 
 template <typename T, typename ToPrintable>
-static auto PrintListOfAlternatives(llvm::raw_ostream& output,
-                                    llvm::ArrayRef<T> alternatives,
-                                    ToPrintable to_printable) -> void {
-  for (const auto& alternative : alternatives.drop_back()) {
+static auto PrintListOfAlternatives(
+    llvm::raw_ostream& output, const llvm::SmallVectorImpl<T>& alternatives,
+    ToPrintable to_printable) -> void {
+  for (const auto& alternative : llvm::ArrayRef(alternatives).drop_back()) {
     output << "`" << to_printable(alternative)
            << (alternatives.size() > 2 ? "`, " : "` ");
   }
@@ -358,7 +358,7 @@ auto MetaPrinter::PrintVersion(const Command& command) const -> void {
 }
 
 auto MetaPrinter::PrintSubcommands(const Command& command) const -> void {
-  PrintListOfAlternatives(*out_, llvm::ArrayRef(command.subcommands),
+  PrintListOfAlternatives(*out_, command.subcommands,
                           [](const std::unique_ptr<Command>& subcommand) {
                             return subcommand->info.name;
                           });

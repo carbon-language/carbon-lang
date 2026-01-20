@@ -33,8 +33,8 @@ class CompileBenchmark {
   // materialized into a virtual file and a list of the virtual filenames is
   // returned.
   auto SetUpFiles(llvm::ArrayRef<std::string> sources)
-      -> llvm::OwningArrayRef<std::string> {
-    llvm::OwningArrayRef<std::string> file_names(sources.size());
+      -> llvm::SmallVector<std::string> {
+    llvm::SmallVector<std::string> file_names(sources.size());
     for (auto [i, source, file_name] : llvm::enumerate(sources, file_names)) {
       file_name = llvm::formatv("file_{0}.carbon", i).str();
       fs_->addFile(file_name, /*ModificationTime=*/0,
@@ -98,7 +98,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   CompileBenchmark bench;
   int target_lines = state.range(0);
   int num_files = ComputeFileCount(target_lines);
-  llvm::OwningArrayRef<std::string> sources(num_files);
+  llvm::SmallVector<std::string> sources(num_files);
 
   // Create a collection of random source files. Compute average statistics for
   // counters for compilation speed.
@@ -124,7 +124,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
                          benchmark::Counter::kIsIterationInvariantRate);
 
   // Set up the sources as files for compilation.
-  llvm::OwningArrayRef<std::string> file_names = bench.SetUpFiles(sources);
+  llvm::SmallVector<std::string> file_names = bench.SetUpFiles(sources);
   CARBON_CHECK(static_cast<int>(file_names.size()) == num_files);
 
   // We benchmark in batches of files to avoid benchmarking any peculiarities of

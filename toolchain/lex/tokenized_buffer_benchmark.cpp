@@ -141,7 +141,7 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
 
   // Build a list of StringRefs from the different types with the desired
   // distribution, then shuffle that list.
-  llvm::OwningArrayRef<llvm::StringRef> tokens(NumTokens);
+  llvm::SmallVector<llvm::StringRef> tokens(NumTokens);
 
   int num_symbols = (NumTokens / 100) * options.symbol_percent;
   int num_keywords = (NumTokens / 100) * options.keyword_percent;
@@ -582,7 +582,7 @@ auto BM_SpeedOfLightStrCpy(benchmark::State& state) -> void {
   std::string source = RandomSource(DefaultSourceDist);
 
   // A buffer to write the null-terminated contents of `source` into.
-  llvm::OwningArrayRef<char> buffer(source.size() + 1);
+  llvm::SmallVector<char> buffer(source.size() + 1);
 
   for (auto _ : state) {
     const char* text = source.data();
@@ -722,7 +722,7 @@ auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
   std::string source = RandomSource(DefaultSourceDist);
 
   // A buffer to write to, simulating some minimal write traffic.
-  llvm::OwningArrayRef<char> buffer(source.size());
+  llvm::SmallVector<char> buffer(source.size());
 
   for (auto _ : state) {
     const char* text = source.data();

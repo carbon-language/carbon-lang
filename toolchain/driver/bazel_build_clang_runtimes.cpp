@@ -164,7 +164,7 @@ static auto GetClangPath(const std::filesystem::path& exe_path)
 
 static auto ParseOptions(int argc, char** argv) -> ErrorOr<Options> {
   Options options;
-  llvm::OwningArrayRef<llvm::StringRef> args(argc - 1);
+  llvm::SmallVector<llvm::StringRef> args(argc - 1);
   for (auto [i, arg] : llvm::enumerate(args)) {
     arg = argv[i + 1];
   }
