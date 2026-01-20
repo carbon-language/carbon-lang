@@ -199,7 +199,7 @@ static absl::NoDestructor<llvm::SmallVector<llvm::StringRef>> raw_str_keys{[] {
 }()};
 
 static absl::NoDestructor<llvm::SmallVector<int*>> raw_ptr_keys(llvm::map_range(
-    llvm::seq(MaxNumKeys), [](int index) { return new int(index); }));
+    llvm::seq(MaxNumKeys), [](int index) { return new int{index}; }));
 
 static absl::NoDestructor<llvm::SmallVector<int>> raw_int_keys(llvm::map_range(
     llvm::seq(MaxNumKeys), [](int index) { return index + 1; }));
