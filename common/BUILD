@@ -199,6 +199,7 @@ cc_library(
     hdrs = ["error_test_helpers.h"],
     deps = [
         ":error",
+        ":ostream",
         "@googletest//:gtest",
     ],
 )
