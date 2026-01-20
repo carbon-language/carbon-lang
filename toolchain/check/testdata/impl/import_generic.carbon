@@ -342,7 +342,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.358: type = import_ref Main//basic_import_generic_interface, loc5_27, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.99f: @J.%J.type (%J.type.04e) = import_ref Main//basic_import_generic_interface, loc4_23, loaded [symbolic = @J.%Self (constants.%Self.c25)]
-// CHECK:STDOUT:   %Main.import_ref.e9b = import_ref Main//basic_import_generic_interface, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e9be38.1 = import_ref Main//basic_import_generic_interface, loc4_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b55 = import_ref Main//basic_import_generic_interface, loc5_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -399,7 +399,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.e9b
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.e9be38.1
 // CHECK:STDOUT:     extend imports.%Main.import_ref.b55
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
@@ -641,7 +641,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.358: type = import_ref Main//basic_import_generic_constraint, loc5_27, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2fc: @J.%J.type (%J.type.d682d6.1) = import_ref Main//basic_import_generic_constraint, loc4_24, loaded [symbolic = @J.%Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//basic_import_generic_constraint, loc4_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//basic_import_generic_constraint, loc4_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//basic_import_generic_constraint, loc5_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -691,7 +691,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
 // CHECK:STDOUT:     extend imports.%Main.import_ref.b41
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1047,7 +1047,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.3582b1.2: type = import_ref Main//import_generic, loc15_27, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic, loc14_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic, loc14_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic, loc14_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//import_generic, loc15_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -1152,7 +1152,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
 // CHECK:STDOUT:     extend imports.%Main.import_ref.b41
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1573,7 +1573,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.3582b1.2: type = import_ref Main//import_generic_with_different_specific, loc10_27, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_with_different_specific, loc9_24, loaded [symbolic = @N.%Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic_with_different_specific, loc9_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic_with_different_specific, loc9_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//import_generic_with_different_specific, loc10_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -1638,7 +1638,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
 // CHECK:STDOUT:     extend imports.%Main.import_ref.b41
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -2023,7 +2023,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.f2a55c.2: type = import_ref Main//import_generic_decl, loc8_27, loaded [symbolic = @N.Self.binding.as_type.impls.J.type.require.%J.type (constants.%J.type.04e)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_decl, loc7_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic_decl, loc7_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic_decl, loc7_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.105 = import_ref Main//import_generic_decl, loc8_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -2128,7 +2128,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
 // CHECK:STDOUT:     extend imports.%Main.import_ref.105
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:

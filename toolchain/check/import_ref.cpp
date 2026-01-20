@@ -475,6 +475,9 @@ class ImportRefResolver : public ImportContext {
 static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
                          SemIR::EntityNameId entity_name_id =
                              SemIR::EntityNameId::None) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
   return AddImportRef(context.local_context(),
                       SemIR::ImportIRInst(context.import_ir_id(), inst_id),
                       entity_name_id);
@@ -1323,8 +1326,9 @@ static auto AddNameScopeImportRefs(ImportContext& context,
                            .result = SemIR::ScopeLookupResult::MakeFound(
                                ref_id, result.access_kind())});
   }
-  for (auto scope_inst_id : import_scope.extended_scopes()) {
-    new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));
+  for (auto [scope_inst_id, inner_self_id] : import_scope.extended_scopes()) {
+    new_scope.AddExtendedScope({AddImportRef(context, scope_inst_id),
+                                AddImportRef(context, inner_self_id)});
   }
 }
 

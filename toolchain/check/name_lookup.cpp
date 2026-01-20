@@ -8,10 +8,13 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -103,11 +106,12 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
-    if (auto non_lexical_result =
-            LookupQualifiedName(context, loc_id, name_id,
-                                LookupScope{.name_scope_id = lookup_scope_id,
-                                            .specific_id = specific_id},
-                                /*required=*/false);
+    if (auto non_lexical_result = LookupQualifiedName(
+            context, loc_id, name_id,
+            LookupScope{.name_scope_id = lookup_scope_id,
+                        .specific_id = specific_id,
+                        .self_const_id = SemIR::ConstantId::None},
+            /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
       // In an interface definition, replace associated entity `M` with
       // `Self.M` (where the `Self` is the `Self` of the interface).
@@ -284,6 +288,7 @@ struct ProhibitedAccessInfo {
 
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
+                                   SemIR::ConstantId self_type_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
   auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
@@ -291,7 +296,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 
   if (auto ns = lookup.TryAs<SemIR::Namespace>()) {
     scopes->push_back(LookupScope{.name_scope_id = ns->name_scope_id,
-                                  .specific_id = SemIR::SpecificId::None});
+                                  .specific_id = SemIR::SpecificId::None,
+                                  .self_const_id = SemIR::ConstantId::None});
     return true;
   }
   if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
@@ -308,7 +314,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
         });
     auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
-                                  .specific_id = class_ty->specific_id});
+                                  .specific_id = class_ty->specific_id,
+                                  .self_const_id = self_type_const_id});
     return true;
   }
   if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
@@ -331,26 +338,30 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       for (const auto& extend : facet_type_info.extend_constraints) {
         auto& interface = context.interfaces().Get(extend.interface_id);
         scopes->push_back({.name_scope_id = interface.scope_id,
-                           .specific_id = extend.specific_id});
+                           .specific_id = extend.specific_id,
+                           .self_const_id = self_type_const_id});
       }
       for (const auto& extend : facet_type_info.extend_named_constraints) {
         auto& constraint =
             context.named_constraints().Get(extend.named_constraint_id);
         scopes->push_back({.name_scope_id = constraint.scope_id,
-                           .specific_id = extend.specific_id});
+                           .specific_id = extend.specific_id,
+                           .self_const_id = self_type_const_id});
       }
     } else {
       // Lookup into this scope should fail without producing an error since
       // `RequireCompleteFacetType` has already issued a diagnostic.
       scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                    .specific_id = SemIR::SpecificId::None});
+                                    .specific_id = SemIR::SpecificId::None,
+                                    .self_const_id = SemIR::ConstantId::None});
     }
     return true;
   }
   if (lookup_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                  .specific_id = SemIR::SpecificId::None});
+                                  .specific_id = SemIR::SpecificId::None,
+                                  .self_const_id = SemIR::ConstantId::None});
     return true;
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
@@ -410,7 +421,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
-    auto [scope_id, specific_id] = scopes.pop_back_val();
+    auto [scope_id, specific_id, self_const_id] = scopes.pop_back_val();
     if (!scope_id.has_value()) {
       has_error = true;
       continue;
@@ -447,7 +458,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
       scopes.reserve(scopes.size() + extended.size());
-      for (auto extended_id : llvm::reverse(extended)) {
+      for (auto [extended_id, inner_self_id] : llvm::reverse(extended)) {
         // Substitute into the constant describing the extended scope to
         // determine its corresponding specific.
         CARBON_CHECK(extended_id.has_value());
@@ -455,8 +466,36 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
+        // Apply self_const_id to the extended_id, replacing inner_self_id
+        // inside.
+        if (inner_self_id.has_value() && self_const_id.has_value()) {
+          LoadImportRef(context, inner_self_id);
+
+          auto inner_self_binding =
+              context.insts().GetAs<SemIR::SymbolicBinding>(
+                  context.constant_values().GetConstantInstId(inner_self_id));
+          auto entity_id = inner_self_binding.entity_name_id;
+          auto bind_index = context.entity_names().Get(entity_id).bind_index();
+          auto facet_value = SemIR::ConstantId::None;
+          if (auto self_type_id =
+                  context.types().TryGetTypeIdForTypeConstantId(self_const_id);
+              self_type_id.has_value()) {
+            // The self for member lookup is a type, we need a facet value to
+            // replace `Self`.
+            facet_value = GetConstantFacetValueForType(
+                context, context.types().GetInstId(self_type_id));
+          } else {
+            // The self for member lookup is a facet value, use it as is to
+            // replace `Self`.
+            facet_value = self_const_id;
+          }
+          llvm::SmallVector<Substitution> substitutions = {
+              {.bind_id = bind_index, .replacement_id = facet_value}};
+          const_id = SubstConstant(context, loc_id, const_id, substitutions);
+        }
+
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
-                                           &scopes)) {
+                                           self_const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
           // look in its type.
         }

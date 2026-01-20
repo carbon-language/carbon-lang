@@ -32,6 +32,20 @@ auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
   return TypeId::ForTypeConstant(constant_id);
 }
 
+auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeId {
+  if (constant_id == SemIR::ErrorInst::ConstantId) {
+    return TypeId::None;
+  }
+  auto type_id = file_->insts()
+                     .Get(file_->constant_values().GetInstId(constant_id))
+                     .type_id();
+  if (type_id != SemIR::TypeType::TypeId) {
+    return TypeId::None;
+  }
+  return TypeId::ForTypeConstant(constant_id);
+}
+
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
   CheckTypeOfConstantIsTypeType(*file_, constant_id);

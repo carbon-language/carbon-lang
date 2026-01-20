@@ -185,11 +185,21 @@ class NameScope : public Printable<NameScope> {
   // identifiers will not be poisoned.
   auto LookupOrPoison(LocId loc_id, NameId name_id) -> std::optional<EntryId>;
 
-  auto extended_scopes() const -> llvm::ArrayRef<InstId> {
+  struct ExtendedScope {
+    SemIR::InstId extended_id;
+    // The inner `Self` of a scope which is part of generics inside the scope
+    // that it extends. These `Self` values need to be replaced with the self
+    // target of member lookup in order to find the right extended scope.
+    SemIR::InstId inner_self_id = SemIR::InstId::None;
+
+    friend auto operator==(NameScope::ExtendedScope lhs,
+                           NameScope::ExtendedScope rhs) -> bool = default;
+  };
+  auto extended_scopes() const -> llvm::ArrayRef<ExtendedScope> {
     return extended_scopes_;
   }
 
-  auto AddExtendedScope(InstId extended_scope) -> void {
+  auto AddExtendedScope(ExtendedScope extended_scope) -> void {
     extended_scopes_.push_back(extended_scope);
   }
 
@@ -275,7 +285,7 @@ class NameScope : public Printable<NameScope> {
   // than a single extended scope.
   // TODO: Revisit this once we have more kinds of extended scope and data.
   // TODO: Consider using something like `TinyPtrVector` for this.
-  llvm::SmallVector<InstId, 1> extended_scopes_;
+  llvm::SmallVector<ExtendedScope, 1> extended_scopes_;
 
   // The instruction which owns the scope.
   InstId inst_id_;

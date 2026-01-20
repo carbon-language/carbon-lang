@@ -20,6 +20,9 @@ struct LookupScope {
   // The specific for the name scope, or `None` if the name scope is not
   // defined by a generic or we should perform lookup into the generic itself.
   SemIR::SpecificId specific_id;
+  // The self-type where lookup is happening when the lookup is for a member
+  // access.
+  SemIR::ConstantId self_const_id;
 };
 
 // A result produced by name lookup.
@@ -79,10 +82,18 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
     -> SemIR::ScopeLookupResult;
 
 // Appends the lookup scopes corresponding to `lookup_const_id` to `*scopes`.
+//
+// The `self_type_const_id` is the self-type that we are looking for a name in,
+// and which is passed through to extended scopes. It may be a facet or a value
+// of type `type`. Some extended scopes have a symbolic `Self` internally which
+// needs to know the self-type in order to produce a correct specific scope in
+// the result.
+//
 // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
 // still updates `*scopes` and returns `true`.
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
+                                   SemIR::ConstantId self_type_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool;
 

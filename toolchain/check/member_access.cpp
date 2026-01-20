@@ -478,60 +478,68 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
-    llvm::SmallVector<LookupScope> lookup_scopes;
-    if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                      &lookup_scopes)) {
-      return LookupMemberNameInScope(
-          context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
-          /*lookup_in_type_of_base=*/false, required);
+    if (base_const_id.is_constant()) {
+      llvm::SmallVector<LookupScope> lookup_scopes;
+      if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
+                                        base_const_id, &lookup_scopes)) {
+        return LookupMemberNameInScope(
+            context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
+            /*lookup_in_type_of_base=*/false, required);
+      }
     }
-  }
 
-  auto base_type_id = context.insts().Get(base_id).type_id();
-
-  // If the base is a facet (a symbolic name scope), perform lookup into its
-  // facet type. This is like the class case, as there is no instance to bind.
-  //
-  // TODO: According to the design, this should just lookup directly in the
-  // `base_id` (part the class case above), as the `base_id` facet should have
-  // member names that directly name members of the `impl`.
-  if (context.types().Is<SemIR::FacetType>(base_type_id)) {
-    // Name lookup into a facet requires the facet type to be complete, so that
-    // any names available through the facet type are known for the facet.
+    // If the base is a facet (a symbolic name scope), perform lookup into its
+    // facet type.
     //
-    // TODO: This should be part of AppendLookupScopesForConstant when we do
-    // lookup on the facet directly instead of the facet type. For now it's here
-    // to provide a better diagnostic than what we get when looking for scopes
-    // directly on the facet type.
-    if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccessOfFacet, Error,
-                            "member access into facet of incomplete type {0}",
-                            SemIR::TypeId);
-          return context.emitter().Build(
-              base_id, IncompleteTypeInMemberAccessOfFacet, base_type_id);
-        })) {
-      // If the scope is invalid in AppendLookupScopesForConstant we still
-      // return true and proceed with lookup, just ignoring that scope. Match
-      // behaviour here for when this moves into AppendLookupScopesForConstant.
-      base_type_id = SemIR::ErrorInst::TypeId;
-    }
+    // TODO: According to the design, this should just lookup directly in the
+    // `base_id` (as part the class case above), as the `base_id` facet should
+    // have member names that directly name members of the `impl`.
+    auto base_type_id = context.insts().Get(base_id).type_id();
+    if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+      // Name lookup into a facet requires the facet type to be complete, so
+      // that any names available through the facet type are known for the
+      // facet.
+      //
+      // TODO: This should be part of AppendLookupScopesForConstant when we do
+      // lookup on the facet directly instead of the facet type. For now it's
+      // here to provide a better diagnostic than what we get when looking for
+      // scopes directly on the facet type.
+      if (!RequireCompleteType(
+              context, base_type_id, SemIR::LocId(base_id), [&] {
+                CARBON_DIAGNOSTIC(
+                    IncompleteTypeInMemberAccessOfFacet, Error,
+                    "member access into facet of incomplete type {0}",
+                    SemIR::TypeId);
+                return context.emitter().Build(
+                    base_id, IncompleteTypeInMemberAccessOfFacet, base_type_id);
+              })) {
+        // If the scope is invalid in AppendLookupScopesForConstant we still
+        // return true and proceed with lookup, just ignoring that scope. Match
+        // behaviour here for when this moves into
+        // AppendLookupScopesForConstant.
+        base_type_id = SemIR::ErrorInst::TypeId;
+      }
 
-    auto base_type_const_id = context.types().GetConstantId(base_type_id);
-    llvm::SmallVector<LookupScope> lookup_scopes;
-    if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
-                                      &lookup_scopes)) {
-      // The name scope constant needs to be a type, but is currently a
-      // FacetType, so perform `as type` to get a FacetAccessType.
-      auto base_as_type = ExprAsType(context, loc_id, base_id);
-      base_type_const_id = context.types().GetConstantId(base_as_type.type_id);
-      return LookupMemberNameInScope(
-          context, loc_id, base_id, name_id, base_type_const_id, lookup_scopes,
-          /*lookup_in_type_of_base=*/false, required);
+      auto base_type_const_id = context.types().GetConstantId(base_type_id);
+      llvm::SmallVector<LookupScope> lookup_scopes;
+      if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
+                                        base_const_id, &lookup_scopes)) {
+        // The name scope constant needs to be a type, but is currently a
+        // FacetType, so perform `as type` to get a FacetAccessType.
+        auto base_as_type = ExprAsType(context, loc_id, base_id);
+        base_type_const_id =
+            context.types().GetConstantId(base_as_type.type_id);
+        return LookupMemberNameInScope(context, loc_id, base_id, name_id,
+                                       base_type_const_id, lookup_scopes,
+                                       /*lookup_in_type_of_base=*/false,
+                                       required);
+      }
     }
   }
 
   // Otherwise, handle `x.F` by performing lookup into the type of `x` (where
   // `x` is `base_id`).
+  auto base_type_id = context.insts().Get(base_id).type_id();
 
   // Require a complete type explicitly. Materializing a temporary will too, but
   // we can produce a better diagnostic here with context about what operation
@@ -569,8 +577,14 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // Perform lookup into the base type.
   llvm::SmallVector<LookupScope> lookup_scopes;
-  if (AppendLookupScopesForConstant(context, loc_id, lookup_const_id,
-                                    &lookup_scopes)) {
+  if (AppendLookupScopesForConstant(
+          context, loc_id, lookup_const_id,
+          // The `self_type_const_id` should be the type of `base_id` even if
+          // it's a facet.
+          //
+          // TODO: This can be replaced with `lookup_const_id` once we stop
+          // having to look through the facet at its type for the scope.
+          context.types().GetConstantId(base_type_id), &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
         /*lookup_in_type_of_base=*/true, required);

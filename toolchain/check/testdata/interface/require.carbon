@@ -46,6 +46,36 @@ fn F(T:! Z, t:! T) {
   t.YY();
 }
 
+// --- fail_todo_extend_with_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Y(T:! type) {
+  fn YY();
+}
+
+//@dump-sem-ir-begin
+interface Z {
+  extend require impls Y(Self);
+}
+//@dump-sem-ir-end
+
+fn F(T:! Z) {
+  // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
+  // `T:! Z` since the identified facet type doesn't include `Y`. The
+  // identified facet type needs to include extends inside interfaces?
+  //
+  // CHECK:STDERR: fail_todo_extend_with_self.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y(T)` in type `T` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   T.YY();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
+  T.YY();
+  // CHECK:STDERR: fail_todo_extend_with_self.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y(T)` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   T.(Y(T).YY)();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  T.(Y(T).YY)();
+}
+
 // --- fail_todo_implicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
@@ -326,6 +356,63 @@ interface Z(T:! type) {
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_extend_with_self.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Y.type.82b: type = generic_interface_type @Y [concrete]
+// CHECK:STDOUT:   %Y.generic: %Y.type.82b = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
+// CHECK:STDOUT:   %Y.type.432: type = facet_type <@Y, @Y(%Self.binding.as_type)> [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
+// CHECK:STDOUT:     require %Self.as_type.loc9_18 impls %Y.type.loc9_30.1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Self.as_type.loc9_18: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %Y.ref: %Y.type.82b = name_ref Y, file.%Y.decl [concrete = constants.%Y.generic]
+// CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
+// CHECK:STDOUT:     %Self.as_type.loc9_30: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %.loc9: type = converted %Self.ref, %Self.as_type.loc9_30 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %Y.type.loc9_30.1: type = facet_type <@Y, @Y(constants.%Self.binding.as_type)> [symbolic = %Y.type.loc9_30.2 (constants.%Y.type.432)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.type.loc9_30.1, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [symbolic = constants.%Y.type.432]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   .YY = <poisoned>
+// CHECK:STDOUT:   extend %.loc9
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
+// CHECK:STDOUT:     require @Z.Self.binding.as_type.impls.Y.type.require.%Self.as_type.loc9_18 impls @Z.Self.binding.as_type.impls.Y.type.require.%Y.type.loc9_30.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Y.type.loc9_30.2: type = facet_type <@Y, @Y(%Self.binding.as_type)> [symbolic = %Y.type.loc9_30.2 (constants.%Y.type.432)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
+// CHECK:STDOUT:   %Self => constants.%Self.c59
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.432
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon

@@ -236,7 +236,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   }
 
   if (!impl.generic_id.has_value()) {
-    parent_scope.AddExtendedScope(impl.constraint_id);
+    parent_scope.AddExtendedScope({impl.constraint_id});
   } else {
     // The extended scope instruction must be part of the enclosing scope (and
     // generic). A specific for the enclosing scope will be applied to it when
@@ -248,7 +248,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
         {.type_id = SemIR::TypeType::TypeId,
          .inst_id = impl.constraint_id,
          .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
-    parent_scope.AddExtendedScope(constraint_id_in_self_specific);
+    parent_scope.AddExtendedScope({constraint_id_in_self_specific});
   }
   return true;
 }

@@ -98,7 +98,7 @@ impl C as B {}
 // CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.e33: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
-// CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//b, loc4_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.65b437.1 = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT:   %Main.import_ref.121 = import_ref Main//b, loc5_25, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,7 +131,7 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b437.1
 // CHECK:STDOUT:   extend imports.%Main.import_ref.121
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
