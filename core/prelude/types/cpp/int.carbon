@@ -34,7 +34,17 @@ impl CppCompat.Long32 as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-// TODO: Copy for ULong32, LongLong64, ULongLong64.
+impl CppCompat.ULong32 as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
+}
+
+impl CppCompat.LongLong64 as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
+}
+
+impl CppCompat.ULongLong64 as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
+}
 
 // Conversions.
 
