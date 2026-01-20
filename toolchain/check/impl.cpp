@@ -663,7 +663,8 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
+                                SemIR::Impl& impl) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
@@ -716,7 +717,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
                           SemIR::SpecificInterface, SemIR::TypeId,
                           SemIR::FacetTypeId);
         context.emitter().Emit(
-            impl.latest_decl_id(), RequireImplsNotImplemented, impl.interface,
+            loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
             context.insts()
                 .GetAs<SemIR::FacetType>(facet_type_inst_id)

@@ -335,7 +335,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
-  CheckRequireDeclsSatisfied(context, impl);
+  CheckRequireDeclsSatisfied(context, node_id, impl);
 
   CARBON_CHECK(!impl.has_definition_started());
   impl.definition_id = impl_decl_id;
