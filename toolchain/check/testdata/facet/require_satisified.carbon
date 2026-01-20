@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -184,3 +184,75 @@ impl C as Z(());
 impl () as Y(Self) {}
 
 impl C as Z(()) {}
+
+// --- impl_requires_itself_cycle.carbon
+library "[[@TEST_NAME]]";
+
+interface A { fn AA(); }
+interface B {
+  require impls A;
+}
+interface C {
+  require impls B;
+}
+
+impl forall [T:! B] T as A { fn AA() {} }
+
+// When we get to the definition we check that anything B requires is satisfied.
+// - The interface B requires A, so we must check T impls A.
+// - The impl for A requires T impls B.
+// - This impl is what provides T impls B.
+impl forall [T:! C] T as B {}
+
+fn F(T:! C) {
+  // If things go wrong, we find the impl `T as B`, but inside its definition is
+  // a lookup for `T as A`, which (through deducing `T`) includes a lookup for
+  // `T as B`. This creates a cycle of evaluating `T as B` recursively.
+  //
+  // This was solved by doing the check for requirements of `B` outside the
+  // definition of `T as B`.
+  // https://discord.com/channels/655572317891461132/941071822756143115/1463189087598022861
+  T.(A.AA)();
+}
+
+// --- fail_impl_requires_itself_cycle_with_monomorphization_error.carbon
+library "[[@TEST_NAME]]";
+
+class W(T:! type) {
+  adapt {};
+}
+
+interface A(N:! Core.IntLiteral()) {
+  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+3]]:26: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:   fn AA() -> W(array((), N));
+  // CHECK:STDERR:                          ^
+  fn AA() -> W(array((), N));
+}
+interface B(N:! Core.IntLiteral()) {
+  require impls A(N);
+}
+interface C(N:! Core.IntLiteral()) {
+  require impls B(N);
+}
+
+impl forall [N:! Core.IntLiteral(), T:! B(N)] T as A(N) {
+  fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
+}
+
+impl forall [N:! Core.IntLiteral(), T:! C(N)] T as B(N) {
+  // The definition here does not contain the lookups verifying that C(N) impls
+  // `A(N)`, so they do not get re-evaluated for a specific `N`. That doesn't
+  // prevent us from producing a reasonable diagnostic when that `N` causes an
+  // error in the specific use of this impl, which we use to get from `C(N)` to
+  // `A(N)` (in the deduction of `T` in the impl as `A(N)`). The error just
+  // happens where we use `N` in `A(N)` instead of inside the verification that
+  // `T as B(N)` implies `T as A(N)`.
+}
+
+fn F(T:! C(-1)) {
+  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+4]]:3: note: in `AA()` used here [ResolvingSpecificHere]
+  // CHECK:STDERR:   T.(A(-1).AA)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  T.(A(-1).AA)();
+}

@@ -668,12 +668,21 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
+                                SemIR::Impl& impl) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
 
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  if (!interface.is_complete()) {
+    // This will be diagnosed later. We check for required decls before starting
+    // the definition to avoid inserting these lookups into the definition, as
+    // the lookups can end up looking for the impl being defined, which creates
+    // a cycle.
+    return;
+  }
+
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
   if (require_ids.empty()) {
@@ -695,8 +704,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
         context, require_specific, require.facet_type_inst_id);
 
     auto result =
-        LookupImplWitness(context, SemIR::LocId(impl.latest_decl_id()),
-                          self_const_id, facet_type_const_id);
+        LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);
     // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
     // it would be nice to diagnose which one was not `impl`ed, but that
     // requires LookupImplWitness to return a partial result, or take a
@@ -713,7 +721,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
                           SemIR::SpecificInterface, SemIR::TypeId,
                           SemIR::FacetTypeId);
         context.emitter().Emit(
-            impl.latest_decl_id(), RequireImplsNotImplemented, impl.interface,
+            loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
             context.insts()
                 .GetAs<SemIR::FacetType>(facet_type_inst_id)

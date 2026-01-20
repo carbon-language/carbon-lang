@@ -335,6 +335,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
+  CheckRequireDeclsSatisfied(context, node_id, impl);
+
   CARBON_CHECK(!impl.has_definition_started());
   impl.definition_id = impl_decl_id;
   impl.scope_id =
@@ -346,7 +348,6 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
   ImplWitnessStartDefinition(context, impl);
-  CheckRequireDeclsSatisfied(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
