@@ -15,7 +15,7 @@ namespace Carbon::RawHashtable {
 // A local shuffle implementation built on Abseil to improve performance in
 // debug builds.
 template <typename T>
-static auto Shuffle(llvm::SmallVectorImpl<T>& data, absl::BitGen& gen) {
+static auto Shuffle(llvm::MutableArrayRef<T> data, absl::BitGen& gen) {
   for (ssize_t i : llvm::seq<ssize_t>(0, data.size() - 1)) {
     ssize_t j = absl::Uniform<ssize_t>(gen, 0, data.size() - i);
     if (j != 0) {
@@ -70,7 +70,7 @@ static auto MakeFourCharStrs(llvm::ArrayRef<char> characters, absl::BitGen& gen)
         str[3] = characters[i];
         return str;
       }));
-  Shuffle(four_char_strs, gen);
+  Shuffle<std::array<char, 4>>(four_char_strs, gen);
   return four_char_strs;
 }
 
@@ -268,7 +268,7 @@ auto GetShuffledLookupKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
           return raw_keys[index % table_keys_size];
         }));
     absl::BitGen gen;
-    Shuffle(lookup_keys, gen);
+    Shuffle<T>(lookup_keys, gen);
   }
   CARBON_CHECK(static_cast<ssize_t>(lookup_keys.size()) == lookup_keys_size);
 
@@ -288,7 +288,7 @@ auto GetKeysAndMissKeys(ssize_t table_keys_size)
     llvm::SmallVector<T> keys(GetRawKeys<T>().take_back(NumOtherKeys));
     CARBON_CHECK(keys.size() == NumOtherKeys);
     absl::BitGen gen;
-    Shuffle(keys, gen);
+    Shuffle<T>(keys, gen);
     return keys;
   }()};
 
