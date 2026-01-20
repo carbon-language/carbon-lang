@@ -67,7 +67,7 @@ auto operator<<(llvm::raw_ostream& output, CommandKind kind)
 
 template <typename T, typename ToPrintable>
 static auto PrintListOfAlternatives(llvm::raw_ostream& output,
-                                    const llvm::ArrayRef<T>& alternatives,
+                                    llvm::ArrayRef<T> alternatives,
                                     ToPrintable to_printable) -> void {
   for (const auto& alternative : alternatives.drop_back()) {
     output << "`" << to_printable(alternative)
