@@ -21,53 +21,34 @@ namespace Carbon {
 // The fake file name to use for the synthesized includes file.
 static constexpr const char IncludesFileName[] = "<carbon Cpp imports>";
 
-namespace {
+auto ClangDriverDiagnosticConsumer::HandleDiagnostic(
+    clang::DiagnosticsEngine::Level diag_level, const clang::Diagnostic& info)
+    -> void {
+  DiagnosticConsumer::HandleDiagnostic(diag_level, info);
 
-// Used to convert diagnostics from the Clang driver to Carbon diagnostics.
-class ClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
- public:
-  // Creates an instance with the location that triggers calling Clang.
-  // `context` must not be null.
-  explicit ClangDriverDiagnosticConsumer(Diagnostics::NoLocEmitter* emitter)
-      : emitter_(emitter) {}
+  llvm::SmallString<256> message;
+  info.FormatDiagnostic(message);
 
-  // Generates a Carbon warning for each Clang warning and a Carbon error for
-  // each Clang error or fatal.
-  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
-                        const clang::Diagnostic& info) -> void override {
-    DiagnosticConsumer::HandleDiagnostic(diag_level, info);
-
-    llvm::SmallString<256> message;
-    info.FormatDiagnostic(message);
-
-    switch (diag_level) {
-      case clang::DiagnosticsEngine::Ignored:
-      case clang::DiagnosticsEngine::Note:
-      case clang::DiagnosticsEngine::Remark: {
-        // TODO: Emit notes and remarks.
-        break;
-      }
-      case clang::DiagnosticsEngine::Warning:
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropDriverWarning, Warning, "{0}", std::string);
-        CARBON_DIAGNOSTIC(CppInteropDriverError, Error, "{0}", std::string);
-        emitter_->Emit(diag_level == clang::DiagnosticsEngine::Warning
-                           ? CppInteropDriverWarning
-                           : CppInteropDriverError,
-                       message.str().str());
-        break;
-      }
+  switch (diag_level) {
+    case clang::DiagnosticsEngine::Ignored:
+    case clang::DiagnosticsEngine::Note:
+    case clang::DiagnosticsEngine::Remark: {
+      // TODO: Emit notes and remarks.
+      break;
+    }
+    case clang::DiagnosticsEngine::Warning:
+    case clang::DiagnosticsEngine::Error:
+    case clang::DiagnosticsEngine::Fatal: {
+      CARBON_DIAGNOSTIC(CppInteropDriverWarning, Warning, "{0}", std::string);
+      CARBON_DIAGNOSTIC(CppInteropDriverError, Error, "{0}", std::string);
+      emitter_->Emit(diag_level == clang::DiagnosticsEngine::Warning
+                         ? CppInteropDriverWarning
+                         : CppInteropDriverError,
+                     message.str().str());
+      break;
     }
   }
-
- private:
-  // Diagnostic emitter. Note that driver diagnostics don't have meaningful
-  // locations attached.
-  Diagnostics::NoLocEmitter* emitter_;
-};
-
-}  // namespace
+}
 
 auto BuildClangInvocation(Diagnostics::Consumer& consumer,
                           llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,

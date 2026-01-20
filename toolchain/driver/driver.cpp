@@ -15,6 +15,7 @@
 #include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
+#include "toolchain/driver/config_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"
 #include "toolchain/driver/language_server_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
@@ -40,6 +41,7 @@ struct Options {
   BuildRuntimesSubcommand runtimes;
   ClangSubcommand clang;
   CompileSubcommand compile;
+  ConfigSubcommand config;
   FormatSubcommand format;
   LanguageServerSubcommand language_server;
   LinkSubcommand link;
@@ -147,6 +149,7 @@ when there are errors or other output.
   runtimes.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
+  config.AddTo(b, &selected_subcommand);
   format.AddTo(b, &selected_subcommand);
   language_server.AddTo(b, &selected_subcommand);
   link.AddTo(b, &selected_subcommand);

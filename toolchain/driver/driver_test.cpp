@@ -9,14 +9,19 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <utility>
 
+#include "common/error_test_helpers.h"
+#include "common/filesystem.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/JSON.h"
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/testing/yaml_test_helpers.h"
@@ -27,6 +32,9 @@ namespace {
 using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
+using Testing::IsSuccess;
+using ::testing::Ne;
+using ::testing::NotNull;
 using ::testing::StrEq;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
@@ -214,6 +222,34 @@ TEST_F(DriverTest, FileOutput) {
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
   EXPECT_THAT(*Testing::ReadFile("test.s"), ContainsRegex("Main:"));
+}
+
+TEST_F(DriverTest, ConfigJson) {
+  // The command won't succeed because we won't find the installation digest to
+  // print. We can still test the overall output is valid JSON.
+  EXPECT_FALSE(driver_.RunCommand({"config", "--json"}).success);
+
+  // Ensure the failure was what we expected.
+  EXPECT_THAT(
+      test_error_stream_.TakeStr(),
+      HasSubstr("error: unable to read the installation's digest file"));
+
+  // Make sure the output parses as JSON.
+  std::string output = test_output_stream_.TakeStr();
+  llvm::Expected<llvm::json::Value> json_value = llvm::json::parse(output);
+  if (auto error = json_value.takeError()) {
+    FAIL() << "Unable to parse to JSON: " << toString(std::move(error))
+           << "\nOriginal text:\n"
+           << output << "\n";
+  }
+  llvm::json::Object* json_obj = json_value->getAsObject();
+  ASSERT_THAT(json_obj, NotNull());
+
+  // Check relevant paths in the output point to existing directories.
+  std::optional<llvm::StringRef> install_root =
+      json_obj->getString("INSTALL_ROOT");
+  ASSERT_THAT(install_root, Ne(std::nullopt));
+  EXPECT_THAT(Filesystem::Cwd().OpenDir(install_root->str()), IsSuccess(_));
 }
 
 }  // namespace
