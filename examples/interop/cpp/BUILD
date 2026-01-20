@@ -8,3 +8,8 @@ carbon_binary(
     name = "hello_world",
     srcs = ["hello_world.carbon"],
 )
+
+carbon_binary(
+    name = "socket",
+    srcs = ["socket.carbon"],
+)
