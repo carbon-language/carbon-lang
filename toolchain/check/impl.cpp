@@ -669,6 +669,14 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
   }
 
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  if (!interface.is_complete()) {
+    // This will be diagnosed later. We check for required decls before starting
+    // the definition to avoid inserting these lookups into the definition, as
+    // the lookups can end up looking for the impl being defined, which creates
+    // a cycle.
+    return;
+  }
+
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
   if (require_ids.empty()) {
