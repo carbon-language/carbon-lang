@@ -1062,17 +1062,17 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.loc4_78.2: init %i32.builtin = converted %int_3.loc4_49, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.1 [concrete = constants.%int_3.a0f]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc4_78.3: ref %i32.builtin = array_index file.%arr.var, %int_0
-// CHECK:STDOUT:   %.loc4_78.4: init %i32.builtin to %.loc4_78.3 = initialize_from %.loc4_78.2 [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:   %.loc4_78.4: ref %i32.builtin to %.loc4_78.3 = materialize %.loc4_78.2 [concrete = constants.%int_3.a0f]
 // CHECK:STDOUT:   %impl.elem0.loc4_78.2: %.7de = impl_witness_access constants.%ImplicitAs.impl_witness.586, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc4_78.2: <bound method> = bound_method %int_4.loc4_52, %impl.elem0.loc4_78.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.762]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.2: init %i32.builtin = call %bound_method.loc4_78.2(%int_4.loc4_52) [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %.loc4_78.5: init %i32.builtin = converted %int_4.loc4_52, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.2 [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc4_78.6: ref %i32.builtin = array_index file.%arr.var, %int_1
-// CHECK:STDOUT:   %.loc4_78.7: init %i32.builtin to %.loc4_78.6 = initialize_from %.loc4_78.5 [concrete = constants.%int_4.4f1]
+// CHECK:STDOUT:   %.loc4_78.7: ref %i32.builtin to %.loc4_78.6 = materialize %.loc4_78.5 [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc4_78.8: ref %i32.builtin = array_index file.%arr.var, %int_2
-// CHECK:STDOUT:   %.loc4_78.9: init %i32.builtin to %.loc4_78.8 = initialize_from %i32.builtin.as.AddWith.impl.Op.call [concrete = constants.%int_7]
+// CHECK:STDOUT:   %.loc4_78.9: ref %i32.builtin to %.loc4_78.8 = materialize %i32.builtin.as.AddWith.impl.Op.call [concrete = constants.%int_7]
 // CHECK:STDOUT:   %.loc4_78.10: init %array_type to file.%arr.var = array_init (%.loc4_78.4, %.loc4_78.7, %.loc4_78.9) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_78.1, %.loc4_78.10 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1

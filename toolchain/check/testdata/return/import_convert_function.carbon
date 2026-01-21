@@ -576,7 +576,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1: init %i32 = call %bound_method.loc6_40.2(%int_0.loc6_31) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.2: init %i32 = converted %int_0.loc6_31, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc6_40.4: init %i32 to %.loc6_40.3 = initialize_from %.loc6_40.2 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc6_40.4: ref %i32 to %.loc6_40.3 = materialize %.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %impl.elem0.loc6_40.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc6_40.3: <bound method> = bound_method %int_0.loc6_39, %impl.elem0.loc6_40.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.897]
 // CHECK:STDOUT:   %specific_fn.loc6_40.2: <specific function> = specific_function %impl.elem0.loc6_40.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -584,7 +584,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2: init %i32 = call %bound_method.loc6_40.4(%int_0.loc6_39) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.5: init %i32 = converted %int_0.loc6_39, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.6: ref %i32 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc6_40.7: init %i32 to %.loc6_40.6 = initialize_from %.loc6_40.5 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc6_40.7: ref %i32 to %.loc6_40.6 = materialize %.loc6_40.5 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.8: init %D to %return.param = class_init (%.loc6_40.4, %.loc6_40.7) [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc6_41: init %D = converted %.loc6_40.1, %.loc6_40.8 [concrete = constants.%D.val]
 // CHECK:STDOUT:   return %.loc6_41 to %return.param

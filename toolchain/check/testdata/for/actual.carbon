@@ -511,14 +511,14 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %bound_method.loc6_22.2: <bound method> = bound_method %start.ref, %specific_impl_fn.loc6_22.1
 // CHECK:STDOUT:     %Copy.Op.call.loc6_22: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = call %bound_method.loc6_22.2(%start.ref)
 // CHECK:STDOUT:     %.loc6_39.2: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = class_element_access %return.param, element0
-// CHECK:STDOUT:     %.loc6_39.3: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.2 = initialize_from %Copy.Op.call.loc6_22
+// CHECK:STDOUT:     %.loc6_39.3: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.2 = materialize %Copy.Op.call.loc6_22
 // CHECK:STDOUT:     %impl.elem0.loc6_36: @IntRange.Make.%.loc6_22.2 (%.3676) = impl_witness_access constants.%Copy.lookup_impl_witness.7a8, element0 [symbolic = %impl.elem0.loc6_22.2 (constants.%impl.elem0.053)]
 // CHECK:STDOUT:     %bound_method.loc6_36.1: <bound method> = bound_method %end.ref, %impl.elem0.loc6_36
 // CHECK:STDOUT:     %specific_impl_fn.loc6_36: <specific function> = specific_impl_function %impl.elem0.loc6_36, @Copy.Op(constants.%Copy.facet.3b9) [symbolic = %specific_impl_fn.loc6_22.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:     %bound_method.loc6_36.2: <bound method> = bound_method %end.ref, %specific_impl_fn.loc6_36
 // CHECK:STDOUT:     %Copy.Op.call.loc6_36: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = call %bound_method.loc6_36.2(%end.ref)
 // CHECK:STDOUT:     %.loc6_39.4: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = class_element_access %return.param, element1
-// CHECK:STDOUT:     %.loc6_39.5: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.4 = initialize_from %Copy.Op.call.loc6_36
+// CHECK:STDOUT:     %.loc6_39.5: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.4 = materialize %Copy.Op.call.loc6_36
 // CHECK:STDOUT:     %.loc6_39.6: init @IntRange.Make.%IntRange (%IntRange.265) to %return.param = class_init (%.loc6_39.3, %.loc6_39.5)
 // CHECK:STDOUT:     %.loc6_40: init @IntRange.Make.%IntRange (%IntRange.265) = converted %.loc6_39.1, %.loc6_39.6
 // CHECK:STDOUT:     return %.loc6_40 to %return.param

@@ -172,6 +172,9 @@ The driver will print this when passed `--dump-raw-sem-ir`.
 
 ### Formatted IR
 
+FIXME document `to` notation (including entire ephemeral references and `return`
+special case).
+
 In addition to the raw form, there is a higher-level formatted IR that aims to
 be human readable. This is used in most `check` tests to validate the output,
 and also expected to be used regularly by toolchain developers to inspect the

@@ -257,7 +257,7 @@ fn Test() {
 // CHECK:STDOUT:   %bound_method.loc20_47.2: <bound method> = bound_method %self.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_47.2(%self.ref)
 // CHECK:STDOUT:   %.loc20_51.2: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc20_51.3: init %i32 to %.loc20_51.2 = initialize_from %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc20_51.3: ref %i32 to %.loc20_51.2 = materialize %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc20_51.4: init %X to %return.param = class_init (%.loc20_51.3)
 // CHECK:STDOUT:   %.loc20_52: init %X = converted %.loc20_51.1, %.loc20_51.4
 // CHECK:STDOUT:   return %.loc20_52 to %return.param

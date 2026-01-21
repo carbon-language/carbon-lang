@@ -319,12 +319,12 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc15_36.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr.loc15: %ptr.251 = addr_of %.loc15_36.1
 // CHECK:STDOUT:   %ThunkOnReturn__carbon_thunk.call: init %empty_tuple.type = call imports.%ThunkOnReturn__carbon_thunk.decl(%.loc15_35.2, %addr.loc15)
-// CHECK:STDOUT:   %.loc15_36.2: init %i16 to %.loc15_36.1 = in_place_init %ThunkOnReturn__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_36.2: ref %i16 to %.loc15_36.1 = mark_materialized %ThunkOnReturn__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_11: type = splice_block %i16.loc15 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16.loc15: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc15: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_36.3: ref %i16 = to_ref %.loc15_36.2
+// CHECK:STDOUT:   %.loc15_36.3: ref %i16 = start_lifetime %.loc15_36.2
 // CHECK:STDOUT:   %.loc15_36.4: %i16 = acquire_value %.loc15_36.3
 // CHECK:STDOUT:   %r3: %i16 = value_binding r3, %.loc15_36.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -351,12 +351,12 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc16_34.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr.loc16_34.2: %ptr.251 = addr_of %.loc16_34.1
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.call: init %empty_tuple.type = call imports.%ThunkOnBoth__carbon_thunk.decl(%addr.loc16_34.1, %addr.loc16_34.2)
-// CHECK:STDOUT:   %.loc16_34.2: init %i16 to %.loc16_34.1 = in_place_init %ThunkOnBoth__carbon_thunk.call
+// CHECK:STDOUT:   %.loc16_34.2: ref %i16 to %.loc16_34.1 = mark_materialized %ThunkOnBoth__carbon_thunk.call
 // CHECK:STDOUT:   %.loc16_11: type = splice_block %i16.loc16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16.loc16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_34.3: ref %i16 = to_ref %.loc16_34.2
+// CHECK:STDOUT:   %.loc16_34.3: ref %i16 = start_lifetime %.loc16_34.2
 // CHECK:STDOUT:   %.loc16_34.4: %i16 = acquire_value %.loc16_34.3
 // CHECK:STDOUT:   %r4: %i16 = value_binding r4, %.loc16_34.4
 // CHECK:STDOUT:   %DestroyOp.bound.loc16_34: <bound method> = bound_method %.loc16_34.3, constants.%DestroyOp

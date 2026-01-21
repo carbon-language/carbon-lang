@@ -203,7 +203,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc10_27.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_27.1
 // CHECK:STDOUT:     %.loc10_28.2: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.var, element0
 // CHECK:STDOUT:     %Copy.Op.call.loc10: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc10_28.2 = call %bound_method.loc10_27.2(%x.ref)
-// CHECK:STDOUT:     %.loc10_28.3: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc10_28.2 = initialize_from %Copy.Op.call.loc10
+// CHECK:STDOUT:     %.loc10_28.3: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc10_28.2 = materialize %Copy.Op.call.loc10
 // CHECK:STDOUT:     %.loc10_28.4: init @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) to %v.var = class_init (%.loc10_28.3)
 // CHECK:STDOUT:     %.loc10_3.1: init @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) = converted %.loc10_28.1, %.loc10_28.4
 // CHECK:STDOUT:     assign %v.var, %.loc10_3.1
@@ -248,7 +248,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %x.ref, %specific_fn.loc15
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc15: init %i32 = call %bound_method.loc15_29.2(%x.ref)
 // CHECK:STDOUT:   %.loc15_30.2: ref %i32 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc15_30.3: init %i32 to %.loc15_30.2 = initialize_from %Int.as.Copy.impl.Op.call.loc15
+// CHECK:STDOUT:   %.loc15_30.3: ref %i32 to %.loc15_30.2 = materialize %Int.as.Copy.impl.Op.call.loc15
 // CHECK:STDOUT:   %.loc15_30.4: init %Class.805 to %v.var = class_init (%.loc15_30.3)
 // CHECK:STDOUT:   %.loc15_3: init %Class.805 = converted %.loc15_30.1, %.loc15_30.4
 // CHECK:STDOUT:   assign %v.var, %.loc15_3

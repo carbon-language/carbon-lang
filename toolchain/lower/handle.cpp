@@ -199,7 +199,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
-                SemIR::InitializeFrom inst) -> void {
+                SemIR::Materialize inst) -> void {
   context.FinishInit(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
                      inst.src_id);
 }

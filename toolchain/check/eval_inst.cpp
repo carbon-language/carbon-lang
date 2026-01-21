@@ -442,7 +442,7 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ImportRefUnloaded inst)
                inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InitializeFrom inst)
+auto EvalConstantInst(Context& context, SemIR::Materialize inst)
     -> ConstantEvalResult {
   // Initialization is not performed in-place during constant evaluation, so
   // just return the value of the initializer.

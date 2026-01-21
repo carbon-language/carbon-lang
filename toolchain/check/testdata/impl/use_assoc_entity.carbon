@@ -4182,13 +4182,13 @@ fn F() {
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc9_50: init bool = call %bound_method.loc9_50(%true) [concrete = constants.%true]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc9_61.2: ref bool = array_index %return.param, %int_0
-// CHECK:STDOUT:   %.loc9_61.3: init bool to %.loc9_61.2 = initialize_from %bool.as.Copy.impl.Op.call.loc9_50 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc9_61.3: ref bool to %.loc9_61.2 = materialize %bool.as.Copy.impl.Op.call.loc9_50 [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc9_56: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc9_56: <bound method> = bound_method %false, %impl.elem0.loc9_56 [concrete = constants.%bool.as.Copy.impl.Op.bound.082]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc9_56: init bool = call %bound_method.loc9_56(%false) [concrete = constants.%false]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc9_61.4: ref bool = array_index %return.param, %int_1
-// CHECK:STDOUT:   %.loc9_61.5: init bool to %.loc9_61.4 = initialize_from %bool.as.Copy.impl.Op.call.loc9_56 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc9_61.5: ref bool to %.loc9_61.4 = materialize %bool.as.Copy.impl.Op.call.loc9_56 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc9_61.6: init %array_type.c9b to %return.param = array_init (%.loc9_61.3, %.loc9_61.5) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc9_62: init %array_type.c9b = converted %.loc9_61.1, %.loc9_61.6 [concrete = constants.%array]
 // CHECK:STDOUT:   return %.loc9_62 to %return.param

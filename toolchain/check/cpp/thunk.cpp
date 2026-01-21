@@ -711,10 +711,10 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {
-    result_id = AddInst<SemIR::InPlaceInit>(context, loc_id,
-                                            {.type_id = return_type_id,
-                                             .src_id = result_id,
-                                             .dest_id = return_slot_id});
+    result_id = AddInst<SemIR::MarkMaterialized>(context, loc_id,
+                                                 {.type_id = return_type_id,
+                                                  .src_id = result_id,
+                                                  .dest_id = return_slot_id});
   }
 
   return result_id;

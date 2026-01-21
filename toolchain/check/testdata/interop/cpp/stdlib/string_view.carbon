@@ -154,7 +154,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %.loc13_11.1: ref %str.ee0 = splice_block %return.param {}
 // CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13_11.1
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc14: init %str.ee0 to %.loc13_11.1 = in_place_init %Produce__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14: ref %str.ee0 to %.loc13_11.1 = mark_materialized %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,8 +228,8 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %.loc8_53.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_53.2: %ptr.bb2 = addr_of %.loc8_53.1
 // CHECK:STDOUT:   %starts_with__carbon_thunk.call: init %empty_tuple.type = call imports.%starts_with__carbon_thunk.decl(%a.ref, %addr.loc8_53.1, %addr.loc8_53.2)
-// CHECK:STDOUT:   %.loc8_53.2: init bool to %.loc8_53.1 = in_place_init %starts_with__carbon_thunk.call
-// CHECK:STDOUT:   %.loc8_54: init bool = repr_init %.loc8_53.2
+// CHECK:STDOUT:   %.loc8_53.2: ref bool to %.loc8_53.1 = mark_materialized %starts_with__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_54: init bool = dematerialize %.loc8_53.2
 // CHECK:STDOUT:   return %.loc8_54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

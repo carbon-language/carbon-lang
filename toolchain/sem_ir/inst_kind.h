@@ -32,23 +32,27 @@ enum class ExprCategory : int8_t {
   // object that outlives the current full expression context.
   DurableRef,
   // This instruction represents an ephemeral reference expression, that denotes
-  // an object that does not outlive the current full expression context.
+  // an object that does not outlive the current full expression context. Note
+  // that ephemeral references that are known to be entire are represented by
+  // EntireEphemeralRef instead.
   EphemeralRef,
+  // This instruction represents an entire ephemeral reference. An entire
+  // ephemeral reference represents an intermediate state between an
+  // initializing expression and an ephemeral reference expression: we have
+  // committed to storing the object in memory, but (as of when the inst is
+  // created) we have not yet committed to a storage location or lifetime for
+  // it. Concretely, an entire ephemeral reference inst always has a storage ID
+  // argument (which can be found with `FindStorageArgForInitializer`), but the
+  // inst it refers to may be rewritten later, when the actual storage location
+  // is chosen.
+  EphemeralEntireRef,
   // This instruction represents an initializing expression that initializes an
   // object using the type's initializing representation. If that representation
   // is not in-place, the instruction doesn't actually initialize the target
   // storage (and may not even specify the target storage), but a separate
   // "final destination store" inst (such as `Temporary` or `InitializeFrom`)
   // can use it to perform that initialization.
-  //
-  // NOTE: the distinction between ReprInitializing and InPlaceInitializing is
-  // not visible at the language level, so it must not affect whether code is
-  // rejected.
-  ReprInitializing,
-  // This instruction represents an initializing expression that initializes
-  // a particular target object in-place, regardless of the type's initializing
-  // representation.
-  InPlaceInitializing,
+  Initializing,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can

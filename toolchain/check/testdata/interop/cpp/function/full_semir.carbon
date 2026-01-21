@@ -364,12 +364,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_30.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc7_30.1
 // CHECK:STDOUT:   %foo_short__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_short__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc7_30.2: init %i16 to %.loc7_30.1 = in_place_init %foo_short__carbon_thunk.call
+// CHECK:STDOUT:   %.loc7_30.2: ref %i16 to %.loc7_30.1 = mark_materialized %foo_short__carbon_thunk.call
 // CHECK:STDOUT:   %.loc7_10: type = splice_block %i16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_30.3: ref %i16 = to_ref %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.3: ref %i16 = start_lifetime %.loc7_30.2
 // CHECK:STDOUT:   %.loc7_30.4: %i16 = acquire_value %.loc7_30.3
 // CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc7_30.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc7_30.3, constants.%DestroyOp

@@ -173,14 +173,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %bound_method.loc21_16.2: <bound method> = bound_method %n.ref, %specific_fn.loc21_16
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_16.2(%n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc21_31.3: init %i32 to %.loc21_31.2 = initialize_from %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc21_31.3: ref %i32 to %.loc21_31.2 = materialize %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %impl.elem0.loc21_27: %.105 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
 // CHECK:STDOUT:   %bound_method.loc21_27.1: <bound method> = bound_method %next.ref, %impl.elem0.loc21_27
 // CHECK:STDOUT:   %specific_fn.loc21_27: <specific function> = specific_function %impl.elem0.loc21_27, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_27.2: <bound method> = bound_method %next.ref, %specific_fn.loc21_27
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc21_27.2(%next.ref)
 // CHECK:STDOUT:   %.loc21_31.4: ref %ptr.8e5 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc21_31.5: init %ptr.8e5 to %.loc21_31.4 = initialize_from %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc21_31.5: ref %ptr.8e5 to %.loc21_31.4 = materialize %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc21_31.6: init %Class to %return.param = class_init (%.loc21_31.3, %.loc21_31.5)
 // CHECK:STDOUT:   %.loc21_32: init %Class = converted %.loc21_31.1, %.loc21_31.6
 // CHECK:STDOUT:   return %.loc21_32 to %return.param
@@ -197,14 +197,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %bound_method.loc25_30.2: <bound method> = bound_method %n.ref, %specific_fn.loc25_30
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_30.2(%n.ref)
 // CHECK:STDOUT:   %.loc25_31.2: ref %i32 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc25_31.3: init %i32 to %.loc25_31.2 = initialize_from %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc25_31.3: ref %i32 to %.loc25_31.2 = materialize %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %impl.elem0.loc25_19: %.105 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
 // CHECK:STDOUT:   %bound_method.loc25_19.1: <bound method> = bound_method %next.ref, %impl.elem0.loc25_19
 // CHECK:STDOUT:   %specific_fn.loc25_19: <specific function> = specific_function %impl.elem0.loc25_19, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_19.2: <bound method> = bound_method %next.ref, %specific_fn.loc25_19
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc25_19.2(%next.ref)
 // CHECK:STDOUT:   %.loc25_31.4: ref %ptr.8e5 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc25_31.5: init %ptr.8e5 to %.loc25_31.4 = initialize_from %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc25_31.5: ref %ptr.8e5 to %.loc25_31.4 = materialize %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc25_31.6: init %Class to %return.param = class_init (%.loc25_31.3, %.loc25_31.5)
 // CHECK:STDOUT:   %.loc25_32: init %Class = converted %.loc25_31.1, %.loc25_31.6
 // CHECK:STDOUT:   return %.loc25_32 to %return.param

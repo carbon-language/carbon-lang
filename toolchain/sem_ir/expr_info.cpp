@@ -70,12 +70,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
                 file, callee_function.resolved_specific_id);
             if (!return_form_id.has_value()) {
               // Treat as equivalent to `-> ()`.
-              return ExprCategory::ReprInitializing;
+              return ExprCategory::Initializing;
             }
             auto return_form = file.insts().Get(return_form_id);
             CARBON_KIND_SWITCH(return_form) {
               case CARBON_KIND(InitForm _):
-                return ExprCategory::ReprInitializing;
+                return ExprCategory::Initializing;
               case CARBON_KIND(RefForm _):
                 return ExprCategory::DurableRef;
               case CARBON_KIND(ErrorInst _):
@@ -89,7 +89,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
           }
           case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
             // TODO: support `ref` returns from C++.
-            return ExprCategory::ReprInitializing;
+            return ExprCategory::Initializing;
           }
         }
       } else {
@@ -162,7 +162,7 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       case CARBON_KIND(ClassInit init): {
         return init.dest_id;
       }
-      case CARBON_KIND(ReprInitialize init): {
+      case CARBON_KIND(Dematerialize init): {
         if (!allow_transitive) {
           return InstId::None;
         }
@@ -175,10 +175,10 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       case CARBON_KIND(TupleInit init): {
         return init.dest_id;
       }
-      case CARBON_KIND(InitializeFrom init): {
+      case CARBON_KIND(Materialize init): {
         return init.dest_id;
       }
-      case CARBON_KIND(InPlaceInit init): {
+      case CARBON_KIND(MarkMaterialized init): {
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {

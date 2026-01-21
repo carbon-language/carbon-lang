@@ -166,8 +166,7 @@ struct ArrayIndex {
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init",
-       .expr_category = ExprCategory::ReprInitializing});
+      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -436,8 +435,7 @@ struct ClassElementAccess {
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
-      {.ir_name = "class_init",
-       .expr_category = ExprCategory::ReprInitializing});
+      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1025,20 +1023,20 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
-// Tracks that an object has been initialized in-place to form the result of
-// this expression, even if its type's initializing representation is not
-// normally in-place. If the type does not use in-place initialization,
-// initialization from this expression will copy the value out of the
-// destination.
+// DO NOT SUBMIT until this file and inst_kind.def are re-alphabetized.
+
+// Records that the evaluation of the initializing expression `src_id`
+// fully initialized the storage at `dest_id` (even if its type's initializing
+// representation is not normally in-place), and forms an entire ephemeral
+// reference to the initialized object.
 //
 // This is used to model the initialization performed by C++ thunks, where
 // in-place initialization is used even for types that would normally have a
 // copy initializing representation.
-// FIXME converts repr init to in-place init?
-struct InPlaceInit {
-  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "in_place_init",
-       .expr_category = ExprCategory::InPlaceInitializing,
+struct MarkMaterialized {
+  static constexpr auto Kind = InstKind::MarkMaterialized.Define<Parse::NodeId>(
+      {.ir_name = "mark_materialized",
+       .expr_category = ExprCategory::EphemeralEntireRef,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1064,16 +1062,17 @@ struct InitForm {
   CallParamIndex index;
 };
 
-// Finalizes the initialization of `dest_id` from the initializer expression
-// `src_id`, by performing a final copy from source to destination, for types
-// whose initialization is not in-place.
-struct InitializeFrom {
+// Materializes the initializing expression `src_id` into the storage `dest_id`,
+// and forms an entire ephemeral reference to the resulting object, by
+// performing a final copy from source to destination, for types whose
+// initialization is not in-place.
+struct Materialize {
   // Note this Parse::NodeId is unused. InitializeFrom is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
-  static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
-      {.ir_name = "initialize_from",
-       .expr_category = ExprCategory::InPlaceInitializing});
+  static constexpr auto Kind = InstKind::Materialize.Define<Parse::NodeId>(
+      {.ir_name = "materialize",
+       .expr_category = ExprCategory::EphemeralEntireRef});
 
   TypeId type_id;
   InstId src_id;
@@ -1425,16 +1424,17 @@ struct RefTagExpr {
   InstId expr_id;
 };
 
-// FIXME comments
-// FIXME convert any expression, or only InPlaceInitializing?
-struct ReprInitialize {
-  static constexpr auto Kind = InstKind::ReprInitialize.Define<Parse::NodeId>(
-      {.ir_name = "repr_init",
-       .expr_category = ExprCategory::ReprInitializing,
+// Converts the ephemeral reference expression `src_id` to an initializing
+// expression. If the type has a copying initializing representation, this loads
+// it from memory.
+struct Dematerialize {
+  static constexpr auto Kind = InstKind::Dematerialize.Define<Parse::NodeId>(
+      {.ir_name = "dematerialize",
+       .expr_category = ExprCategory::Initializing,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
-  InstId src_id;  // DestInstId?
+  InstId src_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1745,8 +1745,7 @@ struct StructAccess {
 // Initializes a dest struct with the provided elements.
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
-      {.ir_name = "struct_init",
-       .expr_category = ExprCategory::ReprInitializing});
+      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1834,7 +1833,9 @@ struct SymbolicBindingType {
   InstId facet_value_inst_id;
 };
 
-// A temporary value.
+// Converts an initializing expression to an ephemeral reference expression
+// representing a temporary object. This is equivalent to `Materialize`
+// followed by `StartLifetime`.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
@@ -1858,11 +1859,11 @@ struct TemporaryStorage {
   TypeId type_id;
 };
 
-// FIXME comments
-// FIXME do we actually need this, or is InPlaceInitializing actually just EphemeralRef?
-struct RefFromInPlace {
-  static constexpr auto Kind = InstKind::RefFromInPlace.Define<Parse::NodeId>(
-      {.ir_name = "to_ref",
+// Converts an entire ephemeral reference to a non-entire ephemeral reference,
+// and starts its lifetime.
+struct StartLifetime {
+  static constexpr auto Kind = InstKind::StartLifetime.Define<Parse::NodeId>(
+      {.ir_name = "start_lifetime",
        .expr_category = ExprCategory::EphemeralRef,
        .constant_kind = InstConstantKind::Never,
        .has_cleanup = true});
@@ -1888,8 +1889,7 @@ struct TupleAccess {
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
-      {.ir_name = "tuple_init",
-       .expr_category = ExprCategory::ReprInitializing});
+      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;

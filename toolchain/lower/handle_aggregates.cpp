@@ -65,8 +65,8 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Pattern:
-    case SemIR::ExprCategory::ReprInitializing:
-    case SemIR::ExprCategory::InPlaceInitializing:
+    case SemIR::ExprCategory::Initializing:
+    case SemIR::ExprCategory::EphemeralEntireRef:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL(
           "Unexpected expression category for aggregate access into {0}",

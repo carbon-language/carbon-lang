@@ -39,12 +39,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::InPlaceInit inst) -> void {
+                SemIR::MarkMaterialized inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.dest_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::ReprInitialize inst) -> void {
+                SemIR::Dematerialize inst) -> void {
   auto type = context.GetTypeIdOfInst(inst_id);
   auto* value = context.GetValue(inst.src_id);
 
@@ -83,7 +83,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::RefFromInPlace inst) -> void {
+                SemIR::StartLifetime inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }
 
@@ -112,7 +112,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
-  CARBON_CHECK(SemIR::IsInitializingCategory(
+  CARBON_CHECK(SemIR::IsInitializerCategory(
       SemIR::GetExprCategory(context.sem_ir(), inst.init_id)));
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);

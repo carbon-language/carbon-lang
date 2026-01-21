@@ -284,7 +284,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_21.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc15_21.4: init %i32 to %.loc15_21.3 = initialize_from %.loc15_21.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc15_21.4: ref %i32 to %.loc15_21.3 = materialize %.loc15_21.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.5: init %Param to %return.param = class_init (%.loc15_21.4) [concrete = constants.%Param.val]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.5 [concrete = constants.%Param.val]
 // CHECK:STDOUT:   return %.loc15_22 to %return.param

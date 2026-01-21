@@ -211,12 +211,12 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc32_13: <bound method> = bound_method %int_3.loc32, %impl.elem0.loc32_13 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op.bound.04c]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.call.loc32_13: init Core.IntLiteral = call %bound_method.loc32_13(%int_3.loc32) [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %tuple.elem0.loc32: Core.IntLiteral = tuple_access %.loc32_8.1, element0 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc32_17.2: init Core.IntLiteral to %tuple.elem0.loc32 = initialize_from %Core.IntLiteral.as.Copy.impl.Op.call.loc32_13 [concrete = constants.%int_3.1ba]
+// CHECK:STDOUT:   %.loc32_17.2: ref Core.IntLiteral to %tuple.elem0.loc32 = materialize %Core.IntLiteral.as.Copy.impl.Op.call.loc32_13 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc32_16: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc32_16: <bound method> = bound_method %int_4.loc32, %impl.elem0.loc32_16 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op.bound.e8e]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.call.loc32_16: init Core.IntLiteral = call %bound_method.loc32_16(%int_4.loc32) [concrete = constants.%int_4]
 // CHECK:STDOUT:   %tuple.elem1.loc32: Core.IntLiteral = tuple_access %.loc32_8.1, element1 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc32_17.3: init Core.IntLiteral to %tuple.elem1.loc32 = initialize_from %Core.IntLiteral.as.Copy.impl.Op.call.loc32_16 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %.loc32_17.3: ref Core.IntLiteral to %tuple.elem1.loc32 = materialize %Core.IntLiteral.as.Copy.impl.Op.call.loc32_16 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %.loc32_17.4: init %tuple.type.f94 to %.loc32_8.1 = tuple_init (%.loc32_17.2, %.loc32_17.3) [concrete = constants.%tuple.302]
 // CHECK:STDOUT:   %.loc32_10: init %tuple.type.f94 = converted %.loc32_17.1, %.loc32_17.4 [concrete = constants.%tuple.302]
 // CHECK:STDOUT:   assign %.loc32_8.1, %.loc32_10
@@ -253,7 +253,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc38_17.1: init %i32 = call %bound_method.loc38_17.2(%int_1.loc38) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc38_17.2: init %i32 = converted %int_1.loc38, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc38_17.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %tuple.elem0.loc38: %i32 = tuple_access %.loc38_8.1, element0
-// CHECK:STDOUT:   %.loc38_17.3: init %i32 to %tuple.elem0.loc38 = initialize_from %.loc38_17.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc38_17.3: ref %i32 to %tuple.elem0.loc38 = materialize %.loc38_17.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc38_17.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc38_17.3: <bound method> = bound_method %int_2.loc38, %impl.elem0.loc38_17.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc38_17.2: <specific function> = specific_function %impl.elem0.loc38_17.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -261,7 +261,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc38_17.2: init %i32 = call %bound_method.loc38_17.4(%int_2.loc38) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc38_17.4: init %i32 = converted %int_2.loc38, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc38_17.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %tuple.elem1.loc38: %i32 = tuple_access %.loc38_8.1, element1
-// CHECK:STDOUT:   %.loc38_17.5: init %i32 to %tuple.elem1.loc38 = initialize_from %.loc38_17.4 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc38_17.5: ref %i32 to %tuple.elem1.loc38 = materialize %.loc38_17.4 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc38_17.6: init %tuple.type.d07 to %.loc38_8.1 = tuple_init (%.loc38_17.3, %.loc38_17.5) [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   %.loc38_10: init %tuple.type.d07 = converted %.loc38_17.1, %.loc38_17.6 [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   assign %.loc38_8.1, %.loc38_10
@@ -288,12 +288,12 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc48_28: <bound method> = bound_method %int_3.loc48, %impl.elem0.loc48_28 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op.bound.04c]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.call.loc48_28: init Core.IntLiteral = call %bound_method.loc48_28(%int_3.loc48) [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc48_37.2: Core.IntLiteral = struct_access %.loc48_18.1, element0 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc48_37.3: init Core.IntLiteral to %.loc48_37.2 = initialize_from %Core.IntLiteral.as.Copy.impl.Op.call.loc48_28 [concrete = constants.%int_3.1ba]
+// CHECK:STDOUT:   %.loc48_37.3: ref Core.IntLiteral to %.loc48_37.2 = materialize %Core.IntLiteral.as.Copy.impl.Op.call.loc48_28 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc48_36: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc48_36: <bound method> = bound_method %int_4.loc48, %impl.elem0.loc48_36 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op.bound.e8e]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.call.loc48_36: init Core.IntLiteral = call %bound_method.loc48_36(%int_4.loc48) [concrete = constants.%int_4]
 // CHECK:STDOUT:   %.loc48_37.4: Core.IntLiteral = struct_access %.loc48_18.1, element1 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc48_37.5: init Core.IntLiteral to %.loc48_37.4 = initialize_from %Core.IntLiteral.as.Copy.impl.Op.call.loc48_36 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %.loc48_37.5: ref Core.IntLiteral to %.loc48_37.4 = materialize %Core.IntLiteral.as.Copy.impl.Op.call.loc48_36 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %.loc48_37.6: init %struct_type.x.y to %.loc48_18.1 = struct_init (%.loc48_37.3, %.loc48_37.5) [concrete = constants.%struct.a0d]
 // CHECK:STDOUT:   %.loc48_20: init %struct_type.x.y = converted %.loc48_37.1, %.loc48_37.6 [concrete = constants.%struct.a0d]
 // CHECK:STDOUT:   assign %.loc48_18.1, %.loc48_20
