@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
+import Cpp library "<arpa/inet.h>";
 import Cpp library "<netinet/in.h>";
 import Cpp library "<stdio.h>";
 import Cpp library "<string_view>";
@@ -36,7 +37,9 @@ fn Run() -> i32 {
   // TODO: Should be able to zero-initialize this with `= ()` or `= {}`.
   var address: Cpp.sockaddr_in6;
   Cpp.memset(&address, 0, Cpp.SOCKADDR_IN_SIZE);
-  address.sin6_family = Cpp.AF_INET6 as u16;
+  // TODO: Should this be valid without a cast? `AF_INET6` is defined to an
+  // integer literal in glibc at least, but we import it as an `i32`.
+  address.sin6_family = Cpp.AF_INET6 as Cpp.sa_family_t;
   // TODO: This leads to a link error referring to `in6addr_any.1`.
   // address.sin6_addr = Cpp.in6addr_any;
   let port: u16 = 8081;
