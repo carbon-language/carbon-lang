@@ -1034,6 +1034,7 @@ struct ImportRefLoaded {
 // This is used to model the initialization performed by C++ thunks, where
 // in-place initialization is used even for types that would normally have a
 // copy initializing representation.
+// FIXME converts repr init to in-place init?
 struct InPlaceInit {
   static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
       {.ir_name = "in_place_init",
@@ -1422,6 +1423,18 @@ struct RefTagExpr {
 
   TypeId type_id;
   InstId expr_id;
+};
+
+// FIXME comments
+// FIXME convert any expression, or only InPlaceInitializing?
+struct ReprInitialize {
+  static constexpr auto Kind = InstKind::ReprInitialize.Define<Parse::NodeId>(
+      {.ir_name = "repr_init",
+       .expr_category = ExprCategory::ReprInitializing,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId src_id;  // DestInstId?
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1843,6 +1856,19 @@ struct TemporaryStorage {
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
+};
+
+// FIXME comments
+// FIXME do we actually need this, or is InPlaceInitializing actually just EphemeralRef?
+struct RefFromInPlace {
+  static constexpr auto Kind = InstKind::RefFromInPlace.Define<Parse::NodeId>(
+      {.ir_name = "to_ref",
+       .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Never,
+       .has_cleanup = true});
+
+  TypeId type_id;
+  InstId init_id;
 };
 
 // Access to a tuple member.

@@ -82,9 +82,15 @@ static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
 // temporary. If `discarded` is `true`, the result is discarded, and no
 // temporary will be created if possible; if no temporary is created, the
 // return value will be `SemIR::InstId::None`.
+// FIXME update comments
 static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                               bool discarded) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
+  auto init = sem_ir.insts().Get(init_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), init_id) == SemIR::ExprCategory::InPlaceInitializing) {
+    return AddInstWithCleanup<SemIR::RefFromInPlace>(context, SemIR::LocId(init_id),
+      {.type_id = init.type_id(), .init_id = init_id});
+  }
   auto return_slot_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
   if (return_slot_arg_id.has_value()) {
     // The return slot should already have a materialized temporary in it.
@@ -93,7 +99,6 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                  "Return slot for initializer does not contain a temporary; "
                  "initialized multiple times? Have {0}",
                  sem_ir.insts().Get(return_slot_arg_id));
-    auto init = sem_ir.insts().Get(init_id);
     return AddInstWithCleanup<SemIR::Temporary>(
         context, SemIR::LocId(init_id),
         {.type_id = init.type_id(),
@@ -173,7 +178,7 @@ static auto GetAggregateElementConversionTargetKind(SemIR::File& sem_ir,
     if (init_repr.kind == SemIR::InitRepr::InPlace) {
       return ConversionTarget::InPlaceInitializer;
     }
-    return ConversionTarget::Initializer;
+    return ConversionTarget::ReprInitializer;
   }
 
   // Otherwise, we want a value representation for each element.
@@ -679,7 +684,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   // point to.
   bool need_temporary = !target.is_initializer();
   if (need_temporary) {
-    target.kind = ConversionTarget::Initializer;
+    target.kind = ConversionTarget::ReprInitializer;
     target.storage_access_block = &target_block;
     target.storage_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
@@ -818,9 +823,8 @@ static auto IsValidExprCategoryForConversionTarget(
       return true;
     case ConversionTarget::InPlaceInitializer:
       return category == SemIR::ExprCategory::InPlaceInitializing;
-    case ConversionTarget::Initializer:
-      return category == SemIR::ExprCategory::ReprInitializing ||
-             category == SemIR::ExprCategory::InPlaceInitializing;
+    case ConversionTarget::ReprInitializer:
+      return category == SemIR::ExprCategory::ReprInitializing;
   }
 }
 
@@ -1728,7 +1732,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   if (target.kind != ConversionTarget::InPlaceInitializer &&
-      (target.kind != ConversionTarget::Initializer ||
+      (target.kind != ConversionTarget::ReprInitializer ||
        !SemIR::InitRepr::ForType(context.sem_ir(), target.type_id)
             .MightBeInPlace())) {
     // storage_id should only be used for an InPlaceInitializer, or an
@@ -1844,17 +1848,21 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           .Convert(expr_id);
 
   // TODO: consider doing this in CategoryConverter
-  // Perform a final destination store, if necessary.
-  if (target.kind == ConversionTarget::InPlaceInitializer &&
-      SemIR::GetExprCategory(sem_ir, expr_id) !=
-          SemIR::ExprCategory::InPlaceInitializing) {
-    if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
-        init_rep.MightBeByCopy()) {
+  // Ensure we produce the right sub-category of initializing expression.
+  if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
+      target.is_initializer() && init_rep.MightBeByCopy()) {
+    auto category = SemIR::GetExprCategory(sem_ir, expr_id);
+    if (target.kind == ConversionTarget::InPlaceInitializer &&
+        category != SemIR::ExprCategory::InPlaceInitializing) {
       target.storage_access_block->InsertHere();
       expr_id = AddInst<SemIR::InitializeFrom>(context, loc_id,
                                                {.type_id = target.type_id,
                                                 .src_id = expr_id,
                                                 .dest_id = target.storage_id});
+    } else if (target.kind == ConversionTarget::ReprInitializer &&
+              category == SemIR::ExprCategory::InPlaceInitializing) {
+      expr_id = AddInst<SemIR::ReprInitialize>(context, loc_id,
+        {.type_id = target.type_id, .src_id = expr_id});
     }
   }
 
@@ -1865,7 +1873,7 @@ auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
                 SemIR::InstId value_id) -> SemIR::InstId {
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
-                 {.kind = ConversionTarget::Initializer,
+                 {.kind = ConversionTarget::ReprInitializer,
                   .type_id = context.insts().Get(storage_id).type_id(),
                   .storage_id = storage_id,
                   .storage_access_block = &target_block});

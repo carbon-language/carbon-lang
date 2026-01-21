@@ -40,8 +40,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::InPlaceInit inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.dest_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ReprInitialize inst) -> void {
   auto type = context.GetTypeIdOfInst(inst_id);
-  auto* value = context.GetValue(inst.dest_id);
+  auto* value = context.GetValue(inst.src_id);
 
   // If the initializing representation is by-value, and the value
   // representation is by-copy, then we need to load from the storage. Otherwise
@@ -74,8 +79,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::InitRepr::Dependent:
       CARBON_FATAL("Unexpected dependent type");
   }
-
   context.SetLocal(inst_id, value);
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::RefFromInPlace inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

@@ -229,6 +229,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %addr.loc8_53.2: %ptr.bb2 = addr_of %.loc8_53.1
 // CHECK:STDOUT:   %starts_with__carbon_thunk.call: init %empty_tuple.type = call imports.%starts_with__carbon_thunk.decl(%a.ref, %addr.loc8_53.1, %addr.loc8_53.2)
 // CHECK:STDOUT:   %.loc8_53.2: init bool to %.loc8_53.1 = in_place_init %starts_with__carbon_thunk.call
-// CHECK:STDOUT:   return %.loc8_53.2
+// CHECK:STDOUT:   %.loc8_54: init bool = repr_init %.loc8_53.2
+// CHECK:STDOUT:   return %.loc8_54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

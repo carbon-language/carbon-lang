@@ -123,8 +123,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc6_40.1.temp = alloca i8, align 1, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_40.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @_Z8ReturnU8v.carbon_thunk(ptr %.loc6_40.1.temp), !dbg !16
-// CHECK:STDOUT:   %.loc6_40.2 = load i8, ptr %.loc6_40.1.temp, align 1, !dbg !16
-// CHECK:STDOUT:   ret i8 %.loc6_40.2, !dbg !17
+// CHECK:STDOUT:   %.loc6_41 = load i8, ptr %.loc6_40.1.temp, align 1, !dbg !17
+// CHECK:STDOUT:   ret i8 %.loc6_41, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -133,8 +133,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc7_43.1.temp = alloca i16, align 2, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_43.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @_Z9ReturnU16v.carbon_thunk(ptr %.loc7_43.1.temp), !dbg !22
-// CHECK:STDOUT:   %.loc7_43.2 = load i16, ptr %.loc7_43.1.temp, align 2, !dbg !22
-// CHECK:STDOUT:   ret i16 %.loc7_43.2, !dbg !23
+// CHECK:STDOUT:   %.loc7_44 = load i16, ptr %.loc7_43.1.temp, align 2, !dbg !23
+// CHECK:STDOUT:   ret i16 %.loc7_44, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -161,8 +161,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc11_40.1.temp = alloca i8, align 1, !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_40.1.temp), !dbg !40
 // CHECK:STDOUT:   call void @_Z8ReturnI8v.carbon_thunk(ptr %.loc11_40.1.temp), !dbg !40
-// CHECK:STDOUT:   %.loc11_40.2 = load i8, ptr %.loc11_40.1.temp, align 1, !dbg !40
-// CHECK:STDOUT:   ret i8 %.loc11_40.2, !dbg !41
+// CHECK:STDOUT:   %.loc11_41 = load i8, ptr %.loc11_40.1.temp, align 1, !dbg !41
+// CHECK:STDOUT:   ret i8 %.loc11_41, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -171,8 +171,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc12_43.1.temp = alloca i16, align 2, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_43.1.temp), !dbg !46
 // CHECK:STDOUT:   call void @_Z9ReturnI16v.carbon_thunk(ptr %.loc12_43.1.temp), !dbg !46
-// CHECK:STDOUT:   %.loc12_43.2 = load i16, ptr %.loc12_43.1.temp, align 2, !dbg !46
-// CHECK:STDOUT:   ret i16 %.loc12_43.2, !dbg !47
+// CHECK:STDOUT:   %.loc12_44 = load i16, ptr %.loc12_43.1.temp, align 2, !dbg !47
+// CHECK:STDOUT:   ret i16 %.loc12_44, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -204,25 +204,17 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc25_35.1.temp = alloca i16, align 2, !dbg !66
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_32.1.temp), !dbg !63
 // CHECK:STDOUT:   call void @_Z8ReturnU8v.carbon_thunk(ptr %.loc19_32.1.temp), !dbg !63
-// CHECK:STDOUT:   %.loc19_32.2 = load i8, ptr %.loc19_32.1.temp, align 1, !dbg !63
-// CHECK:STDOUT:   store i8 %.loc19_32.2, ptr %.loc19_32.1.temp, align 1, !dbg !63
 // CHECK:STDOUT:   %.loc19_32.4 = load i8, ptr %.loc19_32.1.temp, align 1, !dbg !63
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_35.1.temp), !dbg !64
 // CHECK:STDOUT:   call void @_Z9ReturnU16v.carbon_thunk(ptr %.loc20_35.1.temp), !dbg !64
-// CHECK:STDOUT:   %.loc20_35.2 = load i16, ptr %.loc20_35.1.temp, align 2, !dbg !64
-// CHECK:STDOUT:   store i16 %.loc20_35.2, ptr %.loc20_35.1.temp, align 2, !dbg !64
 // CHECK:STDOUT:   %.loc20_35.4 = load i16, ptr %.loc20_35.1.temp, align 2, !dbg !64
 // CHECK:STDOUT:   %ReturnU32.call = call i32 @_Z9ReturnU32v(), !dbg !67
 // CHECK:STDOUT:   %ReturnU64.call = call i64 @_Z9ReturnU64v(), !dbg !68
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_32.1.temp), !dbg !65
 // CHECK:STDOUT:   call void @_Z8ReturnI8v.carbon_thunk(ptr %.loc24_32.1.temp), !dbg !65
-// CHECK:STDOUT:   %.loc24_32.2 = load i8, ptr %.loc24_32.1.temp, align 1, !dbg !65
-// CHECK:STDOUT:   store i8 %.loc24_32.2, ptr %.loc24_32.1.temp, align 1, !dbg !65
 // CHECK:STDOUT:   %.loc24_32.4 = load i8, ptr %.loc24_32.1.temp, align 1, !dbg !65
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_35.1.temp), !dbg !66
 // CHECK:STDOUT:   call void @_Z9ReturnI16v.carbon_thunk(ptr %.loc25_35.1.temp), !dbg !66
-// CHECK:STDOUT:   %.loc25_35.2 = load i16, ptr %.loc25_35.1.temp, align 2, !dbg !66
-// CHECK:STDOUT:   store i16 %.loc25_35.2, ptr %.loc25_35.1.temp, align 2, !dbg !66
 // CHECK:STDOUT:   %.loc25_35.4 = load i16, ptr %.loc25_35.1.temp, align 2, !dbg !66
 // CHECK:STDOUT:   %ReturnI32.call = call i32 @_Z9ReturnI32v(), !dbg !69
 // CHECK:STDOUT:   %ReturnI64.call = call i64 @_Z9ReturnI64v(), !dbg !70
@@ -248,13 +240,13 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_u8.var), !dbg !74
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_32.1.temp), !dbg !75
 // CHECK:STDOUT:   call void @_Z8ReturnU8v.carbon_thunk(ptr %.loc33_32.1.temp), !dbg !75
-// CHECK:STDOUT:   %.loc33_32.2 = load i8, ptr %.loc33_32.1.temp, align 1, !dbg !75
-// CHECK:STDOUT:   store i8 %.loc33_32.2, ptr %my_u8.var, align 1, !dbg !74
+// CHECK:STDOUT:   %.loc33_3 = load i8, ptr %.loc33_32.1.temp, align 1, !dbg !74
+// CHECK:STDOUT:   store i8 %.loc33_3, ptr %my_u8.var, align 1, !dbg !74
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_u16.var), !dbg !76
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_35.1.temp), !dbg !77
 // CHECK:STDOUT:   call void @_Z9ReturnU16v.carbon_thunk(ptr %.loc34_35.1.temp), !dbg !77
-// CHECK:STDOUT:   %.loc34_35.2 = load i16, ptr %.loc34_35.1.temp, align 2, !dbg !77
-// CHECK:STDOUT:   store i16 %.loc34_35.2, ptr %my_u16.var, align 2, !dbg !76
+// CHECK:STDOUT:   %.loc34_3 = load i16, ptr %.loc34_35.1.temp, align 2, !dbg !76
+// CHECK:STDOUT:   store i16 %.loc34_3, ptr %my_u16.var, align 2, !dbg !76
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_u32.var), !dbg !78
 // CHECK:STDOUT:   %ReturnU32.call = call i32 @_Z9ReturnU32v(), !dbg !86
 // CHECK:STDOUT:   store i32 %ReturnU32.call, ptr %my_u32.var, align 4, !dbg !78
@@ -264,13 +256,13 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_i8.var), !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc38_32.1.temp), !dbg !81
 // CHECK:STDOUT:   call void @_Z8ReturnI8v.carbon_thunk(ptr %.loc38_32.1.temp), !dbg !81
-// CHECK:STDOUT:   %.loc38_32.2 = load i8, ptr %.loc38_32.1.temp, align 1, !dbg !81
-// CHECK:STDOUT:   store i8 %.loc38_32.2, ptr %my_i8.var, align 1, !dbg !80
+// CHECK:STDOUT:   %.loc38_3 = load i8, ptr %.loc38_32.1.temp, align 1, !dbg !80
+// CHECK:STDOUT:   store i8 %.loc38_3, ptr %my_i8.var, align 1, !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_i16.var), !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc39_35.1.temp), !dbg !83
 // CHECK:STDOUT:   call void @_Z9ReturnI16v.carbon_thunk(ptr %.loc39_35.1.temp), !dbg !83
-// CHECK:STDOUT:   %.loc39_35.2 = load i16, ptr %.loc39_35.1.temp, align 2, !dbg !83
-// CHECK:STDOUT:   store i16 %.loc39_35.2, ptr %my_i16.var, align 2, !dbg !82
+// CHECK:STDOUT:   %.loc39_3 = load i16, ptr %.loc39_35.1.temp, align 2, !dbg !82
+// CHECK:STDOUT:   store i16 %.loc39_3, ptr %my_i16.var, align 2, !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %my_i32.var), !dbg !84
 // CHECK:STDOUT:   %ReturnI32.call = call i32 @_Z9ReturnI32v(), !dbg !88
 // CHECK:STDOUT:   store i32 %ReturnI32.call, ptr %my_i32.var, align 4, !dbg !84

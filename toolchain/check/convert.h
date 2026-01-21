@@ -44,10 +44,10 @@ struct ConversionTarget {
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
     Discarded,
-    // Convert to an initializing expression. `storage_id` is only used if the
-    // type's initializing representation might be in-place; if it is known not
-    // to be, `storage_id` can be `None`.
-    Initializer,
+    // Convert to an initializing expression that uses `type_id`'s initializing
+    // representation. `storage_id` is only used if that representation might be
+    // in-place; if it is known not to be, `storage_id` can be `None`.
+    ReprInitializer,
     // Convert to an initializing expression, and use it to initialize
     // `storage_id` (which must not be `None`) in-place, regardless of whether
     // the type's initializing representation is in-place.
@@ -70,7 +70,7 @@ struct ConversionTarget {
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
-    return kind == Initializer || kind == InPlaceInitializer;
+    return kind == ReprInitializer || kind == InPlaceInitializer;
   }
   // Is this some kind of explicit `as` conversion?
   auto is_explicit_as() const -> bool {

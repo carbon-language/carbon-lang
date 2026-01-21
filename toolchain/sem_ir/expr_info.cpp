@@ -162,6 +162,13 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       case CARBON_KIND(ClassInit init): {
         return init.dest_id;
       }
+      case CARBON_KIND(ReprInitialize init): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        init_id = init.src_id;
+        continue;
+      }
       case CARBON_KIND(StructInit init): {
         return init.dest_id;
       }

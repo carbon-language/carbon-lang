@@ -118,7 +118,7 @@ fn G() {
 // CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc10_11.1
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc10_11.2: init %C to %.loc10_11.1 = in_place_init %C__carbon_thunk.call
-// CHECK:STDOUT:   %.loc10_11.3: ref %C = temporary %.loc10_11.1, %.loc10_11.2
+// CHECK:STDOUT:   %.loc10_11.3: ref %C = to_ref %.loc10_11.2
 // CHECK:STDOUT:   %F.ref.loc10: %C.F.cpp_overload_set.type = name_ref F, imports.%C.F.cpp_overload_set.value [concrete = constants.%C.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_11.3, %F.ref.loc10
 // CHECK:STDOUT:   %Cpp.ref.loc10_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

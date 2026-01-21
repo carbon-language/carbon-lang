@@ -109,7 +109,7 @@ fn Call() {
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc11_22.1
 // CHECK:STDOUT:   %foo1__carbon_thunk.call: init %empty_tuple.type = call imports.%foo1__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc11_22.2: init %i16 to %.loc11_22.1 = in_place_init %foo1__carbon_thunk.call
-// CHECK:STDOUT:   %.loc11_22.3: ref %i16 = temporary %.loc11_22.1, %.loc11_22.2
+// CHECK:STDOUT:   %.loc11_22.3: ref %i16 = to_ref %.loc11_22.2
 // CHECK:STDOUT:   %.loc11_22.4: %i16 = acquire_value %.loc11_22.3
 // CHECK:STDOUT:   %IngestI16.call: init %empty_tuple.type = call %IngestI16.ref(%.loc11_22.4)
 // CHECK:STDOUT:   %IngestI32.ref: %IngestI32.type = name_ref IngestI32, file.%IngestI32.decl [concrete = constants.%IngestI32]
