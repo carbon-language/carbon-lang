@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
-import Cpp library "<sys/socket.h>";
 import Cpp library "<netinet/in.h>";
-import Cpp library "<unistd.h>";
 import Cpp library "<stdio.h>";
 import Cpp library "<string_view>";
+import Cpp library "<sys/socket.h>";
+import Cpp library "<unistd.h>";
 
 import Cpp inline '''
 #define SOCKADDR_IN_SIZE sizeof(struct sockaddr_in6)
@@ -19,6 +19,11 @@ fn Perror(s: str) {
   Cpp.perror(Cpp.std.data(s));
 }
 
+// Basic example of using POSIX networking functions via interop.
+//
+// Opens a socket listening on port 8081, waits for a single connection, then
+// reads a single chunk of up to 256 bytes from it and echoes it to the
+// terminal.
 fn Run() -> i32 {
   // TODO: `Cpp.SOCK_STREAM as i32` should probably be allowed.
   // TODO: Should this be an implicit conversion?
