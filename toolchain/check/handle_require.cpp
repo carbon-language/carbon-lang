@@ -301,6 +301,21 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             })) {
       return true;
     }
+
+    // The extended scope instruction must be part of the enclosing scope (and
+    // generic). A specific for the enclosing scope will be applied to it when
+    // using the instruction later. To do so, we wrap the constraint facet type
+    // it in a SpecificConstant, which preserves the require declaration's
+    // specific along with the facet type.
+    auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
+        context, node_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .inst_id = constraint_inst_id,
+         .specific_id = context.generics().GetSelfSpecific(
+             context.require_impls().Get(require_impls_id).generic_id)});
+    auto enclosing_scope_id = context.scope_stack().PeekNameScopeId();
+    auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
+    enclosing_scope.AddExtendedScope(constraint_id_in_self_specific);
   }
 
   context.require_impls_stack().AppendToTop(require_impls_id);

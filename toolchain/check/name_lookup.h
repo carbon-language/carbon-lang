@@ -78,11 +78,11 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
                             bool is_being_declared = false)
     -> SemIR::ScopeLookupResult;
 
-// Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
+// Appends the lookup scopes corresponding to `lookup_const_id` to `*scopes`.
 // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
 // still updates `*scopes` and returns `true`.
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId base_const_id,
+                                   SemIR::ConstantId lookup_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool;
 

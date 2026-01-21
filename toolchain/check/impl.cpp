@@ -238,6 +238,11 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   if (!impl.generic_id.has_value()) {
     parent_scope.AddExtendedScope(impl.constraint_id);
   } else {
+    // The extended scope instruction must be part of the enclosing scope (and
+    // generic). A specific for the enclosing scope will be applied to it when
+    // using the instruction later. To do so, we wrap the constraint facet type
+    // it in a SpecificConstant, which preserves the impl declaration's
+    // specific along with the facet type.
     auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
         context, SemIR::LocId(impl.constraint_id),
         {.type_id = SemIR::TypeType::TypeId,
@@ -663,12 +668,21 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
+                                SemIR::Impl& impl) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
 
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  if (!interface.is_complete()) {
+    // This will be diagnosed later. We check for required decls before starting
+    // the definition to avoid inserting these lookups into the definition, as
+    // the lookups can end up looking for the impl being defined, which creates
+    // a cycle.
+    return;
+  }
+
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
   if (require_ids.empty()) {
@@ -690,8 +704,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
         context, require_specific, require.facet_type_inst_id);
 
     auto result =
-        LookupImplWitness(context, SemIR::LocId(impl.latest_decl_id()),
-                          self_const_id, facet_type_const_id);
+        LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);
     // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
     // it would be nice to diagnose which one was not `impl`ed, but that
     // requires LookupImplWitness to return a partial result, or take a
@@ -708,7 +721,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
                           SemIR::SpecificInterface, SemIR::TypeId,
                           SemIR::FacetTypeId);
         context.emitter().Emit(
-            impl.latest_decl_id(), RequireImplsNotImplemented, impl.interface,
+            loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
             context.insts()
                 .GetAs<SemIR::FacetType>(facet_type_inst_id)

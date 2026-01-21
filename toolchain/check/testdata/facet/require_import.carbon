@@ -58,6 +58,7 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %Main.import_ref.926bc7.1: type = import_ref Main//a, loc10_24, loaded [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Main.import_ref.e33: %X.type = import_ref Main//a, loc9_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//a, loc9_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1c5 = import_ref Main//a, loc10_25, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7bb: type = import_ref Main//a, loc6_11, loaded [symbolic = @Y.Self.binding.as_type.impls.Z.type.require.%Self.binding.as_type (constants.%Self.binding.as_type.63e)]
 // CHECK:STDOUT:   %Main.import_ref.926bc7.2: type = import_ref Main//a, loc6_17, loaded [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Main.import_ref.8c7: %Y.type = import_ref Main//a, loc5_13, loaded [symbolic = constants.%Self.d4d]
@@ -112,6 +113,7 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT: constraint @X [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b
+// CHECK:STDOUT:   extend imports.%Main.import_ref.1c5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @X.Self.binding.as_type.impls.Z.type.require {
