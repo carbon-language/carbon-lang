@@ -157,6 +157,9 @@ static auto TypeStructureReferencesSelf(
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
     if (!find_self(type_iter)) {
+      // TODO: The IdentifiedFacetType loses the location (since it's
+      // canonical), but it would be nice to somehow point this diagnostic at
+      // the particular interface in the facet type that is missing `Self`.
       CARBON_DIAGNOSTIC(
           RequireImplsMissingSelf, Error,
           "no `Self` reference found in `require` declaration; `Self` must "

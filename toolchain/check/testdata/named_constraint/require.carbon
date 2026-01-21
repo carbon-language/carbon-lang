@@ -218,6 +218,25 @@ constraint Z(T:! type) {
   require T impls Y(Self) & Y({});
 }
 
+// --- fail_require_impls_without_self_in_multiple_interfaces.carbon
+library "[[@TEST_NAME]]";
+
+interface Y(T:! type) {}
+
+constraint Z(T:! type) {
+  // Self does not appear in either interface, we should get an error for each.
+  //
+  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+8]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y(())` without a `Self` argument [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require T impls Y(()) & Y({});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require T impls Y(()) & Y({});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require T impls Y(()) & Y({});
+}
+
 // --- fail_self_impls_self.carbon
 library "[[@TEST_NAME]]";
 
