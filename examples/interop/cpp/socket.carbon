@@ -33,12 +33,12 @@ fn Run() -> i32 {
   Cpp.memset(&address, 0, Cpp.SOCKADDR_IN_SIZE);
   address.sin6_family = Cpp.AF_INET6 as u16;
   // TODO: This leads to a link error referring to `in6addr_any.1`.
-  // address.sin6_addr = Cpp.in6addr_any; 
+  // address.sin6_addr = Cpp.in6addr_any;
   let port: u16 = 8081;
   address.sin6_port = Cpp.htons(port);
 
   // TODO: Should be able to cast directly.
-  let address_ptr: Cpp.sockaddr* = 
+  let address_ptr: Cpp.sockaddr* =
       (&address as Cpp.void*) unsafe as Cpp.sockaddr*;
     
   // TODO: Should have an implicit conversion from
@@ -62,9 +62,9 @@ fn Run() -> i32 {
   Core.PrintStr("Server is listening on port ");
   Core.Print(port as i32);
 
-  var addr_len: Cpp.socklen_t = 0; 
+  var addr_len: Cpp.socklen_t = 0;
   let socket_fd: i32 = Cpp.accept(
-      server_fd, 
+      server_fd,
       address_ptr,
       &addr_len
   );
