@@ -150,7 +150,7 @@
         {
           "comment": "Matches function return types.",
           "begin": "->",
-          "end": "(?=[;{])",
+          "end": "(?=([;{]|=>))",
           "patterns": [
             { "include": "#reserved" },
             {
