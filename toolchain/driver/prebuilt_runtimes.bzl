@@ -174,4 +174,5 @@ def prebuilt_runtimes(name, target = None, tags = []):
         srcs = [
             ":" + name + "_clang",
         ],
+        tags = tags,
     )
