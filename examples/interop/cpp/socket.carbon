@@ -48,7 +48,7 @@ fn Run() -> i32 {
   // TODO: This leads to a link error referring to `in6addr_any.1`.
   // address.sin6_addr = Cpp.in6addr_any;
   let port: u16 = 8081;
-  address.sin6_port = Cpp.htons(port);
+  address.sin6_port = Cpp.htons_wrap(port);
 
   // TODO: Should be able to cast directly.
   let address_ptr: Cpp.sockaddr* =
