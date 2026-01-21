@@ -43,8 +43,3 @@ impl forall [T:! type] T* as ImplicitAs(const CppCompat.VoidBase*) {
 impl forall [T:! type] CppCompat.VoidBase* as UnsafeAs(T*) {
   fn Convert[self: CppCompat.VoidBase*]() -> T* = "pointer.unsafe_convert";
 }
-
-// TODO: Should `unsafe as` be able to remove `const`?
-impl forall [T:! type] const CppCompat.VoidBase* as UnsafeAs(const T*) {
-  fn Convert[self: const CppCompat.VoidBase*]() -> const T* = "pointer.unsafe_convert";
-}

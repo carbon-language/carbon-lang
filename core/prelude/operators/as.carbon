@@ -20,22 +20,32 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
+// Workaround: ImplicitAs extends As.
 impl forall [U:! type, T:! ImplicitAs(U)] T as As(U) {
   fn Convert[self: Self]() -> U { return self.Convert(); }
 }
 
+// Workaround: As extends UnsafeAs.
 impl forall [U:! type, T:! As(U)] T as UnsafeAs(U) {
   fn Convert[self: Self]() -> U { return self.Convert(); }
 }
 
+// Copyable types have an identity conversion that performs a copy.
 impl forall [T:! Copy] T as ImplicitAs(T) {
   fn Convert[self: Self]() -> Self { return self.(Copy.Op)(); }
 }
 
+// `const` can be added and removed when converting a value.
 impl forall [T:! type, U:! ImplicitAs(T)] U as ImplicitAs(const T) {
   fn Convert[self: U]() -> const T { return self.Convert(); }
 }
 
 impl forall [T:! type, U:! ImplicitAs(T)] const U as ImplicitAs(T) {
   fn Convert[self: const U]() -> T { return (self as U).Convert(); }
+}
+
+// Pointer types can be unsafely cast to other pointer types.
+// TODO: Should `unsafe as` be able to remove `const`?
+impl forall [T:! type, U:! type] T* as UnsafeAs(U*) {
+  fn Convert[self: T*]() -> U* = "pointer.unsafe_convert";
 }
