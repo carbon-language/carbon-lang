@@ -478,14 +478,12 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
-    if (base_const_id.is_constant()) {
-      llvm::SmallVector<LookupScope> lookup_scopes;
-      if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                        base_const_id, &lookup_scopes)) {
-        return LookupMemberNameInScope(
-            context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
-            /*lookup_in_type_of_base=*/false, required);
-      }
+    llvm::SmallVector<LookupScope> lookup_scopes;
+    if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
+                                      base_const_id, &lookup_scopes)) {
+      return LookupMemberNameInScope(
+          context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
+          /*lookup_in_type_of_base=*/false, required);
     }
 
     // If the base is a facet (a symbolic name scope), perform lookup into its

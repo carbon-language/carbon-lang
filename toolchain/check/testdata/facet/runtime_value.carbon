@@ -72,6 +72,10 @@ interface Z {
   let X:! type;
 }
 
+// TODO: Improve this diagnostic. The problem is that T is a runtime facet
+// _and_ its facet type doesn't specific a value for `.X`. Or make this work
+// by producing an ImplWitnessAccess that functions against a runtime facet.
+//
 // CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T: Z, v: T.X);
 // CHECK:STDERR:               ^~~

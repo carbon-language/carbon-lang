@@ -302,6 +302,10 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       return true;
     }
 
+    // The generic of a require declaration is always inside an interface or
+    // constraint, which makes its last generic binding the inner `Self` facet
+    // of the interface/constraint definition. Thus the last argument of its
+    // `self_specific` is that inner `Self`.
     auto self_specific_id = context.generics().GetSelfSpecific(
         context.require_impls().Get(require_impls_id).generic_id);
     const auto& self_specific = context.specifics().Get(self_specific_id);

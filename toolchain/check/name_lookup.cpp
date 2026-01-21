@@ -468,6 +468,15 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 
         // Apply self_const_id to the extended_id, replacing inner_self_id
         // inside.
+        //
+        // TODO: We do this by substituting a `Self` value that the extended
+        // scope provides us with the self type/facet of the name lookup. But
+        // we'd like to avoid using substitution, and do this through the
+        // generic system with a specific and/or eval. Ideally it's somehow done
+        // as part of the `GetConstantValueInSpecific` call above, but with
+        // providing the additional information of the self type/facet of the
+        // name lookup. Further thoughts here:
+        // https://discord.com/channels/655572317891461132/941071822756143115/1463277684082737214
         if (inner_self_id.has_value() && self_const_id.has_value()) {
           LoadImportRef(context, inner_self_id);
 
