@@ -51,9 +51,7 @@ fn Run() -> i32 {
   let port: u16 = 8081;
   address.sin6_port = Cpp.htons_wrap(port);
 
-  // TODO: Should be able to cast directly.
-  let address_ptr: Cpp.sockaddr* =
-      (&address as Cpp.void*) unsafe as Cpp.sockaddr*;
+  let address_ptr: Cpp.sockaddr* = &address unsafe as Cpp.sockaddr*;
   // TODO: Should have an implicit conversion from
   // T* to Optional(const T*).
   // TODO: Should expose `sizeof` somehow.

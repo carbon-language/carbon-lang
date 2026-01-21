@@ -39,7 +39,3 @@ impl forall [T:! type] T* as ImplicitAs(CppCompat.VoidBase*) {
 impl forall [T:! type] T* as ImplicitAs(const CppCompat.VoidBase*) {
   fn Convert[self: T*]() -> CppCompat.VoidBase* = "pointer.unsafe_convert";
 }
-
-impl forall [T:! type] CppCompat.VoidBase* as UnsafeAs(T*) {
-  fn Convert[self: CppCompat.VoidBase*]() -> T* = "pointer.unsafe_convert";
-}
