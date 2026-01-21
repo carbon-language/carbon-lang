@@ -136,11 +136,6 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // This is necessary because later associated entities may refer to earlier
   // associated entities in their signatures. In particular, an associated
   // result type may be used as the return type of an associated function.
-  //
-  // TODO: Consider building one witness after all associated constants, and
-  // then a second after all associated functions, rather than building one at
-  // each step. For now this doesn't really matter since we don't have more than
-  // one of each anyway.
   auto make_witness = [&] {
     return context.constant_values().GetInstId(
         EvalOrAddInst<SemIR::CustomWitness>(
@@ -192,6 +187,13 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         return SemIR::ErrorInst::InstId;
     }
   }
+
+  // TODO: Consider building one witness after all associated constants, and
+  // then a second after all associated functions, rather than building one in
+  // each `StructValue`. Right now the code is written assuming at most one
+  // function, though this CHECK can be removed as a temporary workaround.
+  CARBON_CHECK(entries.size() <= 1,
+               "TODO: Support multiple associated functions");
 
   return make_witness();
 }
