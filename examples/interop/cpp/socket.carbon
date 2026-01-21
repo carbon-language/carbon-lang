@@ -12,6 +12,11 @@ import Cpp library "<unistd.h>";
 
 import Cpp inline '''
 #define SOCKADDR_IN_SIZE sizeof(struct sockaddr_in6)
+
+// Work around htons being a macro, not a function, on MacOS.
+inline short htons_wrap(short n) {
+  return htons(n);
+}
 ''';
 
 fn Perror(s: str) {
