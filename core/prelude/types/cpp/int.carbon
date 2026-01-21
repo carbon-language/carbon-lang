@@ -206,45 +206,55 @@ final impl CppCompat.Long32 as RightShiftWith(Self) where .Result = Self {
 
 // Compound arithmetic assignments.
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as AddAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as AddAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.sadd_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as SubAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as SubAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.ssub_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as MulAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as MulAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.smul_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as DivAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as DivAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.sdiv_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as ModAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as ModAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.smod_assign";
 }
 
 // Compound bitwise assignments.
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as BitAndAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as BitAndAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.and_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as BitOrAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as BitOrAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.or_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as BitXorAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as BitXorAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.xor_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as LeftShiftAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as LeftShiftAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.left_shift_assign";
 }
 
-impl forall [U:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as RightShiftAssignWith(U) {
+impl forall [U:! ImplicitAs(CppCompat.Long32)]
+	  CppCompat.Long32 as RightShiftAssignWith(U) {
   fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
 }
 
