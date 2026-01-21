@@ -15,7 +15,7 @@ import Cpp inline '''
 
 // Work around htons being a macro, not a function, on MacOS.
 // TODO: This should not be necessary once we can import function-like macros.
-inline short htons_wrap(short n) {
+inline unsigned short htons_wrap(unsigned short n) {
   return htons(n);
 }
 ''';
