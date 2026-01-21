@@ -289,20 +289,20 @@ fn CompoundAssignmentLongAndRuntimeI32() {
   // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_runtime_i32.carbon:[[@LINE+20]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:56:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:66:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:   fn Convert[self: Self]() -> CppCompat.Long32 = "int.convert_checked";
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:211:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:221:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:   fn Op[ref self: Self](other: Self) = "int.sadd_assign";
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_runtime_i32.carbon:[[@LINE+10]]:8: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:56:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:66:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:   fn Convert[self: Self]() -> CppCompat.Long32 = "int.convert_checked";
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:211:25: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/types/cpp/int.carbon:221:25: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Op[ref self: Self](other: Self) = "int.sadd_assign";
   // CHECK:STDERR:                         ^~~~~~~~~~~
   // CHECK:STDERR:
