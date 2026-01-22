@@ -1194,7 +1194,8 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
     // debug location, in order to use Clang's rules for (eg) macro handling.
     auto loc =
         sem_ir().clang_source_locs().Get(abs_node_id.clang_source_loc_id());
-    auto presumed_loc = sem_ir().cpp_file()->source_manager().getPresumedLoc(loc);
+    auto presumed_loc =
+        sem_ir().cpp_file()->source_manager().getPresumedLoc(loc);
     return {.filename = presumed_loc.getFilename(),
             .line_number = static_cast<int32_t>(presumed_loc.getLine()),
             .column_number = static_cast<int32_t>(presumed_loc.getColumn())};
