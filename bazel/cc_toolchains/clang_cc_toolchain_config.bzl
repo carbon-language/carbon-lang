@@ -6,29 +6,9 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
-load(
-    ":cc_toolchain_base_features.bzl",
-    "base_features",
-    "output_flags_feature",
-    "user_flags_feature",
-)
 load(":cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
-load(
-    ":cc_toolchain_config_features.bzl",
-    "target_cpu_features",
-    "target_os_features",
-)
-load(
-    ":cc_toolchain_cpp_features.bzl",
-    "clang_feature",
-    "clang_warnings_feature",
-    "libcxx_feature",
-)
-load(":cc_toolchain_debugging.bzl", "debugging_features")
-load(":cc_toolchain_linking.bzl", "linking_features")
-load(":cc_toolchain_modules.bzl", "modules_features")
-load(":cc_toolchain_optimization.bzl", "optimization_features")
-load(":cc_toolchain_sanitizer_features.bzl", "sanitizer_features")
+load(":cc_toolchain_cpp_features.bzl", "libcxx_feature")
+load(":cc_toolchain_features.bzl", "clang_cc_toolchain_features")
 load(
     ":cc_toolchain_tools.bzl",
     "llvm_action_configs",
@@ -44,34 +24,6 @@ load(
     "sysroot_dir",
 )
 
-def _build_features(ctx):
-    # The order of the features determines the relative order of flags used.
-    features = []
-    features += target_os_features(ctx.attr.target_os)
-    features += target_cpu_features(ctx.attr.target_cpu)
-    features += base_features
-    features += [
-        # We always use Clang in the toolchain and enable all of its warnings.
-        clang_feature,
-        clang_warnings_feature,
-        # Enable libc++ where supported.
-        libcxx_feature(llvm_bindir, clang_bindir),
-    ]
-    features += sanitizer_features
-    features += optimization_features
-    features += modules_features
-    features += debugging_features
-    features += linking_features
-
-    # Lastly, we add project features and the user flags so they can override
-    # anything above, and the output flags last of all for ease of debugging.
-    features += carbon_project_features(clang_version_for_cache)
-    features += [
-        user_flags_feature,
-        output_flags_feature,
-    ]
-    return features
-
 def _impl(ctx):
     # Only use a sysroot if one was found when detecting Clang.
     sysroot = None
@@ -81,7 +33,12 @@ def _impl(ctx):
     identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        features = _build_features(ctx),
+        features = clang_cc_toolchain_features(
+            target_os = ctx.attr.target_os,
+            target_cpu = ctx.attr.target_cpu,
+            project_features = carbon_project_features(clang_version_for_cache),
+            extra_cpp_features = [libcxx_feature(llvm_bindir, clang_bindir)],
+        ),
         action_configs = llvm_action_configs(llvm_bindir, clang_bindir),
         cxx_builtin_include_directories = clang_include_dirs_list + [
             # Add Clang's resource directory to the end of the builtin include
