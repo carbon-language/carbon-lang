@@ -42,24 +42,31 @@
 
 namespace Carbon::Check {
 
-// Marks the initializer `init_id` as initializing `target.storage_id`.
-static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
-                               ConversionTarget& target) -> void {
-  if (!target.storage_id.has_value()) {
-    return;
-  }
+// Replaces the contents of the storage arg of the initializer `init_id` with
+// the inst at `target.storage_id`, and returns the ID that should now be used
+// to refer to `init_id`'s storage. Has no effect and returns
+// `target.storage_id` unchanged if `target.storage_id` is None or `init_id`
+// doesn't have a storage arg.
+static auto ReplaceInitializerStorage(SemIR::File& sem_ir,
+                                      SemIR::InstId init_id,
+                                      const ConversionTarget& target)
+    -> SemIR::InstId {
   CARBON_CHECK(target.is_initializer());
-  auto return_slot_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
-  if (return_slot_arg_id.has_value()) {
-    // Replace the temporary in the return slot with a reference to our target.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
-                     SemIR::TemporaryStorage::Kind,
-                 "Return slot for initializer does not contain a temporary; "
-                 "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_arg_id));
-    target.storage_id = target.storage_access_block->MergeReplacing(
-        return_slot_arg_id, target.storage_id);
+  if (!target.storage_id.has_value()) {
+    return SemIR::InstId::None;
   }
+  auto storage_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
+  if (!storage_arg_id.has_value()) {
+    return target.storage_id;
+  }
+  // Replace the temporary in the return slot with a reference to our target.
+  CARBON_CHECK(sem_ir.insts().Get(storage_arg_id).kind() ==
+                   SemIR::TemporaryStorage::Kind,
+               "Return slot for initializer does not contain a temporary; "
+               "initialized multiple times? Have {0}",
+               sem_ir.insts().Get(storage_arg_id));
+  return target.storage_access_block->MergeReplacing(storage_arg_id,
+                                                     target.storage_id);
 }
 
 // For a value or initializing expression using a copy value representation,
@@ -1384,7 +1391,7 @@ static auto IsCppEnum(Context& context, SemIR::TypeId type_id) -> bool {
 // Given a value expression, form a corresponding initializer that copies from
 // that value to the specified target, if it is possible to do so.
 static auto PerformCopy(Context& context, SemIR::InstId expr_id,
-                        ConversionTarget& target) -> SemIR::InstId {
+                        const ConversionTarget& target) -> SemIR::InstId {
   // TODO: We don't have a mechanism yet to generate `Copy` impls for each enum
   // type imported from C++. For now we fake it by providing a direct copy.
   auto type_id = context.insts().Get(expr_id).type_id();
@@ -1402,7 +1409,6 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
                           "cannot copy value of type {0}", TypeOfInstId);
         return context.emitter().Build(expr_id, CopyOfUncopyableType, expr_id);
       });
-  MarkInitializerFor(context.sem_ir(), copy_id, target);
   return copy_id;
 }
 
@@ -1517,14 +1523,17 @@ class CategoryConverter {
   Context& context_;
   SemIR::File& sem_ir_;
   SemIR::LocId loc_id_;
-  ConversionTarget& target_;
+  const ConversionTarget& target_;
   bool performed_builtin_conversion_;
 };
 
 auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                                const SemIR::ExprCategory category) const
     -> State {
-  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category);
+  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category ||
+                // TODO: drop this special case once PerformCopy on C++ enums
+                // produces an initializing expression.
+                IsCppEnum(context_, target_.type_id));
   switch (category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
@@ -1537,16 +1546,31 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
 
     case SemIR::ExprCategory::InPlaceInitializing:
     case SemIR::ExprCategory::ReprInitializing:
-      // TODO: consider performing final destination store here, instead of in
-      // `Convert`.
       if (target_.is_initializer()) {
+        // Overwrite the initializer's storage argument with the inst currently
+        // at target_.storage_id, if both are present. We skip this if we
+        // created the expression through a builtin conversion. In that case, we
+        // will have created it with the target already set.
+        auto new_storage_id = target_.storage_id;
         if (!performed_builtin_conversion_) {
-          // Don't fill in the return slot if we created the expression through
-          // a builtin conversion. In that case, we will have created it with
-          // the target already set.
-          // TODO: Find a better way to track whether we need to do this,
-          // and then make target_ immutable if possible.
-          MarkInitializerFor(sem_ir_, expr_id, target_);
+          new_storage_id = ReplaceInitializerStorage(sem_ir_, expr_id, target_);
+        }
+
+        // Ensure we produce the right sub-category of initializing expression.
+        if (auto init_rep = SemIR::InitRepr::ForType(sem_ir_, target_.type_id);
+            init_rep.MightBeByCopy()) {
+          if (target_.kind == ConversionTarget::InPlaceInitializer &&
+              category != SemIR::ExprCategory::InPlaceInitializing) {
+            target_.storage_access_block->InsertHere();
+            return Done{AddInst<SemIR::InitializeFrom>(context_, loc_id_,
+                                                    {.type_id = target_.type_id,
+                                                      .src_id = expr_id,
+                                                      .dest_id = new_storage_id})};
+          } else if (target_.kind == ConversionTarget::ReprInitializer &&
+                    category == SemIR::ExprCategory::InPlaceInitializing) {
+            return Done{AddInst<SemIR::ReprInitialize>(context_, loc_id_,
+              {.type_id = target_.type_id, .src_id = expr_id})};
+          }
         }
         return Done{expr_id};
       }
@@ -1644,7 +1668,28 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
 
       // When initializing from a value, perform a copy.
       if (target_.is_initializer()) {
-        return Done{PerformCopy(context_, expr_id, target_)};
+        auto copy_id = PerformCopy(context_, expr_id, target_);
+        if (copy_id == SemIR::ErrorInst::InstId) {
+          return Done{SemIR::ErrorInst::InstId};
+        }
+        // Deal with special-case category behavior of PerformCopy.
+        switch (SemIR::GetExprCategory(sem_ir_, copy_id)) {
+          case SemIR::ExprCategory::Value:
+            // As a temporary workaround, PerformCopy on a C++ enum currently
+            // returns the unchanged value, but we treat it as an initializing
+            // expression.
+            // TODO: Drop this case once it's no longer applicable.
+            CARBON_CHECK(IsCppEnum(context_, target_.type_id));
+            [[fallthrough]];
+          case SemIR::ExprCategory::ReprInitializing:
+            // The common case: PerformCopy produces an initializing expression.
+            return NextStep{.expr_id = copy_id, .category = SemIR::ExprCategory::ReprInitializing};
+          case SemIR::ExprCategory::InPlaceInitializing:
+            // C++ copy operations produce in-place initializing expressions.
+            return NextStep{.expr_id = copy_id, .category = SemIR::ExprCategory::InPlaceInitializing};
+          default:
+            CARBON_FATAL("Unexpected category of copy operation {0}", category);
+        }
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a
@@ -1846,25 +1891,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   expr_id =
       CategoryConverter(context, loc_id, target, performed_builtin_conversion)
           .Convert(expr_id);
-
-  // TODO: consider doing this in CategoryConverter
-  // Ensure we produce the right sub-category of initializing expression.
-  if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
-      target.is_initializer() && init_rep.MightBeByCopy()) {
-    auto category = SemIR::GetExprCategory(sem_ir, expr_id);
-    if (target.kind == ConversionTarget::InPlaceInitializer &&
-        category != SemIR::ExprCategory::InPlaceInitializing) {
-      target.storage_access_block->InsertHere();
-      expr_id = AddInst<SemIR::InitializeFrom>(context, loc_id,
-                                               {.type_id = target.type_id,
-                                                .src_id = expr_id,
-                                                .dest_id = target.storage_id});
-    } else if (target.kind == ConversionTarget::ReprInitializer &&
-              category == SemIR::ExprCategory::InPlaceInitializing) {
-      expr_id = AddInst<SemIR::ReprInitialize>(context, loc_id,
-        {.type_id = target.type_id, .src_id = expr_id});
-    }
-  }
 
   return expr_id;
 }
