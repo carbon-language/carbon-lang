@@ -193,9 +193,9 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   }
 }
 
-static auto LookupCppImplicitConversion(Context& context, SemIR::LocId loc_id,
-                                        SemIR::InstId source_id,
-                                        SemIR::TypeId dest_type_id)
+static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId source_id,
+                                SemIR::TypeId dest_type_id, bool allow_explicit)
     -> SemIR::InstId {
   auto dest_type = MapToCppType(context, dest_type_id);
   if (dest_type.isNull()) {
@@ -214,8 +214,12 @@ static auto LookupCppImplicitConversion(Context& context, SemIR::LocId loc_id,
   auto& sema = context.clang_sema();
   clang::InitializedEntity entity =
       clang::InitializedEntity::InitializeTemporary(dest_type);
-  clang::InitializationKind kind = clang::InitializationKind::CreateCopy(
-      loc, /*equal_loc=*/clang::SourceLocation());
+  clang::InitializationKind kind =
+      allow_explicit ? clang::InitializationKind::CreateDirect(
+                           loc, /*LParenLoc=*/clang::SourceLocation(),
+                           /*RParenLoc=*/clang::SourceLocation())
+                     : clang::InitializationKind::CreateCopy(
+                           loc, /*EqualLoc=*/clang::SourceLocation());
   clang::MultiExprArg args(arg_expr);
   clang::InitializationSequence init(sema, entity, kind, args);
 
@@ -289,7 +293,8 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                                                     [](auto& /*builder*/) {});
 
   // Handle `ImplicitAs`.
-  if (op.interface_name == CoreIdentifier::ImplicitAs) {
+  if (op.interface_name == CoreIdentifier::ImplicitAs ||
+      op.interface_name == CoreIdentifier::As) {
     if (op.interface_args_ref.size() != 1 || arg_ids.size() != 1) {
       return SemIR::InstId::None;
     }
@@ -302,8 +307,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       return SemIR::InstId::None;
     }
 
-    return LookupCppImplicitConversion(context, loc_id, arg_ids[0],
-                                       dest_type_id);
+    return LookupCppConversion(
+        context, loc_id, arg_ids[0], dest_type_id,
+        /*allow_explicit=*/op.interface_name == CoreIdentifier::As);
   }
 
   auto op_kind =

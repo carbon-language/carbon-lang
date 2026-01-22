@@ -387,6 +387,12 @@ fn ConvertDC(p: Cpp.D*) -> Cpp.C* {
 }
 
 fn AccessBA(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: Normal sequence: constructor initialization [struct B]
+  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR:   return (d as Cpp.B).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `Cpp.D` to `Cpp.B` with `as` [ConversionFailure]
   // CHECK:STDERR:   return (d as Cpp.B).b;
   // CHECK:STDERR:           ^~~~~~~~~~
@@ -398,6 +404,12 @@ fn AccessBA(d: Cpp.D) -> i32 {
 }
 
 fn AccessCA(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: Normal sequence: constructor initialization [struct C]
+  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR:   return (d as Cpp.C).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `Cpp.D` to `Cpp.C` with `as` [ConversionFailure]
   // CHECK:STDERR:   return (d as Cpp.C).b;
   // CHECK:STDERR:           ^~~~~~~~~~
