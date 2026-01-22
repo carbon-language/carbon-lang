@@ -14,10 +14,16 @@
 // CHECK:STDERR: error: unable to read the installation's digest file: {{.*}}
 // CHECK:STDERR:
 
-// The rest of the config should still be displayed:
+// The rest of the config should still be displayed.
+//
+// Note that the results here are not "portable", and depend on the `--target`
+// argument above. We pass explicit targets to get predictable results in Bazel
+// tests.
+//
 // CHECK:STDOUT: CLANG_INCLUDE_DIRS:
 // CHECK:STDOUT:     {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/22/include
 // CHECK:STDOUT: CLANG_RESOURCE_DIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/22
+// CHECK:STDOUT: CLANG_SYSROOT: /
 // CHECK:STDOUT: INSTALL_ROOT: {{.*}}/toolchain/install/prefix/lib/carbon/
 // CHECK:STDOUT: LLVM_BINDIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/bin
 // CHECK:STDOUT: VERSION: {{[0-9]+}}.{{[0-9]+}}.{{[0-9]+}}-{{.*}}

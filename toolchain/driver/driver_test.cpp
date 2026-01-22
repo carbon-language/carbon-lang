@@ -250,6 +250,11 @@ TEST_F(DriverTest, ConfigJson) {
       json_obj->getString("INSTALL_ROOT");
   ASSERT_THAT(install_root, Ne(std::nullopt));
   EXPECT_THAT(Filesystem::Cwd().OpenDir(install_root->str()), IsSuccess(_));
+
+  std::optional<llvm::StringRef> clang_sysroot =
+      json_obj->getString("CLANG_SYSROOT");
+  ASSERT_THAT(clang_sysroot, Ne(std::nullopt));
+  EXPECT_THAT(Filesystem::Cwd().OpenDir(clang_sysroot->str()), IsSuccess(_));
 }
 
 }  // namespace

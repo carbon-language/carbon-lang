@@ -68,12 +68,17 @@ struct ConfigDataEntry {
 };
 }  // namespace
 
-// Creates a Clang invocation and queries it for the include directories
-// searched during compilation. If there are any errors setting up Clang, this
-// will diagnose them using `driver_env.consumer` and return `std::nullopt`.
-static auto ComputeClangIncludeDirs(DriverEnv& driver_env,
-                                    llvm::StringRef target_str)
-    -> std::optional<llvm::SmallVector<std::string>> {
+// Creates a Clang invocation and queries it for config data to render.
+//
+// This includes the sysroot and the include directories searched during
+// compilation.
+//
+// If there are any errors setting up Clang, this will diagnose them using
+// `driver_env.consumer` and return `false`. If successful, returns `true`.
+static auto ComputeClangConfig(DriverEnv& driver_env,
+                               llvm::StringRef target_str,
+                               llvm::SmallVectorImpl<ConfigDataEntry>& data)
+    -> bool {
   // Build a library invocation of Clang in order to query its header search
   // paths.
   std::shared_ptr clang_invocation =
@@ -103,7 +108,7 @@ static auto ComputeClangIncludeDirs(DriverEnv& driver_env,
                       "unable to setup the requested target `{0}`",
                       std::string);
     driver_env.emitter.Emit(ConfigFailedToSetupTarget, target_str.str());
-    return std::nullopt;
+    return false;
   }
 
   auto header_search = std::make_unique<clang::HeaderSearch>(
@@ -117,14 +122,20 @@ static auto ComputeClangIncludeDirs(DriverEnv& driver_env,
   // If we ended up diagnosing any errors, just return. They will have been
   // converted to Carbon diagnostics.
   if (error_tracker.seen_error()) {
-    return std::nullopt;
+    return false;
   }
+
+  data.push_back({.key = "CLANG_SYSROOT",
+                  .value = clang_instance->getHeaderSearchOpts().Sysroot});
 
   llvm::SmallVector<std::string> search_paths;
   for (const auto& search_dir : header_search->search_dir_range()) {
     search_paths.push_back(search_dir.getName().str());
   }
-  return search_paths;
+  data.push_back(
+      {.key = "CLANG_INCLUDE_DIRS", .value = std::move(search_paths)});
+
+  return true;
 }
 
 static auto RenderDataAsJson(llvm::ArrayRef<ConfigDataEntry> data,
@@ -200,17 +211,10 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
                     .value = llvm::StringRef(*read_result).rtrim().str()});
   }
 
-  // Compute and print Clang's include dirs if we can.
-  std::optional<llvm::SmallVector<std::string>> clang_include_dirs =
-      ComputeClangIncludeDirs(driver_env, options_.codegen_options.target);
-  if (clang_include_dirs) {
-    data.push_back(
-        {.key = "CLANG_INCLUDE_DIRS", .value = *std::move(clang_include_dirs)});
-  } else {
-    // This will have been diagnosed while computing, continue with degraded
-    // data.
-    result = false;
-  }
+  // Compute and print Clang's config entries if we can. This will have been
+  // diagnosed while computing, so just track if we hit errors.
+  result &=
+      ComputeClangConfig(driver_env, options_.codegen_options.target, data);
 
   llvm::sort(data, [](const ConfigDataEntry& lhs, const ConfigDataEntry& rhs) {
     return lhs.key < rhs.key;
