@@ -2162,9 +2162,7 @@ static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
   return nullptr;
 }
 
-// Gets the identifier info for a name. Returns `nullptr` if the name is not an
-// identifier name.
-static auto GetIdentifierInfo(Context& context, SemIR::NameId name_id)
+auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo* {
   std::optional<llvm::StringRef> string_name =
       context.names().GetAsStringIfIdentifier(name_id);
@@ -2189,7 +2187,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     return SemIR::ScopeLookupResult::MakeError();
   }
 
-  clang::IdentifierInfo* identifier_info = GetIdentifierInfo(context, name_id);
+  clang::IdentifierInfo* identifier_info =
+      GetClangIdentifierInfo(context, name_id);
   if (!identifier_info) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }

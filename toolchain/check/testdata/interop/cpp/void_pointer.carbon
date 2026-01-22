@@ -452,15 +452,16 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %UnsafeAs.type.0ee: type = facet_type <@UnsafeAs, @UnsafeAs(%ptr.5c7)> [concrete]
 // CHECK:STDOUT:   %UnsafeAs.Convert.type.e91: type = fn_type @UnsafeAs.Convert, @UnsafeAs(%ptr.5c7) [concrete]
+// CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.9c9: type = fn_type @ptr.as.UnsafeAs.impl.Convert.1, @ptr.as.UnsafeAs.impl.f07(%T.67d) [symbolic]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.175: %ptr.as.UnsafeAs.impl.Convert.type.9c9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %UnsafeAs.impl_witness.624: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.93a, @ptr.as.UnsafeAs.impl.f07(%S) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.010: type = fn_type @ptr.as.UnsafeAs.impl.Convert.1, @ptr.as.UnsafeAs.impl.f07(%S) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.811: %ptr.as.UnsafeAs.impl.Convert.type.010 = struct_value () [concrete]
-// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.0ee = facet_value %ptr.874, (%UnsafeAs.impl_witness.624) [concrete]
-// CHECK:STDOUT:   %.ce5: type = fn_type_with_self_type %UnsafeAs.Convert.type.e91, %UnsafeAs.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.811, @ptr.as.UnsafeAs.impl.Convert.1(%S) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.f06: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%T.67d, %U.091) [symbolic]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.2c4: %ptr.as.UnsafeAs.impl.Convert.type.f06 = struct_value () [symbolic]
+// CHECK:STDOUT:   %UnsafeAs.impl_witness.080: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.630, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.2b8: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%Cpp.void, %S) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.fe3: %ptr.as.UnsafeAs.impl.Convert.type.2b8 = struct_value () [concrete]
+// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.0ee = facet_value %ptr.874, (%UnsafeAs.impl_witness.080) [concrete]
+// CHECK:STDOUT:   %.f7a: type = fn_type_with_self_type %UnsafeAs.Convert.type.e91, %UnsafeAs.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.fe3, @ptr.as.UnsafeAs.impl.Convert(%Cpp.void, %S) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -470,8 +471,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %Core.import_ref.8bb: @ptr.as.UnsafeAs.impl.f07.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.9c9) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.f07.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.175)]
-// CHECK:STDOUT:   %UnsafeAs.impl_witness_table.93a = impl_witness_table (%Core.import_ref.8bb), @ptr.as.UnsafeAs.impl.f07 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
+// CHECK:STDOUT:   %UnsafeAs.impl_witness_table.630 = impl_witness_table (%Core.import_ref.d3b), @ptr.as.UnsafeAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.874) {
@@ -483,9 +484,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.ref.loc10_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc10_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %ptr.loc10_40: type = ptr_type %S.ref.loc10_38 [concrete = constants.%ptr.5c7]
-// CHECK:STDOUT:   %impl.elem0: %.ce5 = impl_witness_access constants.%UnsafeAs.impl_witness.624, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.811]
+// CHECK:STDOUT:   %impl.elem0: %.f7a = impl_witness_access constants.%UnsafeAs.impl_witness.080, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.fe3]
 // CHECK:STDOUT:   %bound_method.loc10_32.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert.1(constants.%S) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%S) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_32.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.5c7 = call %bound_method.loc10_32.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_32.1: %ptr.5c7 = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call
@@ -509,20 +510,21 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
 // CHECK:STDOUT:   %UnsafeAs.type.1ec: type = facet_type <@UnsafeAs, @UnsafeAs(%ptr.31e)> [concrete]
 // CHECK:STDOUT:   %UnsafeAs.Convert.type.b51: type = fn_type @UnsafeAs.Convert, @UnsafeAs(%ptr.31e) [concrete]
+// CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.9c9: type = fn_type @ptr.as.UnsafeAs.impl.Convert.1, @ptr.as.UnsafeAs.impl.f07(%T.67d) [symbolic]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.175: %ptr.as.UnsafeAs.impl.Convert.type.9c9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %UnsafeAs.impl_witness.29a: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.93a, @ptr.as.UnsafeAs.impl.f07(%C) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.53a: type = fn_type @ptr.as.UnsafeAs.impl.Convert.1, @ptr.as.UnsafeAs.impl.f07(%C) [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.e72: %ptr.as.UnsafeAs.impl.Convert.type.53a = struct_value () [concrete]
-// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.1ec = facet_value %ptr.874, (%UnsafeAs.impl_witness.29a) [concrete]
-// CHECK:STDOUT:   %.a62: type = fn_type_with_self_type %UnsafeAs.Convert.type.b51, %UnsafeAs.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.e72, @ptr.as.UnsafeAs.impl.Convert.1(%C) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.f06: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%T.67d, %U.091) [symbolic]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.2c4: %ptr.as.UnsafeAs.impl.Convert.type.f06 = struct_value () [symbolic]
+// CHECK:STDOUT:   %UnsafeAs.impl_witness.2f5: <witness> = impl_witness imports.%UnsafeAs.impl_witness_table.630, @ptr.as.UnsafeAs.impl(%Cpp.void, %C) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.type.04a: type = fn_type @ptr.as.UnsafeAs.impl.Convert, @ptr.as.UnsafeAs.impl(%Cpp.void, %C) [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.409: %ptr.as.UnsafeAs.impl.Convert.type.04a = struct_value () [concrete]
+// CHECK:STDOUT:   %UnsafeAs.facet: %UnsafeAs.type.1ec = facet_value %ptr.874, (%UnsafeAs.impl_witness.2f5) [concrete]
+// CHECK:STDOUT:   %.ce8: type = fn_type_with_self_type %UnsafeAs.Convert.type.b51, %UnsafeAs.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.UnsafeAs.impl.Convert.409, @ptr.as.UnsafeAs.impl.Convert(%Cpp.void, %C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.8bb: @ptr.as.UnsafeAs.impl.f07.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.9c9) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.f07.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.175)]
-// CHECK:STDOUT:   %UnsafeAs.impl_witness_table.93a = impl_witness_table (%Core.import_ref.8bb), @ptr.as.UnsafeAs.impl.f07 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.d3b: @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert.type (%ptr.as.UnsafeAs.impl.Convert.type.f06) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.UnsafeAs.impl.%ptr.as.UnsafeAs.impl.Convert (constants.%ptr.as.UnsafeAs.impl.Convert.2c4)]
+// CHECK:STDOUT:   %UnsafeAs.impl_witness_table.630 = impl_witness_table (%Core.import_ref.d3b), @ptr.as.UnsafeAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.874) {
@@ -533,9 +535,9 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
 // CHECK:STDOUT:   %C.ref.loc10_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr.loc10_32: type = ptr_type %C.ref.loc10_31 [concrete = constants.%ptr.31e]
-// CHECK:STDOUT:   %impl.elem0: %.a62 = impl_witness_access constants.%UnsafeAs.impl_witness.29a, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.e72]
+// CHECK:STDOUT:   %impl.elem0: %.ce8 = impl_witness_access constants.%UnsafeAs.impl_witness.2f5, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.409]
 // CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %input.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert.1(constants.%C) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%C) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_28.2: <bound method> = bound_method %input.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.UnsafeAs.impl.Convert.call: init %ptr.31e = call %bound_method.loc10_28.2(%input.ref)
 // CHECK:STDOUT:   %.loc10_28.1: %ptr.31e = value_of_initializer %ptr.as.UnsafeAs.impl.Convert.call

@@ -1866,6 +1866,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvertChar: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvert: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);

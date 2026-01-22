@@ -359,6 +359,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
+    case SemIR::BuiltinFunctionKind::IntConvertChar:
     case SemIR::BuiltinFunctionKind::IntConvert: {
       context.SetLocal(inst_id,
                        CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),

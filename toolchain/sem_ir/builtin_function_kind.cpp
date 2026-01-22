@@ -446,6 +446,10 @@ constexpr BuiltinInfo CharConvertChecked = {
     "char.convert_checked",
     ValidateSignature<auto(CharLiteral)->CharCompatible>};
 
+// Converts from an integer type to a char-compatible type (u8/adapted Char).
+constexpr BuiltinInfo IntConvertChar = {
+    "int.convert_char", ValidateSignature<auto(AnyInt)->CharCompatible>};
+
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
                                     ValidateSignature<auto(AnyInt)->AnyInt>};
@@ -816,6 +820,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       return true;
 
     case IntConvert:
+    case IntConvertChar:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:

@@ -47,6 +47,7 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CharConvertChecked)
 
 // Integer conversion.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvert)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertChar)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertChecked)
 
 // Integer arithmetic.

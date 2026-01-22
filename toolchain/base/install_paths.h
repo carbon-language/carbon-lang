@@ -92,6 +92,9 @@ class InstallPaths {
     return error_;
   }
 
+  // The path to the root of this installation.
+  auto root() const -> std::filesystem::path { return root_; }
+
   // The directory containing the `Core` package. Computed on demand.
   auto core_package() const -> std::filesystem::path;
 

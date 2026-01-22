@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -15,6 +16,25 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
+
+// Converts diagnostics from the Clang driver to Carbon diagnostics.
+class ClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
+ public:
+  // Creates an instance with the location that triggers calling Clang.
+  // `context` must not be null.
+  explicit ClangDriverDiagnosticConsumer(Diagnostics::NoLocEmitter* emitter)
+      : emitter_(emitter) {}
+
+  // Generates a Carbon warning for each Clang warning and a Carbon error for
+  // each Clang error or fatal.
+  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& info) -> void override;
+
+ private:
+  // Diagnostic emitter. Note that driver diagnostics don't have meaningful
+  // locations attached.
+  Diagnostics::NoLocEmitter* emitter_;
+};
 
 // Builds and returns a clang `CompilerInvocation` to use when building code for
 // interop, from a list of clang driver arguments. Emits diagnostics to

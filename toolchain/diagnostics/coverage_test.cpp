@@ -27,6 +27,8 @@ constexpr Kind UntestedKinds[] = {
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
     Kind::CompilePreludeManifestError,
+    Kind::ConfigFailedToReadDigest,
+    Kind::ConfigFailedToSetupTarget,
     Kind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
