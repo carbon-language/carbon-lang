@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/operators.h"
 
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/core_identifier.h"
@@ -192,6 +193,69 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   }
 }
 
+static auto LookupCppImplicitConversion(Context& context, SemIR::LocId loc_id,
+                                        SemIR::InstId source_id,
+                                        SemIR::TypeId dest_type_id)
+    -> SemIR::InstId {
+  auto source = context.insts().Get(source_id);
+  if (dest_type_id == source.type_id()) {
+    return source_id;
+  }
+
+  auto& sema = context.clang_sema();
+  auto dest_type = MapToCppType(context, dest_type_id);
+  if (dest_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+
+  auto arg_expr = InventClangArg(context, source_id);
+  // If we can't map the argument, we can't perform the conversion.
+  if (!arg_expr) {
+    return SemIR::InstId::None;
+  }
+
+  auto loc = GetCppLocation(context, loc_id);
+
+  // Form a Clang initialization sequence.
+  clang::InitializedEntity entity =
+      clang::InitializedEntity::InitializeTemporary(dest_type);
+  clang::InitializationKind kind =
+      clang::InitializationKind::CreateCopy(loc, clang::SourceLocation());
+  clang::MultiExprArg args(arg_expr);
+  clang::InitializationSequence init(sema, entity, kind, args);
+
+  // Iterate through the steps and skip standard conversions.
+  for (const auto& step : init.steps()) {
+    if (step.Kind == clang::InitializationSequence::SK_UserConversion) {
+      if (!step.Function.Function) {
+        continue;
+      }
+
+      // TODO: Handle ambiguous or deleted conversions if Clang reports them as
+      // steps? InitializationSequence usually stops at failure, but
+      // SK_UserConversion implies success of that step.
+
+      sema.MarkFunctionReferenced(loc, step.Function.Function);
+
+      auto result_id =
+          ImportCppFunctionDecl(context, loc_id, step.Function.Function,
+                                step.Function.Function->getNumParams());
+      if (auto fn_decl =
+              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
+        if (step.Function.FoundDecl) {
+          CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
+                                 fn_decl->inst_id);
+        }
+      } else {
+        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      }
+      return result_id;
+    }
+  }
+
+  return SemIR::InstId::None;
+}
+
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Register an annotation scope to flush any Clang diagnostics when we return.
@@ -199,6 +263,24 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // with Carbon diagnostics.
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
+
+  // Handle `ImplicitAs`.
+  if (op.interface_name == CoreIdentifier::ImplicitAs) {
+    if (op.interface_args_ref.size() != 1 || arg_ids.size() != 1) {
+      return SemIR::InstId::None;
+    }
+    // The argument to `ImplicitAs` is the destination type.
+    auto dest_const_id =
+        context.constant_values().Get(op.interface_args_ref[0]);
+    auto dest_type_id =
+        context.types().TryGetTypeIdForTypeConstantId(dest_const_id);
+    if (!dest_type_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    return LookupCppImplicitConversion(context, loc_id, arg_ids[0],
+                                       dest_type_id);
+  }
 
   auto op_kind =
       GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
@@ -306,7 +388,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {
   auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
-  return clang_method_decl && clang_method_decl->isOverloadedOperator();
+  return clang_method_decl &&
+         (clang_method_decl->isOverloadedOperator() ||
+          isa<clang::CXXConversionDecl>(clang_method_decl));
 }
 
 static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)

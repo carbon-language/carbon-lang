@@ -1391,7 +1391,8 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
       return SemIR::NameId::CppDestructor;
     }
 
-    case clang::DeclarationName::CXXOperatorName: {
+    case clang::DeclarationName::CXXOperatorName:
+    case clang::DeclarationName::CXXConversionFunctionName: {
       return SemIR::NameId::CppOperator;
     }
 
