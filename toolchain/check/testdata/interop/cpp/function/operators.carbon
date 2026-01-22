@@ -435,7 +435,7 @@ class C {
 };
 auto operator+(C lhs, C rhs) -> C;
 
-// --- fail_todo_plus_with_int_conversion.carbon
+// --- plus_with_int_conversion.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -443,29 +443,7 @@ import Cpp library "plus_with_int_conversion.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C(4);
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+11]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+8]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./plus_with_int_conversion.h:6:25: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto operator+(C lhs, C rhs) -> C;
-  // CHECK:STDERR:                         ^
-  // CHECK:STDERR:
   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+11]]:19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
-  // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+8]]:19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
-  // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./plus_with_int_conversion.h:6:18: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto operator+(C lhs, C rhs) -> C;
-  // CHECK:STDERR:                  ^
-  // CHECK:STDERR:
   let c3: Cpp.C = 6 + c1;
 }
 

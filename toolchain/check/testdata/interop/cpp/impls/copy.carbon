@@ -144,20 +144,26 @@ fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
 
 fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+5]]:10: error: cannot access private member `PrivateCopy` of type `Cpp.PrivateCopy` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+8]]:10: error: cannot access private member `PrivateCopy` of type `Cpp.PrivateCopy` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_copy_noncopyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE-67]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:40:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   PrivateCopy(const PrivateCopy&);
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyProtectedCopy(c: Cpp.ProtectedCopy) -> Cpp.ProtectedCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+5]]:10: error: cannot access protected member `ProtectedCopy` of type `Cpp.ProtectedCopy` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+8]]:10: error: cannot access protected member `ProtectedCopy` of type `Cpp.ProtectedCopy` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_copy_noncopyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE-80]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:45:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ProtectedCopy(const ProtectedCopy&);
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   return c;
 }

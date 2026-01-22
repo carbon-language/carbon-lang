@@ -409,6 +409,12 @@ fn AccessCA(d: Cpp.D) -> i32 {
 }
 
 fn AccessDB(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+13]]:10: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: Normal sequence: constructor initialization [struct B]
+  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR:   return d.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Cpp.D` to `Cpp.B` [ConversionFailure]
   // CHECK:STDERR:   return d.b;
   // CHECK:STDERR:          ^~~
@@ -420,6 +426,12 @@ fn AccessDB(d: Cpp.D) -> i32 {
 }
 
 fn AccessDC(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+13]]:10: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: Normal sequence: constructor initialization [struct C]
+  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR:   return d.c;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Cpp.D` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   return d.c;
   // CHECK:STDERR:          ^~~
