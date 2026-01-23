@@ -49,27 +49,8 @@ static auto TypeAsClassDecl(Context& context,
       context.clang_decls().Get(decl_id).key.decl);
 }
 
-static auto BuildSingleFunctionWitness(
-    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* cpp_fn,
-    clang::DeclAccessPair found_decl, int num_params,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  auto fn_id = context.clang_sema().DiagnoseUseOfOverloadedDecl(
-                   cpp_fn, GetCppLocation(context, loc_id))
-                   ? SemIR::ErrorInst::InstId
-                   : ImportCppFunctionDecl(context, loc_id, cpp_fn, num_params);
-  if (auto fn_decl =
-          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(fn_id)) {
-    CheckCppOverloadAccess(context, loc_id, found_decl, fn_decl->inst_id);
-  } else {
-    CARBON_CHECK(fn_id == SemIR::ErrorInst::InstId);
-    return SemIR::ErrorInst::InstId;
-  }
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
-}
-
-static auto LookupMethod(
+// Returns an `impl` that works based on a C++ method.
+static auto LookupCppMethodImpl(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id,
@@ -80,18 +61,30 @@ static auto LookupMethod(
     return SemIR::InstId::None;
   }
 
-  auto* method = lookup(class_decl);
-  if (!method) {
+  auto* cpp_fn_decl = lookup(class_decl);
+  if (!cpp_fn_decl) {
     // TODO: If the impl lookup failure is an error, we should produce a
     // diagnostic explaining why the class is not copyable/destructible.
     return SemIR::InstId::None;
   }
+  auto* cpp_fn = cast<clang::FunctionDecl>(cpp_fn_decl);
 
-  auto* fn_decl = cast<clang::FunctionDecl>(method);
-  return BuildSingleFunctionWitness(
-      context, loc_id, fn_decl,
-      clang::DeclAccessPair::make(fn_decl, fn_decl->getAccess()), num_params,
-      query_self_const_id, query_specific_interface_id);
+  auto fn_id = context.clang_sema().DiagnoseUseOfOverloadedDecl(
+                   cpp_fn, GetCppLocation(context, loc_id))
+                   ? SemIR::ErrorInst::InstId
+                   : ImportCppFunctionDecl(context, loc_id, cpp_fn, num_params);
+  if (auto fn_decl =
+          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(fn_id)) {
+    CheckCppOverloadAccess(
+        context, loc_id,
+        clang::DeclAccessPair::make(cpp_fn, cpp_fn->getAccess()),
+        fn_decl->inst_id);
+  } else {
+    CARBON_CHECK(fn_id == SemIR::ErrorInst::InstId);
+    return SemIR::ErrorInst::InstId;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
@@ -103,7 +96,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   // TODO: Handle other interfaces.
   switch (core_interface) {
     case CoreInterface::Copy:
-      return LookupMethod(
+      return LookupCppMethodImpl(
           context, loc_id, query_self_const_id, query_specific_interface_id,
           [&](clang::CXXRecordDecl* class_decl) {
             return context.clang_sema().LookupCopyingConstructor(
@@ -111,7 +104,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
           },
           /*num_params=*/1);
     case CoreInterface::Destroy:
-      return LookupMethod(
+      return LookupCppMethodImpl(
           context, loc_id, query_self_const_id, query_specific_interface_id,
           [&](clang::CXXRecordDecl* class_decl) {
             return context.clang_sema().LookupDestructor(class_decl);
