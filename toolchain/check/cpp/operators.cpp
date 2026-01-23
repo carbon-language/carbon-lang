@@ -225,41 +225,57 @@ static auto LookupCppImplicitConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
+  bool has_unsupported_step = false;
   for (const auto& step : init.steps()) {
-    if (step.Kind == clang::InitializationSequence::SK_UserConversion) {
-      if (sema.DiagnoseUseOfOverloadedDecl(step.Function.Function, loc)) {
-        return SemIR::ErrorInst::InstId;
+    switch (step.Kind) {
+      case clang::InitializationSequence::SK_UserConversion: {
+        if (sema.DiagnoseUseOfOverloadedDecl(step.Function.Function, loc)) {
+          return SemIR::ErrorInst::InstId;
+        }
+
+        sema.MarkFunctionReferenced(loc, step.Function.Function);
+
+        auto result_id = ImportCppFunctionDecl(
+            context, loc_id, step.Function.Function,
+            // If this is a constructor, the source is passed as an argument;
+            // otherwise, this is a conversion function and the source is passed
+            // as `self`.
+            isa<clang::CXXConstructorDecl>(step.Function.Function) ? 1 : 0);
+        if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
+                result_id)) {
+          CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
+                                 fn_decl->inst_id);
+        } else {
+          CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+        }
+
+        // TODO: There may be other conversions later in the sequence that we
+        // need to model; we've only applied the first one here.
+        return result_id;
       }
 
-      sema.MarkFunctionReferenced(loc, step.Function.Function);
-
-      auto result_id = ImportCppFunctionDecl(
-          context, loc_id, step.Function.Function,
-          // If this is a constructor, the source is passed as an argument;
-          // otherwise, this is a conversion function and the source is passed
-          // as `self`.
-          isa<clang::CXXConstructorDecl>(step.Function.Function) ? 1 : 0);
-      if (auto fn_decl =
-              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
-        CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
-                               fn_decl->inst_id);
-      } else {
-        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      case clang::InitializationSequence::SK_ConversionSequence:
+      case clang::InitializationSequence::SK_ConversionSequenceNoNarrowing: {
+        // Implicit conversions are handled by the normal Carbon conversion
+        // logic, so we ignore them here.
+        continue;
       }
 
-      // TODO: There may be other conversions later in the sequence that we need
-      // to model; we've only applied the first one here.
-      return result_id;
+      default: {
+        // TODO: Handle other kinds of initialization steps. For now we assume
+        // they will be handled by our function call logic and we can skip them.
+        has_unsupported_step = true;
+        break;
+      }
     }
-
-    // TODO: Handle other kinds of initialization steps. For now we assume they
-    // will be handled by our function call logic and we can skip them.
   }
 
-  RawStringOstream os;
-  os << "Unsupported initialization sequence:\n";
-  init.dump(os);
-  context.TODO(loc_id, os.TakeStr());
+  if (has_unsupported_step) {
+    RawStringOstream os;
+    os << "Unsupported initialization sequence:\n";
+    init.dump(os);
+    context.TODO(loc_id, os.TakeStr());
+  }
 
   return SemIR::InstId::None;
 }
