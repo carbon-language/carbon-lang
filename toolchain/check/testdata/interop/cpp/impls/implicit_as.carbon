@@ -236,6 +236,30 @@ fn IntConstructorTest(u: u32) {
   //@dump-sem-ir-end
 }
 
+// --- multi_argument.h
+
+struct Two {
+  Two(int, int);
+};
+
+// --- fail_todo_construct_multi_argument.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "multi_argument.h";
+
+fn ImplicitConvert() {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_construct_multi_argument.carbon:[[@LINE+6]]:20: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: Normal sequence: list initialization via constructor [struct Two]
+  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR:   let _: Cpp.Two = (1, 2);
+  // CHECK:STDERR:                    ^~~~~~
+  // CHECK:STDERR:
+  let _: Cpp.Two = (1, 2);
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- implicit_conversions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -790,4 +814,40 @@ fn IntConstructorTest(u: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %IntConstructor) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_construct_multi_argument.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Two: type = class_type @Two [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Two [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Two = %Two.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Two.decl: type = class_decl @Two [concrete = constants.%Two] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ImplicitConvert() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc14_25.1: %tuple.type = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_13: type = splice_block %Two.ref [concrete = constants.%Two] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Two.ref: type = name_ref Two, imports.%Two.decl [concrete = constants.%Two]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14_25.2: %Two = converted %.loc14_25.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_: %Two = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
