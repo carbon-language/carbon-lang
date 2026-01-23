@@ -303,12 +303,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "return_const_lvalue_ref.h";
 
 fn F() {
-  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+13]]:22: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: constructor initialization [struct S]
-  // CHECK:STDERR: ` [SemanticsTodo]
-  // CHECK:STDERR:   let ref s: Cpp.S = Cpp.ReturnConstLValue();
-  // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
   // CHECK:STDERR:   let ref s: Cpp.S = Cpp.ReturnConstLValue();
   // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~~~~~~

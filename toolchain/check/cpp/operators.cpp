@@ -197,6 +197,15 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId source_id,
                                 SemIR::TypeId dest_type_id, bool allow_explicit)
     -> SemIR::InstId {
+  // Don't try to perform a C++ conversion if the unqualified types are the
+  // same. This would result in a copy, which is handled separately if needed.
+  // TODO: Should we also refuse to perform derived-to-base conversions?
+  if (context.types().GetUnqualifiedType(
+          context.insts().Get(source_id).type_id()) ==
+      context.types().GetUnqualifiedType(dest_type_id)) {
+    return SemIR::InstId::None;
+  }
+
   auto dest_type = MapToCppType(context, dest_type_id);
   if (dest_type.isNull()) {
     return SemIR::InstId::None;
@@ -221,6 +230,13 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
                      : clang::InitializationKind::CreateCopy(
                            loc, /*EqualLoc=*/clang::SourceLocation());
   clang::MultiExprArg args(arg_expr);
+  // `(a, b) as T` uses `T{a, b}`, not `T({a, b})`. The latter would introduce
+  // a redundant extra copy.
+  // TODO: We need to communicate this back to the caller so they know to call
+  // the constructor with an exploded argument list somehow.
+  if (allow_explicit && isa<clang::InitListExpr>(arg_expr)) {
+    kind = clang::InitializationKind::CreateDirectList(loc);
+  }
   clang::InitializationSequence init(sema, entity, kind, args);
 
   if (init.Failed()) {
@@ -229,7 +245,6 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  bool has_unsupported_step = false;
   for (const auto& step : init.steps()) {
     switch (step.Kind) {
       case clang::InitializationSequence::SK_UserConversion: {
@@ -268,17 +283,13 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
       default: {
         // TODO: Handle other kinds of initialization steps. For now we assume
         // they will be handled by our function call logic and we can skip them.
-        has_unsupported_step = true;
-        break;
+        RawStringOstream os;
+        os << "Unsupported initialization sequence:\n";
+        init.dump(os);
+        context.TODO(loc_id, os.TakeStr());
+        return SemIR::InstId::None;
       }
     }
-  }
-
-  if (has_unsupported_step) {
-    RawStringOstream os;
-    os << "Unsupported initialization sequence:\n";
-    init.dump(os);
-    context.TODO(loc_id, os.TakeStr());
   }
 
   return SemIR::InstId::None;

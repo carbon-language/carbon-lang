@@ -184,7 +184,7 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: constructor initialization [struct S]
+  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct S]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
   // CHECK:STDERR:           ^~~~~~~~~~~
@@ -225,7 +225,7 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: constructor initialization [struct S]
+  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct S]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
   // CHECK:STDERR:           ^~~~~~~~~~~
