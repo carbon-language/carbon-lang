@@ -289,7 +289,7 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
         os << "Unsupported initialization sequence:\n";
         init.dump(os);
         context.TODO(loc_id, os.TakeStr());
-        return SemIR::InstId::None;
+        return SemIR::ErrorInst::InstId;
       }
     }
   }

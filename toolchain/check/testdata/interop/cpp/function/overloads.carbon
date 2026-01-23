@@ -262,7 +262,7 @@ import Cpp library "struct_init.h";
 fn MakeThreeFields() -> {.a: i32, .b: i32, .c: i32};
 
 fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: i32, .c: i32}) {
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
@@ -272,105 +272,50 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `{.a: Core.IntLiteral, .b: Core.IntLiteral, .c: Core.IntLiteral}` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+8]]:23: note: type `{.a: Core.IntLiteral, .b: Core.IntLiteral, .c: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
 
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(value);
   // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-33]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `{.a: i32, .b: i32, .c: i32}` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(value);
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+8]]:23: note: type `{.a: i32, .b: i32, .c: i32}` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(value);
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-44]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(value);
 
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-56]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `{.a: i32, .b: i32, .c: i32}` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(reference);
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+8]]:23: note: type `{.a: i32, .b: i32, .c: i32}` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(reference);
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-67]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-34]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(reference);
 
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-79]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `{.a: i32, .b: i32, .c: i32}` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+8]]:23: note: type `{.a: i32, .b: i32, .c: i32}` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-90]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-46]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(MakeThreeFields());
 
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields({.b = 1, .c = 2, .a = 3});
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-102]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `{.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral}` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields({.b = 1, .c = 2, .a = 3});
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE+8]]:23: note: type `{.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields({.b = 1, .c = 2, .a = 3});
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-113]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-58]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
@@ -432,7 +377,7 @@ import Cpp library "struct_init.h";
 fn MakeEmpty() -> ();
 
 fn Empty(value: (), ref reference: ()) {
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:20: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassNoFields(());
@@ -442,82 +387,38 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassNoFields(());
-  // CHECK:STDERR:                    ^~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassNoFields(());
-  // CHECK:STDERR:                    ^~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR:
   Cpp.PassNoFields(());
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:20: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassNoFields(value);
   // CHECK:STDERR:                    ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-36]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassNoFields(value);
-  // CHECK:STDERR:                    ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassNoFields(value);
-  // CHECK:STDERR:                    ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-47]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-25]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   Cpp.PassNoFields(value);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:20: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassNoFields(reference);
   // CHECK:STDERR:                    ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-59]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassNoFields(reference);
-  // CHECK:STDERR:                    ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassNoFields(reference);
-  // CHECK:STDERR:                    ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-70]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   Cpp.PassNoFields(reference);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:20: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
   // CHECK:STDERR:                    ^~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-82]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
-  // CHECK:STDERR:                    ^~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
-  // CHECK:STDERR:                    ^~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-93]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-49]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
@@ -528,92 +429,48 @@ fn Empty(value: (), ref reference: ()) {
 fn MakeThreeFields() -> (i32, i32, i32);
 
 fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
   // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-109]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-120]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-65]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields((1, 2, 3));
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(value);
   // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-132]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(value);
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(value);
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-143]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-77]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(value);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-155]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(reference);
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(reference);
-  // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-166]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-89]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(reference);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+21]]:23: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-178]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-189]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-101]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
@@ -741,23 +598,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "nested_structs.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE+21]]:13: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE+10]]:13: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: list aggregate initialization [struct B]
   // CHECK:STDERR: ` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.TakeB({.a = {.x = 1, .y = 2}, .n = 3});
   // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./nested_structs.h:11:13: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: void TakeB(B);
-  // CHECK:STDERR:             ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE+11]]:13: error: cannot implicitly convert expression of type `{.a: {.x: Core.IntLiteral, .y: Core.IntLiteral}, .n: Core.IntLiteral}` to `Cpp.B` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.TakeB({.a = {.x = 1, .y = 2}, .n = 3});
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE+8]]:13: note: type `{.a: {.x: Core.IntLiteral, .y: Core.IntLiteral}, .n: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.TakeB({.a = {.x = 1, .y = 2}, .n = 3});
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./nested_structs.h:11:13: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: void TakeB(B);
   // CHECK:STDERR:             ^
@@ -2696,8 +2542,6 @@ fn F() {
 // CHECK:STDOUT:   %ThreeFields.elem: type = unbound_element_type %ThreeFields.942, %i32 [concrete]
 // CHECK:STDOUT:   %.c77: type = custom_layout_type {size=12, align=4, .a@0: %i32, .b@4: %i32, .c@8: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.702: <witness> = complete_type_witness %.c77 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.b.c.a: type = struct_type {.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.d34: %struct_type.b.c.a = struct_value (%int_1, %int_2, %int_3) [concrete]
 // CHECK:STDOUT: }
@@ -2705,7 +2549,6 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -2722,7 +2565,6 @@ fn F() {
 // CHECK:STDOUT:     %t.param: %ptr.f81 = value_param call_param0
 // CHECK:STDOUT:     %t: %ptr.f81 = value_binding t, %t.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2975,8 +2817,6 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk: %PassNoFields__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -3009,7 +2849,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -3027,7 +2866,6 @@ fn F() {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
@@ -3476,14 +3314,11 @@ fn F() {
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %.7b6: type = custom_layout_type {size=8, align=4, .x@0: %i32, .y@4: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1e0: <witness> = complete_type_witness %.7b6 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -3500,7 +3335,6 @@ fn F() {
 // CHECK:STDOUT:     %_: %ptr.a04 = value_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

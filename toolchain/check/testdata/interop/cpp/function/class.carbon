@@ -183,16 +183,9 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+6]]:11: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: zero initialization [class C] -> list initialization via constructor [class C]
   // CHECK:STDERR: ` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `{}` to `Cpp.C` with `as` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+4]]:11: note: type `{}` does not implement interface `Core.As(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -224,16 +217,9 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+13]]:11: error: semantics TODO: `Unsupported initialization sequence:
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+6]]:11: error: semantics TODO: `Unsupported initialization sequence:
   // CHECK:STDERR: Normal sequence: zero initialization [class C] -> list initialization via constructor [class C]
   // CHECK:STDERR: ` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `{}` to `Cpp.C` with `as` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+4]]:11: note: type `{}` does not implement interface `Core.As(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR:
