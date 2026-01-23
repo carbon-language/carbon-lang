@@ -112,8 +112,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
-  CARBON_CHECK(SemIR::IsInitializerCategory(
-      SemIR::GetExprCategory(context.sem_ir(), inst.init_id)));
+  CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
+               SemIR::ExprCategory::Initializing);
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);
   auto init_repr = context.GetInitRepr(inst_type);
