@@ -164,12 +164,11 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(!best_viable_fn->RewriteKind);
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, arg_exprs.size());
-      if (auto fn_decl =
-              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
-        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                               fn_decl->inst_id, overload_set.parent_scope_id);
-      } else {
-        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      if (result_id != SemIR::ErrorInst::InstId) {
+        CheckCppOverloadAccess(
+            context, loc_id, best_viable_fn->FoundDecl,
+            context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(result_id),
+            overload_set.parent_scope_id);
       }
       return result_id;
     }

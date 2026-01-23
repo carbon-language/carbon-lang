@@ -262,12 +262,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
           // If this is an operator method, the first arg will be used as self.
           arg_ids.size() -
               (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
-      if (auto fn_decl =
-              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
+      if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                               fn_decl->inst_id);
-      } else {
-        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+                               context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(result_id));
       }
       return result_id;
     }

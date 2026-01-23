@@ -546,6 +546,15 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
+  // Returns the `KnownInstId` form of `inst_id`. Requires a matching
+  // instruction type.
+  template <typename InstT>
+  auto GetAsKnownInstId(InstId inst_id) const -> KnownInstId<InstT> {
+    CARBON_CHECK(Is<InstT>(inst_id), "Casting inst {0} to wrong kind {1}",
+                 Get(inst_id), Internal::InstLikeTypeInfo<InstT>::DebugName());
+    return KnownInstId<InstT>::UnsafeMake(inst_id);
+  }
+
   template <typename InstT>
   struct GetAsWithIdResult {
     KnownInstId<InstT> inst_id;
