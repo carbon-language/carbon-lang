@@ -199,7 +199,7 @@ struct AsCompatible {
 
 // Performs a source-level initialization or assignment of `lhs_id` from
 // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-// `InitializeFrom`.
+// `Materialize`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
@@ -1067,7 +1067,7 @@ struct InitForm {
 // performing a final copy from source to destination, for types whose
 // initialization is not in-place.
 struct Materialize {
-  // Note this Parse::NodeId is unused. InitializeFrom is only constructed by
+  // Note this Parse::NodeId is unused. Materialize is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
   static constexpr auto Kind = InstKind::Materialize.Define<Parse::NodeId>(

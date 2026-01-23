@@ -874,7 +874,7 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
     // reference expression.
     // TODO: We should allow converting an initializing expression of type `T`
     // to `MaybeUnformed(T)`. `PerformBuiltinConversion` will need to generate
-    // an `InPlaceInit` instruction when needed.
+    // a `Materialize` instruction when needed.
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
@@ -1786,7 +1786,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       (target.kind != ConversionTarget::Initializing ||
        !SemIR::InitRepr::ForType(context.sem_ir(), target.type_id)
             .MightBeInPlace())) {
-    // storage_id should only be used for an InPlaceInitializer, or an
+    // storage_id should only be used for an EphemeralEntireRef, or an
     // Initializer if the type has an in-place init representation. This ensures
     // we don't accidentally use it for anything else.
     target.storage_id = SemIR::InstId::None;

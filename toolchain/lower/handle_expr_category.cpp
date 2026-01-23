@@ -69,7 +69,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
           break;
         case SemIR::ValueRepr::Custom:
           CARBON_FATAL(
-              "TODO: Add support for InPlaceInit with custom value rep");
+              "TODO: Add support for Dematerialize with custom value rep");
       }
       break;
     case SemIR::InitRepr::Abstract:

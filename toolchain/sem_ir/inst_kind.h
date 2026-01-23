@@ -50,7 +50,7 @@ enum class ExprCategory : int8_t {
   // object using the type's initializing representation. If that representation
   // is not in-place, the instruction doesn't actually initialize the target
   // storage (and may not even specify the target storage), but a separate
-  // "final destination store" inst (such as `Temporary` or `InitializeFrom`)
+  // "final destination store" inst (such as `Temporary` or `Materialize`)
   // can use it to perform that initialization.
   Initializing,
   // This instruction represents a syntactic combination of expressions that are
