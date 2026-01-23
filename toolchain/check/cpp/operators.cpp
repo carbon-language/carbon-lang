@@ -263,8 +263,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
           arg_ids.size() -
               (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
       if (result_id != SemIR::ErrorInst::InstId) {
-        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                               context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(result_id));
+        CheckCppOverloadAccess(
+            context, loc_id, best_viable_fn->FoundDecl,
+            context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(result_id));
       }
       return result_id;
     }

@@ -561,15 +561,6 @@ class InstStore {
     InstT inst;
   };
 
-  // Returns the requested instruction, which is known to have the specified
-  // type, along with the original `InstId`, encoding the work of checking its
-  // type in a `KnownInstId`.
-  template <typename InstT>
-  auto GetAsWithId(InstId inst_id) const -> GetAsWithIdResult<InstT> {
-    auto inst = GetAs<InstT>(inst_id);
-    return {.inst_id = KnownInstId<InstT>::UnsafeMake(inst_id), .inst = inst};
-  }
-
   // Returns the requested instruction, if it is of that type, along with the
   // original `InstId`, encoding the work of checking its type in a
   // `KnownInstId`.
