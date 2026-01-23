@@ -197,15 +197,6 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId source_id,
                                 SemIR::TypeId dest_type_id, bool allow_explicit)
     -> SemIR::InstId {
-  // Don't try to perform a C++ conversion if the unqualified types are the
-  // same. This would result in a copy, which is handled separately if needed.
-  // TODO: Should we also refuse to perform derived-to-base conversions?
-  if (context.types().GetUnqualifiedType(
-          context.insts().Get(source_id).type_id()) ==
-      context.types().GetUnqualifiedType(dest_type_id)) {
-    return SemIR::InstId::None;
-  }
-
   auto dest_type = MapToCppType(context, dest_type_id);
   if (dest_type.isNull()) {
     return SemIR::InstId::None;
@@ -247,7 +238,18 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
   for (const auto& step : init.steps()) {
     switch (step.Kind) {
-      case clang::InitializationSequence::SK_UserConversion: {
+      case clang::InitializationSequence::SK_UserConversion:
+      case clang::InitializationSequence::SK_ConstructorInitialization: {
+        if (auto* ctor =
+                dyn_cast<clang::CXXConstructorDecl>(step.Function.Function);
+            ctor && ctor->isCopyOrMoveConstructor()) {
+          // Skip copy / move constructor calls. They shouldn't be performed
+          // this way because they're not considered conversions in Carbon, and
+          // will frequently lead to infinite recursion because we'll end up
+          // back here when attempting to convert the argument.
+          continue;
+        }
+
         if (sema.DiagnoseUseOfOverloadedDecl(step.Function.Function, loc)) {
           return SemIR::ErrorInst::InstId;
         }
