@@ -202,7 +202,7 @@ static auto LookupCppImplicitConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto arg_expr = InventClangArg(context, source_id);
+  auto* arg_expr = InventClangArg(context, source_id);
   // If we can't map the argument, we can't perform the conversion.
   if (!arg_expr) {
     return SemIR::InstId::None;
