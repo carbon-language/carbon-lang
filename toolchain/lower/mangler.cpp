@@ -83,7 +83,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         auto self_inst = insts().Get(self_const_inst_id);
         CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
-            auto& class_info = sem_ir().classes().Get(class_type.class_id);
+            const auto& class_info =
+                sem_ir().classes().Get(class_type.class_id);
 
             names_to_render.push_back(
                 {.name_scope_id = class_info.parent_scope_id,
