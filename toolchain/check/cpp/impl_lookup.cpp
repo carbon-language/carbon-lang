@@ -69,49 +69,28 @@ static auto BuildSingleFunctionWitness(
                             query_specific_interface_id, {fn_id});
 }
 
-static auto LookupCopyImpl(
+static auto LookupMethod(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
-    // TODO: Should we also provide a `Copy` implementation for enumerations?
-    return SemIR::InstId::None;
-  }
-
-  auto* ctor = context.clang_sema().LookupCopyingConstructor(
-      class_decl, clang::Qualifiers::Const);
-  if (!ctor) {
-    // TODO: If the impl lookup failure is an error, we should produce a
-    // diagnostic explaining why the class is not copyable.
-    return SemIR::InstId::None;
-  }
-
-  return BuildSingleFunctionWitness(
-      context, loc_id, ctor,
-      clang::DeclAccessPair::make(ctor, ctor->getAccess()), /*num_params=*/1,
-      query_self_const_id, query_specific_interface_id);
-}
-
-static auto LookupDestroyImpl(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    llvm::function_ref<auto(clang::CXXRecordDecl*)->clang::NamedDecl*> lookup,
+    int num_params) -> SemIR::InstId {
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
     return SemIR::InstId::None;
   }
 
-  auto* dtor = context.clang_sema().LookupDestructor(class_decl);
-  if (!dtor) {
+  auto* method = lookup(class_decl);
+  if (!method) {
     // TODO: If the impl lookup failure is an error, we should produce a
-    // diagnostic explaining why the class is not destructible.
+    // diagnostic explaining why the class is not copyable/destructible.
     return SemIR::InstId::None;
   }
 
+  auto* fn_decl = cast<clang::FunctionDecl>(method);
   return BuildSingleFunctionWitness(
-      context, loc_id, dtor,
-      clang::DeclAccessPair::make(dtor, dtor->getAccess()), /*num_params=*/0,
+      context, loc_id, fn_decl,
+      clang::DeclAccessPair::make(fn_decl, fn_decl->getAccess()), num_params,
       query_self_const_id, query_specific_interface_id);
 }
 
@@ -124,11 +103,20 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   // TODO: Handle other interfaces.
   switch (core_interface) {
     case CoreInterface::Copy:
-      return LookupCopyImpl(context, loc_id, query_self_const_id,
-                            query_specific_interface_id);
+      return LookupMethod(
+          context, loc_id, query_self_const_id, query_specific_interface_id,
+          [&](clang::CXXRecordDecl* class_decl) {
+            return context.clang_sema().LookupCopyingConstructor(
+                class_decl, clang::Qualifiers::Const);
+          },
+          /*num_params=*/1);
     case CoreInterface::Destroy:
-      return LookupDestroyImpl(context, loc_id, query_self_const_id,
-                               query_specific_interface_id);
+      return LookupMethod(
+          context, loc_id, query_self_const_id, query_specific_interface_id,
+          [&](clang::CXXRecordDecl* class_decl) {
+            return context.clang_sema().LookupDestructor(class_decl);
+          },
+          /*num_params=*/0);
 
     case CoreInterface::Unknown:
       CARBON_FATAL("shouldn't be called with `Unknown`");
