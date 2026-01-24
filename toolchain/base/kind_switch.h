@@ -78,12 +78,12 @@ concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
 
 // Used to provide a reason in the compiler error from `ValidCaseType`, which
 // will state that "T does not satisfy TypeFoundInVariant".
-template <class T>
+template <typename T>
 concept TypeFoundInVariant = false;
 
 // Used to cause a compler error, which will state that "ValidCaseType was not
 // satisfied" for T and std::variant<...>.
-template <class T, class StdVariant>
+template <typename T, typename StdVariant>
   requires TypeFoundInVariant<T>
 struct ValidCaseType;
 
@@ -222,8 +222,12 @@ consteval auto ForCase() -> auto {
   }
 }
 
-// Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
-// generates `value.As<CaseT>()`.
+// Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this converts
+// the `value` to `CaseT`.
+//
+// For types with a `kind()` accessor this uses `value.As<CaseT>`.
+//
+// For `std::variant<...>` this uses `std::get<CaseT>(value)`.
 template <typename CaseFnT, typename SwitchT>
 auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;

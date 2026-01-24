@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
-#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
@@ -15,23 +14,25 @@
 
 namespace Carbon::SemIR {
 
-LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+#define CARBON_TYPE_QUALIFIERS(X) \
+  X(Const)                        \
+  X(MaybeUnformed)                \
+  X(Partial)
 
-// A bitmask of type qualifiers.
-enum class TypeQualifiers {
-  None = 0,
-  Const = 1 << 0,
-  MaybeUnformed = 1 << 1,
-  Partial = 1 << 2,
-
-  LLVM_MARK_AS_BITMASK_ENUM(Partial)
+CARBON_DEFINE_RAW_ENUM_MASK(TypeQualifiers, uint8_t) {
+  CARBON_TYPE_QUALIFIERS(CARBON_RAW_ENUM_MASK_ENUMERATOR)
 };
 
-// Returns whether the type qualifier set `quals` contains `qual`.
-inline auto HasTypeQualifier(TypeQualifiers quals, TypeQualifiers qual)
-    -> bool {
-  return (quals & qual) != TypeQualifiers::None;
-}
+// Represents a set of keyword modifiers, using a separate bit per modifier.
+class TypeQualifiers : public CARBON_ENUM_MASK_BASE(TypeQualifiers) {
+ public:
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_CONSTANT_DECL)
+};
+
+#define CARBON_TYPE_QUALIFIERS_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(TypeQualifiers, X)
+CARBON_TYPE_QUALIFIERS(CARBON_TYPE_QUALIFIERS_WITH_TYPE)
+#undef CARBON_TYPE_QUALIFIERS_WITH_TYPE
 
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {
@@ -60,6 +61,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // types, so they can not be passed here. They should be converted to a type
   // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
+
+  // Like GetTypeIdForTypeConstantId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
@@ -109,6 +114,13 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   template <typename InstT>
   auto Is(TypeId type_id) const -> bool {
     return GetAsInst(type_id).Is<InstT>();
+  }
+
+  // Returns whether one of the specified kinds of instruction was used to
+  // define the type.
+  template <typename... InstTs>
+  auto IsOneOf(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).IsOneOf<InstTs...>();
   }
 
   // Returns the instruction used to define the specified type, which is known
@@ -211,9 +223,16 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto TryGetIntTypeInfo(TypeId int_type_id) const
       -> std::optional<IntTypeInfo>;
 
-  // Returns whether `type_id` represents a facet type.
+  // Returns whether `type_id` represents a valid facet type.
   auto IsFacetType(TypeId type_id) const -> bool {
     return type_id == TypeType::TypeId || Is<FacetType>(type_id);
+  }
+
+  // Returns whether `type_id` represents any kind of facet type, including the
+  // error instruction, which can be used as a type and so should be treated as
+  // a facet type in some contexts.
+  auto IsFacetTypeOrError(TypeId type_id) const -> bool {
+    return IsFacetType(type_id) || type_id == ErrorInst::TypeId;
   }
 
   // Returns a list of types that were completed in this file, in the order in
@@ -254,8 +273,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 };
 
 // Returns the scrutinee type of `type_id`, which must be a `PatternType`.
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId;
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId;
 
 }  // namespace Carbon::SemIR
 

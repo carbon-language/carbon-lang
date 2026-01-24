@@ -47,7 +47,6 @@ The following words are interpreted as keywords:
 
 -   `abstract`
 -   `adapt`
--   `addr`
 -   `alias`
 -   `and`
 -   `as`
@@ -89,6 +88,7 @@ The following words are interpreted as keywords:
 -   `partial`
 -   `private`
 -   `protected`
+-   `ref`
 -   `require`
 -   `return`
 -   `returned`

@@ -40,7 +40,7 @@ struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
-  FunctionDefinitionId definition_id = NodeId::None;
+  AnyFunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.
   DeferredDefinitionIndex next_definition_index = DeferredDefinitionIndex::None;
 };
@@ -211,9 +211,8 @@ class Tree : public Printable<Tree> {
     }
 
    private:
-    // The kind of this node. Note that this is only a single byte.
+    // The kind of this node.
     NodeKind kind_;
-    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
     // Whether this node is or contains a parse error.
     //
@@ -234,7 +233,7 @@ class Tree : public Printable<Tree> {
     unsigned token_index_ : Lex::TokenIndex::Bits;
   };
 
-  static_assert(sizeof(NodeImpl) == 4,
+  static_assert(sizeof(NodeImpl) == 8,
                 "Unexpected size of node implementation!");
 
   // Sets the kind of a node. This is intended to allow putting the tree into a

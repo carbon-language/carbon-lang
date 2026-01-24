@@ -26,6 +26,7 @@ var x: {.a = 1};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%int_1) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -46,15 +47,15 @@ var x: {.a = 1};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc22_15.1: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:     %.loc22_15.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc22_15.2: type = converted %.loc22_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

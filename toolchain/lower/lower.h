@@ -8,28 +8,12 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
-
-struct LowerToLLVMOptions {
-  // Options must be set individually, not through initialization.
-  explicit LowerToLLVMOptions() = default;
-
-  // If set, enables LLVM IR verification.
-  llvm::raw_ostream* llvm_verifier_stream = nullptr;
-
-  // Whether to include debug info in lowered output.
-  bool want_debug_info = false;
-
-  // If set, enables verbose output.
-  llvm::raw_ostream* vlog_stream = nullptr;
-
-  // If set, LLVM IR will be dumped to this in textual form.
-  llvm::raw_ostream* dump_stream = nullptr;
-};
 
 // Lowers SemIR to LLVM IR.
 auto LowerToLLVM(

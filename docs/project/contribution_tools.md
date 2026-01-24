@@ -22,19 +22,12 @@ contributions.
     -   [Main tools](#main-tools)
         -   [Running pre-commit](#running-pre-commit)
     -   [Optional tools](#optional-tools)
-        -   [Using LLDB with VS Code](#using-lldb-with-vs-code)
-        -   [Using GDB with VS Code](#using-gdb-with-vs-code)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
--   [Debugger dumping with LLDB](#debugger-dumping-with-lldb)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
     -   [Old LLVM versions](#old-llvm-versions)
+    -   [Debugging](#debugging)
     -   [Asking for help](#asking-for-help)
--   [Troubleshooting debug issues](#troubleshooting-debug-issues)
-    -   [Using LLDB from the command line](#using-lldb-from-the-command-line)
-    -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
-    -   [Debugging other build modes](#debugging-other-build-modes)
-    -   [Debugging on MacOS](#debugging-on-macos)
 
 <!-- tocstop -->
 
@@ -228,6 +221,9 @@ considering if they fit your workflow.
         **either** normal terminals **or** Visual Studio Code to run `bazel`,
         not both in combination. Visual Studio Code can still be used for other
         purposes, such as editing files, without interfering with `bazel`.
+    -   We also provide recommended setups for debugging in VS Code with either
+        [LLDB](/toolchain/docs/debugging.md#debugging-with-lldb) or
+        [GDB]((/toolchain/docs/debugging.md#debugging-with-gdb)
 -   [clangd](https://clangd.llvm.org/installation): An LSP server implementation
     for C/C++.
     -   To ensure that `clangd` reports accurate diagnostics. It needs a
@@ -242,42 +238,6 @@ considering if they fit your workflow.
         dependencies for scripts: https://docs.astral.sh/uv/guides/scripts/
     -   Installation: https://docs.astral.sh/uv/getting-started/installation/
 
-#### Using LLDB with VS Code
-
-The required setup for LLDB is:
-
-1.  In the `.vscode` subdirectory, symlink `lldb_launch.json` to `launch.json`.
-    For example: `ln -s lldb_launch.json .vscode/launch.json`
-2.  Install the
-    [`llvm-vs-code-extensions.lldb-dap` extension](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.lldb-dap).
-3.  In VS Code settings, it may be necessary to set `lldb-dap.executable-path`
-    to the path of `lldb-dap`.
-
-A typical debug session looks like:
-
-1. `bazel build -c dbg //toolchain/testing:file_test`
-2. Open a `.carbon` testdata file to debug. This must be the active file in VS
-   Code.
-3. Go to the "Run and debug" panel in VS Code.
-4. Select and run the `file_test (lldb)` configuration.
-
-#### Using GDB with VS Code
-
-The required setup for GDB is:
-
-1.  In the `.vscode` subdirectory, symlink `gdb_launch.json` to `launch.json`.
-    For example: `ln -s gdb_launch.json .vscode/launch.json`
-2.  Install the
-    [`coolchyni.beyond-debug` extension](https://marketplace.visualstudio.com/items?itemName=coolchyni.beyond-debug).
-
-A typical debug session looks like:
-
-1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
-2. Open a `.carbon` testdata file to debug. This must be the active file in VS
-   Code.
-3. Go to the "Run and debug" panel in VS Code.
-4. Select and run the `file_test (gdb)` configuration.
-
 ### Manually building Clang and LLVM (not recommended)
 
 We primarily test against [apt.llvm.org](https://apt.llvm.org) and Homebrew
@@ -291,20 +251,6 @@ work reliably include:
 -DRUNTIMES_CMAKE_ARGS=-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON;-DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF;-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON;-DLIBCXX_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_LLVM_UNWINDER=ON
 -DLLDB_ENABLE_PYTHON=ON
 ```
-
-## Debugger dumping with LLDB
-
-We include a `dump` command in `lldb` (see
-[Using-LLDB-from-the-command-line](#using-lldb-from-the-command-line) to ensure
-it is available). The `dump` command allows you to dump the contents of a value
-associated with an id. Since most data in the toolchain is referenced by id,
-this ends up being a very frequent task.
-
-The debugger command `dump <context> <id_expr>`, gets roughly translated into a
-C++ call to `Dump(<context>, <id_expr>)`.
-
-Run the `dump` command without any arguments to see the builtin help on how to
-use it.
 
 ## Troubleshooting build issues
 
@@ -327,6 +273,11 @@ Homebrew for this reason.
 
 Run [`bazel clean`](#bazel-clean) when changing the installed LLVM version.
 
+### Debugging
+
+See the [toolchain documentation](/toolchain/docs/debugging.md) for guidance on
+how to debug problems with the toolchain itself.
+
 ### Asking for help
 
 If you're having trouble resolving issues, please ask on
@@ -346,116 +297,3 @@ brew --prefix llvm
 
 These commands will help diagnose potential build issues by showing which
 tooling is in use.
-
-## Troubleshooting debug issues
-
-Pass `-c dbg` to `bazel build` in order to compile with debugging enabled. For
-example:
-
-```shell
-bazel build -c dbg //toolchain
-```
-
-Then debugging works with LLDB:
-
-```shell
-lldb bazel-bin/toolchain/carbon
-```
-
-Any installed version of LLDB at least as recent as the installed Clang used for
-building should work.
-
-### Using LLDB from the command line
-
-We include launch commands for running lldb in VSCode in
-[`.vscode/lldb_launch.json`](/.vscode/lldb_launch.json). But it's also possible
-to run lldb from the command line.
-
-When running the debugger, include the `--local-lldbinit` argument to use our
-preset configuration options. This requires running from the repository root.
-
-To debug a single `file_test`, use the following command, pointing it to an
-actual carbon test file.
-
-```
-bazel build -c dbg //toolchain/testing:file_test && \
-  lldb --local-lldbinit bazel-bin/toolchain/testing/file_test -- \
-    --dump_output --file_tests /path/to/some/test.carbon
-```
-
-### Debugging with GDB instead of LLDB
-
-If you prefer using GDB, you may want to pass some extra flags to the build:
-
-```shell
-bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain
-```
-
-Or you can add them to your `user.bazelrc`, they are designed to be safe to pass
-at all times and only have effect when building with debug information:
-
-```shell
-echo "build --features=-lldb_flags --features=gdb_flags" >> user.bazelrc
-```
-
-Note that on Linux we use Split DWARF and DWARF v5 debug symbols, which means
-that GDB version 10.1 or newer is required. If you see an error like this:
-
-```shell
-Dwarf Error: DW_FORM_strx1 found in non-DWO CU
-```
-
-It means that the version of GDB used is too old, and does not support the DWARF
-v5 format.
-
-### Debugging other build modes
-
-If you have an issue that only reproduces with another build mode, you can still
-enable debug information in that mode by passing `--feature=debug_info_flags` to
-Bazel.
-
-### Debugging on MacOS
-
-Bazel sandboxes builds, which on MacOS makes it hard for the debugger to locate
-symbols on linked binaries when debugging. See this
-[Bazel issue](https://github.com/bazelbuild/bazel/issues/2537#issuecomment-449089673)
-for more information. To workaround, provide the `--spawn_strategy=local` option
-to Bazel for the debug build, like:
-
-```shell
-bazel build --spawn_strategy=local -c dbg //toolchain
-```
-
-You should then be able to debug with `lldb`.
-
-If this build command doesn't seem to produce a debuggable binary you might need
-to both clear the build disk cache and clean the build. Running
-`scripts/clean_disk_cache.sh` may not be enough, you might try deleting all the
-files within the disk cache, typically located at
-`~/.cache/carbon-lang-build-cache`. Deleting the disk cache, followed by a
-`bazel clean` should allow your next rebuild, with the recommended options, to
-supply the symbols for debugging.
-
-For debugging on MacOS using VSCode, some people have had success using the
-CodeLLDB extension. In order for LLDB to connect the project source files with
-the symbols you will need to add a `"sourceMap": { ".": "${workspaceRoot}" }`
-line to the CodeLLDB `launch.json` configuration, for example:
-
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "explorer",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/bazel-bin/explorer/explorer",
-            "args": [],
-            "cwd": "${workspaceRoot}",
-            "sourceMap": {
-                ".": "${workspaceRoot}"
-            }
-        }
-    ]
-}
-```

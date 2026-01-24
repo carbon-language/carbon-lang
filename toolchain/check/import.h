@@ -114,7 +114,7 @@ auto MakeImportedLocIdAndInst(Context& context,
     Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
                                               InstT::Kind);
   }
-  return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
+  return SemIR::LocIdAndInst::UncheckedLoc(SemIR::LocId(imported_loc_id), inst);
 }
 
 }  // namespace Carbon::Check

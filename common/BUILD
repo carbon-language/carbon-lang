@@ -32,6 +32,8 @@ cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
+        ":check",
+        ":filesystem",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -160,6 +162,27 @@ cc_test(
 )
 
 cc_library(
+    name = "enum_mask_base",
+    hdrs = ["enum_mask_base.h"],
+    deps = [
+        ":enum_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "enum_mask_base_test",
+    size = "small",
+    srcs = ["enum_mask_base_test.cpp"],
+    deps = [
+        ":enum_mask_base",
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [
@@ -176,6 +199,7 @@ cc_library(
     hdrs = ["error_test_helpers.h"],
     deps = [
         ":error",
+        ":ostream",
         "@googletest//:gtest",
     ],
 )
@@ -262,7 +286,7 @@ sh_test(
     size = "small",
     srcs = [":filesystem_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # Restrict the sizes to 4-digit ones or smaller to keep test times low.
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
@@ -394,6 +418,28 @@ cc_library(
 )
 
 cc_library(
+    name = "latch",
+    srcs = ["latch.cpp"],
+    hdrs = ["latch.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "latch_test",
+    size = "small",
+    srcs = ["latch_test.cpp"],
+    deps = [
+        ":latch",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "map",
     hdrs = ["map.h"],
     deps = [
@@ -441,7 +487,7 @@ sh_test(
     timeout = "moderate",
     srcs = [":map_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
     ],
@@ -511,7 +557,7 @@ sh_test(
     size = "small",
     srcs = ["raw_hashtable_metadata_group_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
     ],
 )
 
@@ -614,7 +660,7 @@ sh_test(
     timeout = "moderate",
     srcs = [":set_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
     ],

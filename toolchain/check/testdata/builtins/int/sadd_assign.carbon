@@ -14,10 +14,10 @@
 
 library "[[@TEST_NAME]]";
 
-fn Builtin(a: i32*, b: i32) = "int.sadd_assign";
+fn Builtin(ref a: i32, b: i32) = "int.sadd_assign";
 
-fn Call(a: i32*, b: i32) {
-  Builtin(a, b);
+fn Call(ref a: i32, b: i32) {
+  Builtin(ref a, b);
 }
 
 // --- fail_unsized.carbon
@@ -25,23 +25,23 @@ fn Call(a: i32*, b: i32) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Builtin(a: Core.IntLiteral()*, b: Core.IntLiteral()) = "int.sadd_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.sadd_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Builtin(a: Core.IntLiteral()*, b: Core.IntLiteral()) = "int.sadd_assign";
+fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.sadd_assign";
 
 // --- fail_bad_decl.carbon
 
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotPtr(a: i32, b: i32) = "int.sadd_assign";
+// CHECK:STDERR: fn NotRef(a: i32, b: i32) = "int.sadd_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn NotPtr(a: i32, b: i32) = "int.sadd_assign";
+fn NotRef(a: i32, b: i32) = "int.sadd_assign";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedTypes(a: i32*, b: i64) = "int.sadd_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedTypes(ref a: i32, b: i64) = "int.sadd_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedTypes(a: i32*, b: i64) = "int.sadd_assign";
+fn MixedTypes(ref a: i32, b: i64) = "int.sadd_assign";

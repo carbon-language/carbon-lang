@@ -85,8 +85,8 @@ class FileTestBase {
   }
 
   // Returns a regex to match the default file when a line may not be present.
-  // May return nullptr if unused. If GetLineNumberReplacements returns an entry
-  // with has_file=false, this is required.
+  // May return `std::nullopt` if unused. If `GetLineNumberReplacements` returns
+  // an entry with `has_file=false`, this is required.
   virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
       const -> std::optional<RE2> {
     return std::nullopt;

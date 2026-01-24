@@ -4,13 +4,13 @@
 
 package Core library "prelude/destroy";
 
-// Object destruction, including running `fn destroy()`. Note this is distinct
-// from memory deallocation.
-interface Destroy {
-  fn Op[addr self: Self*]();
-}
+// TODO: Add `Destructor`, as in:
+// interface Destructor {
+//   private fn Op[ref self: Self]();
+// }
 
-// Provide a default blanket impl for trivial destruction.
-impl forall [T:! type] T as Destroy {
-  fn Op[addr self: Self*]() = "no_op";
+// Destroys objects. This will invoke `Destructor` impls recursively on members;
+// it does not deallocate memory.
+interface Destroy {
+  fn Op[ref self: Self]();
 }

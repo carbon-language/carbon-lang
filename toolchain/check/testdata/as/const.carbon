@@ -96,18 +96,18 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.2a9: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %const: type = const_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.d7f: type = pattern_type %const [concrete]
-// CHECK:STDOUT:   %ptr.cbd: type = ptr_type %const [concrete]
-// CHECK:STDOUT:   %pattern_type.855: type = pattern_type %ptr.cbd [concrete]
+// CHECK:STDOUT:   %pattern_type.c9e: type = pattern_type %const [concrete]
+// CHECK:STDOUT:   %ptr.d4c: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.bf1: type = pattern_type %ptr.d4c [concrete]
 // CHECK:STDOUT:   %reference.var: ref %const = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.0c5: %ptr.cbd = addr_of %reference.var [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.e3b: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%const) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.96e: %T.as.Destroy.impl.Op.type.e3b = struct_value () [concrete]
+// CHECK:STDOUT:   %addr.160: %ptr.d4c = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,13 +116,13 @@ fn Use() {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.d7f = binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.d7f = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type.c9e = ref_binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.c9e = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %const = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc14_3: ref %const = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3
+// CHECK:STDOUT:   %Init.call: init %X to %.loc14_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc14_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %const.loc14_30: type = const_type %X.ref.loc14_36 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc14_27.1: init %const = as_compatible %Init.call
@@ -132,9 +132,9 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc14_16: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %const.loc14_10: type = const_type %X.ref.loc14_16 [concrete = constants.%const]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: ref %const = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %const = ref_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.d7f = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.c9e = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
 // CHECK:STDOUT:   %X.ref.loc15_35: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -145,44 +145,43 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc15_16: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %const.loc15_10: type = const_type %X.ref.loc15_16 [concrete = constants.%const]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: %const = bind_name v, %.loc15_26.2
+// CHECK:STDOUT:   %v: %const = value_binding v, %.loc15_26.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.855 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.bf1 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %reference.ref: ref %X = name_ref reference, file.%reference [concrete = file.%reference.var]
 // CHECK:STDOUT:   %X.ref.loc16_42: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %const.loc16_36: type = const_type %X.ref.loc16_42 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc16_33.1: ref %const = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc16_33.2: ref %const = converted %reference.ref, %.loc16_33.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr.loc16: %ptr.cbd = addr_of %.loc16_33.2 [concrete = constants.%addr.0c5]
-// CHECK:STDOUT:   %.loc16_17: type = splice_block %ptr.loc16 [concrete = constants.%ptr.cbd] {
+// CHECK:STDOUT:   %addr: %ptr.d4c = addr_of %.loc16_33.2 [concrete = constants.%addr.160]
+// CHECK:STDOUT:   %.loc16_17: type = splice_block %ptr.loc16 [concrete = constants.%ptr.d4c] {
 // CHECK:STDOUT:     %X.ref.loc16_16: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %const.loc16_10: type = const_type %X.ref.loc16_16 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %const.loc16_10 [concrete = constants.%ptr.cbd]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %const.loc16_10 [concrete = constants.%ptr.d4c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %ptr.cbd = bind_name a, %addr.loc16
+// CHECK:STDOUT:   %a: %ptr.d4c = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.855 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.bf1 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.d17 = name_ref ptr, file.%ptr.loc9_5
+// CHECK:STDOUT:   %ptr.ref: %ptr.2a9 = name_ref ptr, file.%ptr.loc9_5
 // CHECK:STDOUT:   %X.ref.loc17_34: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %const.loc17_28: type = const_type %X.ref.loc17_34 [concrete = constants.%const]
-// CHECK:STDOUT:   %ptr.loc17_35: type = ptr_type %const.loc17_28 [concrete = constants.%ptr.cbd]
-// CHECK:STDOUT:   %.loc17_25.1: %ptr.cbd = as_compatible %ptr.ref
-// CHECK:STDOUT:   %.loc17_25.2: %ptr.cbd = converted %ptr.ref, %.loc17_25.1
-// CHECK:STDOUT:   %.loc17_17: type = splice_block %ptr.loc17_17 [concrete = constants.%ptr.cbd] {
+// CHECK:STDOUT:   %ptr.loc17_35: type = ptr_type %const.loc17_28 [concrete = constants.%ptr.d4c]
+// CHECK:STDOUT:   %.loc17_25.1: %ptr.d4c = as_compatible %ptr.ref
+// CHECK:STDOUT:   %.loc17_25.2: %ptr.d4c = converted %ptr.ref, %.loc17_25.1
+// CHECK:STDOUT:   %.loc17_17: type = splice_block %ptr.loc17_17 [concrete = constants.%ptr.d4c] {
 // CHECK:STDOUT:     %X.ref.loc17_16: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %const.loc17_10: type = const_type %X.ref.loc17_16 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc17_17: type = ptr_type %const.loc17_10 [concrete = constants.%ptr.cbd]
+// CHECK:STDOUT:     %ptr.loc17_17: type = ptr_type %const.loc17_10 [concrete = constants.%ptr.d4c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.cbd = bind_name b, %.loc17_25.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%T.as.Destroy.impl.Op.96e
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc14: %ptr.cbd = addr_of %i.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc14)
+// CHECK:STDOUT:   %b: %ptr.d4c = value_binding b, %.loc17_25.2
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -193,14 +192,13 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %const: type = const_type %X [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -209,33 +207,34 @@ fn Use() {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.019 = binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.019 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type.05f = ref_binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.05f = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc12_3: ref %X = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %const = call %Init.ref() to %.loc12_3
+// CHECK:STDOUT:   %Init.call: init %const to %.loc12_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc12_24: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc12_21.1: init %X = as_compatible %Init.call
 // CHECK:STDOUT:   %.loc12_21.2: init %X = converted %Init.call, %.loc12_21.1
 // CHECK:STDOUT:   assign %i.var, %.loc12_21.2
 // CHECK:STDOUT:   %X.ref.loc12_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %i: ref %X = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %X = ref_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.019 = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.05f = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %const = name_ref value, file.%value
 // CHECK:STDOUT:   %X.ref.loc13_23: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc13_20.1: %X = as_compatible %value.ref
 // CHECK:STDOUT:   %.loc13_20.2: %X = converted %value.ref, %.loc13_20.1
 // CHECK:STDOUT:   %X.ref.loc13_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %v: %X = bind_name v, %.loc13_20.2
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %i.var
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound(%addr)
+// CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_20.2
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -246,12 +245,12 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %const: type = const_type %X [concrete]
-// CHECK:STDOUT:   %ptr.cbd: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %ptr.d4c: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %ptr.2a9: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.37f: type = pattern_type %ptr.2a9 [concrete]
 // CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.373: %ptr.d17 = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %addr.806: %ptr.2a9 = addr_of %reference.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -260,31 +259,31 @@ fn Use() {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.1c6 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.37f = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %reference.ref: ref %const = name_ref reference, file.%reference [concrete = file.%reference.var]
 // CHECK:STDOUT:   %X.ref.loc11_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc11_34.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc11_34.2: ref %X = converted %reference.ref, %.loc11_34.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc11_34.2 [concrete = constants.%addr.373]
-// CHECK:STDOUT:   %.loc11_11: type = splice_block %ptr.loc11 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:   %addr: %ptr.2a9 = addr_of %.loc11_34.2 [concrete = constants.%addr.806]
+// CHECK:STDOUT:   %.loc11_11: type = splice_block %ptr.loc11 [concrete = constants.%ptr.2a9] {
 // CHECK:STDOUT:     %X.ref.loc11_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %X.ref.loc11_10 [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %X.ref.loc11_10 [concrete = constants.%ptr.2a9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %ptr.d17 = bind_name a, %addr
+// CHECK:STDOUT:   %a: %ptr.2a9 = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.1c6 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.37f = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.cbd = name_ref ptr, file.%ptr.loc7_5
+// CHECK:STDOUT:   %ptr.ref: %ptr.d4c = name_ref ptr, file.%ptr.loc7_5
 // CHECK:STDOUT:   %X.ref.loc12_29: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %ptr.loc12_30: type = ptr_type %X.ref.loc12_29 [concrete = constants.%ptr.d17]
-// CHECK:STDOUT:   %.loc12_26.1: %ptr.d17 = as_compatible %ptr.ref
-// CHECK:STDOUT:   %.loc12_26.2: %ptr.d17 = converted %ptr.ref, %.loc12_26.1
-// CHECK:STDOUT:   %.loc12_11: type = splice_block %ptr.loc12_11 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:   %ptr.loc12_30: type = ptr_type %X.ref.loc12_29 [concrete = constants.%ptr.2a9]
+// CHECK:STDOUT:   %.loc12_26.1: %ptr.2a9 = as_compatible %ptr.ref
+// CHECK:STDOUT:   %.loc12_26.2: %ptr.2a9 = converted %ptr.ref, %.loc12_26.1
+// CHECK:STDOUT:   %.loc12_11: type = splice_block %ptr.loc12_11 [concrete = constants.%ptr.2a9] {
 // CHECK:STDOUT:     %X.ref.loc12_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc12_11: type = ptr_type %X.ref.loc12_10 [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:     %ptr.loc12_11: type = ptr_type %X.ref.loc12_10 [concrete = constants.%ptr.2a9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.d17 = bind_name b, %.loc12_26.2
+// CHECK:STDOUT:   %b: %ptr.2a9 = value_binding b, %.loc12_26.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

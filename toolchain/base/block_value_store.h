@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/set.h"
 #include "llvm/Support/Allocator.h"
+#include "toolchain/base/id_tag.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -22,16 +23,21 @@ namespace Carbon::SemIR {
 //
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
-template <typename IdT, typename ElementT>
-class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ElementT>> {
+template <typename IdT, typename ElementT, typename TagIdT = Untagged>
+class BlockValueStore
+    : public Yaml::Printable<BlockValueStore<IdT, ElementT, TagIdT>> {
  public:
   using IdType = IdT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using ElementType = ElementT;
   using RefType = llvm::MutableArrayRef<ElementT>;
   using ConstRefType = llvm::ArrayRef<ElementT>;
 
-  explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator) {
+  explicit BlockValueStore(llvm::BumpPtrAllocator& allocator,
+                           IdTagType::TagIdType tag_id,
+                           int32_t initial_reserved_ids = 0)
+    requires(!IdTagIsUntagged<IdTagType>)
+      : allocator_(&allocator), values_(tag_id, initial_reserved_ids) {
     auto empty = RefType();
     auto empty_val = canonical_blocks_.Insert(
         empty, [&] { return values_.Add(empty); }, KeyContext(this));
@@ -107,6 +113,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ElementT>> {
 
   auto size() const -> int { return values_.size(); }
 
+  auto GetRawIndex(IdT id) const -> int { return values_.GetRawIndex(id); }
+
  protected:
   // Allocates a copy of the given data using our slab allocator.
   auto AllocateCopy(ConstRefType data) -> RefType {
@@ -126,18 +134,18 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ElementT>> {
   }
 
   // Allow children to have more complex value handling.
-  auto values() -> ValueStore<IdT, RefType>& { return values_; }
+  auto values() -> ValueStore<IdT, RefType, TagIdT>& { return values_; }
 
  private:
   class KeyContext;
 
   llvm::BumpPtrAllocator* allocator_;
-  ValueStore<IdT, RefType> values_;
+  ValueStore<IdT, RefType, TagIdT> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> canonical_blocks_;
 };
 
-template <typename IdT, typename ElementT>
-class BlockValueStore<IdT, ElementT>::KeyContext
+template <typename IdT, typename ElementT, typename TagIdT>
+class BlockValueStore<IdT, ElementT, TagIdT>::KeyContext
     : public TranslatingKeyContext<KeyContext> {
  public:
   explicit KeyContext(const BlockValueStore* store) : store_(store) {}

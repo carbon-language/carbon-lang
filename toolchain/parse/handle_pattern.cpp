@@ -12,15 +12,23 @@ auto HandlePattern(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::OpenParen:
       context.PushStateForPattern(StateKind::PatternListAsTuple,
-                                  state.in_var_pattern);
+                                  state.in_var_pattern,
+                                  state.in_unused_pattern);
       break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(StateKind::VariablePattern,
-                                  state.in_var_pattern);
+                                  state.in_var_pattern,
+                                  state.in_unused_pattern);
+      break;
+    case Lex::TokenKind::Unused:
+      context.PushStateForPattern(StateKind::UnusedPattern,
+                                  state.in_var_pattern,
+                                  state.in_unused_pattern);
       break;
     default:
       context.PushStateForPattern(StateKind::BindingPattern,
-                                  state.in_var_pattern);
+                                  state.in_var_pattern,
+                                  state.in_unused_pattern);
       break;
   }
 }

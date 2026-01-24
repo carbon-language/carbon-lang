@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -16,6 +17,8 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/generate_ast.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -23,7 +26,6 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
@@ -58,20 +60,21 @@ CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
       fs_(std::move(fs)),
+      llvm_context_(llvm_context),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               unit_and_imports_->unit->total_ir_count, gen_implicit_type_impls,
-               vlog_stream) {}
+               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -104,11 +107,19 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto namespace_type_id =
       GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
+  // Use the name of the package for the package scope.
+  SemIR::NameId package_name_id = SemIR::NameId::MainPackage;
+  const auto& packaging = context_.parse_tree().packaging_decl();
+  if (packaging && packaging->names.package_id.has_value()) {
+    package_name_id =
+        SemIR::NameId::ForPackageName(packaging->names.package_id);
+  }
+
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
-  auto package_scope_id = context_.name_scopes().Add(
-      SemIR::Namespace::PackageInstId, SemIR::NameId::PackageNamespace,
-      SemIR::NameScopeId::None);
+  auto package_scope_id =
+      context_.name_scopes().Add(SemIR::Namespace::PackageInstId,
+                                 package_name_id, SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id =
@@ -121,7 +132,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
   // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
-    const auto& names = context_.parse_tree().packaging_decl()->names;
+    const auto& names = packaging->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
@@ -154,19 +165,14 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
-    CARBON_CHECK(clang_ast_unit);
-    CARBON_CHECK(!clang_ast_unit->get());
-    *clang_ast_unit =
-        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
+    ImportCpp(context_, cpp_imports, fs_, llvm_context_, clang_invocation_);
   }
 }
 
 auto CheckUnit::CollectDirectImports(
     llvm::SmallVector<SemIR::ImportIR>& results,
-    FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
-    SemIR::InstId import_decl_id, const PackageImports& imports, bool is_local)
-    -> void {
+    CheckIRIdToIntStore& ir_to_result_index, SemIR::InstId import_decl_id,
+    const PackageImports& imports, bool is_local) -> void {
   for (const auto& import : imports.imports) {
     const auto& direct_ir = *import.unit_info->unit->sem_ir;
     auto& index = ir_to_result_index.Get(direct_ir.check_ir_id());
@@ -193,9 +199,8 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
-  auto ir_to_result_index =
-      FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
-          unit_and_imports_->unit->total_ir_count, -1);
+  auto ir_to_result_index = CheckIRIdToIntStore::MakeWithExplicitSize(
+      unit_and_imports_->unit->total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
@@ -369,7 +374,6 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
-// NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
   NodeIdTraversal traversal(&context_);
 
@@ -524,12 +528,16 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
-    auto witness_result =
-        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
-                                    poison.non_canonical_query_self_inst_id,
-                                    /*poison_concrete_results=*/false);
-    CARBON_CHECK(witness_result.has_concrete_value());
-    auto found_witness_id = witness_result.concrete_witness();
+    auto witness_result = EvalLookupSingleImplWitness(
+        context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
+        EvalImplLookupMode::RecheckPoisonedLookup);
+    CARBON_CHECK(witness_result.has_final_value());
+    auto found_witness_id = witness_result.final_witness();
+    if (found_witness_id == SemIR::ErrorInst::InstId) {
+      // Errors may have been diagnosed with the impl used in the poisoned query
+      // in the meantime (such as a missing definition).
+      continue;
+    }
     if (found_witness_id != poison.impl_witness) {
       auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
         auto table_id = context_.insts()
@@ -579,6 +587,9 @@ auto CheckUnit::FinishRun() -> void {
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
+
+  // Finalizes the C++ portion of the compilation.
+  FinishAst(context_);
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

@@ -14,11 +14,10 @@ namespace Carbon {
 
 class CodeGen {
  public:
-  // `module` and `errors` must not be null. `consumer` may be null, in which
-  // case diagnostics go to stderr.
-  static auto Make(llvm::Module* module, llvm::StringRef target_triple_str,
-                   Diagnostics::Consumer* consumer = nullptr)
-      -> std::optional<CodeGen>;
+  // `module`, `target_machine`, and `consumer` must not be null.
+  explicit CodeGen(llvm::Module* module, llvm::TargetMachine* target_machine,
+                   Diagnostics::Consumer* consumer)
+      : module_(module), target_machine_(target_machine), emitter_(consumer) {}
 
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
@@ -35,10 +34,6 @@ class CodeGen {
   auto EmitAssembly(llvm::raw_pwrite_stream& out) -> bool;
 
  private:
-  // `module` and `consumer` must not be null.
-  explicit CodeGen(llvm::Module* module, Diagnostics::Consumer* consumer)
-      : module_(module), emitter_(consumer) {}
-
   // Using the llvm pass emits either assembly or object code to dest.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
@@ -47,10 +42,10 @@ class CodeGen {
 
   llvm::Module* module_;
 
+  llvm::TargetMachine* target_machine_;
+
   // The emitter for diagnostics.
   Diagnostics::FileEmitter emitter_;
-
-  std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
 
 }  // namespace Carbon

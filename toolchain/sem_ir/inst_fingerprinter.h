@@ -18,7 +18,8 @@ class InstFingerprinter {
   explicit InstFingerprinter(int total_ir_count)
       : fingerprints_(FilesFingerprintStores::MakeWithExplicitSizeFrom(
             total_ir_count, [] {
-              return FingerprintStore::MakeForOverwriteWithExplicitSize(0);
+              return FingerprintStore::MakeForOverwriteWithExplicitSize(
+                  0, CheckIRId::None);
             })) {}
 
   // Gets or computes a fingerprint for the given instruction.
@@ -30,6 +31,10 @@ class InstFingerprinter {
   // Gets or computes a fingerprint for the given impl.
   auto GetOrCompute(const File* file, ImplId impl_id) -> uint64_t;
 
+  // Gets or computes a fingerprint for the given C++ overload set.
+  auto GetOrCompute(const File* file, CppOverloadSetId overload_set_id)
+      -> uint64_t;
+
  private:
   // The fingerprint for each instruction that has had its fingerprint computed,
   // indexed by the InstId's index.
@@ -39,7 +44,8 @@ class InstFingerprinter {
   // the `GetOrCompute` overload for `InstBlockId`s, and may save some work if
   // the same canonical inst block is used by multiple instructions, for example
   // as a specific argument list.
-  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t>;
+  using FingerprintStore =
+      FixedSizeValueStore<InstId, uint64_t, Tag<CheckIRId>>;
   using FilesFingerprintStores =
       FixedSizeValueStore<CheckIRId, FingerprintStore>;
   FilesFingerprintStores fingerprints_;

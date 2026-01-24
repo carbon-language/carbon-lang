@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
-#include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
@@ -21,6 +20,9 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/cpp_global_var.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
@@ -33,6 +35,8 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -59,17 +63,14 @@ struct ExprRegion {
   InstId result_id;
 };
 
-using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
+using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
-using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
+using CustomLayoutStore =
+    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
 
-// Provides semantic analysis on a Parse::Tree.
+// The semantic IR for a single file.
 class File : public Printable<File> {
  public:
-  using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
-                           IdentifiedFacetType>;
-
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
@@ -153,12 +154,38 @@ class File : public Printable<File> {
 
   auto entity_names() -> EntityNameStore& { return entity_names_; }
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
+  auto cpp_global_vars() -> CppGlobalVarStore& { return cpp_global_vars_; }
+  auto cpp_global_vars() const -> const CppGlobalVarStore& {
+    return cpp_global_vars_;
+  }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
+  auto cpp_overload_sets() -> CppOverloadSetStore& {
+    return cpp_overload_sets_;
+  }
+  auto cpp_overload_sets() const -> const CppOverloadSetStore& {
+    return cpp_overload_sets_;
+  }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
+  auto named_constraints() -> NamedConstraintStore& {
+    return named_constraints_;
+  }
+  auto named_constraints() const -> const NamedConstraintStore& {
+    return named_constraints_;
+  }
+  auto require_impls() -> RequireImplsStore& { return require_impls_; }
+  auto require_impls() const -> const RequireImplsStore& {
+    return require_impls_;
+  }
+  auto require_impls_blocks() -> RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
+  auto require_impls_blocks() const -> const RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -192,19 +219,12 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto import_cpps() -> ImportCppStore& { return import_cpps_; }
-  auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
-  auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
-  auto clang_ast_unit() const -> const clang::ASTUnit* {
-    return clang_ast_unit_;
-  }
-  // TODO: When the AST can be created before creating `File`, initialize the
-  // pointer in the constructor and remove this function. This is part of
-  // https://github.com/carbon-language/carbon-lang/issues/4666
-  auto set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void;
-  auto clang_mangle_context() -> clang::MangleContext* {
-    return clang_mangle_context_.get();
-  }
+  auto cpp_file() -> SemIR::CppFile* { return cpp_file_.get(); }
+  auto cpp_file() const -> const SemIR::CppFile* { return cpp_file_.get(); }
+  // TODO: We should be able to create the initial C++ AST before creating the
+  // `File` and initialize the pointer in the constructor instead of using a
+  // setter.
+  auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
@@ -241,7 +261,7 @@ class File : public Printable<File> {
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation>;
+      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
@@ -294,14 +314,29 @@ class File : public Printable<File> {
   // Storage for EntityNames.
   EntityNameStore entity_names_;
 
+  // For imported C++ global variables, the Clang decl to use for mangling.
+  CppGlobalVarStore cpp_global_vars_;
+
   // Storage for callable objects.
   FunctionStore functions_;
+
+  // Storage for CppOverloadSet.
+  CppOverloadSetStore cpp_overload_sets_;
 
   // Storage for classes.
   ClassStore classes_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;
+
+  // Storage for named constraints.
+  NamedConstraintStore named_constraints_;
+
+  // Storage for interface requirements.
+  RequireImplsStore require_impls_;
+
+  // Storage for blocks of RequireImpls.
+  RequireImplsBlockStore require_impls_blocks_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
@@ -332,16 +367,9 @@ class File : public Printable<File> {
   // that are import-related.
   ImportIRInstStore import_ir_insts_;
 
-  // List of Cpp imports.
-  ImportCppStore import_cpps_;
-
-  // The Clang AST to use when looking up `Cpp` names. Null if there are no
-  // `Cpp` imports.
-  clang::ASTUnit* clang_ast_unit_ = nullptr;
-
-  // The Clang mangle context for the target in the ASTContext. Initialized
-  // together with `clang_ast_unit_`.
-  std::unique_ptr<clang::MangleContext> clang_mangle_context_;
+  // The C++ file to use when looking up `Cpp` names. Null if there are no `Cpp`
+  // imports.
+  std::unique_ptr<SemIR::CppFile> cpp_file_;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
@@ -350,7 +378,7 @@ class File : public Printable<File> {
 
   // All instructions. The first entries will always be the singleton
   // instructions.
-  InstStore insts_ = InstStore(this);
+  InstStore insts_;
 
   VtableStore vtables_;
 
@@ -375,10 +403,10 @@ class File : public Printable<File> {
   ConstantStore constants_;
 
   // Storage for StructTypeField lists.
-  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+  StructTypeFieldsStore struct_type_fields_;
 
   // Storage for custom layouts.
-  CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);
+  CustomLayoutStore custom_layouts_;
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);

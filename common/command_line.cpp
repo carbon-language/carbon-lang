@@ -358,10 +358,11 @@ auto MetaPrinter::PrintVersion(const Command& command) const -> void {
 }
 
 auto MetaPrinter::PrintSubcommands(const Command& command) const -> void {
-  PrintListOfAlternatives(*out_, llvm::ArrayRef(command.subcommands),
-                          [](const std::unique_ptr<Command>& subcommand) {
-                            return subcommand->info.name;
-                          });
+  PrintListOfAlternatives<std::unique_ptr<Command>>(
+      *out_, command.subcommands,
+      [](const std::unique_ptr<Command>& subcommand) {
+        return subcommand->info.name;
+      });
 }
 
 auto MetaPrinter::PrintRawVersion(const Command& command,
@@ -929,8 +930,8 @@ auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     error << "` has an invalid value `";
     llvm::printEscapedString(value, error);
     error << "`; valid values are: ";
-    PrintListOfAlternatives(error, arg.value_strings,
-                            [](llvm::StringRef x) { return x; });
+    PrintListOfAlternatives<llvm::StringRef>(
+        error, arg.value_strings, [](llvm::StringRef x) { return x; });
     return Error(error.TakeStr());
   }
   return Success();

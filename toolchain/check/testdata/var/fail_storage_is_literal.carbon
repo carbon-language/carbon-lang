@@ -57,7 +57,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
@@ -67,7 +67,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_1.loc23_10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %.loc23: type = converted %int_1.loc23_10, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

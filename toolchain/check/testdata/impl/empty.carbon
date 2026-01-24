@@ -22,12 +22,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
-// CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness file.%Empty.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness @i32.as.Empty.impl.%Empty.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,20 +51,23 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.impl_witness_table = impl_witness_table (), @i32.as.Empty.impl [concrete]
-// CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness %Empty.impl_witness_table [concrete = constants.%Empty.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.Empty.impl: %i32 as %Empty.ref {
+// CHECK:STDOUT:   %Empty.impl_witness_table = impl_witness_table (), @i32.as.Empty.impl [concrete]
+// CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness %Empty.impl_witness_table [concrete = constants.%Empty.impl_witness]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%Empty.impl_witness
+// CHECK:STDOUT:   witness = %Empty.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

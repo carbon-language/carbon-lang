@@ -11,7 +11,7 @@
 namespace Carbon::SemIR {
 
 // Returns true if `pattern_id` is a `self` parameter pattern, such as
-// `self: Foo` or `addr self: Self*`.
+// `self: Foo` or `ref self: Self`.
 auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool;
 
 // If `pattern_id` introduces any name bindings, this returns the `EntityNameId`

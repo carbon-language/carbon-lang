@@ -24,29 +24,21 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
+// CHECK:STDOUT:   %pattern_type.904: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
-// CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op: %Class.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,60 +50,40 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:   %Class.decl.loc15: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.decl.loc17: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.904 = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %self.param.loc21
+// CHECK:STDOUT:     %self.loc21: %Class = value_binding self, %self.param.loc21
 // CHECK:STDOUT:     %b.param.loc21: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc21_28.1: type = splice_block %.loc21_28.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc21_28.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc21_28.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc21_28.3: type = converted %.loc21_28.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc21: %empty_tuple.type = bind_name b, %b.param.loc21
+// CHECK:STDOUT:     %b.loc21: %empty_tuple.type = value_binding b, %b.param.loc21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @Class.as.Destroy.impl: @Class.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.decl: %Class.as.Destroy.impl.Op.type = fn_decl @Class.as.Destroy.impl.Op [concrete = constants.%Class.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc17: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self: %ptr.e71 = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Class.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Class.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.904 = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc18: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc18: %Class = bind_name self, %self.param.loc18
+// CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
 // CHECK:STDOUT:     %b.param.loc18: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc18_24.1: type = splice_block %.loc18_24.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc18_24.3: type = converted %.loc18_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc18: %empty_tuple.type = bind_name b, %b.param.loc18
+// CHECK:STDOUT:     %b.loc18: %empty_tuple.type = value_binding b, %b.param.loc18
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -124,6 +96,4 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.as.Destroy.impl.Op(%self.param: %ptr.e71) = "no_op";
 // CHECK:STDOUT:

@@ -26,10 +26,10 @@ class Equation {
   fn Read() -> Equation {
     returned var me: Equation;
     me.num_operands = 0;
-    ReadInt64(&me.result);
-    ConsumeChar(0x3A);
-    while (ConsumeChar(0x20)) {
-      ReadInt64(&me.operands[me.num_operands]);
+    ReadInt(ref me.result);
+    ConsumeChar(':');
+    while (ConsumeChar(' ')) {
+      ReadInt(ref me.operands[me.num_operands]);
       ++me.num_operands;
     }
     while (SkipNewline()) {}

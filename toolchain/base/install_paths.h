@@ -1,0 +1,191 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_
+#define CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_
+
+#include <filesystem>
+
+#include "common/error.h"
+#include "common/filesystem.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
+#include "toolchain/base/llvm_tools.h"
+
+namespace Carbon {
+
+// Locates the toolchain installation and provides paths to various components.
+//
+// The Carbon toolchain expects to be installed into a tree rooted at `root_`.
+// This root contains the marker file and the busy box binary.
+//
+// In a Unix-like filesystem environment, the root is typically located as
+// `<some prefix>/lib/carbon`, with symlinks in the other parts of the FHS-based
+// layout back to entries below this tree. However, this class and the toolchain
+// itself should only directly use things below the installation root to support
+// non-FHS usage.
+//
+// When locating an install, we verify it with `CheckMarkerFile`. When errors
+// occur, `SetError` makes `error()` available for diagnostics and clears the
+// install root, leaving things minimally functional but with the installation
+// root of the current working directory.
+//
+// The factory methods locate the install root based on their use-case:
+//
+//   - `MakeExeRelative` for command line tools in an install.
+//   - `MakeForBazelRunfiles` for locating through Bazel's runfile tree.
+//   - `Make` for an explicit path, for example in tests.
+//
+// An instance of this class provides methods that query for specific paths
+// within the install. Note that we want to abstract away any platform
+// differences in the installation layout. When a specific part of the install
+// is needed, a dedicated accessor should be added that computes the path for
+// that component.
+//
+// TODO: Need to check the installation structure of LLVM on Windows and figure
+// out what Carbon's should be within a Windows prefix and how much of the
+// structure we can share with the Unix-y layout of the prefix.
+//
+// TODO: InstallPaths is typically called from places using a VFS (both tests
+// and the Driver), but does not use a VFS itself. It currently only supports
+// using the real filesystem, but should probably support a VFS.
+class InstallPaths {
+ public:
+  // Provide the current executable's path to detect the correct installation
+  // root. This assumes the toolchain to be in its installed layout.
+  static auto MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths;
+
+  // Provide the current executable's path, and use that to detect a Bazel or
+  // Bazel-compatible runfiles install root. This should only be used where it
+  // is reasonable to rely on this rather than a fixed install location such as
+  // for internal development purposes or other Bazel users of the Carbon
+  // library.
+  //
+  // This method of construction also ensures the result is valid. If detection
+  // fails for any reason, it will `CARBON_CHECK` fail with the error message.
+  static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
+
+  // Provide an explicit install paths root. This is useful for testing or for
+  // using Carbon in an environment with an unusual path to the installed files.
+  static auto Make(llvm::StringRef install_root) -> InstallPaths;
+
+  // Returns the contents of the prelude manifest file. This is the list of
+  // files that define the prelude, and will always be non-empty on success.
+  auto ReadPreludeManifest() const -> ErrorOr<llvm::SmallVector<std::string>>;
+
+  // Returns the contents of the clang builtin headers manifest file. This is
+  // the list of header files that are installed as part of the clang compiler,
+  // and will always be non-empty on success.
+  auto ReadClangHeadersManifest() const
+      -> ErrorOr<llvm::SmallVector<std::string>>;
+
+  // Check for an error detecting the install paths correctly.
+  //
+  // A nullopt return means no errors encountered and the paths should work
+  // correctly.
+  //
+  // A string return means there was an error, and details of the error are
+  // in the `StringRef` for inclusion in any user report.
+  [[nodiscard]] auto error() const -> std::optional<llvm::StringRef> {
+    return error_;
+  }
+
+  // The path to the root of this installation.
+  auto root() const -> std::filesystem::path { return root_; }
+
+  // The directory containing the `Core` package. Computed on demand.
+  auto core_package() const -> std::filesystem::path;
+
+  // The directory containing LLVM install binaries. Computed on demand.
+  auto llvm_install_bin() const -> std::filesystem::path;
+
+  // The path to `clang`.
+  auto clang_path() const -> std::filesystem::path;
+
+  // The path to `lld' and various aliases of `lld`.
+  auto lld_path() const -> std::filesystem::path;
+  auto ld_lld_path() const -> std::filesystem::path;
+  auto ld64_lld_path() const -> std::filesystem::path;
+
+  // The path to any of the LLVM tools.
+  auto llvm_tool_path(LLVMTool tool) const -> std::filesystem::path;
+
+  // The path to the Clang resources.
+  auto clang_resource_path() const -> std::filesystem::path;
+
+  // The path to the root of the runtimes.
+  auto runtimes_root() const -> std::filesystem::path;
+
+  // The path to `libunwind` runtime.
+  auto libunwind_path() const -> std::filesystem::path;
+
+  // The path to `libunwind` runtime.
+  auto libcxx_path() const -> std::filesystem::path;
+
+  // The path to `libunwind` runtime.
+  auto libcxxabi_path() const -> std::filesystem::path;
+
+  // The path to the LLVM `libc` runtime.
+  auto libc_path() const -> std::filesystem::path;
+
+  // The installation digest path.
+  //
+  // This file contains a digest of the installation.
+  auto digest_path() const -> std::filesystem::path;
+
+ private:
+  friend class InstallPathsTestPeer;
+
+  InstallPaths() { SetError("No root provided!"); }
+  explicit InstallPaths(std::filesystem::path root) : root_(std::move(root)) {}
+
+  static auto MakeFromFile(std::filesystem::path file) -> InstallPaths;
+
+  // Set an error message on the install paths and reset the `root_` to empty,
+  // which should use the current working directory.
+  auto SetError(llvm::Twine message) -> void;
+
+  // Check that the install paths have a marker file at
+  // `root()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
+  // relevant error message.
+  auto CheckMarkerFile() -> void;
+
+  // Read a manifest file.
+  auto ReadManifest(std::filesystem::path manifest_path,
+                    std::filesystem::path manifest_file) const
+      -> ErrorOr<llvm::SmallVector<std::string>>;
+
+  // The computed installation root. In the event of an error, this will be the
+  // empty string.
+  //
+  // When run from Bazel (for example, in unit tests or development binaries)
+  // this will look like:
+  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix/lib/carbon`
+  //
+  // When installed, it's expected to be similar to the CMake install prefix,
+  // followed by `lib/carbon`:
+  //
+  // - `/usr/lib/carbon` or `/usr/local/lib/carbon` on Linux and most BSDs.
+  // - `/opt/homebrew/lib/carbon` or similar on macOS with Homebrew.
+  // - TODO: Figure out if this is `C:/Program Files/Carbon` or something else
+  //   on Windows.
+  //
+  // See https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
+  // for more details. While we don't build the toolchain with CMake, we expect
+  // our installation to behave in a similar and compatible way.
+  //
+  // The hierarchy of files beneath the install root can be found in the
+  // BUILD's `install_dirs` entry for `lib/carbon`.
+  std::filesystem::path root_;
+
+  // The opened root directory.
+  Filesystem::Dir root_dir_;
+
+  std::optional<std::string> error_;
+};
+
+}  // namespace Carbon
+
+#endif  // CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_

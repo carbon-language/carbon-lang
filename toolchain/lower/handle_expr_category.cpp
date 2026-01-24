@@ -9,12 +9,15 @@
 namespace Carbon::Lower {
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::BindValue inst) -> void {
+                SemIR::AcquireValue inst) -> void {
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   switch (context.GetValueRepr(inst_type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL(
-          "Value binding for type with incomplete value representation");
+          "Value acquisition for type with incomplete value representation");
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL(
+          "Value acquisition for type with dependent value representation");
     case SemIR::ValueRepr::None:
       // Nothing should use this value, but StubRef needs a value to
       // propagate.
@@ -31,7 +34,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
     case SemIR::ValueRepr::Custom:
-      CARBON_FATAL("TODO: Add support for BindValue with custom value rep");
+      CARBON_FATAL("TODO: Add support for AcquireValue with custom value rep");
   }
 }
 
@@ -51,6 +54,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       switch (context.GetValueRepr(type).repr.kind) {
         case SemIR::ValueRepr::Unknown:
           CARBON_FATAL("Unexpected incomplete type");
+        case SemIR::ValueRepr::Dependent:
+          CARBON_FATAL("Unexpected dependent type");
         case SemIR::ValueRepr::None:
         case SemIR::ValueRepr::Pointer:
           break;
@@ -62,8 +67,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
               "TODO: Add support for InPlaceInit with custom value rep");
       }
       break;
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Unexpected abstract type");
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Unexpected incomplete type");
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Unexpected dependent type");
   }
 
   context.SetLocal(inst_id, value);

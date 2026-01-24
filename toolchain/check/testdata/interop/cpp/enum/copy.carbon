@@ -38,9 +38,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.ebf: type = pattern_type %Enum [concrete]
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.664: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Enum) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bbe: %T.as.Destroy.impl.Op.type.664 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.47b: type = ptr_type %Enum [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -60,7 +59,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.ebf = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.ebf = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.ebf = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Enum = var %a.var_patt
@@ -72,17 +71,16 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Enum = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %Enum = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc10: ref %Enum = name_ref a, %a
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc10: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc10, %b.ref
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.bbe
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.47b = addr_of %a.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Enum) = "no_op";
 // CHECK:STDOUT:

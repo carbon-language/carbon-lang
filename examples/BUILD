@@ -8,3 +8,8 @@ carbon_binary(
     name = "sieve",
     srcs = ["sieve.carbon"],
 )
+
+carbon_binary(
+    name = "hello_world",
+    srcs = ["hello_world.carbon"],
+)

@@ -76,7 +76,7 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type = value_binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %UnsizedEnum = value_param call_param0
@@ -84,7 +84,7 @@ fn MyF() {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %UnsizedEnum.ref: type = name_ref UnsizedEnum, imports.%UnsizedEnum.decl [concrete = constants.%UnsizedEnum]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: %UnsizedEnum = bind_name e, %e.param
+// CHECK:STDOUT:     %e: %UnsizedEnum = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -5,6 +5,7 @@
 #include "toolchain/driver/driver.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <optional>
 
@@ -14,6 +15,7 @@
 #include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
+#include "toolchain/driver/config_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"
 #include "toolchain/driver/language_server_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
@@ -31,10 +33,15 @@ struct Options {
   bool verbose = false;
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
+  bool threads = true;
+
+  llvm::StringRef runtimes_cache_path;
+  llvm::StringRef prebuilt_runtimes_path;
 
   BuildRuntimesSubcommand runtimes;
   ClangSubcommand clang;
   CompileSubcommand compile;
+  ConfigSubcommand config;
   FormatSubcommand format;
   LanguageServerSubcommand language_server;
   LinkSubcommand link;
@@ -74,6 +81,35 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
 
+  b.AddStringOption(
+      {
+          .name = "runtimes-cache",
+          .value_name = "PATH",
+          .help = R"""(
+Specify a custom runtimes cache location.
+
+By default, the runtimes cache is located in the `carbon_runtimes` subdirectory
+of `$XDG_CACHE_HOME` (or `$HOME/.cache` if not set). If unable to use either, it
+will be placed in a temporary directory that is removed when the command
+completes. This flag overrides that logic with a specific path. It has no effect
+if --prebuilt-runtimes is set.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&runtimes_cache_path); });
+
+  b.AddStringOption(
+      {
+          .name = "prebuilt-runtimes",
+          .value_name = "PATH",
+          .help = R"""(
+Path to prebuilt runtimes tree.
+
+If this option is provided, runtimes will not be built on demand and this path
+will be used instead.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&prebuilt_runtimes_path); });
+
   b.AddFlag(
       {
           .name = "fuzzing",
@@ -91,9 +127,29 @@ applies to each message that forms a diagnostic, not just the primary message.
       },
       [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
 
+  b.AddFlag(
+      {
+          .name = "threads",
+          .help = R"""(
+Controls whether threads are used to build runtimes.
+
+When enabled (the default), Carbon will try to build runtime libraries using
+threads to parallelize the operation. How many threads is controlled
+automatically by the system.
+
+Disabling threads ensures a single threaded build of the runtimes which can help
+when there are errors or other output.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&threads);
+      });
+
   runtimes.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
+  config.AddTo(b, &selected_subcommand);
   format.AddTo(b, &selected_subcommand);
   language_server.AddTo(b, &selected_subcommand);
   link.AddTo(b, &selected_subcommand);
@@ -135,12 +191,51 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     return {.success = true};
   }
 
+  auto cache_result =
+      options.runtimes_cache_path.empty()
+          ? Runtimes::Cache::MakeSystem(*driver_env_.installation,
+                                        driver_env_.vlog_stream)
+          : Runtimes::Cache::MakeCustom(
+                *driver_env_.installation,
+                std::filesystem::absolute(options.runtimes_cache_path.str()),
+                driver_env_.vlog_stream);
+  if (!cache_result.ok()) {
+    // TODO: We should provide a better diagnostic than the raw error.
+    CARBON_DIAGNOSTIC(DriverRuntimesCacheInvalid, Error, "{0}", std::string);
+    driver_env_.emitter.Emit(DriverRuntimesCacheInvalid,
+                             cache_result.error().message());
+    return {.success = false};
+  }
+  driver_env_.runtimes_cache = std::move(*cache_result);
+
+  if (!options.prebuilt_runtimes_path.empty()) {
+    auto result = Runtimes::OpenExisting(options.prebuilt_runtimes_path.str(),
+                                         driver_env_.vlog_stream);
+    if (!result.ok()) {
+      // TODO: We should provide a better diagnostic than the raw error.
+      CARBON_DIAGNOSTIC(DriverPrebuiltRuntimesInvalid, Error, "{0}",
+                        std::string);
+      driver_env_.emitter.Emit(DriverPrebuiltRuntimesInvalid,
+                               result.error().message());
+      return {.success = false};
+    }
+    driver_env_.prebuilt_runtimes = *std::move(result);
+  }
+
   if (options.verbose) {
     // Note this implies streamed output in order to interleave.
     driver_env_.vlog_stream = driver_env_.error_stream;
   }
   if (options.fuzzing) {
     driver_env_.fuzzing = true;
+  }
+
+  llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
+  std::optional<llvm::DefaultThreadPool> threads;
+  driver_env_.thread_pool = &single_thread;
+  if (options.threads) {
+    threads.emplace(llvm::optimal_concurrency());
+    driver_env_.thread_pool = &*threads;
   }
 
   CARBON_CHECK(options.selected_subcommand != nullptr);

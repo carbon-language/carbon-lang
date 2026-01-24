@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 static auto ExpectAsOrTypeExpression(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::As)) {
     // as <expression> ...
-    context.AddLeafNode(NodeKind::DefaultSelfImplAs, context.Consume());
+    context.AddLeafNode(NodeKind::ImplDefaultSelfAs, context.Consume());
     context.PushState(StateKind::Expr);
   } else {
     // <expression> as <expression>...
@@ -62,7 +62,7 @@ auto HandleImplAfterForall(Context& context) -> void {
 auto HandleImplBeforeAs(Context& context) -> void {
   auto state = context.PopState();
   if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
-    context.AddNode(NodeKind::TypeImplAs, *as, state.has_error);
+    context.AddNode(NodeKind::ImplTypeAs, *as, state.has_error);
     context.PushState(StateKind::Expr);
   } else {
     if (!state.has_error) {

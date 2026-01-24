@@ -470,6 +470,19 @@ auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
   }
 }
 
+auto Context::AddFunctionTerseDefinition(Lex::TokenIndex token, bool has_error)
+    -> void {
+  auto definition_id =
+      AddNode<NodeKind::FunctionTerseDefinition>(token, has_error);
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id = definition_id;
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
+  }
+}
+
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   output << "Parser stack:\n";
   for (auto [i, entry] : llvm::enumerate(state_stack_)) {

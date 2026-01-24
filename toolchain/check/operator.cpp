@@ -4,13 +4,18 @@
 
 #include "toolchain/check/operator.h"
 
+#include <optional>
+
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/call.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -21,6 +26,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   auto implicit_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
 
   // Look up the interface, and pass it any generic arguments.
+  // TODO: Improve diagnostics when the found `interface_id` isn't callable.
   auto interface_id =
       LookupNameInCore(context, implicit_loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
@@ -29,14 +35,13 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   }
 
   // Look up the interface member.
-  auto op_name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(op.op_name));
+  auto op_name_id = context.core_identifiers().AddNameId(op.op_name);
   return PerformMemberAccess(context, implicit_loc_id, interface_id,
                              op_name_id);
 }
 
-// Returns whether the type of the instruction is a C++ class.
-static auto IsOfCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
+// Returns whether the instruction is a C++ class.
+static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
   auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
       context.types().GetInstId(context.insts().Get(inst_id).type_id()));
   if (!class_type) {
@@ -44,49 +49,66 @@ static auto IsOfCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
     return false;
   }
 
-  const auto& class_info = context.classes().Get(class_type->class_id);
-  if (!class_info.is_complete()) {
-    return false;
-  }
-
-  return context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
+  SemIR::NameScopeId class_scope_id =
+      context.classes().Get(class_type->class_id).scope_id;
+  return class_scope_id.has_value() &&
+         context.name_scopes().Get(class_scope_id).is_cpp_scope();
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (operand_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
+  SemIR::InstId op_fn_id = SemIR::InstId::None;
+
   // For unary operators with a C++ class as the operand, try to import and call
   // the C++ operator.
   // TODO: Change impl lookup instead. See
   // https://github.com/carbon-language/carbon-lang/blob/db0a00d713015436844c55e7ac190a0f95556499/toolchain/check/operator.cpp#L76
-  if (IsOfCppClassType(context, operand_id)) {
-    SemIR::ScopeLookupResult cpp_lookup_result =
-        ImportOperatorFromCpp(context, loc_id, op);
-    if (cpp_lookup_result.is_found()) {
-      return PerformCall(context, loc_id, cpp_lookup_result.target_inst_id(),
-                         {operand_id});
+  if (IsCppClassType(context, operand_id)) {
+    op_fn_id = LookupCppOperator(context, loc_id, op, {operand_id});
+
+    // If C++ operator lookup found a non-method operator, call it with one call
+    // argument. Otherwise fall through to call it with a self argument.
+    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
+      return PerformCall(context, loc_id, op_fn_id, {operand_id},
+                         /*is_operator_syntax=*/true);
     }
   }
 
-  // Look up the operator function.
-  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
+  if (!op_fn_id.has_value()) {
+    // Look up the operator function.
+    op_fn_id = GetOperatorOpFunction(context, loc_id, op);
+  }
 
   // Form `operand.(Op)`.
-  auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
-                                                 op_fn, missing_impl_diagnoser);
+  auto bound_op_id = PerformCompoundMemberAccess(
+      context, loc_id, operand_id, op_fn_id, missing_impl_diagnoser);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
 
   // Form `bound_op()`.
-  return PerformCall(context, loc_id, bound_op_id, {});
+  return PerformCall(context, loc_id, bound_op_id, {},
+                     /*is_operator_syntax=*/true);
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (lhs_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
+  SemIR::InstId op_fn_id = SemIR::InstId::None;
+
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic
@@ -95,27 +117,33 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
-  if (IsOfCppClassType(context, lhs_id) || IsOfCppClassType(context, rhs_id)) {
-    SemIR::ScopeLookupResult cpp_lookup_result =
-        ImportOperatorFromCpp(context, loc_id, op);
-    if (cpp_lookup_result.is_found()) {
-      return PerformCall(context, loc_id, cpp_lookup_result.target_inst_id(),
-                         {lhs_id, rhs_id});
+  if (IsCppClassType(context, lhs_id) || IsCppClassType(context, rhs_id)) {
+    op_fn_id = LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
+
+    // If C++ operator lookup found a non-method operator, call it with two call
+    // arguments. Otherwise fall through to call it with a self argument and one
+    // call argument.
+    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
+      return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id},
+                         /*is_operator_syntax=*/true);
     }
   }
 
-  // Look up the operator function.
-  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
+  if (!op_fn_id.has_value()) {
+    // Look up the operator function.
+    op_fn_id = GetOperatorOpFunction(context, loc_id, op);
+  }
 
   // Form `lhs.(Op)`.
-  auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn,
-                                                 missing_impl_diagnoser);
+  auto bound_op_id = PerformCompoundMemberAccess(
+      context, loc_id, lhs_id, op_fn_id, missing_impl_diagnoser);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
 
   // Form `bound_op(rhs)`.
-  return PerformCall(context, loc_id, bound_op_id, {rhs_id});
+  return PerformCall(context, loc_id, bound_op_id, {rhs_id},
+                     /*is_operator_syntax=*/true);
 }
 
 }  // namespace Carbon::Check

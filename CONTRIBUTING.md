@@ -232,21 +232,44 @@ as well as helpful tooling that will ease the contribution process. For example,
 #### Using AI-based contribution tools
 
 All submissions to Carbon need to follow our
-[Contributor License Agreement (CLA)](#contributor-license-agreements-clas), in
-which contributors agree that their contribution is an original work of
-authorship. This doesn’t prohibit the use of coding assistance tools, but what’s
-submitted does need to be a contributor’s original creation.
+[Contributor License Agreement (CLA)](#contributor-license-agreements-clas),
+which covers any original work of authorship included in the submission. This
+doesn't prohibit the use of coding assistance tools, including tool-, AI-, or
+machine-generated code, as long as these submissions abide by the CLA's
+requirements.
 
-All contributions, regardless of what tools are used, are also still subject to
-normal code review and our
-[guidelines and standards](#contribution-guidelines-and-standards) below.
+All contributions, regardless of what tools are used, are also still the
+responsibility of the operator of these tools and subject to normal code review
+and our [guidelines and standards](#contribution-guidelines-and-standards)
+below. We also emphasize two additional requirements for contributors operating
+or using AI-based tools:
 
-Additionally, we want contributions to Carbon to also be viable as contributions
-to LLVM so that we can move things between these projects where relevant. We
-selected our license in part for this reason, and the same should be true for
-the use of AI-based coding tools. Any contributions to Carbon should also abide
-by the guidance in the
-[LLVM Developer Policy around AI generated code](https://llvm.org/docs/DeveloperPolicy.html#ai-generated-contributions).
+1. **Contributions should not become extractive of the project and community**:
+   the value added should outweigh the overhead of landing the contribution. The
+   overhead of landing contributions ranges from code review, to discussions,
+   distractions from the current project priorities, or growing maintenance
+   burden without growing maintainers.
+
+2. **Each PR should be transparent about the tooling used** in proportion to how
+   much of the PR was produced by the tool and whether the tool is a standard
+   one for the project. For example, formatting with the standard tools is
+   reasonable to assume without further comment. But if a PR is largely derived
+   from running a specific Python script, regular expression, or AI-based tool
+   over the codebase, we ask that its commit message is transparent about this
+   and include a description of how the tool was used to formulate the change.
+   For PRs largely derived from AI-based tooling, we suggest following the
+   pattern established by the Fedora Project to mark commits with
+   `Assisted-by: ...`.
+
+Our policies and practices here are inspired by and aim to be roughly compatible
+with several other open source projects:
+
+-   [Fedora Project's policy](https://docs.fedoraproject.org/en-US/council/policy/ai-contribution-policy/)
+-   [LLVM Developer Policy around AI generated code](https://llvm.org/docs/DeveloperPolicy.html#ai-generated-contributions)
+
+As the open source community evolves and learns how best to integrate these
+tools into project and development workflows, we expect to reflect that with
+updates and improvements here.
 
 ### Contribution guidelines and standards
 

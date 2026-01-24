@@ -52,7 +52,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: <error> = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref <error> = var %p.var_patt [concrete = <error>]
@@ -61,9 +61,9 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc22: ref <error> = deref %i32.loc22 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: <error> = bind_name p, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p: ref <error> = ref_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p2.patt: <error> = binding_pattern p2 [concrete]
+// CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete]
 // CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var %p2.var_patt [concrete = <error>]
@@ -73,6 +73,6 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %.loc27: ref <error> = deref %i32.loc27 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p2: <error> = bind_name p2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p2: ref <error> = ref_binding p2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

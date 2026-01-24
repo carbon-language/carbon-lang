@@ -46,11 +46,11 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: impl without compatible virtual in base class [ImplWithoutVirtualInBase]
-  // CHECK:STDERR:   impl fn f[addr self: Self*]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:   override fn f[ref self: Self]() {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn f[addr self: Self*]() {}
+  override fn f[ref self: Self]() {}
 }
 
 // --- abstract_final.h
@@ -94,6 +94,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
+// CHECK:STDOUT:   %.fd6: form = init_form %AbstractFinal, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -114,16 +115,17 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]
+// CHECK:STDOUT:     %.loc11_14.2: form = init_form %AbstractFinal.ref, call_param0 [concrete = constants.%.fd6]
 // CHECK:STDOUT:     %return.param: ref %AbstractFinal = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AbstractFinal = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %AbstractFinal {
+// CHECK:STDOUT: fn @F() -> out %return.param: %AbstractFinal {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc11: ref %AbstractFinal = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %AbstractFinal = call %F.ref() to %.loc11
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc11_14.1: ref %AbstractFinal = splice_block %return.param {}
+// CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc11_14.1 = call %F.ref()
+// CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

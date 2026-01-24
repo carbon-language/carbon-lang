@@ -221,7 +221,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
   auto bind_name_id = AddInst(context, binding.node_id,
-                              SemIR::BindName{
+                              SemIR::ValueBinding{
                                   .type_id = choice_info.self_type_id,
                                   .entity_name_id = entity_name_id,
                                   .value_id = self_value_id,
@@ -291,6 +291,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
+    // TODO: This requires the class to be complete, but we've not yet called
+    // `FinishGenericDefinition`, so we can't use it as a complete type yet. But
+    // this also potentially adds things to the generic definition, so we can't
+    // call `FinsihGenericDefinition` before this call, either.
     MakeLetBinding(context,
                    ChoiceInfo{.self_type_id = class_info.self_type_id,
                               .name_scope_id = class_info.scope_id,

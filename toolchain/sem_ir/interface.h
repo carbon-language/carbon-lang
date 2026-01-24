@@ -20,10 +20,12 @@ struct InterfaceFields {
   // The first block of the interface body.
   // TODO: Handle control flow in the interface body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
-  // The implicit `Self` parameter. This is a BindSymbolicName instruction.
+  // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
 
   // The following members are set at the `}` of the interface definition.
+
+  RequireImplsBlockId require_impls_block_id = RequireImplsBlockId::None;
   InstBlockId associated_entities_id = InstBlockId::None;
 };
 
@@ -34,6 +36,7 @@ struct Interface : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    out << ", require_impls_block_id: " << require_impls_block_id;
     out << "}";
   }
 
@@ -49,7 +52,7 @@ struct Interface : public EntityWithParamsBase,
   }
 };
 
-using InterfaceStore = ValueStore<InterfaceId, Interface>;
+using InterfaceStore = ValueStore<InterfaceId, Interface, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

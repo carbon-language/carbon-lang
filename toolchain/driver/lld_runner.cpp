@@ -10,9 +10,11 @@
 #include <optional>
 #include <string>
 
+#include "common/string_helpers.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 // Declare the supported driver flavor entry points.
 //
@@ -32,11 +34,15 @@ auto LldRunner::LinkHelper(llvm::StringLiteral label,
     -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
-  llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::BumpPtrAllocator alloc;
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs("LLD", path, "-v", args, cstr_arg_storage);
+      BuildCStrArgs(path, args, alloc);
 
-  CARBON_VLOG("Running LLD {0}-platform link...\n", label);
+  CARBON_VLOG("Running LLD {0}-platform link with args:\n", label);
+  for (const char* cstr_arg : cstr_args) {
+    CARBON_VLOG("    '{0}'\n", cstr_arg);
+  }
+
   lld::Result result =
       lld::lldMain(cstr_args, llvm::outs(), llvm::errs(), {driver_def});
 

@@ -23,9 +23,15 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "discriminant";
     case NameId::SpecialNameId::Core:
       return "Core";
-    case NameId::SpecialNameId::Destroy:
-      return "destroy";
-    case NameId::SpecialNameId::PackageNamespace:
+    case NameId::SpecialNameId::Cpp:
+      return "Cpp";
+    case NameId::SpecialNameId::CppDestructor:
+      return for_ir ? "cpp_destructor" : "<C++ destructor>";
+    case NameId::SpecialNameId::CppOperator:
+      return for_ir ? "cpp_operator" : "<C++ operator>";
+    case NameId::SpecialNameId::MainPackage:
+      return "Main";
+    case NameId::SpecialNameId::PackageKeyword:
       return "package";
     case NameId::SpecialNameId::PeriodSelf:
       return ".Self";
@@ -39,8 +45,6 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "_";
     case NameId::SpecialNameId::Vptr:
       return for_ir ? "vptr" : "<vptr>";
-    case NameId::SpecialNameId::CppOperator:
-      return for_ir ? "cpp_operator" : "<C++ operator>";
   }
 }
 

@@ -6,14 +6,20 @@
 
 #include <optional>
 
+#include "common/raw_string_ostream.h"
+#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/subst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
@@ -100,11 +106,12 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
-    if (auto non_lexical_result =
-            LookupQualifiedName(context, loc_id, name_id,
-                                LookupScope{.name_scope_id = lookup_scope_id,
-                                            .specific_id = specific_id},
-                                /*required=*/false);
+    if (auto non_lexical_result = LookupQualifiedName(
+            context, loc_id, name_id,
+            LookupScope{.name_scope_id = lookup_scope_id,
+                        .specific_id = specific_id,
+                        .self_const_id = SemIR::ConstantId::None},
+            /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
       // In an interface definition, replace associated entity `M` with
       // `Self.M` (where the `Self` is the `Self` of the interface).
@@ -160,6 +167,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
     DiagnoseNameNotFound(context, loc_id, name_id);
   }
 
+  // TODO: Should this return MakeNotFound if `required` is false, so that
+  // `is_found()` would be false?
   return {.specific_id = SemIR::SpecificId::None,
           .scope_result = SemIR::ScopeLookupResult::MakeError()};
 }
@@ -195,7 +204,7 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
 
 // Prints diagnostics on invalid qualified name access.
 static auto DiagnoseInvalidQualifiedNameAccess(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId scope_result_id,
+    Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
   auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
@@ -231,7 +240,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
              access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
-      .Note(scope_result_id, ClassMemberDeclaration)
+      .Note(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
@@ -255,6 +264,17 @@ static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
   }
 }
 
+auto CheckAccess(Context& context, SemIR::LocId loc_id,
+                 SemIR::LocId member_loc_id, SemIR::NameId name_id,
+                 SemIR::AccessKind access_kind, bool is_parent_access,
+                 AccessInfo access_info) -> void {
+  if (IsAccessProhibited(access_info, access_kind, is_parent_access)) {
+    DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
+                                       access_kind, is_parent_access,
+                                       access_info);
+  }
+}
+
 // Information regarding a prohibited access.
 struct ProhibitedAccessInfo {
   // The resulting inst of the lookup.
@@ -267,80 +287,81 @@ struct ProhibitedAccessInfo {
 };
 
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId base_const_id,
+                                   SemIR::ConstantId lookup_const_id,
+                                   SemIR::ConstantId self_type_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
-  auto base_id = context.constant_values().GetInstId(base_const_id);
-  auto base = context.insts().Get(base_id);
+  auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
+  auto lookup = context.insts().Get(lookup_inst_id);
 
-  if (auto base_as_facet_access_type = base.TryAs<SemIR::FacetAccessType>()) {
-    // Move from the symbolic facet value up in typish-ness to its FacetType to
-    // find a lookup scope.
-    auto facet_type_type_id =
-        context.insts()
-            .Get(base_as_facet_access_type->facet_value_inst_id)
-            .type_id();
-    base_const_id = context.types().GetConstantId(facet_type_type_id);
-    base_id = context.constant_values().GetInstId(base_const_id);
-    base = context.insts().Get(base_id);
-  }
-
-  if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
-    scopes->push_back(
-        LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
-                    .specific_id = SemIR::SpecificId::None});
+  if (auto ns = lookup.TryAs<SemIR::Namespace>()) {
+    scopes->push_back(LookupScope{.name_scope_id = ns->name_scope_id,
+                                  .specific_id = SemIR::SpecificId::None,
+                                  .self_const_id = SemIR::ConstantId::None});
     return true;
   }
-  if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+  if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
     // TODO: Allow name lookup into classes that are being defined even if they
     // are not complete.
     RequireCompleteType(
-        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+        context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
         loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                             "member access into incomplete class {0}",
                             InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteClassScope, base_id);
+              loc_id, QualifiedExprInIncompleteClassScope, lookup_inst_id);
         });
-    auto& class_info = context.classes().Get(base_as_class->class_id);
+    auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
-                                  .specific_id = base_as_class->specific_id});
+                                  .specific_id = class_ty->specific_id,
+                                  .self_const_id = self_type_const_id});
     return true;
   }
-  if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
+  if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
     // TODO: Allow name lookup into facet types that are being defined even if
     // they are not complete.
     if (RequireCompleteType(
-            context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-            loc_id, [&] {
+            context,
+            context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
+            [&] {
               CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
                                 "member access into incomplete facet type {0}",
                                 InstIdAsType);
               return context.emitter().Build(
-                  loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+                  loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                  lookup_inst_id);
             })) {
       auto facet_type_info =
-          context.facet_types().Get(base_as_facet_type->facet_type_id);
+          context.facet_types().Get(facet_type->facet_type_id);
       // Name lookup into "extend" constraints but not "self impls" constraints.
-      // TODO: Include named constraints, once they are supported.
-      for (const auto& interface : facet_type_info.extend_constraints) {
-        auto& interface_info = context.interfaces().Get(interface.interface_id);
-        scopes->push_back({.name_scope_id = interface_info.scope_id,
-                           .specific_id = interface.specific_id});
+      for (const auto& extend : facet_type_info.extend_constraints) {
+        auto& interface = context.interfaces().Get(extend.interface_id);
+        scopes->push_back({.name_scope_id = interface.scope_id,
+                           .specific_id = extend.specific_id,
+                           .self_const_id = self_type_const_id});
+      }
+      for (const auto& extend : facet_type_info.extend_named_constraints) {
+        auto& constraint =
+            context.named_constraints().Get(extend.named_constraint_id);
+        scopes->push_back({.name_scope_id = constraint.scope_id,
+                           .specific_id = extend.specific_id,
+                           .self_const_id = self_type_const_id});
       }
     } else {
       // Lookup into this scope should fail without producing an error since
       // `RequireCompleteFacetType` has already issued a diagnostic.
       scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                    .specific_id = SemIR::SpecificId::None});
+                                    .specific_id = SemIR::SpecificId::None,
+                                    .self_const_id = SemIR::ConstantId::None});
     }
     return true;
   }
-  if (base_const_id == SemIR::ErrorInst::ConstantId) {
+  if (lookup_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
-                                  .specific_id = SemIR::SpecificId::None});
+                                  .specific_id = SemIR::SpecificId::None,
+                                  .self_const_id = SemIR::ConstantId::None});
     return true;
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
@@ -394,12 +415,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
   LookupResult result = {
       .specific_id = SemIR::SpecificId::None,
       .scope_result = SemIR::ScopeLookupResult::MakeNotFound()};
+  auto parent_const_id = SemIR::ConstantId::None;
   bool has_error = false;
   bool is_parent_access = false;
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
-    auto [scope_id, specific_id] = scopes.pop_back_val();
+    auto [scope_id, specific_id, self_const_id] = scopes.pop_back_val();
     if (!scope_id.has_value()) {
       has_error = true;
       continue;
@@ -410,6 +432,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     const SemIR::ScopeLookupResult scope_result =
         LookupNameInExactScope(context, loc_id, name_id, scope_id, name_scope);
     SemIR::AccessKind access_kind = scope_result.access_kind();
+
+    if (is_parent_access && scope_result.is_found() &&
+        !access_info.has_value()) {
+      access_info =
+          AccessInfo{.constant_id = parent_const_id,
+                     .highest_allowed_access = SemIR::AccessKind::Protected};
+    }
 
     auto is_access_prohibited =
         IsAccessProhibited(access_info, access_kind, is_parent_access);
@@ -429,7 +458,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
       scopes.reserve(scopes.size() + extended.size());
-      for (auto extended_id : llvm::reverse(extended)) {
+      for (auto [extended_id, inner_self_id] : llvm::reverse(extended)) {
         // Substitute into the constant describing the extended scope to
         // determine its corresponding specific.
         CARBON_CHECK(extended_id.has_value());
@@ -437,13 +466,51 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
+        // Apply self_const_id to the extended_id, replacing inner_self_id
+        // inside.
+        //
+        // TODO: We do this by substituting a `Self` value that the extended
+        // scope provides us with the self type/facet of the name lookup. But
+        // we'd like to avoid using substitution, and do this through the
+        // generic system with a specific and/or eval. Ideally it's somehow done
+        // as part of the `GetConstantValueInSpecific` call above, but with
+        // providing the additional information of the self type/facet of the
+        // name lookup. Further thoughts here:
+        // https://discord.com/channels/655572317891461132/941071822756143115/1463277684082737214
+        if (inner_self_id.has_value() && self_const_id.has_value()) {
+          LoadImportRef(context, inner_self_id);
+
+          auto inner_self_binding =
+              context.insts().GetAs<SemIR::SymbolicBinding>(
+                  context.constant_values().GetConstantInstId(inner_self_id));
+          auto entity_id = inner_self_binding.entity_name_id;
+          auto bind_index = context.entity_names().Get(entity_id).bind_index();
+          auto facet_value = SemIR::ConstantId::None;
+          if (auto self_type_id =
+                  context.types().TryGetTypeIdForTypeConstantId(self_const_id);
+              self_type_id.has_value()) {
+            // The self for member lookup is a type, we need a facet value to
+            // replace `Self`.
+            facet_value = GetConstantFacetValueForType(
+                context, context.types().GetInstId(self_type_id));
+          } else {
+            // The self for member lookup is a facet value, use it as is to
+            // replace `Self`.
+            facet_value = self_const_id;
+          }
+          llvm::SmallVector<Substitution> substitutions = {
+              {.bind_id = bind_index, .replacement_id = facet_value}};
+          const_id = SubstConstant(context, loc_id, const_id, substitutions);
+        }
+
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
-                                           &scopes)) {
+                                           self_const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
           // look in its type.
         }
       }
       is_parent_access |= !extended.empty();
+      parent_const_id = context.constant_values().Get(name_scope.inst_id());
       continue;
     }
 
@@ -463,7 +530,8 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     result.specific_id = specific_id;
   }
 
-  if (required && !result.scope_result.is_found()) {
+  if ((!prohibited_accesses.empty() || required) &&
+      !result.scope_result.is_found()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
         DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes);
@@ -475,9 +543,9 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 
         // Note, `access_info` is guaranteed to have a value here, since
         // `prohibited_accesses` is non-empty.
-        DiagnoseInvalidQualifiedNameAccess(context, loc_id, scope_result_id,
-                                           name_id, access_kind,
-                                           is_parent_access, *access_info);
+        DiagnoseInvalidQualifiedNameAccess(
+            context, loc_id, SemIR::LocId(scope_result_id), name_id,
+            access_kind, is_parent_access, *access_info);
       }
     }
 
@@ -489,21 +557,31 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
   return result;
 }
 
+// Returns a `Core.<qualifiers>` name for diagnostics.
+static auto GetCoreQualifiedName(llvm::ArrayRef<CoreIdentifier> qualifiers)
+    -> std::string {
+  RawStringOstream str;
+  str << "Core";
+  for (auto qualifier : qualifiers) {
+    str << "." << qualifier;
+  }
+  return str.TakeStr();
+}
+
 // Returns the scope of the Core package, or `None` if it's not found.
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
-                           llvm::StringRef name) -> SemIR::NameScopeId {
-  auto packaging = context.parse_tree().packaging_decl();
-  if (packaging && packaging->names.package_id == PackageNameId::Core) {
+                           llvm::ArrayRef<CoreIdentifier> qualifiers)
+    -> SemIR::NameScopeId {
+  if (context.name_scopes().IsCorePackage(SemIR::NameScopeId::Package)) {
     return SemIR::NameScopeId::Package;
   }
-  auto core_name_id = SemIR::NameId::Core;
 
   // Look up `package.Core`.
   auto core_scope_result = LookupNameInExactScope(
-      context, loc_id, core_name_id, SemIR::NameScopeId::Package,
+      context, loc_id, SemIR::NameId::Core, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_scope_result.is_found()) {
     // We expect it to be a namespace.
@@ -516,35 +594,57 @@ static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
 
   CARBON_DIAGNOSTIC(
       CoreNotFound, Error,
-      "`Core.{0}` implicitly referenced here, but package `Core` not found",
+      "`{0}` implicitly referenced here, but package `Core` not found",
       std::string);
-  context.emitter().Emit(loc_id, CoreNotFound, name.str());
+  context.emitter().Emit(loc_id, CoreNotFound,
+                         GetCoreQualifiedName(qualifiers));
   return SemIR::NameScopeId::None;
 }
 
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::StringRef name) -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(context, loc_id, name);
+                      llvm::ArrayRef<CoreIdentifier> qualifiers)
+    -> SemIR::InstId {
+  CARBON_CHECK(!qualifiers.empty());
+
+  auto core_package_id = GetCorePackage(context, loc_id, qualifiers);
   if (!core_package_id.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
 
-  auto name_id = SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
-  auto scope_result =
-      LookupNameInExactScope(context, loc_id, name_id, core_package_id,
-                             context.name_scopes().Get(core_package_id));
-  if (!scope_result.is_found()) {
-    CARBON_DIAGNOSTIC(
-        CoreNameNotFound, Error,
-        "name `Core.{0}` implicitly referenced here, but not found",
-        SemIR::NameId);
-    context.emitter().Emit(loc_id, CoreNameNotFound, name_id);
-    return SemIR::ErrorInst::InstId;
+  auto inst_id = SemIR::InstId::None;
+  for (auto qualifier : qualifiers) {
+    auto name_id = context.core_identifiers().AddNameId(qualifier);
+
+    auto scope_id = SemIR::NameScopeId::None;
+    if (inst_id.has_value()) {
+      auto namespace_inst = context.insts().TryGetAs<SemIR::Namespace>(inst_id);
+      if (namespace_inst) {
+        scope_id = namespace_inst->name_scope_id;
+      }
+    } else {
+      scope_id = core_package_id;
+    }
+
+    auto scope_result =
+        scope_id.has_value()
+            ? LookupNameInExactScope(context, loc_id, name_id, scope_id,
+                                     context.name_scopes().Get(scope_id))
+            : SemIR::ScopeLookupResult::MakeNotFound();
+    if (!scope_result.is_found()) {
+      CARBON_DIAGNOSTIC(CoreNameNotFound, Error,
+                        "name `{0}` implicitly referenced here, but not found",
+                        std::string);
+      context.emitter().Emit(loc_id, CoreNameNotFound,
+                             GetCoreQualifiedName(qualifiers));
+      return SemIR::ErrorInst::InstId;
+    }
+
+    // Look through import_refs and aliases.
+    inst_id = context.constant_values().GetConstantInstId(
+        scope_result.target_inst_id());
   }
 
-  // Look through import_refs and aliases.
-  return context.constant_values().GetConstantInstId(
-      scope_result.target_inst_id());
+  return inst_id;
 }
 
 auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,

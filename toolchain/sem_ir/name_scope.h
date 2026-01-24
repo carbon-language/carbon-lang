@@ -185,11 +185,21 @@ class NameScope : public Printable<NameScope> {
   // identifiers will not be poisoned.
   auto LookupOrPoison(LocId loc_id, NameId name_id) -> std::optional<EntryId>;
 
-  auto extended_scopes() const -> llvm::ArrayRef<InstId> {
+  struct ExtendedScope {
+    SemIR::InstId extended_id;
+    // The inner `Self` of a scope which is part of generics inside the scope
+    // that it extends. These `Self` values need to be replaced with the self
+    // target of member lookup in order to find the right extended scope.
+    SemIR::InstId inner_self_id = SemIR::InstId::None;
+
+    friend auto operator==(NameScope::ExtendedScope lhs,
+                           NameScope::ExtendedScope rhs) -> bool = default;
+  };
+  auto extended_scopes() const -> llvm::ArrayRef<ExtendedScope> {
     return extended_scopes_;
   }
 
-  auto AddExtendedScope(InstId extended_scope) -> void {
+  auto AddExtendedScope(ExtendedScope extended_scope) -> void {
     extended_scopes_.push_back(extended_scope);
   }
 
@@ -275,7 +285,7 @@ class NameScope : public Printable<NameScope> {
   // than a single extended scope.
   // TODO: Revisit this once we have more kinds of extended scope and data.
   // TODO: Consider using something like `TinyPtrVector` for this.
-  llvm::SmallVector<InstId, 1> extended_scopes_;
+  llvm::SmallVector<ExtendedScope, 1> extended_scopes_;
 
   // The instruction which owns the scope.
   InstId inst_id_;
@@ -312,7 +322,7 @@ class NameScope : public Printable<NameScope> {
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
-  explicit NameScopeStore(const File* file) : file_(file) {}
+  explicit NameScopeStore(const File* file);
 
   // Adds a name scope, returning an ID to reference it.
   auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
@@ -342,18 +352,17 @@ class NameScopeStore {
   auto GetInstIfValid(NameScopeId scope_id) const
       -> std::pair<InstId, std::optional<Inst>>;
 
-  // Returns whether the provided scope ID is for a package scope.
-  auto IsPackage(NameScopeId scope_id) const -> bool {
-    if (!scope_id.has_value()) {
-      return false;
-    }
-    // A package is either the current package or an imported package.
-    return scope_id == NameScopeId::Package ||
-           Get(scope_id).is_imported_package();
+  // Returns whether the provided scope ID is for the Core package.
+  auto IsCorePackage(NameScopeId scope_id) const -> bool {
+    return scope_id.has_value() && Get(scope_id).name_id() == NameId::Core;
   }
 
-  // Returns whether the provided scope ID is for the Core package.
-  auto IsCorePackage(NameScopeId scope_id) const -> bool;
+  // Returns whether the provided scope ID is valid and is directly contained
+  // within the Core package.
+  auto IsInCorePackageRoot(NameScopeId scope_id) const -> bool {
+    return scope_id.has_value() &&
+           IsCorePackage(Get(scope_id).parent_scope_id());
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
@@ -367,7 +376,7 @@ class NameScopeStore {
 
  private:
   const File* file_;
-  ValueStore<NameScopeId, NameScope> values_;
+  ValueStore<NameScopeId, NameScope, Tag<CheckIRId>> values_;
 };
 
 }  // namespace Carbon::SemIR

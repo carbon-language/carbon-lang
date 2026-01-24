@@ -80,16 +80,10 @@ class FunctionContext {
     }
   };
 
-  // Information about a function's return type in a particular file. By
-  // convention, this represents a value whose initializing representation has
-  // been added to the fingerprint but whose type has not.
-  struct ReturnTypeInfoInFile {
+  // An inst in a particular file.
+  struct InstInFile {
     const SemIR::File* file;
-    SemIR::ReturnTypeInfo info;
-
-    auto type() -> TypeInFile {
-      return {.file = file, .type_id = info.type_id};
-    }
+    SemIR::InstId inst_id;
   };
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -123,24 +117,6 @@ class FunctionContext {
                  sem_ir().insts().Get(inst_id));
   }
 
-  // Gets a callable's function.
-  auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
-    return file_context_->GetFunction(function_id);
-  }
-
-  // Gets or creates a callable's function.
-  auto GetOrCreateFunction(SemIR::FunctionId function_id,
-                           SemIR::SpecificId specific_id) -> llvm::Function* {
-    return file_context_->GetOrCreateFunction(function_id, specific_id);
-  }
-
-  // Builds LLVM function type information for the specified function.
-  auto BuildFunctionTypeInfo(const SemIR::Function& function,
-                             SemIR::SpecificId specific_id)
-      -> FileContext::FunctionTypeInfo {
-    return file_context_->BuildFunctionTypeInfo(function, specific_id);
-  }
-
   // Returns a lowered type for the given type_id in the given file. This adds
   // the specified type to the fingerprint.
   auto GetType(TypeInFile type) -> llvm::Type* {
@@ -164,10 +140,6 @@ class FunctionContext {
   // Returns the initializing representation of the given type. This adds the
   // kind of initializing representation to the fingerprint.
   auto GetInitRepr(TypeInFile type) -> SemIR::InitRepr;
-
-  // Returns the return type information for the given type. This adds the
-  // kind of initializing representation to the fingerprint.
-  auto GetReturnTypeInfo(TypeInFile type) -> ReturnTypeInfoInFile;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {

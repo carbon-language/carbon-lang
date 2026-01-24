@@ -12,18 +12,6 @@
 namespace Carbon {
 
 auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  b.AddStringOption(
-      {
-          .name = "prebuilt-runtimes",
-          .value_name = "PATH",
-          .help = R"""(
-Path to prebuilt target runtimes for Clang.
-
-If this option is provided, runtimes will not be built on demand and this path
-will be used instead.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&prebuilt_runtimes_path); });
   b.AddFlag(
       {
           .name = "build-runtimes",
@@ -42,9 +30,7 @@ the installation tree in the default searched locations.
 )""",
       },
       [&](auto& arg_b) {
-        // TODO: Once runtimes are cached properly, the plan is to enable this
-        // by default.
-        arg_b.Default(false);
+        arg_b.Default(true);
         arg_b.Set(&build_runtimes_on_demand);
       });
   b.AddStringPositionalArg(
@@ -81,9 +67,8 @@ ClangSubcommand::ClangSubcommand() : DriverSubcommand(SubcommandInfo) {}
 // add more.
 // https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
 auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  ClangRunner runner(
-      driver_env.installation, driver_env.fs, driver_env.vlog_stream,
-      /*build_runtimes_on_demand=*/options_.build_runtimes_on_demand);
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
 
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
@@ -91,21 +76,18 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
-  // Only enable Clang's leaking of memory if the driver can support that.
-  if (driver_env.enable_leaking) {
-    runner.EnableLeakingMemory();
+  ErrorOr<bool> run_result = false;
+  if (driver_env.prebuilt_runtimes) {
+    run_result = runner.RunWithPrebuiltRuntimes(options_.args,
+                                                *driver_env.prebuilt_runtimes,
+                                                driver_env.enable_leaking);
+  } else if (options_.build_runtimes_on_demand) {
+    run_result = runner.Run(options_.args, driver_env.runtimes_cache,
+                            *driver_env.thread_pool, driver_env.enable_leaking);
+  } else {
+    run_result =
+        runner.RunWithNoRuntimes(options_.args, driver_env.enable_leaking);
   }
-
-  std::optional<std::filesystem::path> prebuilt_resource_dir_path;
-  if (!options_.prebuilt_runtimes_path.empty()) {
-    prebuilt_resource_dir_path = options_.prebuilt_runtimes_path.str();
-    // TODO: Replace the hard coded `clang_resource_dir` subdirectory here with
-    // an abstraction that manages the layout of the built runtimes.
-    *prebuilt_resource_dir_path /= "clang_resource_dir";
-  }
-
-  ErrorOr<bool> run_result =
-      runner.Run(options_.args, prebuilt_resource_dir_path);
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.

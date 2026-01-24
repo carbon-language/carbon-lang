@@ -18,13 +18,13 @@ namespace Carbon::Check {
 // any applicable instruction lists.
 static auto FinishInst(Context& context, SemIR::InstId inst_id,
                        SemIR::Inst inst) -> void {
-  DependentInst::Kind dep_kind = DependentInst::None;
+  DependentInstKind dep_kind = DependentInstKind::None;
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
   if (context.constant_values().DependsOnGenericParameter(
           context.types().GetConstantId(inst.type_id()))) {
-    dep_kind |= DependentInst::SymbolicType;
+    dep_kind.Add(DependentInstKind::SymbolicType);
   }
 
   // If the instruction has a constant value, compute it.
@@ -37,7 +37,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     // If the constant value is symbolic, track that we need to substitute into
     // it.
     if (context.constant_values().DependsOnGenericParameter(const_id)) {
-      dep_kind |= DependentInst::SymbolicConstant;
+      dep_kind.Add(DependentInstKind::SymbolicConstant);
     }
   }
 
@@ -48,7 +48,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
-  if (dep_kind != DependentInst::None) {
+  if (!dep_kind.empty()) {
     AttachDependentInstToCurrentGeneric(context,
                                         {.inst_id = inst_id, .kind = dep_kind});
   }
@@ -86,7 +86,7 @@ auto AddDependentActionInst(Context& context,
 
   // Register the instruction to be added to the eval block.
   AttachDependentInstToCurrentGeneric(
-      context, {.inst_id = inst_id, .kind = DependentInst::Template});
+      context, {.inst_id = inst_id, .kind = DependentInstKind::Template});
   return inst_id;
 }
 
@@ -200,6 +200,14 @@ auto AddPlaceholderInstInNoBlock(Context& context,
   CARBON_VLOG_TO(context.vlog_stream(), "AddPlaceholderInst: {0}\n",
                  loc_id_and_inst.inst);
   context.constant_values().Set(inst_id, SemIR::ConstantId::None);
+  return inst_id;
+}
+
+auto AddPlaceholderImportedInstInNoBlock(Context& context,
+                                         SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddPlaceholderInstInNoBlock(context, loc_id_and_inst);
+  context.imports().push_back(inst_id);
   return inst_id;
 }
 

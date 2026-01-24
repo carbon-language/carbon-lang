@@ -23,12 +23,14 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
+fn Copy[N:! IntLiteral()](x: Int(N)) -> Int(N) = "primitive_copy";
+
 fn F(n: Int(64)) ->
     //@dump-sem-ir-begin
     Int(64)
     //@dump-sem-ir-end
     {
-  return n;
+  return Copy(n);
 }
 
 fn G(n: Int(13)) ->
@@ -36,11 +38,11 @@ fn G(n: Int(13)) ->
     Int(13)
     //@dump-sem-ir-end
     {
-  return n;
+  return Copy(n);
 }
 
 fn Symbolic(N:! IntLiteral(), x: Int(N)) -> Int(N) {
-  return x;
+  return Copy(x);
 }
 
 // --- import_types.carbon
@@ -112,12 +114,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> %i64.builtin {
+// CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> out %return.param: %i64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> %i13.builtin {
+// CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> out %return.param: %i13.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

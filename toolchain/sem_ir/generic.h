@@ -17,7 +17,10 @@ namespace Carbon::SemIR {
 // Note that this includes both checked generics and template generics.
 struct Generic : public Printable<Generic> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{decl: " << decl_id << ", bindings: " << bindings_id << "}";
+    out << "{decl: " << decl_id << ", bindings: " << bindings_id
+        << ", self_specific_id: " << self_specific_id
+        << ", decl_block_id: " << decl_block_id
+        << ", definition_block_id: " << definition_block_id << "}";
   }
 
   // Returns the eval block for the specified region of the generic. This is a
@@ -53,8 +56,10 @@ struct Generic : public Printable<Generic> {
 };
 
 // Provides storage for generics.
-class GenericStore : public ValueStore<GenericId, Generic> {
+class GenericStore : public ValueStore<GenericId, Generic, Tag<CheckIRId>> {
  public:
+  using ValueStore::ValueStore;
+
   // Get the self specific for a generic, or `None` if the `id` is `None`.
   auto GetSelfSpecific(GenericId id) const -> SpecificId {
     return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
@@ -67,7 +72,9 @@ class GenericStore : public ValueStore<GenericId, Generic> {
 // values for the compile-time parameters themselves.
 struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{generic: " << generic_id << ", args: " << args_id << "}";
+    out << "{generic: " << generic_id << ", args: " << args_id
+        << ", decl_block_id: " << decl_block_id
+        << ", definition_block_id: " << definition_block_id << "}";
   }
 
   // Returns true if this specific has never been resolved. Such specifics are
@@ -107,6 +114,9 @@ struct Specific : Printable<Specific> {
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
   using IdType = SpecificId;
+  using ValueStore = ValueStore<SpecificId, Specific, Tag<CheckIRId>>;
+
+  explicit SpecificStore(CheckIRId check_ir_id) : specifics_(check_ir_id) {}
 
   // Adds a new specific, or gets the existing specific for a specified generic
   // and argument list. Returns the ID of the specific. The argument IDs must be
@@ -140,8 +150,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto values() const [[clang::lifetimebound]]
-  -> ValueStore<SpecificId, Specific>::Range {
+  auto values() const [[clang::lifetimebound]] -> ValueStore::Range {
     return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
@@ -149,11 +158,13 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
     return specifics_.enumerate();
   }
 
+  auto GetIdTag() const { return specifics_.GetIdTag(); }
+
  private:
   // Context for hashing keys.
   class KeyContext;
 
-  ValueStore<SpecificId, Specific> specifics_;
+  ValueStore specifics_;
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 

@@ -10,8 +10,13 @@
 #include <optional>
 #include <string>
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
+
 using ::testing::Eq;
 using ::testing::Optional;
+using ::testing::StrEq;
 
 namespace Carbon {
 namespace {
@@ -226,6 +231,68 @@ TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
      ''')";
   constexpr char Expected[] = "A block string literal";
   EXPECT_THAT(*ParseBlockStringLiteral(Input), Eq(Expected));
+}
+
+TEST(BuildCStrArgs, NoArgs) {
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, alloc);
+  ASSERT_THAT(result.size(), Eq(1));
+  EXPECT_THAT(result[0], StrEq("tool"));
+}
+
+TEST(BuildCStrArgs, OneArg) {
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {"arg1"}, alloc);
+  ASSERT_THAT(result.size(), Eq(2));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+}
+
+TEST(BuildCStrArgs, MultipleArgs) {
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {"arg1", "arg2"}, alloc);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+  EXPECT_THAT(result[2], StrEq("arg2"));
+}
+
+TEST(BuildCStrArgsWithPrefix, NoArgs) {
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, {}, alloc);
+  ASSERT_THAT(result.size(), Eq(1));
+  EXPECT_THAT(result[0], StrEq("tool"));
+}
+
+TEST(BuildCStrArgsWithPrefix, PrefixOnly) {
+  llvm::BumpPtrAllocator alloc;
+  std::string prefix_args[] = {"p_arg1", "p_arg2"};
+  auto result = BuildCStrArgs("tool", prefix_args, {}, alloc);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
+}
+
+TEST(BuildCStrArgsWithPrefix, ArgsOnly) {
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, {"arg1", "arg2"}, alloc);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+  EXPECT_THAT(result[2], StrEq("arg2"));
+}
+
+TEST(BuildCStrArgsWithPrefix, BothPrefixAndArgs) {
+  llvm::BumpPtrAllocator alloc;
+  std::string prefix_args[] = {"p_arg1", "p_arg2"};
+  auto result = BuildCStrArgs("tool", prefix_args, {"arg1", "arg2"}, alloc);
+  ASSERT_THAT(result.size(), Eq(5));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
+  EXPECT_THAT(result[3], StrEq("arg1"));
+  EXPECT_THAT(result[4], StrEq("arg2"));
 }
 
 }  // namespace

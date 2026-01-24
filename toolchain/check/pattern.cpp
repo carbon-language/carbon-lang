@@ -48,40 +48,46 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
 
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id, bool is_generic,
-                       bool is_template) -> BindingPatternInfo {
+                       SemIR::ExprRegionId type_region_id,
+                       SemIR::InstKind pattern_kind, bool is_template)
+    -> BindingPatternInfo {
+  SemIR::InstKind bind_name_kind;
+  switch (pattern_kind) {
+    case SemIR::InstKind::RefBindingPattern:
+      bind_name_kind = SemIR::InstKind::RefBinding;
+      break;
+    case SemIR::InstKind::SymbolicBindingPattern:
+      bind_name_kind = SemIR::InstKind::SymbolicBinding;
+      break;
+    case SemIR::InstKind::ValueBindingPattern:
+      bind_name_kind = SemIR::InstKind::ValueBinding;
+      break;
+    default:
+      CARBON_FATAL("pattern_kind is not a binding pattern kind");
+  }
+  bool is_generic = pattern_kind == SemIR::SymbolicBindingPattern::Kind;
+
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
       is_template);
 
-  auto bind_id = SemIR::InstId::None;
-  if (is_generic) {
-    bind_id = AddInstInNoBlock<SemIR::BindSymbolicName>(
-        context, name_loc,
-        {.type_id = type_id,
-         .entity_name_id = entity_name_id,
-         .value_id = SemIR::InstId::None});
-  } else {
-    bind_id =
-        AddInstInNoBlock<SemIR::BindName>(context, name_loc,
-                                          {.type_id = type_id,
-                                           .entity_name_id = entity_name_id,
-                                           .value_id = SemIR::InstId::None});
-  }
+  auto bind_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::UncheckedLoc(
+          name_loc, SemIR::AnyBinding{.kind = bind_name_kind,
+                                      .type_id = type_id,
+                                      .entity_name_id = entity_name_id,
+                                      .value_id = SemIR::InstId::None}));
 
   auto pattern_type_id = GetPatternType(context, type_id);
-  auto binding_pattern_id = SemIR::InstId::None;
-  if (is_generic) {
-    binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
-        context, name_loc,
-        {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  } else {
-    binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
-        context, name_loc,
-        {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  }
+  auto binding_pattern_id = AddPatternInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   name_loc,
+                   SemIR::AnyBindingPattern{.kind = pattern_kind,
+                                            .type_id = pattern_type_id,
+                                            .entity_name_id = entity_name_id}));
 
   if (is_generic) {
     context.scope_stack().PushCompileTimeBinding(bind_id);
@@ -97,16 +103,15 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 }
 
 // Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return slot, and otherwise it
-// adds a new inst.
+// is the body of a returned var, this reuses the return parameter, and
+// otherwise it adds a new inst.
 static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
                                bool is_returned_var) -> SemIR::InstId {
   if (is_returned_var) {
-    auto& function = GetCurrentFunctionForReturn(context);
-    auto return_info =
-        SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
-    if (return_info.has_return_slot()) {
-      return GetCurrentReturnSlot(context);
+    if (auto return_param_id =
+            GetReturnedVarParam(context, GetCurrentFunctionForReturn(context));
+        return_param_id.has_value()) {
+      return return_param_id;
     }
   }
   auto pattern = context.insts().GetWithLocId(var_pattern_id);
@@ -133,33 +138,31 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
   }
 }
 
-auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                         SemIR::ExprRegionId type_expr_region_id,
-                         SemIR::TypeId type_id) -> SemIR::InstId {
+auto AddParamPattern(Context& context, SemIR::LocId loc_id,
+                     SemIR::NameId name_id,
+                     SemIR::ExprRegionId type_expr_region_id,
+                     SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
+  const auto& binding_pattern_kind = is_ref ? SemIR::RefBindingPattern::Kind
+                                            : SemIR::ValueBindingPattern::Kind;
   SemIR::InstId pattern_id =
-      AddBindingPattern(context, loc_id, SemIR::NameId::SelfValue, type_id,
-                        type_expr_region_id, /*is_generic=*/false,
+      AddBindingPattern(context, loc_id, name_id, type_id, type_expr_region_id,
+                        binding_pattern_kind,
                         /*is_template=*/false)
           .pattern_id;
 
-  pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
-      context, loc_id,
-      {.type_id = context.insts().Get(pattern_id).type_id(),
-       .subpattern_id = pattern_id,
-       .index = SemIR::CallParamIndex::None});
+  const auto& param_pattern_kind =
+      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
+  pattern_id = AddPatternInst(
+      context,
+      SemIR::LocIdAndInst::UncheckedLoc(
+          loc_id,
+          SemIR::AnyParamPattern{
+              .kind = param_pattern_kind,
+              .type_id = context.insts().Get(pattern_id).type_id(),
+              .subpattern_id = pattern_id,
+              .index = context.full_pattern_stack().NextCallParamIndex()}));
 
   return pattern_id;
-}
-
-auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                             SemIR::ExprRegionId type_expr_region_id,
-                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId {
-  auto pattern_id = AddSelfParamPattern(context, loc_id, type_expr_region_id,
-                                        GetPointerType(context, type_inst_id));
-  return AddPatternInst<SemIR::AddrPattern>(
-      context, loc_id,
-      {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
-       .inner_id = pattern_id});
 }
 
 }  // namespace Carbon::Check

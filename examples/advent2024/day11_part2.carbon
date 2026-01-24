@@ -23,15 +23,15 @@ class Digits {
 
   fn Print[self: Self](max_depth: i32) {
     for (digit: i32 in Core.Range(10)) {
-      Core.PrintChar(digit + 0x30);
-      Core.PrintChar(0x3A);
+      Core.PrintChar(((digit + 0x30) as u8) as char);
+      Core.PrintChar(':');
       for (depth: i32 in Core.Range(max_depth)) {
-        Core.PrintChar(0x20);
-        PrintInt64NoNewline(self.count[digit][depth]);
+        Core.PrintChar(' ');
+        PrintIntNoNewline(self.count[digit][depth]);
       }
-      Core.PrintChar(0x0A);
+      Core.PrintChar('\n');
     }
-    Core.PrintChar(0x0A);
+    Core.PrintChar('\n');
   }
 
   var count: array(array(i64, 75), 10);
@@ -56,17 +56,17 @@ fn Run() {
   var digits: Digits = Digits.Make();
 
   var n: i64;
-  while (ReadInt64(&n)) {
+  while (ReadInt(ref n)) {
     total += ReduceToDigits(n, max_depth, 1, &digits);
-    PrintInt64(total);
-    digits.Print(max_depth - 1);
+    // PrintInt(total);
+    // digits.Print(max_depth - 1);
     SkipSpaces();
   }
 
   var depth: i32 = max_depth - 1;
   while (depth >= 0) {
-    PrintInt64(total);
-    digits.Print(depth);
+    // PrintInt(total);
+    // digits.Print(depth);
     for (digit: i32 in Core.Range(10)) {
       let m: i64 = digits.count[digit][depth];
       if (m > 0) {
@@ -78,5 +78,5 @@ fn Run() {
     --depth;
   }
 
-  PrintInt64(total);
+  PrintInt(total);
 }

@@ -27,12 +27,9 @@ struct Unit {
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
+  llvm::LLVMContext* llvm_context;
   // The total number of files.
   int total_ir_count;
-
-  // Storage for the unit's Clang AST. The unique_ptr should start empty, and
-  // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* clang_ast_unit;
 };
 
 struct CheckParseTreesOptions {
@@ -41,11 +38,6 @@ struct CheckParseTreesOptions {
 
   // Whether to import the prelude.
   bool prelude_import = false;
-
-  // Whether to generate standard `impl`s for types, such as `Core.Destroy`.
-  // This only controls generation of the `impl`; code which expects the `impl`
-  // is expected to fail.
-  bool gen_implicit_type_impls = true;
 
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
@@ -79,6 +71,10 @@ struct CheckParseTreesOptions {
 
   // When dumping raw SemIR, whether to include builtins.
   bool dump_raw_sem_ir_builtins = false;
+
+  // If not empty, a raw SemIR dump should be written to this path in the event
+  // of a crash.
+  llvm::StringRef sem_ir_crash_dump;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

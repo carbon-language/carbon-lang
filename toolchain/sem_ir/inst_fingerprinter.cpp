@@ -14,7 +14,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -23,15 +25,16 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
-  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t>;
+  using FingerprintStore =
+      FixedSizeValueStore<InstId, uint64_t, Tag<CheckIRId>>;
   using FilesFingerprintStores =
       FixedSizeValueStore<CheckIRId, FingerprintStore>;
 
   // The file containing the instruction we're currently processing.
   const File* sem_ir = nullptr;
   // The instructions we need to compute fingerprints for.
-  llvm::SmallVector<
-      std::pair<const File*, std::variant<InstId, InstBlockId, ImplId>>>
+  llvm::SmallVector<std::pair<
+      const File*, std::variant<InstId, InstBlockId, ImplId, CppOverloadSetId>>>
       todo;
   // The contents of the current instruction as accumulated so far. This is used
   // to build a Merkle tree containing a fingerprint for the current
@@ -50,6 +53,12 @@ struct Worklist {
     if (store.size() == 0) {
       return 0;
     }
+    // These InstIds are constant values, so not in the ValueStore. We use a
+    // constant (negative) fingerprint for them.
+    if (inst_id == InstId::InitTombstone ||
+        inst_id == InstId::ImplWitnessTablePlaceholder) {
+      return inst_id.index;
+    }
     return store.Get(inst_id);
   }
 
@@ -58,8 +67,8 @@ struct Worklist {
   auto SetFingerprint(const File* file, InstId inst_id, uint64_t fingerprint) {
     auto& store = fingerprints->Get(file->check_ir_id());
     if (store.size() == 0) {
-      store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
-          file->insts().size(), 0);
+      store = FingerprintStore::MakeWithExplicitSize(
+          file->insts().size(), file->insts().GetIdTag(), 0);
     }
     store.Set(inst_id, fingerprint ? fingerprint : 1);
   }
@@ -113,7 +122,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
     }
-    // TODO: Should we include the parent index?
+    Add(entity_name.parent_scope_id);
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -192,8 +201,8 @@ struct Worklist {
     }
     const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
     Add(scope.name_id());
-    if (!sem_ir->name_scopes().IsPackage(name_scope_id) &&
-        scope.parent_scope_id().has_value()) {
+    // For non-package scopes, add the parent scope.
+    if (!scope.is_imported_package() && scope.parent_scope_id().has_value()) {
       Add(sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
     }
   }
@@ -208,6 +217,24 @@ struct Worklist {
 
   auto Add(FunctionId function_id) -> void {
     AddEntity(sem_ir->functions().Get(function_id));
+  }
+
+  auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
+    const CppOverloadSet& cpp_overload_set =
+        sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
+    Add(cpp_overload_set.name_id);
+    if (cpp_overload_set.parent_scope_id.has_value()) {
+      Add(sem_ir->name_scopes()
+              .Get(cpp_overload_set.parent_scope_id)
+              .inst_id());
+    }
+  }
+
+  auto Add(ClangDeclId /*decl_id*/) -> void {
+    // TODO: For `CppTemplateNameType` we don't need to fingerprint the
+    // `decl_id`, because fingerprinting the `NameId` is sufficient to identify
+    // the template, but this won't necessarily be true for other
+    // `ClangDeclId`s.
   }
 
   auto Add(ClassId class_id) -> void {
@@ -226,12 +253,30 @@ struct Worklist {
     AddEntity(sem_ir->interfaces().Get(interface_id));
   }
 
+  auto Add(NamedConstraintId named_constraint_id) -> void {
+    AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
+  }
+
+  auto Add(RequireImplsId require_id) -> void {
+    CARBON_CHECK(require_id.has_value());
+    const auto& require = sem_ir->require_impls().Get(require_id);
+    Add(sem_ir->constant_values().Get(require.self_id));
+    Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
+    contents.push_back(require.extend_self);
+    Add(require.parent_scope_id);
+  }
+
   auto Add(AssociatedConstantId assoc_const_id) -> void {
     AddEntity<AssociatedConstant>(
         sem_ir->associated_constants().Get(assoc_const_id));
   }
 
   auto Add(ImplId impl_id) -> void {
+    if (!impl_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+
     const auto& impl = sem_ir->impls().Get(impl_id);
     Add(sem_ir->constant_values().Get(impl.self_id));
     Add(sem_ir->constant_values().Get(impl.constraint_id));
@@ -399,10 +444,18 @@ struct Worklist {
       if (!std::holds_alternative<InstId>(next)) {
         // Add the contents of the `next` instruction so they all contribute to
         // the `contents`.
-        if (auto* impl_id = std::get_if<ImplId>(&next)) {
-          Add(*impl_id);
-        } else if (auto* inst_block_id = std::get_if<InstBlockId>(&next)) {
-          Add(*inst_block_id);
+        CARBON_KIND_SWITCH(next) {
+          case CARBON_KIND(InstId _):
+            CARBON_FATAL("InstId is checked for above.");
+          case CARBON_KIND(ImplId impl_id):
+            Add(impl_id);
+            break;
+          case CARBON_KIND(InstBlockId inst_block_id):
+            Add(inst_block_id);
+            break;
+          case CARBON_KIND(CppOverloadSetId overload_set_id):
+            Add(overload_set_id);
+            break;
         }
 
         // If we didn't add any more work, then we have a fingerprint for the
@@ -488,6 +541,14 @@ auto InstFingerprinter::GetOrCompute(const File* file,
 auto InstFingerprinter::GetOrCompute(const File* file, ImplId impl_id)
     -> uint64_t {
   Worklist worklist = {.todo = {{file, impl_id}},
+                       .fingerprints = &fingerprints_};
+  return worklist.Run();
+}
+
+auto InstFingerprinter::GetOrCompute(const File* file,
+                                     CppOverloadSetId overload_set_id)
+    -> uint64_t {
+  Worklist worklist = {.todo = {{file, overload_set_id}},
                        .fingerprints = &fingerprints_};
   return worklist.Run();
 }

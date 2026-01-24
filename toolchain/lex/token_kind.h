@@ -130,11 +130,11 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   CARBON_ENUM_CONSTANT_DEFINITION(TokenKind, TokenName)
 #include "toolchain/lex/token_kind.def"
 
-constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
+inline constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) TokenKind::TokenName,
 #include "toolchain/lex/token_kind.def"
 };
-constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
+inline constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
     KeywordTokensStorage;
 
 }  // namespace Carbon::Lex

@@ -140,21 +140,19 @@ let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.loc4 [concrete]
-// CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
+// CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
+// CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Negate.ref: %Negate.type.15b = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %i32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %Negate.call
-// CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %Negate.call, %.loc13_19.1
-// CHECK:STDOUT:   return %.loc13_19.2
+// CHECK:STDOUT:   return %Negate.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

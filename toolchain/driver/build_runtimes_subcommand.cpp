@@ -6,6 +6,7 @@
 
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/clang_runner.h"
+#include "toolchain/driver/clang_runtimes.h"
 
 namespace Carbon {
 
@@ -20,6 +21,17 @@ generation options.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&directory); });
+
+  b.AddFlag(
+      {
+          .name = "force",
+          .help = R"""(
+Force re-creating the provided output path from scratch
+
+This will **remove** the provided output path and re-create it from scratch.
+)""",
+      },
+      [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&force); });
 
   codegen_options.Build(b);
 }
@@ -43,9 +55,6 @@ BuildRuntimesSubcommand::BuildRuntimesSubcommand()
     : DriverSubcommand(SubcommandInfo) {}
 
 auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
-
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
   if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
@@ -56,39 +65,55 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
                     "failure building runtimes: {0}", std::string);
 
-  auto tmp_result = Filesystem::MakeTmpDir();
-  if (!tmp_result.ok()) {
+  auto run_result = RunInternal(driver_env);
+  if (!run_result.ok()) {
     driver_env.emitter.Emit(FailureBuildingRuntimes,
-                            tmp_result.error().message());
+                            run_result.error().message());
     return {.success = false};
   }
-  Filesystem::RemovingDir tmp_dir = *std::move(tmp_result);
 
-  // TODO: Currently, the default location is just a subdirectory of the
-  // temporary directory used for the build. This allows the subcommand to be
-  // used to test and debug runtime building, but not for the results to be
-  // reused. Eventually, this should be connected to the same runtimes cache
-  // used by link commands.
-  std::filesystem::path output_path =
-      options_.directory.empty()
-          ? tmp_dir.abs_path() / "runtimes"
-          : std::filesystem::path(options_.directory.str());
+  llvm::outs() << "Built runtimes: " << *run_result << "\n";
+  return {.success = true};
+}
 
-  // Hard code a subdirectory of the runtimes output for the Clang resource
-  // directory runtimes.
-  //
-  // TODO: This should be replaced with an abstraction that manages the layout
-  // of the generated runtimes rather than hardcoding it.
-  std::filesystem::path resource_dir_path = output_path / "clang_resource_dir";
+auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
+    -> ErrorOr<std::filesystem::path> {
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
 
-  auto build_result = runner.BuildTargetResourceDir(
-      options_.codegen_options.target, resource_dir_path, tmp_dir.abs_path());
-  if (!build_result.ok()) {
-    driver_env.emitter.Emit(FailureBuildingRuntimes,
-                            build_result.error().message());
+  Runtimes::Cache::Features features = {
+      .target = options_.codegen_options.target.str()};
+
+  bool is_cache = options_.directory.empty();
+  std::filesystem::path output_path = options_.directory.str();
+
+  CARBON_ASSIGN_OR_RETURN(
+      auto runtimes, is_cache
+                         ? driver_env.runtimes_cache.Lookup(features)
+                         : Runtimes::Make(output_path, driver_env.vlog_stream));
+
+  if (options_.force) {
+    // Remove existing runtimes to force a rebuild.
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::ClangResourceDir));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::LibUnwind));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::Libcxx));
   }
 
-  return {.success = build_result.ok()};
+  ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
+                                               llvm::Triple(features.target),
+                                               &runtimes);
+  ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
+      &runner, driver_env.thread_pool, llvm::Triple(features.target),
+      &runtimes);
+  ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
+      &runner, driver_env.thread_pool, llvm::Triple(features.target),
+      &runtimes);
+
+  CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
+  CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());
+  CARBON_RETURN_IF_ERROR(std::move(libcxx_builder).Wait());
+
+  return runtimes.base_path();
 }
 
 }  // namespace Carbon

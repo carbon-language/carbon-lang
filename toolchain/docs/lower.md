@@ -81,16 +81,11 @@ taken to only pass the `TypeId` in a `TypeInFile` to code that expects a
 code within `FunctionContext` and `HandleInst` functions should not directly
 interact with `TypeId`s, and should instead always use `TypeInFile`.
 
-Similarly, other type properties have `FunctionContext` wrappers that track the
-file that owns the `TypeId`s:
-
--   `FunctionContext::GetValueRepr` returns a `ValueReprInFile` which is a pair
-    of a `SemIR::File*` and a `SemIR::ValueRepr`.
--   `FunctionContext::GetReturnTypeInfo` returns a `ReturnTypeInfoInFile` which
-    is a pair of a `SemIR::File*` and a `SemIR::ReturnTypeInfo`.
-
-These pairs are kept wrapped in the `*InFile` structs wherever possible, in
-order to minimize the chance of an ID being used with the wrong file.
+Similarly, `SemIR::ValueRepr` has a `FunctionContext::ValueReprInFile` wrapper
+that tracks the file that owns its `TypeId`, and `SemIR::InstId` has a
+`FunctionContext::InstInFile` wrapper that tracks the file that owns the
+`InstId`. These wrappers are kept intact wherever possible, in order to minimize
+the chance of an ID being used with the wrong file.
 
 ## Specific deduplication and fingerprinting
 

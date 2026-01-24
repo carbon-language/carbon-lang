@@ -7,7 +7,10 @@
 
 #include <gmock/gmock.h>
 
+#include <concepts>
+
 #include "common/error.h"
+#include "common/ostream.h"
 
 namespace Carbon::Testing {
 
@@ -95,6 +98,7 @@ class IsSuccessMatcher {
       : matcher_(std::move(matcher)) {}
 
   template <typename T, typename ErrorT>
+  explicit(false)
   // NOLINTNEXTLINE(google-explicit-constructor): Required for matcher APIs.
   operator ::testing::Matcher<const ErrorOr<T, ErrorT>&>() const {
     return ::testing::Matcher<const ErrorOr<T, ErrorT>&>(
@@ -121,6 +125,8 @@ namespace Carbon {
 
 // Supports printing `ErrorOr<T>` to `std::ostream` in tests.
 template <typename T, typename ErrorT>
+  requires(std::same_as<ErrorT, Error> ||
+           std::derived_from<ErrorT, ErrorBase<ErrorT>>)
 auto operator<<(std::ostream& out, const ErrorOr<T, ErrorT>& error_or)
     -> std::ostream& {
   if (error_or.ok()) {

@@ -70,13 +70,15 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
     -> SemIR::TypeId;
 
 // Requires the named constraints in the facet type to be complete, so that the
-// set of interfaces the facet type requires is known. Since named constraints
-// are not yet supported, this currently never fails. Eventually this function
-// will be passed a diagnoser for facet types that use some incomplete named
-// constraint, and return `None` in that case. If not `None`, the result will be
-// present in context.identified_facet_type()`.
-auto RequireIdentifiedFacetType(Context& context,
-                                const SemIR::FacetType& facet_type)
+// set of interfaces the facet type requires is known. The `self_const_id` is
+// a type or facet type expression that is the self that the FacetType is
+// constraining. Produces a set of interfaces that must be implemented for a set
+// of types, most of them for the `self_const_id`. Diagnoses an error and
+// returns None if any error is found.
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::ConstantId self_const_id,
+                                const SemIR::FacetType& facet_type,
+                                MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Adds a note to a diagnostic explaining that a class is incomplete.
@@ -86,6 +88,10 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
 // Adds a note to a diagnostic explaining that an interface is not defined.
 auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
                              DiagnosticBuilder& builder) -> void;
+
+// Adds a note to a diagnostic explaining that a class is abstract.
+auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                       bool direct_use, DiagnosticBuilder& builder) -> void;
 
 }  // namespace Carbon::Check
 

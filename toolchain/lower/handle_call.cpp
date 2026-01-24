@@ -5,10 +5,12 @@
 #include <algorithm>
 #include <vector>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -227,9 +229,6 @@ static auto CreateBinaryOperatorForBuiltin(
       auto lhs_id = context.sem_ir().inst_blocks().Get(
           context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
       auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(lhs_id);
-      if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
-        lhs_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
-      }
       return CreateIntShift(context,
                             lhs_type_file->types().IsSignedInt(lhs_type_id)
                                 ? llvm::Instruction::AShr
@@ -274,6 +273,10 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::NoOp:
       return;
 
+    case SemIR::BuiltinFunctionKind::PrimitiveCopy:
+      context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
+      return;
+
     case SemIR::BuiltinFunctionKind::PrintChar: {
       auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
       llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
@@ -312,6 +315,34 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::StringAt: {
+      auto string_inst_id = arg_ids[0];
+      auto* string_arg = context.GetValue(string_inst_id);
+
+      auto string_type_id = context.GetTypeIdOfInst(string_inst_id);
+      auto* string_type = context.GetType(string_type_id);
+      auto* string_value =
+          context.builder().CreateLoad(string_type, string_arg, "string.load");
+
+      auto* string_ptr_field =
+          context.builder().CreateExtractValue(string_value, {0}, "string.ptr");
+
+      auto* index_value = context.GetValue(arg_ids[1]);
+
+      auto* char_ptr = context.builder().CreateInBoundsGEP(
+          llvm::Type::getInt8Ty(context.llvm_context()), string_ptr_field,
+          index_value, "string.char_ptr");
+
+      auto* char_i8 = context.builder().CreateLoad(
+          llvm::Type::getInt8Ty(context.llvm_context()), char_ptr,
+          "string.char");
+
+      context.SetLocal(inst_id, context.builder().CreateZExt(
+                                    char_i8, context.GetTypeOfInst(inst_id),
+                                    "string.char.zext"));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
@@ -328,6 +359,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
+    case SemIR::BuiltinFunctionKind::IntConvertChar:
     case SemIR::BuiltinFunctionKind::IntConvert: {
       context.SetLocal(inst_id,
                        CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
@@ -411,12 +443,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::FloatDivAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
       auto lhs_type = context.GetTypeIdOfInst(arg_ids[0]);
-      auto pointee_type = lhs_type.GetPointeeType();
-      auto* lhs_value = context.LoadObject(pointee_type, lhs_ptr);
+      auto* lhs_value = context.LoadObject(lhs_type, lhs_ptr);
       auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
-      context.StoreObject(pointee_type, result, lhs_ptr);
+      context.StoreObject(lhs_type, result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
@@ -461,9 +492,82 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
           context.sem_ir().insts().Get(inst_id).type_id()));
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
+
+    case SemIR::BuiltinFunctionKind::PointerMakeNull: {
+      context.SetLocal(inst_id,
+                       llvm::ConstantPointerNull::get(
+                           llvm::PointerType::get(context.llvm_context(),
+                                                  /*AddressSpace=*/0)));
+      return;
+    }
+
+    case SemIR::BuiltinFunctionKind::PointerIsNull: {
+      context.SetLocal(inst_id, context.builder().CreateIsNull(
+                                    context.GetValue(arg_ids[0])));
+      return;
+    }
+
+    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
+      context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
+      return;
+    }
   }
 
   CARBON_FATAL("Unsupported builtin call.");
+}
+
+static auto HandleVirtualCall(FunctionContext& context,
+                              llvm::ArrayRef<llvm::Value*> args,
+                              const SemIR::File* callee_file,
+                              const SemIR::Function& function,
+                              const SemIR::CalleeFunction& callee_function)
+    -> llvm::CallInst* {
+  CARBON_CHECK(!args.empty(),
+               "Virtual functions must have at least one parameter");
+  auto* ptr_type =
+      llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+  // The vtable pointer is always at the start of the object in the Carbon
+  // ABI, so a pointer to the object is a pointer to the vtable pointer - load
+  // that to get a pointer to the vtable.
+  // TODO: Handle the case in C++ interop where the vtable pointer isn't at
+  // the start of the object.
+  // TODO: Use `context.LoadObject`.
+  auto* vtable = context.builder().CreateLoad(ptr_type, args.front(), "vtable");
+  auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+  auto* pointer_type =
+      llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
+  auto function_info =
+      context.GetFileContext(callee_file)
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
+  llvm::Value* virtual_fn;
+  if (function.clang_decl_id.has_value()) {
+    // Use absolute vtables for clang interop - the itanium vtable contains
+    // function pointers.
+    auto* virtual_function_pointer_address = context.builder().CreateGEP(
+        pointer_type, vtable,
+        {llvm::ConstantInt::get(
+            i32_type, static_cast<uint64_t>(function.virtual_index))});
+    virtual_fn = context.builder().CreateLoad(
+        pointer_type, virtual_function_pointer_address, "memptr.virtualfn");
+  } else {
+    // For Carbon, use Relative VTables as pioneered by Fuchsia:
+    // https://llvm.org/devmtg/2021-11/slides/2021-RelativeVTablesinC.pdf
+    // In this case, the vtable contains an offset from the vtable itself to the
+    // function in question. This avoids the use of link-time relocations in the
+    // vtable (making object files smaller, improving link time) - at the cost
+    // of extra instructions to resolve the offset at the call-site.
+    // This uses the `llvm.load.relative` intrinsic (
+    // https://llvm.org/docs/LangRef.html#llvm-load-relative-intrinsic ) that
+    // essentially does the arithmetic in one-shot: ptr + *(ptr + offset)
+    virtual_fn = context.builder().CreateCall(
+        llvm::Intrinsic::getOrInsertDeclaration(
+            &context.llvm_module(), llvm::Intrinsic::load_relative, {i32_type}),
+        {vtable,
+         llvm::ConstantInt::get(
+             i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
+  }
+  return context.builder().CreateCall(function_info->type, virtual_fn, args);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -471,35 +575,35 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  // TODO: This duplicates the SpecificId handling in `GetCalleeFunction`.
+  // TODO: This duplicates the SpecificId handling in `GetCallee`.
 
   // TODO: Should the `bound_method` be removed when forming the `call`
   // instruction? The `self` parameter is transferred into the call argument
   // list.
-  auto callee_id = inst.callee_id;
-  if (auto bound_method =
-          context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-    callee_id = bound_method->function_decl_id;
+  FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
+                                        .inst_id = inst.callee_id};
+  if (auto bound_method = context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(
+          callee.inst_id)) {
+    callee.inst_id = bound_method->function_decl_id;
   }
 
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
-  const auto* callee_file = &context.sem_ir();
   if (context.specific_id().has_value()) {
     auto [const_file, const_id] = GetConstantValueInSpecific(
         context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-        callee_id);
-    callee_file = const_file;
-    callee_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee_id.has_value());
+        callee.inst_id);
+    callee.file = const_file;
+    callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(callee.inst_id.has_value());
   }
 
-  auto callee_function = SemIR::GetCalleeFunction(*callee_file, callee_id);
-  CARBON_CHECK(callee_function.function_id.has_value());
+  auto callee_function =
+      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
 
   const SemIR::Function& function =
-      callee_file->functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
+      callee.file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee.file->check_ir_id(),
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
@@ -509,53 +613,44 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
+  auto& function_info =
+      context.GetFileContext(callee.file)
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
+
+  // Lower args in the LLVM parameter order, rather than the SemIR parameter
+  // order.
   std::vector<llvm::Value*> args;
-
-  auto inst_type = context.GetTypeIdOfInst(inst_id);
-  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
-    args.push_back(context.GetValue(arg_ids.consume_back()));
-  }
-
-  for (auto arg_id : arg_ids) {
-    auto arg_type = context.GetTypeIdOfInst(arg_id);
-    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
-      args.push_back(context.GetValue(arg_id));
-    }
+  for (auto param_pattern_id : function_info->lowered_param_pattern_ids) {
+    auto sem_ir_index = callee.file->insts()
+                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
+                            .index.index;
+    args.push_back(context.GetValue(arg_ids[sem_ir_index]));
   }
 
   llvm::CallInst* call;
-  if (function.virtual_index != -1) {
-    CARBON_CHECK(!args.empty(),
-                 "Virtual functions must have at least one parameter");
-    auto* ptr_type =
-        llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
-    // The vtable pointer is always at the start of the object in the Carbon
-    // ABI, so a pointer to the object is a pointer to the vtable pointer - load
-    // that to get a pointer to the vtable.
-    // TODO: Use `context.LoadObject`.
-    auto* vtable =
-        context.builder().CreateLoad(ptr_type, args.front(), "vtable");
-    auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
-    auto function_type_info =
-        context.GetFileContext(callee_file)
-            .BuildFunctionTypeInfo(function,
-                                   callee_function.resolved_specific_id);
-    call = context.builder().CreateCall(
-        function_type_info.type,
-        context.builder().CreateCall(
-            llvm::Intrinsic::getOrInsertDeclaration(
-                &context.llvm_module(), llvm::Intrinsic::load_relative,
-                {i32_type}),
-            {vtable,
-             llvm::ConstantInt::get(
-                 i32_type, static_cast<uint64_t>(function.virtual_index) * 4)}),
-        args);
+  if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
+    auto* llvm_callee = function_info->llvm_function;
+    auto describe_call = [&] {
+      RawStringOstream out;
+      out << "call ";
+      llvm_callee->printAsOperand(out);
+      out << "(";
+      llvm::ListSeparator sep;
+      for (auto* arg : args) {
+        out << sep;
+        arg->printAsOperand(out);
+      }
+      out << ")\n";
+      llvm_callee->print(out);
+      return out.TakeStr();
+    };
+    CARBON_CHECK(llvm_callee->arg_size() == args.size(),
+                 "Argument count mismatch: {0}", describe_call());
+    call = context.builder().CreateCall(llvm_callee, args);
   } else {
-    call = context.builder().CreateCall(
-        context.GetFileContext(callee_file)
-            .GetOrCreateFunction(callee_function.function_id,
-                                 callee_function.resolved_specific_id),
-        args);
+    call = HandleVirtualCall(context, args, callee.file, function,
+                             callee_function);
   }
 
   context.SetLocal(inst_id, call);

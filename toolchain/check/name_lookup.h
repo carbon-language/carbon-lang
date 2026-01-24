@@ -8,6 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -19,6 +20,9 @@ struct LookupScope {
   // The specific for the name scope, or `None` if the name scope is not
   // defined by a generic or we should perform lookup into the generic itself.
   SemIR::SpecificId specific_id;
+  // The self-type where lookup is happening when the lookup is for a member
+  // access.
+  SemIR::ConstantId self_const_id;
 };
 
 // A result produced by name lookup.
@@ -77,11 +81,19 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
                             bool is_being_declared = false)
     -> SemIR::ScopeLookupResult;
 
-// Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
+// Appends the lookup scopes corresponding to `lookup_const_id` to `*scopes`.
+//
+// The `self_type_const_id` is the self-type that we are looking for a name in,
+// and which is passed through to extended scopes. It may be a facet or a value
+// of type `type`. Some extended scopes have a symbolic `Self` internally which
+// needs to know the self-type in order to produce a correct specific scope in
+// the result.
+//
 // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
 // still updates `*scopes` and returns `true`.
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId base_const_id,
+                                   SemIR::ConstantId lookup_const_id,
+                                   SemIR::ConstantId self_type_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool;
 
@@ -94,10 +106,25 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          std::optional<AccessInfo> access_info = std::nullopt)
     -> LookupResult;
 
-// Returns the `InstId` corresponding to a name in the core package, or
-// BuiltinErrorInst if not found.
+// Returns the `InstId` corresponding to a qualified name in the `Core` package,
+// or BuiltinErrorInst if not found.
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::StringRef name) -> SemIR::InstId;
+                      llvm::ArrayRef<CoreIdentifier> qualifiers)
+    -> SemIR::InstId;
+
+// Returns the `InstId` corresponding to a name in the `Core`, or
+// BuiltinErrorInst if not found.
+inline auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
+                             CoreIdentifier identifier) -> SemIR::InstId {
+  return LookupNameInCore(context, loc_id, llvm::ArrayRef{identifier});
+}
+
+// Checks whether a name is accessible in the given access context. Produces a
+// diagnostic if not.
+auto CheckAccess(Context& context, SemIR::LocId loc_id,
+                 SemIR::LocId member_loc_id, SemIR::NameId name_id,
+                 SemIR::AccessKind access_kind, bool is_parent_access,
+                 AccessInfo access_info) -> void;
 
 // Prints a diagnostic for a duplicate name.
 auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,

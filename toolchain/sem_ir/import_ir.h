@@ -26,7 +26,7 @@ struct ImportIR : public Printable<ImportIR> {
 
 static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
 
-using ImportIRStore = ValueStore<ImportIRId, ImportIR>;
+using ImportIRStore = ValueStore<ImportIRId, ImportIR, Tag<CheckIRId>>;
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
 // LocId. For a `Cpp` import, points to a Clang source location.
@@ -78,7 +78,7 @@ using ImportIRInstStore = ValueStore<ImportIRInstId, ImportIRInst>;
 // Returns the canonical `File` and `InstId` for an entity, tracing imported
 // instructions. Note the returned `File` might not be directly imported by the
 // input `sem_ir`.
-auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
+auto GetCanonicalFileAndInstId(const File* sem_ir, InstId inst_id)
     -> std::pair<const File*, InstId>;
 
 }  // namespace Carbon::SemIR

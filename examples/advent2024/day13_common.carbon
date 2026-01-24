@@ -27,22 +27,22 @@ class Machine {
     returned var me: Machine;
     // "Button A: X+"
     SkipNChars(12);
-    ReadInt64(&me.a.0);
+    ReadInt(ref me.a.0);
     // ", Y+"
     SkipNChars(4);
-    ReadInt64(&me.a.1);
+    ReadInt(ref me.a.1);
     // "\nButton B: X+"
     SkipNChars(13);
-    ReadInt64(&me.b.0);
+    ReadInt(ref me.b.0);
     // ", Y+"
     SkipNChars(4);
-    ReadInt64(&me.b.1);
+    ReadInt(ref me.b.1);
     // "\nPrize: X="
     SkipNChars(10);
-    ReadInt64(&me.prize.0);
+    ReadInt(ref me.prize.0);
     // ", Y="
     SkipNChars(4);
-    ReadInt64(&me.prize.1);
+    ReadInt(ref me.prize.1);
     SkipNewline();
     return var;
   }

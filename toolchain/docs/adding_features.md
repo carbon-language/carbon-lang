@@ -26,10 +26,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [SemIR dumps and ranges](#semir-dumps-and-ranges)
             -   [Example uses](#example-uses)
     -   [Debugging errors](#debugging-errors)
-        -   [Verbose output](#verbose-output)
-        -   [Stack traces](#stack-traces)
-        -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
-        -   [Dumping prelude files](#dumping-prelude-files)
 
 <!-- tocstop -->
 
@@ -304,11 +300,11 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `GetSingletonType(context,SemIR::WitnessType::InstId)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::TypeInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            GetSingletonType(context, SemIR::WitnessType::InstId);
+            GetSingletonType(context, SemIR::WitnessType::TypeInstId);
         SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
             context, node_id, {.type_id = witness_type_id, ...});
         ```
@@ -508,7 +504,7 @@ minimal `Core` package and `prelude` library to the file test with the
 `check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature
@@ -602,48 +598,4 @@ output can help check that an error is correctly propagated in SemIR.
 
 ### Debugging errors
 
-#### Verbose output
-
-The `-v` flag can be passed to trace state, and should be specified before the
-subcommand name: `carbon -v compile ...`. `CARBON_VLOG` is used to print output
-in this mode. There is currently no control over the degree of verbosity.
-
-To include VLOG output when debugging a file test, add an `ARGS: -v compile %s`
-line to the file, such as:
-
-```
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
-// ARGS: -v compile %s
-// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
-```
-
-This will also include the VLOG output when running the test in an interactive
-debugger. Note that using `-v compile` with `autoupdate.py` will deeply mangle
-your test file, so avoid doing that.
-
-#### Stack traces
-
-While the iterative processing pattern means function stack traces will have
-minimal context for how the current function is reached, we use LLVM's
-`PrettyStackTrace` to include details about the state stack. The state stack
-will be above the function stack in crash output.
-
-#### Dumping objects in interactive debuggers
-
-We provide namespace-scoped `Dump` functions in several components, such as
-[check/dump.cpp](/toolchain/check/dump.cpp). These `Dump` functions will print
-contextual information about an object to stderr. The files contain details
-regarding support.
-
-Objects which inherit from `Printable` also have `Dump` member functions, but
-these will lack contextual information.
-
-#### Dumping prelude files
-
-By default, prelude files are excluded from dumps by
-`--exclude-dump-file-prefix`. To enable dumps for specific files, add
-`//@include-in-dumps`. This works for every phase after lex, but may be most
-helpful to debug check and lower output. This can also be used to view
-cross-file SemIR, such as imports from a prelude, by adding
-`//@include-in-dumps` to the prelude file and looking at the SemIR of the
-importing file.
+See [Debugging tools and techniques](debugging.md).

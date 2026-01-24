@@ -20,19 +20,15 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
-  AddInstAndPush<SemIR::BoolLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
-       .value = SemIR::BoolValue::False});
+  context.node_stack().Push(
+      node_id, MakeBoolLiteral(context, node_id, SemIR::BoolValue::False));
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
-  AddInstAndPush<SemIR::BoolLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
-       .value = SemIR::BoolValue::True});
+  context.node_stack().Push(
+      node_id, MakeBoolLiteral(context, node_id, SemIR::BoolValue::True));
   return true;
 }
 
@@ -77,8 +73,15 @@ auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  auto fn_inst_id = LookupNameInCore(context, node_id, "Bool");
+  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Bool);
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+  context.node_stack().Push(node_id, type_inst_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::CharTypeLiteralId node_id)
+    -> bool {
+  auto type_inst_id = MakeCharTypeLiteral(context, node_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }

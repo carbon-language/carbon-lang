@@ -89,33 +89,25 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   std::string target_arg = llvm::formatv("--target={0}", target).str();
   std::string out;
   std::string err;
-  CARBON_CHECK(Testing::CallWithCapturedOutput(
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.Run({target_arg, "-fPIE", "-c",
-                                                  test_a_file.string(), "-o",
-                                                  test_a_output.string()});
-                     if (!run_result.ok()) {
-                       err = run_result.error().message();
-                       return false;
-                     }
-                     return *run_result;
+                     auto run_result = clang.RunWithNoRuntimes(
+                         {target_arg, "-fPIE", "-c", test_a_file.string(), "-o",
+                          test_a_output.string()});
+                     return run_result;
                    }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);
   verbose_out.clear();
 
-  CARBON_CHECK(Testing::CallWithCapturedOutput(
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.Run({target_arg, "-fPIE", "-c",
-                                                  test_b_file.string(), "-o",
-                                                  test_b_output.string()});
-                     if (!run_result.ok()) {
-                       err = run_result.error().message();
-                       return false;
-                     }
-                     return *run_result;
+                     auto run_result = clang.RunWithNoRuntimes(
+                         {target_arg, "-fPIE", "-c", test_b_file.string(), "-o",
+                          test_b_output.string()});
+                     return run_result;
                    }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);

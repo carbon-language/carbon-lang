@@ -66,8 +66,8 @@ class [[clang::internal_linkage]] Lexer {
    public:
     // Consumes (and discard) a valid token to construct a result
     // indicating a token has been produced. Relies on implicit conversions.
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    LexResult(TokenIndex /*discarded_token*/) : LexResult(true) {}
+    explicit(false) LexResult(TokenIndex /*discarded_token*/)
+        : LexResult(true) {}
 
     // Returns a result indicating no token was produced.
     static auto NoMatch() -> LexResult { return LexResult(false); }

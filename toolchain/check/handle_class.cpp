@@ -15,7 +15,6 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
-#include "toolchain/check/implicit_type_impls.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -404,7 +403,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    class_scope.AddExtendedScope(adapted_type_inst_id);
+    class_scope.AddExtendedScope({adapted_type_inst_id});
   }
   return true;
 }
@@ -554,7 +553,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.has_value()) {
-      class_scope.AddExtendedScope(base_info.inst_id);
+      class_scope.AddExtendedScope({base_info.inst_id});
     } else {
       class_scope.set_has_error();
     }
@@ -566,8 +565,6 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-
-  MakeClassDestroyImpl(context, class_id);
 
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context, node_id, class_id,

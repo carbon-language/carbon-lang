@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -16,14 +16,14 @@
 library "[[@TEST_NAME]]";
 
 // 1. The function `Outer.G` is written inside the generic `Outer`. The facet
-//    value `H` has a specific with a `BindSymbolicName` for the generic
+//    value `H` has a specific with a `SymbolicBinding` for the generic
 //    parameter `OuterParam`.
 //
 // 2. The use of `.T` in the rewrite constraint does a lookup for `.Self` which
 //    finds a `FacetType` that includes the interface `Y` which is _also inside_
 //    the generic `Outer` class. This results in a `LookupImplWitness`
 //    instruction where the query `SpecificInterface` has a specific argument
-//    that is a `BindSymbolicName` for the enclosing generic's parameter
+//    that is a `SymbolicBinding` for the enclosing generic's parameter
 //    `OuterParam`.
 //
 // 3. The call to `G` from a concrete function `F` is against `Outer.G` for a
@@ -34,8 +34,8 @@ library "[[@TEST_NAME]]";
 //
 // 4. This substitution includes the rewrite constraints in the `FacetType`,
 //    where there is a `LookupImplWitness` instruction (from step 2) with a
-//    query `SpecificInterface` that has a `BindSymbolicName`. When
-//    substituting, the `BindSymbolicName` is changed to the concrete `()` from
+//    query `SpecificInterface` that has a `SymbolicBinding`. When
+//    substituting, the `SymbolicBinding` is changed to the concrete `()` from
 //    the caller's specific. Then the `LookupImplWitness` instruction is
 //    evaluated again with its new values.
 //
@@ -43,7 +43,7 @@ library "[[@TEST_NAME]]";
 //
 // 5. The `LookupImplWitness` with the concrete `()` in the specific for the
 //    query interface attempts to find a witness from the facet type of `H`. The
-//    facet type has a `SpecificInterface` with `BindSymbolicName` in the same
+//    facet type has a `SpecificInterface` with `SymbolicBinding` in the same
 //    position, so it doesn't match and the witness is not used.
 //
 // 6. The `LookupImplWitness` evaluation fails (this is supposed to be
@@ -103,67 +103,58 @@ fn F() {
 // CHECK:STDOUT: --- lookup_interface_with_encenclosing_specific_is_concrete_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Outer.9d6: type = class_type @Outer, @Outer(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.type.269: type = facet_type <@Y, @Y(%OuterParam)> [symbolic]
-// CHECK:STDOUT:   %Self.86f: %Y.type.269 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Y.assoc_type.56e: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %assoc0.044: %Y.assoc_type.56e = assoc_entity element0, @Y.%T [symbolic]
-// CHECK:STDOUT:   %.Self.2d2: %Y.type.269 = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type.269 [symbolic]
-// CHECK:STDOUT:   %.Self.as_type.3ad: type = facet_access_type %.Self.2d2 [symbolic]
-// CHECK:STDOUT:   %Y.lookup_impl_witness.617: <witness> = lookup_impl_witness %.Self.2d2, @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.facet.ddc: %Y.type.269 = facet_value %.Self.as_type.3ad, (%Y.lookup_impl_witness.617) [symbolic]
-// CHECK:STDOUT:   %impl.elem0.a39: type = impl_witness_access %Y.lookup_impl_witness.617, element0 [symbolic]
-// CHECK:STDOUT:   %Y_where.type.194: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.a39 = %empty_tuple.type> [symbolic]
-// CHECK:STDOUT:   %H: %Y_where.type.194 = bind_symbolic_name H, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.e35: type = pattern_type %Y_where.type.194 [symbolic]
-// CHECK:STDOUT:   %Outer.G.type.d49: type = fn_type @Outer.G, @Outer(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Outer.G.f3c: %Outer.G.type.d49 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %ptr.6ff: type = ptr_type %Outer.9d6 [symbolic]
-// CHECK:STDOUT:   %pattern_type.07e: type = pattern_type %ptr.6ff [symbolic]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: %Outer.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Outer.387: type = class_type @Outer, @Outer(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %Y.type.6b3: type = facet_type <@Y, @Y(%OuterParam)> [symbolic]
+// CHECK:STDOUT:   %Self.8ed: %Y.type.6b3 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Y.assoc_type.978: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %assoc0.29e: %Y.assoc_type.978 = assoc_entity element0, @Y.%T [symbolic]
+// CHECK:STDOUT:   %.Self.cf7: %Y.type.6b3 = symbolic_binding .Self [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type.6b3 [symbolic]
+// CHECK:STDOUT:   %.Self.binding.as_type.b3c: type = symbolic_binding_type .Self, %.Self.cf7 [symbolic]
+// CHECK:STDOUT:   %Y.lookup_impl_witness.3b9: <witness> = lookup_impl_witness %.Self.cf7, @Y, @Y(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %impl.elem0.284: type = impl_witness_access %Y.lookup_impl_witness.3b9, element0 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %Y_where.type.7c7: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.284 = %empty_tuple.type> [symbolic]
+// CHECK:STDOUT:   %H: %Y_where.type.7c7 = symbolic_binding H, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.b97: type = pattern_type %Y_where.type.7c7 [symbolic]
+// CHECK:STDOUT:   %Outer.G.type.20d: type = fn_type @Outer.G, @Outer(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %Outer.G.b44: %Outer.G.type.20d = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %Outer.8f5: type = class_type @Outer, @Outer(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %Y.type.400: type = facet_type <@Y, @Y(%empty_tuple.type)> [concrete]
-// CHECK:STDOUT:   %Outer.G.type.96c: type = fn_type @Outer.G, @Outer(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %Outer.G.510: %Outer.G.type.96c = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.0c5: %Y.type.400 = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Self.6da: %Y.type.400 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Y.assoc_type.06e: type = assoc_entity_type @Y, @Y(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %assoc0.0a6: %Y.assoc_type.06e = assoc_entity element0, @Y.%T [concrete]
-// CHECK:STDOUT:   %.Self.as_type.4c1: type = facet_access_type %.Self.0c5 [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness.306: <witness> = lookup_impl_witness %.Self.0c5, @Y, @Y(%empty_tuple.type) [symbolic_self]
-// CHECK:STDOUT:   %Y.facet.359: %Y.type.400 = facet_value %.Self.as_type.4c1, (%Y.lookup_impl_witness.306) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.bb2: type = impl_witness_access %Y.lookup_impl_witness.306, element0 [symbolic_self]
-// CHECK:STDOUT:   %Y_where.type.040: type = facet_type <@Y, @Y(%empty_tuple.type) where %impl.elem0.bb2 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness file.%Y.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Outer.dfa: type = class_type @Outer, @Outer(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Y.type.5e1: type = facet_type <@Y, @Y(%empty_tuple.type)> [concrete]
+// CHECK:STDOUT:   %Outer.G.type.841: type = fn_type @Outer.G, @Outer(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Outer.G.e36: %Outer.G.type.841 = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.f22: %Y.type.5e1 = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Self.95d: %Y.type.5e1 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Y.assoc_type.4bc: type = assoc_entity_type @Y, @Y(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %assoc0.36c: %Y.assoc_type.4bc = assoc_entity element0, @Y.%T [concrete]
+// CHECK:STDOUT:   %.Self.binding.as_type.32f: type = symbolic_binding_type .Self, %.Self.f22 [symbolic_self]
+// CHECK:STDOUT:   %Y.lookup_impl_witness.b08: <witness> = lookup_impl_witness %.Self.f22, @Y, @Y(%empty_tuple.type) [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.48b: type = impl_witness_access %Y.lookup_impl_witness.b08, element0 [symbolic_self]
+// CHECK:STDOUT:   %Y_where.type.ad5: type = facet_type <@Y, @Y(%empty_tuple.type) where %impl.elem0.48b = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value: %Y_where.type.040 = facet_value %C, (%Y.impl_witness) [concrete]
-// CHECK:STDOUT:   %complete_type.29b: <witness> = complete_type_witness %Y.type.400 [concrete]
-// CHECK:STDOUT:   %pattern_type.b38: type = pattern_type %Y_where.type.040 [concrete]
-// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %Outer.G.510, @Outer.G(%empty_tuple.type, %facet_value) [concrete]
+// CHECK:STDOUT:   %facet_value: %Y_where.type.ad5 = facet_value %C, (%Y.impl_witness) [concrete]
+// CHECK:STDOUT:   %complete_type.ed2: <witness> = complete_type_witness %Y.type.5e1 [concrete]
+// CHECK:STDOUT:   %pattern_type.c51: type = pattern_type %Y_where.type.ad5 [concrete]
+// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %Outer.G.e36, @Outer.G(%empty_tuple.type, %facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,139 +168,109 @@ fn F() {
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
 // CHECK:STDOUT:     %OuterParam.patt: %pattern_type.98f = symbolic_binding_pattern OuterParam, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
-// CHECK:STDOUT:     %OuterParam.loc49_13.2: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:     %OuterParam.loc49_13.2: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @C.as.Y.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:     %.loc58_18: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc58_18: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc58_19: type = converted %.loc58_18, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %Outer: type = class_type @Outer, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.8f5]
-// CHECK:STDOUT:     %.loc58_20: type = specific_constant @Outer.%Y.decl, @Outer(constants.%empty_tuple.type) [concrete = constants.%Y.type.400]
-// CHECK:STDOUT:     %Y.ref: type = name_ref Y, %.loc58_20 [concrete = constants.%Y.type.400]
-// CHECK:STDOUT:     %.Self: %Y.type.400 = bind_symbolic_name .Self [symbolic_self = constants.%.Self.0c5]
-// CHECK:STDOUT:     %.Self.ref: %Y.type.400 = name_ref .Self, %.Self [symbolic_self = constants.%.Self.0c5]
-// CHECK:STDOUT:     %.loc58_29.1: %Y.assoc_type.06e = specific_constant @T.%assoc0, @Y(constants.%empty_tuple.type) [concrete = constants.%assoc0.0a6]
-// CHECK:STDOUT:     %T.ref: %Y.assoc_type.06e = name_ref T, %.loc58_29.1 [concrete = constants.%assoc0.0a6]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.4c1]
-// CHECK:STDOUT:     %.loc58_29.2: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.4c1]
-// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness.306, element0 [symbolic_self = constants.%impl.elem0.bb2]
-// CHECK:STDOUT:     %.loc58_35.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %Outer: type = class_type @Outer, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.dfa]
+// CHECK:STDOUT:     %.loc58_20: type = specific_constant @Outer.%Y.decl, @Outer(constants.%empty_tuple.type) [concrete = constants.%Y.type.5e1]
+// CHECK:STDOUT:     %Y.ref: type = name_ref Y, %.loc58_20 [concrete = constants.%Y.type.5e1]
+// CHECK:STDOUT:     %.Self: %Y.type.5e1 = symbolic_binding .Self [symbolic_self = constants.%.Self.f22]
+// CHECK:STDOUT:     %.Self.ref: %Y.type.5e1 = name_ref .Self, %.Self [symbolic_self = constants.%.Self.f22]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type.32f]
+// CHECK:STDOUT:     %.loc58_29.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type.32f]
+// CHECK:STDOUT:     %.loc58_29.2: %Y.assoc_type.4bc = specific_constant @T.%assoc0, @Y(constants.%empty_tuple.type) [concrete = constants.%assoc0.36c]
+// CHECK:STDOUT:     %T.ref: %Y.assoc_type.4bc = name_ref T, %.loc58_29.2 [concrete = constants.%assoc0.36c]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness.b08, element0 [symbolic_self = constants.%impl.elem0.48b]
+// CHECK:STDOUT:     %.loc58_35.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc58_35.2: type = converted %.loc58_35.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc58_23: type = where_expr %.Self [concrete = constants.%Y_where.type.040] {
-// CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type.400
+// CHECK:STDOUT:     %.loc58_23: type = where_expr %.Self [concrete = constants.%Y_where.type.ad5] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%Y.type.5e1
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc58_35.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
-// CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc49_13.2: type) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.269)]
-// CHECK:STDOUT:   %Self.2: @Y.%Y.type (%Y.type.269) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.86f)]
-// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.56e)]
-// CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.56e) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.044)]
+// CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:   %Self.loc50_15.2: @Y.%Y.type (%Y.type.6b3) = symbolic_binding Self, 1 [symbolic = %Self.loc50_15.2 (constants.%Self.8ed)]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.978)]
+// CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.978) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.29e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Y.%Y.type (%Y.type.269) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.86f)]
+// CHECK:STDOUT:     %Self.loc50_15.1: @Y.%Y.type (%Y.type.6b3) = symbolic_binding Self, 1 [symbolic = %Self.loc50_15.2 (constants.%Self.8ed)]
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.56e) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.044)]
+// CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.978) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.29e)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc50_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc49_13.2: type, @Y.%Self.1: @Y.%Y.type (%Y.type.269)) {
+// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc49_13.2: type, @Y.%Self.loc50_15.1: @Y.%Y.type (%Y.type.6b3)) {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @Outer.as.Destroy.impl(@Outer.%OuterParam.loc49_13.2: type) {
-// CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.9d6)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Outer.as.Destroy.impl.Op.type (constants.%Outer.as.Destroy.impl.Op.type)]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: @Outer.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:     %Outer.as.Destroy.impl.Op.decl: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = fn_decl @Outer.as.Destroy.impl.Op [symbolic = @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)] {
-// CHECK:STDOUT:       %self.patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.07e) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.07e) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %.loc49_32.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @Outer.as.Destroy.impl.Op.%ptr (%ptr.6ff) = value_param call_param0
-// CHECK:STDOUT:       %.loc49_32.2: type = splice_block %Self.ref [symbolic = %Outer (constants.%Outer.9d6)] {
-// CHECK:STDOUT:         %.loc49_32.3: type = specific_constant constants.%Outer.9d6, @Outer(constants.%OuterParam) [symbolic = %Outer (constants.%Outer.9d6)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc49_32.3 [symbolic = %Outer (constants.%Outer.9d6)]
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Outer.as.Destroy.impl.Op.%ptr (%ptr.6ff) = bind_name self, %self.param
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Op = %Outer.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = @Outer.%Destroy.impl_witness
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Y.impl: %C.ref as %.loc58_23 {
+// CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
+// CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%Y.impl_witness
+// CHECK:STDOUT:   witness = %Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%OuterParam.loc49_13.2: type) {
-// CHECK:STDOUT:   %OuterParam.loc49_13.1: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:   %OuterParam.loc49_13.1: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc49_13.1)> [symbolic = %Y.type (constants.%Y.type.269)]
-// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc49_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.d49)]
-// CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.d49) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.f3c)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc49_13.1)> [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc49_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.20d)]
+// CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.20d) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.b44)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Y.decl: type = interface_decl @Y [symbolic = @Outer.%Y.type (constants.%Y.type.269)] {} {}
-// CHECK:STDOUT:     %Outer.G.decl: @Outer.%Outer.G.type (%Outer.G.type.d49) = fn_decl @Outer.G [symbolic = @Outer.%Outer.G (constants.%Outer.G.f3c)] {
-// CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.e35) = symbolic_binding_pattern H, 1 [concrete]
+// CHECK:STDOUT:     %Y.decl: type = interface_decl @Y [symbolic = @Outer.%Y.type (constants.%Y.type.6b3)] {} {}
+// CHECK:STDOUT:     %Outer.G.decl: @Outer.%Outer.G.type (%Outer.G.type.20d) = fn_decl @Outer.G [symbolic = @Outer.%Outer.G (constants.%Outer.G.b44)] {
+// CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.b97) = symbolic_binding_pattern H, 1 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc54_14.1: type = splice_block %.loc54_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.194)] {
-// CHECK:STDOUT:         %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
-// CHECK:STDOUT:         %.loc54_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.269)]
-// CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc54_12 [symbolic = %Y.type (constants.%Y.type.269)]
-// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.269) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.2d2)]
-// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.269) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.2d2)]
-// CHECK:STDOUT:         %.loc54_20.1: @Outer.G.%Y.assoc_type (%Y.assoc_type.56e) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.044)]
-// CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.56e) = name_ref T, %.loc54_20.1 [symbolic = %assoc0 (constants.%assoc0.044)]
-// CHECK:STDOUT:         %.Self.as_type.loc54_20.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc54_20.1 (constants.%.Self.as_type.3ad)]
-// CHECK:STDOUT:         %.loc54_20.2: type = converted %.Self.ref, %.Self.as_type.loc54_20.2 [symbolic = %.Self.as_type.loc54_20.1 (constants.%.Self.as_type.3ad)]
-// CHECK:STDOUT:         %impl.elem0.loc54_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.617, element0 [symbolic = %impl.elem0.loc54_20.1 (constants.%impl.elem0.a39)]
-// CHECK:STDOUT:         %.loc54_26.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc54_14.1: type = splice_block %.loc54_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.7c7)] {
+// CHECK:STDOUT:         %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:         %.loc54_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc54_12 [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.6b3) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.cf7)]
+// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.6b3) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.cf7)]
+// CHECK:STDOUT:         %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.b3c)]
+// CHECK:STDOUT:         %.loc54_20.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.b3c)]
+// CHECK:STDOUT:         %.loc54_20.2: @Outer.G.%Y.assoc_type (%Y.assoc_type.978) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.29e)]
+// CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.978) = name_ref T, %.loc54_20.2 [symbolic = %assoc0 (constants.%assoc0.29e)]
+// CHECK:STDOUT:         %impl.elem0.loc54_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.3b9, element0 [symbolic = %impl.elem0.loc54_20.1 (constants.%impl.elem0.284)]
+// CHECK:STDOUT:         %.loc54_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:         %.loc54_26.2: type = converted %.loc54_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:         %.loc54_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.194)] {
-// CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.269
+// CHECK:STDOUT:         %.loc54_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.7c7)] {
+// CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.6b3
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc54_20.2, %.loc54_26.2
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %H.loc54_8.2: @Outer.G.%Y_where.type (%Y_where.type.194) = bind_symbolic_name H, 1 [symbolic = %H.loc54_8.1 (constants.%H)]
+// CHECK:STDOUT:       %H.loc54_8.2: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_8.1 (constants.%H)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Outer.9d6 [symbolic = @Outer.as.Destroy.impl.%Outer (constants.%Outer.9d6)]
-// CHECK:STDOUT:     impl_decl @Outer.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
-// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Outer.as.Destroy.impl(constants.%OuterParam) [symbolic = @Outer.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Outer.9d6
+// CHECK:STDOUT:     .Self = constants.%Outer.387
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:     .G = %Outer.G.decl
 // CHECK:STDOUT:   }
@@ -317,19 +278,19 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc49_13.2: type, %H.loc54_8.2: @Outer.G.%Y_where.type (%Y_where.type.194)) {
-// CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.269)]
-// CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.269) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.2d2)]
+// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc49_13.2: type, %H.loc54_8.2: @Outer.G.%Y_where.type (%Y_where.type.7c7)) {
+// CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6b3)]
+// CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.6b3) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.cf7)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.56e)]
-// CHECK:STDOUT:   %assoc0: @Outer.G.%Y.assoc_type (%Y.assoc_type.56e) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.044)]
-// CHECK:STDOUT:   %.Self.as_type.loc54_20.1: type = facet_access_type %.Self.1 [symbolic = %.Self.as_type.loc54_20.1 (constants.%.Self.as_type.3ad)]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.617)]
-// CHECK:STDOUT:   %impl.elem0.loc54_20.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc54_20.1 (constants.%impl.elem0.a39)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc54_20.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.194)]
-// CHECK:STDOUT:   %H.loc54_8.1: @Outer.G.%Y_where.type (%Y_where.type.194) = bind_symbolic_name H, 1 [symbolic = %H.loc54_8.1 (constants.%H)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.e35)]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.1 [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.b3c)]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.978)]
+// CHECK:STDOUT:   %assoc0: @Outer.G.%Y.assoc_type (%Y.assoc_type.978) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.29e)]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.3b9)]
+// CHECK:STDOUT:   %impl.elem0.loc54_20.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc54_20.1 (constants.%impl.elem0.284)]
+// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc54_20.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.7c7)]
+// CHECK:STDOUT:   %H.loc54_8.1: @Outer.G.%Y_where.type (%Y_where.type.7c7) = symbolic_binding H, 1 [symbolic = %H.loc54_8.1 (constants.%H)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.b97)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -339,28 +300,17 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.as.Destroy.impl.Op(@Outer.%OuterParam.loc49_13.2: type) {
-// CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.9d6)]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Outer [symbolic = %ptr (constants.%ptr.6ff)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.07e)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Outer.as.Destroy.impl.Op.%ptr (%ptr.6ff)) = "no_op";
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:   %.loc61_10: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc61_10: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc61_11: type = converted %.loc61_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.8f5]
-// CHECK:STDOUT:   %.loc61_12: %Outer.G.type.96c = specific_constant @Outer.%Outer.G.decl, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.G.510]
-// CHECK:STDOUT:   %G.ref: %Outer.G.type.96c = name_ref G, %.loc61_12 [concrete = constants.%Outer.G.510]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.dfa]
+// CHECK:STDOUT:   %.loc61_12: %Outer.G.type.841 = specific_constant @Outer.%Outer.G.decl, @Outer(constants.%empty_tuple.type) [concrete = constants.%Outer.G.e36]
+// CHECK:STDOUT:   %G.ref: %Outer.G.type.841 = name_ref G, %.loc61_12 [concrete = constants.%Outer.G.e36]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %facet_value: %Y_where.type.040 = facet_value constants.%C, (constants.%Y.impl_witness) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc61_16: %Y_where.type.040 = converted constants.%C, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value: %Y_where.type.ad5 = facet_value constants.%C, (constants.%Y.impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc61_16: %Y_where.type.ad5 = converted constants.%C, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %G.ref, @Outer.G(constants.%empty_tuple.type, constants.%facet_value) [concrete = constants.%Outer.G.specific_fn]
 // CHECK:STDOUT:   %Outer.G.call: init %empty_tuple.type = call %Outer.G.specific_fn()
 // CHECK:STDOUT:   return
@@ -370,85 +320,72 @@ fn F() {
 // CHECK:STDOUT:   %OuterParam.loc49_13.1 => constants.%OuterParam
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.269
-// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.d49
-// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.f3c
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6b3
+// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.20d
+// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.b44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%OuterParam) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.269
-// CHECK:STDOUT:   %Self.2 => constants.%Self.86f
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.56e
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.044
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6b3
+// CHECK:STDOUT:   %Self.loc50_15.2 => constants.%Self.8ed
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.978
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.29e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.86f) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.8ed) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Y.facet.ddc) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.cf7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.269
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.2d2
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6b3
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.cf7
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.56e
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.044
-// CHECK:STDOUT:   %.Self.as_type.loc54_20.1 => constants.%.Self.as_type.3ad
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.617
-// CHECK:STDOUT:   %impl.elem0.loc54_20.1 => constants.%impl.elem0.a39
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.194
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.b3c
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.978
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.29e
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.3b9
+// CHECK:STDOUT:   %impl.elem0.loc54_20.1 => constants.%impl.elem0.284
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.7c7
 // CHECK:STDOUT:   %H.loc54_8.1 => constants.%H
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.as.Destroy.impl(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Outer => constants.%Outer.9d6
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.as.Destroy.impl.Op(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Outer => constants.%Outer.9d6
-// CHECK:STDOUT:   %ptr => constants.%ptr.6ff
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.07e
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %OuterParam.loc49_13.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.400
-// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.96c
-// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.510
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.5e1
+// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.841
+// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.e36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%empty_tuple.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%empty_tuple.type
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.400
-// CHECK:STDOUT:   %Self.2 => constants.%Self.6da
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.06e
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0a6
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.5e1
+// CHECK:STDOUT:   %Self.loc50_15.2 => constants.%Self.95d
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.4bc
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.36c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%empty_tuple.type, constants.%Y.facet.359) {}
+// CHECK:STDOUT: specific @T(constants.%empty_tuple.type, constants.%.Self.f22) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%empty_tuple.type, constants.%facet_value) {
 // CHECK:STDOUT:   %OuterParam => constants.%empty_tuple.type
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.400
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.0c5
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.29b
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.06e
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0a6
-// CHECK:STDOUT:   %.Self.as_type.loc54_20.1 => constants.%.Self.as_type.4c1
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.306
-// CHECK:STDOUT:   %impl.elem0.loc54_20.1 => constants.%impl.elem0.bb2
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.040
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.5e1
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.f22
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.ed2
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.32f
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.4bc
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.36c
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.b08
+// CHECK:STDOUT:   %impl.elem0.loc54_20.1 => constants.%impl.elem0.48b
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.ad5
 // CHECK:STDOUT:   %H.loc54_8.1 => constants.%facet_value
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b38
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c51
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -457,45 +394,39 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z1.type: type = facet_type <@Z1> [concrete]
-// CHECK:STDOUT:   %Self.7fa: %Z1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.d71: %Z1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Z2.type: type = facet_type <@Z2> [concrete]
-// CHECK:STDOUT:   %Self.c6e: %Z2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.39c: type = pattern_type %Z1.type [concrete]
+// CHECK:STDOUT:   %Self.cde: %Z2.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.62d: type = pattern_type %Z1.type [concrete]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Outer.a5c: type = class_type @Outer, @Outer(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.type.b38: type = facet_type <@Y, @Y(%OuterParam)> [symbolic]
-// CHECK:STDOUT:   %Self.957: %Y.type.b38 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Y.assoc_type.b7a: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %assoc0.9f8: %Y.assoc_type.b7a = assoc_entity element0, @Y.%T [symbolic]
-// CHECK:STDOUT:   %.Self.de8: %Y.type.b38 = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %require_complete.527: <witness> = require_complete_type %Y.type.b38 [symbolic]
-// CHECK:STDOUT:   %.Self.as_type.fbc: type = facet_access_type %.Self.de8 [symbolic]
-// CHECK:STDOUT:   %Y.lookup_impl_witness.787: <witness> = lookup_impl_witness %.Self.de8, @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.facet: %Y.type.b38 = facet_value %.Self.as_type.fbc, (%Y.lookup_impl_witness.787) [symbolic]
-// CHECK:STDOUT:   %impl.elem0.b76: type = impl_witness_access %Y.lookup_impl_witness.787, element0 [symbolic]
-// CHECK:STDOUT:   %Y_where.type.1f2: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.b76 = %empty_tuple.type> [symbolic]
-// CHECK:STDOUT:   %H: %Y_where.type.1f2 = bind_symbolic_name H, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.23c: type = pattern_type %Y_where.type.1f2 [symbolic]
-// CHECK:STDOUT:   %Outer.G.type.cfe: type = fn_type @Outer.G, @Outer(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Outer.G.824: %Outer.G.type.cfe = struct_value () [symbolic]
-// CHECK:STDOUT:   %C.660: type = class_type @C, @C(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %require_complete.dc1: <witness> = require_complete_type %Y_where.type.1f2 [symbolic]
-// CHECK:STDOUT:   %Y.impl_witness.1ea: <witness> = impl_witness @Outer.%Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %ptr.580: type = ptr_type %Outer.a5c [symbolic]
-// CHECK:STDOUT:   %pattern_type.eb9: type = pattern_type %ptr.580 [symbolic]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: %Outer.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Outer.1b9: type = class_type @Outer, @Outer(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %Y.type.6ae: type = facet_type <@Y, @Y(%OuterParam)> [symbolic]
+// CHECK:STDOUT:   %Self.f29: %Y.type.6ae = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Y.assoc_type.aab: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %assoc0.5a1: %Y.assoc_type.aab = assoc_entity element0, @Y.%T [symbolic]
+// CHECK:STDOUT:   %.Self.997: %Y.type.6ae = symbolic_binding .Self [symbolic]
+// CHECK:STDOUT:   %require_complete.f45: <witness> = require_complete_type %Y.type.6ae [symbolic]
+// CHECK:STDOUT:   %.Self.binding.as_type.238: type = symbolic_binding_type .Self, %.Self.997 [symbolic]
+// CHECK:STDOUT:   %Y.lookup_impl_witness.5bf: <witness> = lookup_impl_witness %.Self.997, @Y, @Y(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %impl.elem0.63e: type = impl_witness_access %Y.lookup_impl_witness.5bf, element0 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %Y_where.type.b0f: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.63e = %empty_tuple.type> [symbolic]
+// CHECK:STDOUT:   %H: %Y_where.type.b0f = symbolic_binding H, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.6bf: type = pattern_type %Y_where.type.b0f [symbolic]
+// CHECK:STDOUT:   %Outer.G.type.e0a: type = fn_type @Outer.G, @Outer(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %Outer.G.dc4: %Outer.G.type.e0a = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.521: type = class_type @C, @C(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %Y.impl_witness.26b: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic]
+// CHECK:STDOUT:   %require_complete.4a2: <witness> = require_complete_type %Y_where.type.b0f [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness file.%Z1.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness file.%Z2.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z1.impl.%Z1.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z2.impl.%Z2.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.type.f2e: type = generic_interface_type @BitAndWith [concrete]
@@ -504,45 +435,43 @@ fn F() {
 // CHECK:STDOUT:   %BitAndWith.Op.type.9a3: type = fn_type @BitAndWith.Op, @BitAndWith(type) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b22: type = fn_type_with_self_type %BitAndWith.Op.type.9a3, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %.890: type = fn_type_with_self_type %BitAndWith.Op.type.9a3, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %Z1.type, %type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@Z1 & @Z2> [concrete]
-// CHECK:STDOUT:   %facet_value.f10: %facet_type = facet_value %empty_tuple.type, (%Z1.impl_witness, %Z2.impl_witness) [concrete]
+// CHECK:STDOUT:   %facet_value.d99: %facet_type = facet_value %empty_tuple.type, (%Z1.impl_witness, %Z2.impl_witness) [concrete]
 // CHECK:STDOUT:   %Z1.facet: %Z1.type = facet_value %empty_tuple.type, (%Z1.impl_witness) [concrete]
-// CHECK:STDOUT:   %Outer.406: type = class_type @Outer, @Outer(%Z1.facet) [concrete]
-// CHECK:STDOUT:   %Y.type.f82: type = facet_type <@Y, @Y(%Z1.facet)> [concrete]
-// CHECK:STDOUT:   %Outer.G.type.8c8: type = fn_type @Outer.G, @Outer(%Z1.facet) [concrete]
-// CHECK:STDOUT:   %Outer.G.bc6: %Outer.G.type.8c8 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.b85: type = class_type @C, @C(%Z1.facet) [concrete]
-// CHECK:STDOUT:   %.Self.c9d: %Y.type.f82 = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness.fbf: <witness> = lookup_impl_witness %.Self.c9d, @Y, @Y(%Z1.facet) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.406: type = impl_witness_access %Y.lookup_impl_witness.fbf, element0 [symbolic_self]
-// CHECK:STDOUT:   %Y_where.type.f47: type = facet_type <@Y, @Y(%Z1.facet) where %impl.elem0.406 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %Self.7e3: %Y.type.f82 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Y.assoc_type.de4: type = assoc_entity_type @Y, @Y(%Z1.facet) [concrete]
-// CHECK:STDOUT:   %assoc0.0ca: %Y.assoc_type.de4 = assoc_entity element0, @Y.%T [concrete]
-// CHECK:STDOUT:   %complete_type.c57: <witness> = complete_type_witness %Y.type.f82 [concrete]
-// CHECK:STDOUT:   %.Self.as_type.09c: type = facet_access_type %.Self.c9d [symbolic_self]
-// CHECK:STDOUT:   %complete_type.b7b: <witness> = complete_type_witness %Y_where.type.f47 [concrete]
-// CHECK:STDOUT:   %Y.impl_witness.2d3: <witness> = impl_witness @Outer.%Y.impl_witness_table, @C.as.Y.impl(%Z1.facet) [concrete]
-// CHECK:STDOUT:   %facet_value.9bc: %Y_where.type.f47 = facet_value %C.b85, (%Y.impl_witness.2d3) [concrete]
-// CHECK:STDOUT:   %pattern_type.0c9: type = pattern_type %Y_where.type.f47 [concrete]
-// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %Outer.G.bc6, @Outer.G(%Z1.facet, %facet_value.9bc) [concrete]
+// CHECK:STDOUT:   %Outer.87f: type = class_type @Outer, @Outer(%Z1.facet) [concrete]
+// CHECK:STDOUT:   %Y.type.874: type = facet_type <@Y, @Y(%Z1.facet)> [concrete]
+// CHECK:STDOUT:   %Outer.G.type.663: type = fn_type @Outer.G, @Outer(%Z1.facet) [concrete]
+// CHECK:STDOUT:   %Outer.G.a31: %Outer.G.type.663 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.af8: type = class_type @C, @C(%Z1.facet) [concrete]
+// CHECK:STDOUT:   %.Self.178: %Y.type.874 = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Y.lookup_impl_witness.249: <witness> = lookup_impl_witness %.Self.178, @Y, @Y(%Z1.facet) [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.9e9: type = impl_witness_access %Y.lookup_impl_witness.249, element0 [symbolic_self]
+// CHECK:STDOUT:   %Y_where.type.c95: type = facet_type <@Y, @Y(%Z1.facet) where %impl.elem0.9e9 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %Self.974: %Y.type.874 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Y.assoc_type.748: type = assoc_entity_type @Y, @Y(%Z1.facet) [concrete]
+// CHECK:STDOUT:   %assoc0.673: %Y.assoc_type.748 = assoc_entity element0, @Y.%T [concrete]
+// CHECK:STDOUT:   %complete_type.f55: <witness> = complete_type_witness %Y.type.874 [concrete]
+// CHECK:STDOUT:   %.Self.binding.as_type.d52: type = symbolic_binding_type .Self, %.Self.178 [symbolic_self]
+// CHECK:STDOUT:   %Y.impl_witness.004: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table, @C.as.Y.impl(%Z1.facet) [concrete]
+// CHECK:STDOUT:   %complete_type.fa4: <witness> = complete_type_witness %Y_where.type.c95 [concrete]
+// CHECK:STDOUT:   %facet_value.256: %Y_where.type.c95 = facet_value %C.af8, (%Y.impl_witness.004) [concrete]
+// CHECK:STDOUT:   %pattern_type.81f: type = pattern_type %Y_where.type.c95 [concrete]
+// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %Outer.G.a31, @Outer.G(%Z1.facet, %facet_value.256) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .BitAndWith = %Core.BitAndWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.BitAndWith: %BitAndWith.type.f2e = import_ref Core//prelude, BitAndWith, loaded [concrete = constants.%BitAndWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.a4f: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude, loc13_42, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.a4f), @type.as.BitAndWith.impl [concrete]
+// CHECK:STDOUT:   %Core.BitAndWith: %BitAndWith.type.f2e = import_ref Core//prelude/parts/as, BitAndWith, loaded [concrete = constants.%BitAndWith.generic]
+// CHECK:STDOUT:   %Core.import_ref.8d3: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.8d3), @type.as.BitAndWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -557,200 +486,176 @@ fn F() {
 // CHECK:STDOUT:   %Z1.decl: type = interface_decl @Z1 [concrete = constants.%Z1.type] {} {}
 // CHECK:STDOUT:   %Z2.decl: type = interface_decl @Z2 [concrete = constants.%Z2.type] {} {}
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
-// CHECK:STDOUT:     %OuterParam.patt: %pattern_type.39c = symbolic_binding_pattern OuterParam, 0 [concrete]
+// CHECK:STDOUT:     %OuterParam.patt: %pattern_type.62d = symbolic_binding_pattern OuterParam, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %Z1.ref [concrete = constants.%Z1.type] {
-// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %OuterParam.loc6_13.2: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:     %OuterParam.loc6_13.2: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z1.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc17_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc17_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc17_7.2: type = converted %.loc17_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z1.impl_witness_table = impl_witness_table (), @empty_tuple.type.as.Z1.impl [concrete]
-// CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness %Z1.impl_witness_table [concrete = constants.%Z1.impl_witness]
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z2.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc18_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc18_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_7.2: type = converted %.loc18_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Z2.ref: type = name_ref Z2, file.%Z2.decl [concrete = constants.%Z2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z2.impl_witness_table = impl_witness_table (), @empty_tuple.type.as.Z2.impl [concrete]
-// CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness %Z2.impl_witness_table [concrete = constants.%Z2.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z1 {
-// CHECK:STDOUT:   %Self: %Z1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.7fa]
+// CHECK:STDOUT:   %Self: %Z1.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d71]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z2 {
-// CHECK:STDOUT:   %Self: %Z2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.c6e]
+// CHECK:STDOUT:   %Self: %Z2.type = symbolic_binding Self, 0 [symbolic = constants.%Self.cde]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:   %Self.2: @Y.%Y.type (%Y.type.b38) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.957)]
-// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.b7a)]
-// CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.b7a) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.9f8)]
+// CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:   %Self.loc7_15.2: @Y.%Y.type (%Y.type.6ae) = symbolic_binding Self, 1 [symbolic = %Self.loc7_15.2 (constants.%Self.f29)]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.aab)]
+// CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.aab) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.5a1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Y.%Y.type (%Y.type.b38) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.957)]
+// CHECK:STDOUT:     %Self.loc7_15.1: @Y.%Y.type (%Y.type.6ae) = symbolic_binding Self, 1 [symbolic = %Self.loc7_15.2 (constants.%Self.f29)]
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.b7a) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.9f8)]
+// CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.aab) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.5a1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc7_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc6_13.2: %Z1.type, @Y.%Self.1: @Y.%Y.type (%Y.type.b38)) {
+// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc6_13.2: %Z1.type, @Y.%Self.loc7_15.1: @Y.%Y.type (%Y.type.6ae)) {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Y.impl(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam) [symbolic = %C (constants.%C.660)]
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:   %.Self.2: @C.as.Y.impl.%Y.type (%Y.type.b38) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.de8)]
-// CHECK:STDOUT:   %require_complete.loc14_21: <witness> = require_complete_type %Y.type [symbolic = %require_complete.loc14_21 (constants.%require_complete.527)]
-// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.b7a)]
-// CHECK:STDOUT:   %assoc0: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.b7a) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:   %.Self.as_type.loc14_21.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc14_21.2 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.787)]
-// CHECK:STDOUT:   %impl.elem0.loc14_21.2: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_21.2 (constants.%impl.elem0.b76)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc14_21.2 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.1f2)]
-// CHECK:STDOUT:   %require_complete.loc14_15: <witness> = require_complete_type %Y_where.type [symbolic = %require_complete.loc14_15 (constants.%require_complete.dc1)]
-// CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @Outer.%Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic = %Y.impl_witness (constants.%Y.impl_witness.1ea)]
+// CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam) [symbolic = %C (constants.%C.521)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:   %.Self.2: @C.as.Y.impl.%Y.type (%Y.type.6ae) = symbolic_binding .Self [symbolic = %.Self.2 (constants.%.Self.997)]
+// CHECK:STDOUT:   %require_complete.loc14_21: <witness> = require_complete_type %Y.type [symbolic = %require_complete.loc14_21 (constants.%require_complete.f45)]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.2 [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.aab)]
+// CHECK:STDOUT:   %assoc0: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.aab) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.5bf)]
+// CHECK:STDOUT:   %impl.elem0.loc14_21.2: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_21.2 (constants.%impl.elem0.63e)]
+// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc14_21.2 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.b0f)]
+// CHECK:STDOUT:   %Y.impl_witness.loc14_29.2: <witness> = impl_witness %Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic = %Y.impl_witness.loc14_29.2 (constants.%Y.impl_witness.26b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc14_15: <witness> = require_complete_type %Y_where.type [symbolic = %require_complete.loc14_15 (constants.%require_complete.4a2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %.loc14_15 {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = @Outer.%Y.impl_witness
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @Outer.as.Destroy.impl(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.a5c)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Outer.as.Destroy.impl.Op.type (constants.%Outer.as.Destroy.impl.Op.type)]
-// CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: @Outer.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:     %Outer.as.Destroy.impl.Op.decl: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = fn_decl @Outer.as.Destroy.impl.Op [symbolic = @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)] {
-// CHECK:STDOUT:       %self.patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.eb9) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.eb9) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %.loc6_30.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @Outer.as.Destroy.impl.Op.%ptr (%ptr.580) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_30.2: type = splice_block %Self.ref [symbolic = %Outer (constants.%Outer.a5c)] {
-// CHECK:STDOUT:         %.loc6_30.3: type = specific_constant constants.%Outer.a5c, @Outer(constants.%OuterParam) [symbolic = %Outer (constants.%Outer.a5c)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_30.3 [symbolic = %Outer (constants.%Outer.a5c)]
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Outer.as.Destroy.impl.Op.%ptr (%ptr.580) = bind_name self, %self.param
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
+// CHECK:STDOUT:     %Y.impl_witness.loc14_29.1: <witness> = impl_witness %Y.impl_witness_table, @C.as.Y.impl(constants.%OuterParam) [symbolic = %Y.impl_witness.loc14_29.2 (constants.%Y.impl_witness.26b)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Op = %Outer.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = @Outer.%Destroy.impl_witness
+// CHECK:STDOUT:     witness = %Y.impl_witness.loc14_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z1.impl: %.loc17_7.2 as %Z1.ref {
+// CHECK:STDOUT:   %Z1.impl_witness_table = impl_witness_table (), @empty_tuple.type.as.Z1.impl [concrete]
+// CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness %Z1.impl_witness_table [concrete = constants.%Z1.impl_witness]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%Z1.impl_witness
+// CHECK:STDOUT:   witness = %Z1.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z2.impl: %.loc18_7.2 as %Z2.ref {
+// CHECK:STDOUT:   %Z2.impl_witness_table = impl_witness_table (), @empty_tuple.type.as.Z2.impl [concrete]
+// CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness %Z2.impl_witness_table [concrete = constants.%Z2.impl_witness]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%Z2.impl_witness
+// CHECK:STDOUT:   witness = %Z2.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%OuterParam.loc6_13.2: %Z1.type) {
-// CHECK:STDOUT:   %OuterParam.loc6_13.1: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
+// CHECK:STDOUT:   %OuterParam.loc6_13.1: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc6_13.1)> [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc6_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.cfe)]
-// CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.cfe) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.824)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam.loc6_13.1) [symbolic = %C (constants.%C.660)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam.loc6_13.1)> [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:   %Outer.G.type: type = fn_type @Outer.G, @Outer(%OuterParam.loc6_13.1) [symbolic = %Outer.G.type (constants.%Outer.G.type.e0a)]
+// CHECK:STDOUT:   %Outer.G: @Outer.%Outer.G.type (%Outer.G.type.e0a) = struct_value () [symbolic = %Outer.G (constants.%Outer.G.dc4)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%OuterParam.loc6_13.1) [symbolic = %C (constants.%C.521)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Y.decl: type = interface_decl @Y [symbolic = @Outer.%Y.type (constants.%Y.type.b38)] {} {}
-// CHECK:STDOUT:     %Outer.G.decl: @Outer.%Outer.G.type (%Outer.G.type.cfe) = fn_decl @Outer.G [symbolic = @Outer.%Outer.G (constants.%Outer.G.824)] {
-// CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.23c) = symbolic_binding_pattern H, 1 [concrete]
+// CHECK:STDOUT:     %Y.decl: type = interface_decl @Y [symbolic = @Outer.%Y.type (constants.%Y.type.6ae)] {} {}
+// CHECK:STDOUT:     %Outer.G.decl: @Outer.%Outer.G.type (%Outer.G.type.e0a) = fn_decl @Outer.G [symbolic = @Outer.%Outer.G (constants.%Outer.G.dc4)] {
+// CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.6bf) = symbolic_binding_pattern H, 1 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc11_14.1: type = splice_block %.loc11_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.1f2)] {
-// CHECK:STDOUT:         %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
-// CHECK:STDOUT:         %.loc11_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc11_12 [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.b38) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.de8)]
-// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.b38) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.de8)]
-// CHECK:STDOUT:         %.loc11_20.1: @Outer.G.%Y.assoc_type (%Y.assoc_type.b7a) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.b7a) = name_ref T, %.loc11_20.1 [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:         %.Self.as_type.loc11_20.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc11_20.1 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:         %.loc11_20.2: type = converted %.Self.ref, %.Self.as_type.loc11_20.2 [symbolic = %.Self.as_type.loc11_20.1 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:         %impl.elem0.loc11_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.787, element0 [symbolic = %impl.elem0.loc11_20.1 (constants.%impl.elem0.b76)]
-// CHECK:STDOUT:         %.loc11_26.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc11_14.1: type = splice_block %.loc11_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.b0f)] {
+// CHECK:STDOUT:         %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:         %.loc11_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc11_12 [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.6ae) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.997)]
+// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.6ae) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.997)]
+// CHECK:STDOUT:         %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:         %.loc11_20.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:         %.loc11_20.2: @Outer.G.%Y.assoc_type (%Y.assoc_type.aab) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.aab) = name_ref T, %.loc11_20.2 [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:         %impl.elem0.loc11_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.5bf, element0 [symbolic = %impl.elem0.loc11_20.1 (constants.%impl.elem0.63e)]
+// CHECK:STDOUT:         %.loc11_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:         %.loc11_26.2: type = converted %.loc11_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:         %.loc11_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.1f2)] {
-// CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.b38
+// CHECK:STDOUT:         %.loc11_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.b0f)] {
+// CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.6ae
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_20.2, %.loc11_26.2
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %H.loc11_8.2: @Outer.G.%Y_where.type (%Y_where.type.1f2) = bind_symbolic_name H, 1 [symbolic = %H.loc11_8.1 (constants.%H)]
+// CHECK:STDOUT:       %H.loc11_8.2: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_8.1 (constants.%H)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.decl: type = class_decl @C [symbolic = @Outer.%C (constants.%C.660)] {} {}
+// CHECK:STDOUT:     %C.decl: type = class_decl @C [symbolic = @Outer.%C (constants.%C.521)] {} {}
 // CHECK:STDOUT:     impl_decl @C.as.Y.impl [concrete] {} {
-// CHECK:STDOUT:       %.loc14_8: type = specific_constant @Outer.%C.decl, @Outer(constants.%OuterParam) [symbolic = %C (constants.%C.660)]
-// CHECK:STDOUT:       %C.ref: type = name_ref C, %.loc14_8 [symbolic = %C (constants.%C.660)]
-// CHECK:STDOUT:       %.loc14_13: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:       %Y.ref: type = name_ref Y, %.loc14_13 [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:       %.Self.1: @C.as.Y.impl.%Y.type (%Y.type.b38) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.de8)]
-// CHECK:STDOUT:       %.Self.ref: @C.as.Y.impl.%Y.type (%Y.type.b38) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.de8)]
-// CHECK:STDOUT:       %.loc14_21.1: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.b7a) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:       %T.ref: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.b7a) = name_ref T, %.loc14_21.1 [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:       %.Self.as_type.loc14_21.1: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc14_21.2 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:       %.loc14_21.2: type = converted %.Self.ref, %.Self.as_type.loc14_21.1 [symbolic = %.Self.as_type.loc14_21.2 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:       %impl.elem0.loc14_21.1: type = impl_witness_access constants.%Y.lookup_impl_witness.787, element0 [symbolic = %impl.elem0.loc14_21.2 (constants.%impl.elem0.b76)]
-// CHECK:STDOUT:       %.loc14_27.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc14_8: type = specific_constant @Outer.%C.decl, @Outer(constants.%OuterParam) [symbolic = %C (constants.%C.521)]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, %.loc14_8 [symbolic = %C (constants.%C.521)]
+// CHECK:STDOUT:       %.loc14_13: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:       %Y.ref: type = name_ref Y, %.loc14_13 [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:       %.Self.1: @C.as.Y.impl.%Y.type (%Y.type.6ae) = symbolic_binding .Self [symbolic = %.Self.2 (constants.%.Self.997)]
+// CHECK:STDOUT:       %.Self.ref: @C.as.Y.impl.%Y.type (%Y.type.6ae) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.997)]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:       %.loc14_21.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:       %.loc14_21.2: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.aab) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:       %T.ref: @C.as.Y.impl.%Y.assoc_type (%Y.assoc_type.aab) = name_ref T, %.loc14_21.2 [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:       %impl.elem0.loc14_21.1: type = impl_witness_access constants.%Y.lookup_impl_witness.5bf, element0 [symbolic = %impl.elem0.loc14_21.2 (constants.%impl.elem0.63e)]
+// CHECK:STDOUT:       %.loc14_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc14_27.2: type = converted %.loc14_27.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc14_15: type = where_expr %.Self.1 [symbolic = %Y_where.type (constants.%Y_where.type.1f2)] {
-// CHECK:STDOUT:         requirement_base_facet_type constants.%Y.type.b38
+// CHECK:STDOUT:       %.loc14_15: type = where_expr %.Self.1 [symbolic = %Y_where.type (constants.%Y_where.type.b0f)] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%Y.type.6ae
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc14_21.1, %.loc14_27.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
-// CHECK:STDOUT:     %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table, @C.as.Y.impl(constants.%OuterParam) [symbolic = @C.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.1ea)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Outer.a5c [symbolic = @Outer.as.Destroy.impl.%Outer (constants.%Outer.a5c)]
-// CHECK:STDOUT:     impl_decl @Outer.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
-// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Outer.as.Destroy.impl(constants.%OuterParam) [symbolic = @Outer.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Outer.a5c
+// CHECK:STDOUT:     .Self = constants.%Outer.1b9
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:     .G = %Outer.G.decl
 // CHECK:STDOUT:     .C = %C.decl
@@ -761,19 +666,19 @@ fn F() {
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc6_13.2: %Z1.type, %H.loc11_8.2: @Outer.G.%Y_where.type (%Y_where.type.1f2)) {
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.b38)]
-// CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.b38) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.de8)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type [symbolic = %require_complete (constants.%require_complete.527)]
-// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.b7a)]
-// CHECK:STDOUT:   %assoc0: @Outer.G.%Y.assoc_type (%Y.assoc_type.b7a) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.9f8)]
-// CHECK:STDOUT:   %.Self.as_type.loc11_20.1: type = facet_access_type %.Self.1 [symbolic = %.Self.as_type.loc11_20.1 (constants.%.Self.as_type.fbc)]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.787)]
-// CHECK:STDOUT:   %impl.elem0.loc11_20.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_20.1 (constants.%impl.elem0.b76)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc11_20.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.1f2)]
-// CHECK:STDOUT:   %H.loc11_8.1: @Outer.G.%Y_where.type (%Y_where.type.1f2) = bind_symbolic_name H, 1 [symbolic = %H.loc11_8.1 (constants.%H)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.23c)]
+// CHECK:STDOUT: generic fn @Outer.G(@Outer.%OuterParam.loc6_13.2: %Z1.type, %H.loc11_8.2: @Outer.G.%Y_where.type (%Y_where.type.b0f)) {
+// CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.6ae)]
+// CHECK:STDOUT:   %.Self.1: @Outer.G.%Y.type (%Y.type.6ae) = symbolic_binding .Self [symbolic = %.Self.1 (constants.%.Self.997)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type [symbolic = %require_complete (constants.%require_complete.f45)]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.1 [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.238)]
+// CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.aab)]
+// CHECK:STDOUT:   %assoc0: @Outer.G.%Y.assoc_type (%Y.assoc_type.aab) = assoc_entity element0, @Y.%T [symbolic = %assoc0 (constants.%assoc0.5a1)]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Y, @Y(%OuterParam) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.5bf)]
+// CHECK:STDOUT:   %impl.elem0.loc11_20.1: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_20.1 (constants.%impl.elem0.63e)]
+// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc11_20.1 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.b0f)]
+// CHECK:STDOUT:   %H.loc11_8.1: @Outer.G.%Y_where.type (%Y_where.type.b0f) = symbolic_binding H, 1 [symbolic = %H.loc11_8.1 (constants.%H)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Y_where.type [symbolic = %pattern_type (constants.%pattern_type.6bf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -783,56 +688,45 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Outer.as.Destroy.impl.Op(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
-// CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
-// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.a5c)]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Outer [symbolic = %ptr (constants.%ptr.580)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.eb9)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Outer.as.Destroy.impl.Op.%ptr (%ptr.580)) = "no_op";
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref.loc21_3: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:   %.loc21_10: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_10: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %Z1.ref.loc21_16: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:   %Z2.ref.loc21_21: type = name_ref Z2, file.%Z2.decl [concrete = constants.%Z2.type]
-// CHECK:STDOUT:   %impl.elem0.loc21_19: %.b22 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0.loc21_19: %.890 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc21_19: <bound method> = bound_method %Z1.ref.loc21_16, %impl.elem0.loc21_19 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc21_19: init type = call %bound_method.loc21_19(%Z1.ref.loc21_16, %Z2.ref.loc21_21) [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc21_23.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc21_19 [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc21_23.2: type = converted %type.as.BitAndWith.impl.Op.call.loc21_19, %.loc21_23.1 [concrete = constants.%facet_type]
-// CHECK:STDOUT:   %facet_value.loc21_12: %facet_type = facet_value constants.%empty_tuple.type, (constants.%Z1.impl_witness, constants.%Z2.impl_witness) [concrete = constants.%facet_value.f10]
-// CHECK:STDOUT:   %.loc21_12: %facet_type = converted %.loc21_10, %facet_value.loc21_12 [concrete = constants.%facet_value.f10]
-// CHECK:STDOUT:   %as_type.loc21_24: type = facet_access_type constants.%facet_value.f10 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %facet_value.loc21_12: %facet_type = facet_value constants.%empty_tuple.type, (constants.%Z1.impl_witness, constants.%Z2.impl_witness) [concrete = constants.%facet_value.d99]
+// CHECK:STDOUT:   %.loc21_12: %facet_type = converted %.loc21_10, %facet_value.loc21_12 [concrete = constants.%facet_value.d99]
+// CHECK:STDOUT:   %as_type.loc21_24: type = facet_access_type %.loc21_12 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Z1.facet.loc21_24: %Z1.type = facet_value %as_type.loc21_24, (constants.%Z1.impl_witness) [concrete = constants.%Z1.facet]
 // CHECK:STDOUT:   %.loc21_24: %Z1.type = converted %.loc21_12, %Z1.facet.loc21_24 [concrete = constants.%Z1.facet]
-// CHECK:STDOUT:   %Outer.loc21_24: type = class_type @Outer, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.406]
-// CHECK:STDOUT:   %.loc21_25: %Outer.G.type.8c8 = specific_constant @Outer.%Outer.G.decl, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.G.bc6]
-// CHECK:STDOUT:   %G.ref: %Outer.G.type.8c8 = name_ref G, %.loc21_25 [concrete = constants.%Outer.G.bc6]
+// CHECK:STDOUT:   %Outer.loc21_24: type = class_type @Outer, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.87f]
+// CHECK:STDOUT:   %.loc21_25: %Outer.G.type.663 = specific_constant @Outer.%Outer.G.decl, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.G.a31]
+// CHECK:STDOUT:   %G.ref: %Outer.G.type.663 = name_ref G, %.loc21_25 [concrete = constants.%Outer.G.a31]
 // CHECK:STDOUT:   %Outer.ref.loc21_28: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:   %.loc21_35: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_35: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %Z1.ref.loc21_41: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:   %Z2.ref.loc21_46: type = name_ref Z2, file.%Z2.decl [concrete = constants.%Z2.type]
-// CHECK:STDOUT:   %impl.elem0.loc21_44: %.b22 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0.loc21_44: %.890 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc21_44: <bound method> = bound_method %Z1.ref.loc21_41, %impl.elem0.loc21_44 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc21_44: init type = call %bound_method.loc21_44(%Z1.ref.loc21_41, %Z2.ref.loc21_46) [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc21_48.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc21_44 [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc21_48.2: type = converted %type.as.BitAndWith.impl.Op.call.loc21_44, %.loc21_48.1 [concrete = constants.%facet_type]
-// CHECK:STDOUT:   %facet_value.loc21_37: %facet_type = facet_value constants.%empty_tuple.type, (constants.%Z1.impl_witness, constants.%Z2.impl_witness) [concrete = constants.%facet_value.f10]
-// CHECK:STDOUT:   %.loc21_37: %facet_type = converted %.loc21_35, %facet_value.loc21_37 [concrete = constants.%facet_value.f10]
-// CHECK:STDOUT:   %as_type.loc21_49: type = facet_access_type constants.%facet_value.f10 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %facet_value.loc21_37: %facet_type = facet_value constants.%empty_tuple.type, (constants.%Z1.impl_witness, constants.%Z2.impl_witness) [concrete = constants.%facet_value.d99]
+// CHECK:STDOUT:   %.loc21_37: %facet_type = converted %.loc21_35, %facet_value.loc21_37 [concrete = constants.%facet_value.d99]
+// CHECK:STDOUT:   %as_type.loc21_49: type = facet_access_type %.loc21_37 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Z1.facet.loc21_49: %Z1.type = facet_value %as_type.loc21_49, (constants.%Z1.impl_witness) [concrete = constants.%Z1.facet]
 // CHECK:STDOUT:   %.loc21_49: %Z1.type = converted %.loc21_37, %Z1.facet.loc21_49 [concrete = constants.%Z1.facet]
-// CHECK:STDOUT:   %Outer.loc21_49: type = class_type @Outer, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.406]
-// CHECK:STDOUT:   %.loc21_50: type = specific_constant @Outer.%C.decl, @Outer(constants.%Z1.facet) [concrete = constants.%C.b85]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %.loc21_50 [concrete = constants.%C.b85]
-// CHECK:STDOUT:   %facet_value.loc21_52: %Y_where.type.f47 = facet_value constants.%C.b85, (constants.%Y.impl_witness.2d3) [concrete = constants.%facet_value.9bc]
-// CHECK:STDOUT:   %.loc21_52: %Y_where.type.f47 = converted constants.%C.b85, %facet_value.loc21_52 [concrete = constants.%facet_value.9bc]
-// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %G.ref, @Outer.G(constants.%Z1.facet, constants.%facet_value.9bc) [concrete = constants.%Outer.G.specific_fn]
+// CHECK:STDOUT:   %Outer.loc21_49: type = class_type @Outer, @Outer(constants.%Z1.facet) [concrete = constants.%Outer.87f]
+// CHECK:STDOUT:   %.loc21_50: type = specific_constant @Outer.%C.decl, @Outer(constants.%Z1.facet) [concrete = constants.%C.af8]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, %.loc21_50 [concrete = constants.%C.af8]
+// CHECK:STDOUT:   %facet_value.loc21_52: %Y_where.type.c95 = facet_value constants.%C.af8, (constants.%Y.impl_witness.004) [concrete = constants.%facet_value.256]
+// CHECK:STDOUT:   %.loc21_52: %Y_where.type.c95 = converted constants.%C.af8, %facet_value.loc21_52 [concrete = constants.%facet_value.256]
+// CHECK:STDOUT:   %Outer.G.specific_fn: <specific function> = specific_function %G.ref, @Outer.G(constants.%Z1.facet, constants.%facet_value.256) [concrete = constants.%Outer.G.specific_fn]
 // CHECK:STDOUT:   %Outer.G.call: init %empty_tuple.type = call %Outer.G.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -841,123 +735,109 @@ fn F() {
 // CHECK:STDOUT:   %OuterParam.loc6_13.1 => constants.%OuterParam
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.b38
-// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.cfe
-// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.824
-// CHECK:STDOUT:   %C => constants.%C.660
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6ae
+// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.e0a
+// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.dc4
+// CHECK:STDOUT:   %C => constants.%C.521
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%OuterParam) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.b38
-// CHECK:STDOUT:   %Self.2 => constants.%Self.957
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.b7a
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9f8
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6ae
+// CHECK:STDOUT:   %Self.loc7_15.2 => constants.%Self.f29
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.5a1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.957) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.f29) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Y.facet) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.997) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.b38
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.de8
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.527
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.b7a
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9f8
-// CHECK:STDOUT:   %.Self.as_type.loc11_20.1 => constants.%.Self.as_type.fbc
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.787
-// CHECK:STDOUT:   %impl.elem0.loc11_20.1 => constants.%impl.elem0.b76
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.1f2
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6ae
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.997
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.f45
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.238
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.5a1
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.5bf
+// CHECK:STDOUT:   %impl.elem0.loc11_20.1 => constants.%impl.elem0.63e
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.b0f
 // CHECK:STDOUT:   %H.loc11_8.1 => constants.%H
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.23c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6bf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%OuterParam) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Y.impl(constants.%OuterParam) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %C => constants.%C.660
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.b38
-// CHECK:STDOUT:   %.Self.2 => constants.%.Self.de8
-// CHECK:STDOUT:   %require_complete.loc14_21 => constants.%require_complete.527
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.b7a
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9f8
-// CHECK:STDOUT:   %.Self.as_type.loc14_21.2 => constants.%.Self.as_type.fbc
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.787
-// CHECK:STDOUT:   %impl.elem0.loc14_21.2 => constants.%impl.elem0.b76
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.1f2
-// CHECK:STDOUT:   %require_complete.loc14_15 => constants.%require_complete.dc1
-// CHECK:STDOUT:   %Y.impl_witness => constants.%Y.impl_witness.1ea
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.as.Destroy.impl(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Outer => constants.%Outer.a5c
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.as.Destroy.impl.Op(constants.%OuterParam) {
-// CHECK:STDOUT:   %OuterParam => constants.%OuterParam
-// CHECK:STDOUT:   %Outer => constants.%Outer.a5c
-// CHECK:STDOUT:   %ptr => constants.%ptr.580
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.eb9
+// CHECK:STDOUT:   %C => constants.%C.521
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.6ae
+// CHECK:STDOUT:   %.Self.2 => constants.%.Self.997
+// CHECK:STDOUT:   %require_complete.loc14_21 => constants.%require_complete.f45
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.238
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.5a1
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.5bf
+// CHECK:STDOUT:   %impl.elem0.loc14_21.2 => constants.%impl.elem0.63e
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.b0f
+// CHECK:STDOUT:   %Y.impl_witness.loc14_29.2 => constants.%Y.impl_witness.26b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%Z1.facet) {
 // CHECK:STDOUT:   %OuterParam.loc6_13.1 => constants.%Z1.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.f82
-// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.8c8
-// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.bc6
-// CHECK:STDOUT:   %C => constants.%C.b85
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.874
+// CHECK:STDOUT:   %Outer.G.type => constants.%Outer.G.type.663
+// CHECK:STDOUT:   %Outer.G => constants.%Outer.G.a31
+// CHECK:STDOUT:   %C => constants.%C.af8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%Z1.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%Z1.facet
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.f82
-// CHECK:STDOUT:   %Self.2 => constants.%Self.7e3
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.de4
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0ca
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.874
+// CHECK:STDOUT:   %Self.loc7_15.2 => constants.%Self.974
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.748
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.673
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Z1.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Y.impl(constants.%Z1.facet) {
 // CHECK:STDOUT:   %OuterParam => constants.%Z1.facet
-// CHECK:STDOUT:   %C => constants.%C.b85
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.f82
-// CHECK:STDOUT:   %.Self.2 => constants.%.Self.c9d
-// CHECK:STDOUT:   %require_complete.loc14_21 => constants.%complete_type.c57
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.de4
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0ca
-// CHECK:STDOUT:   %.Self.as_type.loc14_21.2 => constants.%.Self.as_type.09c
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.fbf
-// CHECK:STDOUT:   %impl.elem0.loc14_21.2 => constants.%impl.elem0.406
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.f47
-// CHECK:STDOUT:   %require_complete.loc14_15 => constants.%complete_type.b7b
-// CHECK:STDOUT:   %Y.impl_witness => constants.%Y.impl_witness.2d3
+// CHECK:STDOUT:   %C => constants.%C.af8
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.874
+// CHECK:STDOUT:   %.Self.2 => constants.%.Self.178
+// CHECK:STDOUT:   %require_complete.loc14_21 => constants.%complete_type.f55
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.d52
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.748
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.673
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.249
+// CHECK:STDOUT:   %impl.elem0.loc14_21.2 => constants.%impl.elem0.9e9
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.c95
+// CHECK:STDOUT:   %Y.impl_witness.loc14_29.2 => constants.%Y.impl_witness.004
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc14_15 => constants.%complete_type.fa4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.G(constants.%Z1.facet, constants.%facet_value.9bc) {
+// CHECK:STDOUT: specific @Outer.G(constants.%Z1.facet, constants.%facet_value.256) {
 // CHECK:STDOUT:   %OuterParam => constants.%Z1.facet
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.f82
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.c9d
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.c57
-// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.de4
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.0ca
-// CHECK:STDOUT:   %.Self.as_type.loc11_20.1 => constants.%.Self.as_type.09c
-// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.fbf
-// CHECK:STDOUT:   %impl.elem0.loc11_20.1 => constants.%impl.elem0.406
-// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.f47
-// CHECK:STDOUT:   %H.loc11_8.1 => constants.%facet_value.9bc
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0c9
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.874
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.178
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.f55
+// CHECK:STDOUT:   %.Self.binding.as_type => constants.%.Self.binding.as_type.d52
+// CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.748
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.673
+// CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.249
+// CHECK:STDOUT:   %impl.elem0.loc11_20.1 => constants.%impl.elem0.9e9
+// CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.c95
+// CHECK:STDOUT:   %H.loc11_8.1 => constants.%facet_value.256
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.81f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

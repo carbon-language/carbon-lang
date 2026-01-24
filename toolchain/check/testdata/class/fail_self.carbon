@@ -33,7 +33,10 @@ fn Class.G() -> Self {
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
   var self: Self;
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
+  // CHECK:STDERR:   return self;
+  // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: note: type `Class` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:

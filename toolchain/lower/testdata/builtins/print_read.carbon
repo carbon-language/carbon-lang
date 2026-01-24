@@ -32,7 +32,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   br label %while.cond, !dbg !8
@@ -67,16 +68,18 @@ fn Main() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @putchar, { 1, 0 }
 // CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "print_read.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 22, column: 9, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 10, scope: !4)

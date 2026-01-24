@@ -14,10 +14,10 @@
 
 library "[[@TEST_NAME]]";
 
-fn Builtin(a: f64*, b: f64) = "float.sub_assign";
+fn Builtin(ref a: f64, b: f64) = "float.sub_assign";
 
-fn Call(a: f64*, b: f64) {
-  Builtin(a, b);
+fn Call(ref a: f64, b: f64) {
+  Builtin(ref a, b);
 }
 
 // --- fail_bad_decl.carbon
@@ -25,16 +25,16 @@ fn Call(a: f64*, b: f64) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotPtr(a: f64, b: f64) = "float.sub_assign";
+// CHECK:STDERR: fn NotRef(a: f64, b: f64) = "float.sub_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn NotPtr(a: f64, b: f64) = "float.sub_assign";
+fn NotRef(a: f64, b: f64) = "float.sub_assign";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedTypes(a: f64*, b: f32) = "float.sub_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedTypes(ref a: f64, b: f32) = "float.sub_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedTypes(a: f64*, b: f32) = "float.sub_assign";
+fn MixedTypes(ref a: f64, b: f32) = "float.sub_assign";
 
 // --- fail_literal.carbon
 
@@ -42,7 +42,7 @@ library "[[@TEST_NAME]]";
 
 fn Literal() -> type = "float_literal.make_type";
 // CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn LiteralRuntime(a: Literal()*, b: Literal()) = "float.sub_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn LiteralRuntime(ref a: Literal(), b: Literal()) = "float.sub_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn LiteralRuntime(a: Literal()*, b: Literal()) = "float.sub_assign";
+fn LiteralRuntime(ref a: Literal(), b: Literal()) = "float.sub_assign";

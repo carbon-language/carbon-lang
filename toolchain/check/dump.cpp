@@ -71,6 +71,12 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
   return SemIR::Dump(context.sem_ir(), generic_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context,
+    SemIR::IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
+  return SemIR::Dump(context.sem_ir(), identified_facet_type_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), impl_id);
@@ -109,10 +115,22 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
   return SemIR::Dump(context.sem_ir(), name_scope_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::NamedConstraintId named_constraint_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), named_constraint_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context,
-    SemIR::IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
-  return SemIR::Dump(context.sem_ir(), identified_facet_type_id);
+    const Context& context, SemIR::RequireImplsBlockId require_impls_block_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), require_impls_block_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::RequireImplsId require_impls_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), require_impls_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

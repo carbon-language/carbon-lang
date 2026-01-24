@@ -24,12 +24,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.631: form = init_form %empty_struct_type, call_param1 [concrete]
 // CHECK:STDOUT:   %Echo.type: type = fn_type @Echo [concrete]
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -38,35 +39,38 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [concrete = constants.%Echo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc15_20.3: form = init_form %.loc15_20.2, call_param1 [concrete = constants.%.631]
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc15_13.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc15_13.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %empty_struct_type = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %empty_struct_type = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a.param: %empty_struct_type) -> %empty_struct_type {
+// CHECK:STDOUT: fn @Echo(%a.param: %empty_struct_type) -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_struct_type = name_ref a, %a
-// CHECK:STDOUT:   return %a.ref
+// CHECK:STDOUT:   %.loc16_10: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_11: init %empty_struct_type = converted %a.ref, %.loc16_10 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   return %.loc16_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [concrete = constants.%Echo]
-// CHECK:STDOUT:   %.loc20_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc20_9.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc20_9.2: %empty_struct_type = converted %.loc20_9.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Echo.call: init %empty_struct_type = call %Echo.ref(%.loc20_9.2)

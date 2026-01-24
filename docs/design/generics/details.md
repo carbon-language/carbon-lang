@@ -32,7 +32,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
+        -   [`extend require` with named constraints](#extend-require-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
 -   [Adapting types](#adapting-types)
@@ -447,6 +447,10 @@ impl Point_ExtendForward as Vector {
 }
 ```
 
+> **TODO:** The second `impl` in this example is no longer a valid redeclaration
+> of the first after
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
+
 More about forward declaring implementations in
 [its dedicated section](#declaring-implementations).
 
@@ -775,7 +779,7 @@ checked-generic function.
 
 A checked-generic caller of a checked-generic function performs the same
 substitution process to determine the return type, but the result may be a
-symbolic value. In this example of calling a checked generic from another
+symbolic constant. In this example of calling a checked generic from another
 checked generic,
 
 ```carbon
@@ -900,15 +904,15 @@ same definition are equivalent even if they have different names. This is
 because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
-A named constraint definition can contain interface requirements using
-`require Self impls` declarations and names using `alias` declarations. Note
-that this allows us to declare the aspects of a facet type directly.
+A named constraint definition can contain interface requirements using `require`
+... `impls` declarations and names using `alias` declarations. Note that this
+allows us to declare the aspects of a facet type directly.
 
 ```carbon
 constraint VectorLegoFish {
   // Interface implementation requirements
-  require Self impls Vector;
-  require Self impls LegoFish;
+  require impls Vector;
+  require impls LegoFish;
   // Names
   alias Scale = Vector.Scale;
   alias VAdd = Vector.Add;
@@ -916,16 +920,16 @@ constraint VectorLegoFish {
 }
 ```
 
-A `require Self impls` requirement may alternatively be on a named constraint,
+A `require impls` requirement may alternatively be on a named constraint,
 instead of an interface, to add all the requirements of another named constraint
 without adding any of the names:
 
 ```carbon
 constraint DrawVectorLegoFish {
   // The same as requiring both `Vector` and `LegoFish`.
-  require Self impls VectorLegoFish;
+  require impls VectorLegoFish;
   // A regular interface requirement. No syntactic difference.
-  require Self impls Drawable;
+  require impls Drawable;
 }
 ```
 
@@ -937,7 +941,7 @@ whenever an interface may be. This includes all of these
 
 -   A type may `impl` a named constraint to say that it implements all of the
     requirements of the named constraint, as
-    [described below](#extend-and-impl-with-named-constraints).
+    [described below](#extend-require-with-named-constraints).
 -   A named constraint may be used as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
@@ -957,14 +961,16 @@ That is, `type` is the facet type with no requirements (so matches every type),
 and defines no names.
 
 ```carbon
-fn Identity[T:! type](x: T) -> T {
+fn Identity[T:! type](x: T*) -> T* {
   // Can accept values of any type. But, since we know nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
 }
 
-var i: i32 = Identity(3);
-var s: String = Identity("string");
+var i: i32 = 3;
+var p_i: i32* = Identity(&i);
+var s: String = "string";
+var p_s: String = Identity(&s);
 ```
 
 In general, the declarations in `constraint` definition match a subset of the
@@ -1041,11 +1047,11 @@ interface Printable { fn Print[self: Self](); }
 interface Renderable { fn Draw[self: Self](); }
 
 constraint PrintAndRender {
-  require Self impls Printable;
-  require Self impls Renderable;
+  require impls Printable;
+  require impls Renderable;
 }
 constraint JustPrint {
-  require Self impls Printable;
+  require impls Printable;
 }
 
 fn PrintIt[T2:! JustPrint](x2: T2) {
@@ -1079,8 +1085,8 @@ interface Renderable {
 
 // `Printable & Renderable` is syntactic sugar for this facet type:
 constraint {
-  require Self impls Printable;
-  require Self impls Renderable;
+  require impls Printable;
+  require impls Renderable;
   alias Print = Printable.Print;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
@@ -1131,8 +1137,8 @@ or by defining a named constraint explicitly and renaming the methods:
 
 ```carbon
 constraint RenderableAndEndOfGame {
-  require Self impls Renderable;
-  require Self impls EndOfGame;
+  require impls Renderable;
+  require impls EndOfGame;
   alias Center = Renderable.Center;
   alias RenderableDraw = Renderable.Draw;
   alias TieGame = EndOfGame.Draw;
@@ -1163,8 +1169,8 @@ avoid the possibility of name conflicts, names, use a
 ```
 // `Printable where .Self impls Renderable` is equivalent to:
 constraint {
-  require Self impls Printable;
-  require Self impls Renderable;
+  require impls Printable;
+  require impls Renderable;
   alias Print = Printable.Print;
 }
 ```
@@ -1196,15 +1202,15 @@ For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
 already a capability for [facet types in general](#facet-types). For consistency
-we use the same semantics and `require Self impls` syntax as we do for
+we use the same semantics and `require` ... `impls` syntax as we do for
 [named constraints](#named-constraints):
 
 ```carbon
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Iterable {
-  fn Advance[addr self: Self*]() -> bool;
-  require Self impls Equatable;
+  fn Advance[ref self: Self]() -> bool;
+  require impls Equatable;
 }
 
 fn DoAdvanceAndEquals[T:! Iterable](x: T) {
@@ -1230,7 +1236,7 @@ declarations:
 ```carbon
 interface Hashable {
   fn Hash[self: Self]() -> u64;
-  require Self impls Equatable;
+  require impls Equatable;
   alias Equals = Equatable.Equals;
 }
 
@@ -1248,6 +1254,10 @@ fn DoHashAndEquals[T:! Hashable](x: T) {
 [a later section](#interface-requiring-other-interfaces-revisited).
 
 ### Interface extension
+
+> **TODO:** Update this section as needed to reflect the fact that an impl of an
+> interface doesn't impl the interfaces it extends, as adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1276,16 +1286,19 @@ benefits:
 We expect this concept to be common enough to warrant dedicated `interface`
 syntax:
 
+> **TODO:** Update this section to reflect the new syntax adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 ```carbon
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Hashable {
-  extend Equatable;
+  extend require impls Equatable;
   fn Hash[self: Self]() -> u64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
-//   require Self impls Equatable;
+//   require impls Equatable;
 //   alias Equals = Equatable.Equals;
 //   fn Hash[self: Self]() -> u64;
 // }
@@ -1321,10 +1334,60 @@ Carbon:
 
 ```carbon
 interface SetAlgebra {
-  extend Equatable;
-  extend ExpressibleByArrayLiteral;
+  extend require impls Equatable;
+  extend require impls ExpressibleByArrayLiteral;
 }
 ```
+
+With `extend require impls I`, an interface requires an `impl` to exist for `I`
+when implementing the containing interface. This requires writing at least two
+`impl`s to implement the containing interface. When the two interfaces are
+tightly coupled, it's possible to have one interface gain the members of and
+_provide_ an implementation for the other interface instead, with
+`extend impl as`.
+
+Just as when used in a class, the implied `Self` between `extend impl` and `as`
+must be omitted.
+
+When an interface `B` contains `extend impl as A`, implementing `B` will require
+writing an implementation of all members of `A` inside the `impl` of `B`. And
+anything that implements `B` will implicitly also implement `A`, using the
+definitions from the `impl` of `B`. Here is an example:
+
+```carbon
+interface A {
+  let T:! type;
+  fn F();
+  fn G();
+}
+
+interface B {
+  extend impl as A;
+  fn H();
+}
+```
+
+This is equivalent to writing `B` as:
+
+```carbon
+interface B {
+  let T:! type;
+  fn F();
+  fn G();
+  fn H();
+}
+impl forall [U:! B] U as A {
+  let T:! type = U.(B.T);
+  fn F() = U.(B.F);
+  fn G() = U.(B.G);
+}
+```
+
+The implied `impl` definition can be made `final` by writing the reference to
+`A` as `extend final impl as A`.
+
+Note that this is supported only in an `interface` and not in a named
+[`constraint`](#named-constraints).
 
 **Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
@@ -1339,17 +1402,18 @@ interface ConvertibleTo(T:! type) { ... }
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
   let AssociatedFacet:! type;
-  // `extend` is in the body of an `interface`
+  // `extend require impls` is in the body of an `interface`
   // definition. This allows extending an expression
   // that uses an associated facet.
-  extend ConvertibleTo(AssociatedFacet);
+  extend require impls ConvertibleTo(AssociatedFacet);
 }
 ```
 
-#### `extend` and `impl` with named constraints
+#### `extend require` with named constraints
 
-The `extend` declaration makes sense with the same meaning inside a
-[`constraint`](#named-constraints) definition, and so is also supported.
+The `extend` modifier on `require` makes sense with the same meaning inside a
+[`constraint`](#named-constraints) definition, and so is also supported (unlike
+`extend impl as`).
 
 ```carbon
 interface Media {
@@ -1360,8 +1424,8 @@ interface Job {
 }
 
 constraint Combined {
-  extend Media;
-  extend Job;
+  extend require impls Media;
+  extend require impls Job;
 }
 ```
 
@@ -1371,9 +1435,9 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 ```carbon
 // Equivalent
 constraint Combined {
-  require Self impls Media;
+  require impls Media;
   alias Play = Media.Play;
-  require Self impls Job;
+  require impls Job;
   alias Run = Job.Run;
 }
 ```
@@ -1412,9 +1476,9 @@ Conversely, an `interface` can extend a `constraint`:
 
 ```carbon
 interface MovieCodec {
-  extend Combined;
+  extend require impls Combined;
 
-  fn Load[addr self: Self*](filename: String);
+  fn Load[ref self: Self](filename: String);
 }
 ```
 
@@ -1423,35 +1487,38 @@ equivalent to:
 
 ```carbon
 interface MovieCodec {
-  require Self impls Media;
+  require impls Media;
   alias Play = Media.Play;
-  require Self impls Job;
+  require impls Job;
   alias Run = Job.Run;
 
-  fn Load[addr self: Self*](filename: String);
+  fn Load[ref self: Self](filename: String);
 }
 ```
 
 #### Diamond dependency issue
+
+> **TODO:** Update this section to reflect the changes in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
 
 Consider this set of interfaces, simplified from
 [this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
 
 ```carbon
 interface Graph {
-  fn Source[addr self: Self*](e: EdgeDescriptor) -> VertexDescriptor;
-  fn Target[addr self: Self*](e: EdgeDescriptor) -> VertexDescriptor;
+  fn Source[ref self: Self](e: EdgeDescriptor) -> VertexDescriptor;
+  fn Target[ref self: Self](e: EdgeDescriptor) -> VertexDescriptor;
 }
 
 interface IncidenceGraph {
   extend Graph;
-  fn OutEdges[addr self: Self*](u: VertexDescriptor)
+  fn OutEdges[ref self: Self](u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
   extend Graph;
-  fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator);
+  fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator);
 }
 ```
 
@@ -1478,11 +1545,11 @@ though could be defined in the `impl` block of `IncidenceGraph`,
       extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn OutEdges[addr self: Self*](u: VertexDescriptor)
+        fn OutEdges[ref self: Self](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
       extend impl as EdgeListGraph {
-        fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+        fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
     ```
@@ -1494,12 +1561,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     class MyEdgeListIncidenceGraph {
       extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn OutEdges[addr self: Self*](u: VertexDescriptor)
+        fn OutEdges[ref self: Self](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
       extend impl as EdgeListGraph {
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+        fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
     ```
@@ -1986,6 +2053,10 @@ keyword `private` before `adapt`, so you might write
 
 ## Associated constants
 
+> **TODO:** Update this section to reflect the new rules and guidance on
+> associated constants in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
 the same syntax to describe a compile-time constant in an interface as in a type
@@ -1997,10 +2068,10 @@ as an associated constant.
 interface NSpacePoint {
   let N:! i32;
   // The following require: 0 <= i < N.
-  fn Get[addr self: Self*](i: i32) -> f64;
-  fn Set[addr self: Self*](i: i32, value: f64);
+  fn Get[ref self: Self](i: i32) -> f64;
+  fn Set[ref self: Self](i: i32, value: f64);
   // Associated constants may be used in signatures:
-  fn SetAll[addr self: Self*](value: Array(f64, N));
+  fn SetAll[ref self: Self](value: Array(f64, N));
 }
 ```
 
@@ -2020,17 +2091,17 @@ a [`where` clause](#where-constraints). For example, implementations of
 ```carbon
 class Point2D {
   extend impl as NSpacePoint where .N = 2 {
-    fn Get[addr self: Self*](i: i32) -> f64 { ... }
-    fn Set[addr self: Self*](i: i32, value: f64) { ... }
-    fn SetAll[addr self: Self*](value: Array(f64, 2)) { ... }
+    fn Get[ref self: Self](i: i32) -> f64 { ... }
+    fn Set[ref self: Self](i: i32, value: f64) { ... }
+    fn SetAll[ref self: Self](value: Array(f64, 2)) { ... }
   }
 }
 
 class Point3D {
   extend impl as NSpacePoint where .N = 3 {
-    fn Get[addr self: Self*](i: i32) -> f64 { ... }
-    fn Set[addr self: Self*](i: i32, value: f64) { ... }
-    fn SetAll[addr self: Self*](value: Array(f64, 3)) { ... }
+    fn Get[ref self: Self](i: i32) -> f64 { ... }
+    fn Set[ref self: Self](i: i32, value: f64) { ... }
+    fn SetAll[ref self: Self](value: Array(f64, 3)) { ... }
   }
 }
 ```
@@ -2112,6 +2183,10 @@ Together associated methods and associated class functions are called
 _associated functions_, much like together methods and class functions are
 called [member functions](/docs/design/classes.md#member-functions).
 
+> **TODO:** Document rules on where associated function implementations can be
+> declared, as adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 ## Associated facets
 
 Associated facets are [associated constants](#associated-constants) that happen
@@ -2126,9 +2201,9 @@ a specified name. For example:
 ```carbon
 interface StackAssociatedFacet {
   let ElementType:! type;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 
@@ -2141,26 +2216,26 @@ of `StackAssociatedFacet` must also define. For example, maybe a `DynamicArray`
 ```carbon
 class DynamicArray(T:! type) {
   class IteratorType { ... }
-  fn Begin[addr self: Self*]() -> IteratorType;
-  fn End[addr self: Self*]() -> IteratorType;
-  fn Insert[addr self: Self*](pos: IteratorType, value: T);
-  fn Remove[addr self: Self*](pos: IteratorType);
+  fn Begin[ref self: Self]() -> IteratorType;
+  fn End[ref self: Self]() -> IteratorType;
+  fn Insert[ref self: Self](pos: IteratorType, value: T);
+  fn Remove[ref self: Self](pos: IteratorType);
 
   // Set the associated facet `ElementType` to `T`.
   extend impl as StackAssociatedFacet where .ElementType = T {
-    fn Push[addr self: Self*](value: ElementType) {
-      self->Insert(self->End(), value);
+    fn Push[ref self: Self](value: ElementType) {
+      self.Insert(self.End(), value);
     }
-    fn Pop[addr self: Self*]() -> ElementType {
-      var pos: IteratorType = self->End();
-      Assert(pos != self->Begin());
+    fn Pop[ref self: Self]() -> ElementType {
+      var pos: IteratorType = self.End();
+      Assert(pos != self.Begin());
       --pos;
       returned var ret: ElementType = *pos;
-      self->Remove(pos);
+      self.Remove(pos);
       return var;
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->Begin() == self->End();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.Begin() == self.End();
     }
   }
 }
@@ -2262,9 +2337,9 @@ after the name of the interface:
 
 ```carbon
 interface StackParameterized(ElementType:! type) {
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 
@@ -2276,25 +2351,25 @@ class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
   extend impl as StackParameterized(Fruit) {
-    fn Push[addr self: Self*](value: Fruit) {
-      self->fruit.Push(value);
+    fn Push[ref self: Self](value: Fruit) {
+      self.fruit.Push(value);
     }
-    fn Pop[addr self: Self*]() -> Fruit {
-      return self->fruit.Pop();
+    fn Pop[ref self: Self]() -> Fruit {
+      return self.fruit.Pop();
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->fruit.IsEmpty();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.fruit.IsEmpty();
     }
   }
   extend impl as StackParameterized(Veggie) {
-    fn Push[addr self: Self*](value: Veggie) {
-      self->veggie.Push(value);
+    fn Push[ref self: Self](value: Veggie) {
+      self.veggie.Push(value);
     }
-    fn Pop[addr self: Self*]() -> Veggie {
-      return self->veggie.Pop();
+    fn Pop[ref self: Self]() -> Veggie {
+      return self.veggie.Pop();
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->veggie.IsEmpty();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.veggie.IsEmpty();
     }
   }
 }
@@ -2402,7 +2477,7 @@ parameters are required to always be different. For example:
 
 ```carbon
 interface Map(FromType:! type, ToType:! type) {
-  fn Map[addr self: Self*](needle: FromType) -> Optional(ToType);
+  fn Map[ref self: Self](needle: FromType) -> Optional(ToType);
 }
 class Bijection(FromType:! type, ToType:! type) {
   extend impl as Map(FromType, ToType) { ... }
@@ -2630,7 +2705,7 @@ interface Container {
   let SliceType:! Container where .Self impls SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
-  fn GetSlice[addr self: Self*]
+  fn GetSlice[ref self: Self]
       (start: IteratorType, end: IteratorType) -> SliceType;
 }
 
@@ -2740,7 +2815,7 @@ with any mentioned parameters substituted into that type.
 interface Container {
   let Element:! type;
   let Slice:! Container where .Element = Element;
-  fn Add[addr self: Self*](x: Element);
+  fn Add[ref self: Self](x: Element);
 }
 // `T.Slice.Element` rewritten to `T.Element`
 //     because type of `T.Slice` says `.Element = Element`.
@@ -2932,7 +3007,7 @@ interface Edge {
 interface Node {
   let E:! EdgeFor(Self);
   fn GetE[self: Self]() -> E;
-  fn AddE[addr self: Self*](e: E);
+  fn AddE[ref self: Self](e: E);
   fn NearN[self: Self](n: Self) -> bool;
 }
 
@@ -3877,7 +3952,7 @@ Example:
 // In the Carbon standard library
 interface DefaultConstructible {
   // Types must be sized to be default constructible.
-  require Self impls Sized;
+  require impls Sized;
   fn Default() -> Self;
 }
 
@@ -4466,6 +4541,9 @@ difference.
 
 #### Prioritization rule
 
+> **TODO:** Document the changes to prioritization adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
 same library. Furthermore by the [`impl` declaration access rules](#access),
@@ -4866,6 +4944,10 @@ class Optional(T:! type) {
 // ❌ Illegal: impl Optional(i32) as Deref { ... }
 ```
 
+> **TODO:** Update the following passage to reflect the relaxed overlap rule
+> adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 This prevents any higher-priority impl that overlaps a final impl from being
 defined unless it agrees with the `final` impl on the overlap. Overlap is
 computed between two non-`template` `impl` declaration by
@@ -4998,6 +5080,10 @@ differences between the Carbon design and Rust plans:
 
 ## Forward declarations and cyclic references
 
+> **TODO:** Update this section to distinguish between _defined_ and _complete_,
+> as adopted in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+
 Interfaces, named constraints, and their implementations may be forward declared
 and then later defined. This is needed to allow cyclic references, for example
 when declaring the edges and nodes of a graph. It is also a tool that may be
@@ -5015,6 +5101,10 @@ There are additional restrictions on how the name of an incomplete entity may be
 used.
 
 ### Declaring interfaces and named constraints
+
+> **TODO:** Update this section to reflect the additional things you can do with
+> a defined but incomplete type, as adoped in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
 
 The declaration for an interface or named constraint consists of:
 
@@ -5038,9 +5128,9 @@ An interface or named constraint may be forward declared subject to these rules:
 -   Only the first declaration may have an access-control keyword.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
-    includes an `require` or `extend` declaration inside an interface or named
-    constraint, but excludes specifying the values for associated constants
-    because that would involve name lookup into the incomplete constraint.
+    includes a `require` declaration inside an interface or named constraint,
+    but excludes specifying the values for associated constants because that
+    would involve name lookup into the incomplete constraint.
 -   An attempt to define the body of a generic function using an incomplete
     interface or named constraint in its signature is illegal.
 -   An attempt to call a generic function using an incomplete interface or named
@@ -5102,6 +5192,9 @@ An incomplete `C` cannot be used in the following contexts:
 
 ### Declaring implementations
 
+> **TODO:** Update this section to reflect the new rules adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 The declaration of an interface implementation consists of:
 
 -   optional modifier keyword `final`,
@@ -5116,6 +5209,9 @@ The declaration of an interface implementation consists of:
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
+
+> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
 
 **Note:** The type before the `as` is required except in class scope, where it
 defaults to `Self` as described in the
@@ -5156,6 +5252,11 @@ these rules:
 
 ### Matching and agreeing
 
+> **TODO:** Update this section to reflect the new terminology and rules adopted
+> in [p3763: Matching redeclarations](/proposals/p3763.md), and the new rules
+> adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 Carbon needs to determine if two declarations match in order to say which
 definition a forward declaration corresponds to and to verify that nothing is
 defined twice. Declarations that match must also agree, meaning they are
@@ -5190,6 +5291,10 @@ expressions match along with
     and the same parameters. Note that a named constraint that is equivalent to
     an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
     considered to match.
+
+> **TODO:** Document the matching rules for the redeclaration syntax
+> `impl C.(as I)` adopted in
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
 
 For implementations to agree:
 
@@ -5497,7 +5602,7 @@ interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
-  require Self impls PartialOrder {
+  require impls PartialOrder {
     fn PartialLess[self: Self](right: Self) -> bool {
       return self.TotalLess(right);
     }
@@ -5599,7 +5704,7 @@ as in:
 
 ```carbon
 interface Iterable {
-  require Self impls Equatable;
+  require impls Equatable;
   // ...
 }
 ```
@@ -5630,17 +5735,23 @@ interface CommonTypeWith(T:! type) {
 says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
-A `require`...`impls` constraint in an `interface`, or `constraint`, definition
-must still use `Self` in some way. It can be an argument to either the
-[type](#parameterized-types) or [interface](#parameterized-interfaces). For
-example:
+A `require <type> impls <facet type>` constraint in an `interface`, or
+`constraint`, definition must still use `Self` as either the type, or as a
+parameter to the [type](#parameterized-types) or an
+[interface](#parameterized-interfaces) in the facet type. In particular, it
+requires `Self` be part of the type structure of any `impl` that could satisfy
+that `require`. If the `<type>` is omitted entirely, it will be implied to be
+`Self`. For example:
 
+-   ✅ Allowed: `require impls Equatable`
 -   ✅ Allowed: `require Self impls Equatable`
 -   ✅ Allowed: `require Vector(Self) impls Equatable`
 -   ✅ Allowed: `require i32 impls CommonTypeWith(Self)`
+-   ✅ Allowed: `require impls CommonTypeWith(Self)`
 -   ✅ Allowed: `require Self impls CommonTypeWith(Self)`
 -   ❌ Error: `require i32 impls Equatable`
--   ❌ Error: `require T impls Equatable` where `T` is some parameter to the
+-   ❌ Error: `require i32 impls Equatable where .Result = Self`
+-   ❌ Error: `require T impls Equatable` when `T` is some parameter to the
     interface
 
 This restriction allows the Carbon compiler to know where to look for facts
@@ -5716,7 +5827,7 @@ interface A(T:! type) {
   let Result:! type;
 }
 interface B(T:! type) {
-  require Self impls A(T) where .Result == i32;
+  require impls A(T) where .Result == i32;
 }
 ```
 
@@ -5753,9 +5864,9 @@ type implements an interface, as in this example:
 
 ```carbon
 interface A { }
-interface B { require Self impls A; }
-interface C { require Self impls B; }
-interface D { require Self impls C; }
+interface B { require impls A; }
+interface C { require impls B; }
+interface D { require impls C; }
 
 fn RequiresA[T:! A](x: T);
 fn RequiresC[T:! C](x: T);
@@ -6242,7 +6353,7 @@ class HashMap(
   // `Self` is `HashMap(KeyT, ValueT)`.
 
   // Class parameters may be used in function signatures.
-  fn Insert[addr self: Self*](k: KeyT, v: ValueT);
+  fn Insert[ref self: Self](k: KeyT, v: ValueT);
 
   // Class parameters may be used in field types.
   private var buckets: DynArray((KeyT, ValueT));
@@ -6318,7 +6429,7 @@ its elements implement the `Ordered` interface:
 ```carbon
 class DynArray(T:! type) {
   // `DynArray(T)` has a `Sort()` method if `T impls Ordered`.
-  fn Sort[C:! Ordered, addr self: DynArray(C)*]();
+  fn Sort[C:! Ordered, ref self: DynArray(C)]();
 }
 ```
 

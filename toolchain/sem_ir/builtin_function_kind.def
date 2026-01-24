@@ -22,10 +22,15 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(None)
 // A no-op function definition; calls should be elided when lowering.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(NoOp)
 
+// A primitive copy for types whose value and initializing representation are
+// the same.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PrimitiveCopy)
+
 // Temporary builtins for primitive IO.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PrintChar)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PrintInt)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(ReadChar)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(StringAt)
 
 // Type factories.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CharLiteralMakeType)
@@ -42,6 +47,7 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CharConvertChecked)
 
 // Integer conversion.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvert)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertChar)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertChecked)
 
 // Integer arithmetic.
@@ -118,6 +124,11 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(FloatGreaterEq)
 // Bool comparison.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(BoolEq)
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(BoolNeq)
+
+// Pointers.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PointerMakeNull)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PointerIsNull)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PointerUnsafeConvert)
 
 // Facet type combination.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAnd)

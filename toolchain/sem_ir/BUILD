@@ -19,6 +19,7 @@ cc_library(
         "inst_kind.h",
         "singleton_insts.h",
         "specific_interface.h",
+        "specific_named_constraint.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],
@@ -26,6 +27,7 @@ cc_library(
         "//common:check",
         "//common:enum_base",
         "//common:ostream",
+        "//common:template_string",
         "//common:type_enum",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
@@ -55,8 +57,25 @@ cc_library(
         ":typed_insts",
         "//common:hashtable_key_context",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/base:canonical_value_store",
         "@llvm-project//clang:ast",
+    ],
+)
+
+cc_library(
+    name = "cpp_file",
+    hdrs = ["cpp_file.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//clang:ast",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:codegen",
+        "@llvm-project//clang:frontend",
+        "@llvm-project//clang:lex",
+        "@llvm-project//clang:sema",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -86,6 +105,8 @@ cc_library(
         "class.h",
         "constant.h",
         "copy_on_write_block.h",
+        "cpp_global_var.h",
+        "cpp_overload_set.h",
         "entity_name.h",
         "entity_with_params_base.h",
         "facet_type_info.h",
@@ -99,7 +120,9 @@ cc_library(
         "interface.h",
         "name.h",
         "name_scope.h",
+        "named_constraint.h",
         "pattern.h",
+        "require_impls.h",
         "struct_type_field.h",
         "type.h",
         "type_info.h",
@@ -111,9 +134,11 @@ cc_library(
     ],
     deps = [
         ":clang_decl",
+        ":cpp_file",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
+        "//common:enum_mask_base",
         "//common:error",
         "//common:hashing",
         "//common:map",
@@ -136,6 +161,7 @@ cc_library(
         "//toolchain/parse:tree",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:sema",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -258,6 +284,7 @@ cc_library(
     deps = [
         ":file",
         ":stringify",
+        ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
     ],

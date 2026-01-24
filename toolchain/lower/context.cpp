@@ -18,16 +18,24 @@ Context::Context(
     llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    llvm::StringRef module_name, int total_ir_count,
+    clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
+    int total_ir_count, Lower::OptimizationLevel opt_level,
     llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
-      llvm_module_(std::make_unique<llvm::Module>(module_name, *llvm_context)),
+      clang_code_generator_(clang_code_generator),
+      llvm_module_owner_(
+          clang_code_generator_
+              ? nullptr
+              : std::make_unique<llvm::Module>(module_name, *llvm_context)),
+      llvm_module_(llvm_module_owner_ ? llvm_module_owner_.get()
+                                      : clang_code_generator_->GetModule()),
       file_system_(std::move(fs)),
+      opt_level_(opt_level),
       di_builder_(*llvm_module_),
-      di_compile_unit_(
-          want_debug_info
-              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
-              : nullptr),
+      di_compile_unit_(want_debug_info
+                           ? BuildDICompileUnit(llvm_module_->getName(),
+                                                *llvm_module_, di_builder_)
+                           : nullptr),
       tree_and_subtrees_getters_(tree_and_subtrees_getters),
       vlog_stream_(vlog_stream),
       total_ir_count_(total_ir_count),
@@ -64,7 +72,9 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
     }
   }
 
-  return std::move(llvm_module_);
+  return clang_code_generator_ ? std::unique_ptr<llvm::Module>(
+                                     clang_code_generator_->ReleaseModule())
+                               : std::move(llvm_module_owner_);
 }
 
 auto Context::BuildDICompileUnit(llvm::StringRef module_name,
@@ -76,12 +86,10 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
                             llvm::DEBUG_METADATA_VERSION);
   // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // TODO: Introduce a new language code for Carbon. C works well for now since
-  // it's something debuggers will already know/have support for at least.
-  // Probably have to bump to C++ at some point for virtual functions,
-  // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
-                                      "carbon",
+  // TODO: Introduce a new language code for Carbon. C++ works well for now
+  // since it's something debuggers will already know/have support for at least.
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C_plus_plus,
+                                      compile_unit_file, "carbon",
                                       /*isOptimized=*/false, /*Flags=*/"",
                                       /*RV=*/0);
 }

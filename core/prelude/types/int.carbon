@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/int";
 
+import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/int_literal";
@@ -12,6 +13,12 @@ private fn MakeInt(size: IntLiteral()) -> type = "int.make_type_signed";
 
 class Int(N:! IntLiteral()) {
   adapt MakeInt(N);
+}
+
+// Copy.
+
+impl forall [N:! IntLiteral()] Int(N) as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
 // Conversions.
@@ -24,7 +31,9 @@ final impl forall [From:! IntLiteral()] Int(From) as ImplicitAs(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Remove these once ImplicitAs extends As.
+// TODO: Remove these once ImplicitAs extends As. For now we need them because
+// the forwarding impl of As in terms of ImplicitAs is not usable at compile
+// time.
 impl forall [To:! IntLiteral()] IntLiteral() as As(Int(To)) {
   fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
 }
@@ -265,52 +274,52 @@ impl forall [N:! IntLiteral(), T:! ImplicitAs(Int(N))]
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as AddAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.sadd_assign";
+  fn Op[ref self: Self](other: Self) = "int.sadd_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as BitAndAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.and_assign";
+  fn Op[ref self: Self](other: Self) = "int.and_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as BitOrAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.or_assign";
+  fn Op[ref self: Self](other: Self) = "int.or_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as BitXorAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.xor_assign";
+  fn Op[ref self: Self](other: Self) = "int.xor_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as DivAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.sdiv_assign";
+  fn Op[ref self: Self](other: Self) = "int.sdiv_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as LeftShiftAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.left_shift_assign";
+  fn Op[ref self: Self](other: Self) = "int.left_shift_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as ModAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.smod_assign";
+  fn Op[ref self: Self](other: Self) = "int.smod_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as MulAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.smul_assign";
+  fn Op[ref self: Self](other: Self) = "int.smul_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as RightShiftAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.right_shift_assign";
+  fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
     Int(N) as SubAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.ssub_assign";
+  fn Op[ref self: Self](other: Self) = "int.ssub_assign";
 }
 
 // Increment and decrement.
@@ -318,19 +327,19 @@ impl forall [N:! IntLiteral(), U:! ImplicitAs(Int(N))]
 // TODO: Add builtins for these to avoid emitting a call.
 
 impl forall [N:! IntLiteral()] Int(N) as Dec {
-  fn Op[addr self: Self*]() {
-    // TODO: `*self -= 1;` should work, but fails because the `impl IntLiteral
+  fn Op[ref self: Self]() {
+    // TODO: `self -= 1;` should work, but fails because the `impl IntLiteral
     // as ImplicitAs(Int(N))` is not final, which causes us to not attempt the
     // conversion from `1` to `Int(N)` until runtime, when we've lost the
     // constant value.
     fn AsInt(n: IntLiteral()) -> Int(N) = "int.convert_checked";
-    *self -= AsInt(1);
+    self -= AsInt(1);
   }
 }
 
 impl forall [N:! IntLiteral()] Int(N) as Inc {
-  fn Op[addr self: Self*]() {
+  fn Op[ref self: Self]() {
     fn AsInt(n: IntLiteral()) -> Int(N) = "int.convert_checked";
-    *self += AsInt(1);
+    self += AsInt(1);
   }
 }

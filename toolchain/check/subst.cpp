@@ -11,6 +11,7 @@
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -138,6 +139,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
       for (auto interface : facet_type_info.self_impls_constraints) {
         push_specific(interface.specific_id);
       }
+      for (auto interface : facet_type_info.extend_named_constraints) {
+        push_specific(interface.specific_id);
+      }
+      for (auto interface : facet_type_info.self_impls_named_constraints) {
+        push_specific(interface.specific_id);
+      }
       for (auto rewrite : facet_type_info.rewrite_constraints) {
         worklist.Push(rewrite.lhs_id);
         worklist.Push(rewrite.rhs_id);
@@ -228,7 +235,8 @@ static auto PopOperand(Context& context, Worklist& worklist,
     case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
       const auto& old_facet_type_info =
           context.facet_types().Get(facet_type_id);
-      SemIR::FacetTypeInfo new_facet_type_info;
+      SemIR::FacetTypeInfo new_facet_type_info = {
+          .other_requirements = old_facet_type_info.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(
           old_facet_type_info.rewrite_constraints.size(),
@@ -239,12 +247,33 @@ static auto PopOperand(Context& context, Worklist& worklist,
         auto lhs_id = worklist.Pop();
         new_constraint = {.lhs_id = lhs_id, .rhs_id = rhs_id};
       }
+      new_facet_type_info.self_impls_named_constraints.resize(
+          old_facet_type_info.self_impls_named_constraints.size(),
+          SemIR::SpecificNamedConstraint::None);
+      for (auto [old_constraint, new_constraint] :
+           llvm::reverse(llvm::zip_equal(
+               old_facet_type_info.self_impls_named_constraints,
+               new_facet_type_info.self_impls_named_constraints))) {
+        new_constraint = {
+            .named_constraint_id = old_constraint.named_constraint_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
+      }
+      new_facet_type_info.extend_named_constraints.resize(
+          old_facet_type_info.extend_named_constraints.size(),
+          SemIR::SpecificNamedConstraint::None);
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip_equal(old_facet_type_info.extend_named_constraints,
+                               new_facet_type_info.extend_named_constraints))) {
+        new_constraint = {
+            .named_constraint_id = old_constraint.named_constraint_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
+      }
       new_facet_type_info.self_impls_constraints.resize(
           old_facet_type_info.self_impls_constraints.size(),
           SemIR::SpecificInterface::None);
       for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip(old_facet_type_info.self_impls_constraints,
-                         new_facet_type_info.self_impls_constraints))) {
+               llvm::zip_equal(old_facet_type_info.self_impls_constraints,
+                               new_facet_type_info.self_impls_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
@@ -252,15 +281,13 @@ static auto PopOperand(Context& context, Worklist& worklist,
       new_facet_type_info.extend_constraints.resize(
           old_facet_type_info.extend_constraints.size(),
           SemIR::SpecificInterface::None);
-      for (auto [old_constraint, new_constraint] :
-           llvm::reverse(llvm::zip(old_facet_type_info.extend_constraints,
-                                   new_facet_type_info.extend_constraints))) {
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip_equal(old_facet_type_info.extend_constraints,
+                               new_facet_type_info.extend_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.other_requirements =
-          old_facet_type_info.other_requirements;
       new_facet_type_info.Canonicalize();
       return context.facet_types().Add(new_facet_type_info).index;
     }
@@ -414,7 +441,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
         substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
-  // BindSymbolicName instructions with the value of the binding.
+  // SymbolicBinding instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
     if (context().constant_values().Get(inst_id).is_concrete()) {
       // This instruction is a concrete constant, so can't contain any
@@ -422,9 +449,30 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       return SubstResult::FullySubstituted;
     }
 
+    // A symbolic binding `as type` contains the EntityNameId of that symbolic
+    // binding. If it matches a substitution, then we want to point the
+    // EntityNameId to the substitution facet value.
+    if (auto bind =
+            context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
+      auto& entity_name = context().entity_names().Get(bind->entity_name_id);
+
+      for (auto [bind_index, replacement_id] : substitutions_) {
+        if (entity_name.bind_index() == bind_index) {
+          auto replacement_inst_id =
+              context().constant_values().GetInstId(replacement_id);
+          inst_id = RebuildNewInst<SemIR::FacetAccessType>(
+              loc_id_, {
+                           .type_id = SemIR::TypeType::TypeId,
+                           .facet_value_inst_id = replacement_inst_id,
+                       });
+          return SubstResult::FullySubstituted;
+        }
+      }
+    }
+
     auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
-            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+            context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else if (auto bind =
                    context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
@@ -434,12 +482,13 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       return SubstResult::SubstOperands;
     }
 
+    auto& entity_name = context().entity_names().Get(entity_name_id);
+
     // This is a symbolic binding. Check if we're substituting it.
     // TODO: Consider building a hash map for substitutions. We might have a
     // lot of them.
     for (auto [bind_index, replacement_id] : substitutions_) {
-      if (context().entity_names().Get(entity_name_id).bind_index() ==
-          bind_index) {
+      if (entity_name.bind_index() == bind_index) {
         // This is the binding we're replacing. Perform substitution.
         inst_id = context().constant_values().GetInstId(replacement_id);
         return SubstResult::FullySubstituted;

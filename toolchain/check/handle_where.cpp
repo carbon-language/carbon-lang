@@ -24,8 +24,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto self_with_constraints_type_id =
       ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (self_with_constraints_type_id != SemIR::ErrorInst::TypeId &&
-      !context.types().IsFacetType(self_with_constraints_type_id)) {
+  if (!context.types().IsFacetTypeOrError(self_with_constraints_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);

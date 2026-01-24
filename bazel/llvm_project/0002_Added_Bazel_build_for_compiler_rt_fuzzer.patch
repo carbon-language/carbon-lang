@@ -8,14 +8,13 @@ Subject: [PATCH] Add libfuzzer target to compiler-rt.
  1 file changed, 17 insertions(+)
 
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
-index 9bdd454e1e36..0f30c21f63dc 100644
+index 90264449de76..115da4cb77f6 100644
 --- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
-@@ -50,3 +50,20 @@ cc_library(
-         ":config",
+@@ -57,6 +57,23 @@ cc_library(
      ],
  )
-+
+
 +cc_library(
 +    name = "FuzzerMain",
 +    srcs = glob(
@@ -32,5 +31,9 @@ index 9bdd454e1e36..0f30c21f63dc 100644
 +    ],
 +    includes = ["lib/fuzzer"],
 +)
++
+ cc_library(
+     name = "orc_rt_common_headers",
+     hdrs = [
 --
 2.42.0

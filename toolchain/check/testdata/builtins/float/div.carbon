@@ -91,15 +91,13 @@ fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> %f64.d77 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, file.%Div.decl [concrete = constants.%Div]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Div.call: init %f64.d77 = call %Div.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: %f64.d77 = value_of_initializer %Div.call
-// CHECK:STDOUT:   %.loc8_19.2: %f64.d77 = converted %Div.call, %.loc8_19.1
-// CHECK:STDOUT:   return %.loc8_19.2
+// CHECK:STDOUT:   return %Div.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

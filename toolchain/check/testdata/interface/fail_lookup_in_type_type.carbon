@@ -36,6 +36,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,23 +44,24 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: <error> = binding_pattern T [concrete]
+// CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: <error> = bind_name T, <error> [concrete = <error>]
+// CHECK:STDOUT:   %T: <error> = value_binding T, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_lookup_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,10 +69,10 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %U.patt: <error> = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.patt: <error> = value_binding_pattern U [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8: type = where_expr %.Self [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_base_facet_type type
@@ -78,12 +80,12 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U: <error> = bind_name U, <error> [concrete = <error>]
+// CHECK:STDOUT:   %U: <error> = value_binding U, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

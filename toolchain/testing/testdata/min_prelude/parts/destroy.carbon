@@ -6,9 +6,14 @@
 
 package Core library "prelude/parts/destroy";
 
+// TODO: Add `Destructor`, as in:
+// interface Destructor {
+//   private fn Op[ref self: Self]();
+// }
+
+// Destroys objects. This will invoke `Destructor` impls recursively on members;
+// it does not deallocate memory.
 interface Destroy {
-  fn Op[addr self: Self*]();
-}
-impl forall [T:! type] T as Destroy {
-  fn Op[addr self: Self*]() = "no_op";
+  // TODO: This should be `final fn Op[ref self: Self]() = "type.destroy"`.
+  fn Op[ref self: Self]();
 }

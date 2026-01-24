@@ -8,7 +8,6 @@
 #include <string>
 #include <utility>
 
-#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -35,14 +34,48 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                                  : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
+      entity_names_(check_ir_id),
+      cpp_global_vars_(check_ir_id),
+      functions_(check_ir_id),
+      cpp_overload_sets_(check_ir_id),
+      classes_(check_ir_id),
+      interfaces_(check_ir_id),
+      named_constraints_(check_ir_id),
+      require_impls_(check_ir_id),
+      // 1 reserved id for `RequireImplsBlockId::Empty`.
+      require_impls_blocks_(allocator_, check_ir_id, 1),
+      associated_constants_(check_ir_id),
+      facet_types_(check_ir_id),
+      identified_facet_types_(check_ir_id),
       impls_(*this),
-      constant_values_(ConstantId::NotConstant),
-      inst_blocks_(allocator_),
-      constants_(this) {
-  // `type` and the error type are both complete & concrete types.
+      specific_interfaces_(check_ir_id),
+      generics_(check_ir_id),
+      specifics_(check_ir_id),
+      // The `2` prevents adding a tag for the global ids
+      // `ImportIRId::{ApiForImpl,Cpp}`.
+      import_irs_(check_ir_id, 2),
+      clang_decls_(check_ir_id),
+      // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
+      // instruction. It's not a "singleton" instruction, but it's a unique
+      // instruction id that comes right after the singletons.
+      insts_(this, SingletonInstKinds.size() + 1),
+      vtables_(check_ir_id),
+      constant_values_(ConstantId::NotConstant, &insts_),
+      inst_blocks_(allocator_, check_ir_id),
+      constants_(this),
+      // 1 reserved id for `StructTypeFieldsId::Empty`.
+      struct_type_fields_(allocator_, check_ir_id, 1),
+      // 1 reserved id for `CustomLayoutId::Empty`.
+      custom_layouts_(allocator_, check_ir_id, 1),
+      expr_regions_(check_ir_id),
+      clang_source_locs_(check_ir_id) {
+  // `type`, `form`, and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+  types_.SetComplete(
+      FormType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = FormType::TypeId}});
   types_.SetComplete(
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
@@ -99,16 +132,25 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
                                  Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("names", names().OutputYaml());
               map.Add("import_irs", import_irs_.OutputYaml());
               map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+              map.Add("clang_decls", clang_decls_.OutputYaml());
               map.Add("name_scopes", name_scopes_.OutputYaml());
               map.Add("entity_names", entity_names_.OutputYaml());
+              map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
+              map.Add("interfaces", interfaces_.OutputYaml());
+              map.Add("associated_constants",
+                      associated_constants_.OutputYaml());
+              map.Add("impls", impls_.OutputYaml());
               map.Add("generics", generics_.OutputYaml());
               map.Add("specifics", specifics_.OutputYaml());
+              map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
               map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
               map.Add("types", types_.OutputYaml());
+              map.Add("facet_types", facet_types_.OutputYaml());
               map.Add("insts",
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         for (auto [id, inst] : insts_.enumerate()) {
@@ -121,6 +163,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("constant_values",
                       constant_values_.OutputYaml(include_singletons));
               map.Add("inst_blocks", inst_blocks_.OutputYaml());
+              map.Add("value_stores", value_stores_->OutputYaml());
             }));
   });
 }
@@ -130,6 +173,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
+                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
@@ -139,6 +184,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
@@ -150,10 +196,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
 }
 
-auto File::set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void {
-  clang_ast_unit_ = clang_ast_unit;
-  clang_mangle_context_.reset(
-      clang_ast_unit->getASTContext().createMangleContext());
+auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
+  cpp_file_ = std::move(cpp_file);
 }
 
 }  // namespace Carbon::SemIR

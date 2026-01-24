@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,41 +10,24 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/fail_incomplete.carbon
 
-interface A;
-interface B {}
-class C {}
+// --- fail_impl_lookup_incomplete.carbon
+library "[[@TEST_NAME]]";
 
-fn G[T:! A](t: T) {}
-fn H[T:! A & B](t: T) {}
+constraint Z;
+
+fn AsZ(T:! Z) {}
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: error: cannot convert type `C` into type implementing `A` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   ({} as C) as (C as A);
-  // CHECK:STDERR:                 ^~~~~~
+  // Requires Z identified.
+  // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE+10]]:3: error: facet type `Z` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:   AsZ(());
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-9]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: constraint Z;
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-10]]:8: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn AsZ(T:! Z) {}
+  // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  ({} as C) as (C as A);
-
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: error: cannot convert type `C` into type implementing `A & B` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   ({} as C) as (C as (A & B));
-  // CHECK:STDERR:                 ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  ({} as C) as (C as (A & B));
-
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   G({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T:! A](t: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  G({} as C);
-
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A & B` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   H({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-27]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn H[T:! A & B](t: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  H({} as C);
+  AsZ(());
 }

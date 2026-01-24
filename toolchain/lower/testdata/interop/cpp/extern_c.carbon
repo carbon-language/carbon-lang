@@ -29,6 +29,24 @@ fn MyF() {
 }
 
 // ============================================================================
+// Overload set of extern "C" function and a C++ function
+// ============================================================================
+
+// --- extern_c_function_with_cpp_overload_set.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+extern "C" void foo();
+void foo(int x);
+''';
+
+fn MyF() {
+  Cpp.foo();
+  Cpp.foo(5);
+}
+
+// ============================================================================
 // extern "C" variable
 // ============================================================================
 
@@ -89,29 +107,81 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @foo(), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   call void @foo(), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @foo()
+// CHECK:STDOUT: declare void @foo() #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_function.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "import_extern_c_function.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !12)
+// CHECK:STDOUT: ; ModuleID = 'extern_c_function_with_cpp_overload_set.carbon'
+// CHECK:STDOUT: source_filename = "extern_c_function_with_cpp_overload_set.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @foo(), !dbg !15
+// CHECK:STDOUT:   call void @_Z3fooi(i32 5), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @foo() #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z3fooi(i32 noundef) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "extern_c_function_with_cpp_overload_set.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 9, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 10, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 11, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 9, column: 1, scope: !12)
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_variable.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_variable.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -119,27 +189,37 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @foo = external global i32
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !10
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !11
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !16
+// CHECK:STDOUT:   ret i32 %.loc7, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_variable.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "import_extern_c_variable.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 10, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !12)
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_special_name.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_special_name.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -147,16 +227,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %struct.X = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main(ptr sret({}) %return, ptr %a, ptr %b) !dbg !7 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk(ptr %a, ptr %b, ptr %return), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Zpl1XS_(ptr sret({}), ptr, ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Zpl1XS_.carbon_thunk(ptr %0, ptr %1, ptr %return) #0 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_Zpl1XS_.carbon_thunk(ptr noundef %0, ptr noundef %1, ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
@@ -164,58 +236,92 @@ fn MyF() {
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.X, align 1
 // CHECK:STDOUT:   %agg.tmp2 = alloca %struct.X, align 1
 // CHECK:STDOUT:   %undef.agg.tmp = alloca %struct.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8
-// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8
-// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8
-// CHECK:STDOUT:   %4 = load ptr, ptr %.addr1, align 8
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %4 = load ptr, ptr %.addr1, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_Zpl1XS_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: declare void @_Zpl1XS_() #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main(ptr sret({}) %return, ptr %a, ptr %b) #2 !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk(ptr %a, ptr %b, ptr %return), !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_with_special_name.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "import_extern_c_with_special_name.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"p1 _ZTS1X", !14, i64 0}
+// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !19)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{!18, !18, !18}
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !{!20, !21}
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
+// CHECK:STDOUT: !21 = !DILocalVariable(arg: 2, scope: !15, type: !18)
+// CHECK:STDOUT: !22 = !DILocation(line: 7, column: 10, scope: !15)
+// CHECK:STDOUT: !23 = !DILocation(line: 7, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_asm_label.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_asm_label.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @bar(), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   call void @bar(), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @bar()
+// CHECK:STDOUT: declare void @bar() #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_with_asm_label.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "import_extern_c_with_asm_label.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !12)

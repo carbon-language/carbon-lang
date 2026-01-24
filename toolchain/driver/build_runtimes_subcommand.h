@@ -22,6 +22,7 @@ struct BuildRuntimesOptions {
 
   CodegenOptions codegen_options;
   llvm::StringRef directory;
+  bool force;
 };
 
 // Implements the link subcommand of the driver.
@@ -36,6 +37,8 @@ class BuildRuntimesSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  auto RunInternal(DriverEnv& driver_env) -> ErrorOr<std::filesystem::path>;
+
   BuildRuntimesOptions options_;
 };
 

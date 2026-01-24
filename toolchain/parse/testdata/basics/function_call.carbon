@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'c'},
 // CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeParams', text: 'd'},
 // CHECK:STDOUT:                 {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'CallExprComma', text: ','},
+// CHECK:STDOUT:                 {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:                   {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'e'},
 // CHECK:STDOUT:                 {kind: 'ParenExpr', text: ')', subtree_size: 3},
