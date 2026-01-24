@@ -255,8 +255,8 @@ The `EqWithPrimitive` interface is used to define the semantics of the `==` and
 
 ```
 interface EqWithPrimitive
-    [implicit_into Self:! Core.NoRefForm]
-    (implicit_into U:! Core.NoRefForm) {
+    [implicit_into Self:! Core.Form]
+    (implicit_into U:! Core.Form) {
   fn Equal[self:? Self](u:? U) -> bool;
   default fn NotEqual[self:? Self](u:? U) -> bool {
     return not (self == u);

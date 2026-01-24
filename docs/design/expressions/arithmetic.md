@@ -194,8 +194,8 @@ following family of interfaces:
 package Core;
 
 // Unary `-`.
-interface NegatePrimitive[implicit_into anchor Self:! NoRefForm] {
-  default let implicit_from ResultForm:! NoRefForm
+interface NegatePrimitive[implicit_into anchor Self:! Form] {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[bound self:? Self]()
       ->? ResultForm;
@@ -212,9 +212,9 @@ constraint Negate {
 ```
 // Binary `+`.
 interface AddWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -233,9 +233,9 @@ constraint Add {
 ```
 // Binary `-`.
 interface SubWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -254,9 +254,9 @@ constraint Sub {
 ```
 // Binary `*`.
 interface MulWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -275,9 +275,9 @@ constraint Mul {
 ```
 // Binary `/`.
 interface DivWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -296,9 +296,9 @@ constraint Div {
 ```
 // Binary `%`.
 interface ModWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;

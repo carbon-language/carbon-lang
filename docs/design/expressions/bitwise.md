@@ -199,8 +199,8 @@ package Core;
 
 // Unary `^`.
 interface BitComplementPrimitive
-    [implicit_into anchor Self:! NoRefForm] {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into anchor Self:! Form] {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self: Self]() -> Result;
 }
@@ -215,9 +215,9 @@ constraint BitComplement {
 ```
 // Binary `&`.
 interface BitAndWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -236,9 +236,9 @@ constraint BitAnd {
 ```
 // Binary `|`.
 interface BitOrWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -257,9 +257,9 @@ constraint BitOr {
 ```
 // Binary `^`.
 interface BitXorWithPrimitive
-    [implicit_into Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -280,9 +280,9 @@ Note that the shift operators anchor on the type of the left argument.
 ```
 // Binary `<<`.
 interface LeftShiftWithPrimitive
-    [implicit_into anchor Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into anchor Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -301,9 +301,9 @@ constraint LeftShift {
 ```
 // Binary `>>`.
 interface RightShiftWithPrimitive
-    [implicit_into anchor Self:! NoRefForm]
-    (implicit_into U:! NoRefForm) {
-  default let implicit_from ResultForm:! NoRefForm
+    [implicit_into anchor Self:! Form]
+    (implicit_into U:! Form) {
+  default let implicit_from ResultForm:! Form
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
