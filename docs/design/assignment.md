@@ -76,10 +76,11 @@ The operands of these operators can be any [expression](expressions/README.md).
 However, the first operand must be modifiable because it is passed to a
 `[ref self: Self]` parameter, which disallows most expression forms other than:
 
--   The name of a `var` binding.
+-   The name of a `var` or `let ref` binding.
 -   A dereference of a pointer.
 -   Array indexing that produces a modifiable result.
 -   Member access naming a field, where the object is one of these expressions.
+-   A call to a function returning a `ref` form.
 
 ## Simple assignment semantics
 
