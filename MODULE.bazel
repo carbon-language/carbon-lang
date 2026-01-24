@@ -142,3 +142,32 @@ python.toolchain(
     python_version = "3.11",
 )
 use_repo(python, "python_versions")
+
+###############################################################################
+# Bazel integration testing
+###############################################################################
+
+bazel_dep(
+    name = "rules_bazel_integration_test",
+    version = "0.36.0",
+    dev_dependency = True,
+)
+
+# We test against our current Bazel version, the latest release, and the latest
+# release candidate.
+bazel_binaries = use_extension(
+    "@rules_bazel_integration_test//:extensions.bzl",
+    "bazel_binaries",
+    dev_dependency = True,
+)
+bazel_binaries.download(version_file = "//:.bazelversion")
+bazel_binaries.download(version = "latest")
+bazel_binaries.download(version = "last_rc")
+use_repo(
+    bazel_binaries,
+    "bazel_binaries",
+    "bazel_binaries_bazelisk",
+    "build_bazel_bazel_.bazelversion",
+    "build_bazel_bazel_last_rc",
+    "build_bazel_bazel_latest",
+)

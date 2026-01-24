@@ -10,12 +10,21 @@
 # For more details about how to manually interact with this example, please see
 # the adjacent `MODULES.bazel` file.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+cc_library(
+    name = "example_lib",
+    srcs = [
+        "example_lib.cpp",
+        "example_lib.h",
+    ],
+    # We force static linking here so we can test compilation without performing
+    # a full link that is more expensive with runtimes on demand.
+    linkstatic = 1,
+)
 
 cc_binary(
     name = "example",
-    srcs = [
-        "example.cpp",
-        "example.h",
-    ],
+    srcs = ["example.cpp"],
+    deps = [":example_lib"],
 )

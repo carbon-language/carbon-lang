@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXAMPLES_BAZEL_EXAMPLE_H_
-#define CARBON_EXAMPLES_BAZEL_EXAMPLE_H_
+#include "example_lib.h"
 
-auto HelloWorld() -> void;
+#include <iostream>
 
-#endif  // CARBON_EXAMPLES_BAZEL_EXAMPLE_H_
+auto HelloWorld() -> void { std::cout << "Hello World!\n"; }

@@ -148,12 +148,14 @@ repos:
         # Exclusions are:
         # - p#### scripts because they're not tested or maintained.
         # - lit.cfg.py because it has multiple copies, breaking mypy.
+        # - `bazel_test_runner.py` which depends on Bazel-specific imports.
         # - Unit tests because they sometimes violate typing, such as by
         #   assigning a mock to a function.
         exclude: |
           (?x)^(
               proposals/(?!scripts/).*|
               .*/lit\.cfg\.py|
+              examples/bazel_test_runner\.py|
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
