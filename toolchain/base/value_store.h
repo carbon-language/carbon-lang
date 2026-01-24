@@ -148,7 +148,7 @@ class ValueStore
       return;
     }
     auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
-    chunks_.resize(final_chunk_index + 1);
+    chunks_.reserve(final_chunk_index + 1);
   }
 
   // Grows the ValueStore to `size`. Fills entries with `default_value`.
