@@ -236,6 +236,10 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
+  // Scan the steps looking for user-defined conversions. For now we just find
+  // and return the first such conversion function. We skip over standard
+  // conversions; we'll perform those using the Carbon rules as part of calling
+  // the C++ conversion function.
   for (const auto& step : init.steps()) {
     switch (step.Kind) {
       case clang::InitializationSequence::SK_UserConversion:
@@ -305,13 +309,13 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
 
-  // Handle `ImplicitAs`.
+  // Handle `ImplicitAs` and `As`.
   if (op.interface_name == CoreIdentifier::ImplicitAs ||
       op.interface_name == CoreIdentifier::As) {
     if (op.interface_args_ref.size() != 1 || arg_ids.size() != 1) {
       return SemIR::InstId::None;
     }
-    // The argument to `ImplicitAs` is the destination type.
+    // The argument is the destination type for both interfaces.
     auto dest_const_id =
         context.constant_values().Get(op.interface_args_ref[0]);
     auto dest_type_id =

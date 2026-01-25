@@ -125,7 +125,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // addable. See
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
-  // https://github.com/carbon-language/carbon-lang/push/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
   if (HasCppClassType(context, lhs_id) || HasCppClassType(context, rhs_id) ||
       llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
         return IsCppClassType(context, arg_id);
