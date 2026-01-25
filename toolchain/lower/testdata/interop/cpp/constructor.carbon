@@ -188,8 +188,8 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_COp:thunk.Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #3 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !26
-// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !27
+// CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -228,10 +228,11 @@ fn F() {
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 7, column: 10, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 7, column: 3, scope: !15)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Copy.Cpp", scope: null, file: !7, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !24)
-// CHECK:STDOUT: !24 = !{!25}
-// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !18)
-// CHECK:STDOUT: !26 = !DILocation(line: 0, scope: !23)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Copy.Cpp", scope: null, file: !24, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !25)
+// CHECK:STDOUT: !24 = !DIFile(filename: "./copy.h", directory: "")
+// CHECK:STDOUT: !25 = !{!26}
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !23, type: !18)
+// CHECK:STDOUT: !27 = !DILocation(line: 5, column: 3, scope: !23)
 // CHECK:STDOUT: ; ModuleID = 'call_c1_in_thunk.carbon'
 // CHECK:STDOUT: source_filename = "call_c1_in_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

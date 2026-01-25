@@ -1391,7 +1391,8 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
       return SemIR::NameId::CppDestructor;
     }
 
-    case clang::DeclarationName::CXXOperatorName: {
+    case clang::DeclarationName::CXXOperatorName:
+    case clang::DeclarationName::CXXConversionFunctionName: {
       return SemIR::NameId::CppOperator;
     }
 
@@ -1406,6 +1407,7 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
 // * Have not been imported before.
 // * Be of supported type (ignoring parameters).
 static auto ImportFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::ImportIRInstId import_ir_inst_id,
                            clang::FunctionDecl* clang_decl, int num_params)
     -> std::optional<SemIR::FunctionId> {
   context.scope_stack().PushForDeclName();
@@ -1426,7 +1428,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
   auto decl_id = AddPlaceholderImportedInstInNoBlock(
-      context, SemIR::LocIdAndInst::NoLoc(function_decl));
+      context,
+      MakeImportedLocIdAndInst(context, import_ir_inst_id, function_decl));
 
   auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
@@ -1506,10 +1509,13 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  auto import_ir_inst_id =
+      AddImportIRInst(context.sem_ir(), clang_decl->getLocation());
+
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
-
-  auto function_id = ImportFunction(context, loc_id, clang_decl, num_params);
+  auto function_id = ImportFunction(context, loc_id, import_ir_inst_id,
+                                    clang_decl, num_params);
   if (!function_id) {
     MarkFailedDecl(context, key);
     return SemIR::ErrorInst::InstId;
@@ -1526,9 +1532,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
     if (clang::FunctionDecl* thunk_clang_decl =
             BuildCppThunk(context, function_info)) {
-      if (auto thunk_function_id =
-              ImportFunction(context, loc_id, thunk_clang_decl,
-                             thunk_clang_decl->getNumParams())) {
+      if (auto thunk_function_id = ImportFunction(
+              context, loc_id, import_ir_inst_id, thunk_clang_decl,
+              thunk_clang_decl->getNumParams())) {
         SemIR::InstId thunk_function_decl_id =
             context.functions().Get(*thunk_function_id).first_owning_decl_id;
         function_info.SetHasCppThunk(thunk_function_decl_id);
