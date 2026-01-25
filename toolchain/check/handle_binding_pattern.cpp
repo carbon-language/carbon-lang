@@ -366,13 +366,6 @@ auto HandleParseNode(Context& context,
     // add a proper diagnostic.
     context.TODO(node_id, "_ used as associated constant name");
   }
-  cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
-                      "associated constant has incomplete type {0}",
-                      SemIR::TypeId);
-    return context.emitter().Build(
-        type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
-  });
 
   SemIR::AssociatedConstantDecl assoc_const_decl = {
       .type_id = cast_type_id,

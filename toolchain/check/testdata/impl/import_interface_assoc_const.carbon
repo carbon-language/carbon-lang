@@ -218,7 +218,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %NonType.type: type = facet_type <@NonType> [concrete]
 // CHECK:STDOUT:   %Self.13f: %NonType.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %NonType.assoc_type: type = assoc_entity_type @NonType [concrete]
 // CHECK:STDOUT:   %assoc0.b16: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete]
 // CHECK:STDOUT: }
@@ -272,7 +272,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType {
 // CHECK:STDOUT:   %Self: %NonType.type = symbolic_binding Self, 0 [symbolic = constants.%Self.13f]
-// CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [concrete] {
+// CHECK:STDOUT:   %Y: %struct_type.a = assoc_const_decl @Y [concrete] {
 // CHECK:STDOUT:     %assoc0: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete = constants.%assoc0.b16]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -301,7 +301,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Y(@NonType.%Self: %NonType.type) {
-// CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
+// CHECK:STDOUT:   assoc_const Y:! %struct_type.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.ab9) {}

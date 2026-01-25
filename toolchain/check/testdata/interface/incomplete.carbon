@@ -12,19 +12,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/incomplete.carbon
 
-// --- fail_incomplete_type.carbon
+// --- incomplete_type.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
 interface I {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `C` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let T:! C;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR:
   let T:! C;
 }
 
@@ -72,7 +65,7 @@ interface A(T:! type) {
   extend require impls A({});
 }
 
-// CHECK:STDOUT: --- fail_incomplete_type.carbon
+// CHECK:STDOUT: --- incomplete_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -93,7 +86,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T: <error> = assoc_const_decl @T [concrete] {
+// CHECK:STDOUT:   %T: %C = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -107,7 +100,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! <error>;
+// CHECK:STDOUT:   assoc_const T:! %C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
