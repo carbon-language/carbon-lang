@@ -49,7 +49,6 @@ TEST(ValueStoreReserveTest, ReserveOverestimate) {
   }
 
   EXPECT_EQ(store.size(), UseCount);
-  // We can't easily check capacity/reserved state as it's private, but we ensure no crash.
 }
 
 }  // namespace

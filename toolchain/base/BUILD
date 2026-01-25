@@ -23,6 +23,31 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "value_store_reserve_test",
+    size = "small",
+    srcs = ["value_store_reserve_test.cpp"],
+    deps = [
+        ":value_ids",
+        ":value_store",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "value_store_benchmark",
+    testonly = 1,
+    srcs = ["value_store_benchmark.cpp"],
+    deps = [
+        ":value_ids",
+        ":value_store",
+        "@com_github_google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "canonical_value_store",
     hdrs = ["canonical_value_store.h"],
@@ -244,27 +269,15 @@ cc_library(
 )
 
 cc_test(
-    name = "value_store_reserve_test",
+    name = "value_store_test",
     size = "small",
-    srcs = ["value_store_reserve_test.cpp"],
+    srcs = ["value_store_test.cpp"],
     deps = [
         ":value_ids",
         ":value_store",
         "//common:raw_string_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
-    ],
-)
-
-cc_binary(
-    name = "value_store_benchmark",
-    testonly = 1,
-    srcs = ["value_store_benchmark.cpp"],
-    deps = [
-        ":value_ids",
-        ":value_store",
-        "@com_github_google_benchmark//:benchmark",
-        "@llvm-project//llvm:Support",
     ],
 )
 
