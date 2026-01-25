@@ -80,7 +80,23 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
 
-  insts_.Reserve(SingletonInstKinds.size());
+  // Reserve space for instructions and other stores based on the parse tree size.
+  // This is a heuristic, but since `Reserve` is lazy, it's safe to overestimate.
+  // These ratios are based on typical Carbon code.
+  if (parse_tree_) {
+    int32_t parse_size = parse_tree_->size();
+    insts_.Reserve(std::max<int32_t>(SingletonInstKinds.size(), parse_size));
+    // Types are typically fewer than instructions.
+    types_.Reserve(parse_size / 4);
+    // Functions are even fewer.
+    functions_.Reserve(parse_size / 20);
+    // Constants might be numerous.
+    constants_.Reserve(parse_size / 10);
+    // Instruction blocks are roughly one per block/statement sequence.
+    inst_blocks_.Reserve(parse_size / 5);
+  } else {
+    insts_.Reserve(SingletonInstKinds.size());
+  }
   for (auto kind : SingletonInstKinds) {
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
