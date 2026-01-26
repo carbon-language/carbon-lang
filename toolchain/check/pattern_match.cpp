@@ -245,8 +245,16 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::AnyBindingPattern binding_pattern,
                                       MatchContext::WorkItem entry) -> void {
   if (kind_ == MatchKind::Caller) {
-    CARBON_CHECK(binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind,
-                 "Found runtime binding pattern during caller pattern match");
+    // TODO: C++ interop uses a `_: {}` pattern with no parameter to model list
+    // initialization from an empty struct. Once we support struct patterns, we
+    // can use an empty struct pattern there and stop allowing `_` patterns
+    // here.
+    CARBON_CHECK(
+        binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind ||
+            context.entity_names()
+                    .Get(binding_pattern.entity_name_id)
+                    .name_id == SemIR::NameId::Underscore,
+        "Found named runtime binding pattern during caller pattern match");
     return;
   }
   // We're logically consuming this map entry, so we invalidate it in order
@@ -255,10 +263,9 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       std::exchange(context.bind_name_map().Lookup(entry.pattern_id).value(),
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
-  // bind_name_id doesn't have a value in the case of an unused binding pattern,
-  // but type_expr_region_id should always be populated.
-  CARBON_CHECK(type_expr_region_id.has_value());
-  InsertHere(context, type_expr_region_id);
+  if (type_expr_region_id.has_value()) {
+    InsertHere(context, type_expr_region_id);
+  }
   auto value_id = SemIR::InstId::None;
   if (kind_ == MatchKind::Local) {
     auto conversion_kind = [&binding_pattern]() -> ConversionTarget::Kind {
