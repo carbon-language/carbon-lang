@@ -48,6 +48,13 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "value_store_benchmark_comparative",
+    testonly = 1,
+    srcs = ["value_store_benchmark_comparative.cpp"],
+    deps = [],
+)
+
 cc_library(
     name = "canonical_value_store",
     hdrs = ["canonical_value_store.h"],
