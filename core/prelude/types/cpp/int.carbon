@@ -195,12 +195,14 @@ impl forall [T:! ImplicitAs(CppCompat.Long32)] CppCompat.Long32 as OrderedWith(T
   fn GreaterOrEquivalent[self: Self](other: Self) -> bool = "int.greater_eq";
 }
 
-impl forall [T:! ImplicitAs(CppCompat.LongLong64)] CppCompat.LongLong64 as EqWith(T) {
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as EqWith(T) {
   fn Equal[self: Self](other: Self) -> bool = "int.eq";
   fn NotEqual[self: Self](other: Self) -> bool = "int.neq";
 }
 
-impl forall [T:! ImplicitAs(CppCompat.LongLong64)] CppCompat.LongLong64 as OrderedWith(T) {
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as OrderedWith(T) {
   fn Less[self: Self](other: Self) -> bool = "int.less";
   fn LessOrEquivalent[self: Self](other: Self) -> bool = "int.less_eq";
   fn Greater[self: Self](other: Self) -> bool = "int.greater";
@@ -221,16 +223,24 @@ impl forall [T:! ImplicitAs(CppCompat.Long32)] T as OrderedWith(CppCompat.Long32
   fn GreaterOrEquivalent[self: CppCompat.Long32](other: CppCompat.Long32) -> bool = "int.greater_eq";
 }
 
-impl forall [T:! ImplicitAs(CppCompat.LongLong64)] T as EqWith(CppCompat.LongLong64) {
-  fn Equal[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.eq";
-  fn NotEqual[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.neq";
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as EqWith(CppCompat.LongLong64) {
+  fn Equal[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.eq";
+  fn NotEqual[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.neq";
 }
 
-impl forall [T:! ImplicitAs(CppCompat.LongLong64)] T as OrderedWith(CppCompat.LongLong64) {
-  fn Less[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.less";
-  fn LessOrEquivalent[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.less_eq";
-  fn Greater[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.greater";
-  fn GreaterOrEquivalent[self: CppCompat.LongLong64](other: CppCompat.LongLong64) -> bool = "int.greater_eq";
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as OrderedWith(CppCompat.LongLong64) {
+  fn Less[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.less";
+  fn LessOrEquivalent[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.less_eq";
+  fn Greater[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.greater";
+  fn GreaterOrEquivalent[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> bool = "int.greater_eq";
 }
 
 // TODO: Comparisons for ULong32, ULongLong64.
