@@ -51,5 +51,29 @@ TEST(ValueStoreReserveTest, ReserveOverestimate) {
   EXPECT_EQ(store.size(), UseCount);
 }
 
+TEST(ValueStoreReserveTest, ReserveZero) {
+  ValueStore<RealId, Real> store;
+  store.Reserve(0);
+  EXPECT_EQ(store.size(), 0);
+
+  // Add one to verify it works after Reserve(0)
+  Real r{.mantissa = llvm::APInt(64, 1), .exponent = llvm::APInt(64, 0), .is_decimal = true};
+  store.Add(r);
+  EXPECT_EQ(store.size(), 1);
+}
+
+TEST(ValueStoreReserveTest, ReserveUnderestimate) {
+  ValueStore<RealId, Real> store;
+  // Reserve less than needed
+  store.Reserve(10);
+
+  for (int32_t i = 0; i < 20; ++i) {
+    Real r{.mantissa = llvm::APInt(64, i), .exponent = llvm::APInt(64, 0), .is_decimal = true};
+    store.Add(r);
+  }
+
+  EXPECT_EQ(store.size(), 20);
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

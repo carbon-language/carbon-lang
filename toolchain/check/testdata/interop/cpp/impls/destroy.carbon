@@ -141,19 +141,25 @@ fn DeletedDestroy() {
 }
 
 fn PrivateDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var a: Cpp.PrivateDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-26]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~PrivateDestructor();
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var a: Cpp.PrivateDestructor = {};
 }
 
 fn ProtectedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var a: Cpp.ProtectedDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-38]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~ProtectedDestructor();
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var a: Cpp.ProtectedDestructor = {};
 }

@@ -50,6 +50,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000000}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000001}
 // CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000002}
+// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000003}
+// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000004}
 // CHECK:STDOUT:   clang_decls:
 // CHECK:STDOUT:     clang_decl_id60000000: {key: "<translation unit>", inst_id: inst60000011}
 // CHECK:STDOUT:     clang_decl_id60000001: {key: "struct X {}", inst_id: inst60000014}

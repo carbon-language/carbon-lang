@@ -40,10 +40,10 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                              op_name_id);
 }
 
-// Returns whether the instruction is a C++ class.
+// Returns whether the instruction is a C++ class type. Assumes the argument is
+// in canonical form and does not look through the constant value.
 static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-      context.types().GetInstId(context.insts().Get(inst_id).type_id()));
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(inst_id);
   if (!class_type) {
     // Not a class.
     return false;
@@ -53,6 +53,12 @@ static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
       context.classes().Get(class_type->class_id).scope_id;
   return class_scope_id.has_value() &&
          context.name_scopes().Get(class_scope_id).is_cpp_scope();
+}
+
+// Returns whether the instruction is a value of C++ class type.
+static auto HasCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
+  return IsCppClassType(context, context.types().GetInstId(
+                                     context.insts().Get(inst_id).type_id()));
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -70,7 +76,10 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // the C++ operator.
   // TODO: Change impl lookup instead. See
   // https://github.com/carbon-language/carbon-lang/blob/db0a00d713015436844c55e7ac190a0f95556499/toolchain/check/operator.cpp#L76
-  if (IsCppClassType(context, operand_id)) {
+  if (HasCppClassType(context, operand_id) ||
+      llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
+        return IsCppClassType(context, arg_id);
+      })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {operand_id});
 
     // If C++ operator lookup found a non-method operator, call it with one call
@@ -117,7 +126,10 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
-  if (IsCppClassType(context, lhs_id) || IsCppClassType(context, rhs_id)) {
+  if (HasCppClassType(context, lhs_id) || HasCppClassType(context, rhs_id) ||
+      llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
+        return IsCppClassType(context, arg_id);
+      })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
 
     // If C++ operator lookup found a non-method operator, call it with two call
