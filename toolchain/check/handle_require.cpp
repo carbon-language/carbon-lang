@@ -60,14 +60,10 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
     return true;
   }
 
-  auto scope_id = context.scope_stack().PeekNameScopeId();
   auto lookup_result =
-      LookupNameInExactScope(context, node_id, SemIR::NameId::SelfType,
-                             scope_id, context.name_scopes().Get(scope_id),
-                             /*is_being_declared=*/false);
-  CARBON_CHECK(lookup_result.is_found());
-
-  auto self_inst_id = lookup_result.target_inst_id();
+      LookupUnqualifiedName(context, node_id, SemIR::NameId::SelfType,
+                            /*required=*/true);
+  auto self_inst_id = lookup_result.scope_result.target_inst_id();
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
   if (self_type_id == SemIR::ErrorInst::TypeId) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);

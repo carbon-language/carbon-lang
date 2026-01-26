@@ -194,6 +194,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_26.1: @HasF.%HasF.type (%HasF.type.8a4) = symbolic_binding Self, 1 [symbolic = %Self.loc4_26.2 (constants.%Self.c1f)]
+// CHECK:STDOUT:     interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %HasF.F.decl: @HasF.%HasF.F.type (%HasF.F.type.607) = fn_decl @HasF.F [symbolic = @HasF.%HasF.F (constants.%HasF.F.39f)] {
 // CHECK:STDOUT:       %return.patt: @HasF.F.%pattern_type (%pattern_type.51d1c4.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @HasF.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern %return.patt, call_param0 [concrete]
@@ -353,6 +356,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%T.67d, constants.%Self.c1f) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%T.67d, constants.%Self.c1f) {
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %.loc5_13.1 => constants.%.c6c
@@ -459,6 +464,9 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.1ab3e4.1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.fdb544.1)]
+// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.F.decl: @I.%I.F.type (%I.F.type.93703d.1) = fn_decl @I.F [symbolic = @I.%I.F (constants.%I.F.a37974.1)] {
 // CHECK:STDOUT:       %self.patt: @I.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @I.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -586,6 +594,8 @@ class X(U:! type) {
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb544.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%T, constants.%Self.fdb544.1) {
 // CHECK:STDOUT:   %T => constants.%T

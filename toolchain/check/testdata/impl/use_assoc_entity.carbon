@@ -508,6 +508,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.d5c]
 // CHECK:STDOUT:   }
@@ -679,6 +682,8 @@ fn F() {
 // CHECK:STDOUT:   return %.loc22_44.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
@@ -837,6 +842,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.d5c]
 // CHECK:STDOUT:   }
@@ -949,6 +957,8 @@ fn F() {
 // CHECK:STDOUT:   %D.as.J.impl.F.call: init %i32 = call %impl.elem1(%.loc15_18.2)
 // CHECK:STDOUT:   return %D.as.J.impl.F.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
@@ -1181,6 +1191,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.d5c]
 // CHECK:STDOUT:   }
@@ -1540,6 +1553,8 @@ fn F() {
 // CHECK:STDOUT:   return %GenericCallF.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
@@ -1746,6 +1761,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.Op.decl: %I.Op.type = fn_decl @I.Op [concrete = constants.%I.Op] {
 // CHECK:STDOUT:     %self.patt: @I.Op.%pattern_type (%pattern_type.fa0) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.Op.%pattern_type (%pattern_type.fa0) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1787,6 +1805,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: %facet_type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.918]
 // CHECK:STDOUT:   }
@@ -1920,12 +1941,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: @GenericResult.%as_type.loc12_35.1 (%as_type.baf)) = "no_op";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.Op(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.d31
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fa0
 // CHECK:STDOUT:   %.loc4_33.1 => constants.%.1fc
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
@@ -2060,6 +2085,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
@@ -2148,6 +2176,8 @@ fn F() {
 // CHECK:STDOUT:     return %J.G.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self) {}
 // CHECK:STDOUT:
@@ -2303,6 +2333,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.d5c]
 // CHECK:STDOUT:   }
@@ -2380,6 +2413,8 @@ fn F() {
 // CHECK:STDOUT:     return %J.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
@@ -2469,6 +2504,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete = constants.%assoc0.d5c]
 // CHECK:STDOUT:   }
@@ -2594,6 +2632,8 @@ fn F() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
@@ -2654,6 +2694,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %J.F.decl: %J.F.type = fn_decl @J.F [concrete = constants.%J.F] {} {}
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, %J.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -2712,6 +2755,8 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%J.facet) {}
@@ -2762,6 +2807,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %J.F.decl: %J.F.type = fn_decl @J.F [concrete = constants.%J.F] {
 // CHECK:STDOUT:     %self.patt: @J.F.%pattern_type (%pattern_type.832) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @J.F.%pattern_type (%pattern_type.832) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -2854,6 +2902,8 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
@@ -2912,6 +2962,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%X [concrete = constants.%assoc0.cab]
 // CHECK:STDOUT:   }
@@ -2974,6 +3027,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Self.8a1) {}
 // CHECK:STDOUT:
@@ -3075,6 +3130,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @J2 [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %U2: type = assoc_const_decl @U2 [concrete] {
 // CHECK:STDOUT:     %assoc0: %J2.assoc_type = assoc_entity element0, @J2.%U2 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
@@ -3261,6 +3319,8 @@ fn F() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J2(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @U2(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J2.F(constants.%Self) {
@@ -3363,6 +3423,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
 // CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self.44d]
+// CHECK:STDOUT:   interface_with_self_decl @K [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %V: type = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.%V [concrete = constants.%assoc0.d6c]
 // CHECK:STDOUT:   }
@@ -3500,6 +3563,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.x) = "no_op";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @K(constants.%Self.44d) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%Self.44d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.F(constants.%Self.44d) {
@@ -3592,6 +3657,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @M {
 // CHECK:STDOUT:   %Self: %M.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @M [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z: %struct_type.b.347 = assoc_const_decl @Z [concrete] {
 // CHECK:STDOUT:     %assoc0: %M.assoc_type = assoc_entity element0, @M.%Z [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
@@ -3660,6 +3728,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_27: init %empty_struct_type = converted %.loc10_25.1, %.loc10_25.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc10_27
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @M(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self) {}
 // CHECK:STDOUT:
@@ -3801,6 +3871,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @M {
 // CHECK:STDOUT:   %Self: %M.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0c7]
+// CHECK:STDOUT:   interface_with_self_decl @M [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z: %struct_type.b.86f = assoc_const_decl @Z [concrete] {
 // CHECK:STDOUT:     %assoc0: %M.assoc_type = assoc_entity element0, @M.%Z [concrete = constants.%assoc0.5f4]
 // CHECK:STDOUT:   }
@@ -3920,6 +3993,8 @@ fn F() {
 // CHECK:STDOUT: specific @C(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc3_9.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @M(constants.%Self.0c7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.0c7) {}
 // CHECK:STDOUT:
@@ -4087,6 +4162,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%N [concrete = constants.%assoc0.607]
 // CHECK:STDOUT:   }
@@ -4200,6 +4278,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_62: init %array_type.c9b = converted %.loc9_61.1, %.loc9_61.6 [concrete = constants.%array]
 // CHECK:STDOUT:   return %.loc9_62 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%Self.ab9) {}
 // CHECK:STDOUT:
@@ -4325,6 +4405,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:     %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%X [concrete = constants.%assoc0.bdb]
 // CHECK:STDOUT:   }
@@ -4411,6 +4494,8 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %C.302) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Self.c59) {}
 // CHECK:STDOUT:

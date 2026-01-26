@@ -83,6 +83,9 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0.e06]
 // CHECK:STDOUT:     %int_32.loc20_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -124,6 +127,8 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const N:! %i32 = %.loc25_27.2;
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
 // CHECK:STDOUT:

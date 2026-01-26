@@ -46,6 +46,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
+// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -56,6 +57,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
+// CHECK:STDOUT:   interface_with_self_decl @ForwardDeclared [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %ForwardDeclared.F.decl: %ForwardDeclared.F.type = fn_decl @ForwardDeclared.F [concrete = constants.%ForwardDeclared.F] {} {}
 // CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, %ForwardDeclared.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -70,6 +74,10 @@ interface ForwardDeclared {
 // CHECK:STDOUT: generic fn @ForwardDeclared.F(@ForwardDeclared.%Self: %ForwardDeclared.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.8e7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.F(constants.%Self.8e7) {}
 // CHECK:STDOUT:

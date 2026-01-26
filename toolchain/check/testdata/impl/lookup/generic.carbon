@@ -201,6 +201,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasF.F.decl: %HasF.F.type = fn_decl @HasF.F [concrete = constants.%HasF.F] {
 // CHECK:STDOUT:     %self.patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -282,6 +285,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method.loc13_14(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -435,6 +440,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = constants.%Self.f09]
+// CHECK:STDOUT:   interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasF.F.decl: %HasF.F.type = fn_decl @HasF.F [concrete = constants.%HasF.F] {
 // CHECK:STDOUT:     %self.patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -548,6 +556,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %ptr.as.HasF.impl.F.call: init %ptr.c28 = call %bound_method.loc13_21(%x.ref)
 // CHECK:STDOUT:   return %ptr.as.HasF.impl.F.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%Self.f09) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%Self.f09) {
 // CHECK:STDOUT:   %Self => constants.%Self.f09
@@ -695,6 +705,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasF.F.decl: %HasF.F.type = fn_decl @HasF.F [concrete = constants.%HasF.F] {
 // CHECK:STDOUT:     %self.patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -792,6 +805,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method.loc15_14(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -952,6 +967,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_26.1: @HasF.%HasF.type (%HasF.type.8a4) = symbolic_binding Self, 1 [symbolic = %Self.loc4_26.2 (constants.%Self.c1f)]
+// CHECK:STDOUT:     interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %HasF.F.decl: @HasF.%HasF.F.type (%HasF.F.type.607) = fn_decl @HasF.F [symbolic = @HasF.%HasF.F (constants.%HasF.F.39f)] {
 // CHECK:STDOUT:       %self.patt: @HasF.F.%pattern_type (%pattern_type.969) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HasF.F.%pattern_type (%pattern_type.969) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1051,6 +1069,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.assoc_type => constants.%HasF.assoc_type.196
 // CHECK:STDOUT:   %assoc0.loc5_21.2 => constants.%assoc0.303
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%T, constants.%Self.c1f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%T, constants.%Self.c1f) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1177,6 +1197,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %HasF.F.decl: %HasF.F.type = fn_decl @HasF.F [concrete = constants.%HasF.F] {
 // CHECK:STDOUT:     %self.patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @HasF.F.%pattern_type (%pattern_type.d0b) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1254,6 +1277,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -1372,6 +1397,9 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_26.1: @HasF.%HasF.type (%HasF.type.8a4) = symbolic_binding Self, 1 [symbolic = %Self.loc4_26.2 (constants.%Self.c1f)]
+// CHECK:STDOUT:     interface_with_self_decl @HasF [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %HasF.F.decl: @HasF.%HasF.F.type (%HasF.F.type.607) = fn_decl @HasF.F [symbolic = @HasF.%HasF.F (constants.%HasF.F.39f)] {
 // CHECK:STDOUT:       %self.patt: @HasF.F.%pattern_type (%pattern_type.969) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HasF.F.%pattern_type (%pattern_type.969) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1485,6 +1513,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.assoc_type => constants.%HasF.assoc_type.196
 // CHECK:STDOUT:   %assoc0.loc5_21.2 => constants.%assoc0.303
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF(constants.%T, constants.%Self.c1f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.F(constants.%T, constants.%Self.c1f) {
 // CHECK:STDOUT:   %T => constants.%T

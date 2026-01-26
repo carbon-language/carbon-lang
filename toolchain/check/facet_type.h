@@ -15,9 +15,6 @@ namespace Carbon::Check {
 
 // Create a FacetType typed instruction object consisting of a interface. The
 // `specific_id` specifies arguments in the case the interface is generic.
-//
-// The resulting FacetType may contain multiple interfaces if the named
-// interface contains `require` declarations.
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
 
@@ -83,6 +80,11 @@ auto GetEmptyFacetType(Context& context) -> SemIR::TypeId;
 // type. Returns a constant value, whose instruction payload is a FacetValue.
 auto GetConstantFacetValueForType(Context& context,
                                   SemIR::TypeInstId type_inst_id)
+    -> SemIR::ConstantId;
+
+auto GetConstantFacetValueForTypeAndInterface(
+    Context& context, SemIR::TypeInstId type_inst_id,
+    SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check

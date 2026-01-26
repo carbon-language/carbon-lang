@@ -94,6 +94,9 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Simple [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Simple.G.decl: %Simple.G.type = fn_decl @Simple.G [concrete = constants.%Simple.G] {
 // CHECK:STDOUT:     %self.patt: @Simple.G.%pattern_type (%pattern_type.5e9) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @Simple.G.%pattern_type (%pattern_type.5e9) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -172,6 +175,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

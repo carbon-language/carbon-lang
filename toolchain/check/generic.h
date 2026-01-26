@@ -125,6 +125,20 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
 auto DiagnoseIfGenericMissingExplicitParameters(
     Context& context, const SemIR::EntityWithParamsBase& entity_base) -> void;
 
+// FIXME: Docs
+//
+// There can be no outer generic, but still an inner generic. In that case
+// there'd be no outer specific either.
+//
+// The generic-without-self is required to have its definition constructed,
+// which means the generic entity is complete.
+auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
+                               SemIR::GenericId generic_without_self_id,
+                               SemIR::GenericId generic_with_self_id,
+                               SemIR::SpecificId specific_without_self_id,
+                               SemIR::ConstantId self_facet)
+    -> SemIR::SpecificId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

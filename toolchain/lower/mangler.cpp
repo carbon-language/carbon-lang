@@ -81,9 +81,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         auto impl_target = identified.impl_as_target_interface();
         const auto& interface =
             sem_ir().interfaces().Get(impl_target.interface_id);
-        names_to_render.push_back({.name_scope_id = interface.scope_id,
-                                   .specific_id = impl_target.specific_id,
-                                   .prefix = ':'});
+        names_to_render.push_back(
+            // We mangle names in an interface without `Self` in the specific
+            // since it would just add noise and `Self` is not part of how you
+            // name the entities syntactically.
+            {.name_scope_id = interface.scope_without_self_id,
+             .specific_id = impl_target.specific_id,
+             .prefix = ':'});
 
         auto self_const_inst_id =
             constant_values().GetConstantInstId(impl.self_id);

@@ -240,6 +240,9 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_34.1: @Generic.%Generic.type (%Generic.type.03dff7.1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.15d2d5.1)]
+// CHECK:STDOUT:     interface_with_self_decl @Generic [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Generic.F.decl: @Generic.%Generic.F.type (%Generic.F.type.8aacdf.1) = fn_decl @Generic.F [symbolic = @Generic.%Generic.F (constants.%Generic.F.673760.1)] {} {}
 // CHECK:STDOUT:     %assoc0.loc5_9.1: @Generic.%Generic.assoc_type (%Generic.assoc_type.22afda.1) = assoc_entity element0, %Generic.F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0.6ba576.1)]
 // CHECK:STDOUT:
@@ -357,6 +360,8 @@ fn B() {
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_19.1 => constants.%Scalar
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%Scalar, constants.%Self.15d2d5.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.F(constants.%Scalar, constants.%Self.15d2d5.1) {}
 // CHECK:STDOUT:
@@ -541,6 +546,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_33.1: @I.%I.type (%I.type.54f) = symbolic_binding Self, 2 [symbolic = %Self.loc3_33.2 (constants.%Self.8fa)]
+// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_33.1
@@ -616,6 +622,8 @@ fn B() {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%V
 // CHECK:STDOUT:   %W.loc3_23.1 => constants.%W
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%V, constants.%W, constants.%Self.8fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.67d, constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%T.67d
@@ -781,6 +789,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_33.1: @I.%I.type (%I.type.54f) = symbolic_binding Self, 2 [symbolic = %Self.loc3_33.2 (constants.%Self.8fa)]
+// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_33.1
@@ -849,6 +858,8 @@ fn B() {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%V
 // CHECK:STDOUT:   %W.loc3_23.1 => constants.%W
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%V, constants.%W, constants.%Self.8fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.67d, constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%T.67d
@@ -980,6 +991,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1053,6 +1065,8 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %C.9f1) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc5_9.1 => constants.%V

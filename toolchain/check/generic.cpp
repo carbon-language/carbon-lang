@@ -739,4 +739,46 @@ auto DiagnoseIfGenericMissingExplicitParameters(
                          GenericMissingExplicitParameters);
 }
 
+auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
+                               SemIR::GenericId generic_without_self_id,
+                               SemIR::GenericId generic_with_self_id,
+                               SemIR::SpecificId specific_without_self_id,
+                               SemIR::ConstantId self_facet)
+    -> SemIR::SpecificId {
+  CARBON_CHECK(generic_without_self_id.has_value() ==
+               specific_without_self_id.has_value());
+  if (generic_without_self_id.has_value()) {
+    // If there's an outer generic, then the inner and outer generics are for
+    // the same decl, and the specific is for the correct generic.
+    CARBON_CHECK(generic_with_self_id.has_value());
+    CARBON_CHECK(context.generics().Get(generic_without_self_id).decl_id ==
+                 context.generics().Get(generic_with_self_id).decl_id);
+    CARBON_CHECK(context.specifics().Get(specific_without_self_id).generic_id ==
+                 generic_without_self_id);
+  }
+
+  auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+      context.insts().Get(self_facet_inst_id).type_id()));
+
+  auto outer_args_id =
+      context.specifics().GetArgsOrEmpty(specific_without_self_id);
+  auto outer_args = context.inst_blocks().Get(outer_args_id);
+
+  llvm::SmallVector<SemIR::InstId> args;
+  args.reserve(outer_args.size() + 1);
+  llvm::append_range(args, outer_args);
+  args.push_back(self_facet_inst_id);
+
+  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
+
+  bool resolved = ResolveSpecificDefinition(context, loc_id, specific_id);
+  CARBON_CHECK(
+      resolved,
+      "MakeSpecificWithInnerSelf() called before the generic entity is "
+      "complete");
+
+  return specific_id;
+}
+
 }  // namespace Carbon::Check

@@ -78,6 +78,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_38.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.8bc) = symbolic_binding Self, 1 [symbolic = %Self.loc15_38.2 (constants.%Self)]
+// CHECK:STDOUT:     interface_with_self_decl @GenericInterface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %GenericInterface.F.decl: @GenericInterface.%GenericInterface.F.type (%GenericInterface.F.type) = fn_decl @GenericInterface.F [symbolic = @GenericInterface.%GenericInterface.F (constants.%GenericInterface.F)] {
 // CHECK:STDOUT:       %x.patt: @GenericInterface.F.%pattern_type (%pattern_type.51d) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:       %x.param_patt: @GenericInterface.F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt, call_param0 [concrete]
@@ -169,6 +172,8 @@ class C {
 // CHECK:STDOUT: specific @GenericInterface(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_28.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericInterface(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface.F(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T

@@ -137,6 +137,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic = constants.%Self.f7b]
+// CHECK:STDOUT:   interface_with_self_decl @UseSelf [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %UseSelf.F.decl: %UseSelf.F.type = fn_decl @UseSelf.F [concrete = constants.%UseSelf.F] {
 // CHECK:STDOUT:     %self.patt: @UseSelf.F.%pattern_type (%pattern_type.431) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @UseSelf.F.%pattern_type (%pattern_type.431) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -178,6 +181,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
 // CHECK:STDOUT:   %Self: %SelfNested.type = symbolic_binding Self, 0 [symbolic = constants.%Self.aed]
+// CHECK:STDOUT:   interface_with_self_decl @SelfNested [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %SelfNested.F.decl: %SelfNested.F.type = fn_decl @SelfNested.F [concrete = constants.%SelfNested.F] {
 // CHECK:STDOUT:     %x.patt: @SelfNested.F.%pattern_type (%pattern_type.fb7) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @SelfNested.F.%pattern_type (%pattern_type.fb7) = value_param_pattern %x.patt, call_param0 [concrete]
@@ -376,6 +382,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.as.SelfNested.impl.F(%x.param: %tuple.type.e0d);
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @UseSelf(constants.%Self.f7b) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.F(constants.%Self.f7b) {
 // CHECK:STDOUT:   %Self => constants.%Self.f7b
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.e3d
@@ -396,6 +404,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9c8
 // CHECK:STDOUT:   %.loc16_32.1 => constants.%.802
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @SelfNested(constants.%Self.aed) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SelfNested.F(constants.%Self.aed) {
 // CHECK:STDOUT:   %Self => constants.%Self.aed

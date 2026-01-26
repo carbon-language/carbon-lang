@@ -403,16 +403,28 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
 
   llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  if (interface_info.scope_id.has_value()) {
+  if (interface_info.is_complete()) {
     out_ << ' ';
     OpenBrace();
-    FormatCodeBlock(interface_info.body_block_id);
+    FormatCodeBlock(interface_info.body_block_without_self_id);
 
-    // Always include the !members label because we always list the witness in
-    // this section.
+    bool body_block_empty =
+        sem_ir_->inst_blocks()
+            .GetOrEmpty(interface_info.body_block_with_self_id)
+            .empty();
+    if (!body_block_empty) {
+      IndentLabel();
+      out_ << "!with Self:\n";
+      FormatCodeBlock(interface_info.body_block_with_self_id);
+    }
+
+    // Always include the !members without self label because we always list the
+    // witness in this section.
     IndentLabel();
     out_ << "!members:\n";
-    FormatNameScope(interface_info.scope_id);
+
+    FormatNameScope(interface_info.scope_without_self_id);
+    FormatNameScope(interface_info.scope_with_self_id);
 
     Indent();
     out_ << "witness = ";

@@ -543,6 +543,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc5_19.1: @Inner.%Inner.type (%Inner.type.6ef) = symbolic_binding Self, 1 [symbolic = %Self.loc5_19.2 (constants.%Self.d55)]
+// CHECK:STDOUT:     interface_with_self_decl @Inner [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.31e) = fn_decl @Inner.F [symbolic = @Inner.%Inner.F (constants.%Inner.F.3c5)] {
 // CHECK:STDOUT:       %self.patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.72a) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.72a) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -813,6 +816,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.be2
 // CHECK:STDOUT:   %assoc0.loc6_28.2 => constants.%assoc0.0a9
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%T, constants.%Self.d55) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.F(constants.%T, constants.%Self.d55) {
 // CHECK:STDOUT:   %T => constants.%T

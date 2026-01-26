@@ -99,6 +99,9 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_23.1: @I.%I.type (%I.type.1ab) = symbolic_binding Self, 1 [symbolic = %Self.loc15_23.2 (constants.%Self.fdb)]
+// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.F.decl: @I.%I.F.type (%I.F.type.937) = fn_decl @I.F [symbolic = @I.%I.F (constants.%I.F.a37)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %return.patt: @I.F.%pattern_type (%pattern_type.62e) = return_slot_pattern [concrete]
@@ -172,6 +175,8 @@ fn H() {
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.76c
 // CHECK:STDOUT:   %assoc0.loc16_22.2 => constants.%assoc0.6a6
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%T, constants.%Self.fdb, constants.%U) {
 // CHECK:STDOUT:   %U.loc16_8.1 => constants.%U

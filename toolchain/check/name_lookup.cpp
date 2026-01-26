@@ -337,7 +337,9 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       // Name lookup into "extend" constraints but not "self impls" constraints.
       for (const auto& extend : facet_type_info.extend_constraints) {
         auto& interface = context.interfaces().Get(extend.interface_id);
-        scopes->push_back({.name_scope_id = interface.scope_id,
+        // FIXME: Change to scope_with_self_id when the entities in interface
+        // move there.
+        scopes->push_back({.name_scope_id = interface.scope_without_self_id,
                            .specific_id = extend.specific_id,
                            .self_const_id = self_type_const_id});
       }

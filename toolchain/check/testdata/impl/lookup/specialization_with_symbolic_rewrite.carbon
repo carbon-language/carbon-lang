@@ -252,6 +252,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.822)]
+// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.bb9)]
 // CHECK:STDOUT:     }
@@ -354,6 +357,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: specific @Z(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T.67d, constants.%Self.822) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T.67d, constants.%Self.822) {}
 // CHECK:STDOUT:
@@ -597,6 +602,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.822)]
+// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.bb9)]
 // CHECK:STDOUT:     }
@@ -612,6 +620,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.162]
+// CHECK:STDOUT:   interface_with_self_decl @Y [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -720,7 +729,11 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T.67d, constants.%Self.822) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T.67d, constants.%Self.822) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y(constants.%Self.162) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%S) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%S
@@ -882,6 +895,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
+// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
 // CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.516]
 // CHECK:STDOUT:   }
@@ -949,6 +965,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Ptr(constants.%Self.0e0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
 // CHECK:STDOUT:
@@ -1098,6 +1116,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
+// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
 // CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.516]
 // CHECK:STDOUT:   }
@@ -1165,6 +1186,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Ptr(constants.%Self.0e0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
 // CHECK:STDOUT:
@@ -1313,6 +1336,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
+// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
 // CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.516]
 // CHECK:STDOUT:   }
@@ -1380,6 +1406,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Ptr(constants.%Self.0e0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
 // CHECK:STDOUT:

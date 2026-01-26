@@ -44,6 +44,9 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Interface.F.decl.loc16: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl.loc16 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Interface.F.decl.loc24: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
@@ -59,6 +62,8 @@ interface Interface {
 // CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self) {}
 // CHECK:STDOUT:

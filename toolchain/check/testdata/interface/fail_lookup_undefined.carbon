@@ -84,6 +84,9 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @BeingDefined [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %BeingDefined.H.decl: %BeingDefined.H.type = fn_decl @BeingDefined.H [concrete = constants.%BeingDefined.H] {} {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [concrete = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
@@ -116,6 +119,8 @@ interface BeingDefined {
 // CHECK:STDOUT: generic fn @BeingDefined.I(@BeingDefined.%Self: %BeingDefined.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @BeingDefined(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BeingDefined.H(constants.%Self) {}
 // CHECK:STDOUT:

@@ -198,6 +198,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_31.1: @Interface.%Interface.type (%Interface.type.442) = symbolic_binding Self, 1 [symbolic = %Self.loc4_31.2 (constants.%Self.ade)]
+// CHECK:STDOUT:     interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: @X.%ptr (%ptr.e8f) = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.624)]
 // CHECK:STDOUT:     }
@@ -298,6 +301,8 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.624
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%T.67d, constants.%Self.ade) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T.67d, constants.%Self.ade) {
 // CHECK:STDOUT:   %T => constants.%T.67d
@@ -453,6 +458,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_31.1: @Interface.%Interface.type (%Interface.type.442) = symbolic_binding Self, 1 [symbolic = %Self.loc4_31.2 (constants.%Self.ade)]
+// CHECK:STDOUT:     interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: @X.%ptr (%ptr) = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.624)]
 // CHECK:STDOUT:     }
@@ -523,6 +531,8 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.624
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%T, constants.%Self.ade) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T, constants.%Self.ade) {
 // CHECK:STDOUT:   %T => constants.%T

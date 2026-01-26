@@ -108,6 +108,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
+// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -118,6 +119,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
 // CHECK:STDOUT:   %Self: %Basic.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3e6]
+// CHECK:STDOUT:   interface_with_self_decl @Basic [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc8 [concrete] {
 // CHECK:STDOUT:     %assoc0: %Basic.assoc_type = assoc_entity element0, @Basic.%T [concrete = constants.%assoc0.909]
 // CHECK:STDOUT:   }
@@ -135,6 +139,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
+// CHECK:STDOUT:   interface_with_self_decl @ForwardDeclared [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc16 [concrete] {
 // CHECK:STDOUT:     %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%T [concrete = constants.%assoc0.06c]
 // CHECK:STDOUT:   }
@@ -166,9 +173,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Basic(constants.%Self.3e6) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.loc8(constants.%Self.3e6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Basic.F(constants.%Self.3e6) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.8e7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.loc16(constants.%Self.8e7) {}
 // CHECK:STDOUT:
@@ -178,14 +191,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
+// CHECK:STDOUT:   %Self.0c3: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7d1: type = pattern_type %Empty.type [concrete]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [concrete]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [concrete]
+// CHECK:STDOUT:   %Self.685: %Basic.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.185: type = pattern_type %Basic.type [concrete]
 // CHECK:STDOUT:   %UseBasic.type: type = fn_type @UseBasic [concrete]
 // CHECK:STDOUT:   %UseBasic: %UseBasic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
+// CHECK:STDOUT:   %Self.332: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.0a0: type = pattern_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared.type: type = fn_type @UseForwardDeclared [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared: %UseForwardDeclared.type = struct_value () [concrete]
@@ -371,4 +387,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   assign file.%f.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self.0c3) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Basic(constants.%Self.685) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.332) {}
 // CHECK:STDOUT:

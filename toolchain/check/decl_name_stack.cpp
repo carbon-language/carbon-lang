@@ -435,7 +435,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
             name_context.resolved_inst_id);
         return InvalidResult;
       }
-      return {interface_info.scope_id, interface_info.generic_id};
+      // FIXME: Change to scope and generic for interface-with-self. Can we do
+      // that before move the entities there since it's a child scope?
+      return {interface_info.scope_without_self_id, interface_info.generic_id};
     }
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;

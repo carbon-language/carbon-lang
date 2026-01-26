@@ -201,6 +201,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %V: @V.%Self.binding.as_type (%Self.binding.as_type.d31) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [concrete = constants.%assoc0.8a1]
 // CHECK:STDOUT:   }
@@ -244,6 +247,8 @@ fn CallF() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
@@ -323,6 +328,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %V: @V.%Self.binding.as_type (%Self.binding.as_type.d31) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [concrete = constants.%assoc0.8a1]
 // CHECK:STDOUT:   }
@@ -351,6 +359,8 @@ fn CallF() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
@@ -451,6 +461,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %V: @V.%Self.binding.as_type (%Self.binding.as_type.d31) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [concrete = constants.%assoc0.8a1]
 // CHECK:STDOUT:   }
@@ -528,6 +541,8 @@ fn CallF() {
 // CHECK:STDOUT:   %.loc11_42: init %C = converted %.loc11_41.1, %.loc11_41.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc11_42 to %return.param
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
@@ -654,6 +669,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_36.1: @I.%I.type (%I.type.68b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_36.2 (constants.%Self.cad)]
+// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %V: @V.%array_type (%array_type) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:       %assoc0: @I.%I.assoc_type (%I.assoc_type.223) = assoc_entity element0, @I.%V [symbolic = @I.%assoc0 (constants.%assoc0.e69)]
 // CHECK:STDOUT:     }
@@ -686,6 +704,8 @@ fn CallF() {
 // CHECK:STDOUT: specific @I(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_13.1 => constants.%N
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%N, constants.%Self.cad) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%N, constants.%Self.cad) {
 // CHECK:STDOUT:   %N => constants.%N
@@ -795,6 +815,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %V: @V.%Self.binding.as_type (%Self.binding.as_type.d31) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%V [concrete = constants.%assoc0.8a1]
 // CHECK:STDOUT:   }
@@ -826,6 +849,8 @@ fn CallF() {
 // CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9

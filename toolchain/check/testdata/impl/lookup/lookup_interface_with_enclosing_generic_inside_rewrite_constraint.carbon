@@ -207,6 +207,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc50_15.1: @Y.%Y.type (%Y.type.6b3) = symbolic_binding Self, 1 [symbolic = %Self.loc50_15.2 (constants.%Self.8ed)]
+// CHECK:STDOUT:     interface_with_self_decl @Y [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.978) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.29e)]
 // CHECK:STDOUT:     }
@@ -333,6 +336,8 @@ fn F() {
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.978
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.29e
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y(constants.%OuterParam, constants.%Self.8ed) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.8ed) {}
 // CHECK:STDOUT:
@@ -509,6 +514,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z1 {
 // CHECK:STDOUT:   %Self: %Z1.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d71]
+// CHECK:STDOUT:   interface_with_self_decl @Z1 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -519,6 +525,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z2 {
 // CHECK:STDOUT:   %Self: %Z2.type = symbolic_binding Self, 0 [symbolic = constants.%Self.cde]
+// CHECK:STDOUT:   interface_with_self_decl @Z2 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -537,6 +544,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc7_15.1: @Y.%Y.type (%Y.type.6ae) = symbolic_binding Self, 1 [symbolic = %Self.loc7_15.2 (constants.%Self.f29)]
+// CHECK:STDOUT:     interface_with_self_decl @Y [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.aab) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.5a1)]
 // CHECK:STDOUT:     }
@@ -731,6 +741,10 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z1(constants.%Self.d71) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z2(constants.%Self.cde) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%OuterParam) {
 // CHECK:STDOUT:   %OuterParam.loc6_13.1 => constants.%OuterParam
 // CHECK:STDOUT:
@@ -749,6 +763,8 @@ fn F() {
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.5a1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y(constants.%OuterParam, constants.%Self.f29) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.f29) {}
 // CHECK:STDOUT:

@@ -139,6 +139,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -201,6 +202,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: specific @GenericType(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_24.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_21.1 => constants.%U

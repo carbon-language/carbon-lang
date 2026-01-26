@@ -39,6 +39,9 @@ interface UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @UseSelf [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %UseSelf.F.decl: %UseSelf.F.type = fn_decl @UseSelf.F [concrete = constants.%UseSelf.F] {
 // CHECK:STDOUT:     %self.patt: @UseSelf.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @UseSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -77,6 +80,8 @@ interface UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @UseSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

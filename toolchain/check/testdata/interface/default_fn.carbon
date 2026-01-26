@@ -76,6 +76,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.849]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
 // CHECK:STDOUT:     %self.patt: @I.F.%pattern_type (%pattern_type.b59) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.F.%pattern_type (%pattern_type.b59) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -172,6 +175,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.849) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.849) {
 // CHECK:STDOUT:   %Self => constants.%Self.849

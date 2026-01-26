@@ -170,6 +170,9 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_34.1: @Generic.%Generic.type (%Generic.type.03dff7.1) = symbolic_binding Self, 1 [symbolic = %Self.loc15_34.2 (constants.%Self.15d2d5.1)]
+// CHECK:STDOUT:     interface_with_self_decl @Generic [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Generic.F.decl: @Generic.%Generic.F.type (%Generic.F.type.8aacdf.1) = fn_decl @Generic.F [symbolic = @Generic.%Generic.F (constants.%Generic.F.673760.1)] {} {}
 // CHECK:STDOUT:     %assoc0.loc16_9.1: @Generic.%Generic.assoc_type (%Generic.assoc_type.22afda.1) = assoc_entity element0, %Generic.F.decl [symbolic = %assoc0.loc16_9.2 (constants.%assoc0.6ba576.1)]
 // CHECK:STDOUT:
@@ -184,6 +187,9 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Other {
 // CHECK:STDOUT:   %Self: %Other.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c4]
+// CHECK:STDOUT:   interface_with_self_decl @Other [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Other.G.decl: %Other.G.type = fn_decl @Other.G [concrete = constants.%Other.G] {} {}
 // CHECK:STDOUT:   %assoc0: %Other.assoc_type = assoc_entity element0, %Other.G.decl [concrete = constants.%assoc0.96c]
 // CHECK:STDOUT:
@@ -293,6 +299,8 @@ fn G() {
 // CHECK:STDOUT:   %Scalar.loc15_19.1 => constants.%Scalar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%Scalar, constants.%Self.15d2d5.1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.F(constants.%Scalar, constants.%Self.15d2d5.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
@@ -308,6 +316,8 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.F(constants.%GenericParam, constants.%Generic.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Other(constants.%Self.8c4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Other.G(constants.%Self.8c4) {}
 // CHECK:STDOUT:

@@ -65,6 +65,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self.887]
+// CHECK:STDOUT:   interface_with_self_decl @Interface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -76,6 +77,9 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
 // CHECK:STDOUT:   %Self: %Outer.type = symbolic_binding Self, 0 [symbolic = constants.%Self.672]
+// CHECK:STDOUT:   interface_with_self_decl @Outer [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [symbolic = constants.%Inner.type] {} {}
 // CHECK:STDOUT:   %Inner.F.decl: %Inner.F.type.4b0134.2 = fn_decl @Inner.F.loc36 [symbolic = constants.%Inner.F.a5d5f7.2] {} {}
 // CHECK:STDOUT:
@@ -97,6 +101,9 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc25_19.1: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc25_19.3 (constants.%Self.eac)]
+// CHECK:STDOUT:     interface_with_self_decl @Inner [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.4b0134.1) = fn_decl @Inner.F.loc30 [symbolic = @Inner.%Inner.F (constants.%Inner.F.a5d5f7.1)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -125,7 +132,11 @@ interface Outer {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Self.887) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(constants.%Self.672) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.672) {
 // CHECK:STDOUT: !definition:
@@ -135,6 +146,8 @@ interface Outer {
 // CHECK:STDOUT:   %Inner.F.type => constants.%Inner.F.type.4b0134.1
 // CHECK:STDOUT:   %Inner.F => constants.%Inner.F.a5d5f7.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%Self.672, constants.%Self.eac) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.F.loc30(constants.%Self.672, constants.%Self.eac) {}
 // CHECK:STDOUT:

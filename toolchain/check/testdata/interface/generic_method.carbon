@@ -271,6 +271,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc5_23.1: @A.%A.type (%A.type.ade) = symbolic_binding Self, 1 [symbolic = %Self.loc5_23.2 (constants.%Self.362)]
+// CHECK:STDOUT:     interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %A.F.decl: @A.%A.F.type (%A.F.type.71b) = fn_decl @A.F [symbolic = @A.%A.F (constants.%A.F.155)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %u.patt: @A.F.%pattern_type.loc6_18 (%pattern_type.986) = value_binding_pattern u [concrete]
@@ -532,6 +535,8 @@ fn CallIndirect() {
 // CHECK:STDOUT: specific @A(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%T.67d, constants.%Self.362) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%T.67d, constants.%Self.362, constants.%U.4e7) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.4e7
@@ -853,6 +858,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc5_23.1: @A.%A.type (%A.type.ade) = symbolic_binding Self, 1 [symbolic = %Self.loc5_23.2 (constants.%Self.362)]
+// CHECK:STDOUT:     interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %A.F.decl: @A.%A.F.type (%A.F.type.71b) = fn_decl @A.F [symbolic = @A.%A.F (constants.%A.F.155)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %u.patt: @A.F.%pattern_type.loc6_18 (%pattern_type.62e) = value_binding_pattern u [concrete]
@@ -1120,6 +1128,8 @@ fn CallIndirect() {
 // CHECK:STDOUT: specific @A(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%T.67d, constants.%Self.362) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%T.67d, constants.%Self.362, constants.%U.4e7) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.4e7

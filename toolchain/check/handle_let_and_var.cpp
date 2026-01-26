@@ -294,9 +294,11 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   // binding pattern, but we still need to finish building the `Generic` object
   // and attach the default value, if any is specified.
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
-    context.name_scopes()
-        .Get(context.interfaces().Get(interface_scope->interface_id).scope_id)
-        .set_has_error();
+    const auto& interface =
+        context.interfaces().Get(interface_scope->interface_id);
+    // FIXME: Switch to scope_with_self_id when the entities in interface move
+    // there.
+    context.name_scopes().Get(interface.scope_without_self_id).set_has_error();
     if (decl_info.init_id.has_value()) {
       DiscardGenericDecl(context);
     }

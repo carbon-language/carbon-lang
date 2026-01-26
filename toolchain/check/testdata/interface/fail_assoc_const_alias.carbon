@@ -132,6 +132,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_35.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self.loc3_35.2 (constants.%Self)]
+// CHECK:STDOUT:     interface_with_self_decl @ImplicitAs [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.Convert.decl: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type) = fn_decl @ImplicitAs.Convert [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert)] {
 // CHECK:STDOUT:       %self.patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -179,6 +182,8 @@ interface C {
 // CHECK:STDOUT:   %Dest.loc3_22.1 => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest, constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.9fe
@@ -224,6 +229,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0.e06]
 // CHECK:STDOUT:   }
@@ -238,6 +246,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0.e06]
 // CHECK:STDOUT:   %U: %I.assoc_type = alias_binding U, @T.%assoc0 [concrete = constants.%assoc0.e06]
@@ -268,7 +279,11 @@ interface C {
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
@@ -356,6 +371,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I2 {
 // CHECK:STDOUT:   %Self: %I2.type = symbolic_binding Self, 0 [symbolic = constants.%Self.36e]
+// CHECK:STDOUT:   interface_with_self_decl @I2 [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T2: type = assoc_const_decl @T2 [concrete] {
 // CHECK:STDOUT:     %assoc0: %I2.assoc_type = assoc_entity element0, @I2.%T2 [concrete = constants.%assoc0.e09]
 // CHECK:STDOUT:   }
@@ -370,6 +388,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = constants.%Self.4a7]
+// CHECK:STDOUT:   interface_with_self_decl @J2 [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I2.ref: type = name_ref I2, file.%I2.decl [concrete = constants.%I2.type]
 // CHECK:STDOUT:   %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.e09]
 // CHECK:STDOUT:   %U2: %I2.assoc_type = alias_binding U2, @T2.%assoc0 [concrete = constants.%assoc0.e09]
@@ -432,6 +453,8 @@ interface C {
 // CHECK:STDOUT:   fn() -> out %return.param: @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.006);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I2(constants.%Self.36e) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%Self.36e) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%.Self.feb) {}
@@ -441,6 +464,8 @@ interface C {
 // CHECK:STDOUT:   %V.binding.as_type => constants.%V.binding.as_type
 // CHECK:STDOUT:   %I2.impl_witness.loc11_45.2 => constants.%I2.impl_witness.364
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J2(constants.%Self.4a7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V.binding.as_type.as.I2.impl(constants.%Self.4a7) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%Self.4a7
@@ -504,6 +529,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c51]
+// CHECK:STDOUT:   interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %A.F.decl: %A.F.type = fn_decl @A.F [concrete = constants.%A.F] {
 // CHECK:STDOUT:     %self.patt: @A.F.%pattern_type (%pattern_type.df1) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @A.F.%pattern_type (%pattern_type.df1) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -533,6 +561,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d0b]
+// CHECK:STDOUT:   interface_with_self_decl @B [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %F.ref: %A.assoc_type = name_ref F, @A.%assoc0 [concrete = constants.%assoc0.e44]
 // CHECK:STDOUT:   %F: %A.assoc_type = alias_binding F, @A.%assoc0 [concrete = constants.%assoc0.e44]
@@ -567,11 +598,15 @@ interface C {
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%Self.c51) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%Self.c51) {
 // CHECK:STDOUT:   %Self => constants.%Self.c51
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.55a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.df1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%Self.d0b) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.G(constants.%Self.d0b) {
 // CHECK:STDOUT:   %Self => constants.%Self.d0b
@@ -617,6 +652,9 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
 // CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @C [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %self.patt: @C.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @C.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -692,6 +730,8 @@ interface C {
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

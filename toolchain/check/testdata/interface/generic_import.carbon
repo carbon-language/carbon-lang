@@ -73,6 +73,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_29.1: @AddWith.%AddWith.type (%AddWith.type.265) = symbolic_binding Self, 1 [symbolic = %Self.loc4_29.2 (constants.%Self)]
+// CHECK:STDOUT:     interface_with_self_decl @AddWith [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %AddWith.F.decl: @AddWith.%AddWith.F.type (%AddWith.F.type) = fn_decl @AddWith.F [symbolic = @AddWith.%AddWith.F (constants.%AddWith.F)] {} {}
 // CHECK:STDOUT:     %assoc0.loc5_9.1: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type) = assoc_entity element0, %AddWith.F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -92,6 +95,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.F(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
@@ -127,10 +132,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Main.import_ref.367 = import_ref Main//a, loc4_29, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f21 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%AddWith.F.type (%AddWith.F.type.b80) = import_ref Main//a, F, loaded [symbolic = @AddWith.%AddWith.F (constants.%AddWith.F.349)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.cb1: @AddWith.%AddWith.type (%AddWith.type.265) = import_ref Main//a, loc4_29, loaded [symbolic = @AddWith.%Self (constants.%Self.db2)]
+// CHECK:STDOUT:   %Main.import_ref.3ef = import_ref Main//a, loc5_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.cb13aa.2: @AddWith.%AddWith.type (%AddWith.type.265) = import_ref Main//a, loc4_29, loaded [symbolic = @AddWith.%Self (constants.%Self.db2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -148,7 +153,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.b3bc94.1: type) [from "a.carbon"] {
+// CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.b3bc94.2: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -187,7 +192,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AddWith.F(imports.%Main.import_ref.b3bc94.2: type, imports.%Main.import_ref.cb1: @AddWith.%AddWith.type (%AddWith.type.265)) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @AddWith.F(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.cb13aa.2: @AddWith.%AddWith.type (%AddWith.type.265)) [from "a.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,6 +204,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith(constants.%T, constants.%Self.db2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.F(constants.%T, constants.%Self.db2) {}
 // CHECK:STDOUT:

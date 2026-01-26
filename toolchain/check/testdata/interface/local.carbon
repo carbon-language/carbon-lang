@@ -55,6 +55,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.G.decl: %I.G.type = fn_decl @I.G [concrete = constants.%I.G] {
 // CHECK:STDOUT:     %self.patt: @I.G.%pattern_type (%pattern_type.2ec) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.G.%pattern_type (%pattern_type.2ec) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -125,6 +128,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

@@ -199,6 +199,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_28.1: @Simple.%Simple.type (%Simple.type.e29) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self.862)]
+// CHECK:STDOUT:     interface_with_self_decl @Simple [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_28.1
@@ -221,6 +222,9 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc8_33.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.d36) = symbolic_binding Self, 1 [symbolic = %Self.loc8_33.2 (constants.%Self.629)]
+// CHECK:STDOUT:     interface_with_self_decl @WithAssocFn [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %WithAssocFn.F.decl: @WithAssocFn.%WithAssocFn.F.type (%WithAssocFn.F.type.b86) = fn_decl @WithAssocFn.F [symbolic = @WithAssocFn.%WithAssocFn.F (constants.%WithAssocFn.F.c8d)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.05f = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
@@ -352,9 +356,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_18.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple(constants.%T.67d, constants.%Self.862) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc8_23.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.F(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
@@ -474,6 +482,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_29.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc4_29.2 (constants.%Self.15d)]
+// CHECK:STDOUT:     interface_with_self_decl @Generic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_29.1
@@ -523,6 +532,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: specific @Generic(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%T.67d, constants.%Self.15d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%A
@@ -594,6 +605,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_29.1: @Generic.%Generic.type (%Generic.type.03d) = symbolic_binding Self, 1 [symbolic = %Self.loc3_29.2 (constants.%Self)]
+// CHECK:STDOUT:     interface_with_self_decl @Generic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_29.1
@@ -615,6 +627,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_19.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:

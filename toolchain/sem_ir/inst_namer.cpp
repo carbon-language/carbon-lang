@@ -109,7 +109,9 @@ InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
     while (!inst_stack_.empty() || !inst_block_stack_.empty()) {
       if (inst_stack_.empty()) {
         auto [scope_id, block_id] = inst_block_stack_.pop_back_val();
-        PushBlockInsts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+        if (block_id != SemIR::InstBlockId::Empty) {
+          PushBlockInsts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+        }
       }
       while (!inst_stack_.empty()) {
         auto [scope_id, inst_id] = inst_stack_.pop_back_val();
@@ -714,11 +716,16 @@ auto InstNamer::PushEntity(InterfaceId interface_id, ScopeId scope_id,
   scope.name = globals_.AllocateName(
       *this, interface_loc,
       sem_ir_->names().GetIRBaseName(interface.name_id).str());
-  AddBlockLabel(scope_id, interface.body_block_id, "interface", interface_loc);
+  AddBlockLabel(scope_id, interface.body_block_without_self_id,
+                "interface_without_self", interface_loc);
+  AddBlockLabel(scope_id, interface.body_block_with_self_id, "interface",
+                interface_loc);
 
   // Push blocks in reverse order.
+  PushGeneric(scope_id, interface.generic_with_self_id);
   PushGeneric(scope_id, interface.generic_id);
-  PushBlockId(scope_id, interface.body_block_id);
+  PushBlockId(scope_id, interface.body_block_without_self_id);
+  PushBlockId(scope_id, interface.body_block_with_self_id);
   PushBlockId(scope_id, interface.pattern_block_id);
 }
 

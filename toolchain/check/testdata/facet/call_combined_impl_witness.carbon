@@ -196,6 +196,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
+// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -208,6 +209,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c51]
+// CHECK:STDOUT:   interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %A.AA.decl: %A.AA.type = fn_decl @A.AA [concrete = constants.%A.AA] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %A.AA.decl [concrete = constants.%assoc0.206]
 // CHECK:STDOUT:
@@ -222,6 +226,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d0b]
+// CHECK:STDOUT:   interface_with_self_decl @B [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %B.BB.decl: %B.BB.type = fn_decl @B.BB [concrete = constants.%B.BB] {} {}
 // CHECK:STDOUT:   %assoc0: %B.assoc_type = assoc_entity element0, %B.BB.decl [concrete = constants.%assoc0.296]
 // CHECK:STDOUT:
@@ -377,7 +384,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%Self.c51) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.AA(constants.%Self.c51) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%Self.d0b) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.BB(constants.%Self.d0b) {}
 // CHECK:STDOUT:

@@ -141,6 +141,9 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
 // CHECK:STDOUT:     %c.patt: @I.F.%pattern_type (%pattern_type.a8e) = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: @I.F.%pattern_type (%pattern_type.a8e) = value_param_pattern %c.patt, call_param0 [concrete]
@@ -262,6 +265,8 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.loc15_19.1 => constants.%X
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%Self.ab9) {
 // CHECK:STDOUT:   %T.loc15_9.1 => constants.%I.type
