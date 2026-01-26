@@ -559,15 +559,14 @@ static auto BuildThunkBody(clang::Sema& sema,
 
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
+  auto clang_decl_key =
+      context.clang_decls().Get(callee_function.clang_decl_id).key;
   clang::FunctionDecl* callee_function_decl =
-      context.clang_decls()
-          .Get(callee_function.clang_decl_id)
-          .key.decl->getAsFunction();
+      clang_decl_key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);
 
-  CalleeFunctionInfo callee_info(
-      callee_function_decl,
-      context.inst_blocks().Get(callee_function.param_patterns_id).size());
+  CalleeFunctionInfo callee_info(callee_function_decl,
+                                 clang_decl_key.params.num_params);
 
   // Build the thunk function declaration.
   auto thunk_param_types =
@@ -640,8 +639,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
       callee_function_params.drop_back(callee_return_patterns.size());
 
   // We assume that the call parameters exactly match the parameter patterns for
-  // both the thunk and the callee. This is currently guaranteed because we only
-  // create trivial *ParamPatterns when importing a C++ function.
+  // both the thunk and the callee. This is guaranteed even when we generate a
+  // tuple pattern wrapping the function parameters.
   CARBON_CHECK(num_callee_args == callee_function_params.size(), "{0} != {1}",
                num_callee_args, callee_function_params.size());
   CARBON_CHECK(num_callee_args == callee_arg_ids.size());

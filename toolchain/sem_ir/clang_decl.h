@@ -27,13 +27,24 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // Information about how to form the Carbon function signature from the Clang
   // function declaration.
   struct FuncParams {
-    enum Kind : int8_t { Normal };
+    enum Kind : int8_t {
+      // A normal function signature: each C++ parameter maps into a Carbon
+      // parameter.
+      Normal,
+      // A function signature taking a tuple pattern that contains the C++
+      // parameters. This is used when importing a constructor that is used for
+      // list initialization from a Carbon tuple.
+      TuplePattern,
+      // A function signature taking an empty struct pattern. This is used when
+      // importing a constructor that is used for list initialization from `{}`.
+      EmptyStructPattern,
+    };
+    // The kind of function signature being imported.
+    Kind kind = Normal;
     // The number of parameters to import. This can be less than the number of
     // parameters in the Clang declaration if the Clang declaration has default
     // arguments. Excludes the implicit object parameter, if there is one.
     int32_t num_params = -1;
-    // The kind of function signature being imported.
-    Kind kind = Normal;
 
     friend auto operator==(const FuncParams& lhs, const FuncParams& rhs)
         -> bool = default;

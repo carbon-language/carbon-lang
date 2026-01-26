@@ -1134,11 +1134,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclKey::FuncParams params)
     -> SemIR::InstBlockId {
-  if (clang_decl.parameters().empty() || params.num_params == 0) {
-    return SemIR::InstBlockId::Empty;
-  }
-  llvm::SmallVector<SemIR::InstId> params_ids;
-  params_ids.reserve(params.num_params);
+  llvm::SmallVector<SemIR::InstId> param_ids;
+  llvm::SmallVector<SemIR::InstId> param_type_ids;
+  param_ids.reserve(params.num_params);
+  param_type_ids.reserve(params.num_params);
   CARBON_CHECK(
       static_cast<int>(clang_decl.getNumNonObjectParams()) >= params.num_params,
       "Function has fewer parameters than requested: {0} < {1}",
@@ -1160,12 +1159,12 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // created later with the call of `EndSubpatternAsExpr()`.
     BeginSubpattern(context);
     auto param_info = MapParameterType(context, loc_id, param_type);
-    auto [orig_type_inst_id, type_id] = param_info.type;
+    auto [type_inst_id, type_id] = param_info.type;
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        EndSubpatternAsExpr(context, orig_type_inst_id);
+        EndSubpatternAsExpr(context, type_inst_id);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
@@ -1188,9 +1187,50 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     SemIR::InstId pattern_id =
         AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
                         type_id, param_info.want_ref_pattern);
-    params_ids.push_back(pattern_id);
+    param_ids.push_back(pattern_id);
+    param_type_ids.push_back(type_inst_id);
   }
-  return context.inst_blocks().Add(params_ids);
+
+  switch (params.kind) {
+    case SemIR::ClangDeclKey::FuncParams::Normal: {
+      // Use the converted parameter list as-is.
+      break;
+    }
+
+    case SemIR::ClangDeclKey::FuncParams::TuplePattern: {
+      // Replace the parameters with a single tuple pattern containing the
+      // converted parameter list.
+      auto param_block_id = context.inst_blocks().Add(param_ids);
+      auto tuple_pattern_type_id =
+          GetPatternType(context, GetTupleType(context, param_type_ids));
+      SemIR::InstId pattern_id = AddPatternInst(
+          context,
+          SemIR::LocIdAndInst::UncheckedLoc(
+              loc_id, SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
+                                          .elements_id = param_block_id}));
+      param_ids = {pattern_id};
+      break;
+    }
+
+    case SemIR::ClangDeclKey::FuncParams::EmptyStructPattern: {
+      // Form a single binding `_: {}`. Don't add a parameter; we just want to
+      // discard the struct value, not pass it to the function.
+      CARBON_CHECK(param_type_ids.empty());
+      SemIR::LocId param_loc_id =
+          AddImportIRInst(context.sem_ir(), clang_decl.getLocation());
+      SemIR::InstId pattern_id =
+          AddBindingPattern(
+              context, param_loc_id, SemIR::NameId::Underscore,
+              GetStructType(context, SemIR::StructTypeFieldsId::Empty),
+              SemIR::ExprRegionId::None, SemIR::ValueBindingPattern::Kind,
+              /*is_template=*/false)
+              .pattern_id;
+      param_ids.push_back(pattern_id);
+      break;
+    }
+  }
+
+  return context.inst_blocks().Add(param_ids);
 }
 
 // Returns the return `TypeExpr` of the given function declaration. In case of

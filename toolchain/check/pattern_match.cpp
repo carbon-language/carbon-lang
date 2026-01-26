@@ -534,8 +534,12 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       };
   if (!entry.scrutinee_id.has_value()) {
     CARBON_CHECK(kind_ == MatchKind::Callee);
-    context.TODO(entry.pattern_id,
-                 "Support patterns besides bindings in parameter list");
+    // If we don't have a scrutinee yet, we're still on the caller side of the
+    // pattern, so the subpatterns don't have a scrutinee either.
+    for (auto subpattern_id : llvm::reverse(subpattern_ids)) {
+      AddWork(
+          {.pattern_id = subpattern_id, .scrutinee_id = SemIR::InstId::None});
+    }
     return;
   }
   auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);

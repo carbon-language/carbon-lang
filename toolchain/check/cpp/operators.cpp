@@ -193,6 +193,51 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Returns information about the Carbon signature to import when importing a C++
+// constructor or conversion operator.
+static auto GetConversionSignatureToImport(
+    Context& context, SemIR::InstId source_id,
+    clang::InitializationSequence::StepKind step_kind,
+    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::FuncParams {
+  // If we're performing a constructor initialization from a list, form a
+  // function signature that takes a single tuple or struct pattern
+  // instead of a function signature with one parameter per C++ parameter.
+  if (step_kind ==
+      clang::InitializationSequence::SK_ConstructorInitializationFromList) {
+    auto source_type_id = context.insts().Get(source_id).type_id();
+    if (auto tuple_type =
+            context.types().TryGetAs<SemIR::TupleType>(source_type_id)) {
+      return {
+          .kind = SemIR::ClangDeclKey::FuncParams::Kind::TuplePattern,
+          .num_params = static_cast<int32_t>(
+              context.inst_blocks().Get(tuple_type->type_elements_id).size())};
+    }
+
+    if (auto struct_type =
+            context.types().TryGetAs<SemIR::StructType>(source_type_id)) {
+      CARBON_CHECK(struct_type->fields_id == SemIR::StructTypeFieldsId::Empty,
+                   "Mapped a non-empty struct to a constructor call");
+      return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::EmptyStructPattern,
+              .num_params = 0};
+    }
+
+    CARBON_FATAL("Unexpected kind {0} for initializer list argument",
+                 context.types().GetAsInst(source_type_id));
+  }
+
+  // Otherwise, if this is a constructor, the source is passed as an argument.
+  if (isa<clang::CXXConstructorDecl>(function_decl)) {
+    return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::Normal,
+            .num_params = 1};
+  }
+
+  // Otherwise, this is a conversion function and the source is passed as
+  // `self`.
+  CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
+  return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::Normal,
+          .num_params = 0};
+}
+
 static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId source_id,
                                 SemIR::TypeId dest_type_id, bool allow_explicit)
@@ -243,7 +288,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
   for (const auto& step : init.steps()) {
     switch (step.Kind) {
       case clang::InitializationSequence::SK_UserConversion:
-      case clang::InitializationSequence::SK_ConstructorInitialization: {
+      case clang::InitializationSequence::SK_ConstructorInitialization:
+      case clang::InitializationSequence::
+          SK_ConstructorInitializationFromList: {
         if (auto* ctor =
                 dyn_cast<clang::CXXConstructorDecl>(step.Function.Function);
             ctor && ctor->isCopyOrMoveConstructor()) {
@@ -260,14 +307,10 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
 
         sema.MarkFunctionReferenced(loc, step.Function.Function);
 
+        auto signature = GetConversionSignatureToImport(
+            context, source_id, step.Kind, step.Function.Function);
         auto result_id = ImportCppFunctionDecl(
-            context, loc_id, step.Function.Function,
-            // If this is a constructor, the source is passed as an argument;
-            // otherwise, this is a conversion function and the source is passed
-            // as `self`.
-            {.num_params =
-                 isa<clang::CXXConstructorDecl>(step.Function.Function) ? 1
-                                                                        : 0});
+            context, loc_id, step.Function.Function, signature);
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
                 result_id)) {
           CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,

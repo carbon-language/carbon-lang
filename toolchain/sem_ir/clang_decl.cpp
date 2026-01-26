@@ -27,6 +27,12 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
       case ClangDeclKey::FuncParams::Normal:
         out << "normal";
         break;
+      case ClangDeclKey::FuncParams::TuplePattern:
+        out << "tuple";
+        break;
+      case ClangDeclKey::FuncParams::EmptyStructPattern:
+        out << "struct";
+        break;
     }
     out << ", num_params: " << params.num_params << "}";
   } else {
