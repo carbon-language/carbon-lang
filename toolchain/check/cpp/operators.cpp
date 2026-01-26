@@ -265,7 +265,9 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
             // If this is a constructor, the source is passed as an argument;
             // otherwise, this is a conversion function and the source is passed
             // as `self`.
-            isa<clang::CXXConstructorDecl>(step.Function.Function) ? 1 : 0);
+            {.num_params =
+                 isa<clang::CXXConstructorDecl>(step.Function.Function) ? 1
+                                                                        : 0});
         if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
                 result_id)) {
           CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
@@ -389,8 +391,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
       auto result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function,
           // If this is an operator method, the first arg will be used as self.
-          arg_ids.size() -
-              (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
+          {.num_params = static_cast<int32_t>(
+               arg_ids.size() -
+               (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0))});
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,

@@ -163,7 +163,8 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
       SemIR::InstId result_id = ImportCppFunctionDecl(
-          context, loc_id, best_viable_fn->Function, arg_exprs.size());
+          context, loc_id, best_viable_fn->Function,
+          {.num_params = static_cast<int32_t>(arg_exprs.size())});
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,
