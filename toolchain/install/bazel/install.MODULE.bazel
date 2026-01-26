@@ -8,8 +8,7 @@ This module exposes Bazel `cc_toolchain`s built from this Carbon toolchain.
 
 Add the repository to your `MODULES.bazel` and then use
 `register_toolchains("@carbon_toolchain//:all")` to get these toolchains. For
-more detailed examples, see the Carbon project examples here:
-https://github.com/carbon-language/carbon-lang/tree/trunk/examples/bazel
+more detailed examples, see the Carbon project examples in examples/bazel
 """
 
 module(name = "carbon_toolchain")
