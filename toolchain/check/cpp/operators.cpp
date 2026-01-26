@@ -198,7 +198,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
 static auto GetConversionSignatureToImport(
     Context& context, SemIR::InstId source_id,
     clang::InitializationSequence::StepKind step_kind,
-    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::FuncParams {
+    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::Signature {
   // If we're performing a constructor initialization from a list, form a
   // function signature that takes a single tuple or struct pattern
   // instead of a function signature with one parameter per C++ parameter.
@@ -208,7 +208,7 @@ static auto GetConversionSignatureToImport(
     if (auto tuple_type =
             context.types().TryGetAs<SemIR::TupleType>(source_type_id)) {
       return {
-          .kind = SemIR::ClangDeclKey::FuncParams::Kind::TuplePattern,
+          .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
           .num_params = static_cast<int32_t>(
               context.inst_blocks().Get(tuple_type->type_elements_id).size())};
     }
@@ -217,7 +217,7 @@ static auto GetConversionSignatureToImport(
             context.types().TryGetAs<SemIR::StructType>(source_type_id)) {
       CARBON_CHECK(struct_type->fields_id == SemIR::StructTypeFieldsId::Empty,
                    "Mapped a non-empty struct to a constructor call");
-      return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::EmptyStructPattern,
+      return {.kind = SemIR::ClangDeclKey::Signature::Kind::EmptyStructPattern,
               .num_params = 0};
     }
 
@@ -227,14 +227,14 @@ static auto GetConversionSignatureToImport(
 
   // Otherwise, if this is a constructor, the source is passed as an argument.
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
-    return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::Normal,
+    return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
             .num_params = 1};
   }
 
   // Otherwise, this is a conversion function and the source is passed as
   // `self`.
   CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
-  return {.kind = SemIR::ClangDeclKey::FuncParams::Kind::Normal,
+  return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
           .num_params = 0};
 }
 

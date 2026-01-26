@@ -53,7 +53,7 @@ namespace {
 // See `GetDeclForCoreInterface`.
 struct DeclInfo {
   clang::NamedDecl* decl;
-  SemIR::ClangDeclKey::FuncParams params;
+  SemIR::ClangDeclKey::Signature signature;
 };
 }  // namespace
 
@@ -68,10 +68,10 @@ auto GetDeclForCoreInterface(clang::Sema& clang_sema,
     case CoreInterface::Copy:
       return {.decl = clang_sema.LookupCopyingConstructor(
                   class_decl, clang::Qualifiers::Const),
-              .params = {.num_params = 1}};
+              .signature = {.num_params = 1}};
     case CoreInterface::Destroy:
       return {.decl = clang_sema.LookupDestructor(class_decl),
-              .params = {.num_params = 0}};
+              .signature = {.num_params = 0}};
     case CoreInterface::Unknown:
       CARBON_FATAL("shouldn't be called with `Unknown`");
   }
@@ -102,7 +102,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  auto fn_id = ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.params);
+  auto fn_id =
+      ImportCppFunctionDecl(context, loc_id, cpp_fn, decl_info.signature);
   if (fn_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }

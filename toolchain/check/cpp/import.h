@@ -38,11 +38,11 @@ auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
 // imported, returns the mapped instruction.
 inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                                   clang::FunctionDecl* clang_decl,
-                                  SemIR::ClangDeclKey::FuncParams params)
+                                  SemIR::ClangDeclKey::Signature signature)
     -> SemIR::InstId {
   return ImportCppDecl(
       context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, params));
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature));
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns

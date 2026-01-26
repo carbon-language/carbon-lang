@@ -26,7 +26,7 @@ namespace Carbon::SemIR {
 struct ClangDeclKey : public Printable<ClangDeclKey> {
   // Information about how to form the Carbon function signature from the Clang
   // function declaration.
-  struct FuncParams {
+  struct Signature {
     enum Kind : int8_t {
       // A normal function signature: each C++ parameter maps into a Carbon
       // parameter.
@@ -46,7 +46,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
     // arguments. Excludes the implicit object parameter, if there is one.
     int32_t num_params = -1;
 
-    friend auto operator==(const FuncParams& lhs, const FuncParams& rhs)
+    friend auto operator==(const Signature& lhs, const Signature& rhs)
         -> bool = default;
   };
 
@@ -57,36 +57,35 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
              !std::derived_from<clang::FunctionDecl, DeclT> &&
              !std::derived_from<DeclT, clang::FunctionDecl>)
   explicit ClangDeclKey(DeclT* decl)
-      : ClangDeclKey(decl, FuncParams(), UncheckedTag()) {}
+      : ClangDeclKey(decl, Signature(), UncheckedTag()) {}
 
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
-  static auto ForFunctionDecl(clang::FunctionDecl* decl, FuncParams params)
+  static auto ForFunctionDecl(clang::FunctionDecl* decl, Signature signature)
       -> ClangDeclKey {
-    return ClangDeclKey(decl, params, UncheckedTag());
+    return ClangDeclKey(decl, signature, UncheckedTag());
   }
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
   static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
     CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
-    return ClangDeclKey(decl, FuncParams(), UncheckedTag());
+    return ClangDeclKey(decl, Signature(), UncheckedTag());
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
   auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return decl == rhs.decl && params == rhs.params;
+    return decl == rhs.decl && signature == rhs.signature;
   }
 
   // Hashing for ClangDecl. See common/hashing.h.
   friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)
       -> HashCode {
-    // Manual hashing support is required because this type has tail padding in
-    // 64-bit compilations.
-    return HashValue(
-        std::tuple{value.decl, value.params.num_params, value.params.kind},
-        seed);
+    // Manual hashing support is required because `Signature` has padding.
+    return HashValue(std::tuple{value.decl, value.signature.num_params,
+                                value.signature.kind},
+                     seed);
   }
 
   // The Clang declaration pointing to the Clang AST.
@@ -96,14 +95,14 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   // The parameters to import for a function declaration. Otherwise a
   // default-constructed value.
-  FuncParams params = FuncParams();
+  Signature signature = Signature();
 
  private:
   struct UncheckedTag {
     explicit UncheckedTag() = default;
   };
-  ClangDeclKey(clang::Decl* decl, FuncParams params, UncheckedTag /*_*/)
-      : decl(decl->getCanonicalDecl()), params(params) {}
+  ClangDeclKey(clang::Decl* decl, Signature signature, UncheckedTag /*_*/)
+      : decl(decl->getCanonicalDecl()), signature(signature) {}
 };
 
 // A Clang declaration mapped to a Carbon instruction.

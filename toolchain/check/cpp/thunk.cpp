@@ -40,19 +40,19 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
     const clang::FunctionDecl& callee_function_decl,
-    SemIR::ClangDeclKey::FuncParams::Kind signature_kind, int num_params)
+    SemIR::ClangDeclKey::Signature::Kind signature_kind, int num_params)
     -> std::string {
   RawStringOstream mangled_name_stream;
   mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
   switch (signature_kind) {
-    case SemIR::ClangDeclKey::FuncParams::Normal:
+    case SemIR::ClangDeclKey::Signature::Normal:
       mangled_name_stream << ".carbon_thunk";
       break;
-    case SemIR::ClangDeclKey::FuncParams::TuplePattern:
+    case SemIR::ClangDeclKey::Signature::TuplePattern:
       mangled_name_stream << ".carbon_thunk_tuple";
       break;
-    case SemIR::ClangDeclKey::FuncParams::EmptyStructPattern:
+    case SemIR::ClangDeclKey::Signature::EmptyStructPattern:
       mangled_name_stream << ".carbon_thunk_struct";
       break;
   }
@@ -112,10 +112,10 @@ namespace {
 // Information about the callee of a thunk.
 struct CalleeFunctionInfo {
   explicit CalleeFunctionInfo(clang::FunctionDecl* decl,
-                              SemIR::ClangDeclKey::FuncParams params)
+                              SemIR::ClangDeclKey::Signature signature)
       : decl(decl),
-        signature_kind(params.kind),
-        num_params(params.num_params +
+        signature_kind(signature.kind),
+        num_params(signature.num_params +
                    decl->hasCXXExplicitFunctionObjectParameter()) {
     auto& ast_context = decl->getASTContext();
     const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
@@ -165,7 +165,7 @@ struct CalleeFunctionInfo {
   clang::FunctionDecl* decl;
 
   // The kind of function signature being imported.
-  SemIR::ClangDeclKey::FuncParams::Kind signature_kind;
+  SemIR::ClangDeclKey::Signature::Kind signature_kind;
 
   // The number of explicit parameters to import. This may be less than the
   // number of parameters that the function has if default arguments are being
@@ -199,8 +199,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
   auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
-  if (decl_info.key.params.kind != SemIR::ClangDeclKey::FuncParams::Normal ||
-      decl_info.key.params.num_params !=
+  if (decl_info.key.signature.kind != SemIR::ClangDeclKey::Signature::Normal ||
+      decl_info.key.signature.num_params !=
           static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
@@ -208,7 +208,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     return true;
   }
 
-  CalleeFunctionInfo callee_info(decl, decl_info.key.params);
+  CalleeFunctionInfo callee_info(decl, decl_info.key.signature);
   if (!callee_info.has_simple_return_type) {
     return true;
   }
@@ -588,7 +588,8 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   // shouldn't consider it here. However, to do that, we would need to cache the
   // thunks we build so that we don't build the same thunk multiple times if
   // it's used with multiple different signature kinds.
-  CalleeFunctionInfo callee_info(callee_function_decl, clang_decl_key.params);
+  CalleeFunctionInfo callee_info(callee_function_decl,
+                                 clang_decl_key.signature);
 
   // Build the thunk function declaration.
   auto thunk_param_types =
