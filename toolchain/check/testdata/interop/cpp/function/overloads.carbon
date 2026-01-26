@@ -382,48 +382,52 @@ import Cpp library "struct_init.h";
 fn MakeEmpty() -> ();
 
 fn Empty(value: (), ref reference: ()) {
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassNoFields(());
   // CHECK:STDERR:                    ^~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassNoFields(());
+  // CHECK:STDERR:                    ^~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   Cpp.PassNoFields(());
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassNoFields(value);
   // CHECK:STDERR:                    ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-25]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassNoFields(value);
+  // CHECK:STDERR:                    ^~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   Cpp.PassNoFields(value);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassNoFields(reference);
   // CHECK:STDERR:                    ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassNoFields(reference);
+  // CHECK:STDERR:                    ^~~~~~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-40]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   Cpp.PassNoFields(reference);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:20: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct NoFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:20: error: cannot implicitly convert expression of type `()` to `Cpp.NoFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
   // CHECK:STDERR:                    ^~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-49]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:20: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.NoFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
+  // CHECK:STDERR:                    ^~~~~~~~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-53]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
@@ -434,48 +438,52 @@ fn Empty(value: (), ref reference: ()) {
 fn MakeThreeFields() -> (i32, i32, i32);
 
 fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)` to `Cpp.ThreeFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
   // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-65]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
+  // CHECK:STDERR:                       ^~~~~~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-70]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields((1, 2, 3));
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassThreeFields(value);
   // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-77]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassThreeFields(value);
+  // CHECK:STDERR:                       ^~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-83]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(value);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:                       ^~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-89]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassThreeFields(reference);
+  // CHECK:STDERR:                       ^~~~~~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-96]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
   Cpp.PassThreeFields(reference);
 
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+10]]:23: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct ThreeFields]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+11]]:23: error: cannot implicitly convert expression of type `(i32, i32, i32)` to `Cpp.ThreeFields` [ConversionFailure]
   // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-101]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE+8]]:23: note: type `(i32, i32, i32)` does not implement interface `Core.ImplicitAs(Cpp.ThreeFields)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-109]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
@@ -2827,6 +2835,8 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk: %PassNoFields__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -2838,7 +2848,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.b5a: type = pattern_type %tuple.type.189 [concrete]
 // CHECK:STDOUT:   %MakeThreeFields.type: type = fn_type @MakeThreeFields [concrete]
 // CHECK:STDOUT:   %MakeThreeFields: %MakeThreeFields.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ThreeFields.type: type = fn_type @ThreeFields.loc63 [concrete]
+// CHECK:STDOUT:   %ThreeFields.type: type = fn_type @ThreeFields.loc67 [concrete]
 // CHECK:STDOUT:   %ThreeFields.c3a: %ThreeFields.type = struct_value () [concrete]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.type: type = cpp_overload_set_type @PassThreeFields.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete]
@@ -2859,6 +2869,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -2876,6 +2887,7 @@ fn F() {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
@@ -2933,46 +2945,46 @@ fn F() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc61_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc61_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc61_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc61_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc61_36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc61_36: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc61_39.1: %tuple.type.ff9 = tuple_literal (%i32.loc61_26, %i32.loc61_31, %i32.loc61_36) [concrete = constants.%tuple.e64]
-// CHECK:STDOUT:     %.loc61_39.2: type = converted %.loc61_39.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
-// CHECK:STDOUT:     %.loc61_39.3: form = init_form %.loc61_39.2, call_param0 [concrete = constants.%.084]
+// CHECK:STDOUT:     %int_32.loc65_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc65_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc65_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc65_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc65_36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc65_36: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc65_39.1: %tuple.type.ff9 = tuple_literal (%i32.loc65_26, %i32.loc65_31, %i32.loc65_36) [concrete = constants.%tuple.e64]
+// CHECK:STDOUT:     %.loc65_39.2: type = converted %.loc65_39.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %.loc65_39.3: form = init_form %.loc65_39.2, call_param0 [concrete = constants.%.084]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.189 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.189 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc63 [concrete = constants.%ThreeFields.c3a] {
+// CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc67 [concrete = constants.%ThreeFields.c3a] {
 // CHECK:STDOUT:     %value.patt: %pattern_type.b5a = value_binding_pattern value [concrete]
 // CHECK:STDOUT:     %value.param_patt: %pattern_type.b5a = value_param_pattern %value.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %reference.patt: %pattern_type.b5a = ref_binding_pattern reference [concrete]
 // CHECK:STDOUT:     %reference.param_patt: %pattern_type.b5a = ref_param_pattern %reference.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %tuple.type.189 = value_param call_param0
-// CHECK:STDOUT:     %.loc63_37.1: type = splice_block %.loc63_37.3 [concrete = constants.%tuple.type.189] {
-// CHECK:STDOUT:       %int_32.loc63_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc63_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc63_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc63_37.2: %tuple.type.ff9 = tuple_literal (%i32.loc63_24, %i32.loc63_29, %i32.loc63_34) [concrete = constants.%tuple.e64]
-// CHECK:STDOUT:       %.loc63_37.3: type = converted %.loc63_37.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %.loc67_37.1: type = splice_block %.loc67_37.3 [concrete = constants.%tuple.type.189] {
+// CHECK:STDOUT:       %int_32.loc67_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc67_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc67_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %.loc67_37.2: %tuple.type.ff9 = tuple_literal (%i32.loc67_24, %i32.loc67_29, %i32.loc67_34) [concrete = constants.%tuple.e64]
+// CHECK:STDOUT:       %.loc67_37.3: type = converted %.loc67_37.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value: %tuple.type.189 = value_binding value, %value.param
 // CHECK:STDOUT:     %reference.param: ref %tuple.type.189 = ref_param call_param1
-// CHECK:STDOUT:     %.loc63_69.1: type = splice_block %.loc63_69.3 [concrete = constants.%tuple.type.189] {
-// CHECK:STDOUT:       %int_32.loc63_56: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_56: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc63_61: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_61: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc63_66: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc63_66: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc63_69.2: %tuple.type.ff9 = tuple_literal (%i32.loc63_56, %i32.loc63_61, %i32.loc63_66) [concrete = constants.%tuple.e64]
-// CHECK:STDOUT:       %.loc63_69.3: type = converted %.loc63_69.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %.loc67_69.1: type = splice_block %.loc67_69.3 [concrete = constants.%tuple.type.189] {
+// CHECK:STDOUT:       %int_32.loc67_56: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_56: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc67_61: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_61: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc67_66: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc67_66: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %.loc67_69.2: %tuple.type.ff9 = tuple_literal (%i32.loc67_56, %i32.loc67_61, %i32.loc67_66) [concrete = constants.%tuple.e64]
+// CHECK:STDOUT:       %.loc67_69.3: type = converted %.loc67_69.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %reference: ref %tuple.type.189 = ref_binding reference, %reference.param
 // CHECK:STDOUT:   }
@@ -3009,31 +3021,31 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Empty(%value.param: %empty_tuple.type, %reference.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassNoFields.ref.loc22: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc22_21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22_21.2: %NoFields = converted %.loc22_21.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc22: %ptr.dd0 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc22)
-// CHECK:STDOUT:   %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassNoFields.ref.loc34: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassNoFields.ref.loc23: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc23_21.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_21.2: %NoFields = converted %.loc23_21.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc23: %ptr.dd0 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc23: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc23)
+// CHECK:STDOUT:   %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassNoFields.ref.loc36: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %value.ref: %empty_tuple.type = name_ref value, %value
-// CHECK:STDOUT:   %.loc34: %NoFields = converted %value.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc34: %ptr.dd0 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc34: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc34)
-// CHECK:STDOUT:   %Cpp.ref.loc46: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassNoFields.ref.loc46: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc36: %NoFields = converted %value.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc36: %ptr.dd0 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc36: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc36)
+// CHECK:STDOUT:   %Cpp.ref.loc49: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassNoFields.ref.loc49: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %reference.ref: ref %empty_tuple.type = name_ref reference, %reference
-// CHECK:STDOUT:   %.loc46: %NoFields = converted %reference.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc46: %ptr.dd0 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc46: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc46)
-// CHECK:STDOUT:   %Cpp.ref.loc58: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassNoFields.ref.loc58: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc49: %NoFields = converted %reference.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc49: %ptr.dd0 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc49: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc49)
+// CHECK:STDOUT:   %Cpp.ref.loc62: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassNoFields.ref.loc62: %PassNoFields.cpp_overload_set.type = name_ref PassNoFields, imports.%PassNoFields.cpp_overload_set.value [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %MakeEmpty.ref: %MakeEmpty.type = name_ref MakeEmpty, file.%MakeEmpty.decl [concrete = constants.%MakeEmpty]
 // CHECK:STDOUT:   %MakeEmpty.call: init %empty_tuple.type = call %MakeEmpty.ref()
-// CHECK:STDOUT:   %.loc58: %NoFields = converted %MakeEmpty.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc58: %ptr.dd0 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc58: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc58)
+// CHECK:STDOUT:   %.loc62: %NoFields = converted %MakeEmpty.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc62: %ptr.dd0 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc62: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc62)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3043,37 +3055,37 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeThreeFields() -> out %return.param: %tuple.type.189;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ThreeFields.loc63(%value.param: %tuple.type.189, %reference.param: %tuple.type.189) {
+// CHECK:STDOUT: fn @ThreeFields.loc67(%value.param: %tuple.type.189, %reference.param: %tuple.type.189) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc74: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassThreeFields.ref.loc74: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc79: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassThreeFields.ref.loc79: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc74_31.1: %tuple.type.37f = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple.2d5]
-// CHECK:STDOUT:   %.loc74_31.2: %ThreeFields.942 = converted %.loc74_31.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc74: %ptr.f81 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc74: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc74)
-// CHECK:STDOUT:   %Cpp.ref.loc86: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassThreeFields.ref.loc86: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc79_31.1: %tuple.type.37f = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple.2d5]
+// CHECK:STDOUT:   %.loc79_31.2: %ThreeFields.942 = converted %.loc79_31.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc79: %ptr.f81 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc79: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc79)
+// CHECK:STDOUT:   %Cpp.ref.loc92: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassThreeFields.ref.loc92: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %value.ref: %tuple.type.189 = name_ref value, %value
-// CHECK:STDOUT:   %.loc86: %ThreeFields.942 = converted %value.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc86: %ptr.f81 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc86: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc86)
-// CHECK:STDOUT:   %Cpp.ref.loc98: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassThreeFields.ref.loc98: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc92: %ThreeFields.942 = converted %value.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc92: %ptr.f81 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc92: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc92)
+// CHECK:STDOUT:   %Cpp.ref.loc105: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassThreeFields.ref.loc105: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %reference.ref: ref %tuple.type.189 = name_ref reference, %reference
-// CHECK:STDOUT:   %.loc98: %ThreeFields.942 = converted %reference.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc98: %ptr.f81 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc98: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc98)
-// CHECK:STDOUT:   %Cpp.ref.loc110: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PassThreeFields.ref.loc110: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc105: %ThreeFields.942 = converted %reference.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc105: %ptr.f81 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc105: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc105)
+// CHECK:STDOUT:   %Cpp.ref.loc118: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PassThreeFields.ref.loc118: %PassThreeFields.cpp_overload_set.type = name_ref PassThreeFields, imports.%PassThreeFields.cpp_overload_set.value [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %MakeThreeFields.ref: %MakeThreeFields.type = name_ref MakeThreeFields, file.%MakeThreeFields.decl [concrete = constants.%MakeThreeFields]
-// CHECK:STDOUT:   %.loc110_39.1: ref %tuple.type.189 = temporary_storage
-// CHECK:STDOUT:   %MakeThreeFields.call: init %tuple.type.189 to %.loc110_39.1 = call %MakeThreeFields.ref()
-// CHECK:STDOUT:   %.loc110_39.2: %ThreeFields.942 = converted %MakeThreeFields.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc110: %ptr.f81 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc110: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc110)
+// CHECK:STDOUT:   %.loc118_39.1: ref %tuple.type.189 = temporary_storage
+// CHECK:STDOUT:   %MakeThreeFields.call: init %tuple.type.189 to %.loc118_39.1 = call %MakeThreeFields.ref()
+// CHECK:STDOUT:   %.loc118_39.2: %ThreeFields.942 = converted %MakeThreeFields.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc118: %ptr.f81 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %PassThreeFields__carbon_thunk.call.loc118: init %empty_tuple.type = call imports.%PassThreeFields__carbon_thunk.decl(%addr.loc118)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

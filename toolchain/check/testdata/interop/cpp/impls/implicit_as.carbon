@@ -304,23 +304,26 @@ import Cpp library "aggregate.h";
 
 fn InitFromTuple() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+6]]:26: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct Aggregate]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `()` to `Cpp.Aggregate` [ConversionFailure]
+  // CHECK:STDERR:   let _: Cpp.Aggregate = ();
+  // CHECK:STDERR:                          ^~
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let _: Cpp.Aggregate = ();
   // CHECK:STDERR:                          ^~
   // CHECK:STDERR:
   let _: Cpp.Aggregate = ();
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+6]]:26: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct Aggregate]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `(Core.IntLiteral,)` to `Cpp.Aggregate` [ConversionFailure]
+  // CHECK:STDERR:   let _: Cpp.Aggregate = (1,);
+  // CHECK:STDERR:                          ^~~~
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26: note: type `(Core.IntLiteral,)` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let _: Cpp.Aggregate = (1,);
   // CHECK:STDERR:                          ^~~~
   // CHECK:STDERR:
   let _: Cpp.Aggregate = (1,);
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+6]]:26: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: list aggregate initialization [struct Aggregate]
-  // CHECK:STDERR: ` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `(Core.IntLiteral, Core.IntLiteral)` to `Cpp.Aggregate` [ConversionFailure]
+  // CHECK:STDERR:   let _: Cpp.Aggregate = (1, 2);
+  // CHECK:STDERR:                          ^~~~~~
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26: note: type `(Core.IntLiteral, Core.IntLiteral)` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let _: Cpp.Aggregate = (1, 2);
   // CHECK:STDERR:                          ^~~~~~
   // CHECK:STDERR:
@@ -1263,38 +1266,38 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @InitFromTuple() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc14: %pattern_type.235 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.235 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc14_13: type = splice_block %Aggregate.ref.loc14 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc14: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc15_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_13: type = splice_block %Aggregate.ref.loc15 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc15: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_27.2: %Aggregate = converted %.loc14_27.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %_.loc14: %Aggregate = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_27.2: %Aggregate = converted %.loc15_27.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc15: %Aggregate = value_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc21: %pattern_type.235 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.235 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc21_29.1: %tuple.type.985 = tuple_literal (%int_1.loc21) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %Aggregate.ref.loc21 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc21: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc23_29.1: %tuple.type.985 = tuple_literal (%int_1.loc23) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %.loc23_13: type = splice_block %Aggregate.ref.loc23 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc23: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_29.2: %Aggregate = converted %.loc21_29.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %_.loc21: %Aggregate = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_29.2: %Aggregate = converted %.loc23_29.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc23: %Aggregate = value_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc28: %pattern_type.235 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.235 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc28: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc28_31.1: %tuple.type.f94 = tuple_literal (%int_1.loc28, %int_2) [concrete = constants.%tuple.ad8]
-// CHECK:STDOUT:   %.loc28_13: type = splice_block %Aggregate.ref.loc28 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc28: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc31_31.1: %tuple.type.f94 = tuple_literal (%int_1.loc31, %int_2) [concrete = constants.%tuple.ad8]
+// CHECK:STDOUT:   %.loc31_13: type = splice_block %Aggregate.ref.loc31 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc31: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28_31.2: %Aggregate = converted %.loc28_31.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %_.loc28: %Aggregate = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_31.2: %Aggregate = converted %.loc31_31.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc31: %Aggregate = value_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

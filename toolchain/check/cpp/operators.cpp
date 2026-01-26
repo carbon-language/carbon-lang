@@ -296,6 +296,7 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     switch (step.Kind) {
       case clang::InitializationSequence::SK_UserConversion:
       case clang::InitializationSequence::SK_ConstructorInitialization:
+      case clang::InitializationSequence::SK_StdInitializerListConstructorCall:
       case clang::InitializationSequence::
           SK_ConstructorInitializationFromList: {
         if (auto* ctor =
@@ -329,6 +330,19 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
         // TODO: There may be other conversions later in the sequence that we
         // need to model; we've only applied the first one here.
         return result_id;
+      }
+
+      case clang::InitializationSequence::SK_StdInitializerList: {
+        context.TODO(loc_id, "std::initializer_list construction");
+        return SemIR::ErrorInst::InstId;
+      }
+
+      case clang::InitializationSequence::SK_ListInitialization: {
+        // Aggregate initialization is handled by the normal Carbon conversion
+        // logic, so we ignore it here.
+        // TODO: So far we only support aggregate initialization for arrays and
+        // empty classes.
+        continue;
       }
 
       case clang::InitializationSequence::SK_ConversionSequence:
