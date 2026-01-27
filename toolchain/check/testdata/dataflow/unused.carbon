@@ -253,3 +253,43 @@ class C(T:! type);
 // CHECK:STDERR:                ^
 // CHECK:STDERR:
 class C(unused T:! type) {}
+
+// --- fail_unused_let_multiple_uses.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+3]]:14: error: variable `x` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR:   let unused x: i32 = 0;
+  // CHECK:STDERR:              ^
+  let unused x: i32 = 0;
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+8]]:16: note: usage here [UnusedButUsedHere]
+  // CHECK:STDERR:   var y: i32 = x;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
+  // CHECK:STDERR:   var y: i32 = x;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var y: i32 = x;
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `z` unused [UnusedBinding]
+  // CHECK:STDERR:   var z: i32 = x;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var z: i32 = x;
+}
+
+// --- multiple_unused_bindings.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var x: i32 = 0;
+  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
+  // CHECK:STDERR:   var y: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var y: i32 = 0;
+}
