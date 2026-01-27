@@ -1451,6 +1451,7 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
 // Creates a `FunctionDecl` and a `Function` without C++ thunk information.
 // Returns std::nullopt on failure. The given Clang declaration is assumed to:
 // * Have not been imported before.
+// * Be of supported type (ignoring parameters).
 // `signature` specifies how to convert the C++ function signature to the Carbon
 // function signature.
 static auto ImportFunction(Context& context, SemIR::LocId loc_id,

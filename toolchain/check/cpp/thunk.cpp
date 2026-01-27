@@ -663,7 +663,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
 
   // We assume that the call parameters exactly match the parameter patterns for
   // both the thunk and the callee. This is guaranteed even when we generate a
-  // tuple pattern wrapping the function parameters.
+  // struct or tuple pattern wrapping the function parameters.
   CARBON_CHECK(num_callee_args == callee_function_params.size(), "{0} != {1}",
                num_callee_args, callee_function_params.size());
   CARBON_CHECK(num_callee_args == callee_arg_ids.size());
