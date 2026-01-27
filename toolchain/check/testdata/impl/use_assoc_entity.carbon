@@ -1910,7 +1910,6 @@ fn F() {
 // CHECK:STDOUT:     %.loc13_29.4: ref @GenericResult.%as_type.loc12_35.1 (%as_type.baf) = temporary %.loc13_29.3, %J.F.call.loc13_29
 // CHECK:STDOUT:     %.loc13_29.5: @GenericResult.%as_type.loc12_35.1 (%as_type.baf) = acquire_value %.loc13_29.4
 // CHECK:STDOUT:     %I.Op.call: init @GenericResult.%as_type.loc12_35.1 (%as_type.baf) to %.loc12_43.1 = call %bound_method.loc13_30(%.loc13_15.5, %.loc13_29.5)
-// CHECK:STDOUT:     %as_type.loc13: type = facet_access_type constants.%impl.elem0.397 [symbolic = %as_type.loc12_35.1 (constants.%as_type.baf)]
 // CHECK:STDOUT:     %DestroyOp.bound.loc13_29: <bound method> = bound_method %.loc13_29.4, constants.%DestroyOp
 // CHECK:STDOUT:     %DestroyOp.call.loc13_29: init %empty_tuple.type = call %DestroyOp.bound.loc13_29(%.loc13_29.4)
 // CHECK:STDOUT:     %DestroyOp.bound.loc13_15: <bound method> = bound_method %.loc13_15.4, constants.%DestroyOp

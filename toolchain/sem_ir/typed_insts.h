@@ -1269,12 +1269,11 @@ struct OutParam {
 // A pattern that represents an output `Call` parameter. See `AnyParamPattern`
 // for member documentation.
 struct OutParamPattern {
-  static constexpr auto Kind =
-      InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "out_param_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "out_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1586,7 +1585,7 @@ struct ReturnSlot {
 // for input parameters.
 struct ReturnSlotPattern {
   static constexpr auto Kind =
-      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+      InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,

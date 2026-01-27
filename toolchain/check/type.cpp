@@ -240,6 +240,11 @@ auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
                                        context.facet_types().Add(info));
 }
 
+auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetAccessType>(context, facet_value_inst_id);
+}
+
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);

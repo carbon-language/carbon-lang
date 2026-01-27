@@ -5,19 +5,19 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/pattern.h"
-#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 // Given a value whose type `IsFacetTypeOrError`, returns the corresponding
 // type.
-static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
+static auto GetFacetAsType(Context& context,
                            SemIR::ConstantId facet_or_type_const_id)
     -> SemIR::TypeId {
   auto facet_or_type_id =
@@ -27,10 +27,8 @@ static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
 
   if (context.types().Is<SemIR::FacetType>(type_type_id)) {
     // It's a facet; access its type.
-    facet_or_type_id = GetOrAddInst<SemIR::FacetAccessType>(
-        context, loc_id,
-        {.type_id = SemIR::TypeType::TypeId,
-         .facet_value_inst_id = facet_or_type_id});
+    facet_or_type_id = context.types().GetInstId(
+        GetFacetAccessType(context, facet_or_type_id));
   }
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
@@ -38,76 +36,15 @@ static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
 // Returns a manufactured no-op function with `self_const_id` as parameter.
 // TODO: This is somewhat temporary, but we may want to keep something similar
 // long-term where names are based on type structure (potentially also for
-// copy/move). It'll probably be good to look at refactoring with function
-// construction in thunk.cpp and cpp/import.cpp.
+// copy/move).
 static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
-                             SemIR::ConstantId self_const_id,
-                             SemIR::SpecificId specific_id) -> SemIR::InstId {
-  // Build the parameters, with `[ref self: Self]`
-  context.scope_stack().PushForDeclName();
-  context.inst_block_stack().Push();
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ExplicitParamList);
-
-  BeginSubpattern(context);
-  auto type_id = GetFacetAsType(context, loc_id, self_const_id);
-  SemIR::ExprRegionId type_expr_region_id =
-      EndSubpatternAsExpr(context, context.types().GetInstId(type_id));
-  auto self_param_id = AddParamPattern(
-      context, loc_id, SemIR::NameId::SelfValue, type_expr_region_id, type_id,
-      /*is_ref=*/true);
-  auto implicit_param_patterns_id = context.inst_blocks().Add({self_param_id});
-  auto [call_param_patterns_id, call_params_id] =
-      CalleePatternMatch(context, implicit_param_patterns_id,
-                         /*param_patterns_id=*/SemIR::InstBlockId::Empty,
-                         /*return_patterns_id=*/SemIR::InstBlockId::None);
-
-  context.full_pattern_stack().PopFullPattern();
-  auto pattern_block_id = context.pattern_block_stack().Pop();
-  auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-
-  // Add the function declaration.
-  SemIR::FunctionDecl function_decl = {.type_id = SemIR::TypeId::None,
-                                       .function_id = SemIR::FunctionId::None,
-                                       .decl_block_id = decl_block_id};
-  auto noop_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
-
-  auto noop_name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add("DestroyOp"));
-
-  // Build the function entity.
-  auto noop_function = SemIR::Function{
-      {
-          .name_id = noop_name_id,
-          .parent_scope_id = SemIR::NameScopeId::None,
-          .generic_id = SemIR::GenericId::None,
-          .first_param_node_id = Parse::NodeId::None,
-          .last_param_node_id = Parse::NodeId::None,
-          .pattern_block_id = pattern_block_id,
-          .implicit_param_patterns_id = implicit_param_patterns_id,
-          .param_patterns_id = SemIR::InstBlockId::Empty,
-          .is_extern = false,
-          .extern_library_id = SemIR::LibraryNameId::None,
-          .non_owning_decl_id = SemIR::InstId::None,
-          .first_owning_decl_id = noop_id,
-      },
-      {
-          .call_param_patterns_id = call_param_patterns_id,
-          .call_params_id = call_params_id,
-          .return_type_inst_id = SemIR::TypeInstId::None,
-          .return_form_inst_id = SemIR::InstId::None,
-          .return_patterns_id = SemIR::InstBlockId::None,
-          .self_param_id = self_param_id,
-      }};
-  noop_function.SetBuiltinFunction(SemIR::BuiltinFunctionKind::NoOp);
-  function_decl.function_id = context.functions().Add(noop_function);
-  function_decl.type_id =
-      GetFunctionType(context, function_decl.function_id, specific_id);
-  ReplaceInstBeforeConstantUse(context, noop_id, function_decl);
-  return noop_id;
+                             SemIR::NameScopeId name_scope_id,
+                             SemIR::NameId name_id,
+                             SemIR::ConstantId self_const_id) -> SemIR::InstId {
+  auto self_type_id = GetFacetAsType(context, self_const_id);
+  return MakeBuiltinFunction(context, loc_id, SemIR::BuiltinFunctionKind::NoOp,
+                             name_scope_id, name_id,
+                             {.self_type_id = self_type_id});
 }
 
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
@@ -161,8 +98,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
           return SemIR::ErrorInst::InstId;
         }
-        auto self_type_id =
-            GetFacetAsType(context, loc_id, query_self_const_id);
+        auto self_type_id = GetFacetAsType(context, query_self_const_id);
         // TODO: If a thunk is needed, this will build a different value each
         // time it's called, so we won't properly deduplicate repeated
         // witnesses.
@@ -285,8 +221,10 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
   // TODO: This needs more complex logic to apply the correct behavior. Also, we
   // should avoid building a new function on each lookup since a similar query
   // could result in identical functions.
-  auto noop_id = MakeNoOpFunction(context, loc_id, query_self_const_id,
-                                  query_specific_interface.specific_id);
+  auto noop_id = MakeNoOpFunction(
+      context, loc_id, SemIR::NameScopeId::None,
+      SemIR::NameId::ForIdentifier(context.identifiers().Add("DestroyOp")),
+      query_self_const_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {noop_id});
 }

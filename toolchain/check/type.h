@@ -104,6 +104,10 @@ auto GetNamedConstraintType(Context& context,
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
     -> SemIR::TypeId;
 
+// Gets the type contained within the given facet value.
+auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::TypeId;
+
 // Returns a pointer type whose pointee type is `pointee_type_id`. The returned
 // type will be complete.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)

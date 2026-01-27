@@ -5,9 +5,15 @@
 #include "toolchain/check/function.h"
 
 #include "common/find.h"
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/check/convert.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
+#include "toolchain/check/pattern.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
 
@@ -21,6 +27,177 @@ auto FindSelfPattern(Context& context,
   return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
     return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
   });
+}
+
+auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
+                       Context::FormExpr form_expr) -> SemIR::InstBlockId {
+  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
+  auto form_inst = context.insts().Get(form_expr.form_inst_id);
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::RefForm::Kind: {
+      break;
+    }
+    case CARBON_KIND(SemIR::InitForm init_form): {
+      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
+      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
+          context, loc_id,
+          {.type_id = pattern_type_id,
+           .type_inst_id = form_expr.type_component_id});
+      return_patterns.push_back(AddPatternInst<SemIR::OutParamPattern>(
+          context, SemIR::LocId(form_expr.form_inst_id),
+          {.type_id = pattern_type_id,
+           .subpattern_id = return_slot_pattern_id,
+           .index = init_form.index}));
+      break;
+    }
+    case SemIR::ErrorInst::Kind: {
+      break;
+    }
+    default:
+      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
+  }
+  return context.inst_blocks().AddCanonical(return_patterns);
+}
+
+auto IsValidBuiltinDeclaration(Context& context,
+                               const SemIR::Function& function,
+                               SemIR::BuiltinFunctionKind builtin_kind)
+    -> bool {
+  if (!function.call_params_id.has_value()) {
+    // For now, we have no builtins that support positional parameters.
+    return false;
+  }
+
+  // Find the list of call parameters other than the implicit return slots.
+  auto call_params = context.inst_blocks()
+                         .Get(function.call_params_id)
+                         .drop_back(context.inst_blocks()
+                                        .GetOrEmpty(function.return_patterns_id)
+                                        .size());
+
+  // Get the return type. This is `()` if none was specified.
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
+  if (!return_type_id.has_value()) {
+    return_type_id = GetTupleType(context, {});
+  }
+
+  return builtin_kind.IsValidType(context.sem_ir(), call_params,
+                                  return_type_id);
+}
+
+auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
+                         SemIR::BuiltinFunctionKind builtin_kind,
+                         SemIR::NameScopeId name_scope_id,
+                         SemIR::NameId name_id,
+                         BuiltinFunctionSignature signature) -> SemIR::InstId {
+  // TODO: Refactor with function construction in thunk.cpp and cpp/import.cpp.
+  context.scope_stack().PushForDeclName();
+  context.inst_block_stack().Push();
+  context.pattern_block_stack().Push();
+
+  // Build and add a `[ref self: Self]` parameter if needed.
+  auto implicit_param_patterns_id = SemIR::InstBlockId::None;
+  auto self_param_id = SemIR::InstId::None;
+  if (signature.self_type_id.has_value()) {
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ImplicitParamList);
+
+    BeginSubpattern(context);
+    auto self_type_region_id = EndSubpatternAsExpr(
+        context, context.types().GetInstId(signature.self_type_id));
+
+    self_param_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                                    self_type_region_id, signature.self_type_id,
+                                    signature.self_is_ref);
+    implicit_param_patterns_id = context.inst_blocks().Add({self_param_id});
+
+    context.full_pattern_stack().EndImplicitParamList();
+  } else {
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ExplicitParamList);
+  }
+
+  // Build and add any explicit parameters. We always use value parameters for
+  // now.
+  auto param_patterns_id = SemIR::InstBlockId::Empty;
+  if (!signature.param_type_ids.empty()) {
+    context.inst_block_stack().Push();
+    for (auto param_type_id : signature.param_type_ids) {
+      BeginSubpattern(context);
+      auto param_type_region_id = EndSubpatternAsExpr(
+          context, context.types().GetInstId(param_type_id));
+
+      context.inst_block_stack().AddInstId(AddParamPattern(
+          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
+          param_type_id, /*is_ref=*/false));
+    }
+    param_patterns_id = context.inst_block_stack().Pop();
+  }
+
+  // Build and add the return type. We always use an initializing form for now.
+  auto return_patterns_id = SemIR::InstBlockId::None;
+  Context::FormExpr return_form = {.form_inst_id = SemIR::InstId::None,
+                                   .type_component_id = SemIR::TypeInstId::None,
+                                   .type_id = SemIR::TypeId::None};
+  if (signature.return_type_id.has_value()) {
+    return_form = ExprAsReturnForm(
+        context, loc_id, context.types().GetInstId(signature.return_type_id));
+    return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
+  }
+
+  auto [call_param_patterns_id, call_params_id] =
+      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
+                         return_patterns_id);
+
+  context.full_pattern_stack().PopFullPattern();
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
+
+  // Add the function declaration.
+  SemIR::FunctionDecl function_decl = {.type_id = SemIR::TypeId::None,
+                                       .function_id = SemIR::FunctionId::None,
+                                       .decl_block_id = decl_block_id};
+  auto decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
+
+  // Build the function entity.
+  auto function = SemIR::Function{
+      {
+          .name_id = name_id,
+          .parent_scope_id = name_scope_id,
+          .generic_id = SemIR::GenericId::None,
+          .first_param_node_id = Parse::NodeId::None,
+          .last_param_node_id = Parse::NodeId::None,
+          .pattern_block_id = pattern_block_id,
+          .implicit_param_patterns_id = implicit_param_patterns_id,
+          .param_patterns_id = param_patterns_id,
+          .is_extern = false,
+          .extern_library_id = SemIR::LibraryNameId::None,
+          .non_owning_decl_id = SemIR::InstId::None,
+          .first_owning_decl_id = decl_id,
+          .definition_id = decl_id,
+      },
+      {
+          .call_param_patterns_id = call_param_patterns_id,
+          .call_params_id = call_params_id,
+          .return_type_inst_id = return_form.type_component_id,
+          .return_form_inst_id = return_form.form_inst_id,
+          .return_patterns_id = return_patterns_id,
+          .self_param_id = self_param_id,
+      }};
+  CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));
+  function.SetBuiltinFunction(builtin_kind);
+  function_decl.function_id = context.functions().Add(function);
+  function_decl.type_id = GetFunctionType(context, function_decl.function_id,
+                                          SemIR::SpecificId::None);
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  // Add the builtin to the imports block so that it appears in the formatted
+  // IR.
+  // TODO: Find a better way to handle this. Ideally we should stop using this
+  // function entirely and declare builtins in the prelude.
+  context.imports().push_back(decl_id);
+  return decl_id;
 }
 
 auto CheckFunctionReturnTypeMatches(Context& context,
