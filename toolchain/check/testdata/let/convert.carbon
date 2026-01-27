@@ -34,10 +34,10 @@ fn G() {
   // CHECK:STDERR:   n = 1;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE-5]]:14: error: variable `n` is marked `unused` but is used [UnusedButUsed]
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE-5]]:14: error: variable `n` marked `unused` but used [UnusedButUsed]
   // CHECK:STDERR:   let unused n: i32 = a;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: note: usage is here [UnusedButUsedHere]
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:   n = 1;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:

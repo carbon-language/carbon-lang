@@ -41,7 +41,7 @@ class A(T:! type) {
   }
 }
 
-// CHECK:STDERR: nested.carbon:[[@LINE+4]]:18: warning: binding `N` is unused [UnusedBinding]
+// CHECK:STDERR: nested.carbon:[[@LINE+4]]:18: warning: binding `N` unused [UnusedBinding]
 // CHECK:STDERR: fn A(T:! type).B(N:! T).F[unused self: Self](unused a: T) {}
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:

@@ -17,10 +17,10 @@ fn F() {
   // CHECK:STDERR:   let unused a: i32 = a;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+7]]:14: error: variable `a` is marked `unused` but is used [UnusedButUsed]
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+7]]:14: error: variable `a` marked `unused` but used [UnusedButUsed]
   // CHECK:STDERR:   let unused a: i32 = a;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:23: note: usage is here [UnusedButUsedHere]
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:23: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:   let unused a: i32 = a;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
