@@ -52,9 +52,6 @@ static auto GenerateThunkMangledName(
     case SemIR::ClangDeclKey::Signature::TuplePattern:
       mangled_name_stream << ".carbon_thunk_tuple";
       break;
-    case SemIR::ClangDeclKey::Signature::EmptyStructPattern:
-      mangled_name_stream << ".carbon_thunk_struct";
-      break;
   }
 
   if (num_params !=
@@ -663,7 +660,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
 
   // We assume that the call parameters exactly match the parameter patterns for
   // both the thunk and the callee. This is guaranteed even when we generate a
-  // struct or tuple pattern wrapping the function parameters.
+  // tuple pattern wrapping the function parameters.
   CARBON_CHECK(num_callee_args == callee_function_params.size(), "{0} != {1}",
                num_callee_args, callee_function_params.size());
   CARBON_CHECK(num_callee_args == callee_arg_ids.size());

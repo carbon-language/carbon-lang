@@ -35,9 +35,6 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
       // parameters. This is used when importing a constructor that is used for
       // list initialization from a Carbon tuple.
       TuplePattern,
-      // A function signature taking an empty struct pattern. This is used when
-      // importing a constructor that is used for list initialization from `{}`.
-      EmptyStructPattern,
     };
     // The kind of function signature being imported.
     Kind kind = Normal;
@@ -57,7 +54,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
              !std::derived_from<clang::FunctionDecl, DeclT> &&
              !std::derived_from<DeclT, clang::FunctionDecl>)
   explicit ClangDeclKey(DeclT* decl)
-      : ClangDeclKey(decl, Signature(), UncheckedTag()) {}
+      : ClangDeclKey(decl, Signature{}, UncheckedTag()) {}
 
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
@@ -70,7 +67,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // a function declaration.
   static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
     CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
-    return ClangDeclKey(decl, Signature(), UncheckedTag());
+    return ClangDeclKey(decl, Signature{}, UncheckedTag());
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -91,11 +88,11 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // The Clang declaration pointing to the Clang AST.
   // TODO: Ensure we can easily serialize/deserialize this. Consider
   // `clang::LazyDeclPtr`.
-  clang::Decl* decl = nullptr;
+  clang::Decl* decl;
 
   // The parameters to import for a function declaration. Otherwise a
   // default-constructed value.
-  Signature signature = Signature();
+  Signature signature;
 
  private:
   struct UncheckedTag {

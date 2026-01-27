@@ -30,9 +30,6 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
       case ClangDeclKey::Signature::TuplePattern:
         out << "tuple";
         break;
-      case ClangDeclKey::Signature::EmptyStructPattern:
-        out << "struct";
-        break;
     }
     out << ", num_params: " << signature.num_params << "}";
   } else {

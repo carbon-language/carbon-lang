@@ -204,36 +204,20 @@ static auto GetConversionSignatureToImport(
   // instead of a function signature with one parameter per C++ parameter.
   if (step_kind ==
       clang::InitializationSequence::SK_ConstructorInitializationFromList) {
-    auto source_type_id = context.insts().Get(source_id).type_id();
-    if (auto tuple_type =
-            context.types().TryGetAs<SemIR::TupleType>(source_type_id)) {
-      // Initialization from a tuple `(a, b, c)` results in a constructor
-      // function that takes a tuple pattern:
-      //
-      //   fn Class.Class((a: A, b: B, c: C)) -> Class;
-      return {
-          .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
-          .num_params = static_cast<int32_t>(
-              context.inst_blocks().Get(tuple_type->type_elements_id).size())};
-    }
+    // The source type should always be a tuple type, because we don't support
+    // C++ initialization from struct types.
+    auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(
+        context.insts().Get(source_id).type_id());
+    CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
 
-    if (auto struct_type =
-            context.types().TryGetAs<SemIR::StructType>(source_type_id)) {
-      // Initialization from a struct `{}` results in a constructor function
-      // that takes an empty struct pattern:
-      //
-      //   fn Class.Class({}) -> Class;
-      //
-      // TODO: We currently use `_: {}` instead of `{}` because we don't yet
-      // support struct patterns.
-      CARBON_CHECK(struct_type->fields_id == SemIR::StructTypeFieldsId::Empty,
-                   "Mapped a non-empty struct to a constructor call");
-      return {.kind = SemIR::ClangDeclKey::Signature::Kind::EmptyStructPattern,
-              .num_params = 0};
-    }
-
-    CARBON_FATAL("Unexpected kind {0} for initializer list argument",
-                 context.types().GetAsInst(source_type_id));
+    // Initialization from a tuple `(a, b, c)` results in a constructor
+    // function that takes a tuple pattern:
+    //
+    //   fn Class.Class((a: A, b: B, c: C)) -> Class;
+    return {
+        .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
+        .num_params = static_cast<int32_t>(
+            context.inst_blocks().Get(tuple_type->type_elements_id).size())};
   }
 
   // Any other initialization from an expression `a` using a constructor is
@@ -258,6 +242,13 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId source_id,
                                 SemIR::TypeId dest_type_id, bool allow_explicit)
     -> SemIR::InstId {
+  if (context.types().Is<SemIR::StructType>(
+          context.insts().Get(source_id).type_id())) {
+    // Structs can only be used to initialize C++ aggregates. That case is
+    // handled by Convert, not here.
+    return SemIR::InstId::None;
+  }
+
   auto dest_type = MapToCppType(context, dest_type_id);
   if (dest_type.isNull()) {
     return SemIR::InstId::None;

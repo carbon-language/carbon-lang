@@ -39,10 +39,6 @@ fn G() {
   let _: Cpp.C = ();
 }
 
-fn H() {
-  let _: Cpp.C = {};
-}
-
 // ============================================================================
 // Copy constructor
 // ============================================================================
@@ -177,16 +173,6 @@ fn Four() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk_struct(ptr noundef %return) #0 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 4 dereferenceable(8) %0)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #2 !dbg !18 {
 // CHECK:STDOUT: entry:
@@ -205,21 +191,12 @@ fn Four() {
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CH.Main() #2 !dbg !26 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_19.2.temp = alloca [8 x i8], align 1, !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_19.2.temp), !dbg !27
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_struct(ptr %.loc15_19.2.temp), !dbg !27
-// CHECK:STDOUT:   ret void, !dbg !28
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ev, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -256,9 +233,6 @@ fn Four() {
 // CHECK:STDOUT: !23 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !7, line: 10, type: !19, spFlags: DISPFlagDefinition, unit: !6)
 // CHECK:STDOUT: !24 = !DILocation(line: 11, column: 18, scope: !23)
 // CHECK:STDOUT: !25 = !DILocation(line: 10, column: 1, scope: !23)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !7, line: 14, type: !19, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !27 = !DILocation(line: 15, column: 18, scope: !26)
-// CHECK:STDOUT: !28 = !DILocation(line: 14, column: 1, scope: !26)
 // CHECK:STDOUT: ; ModuleID = 'call_copy.carbon'
 // CHECK:STDOUT: source_filename = "call_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

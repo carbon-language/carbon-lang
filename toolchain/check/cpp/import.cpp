@@ -1212,23 +1212,6 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
       param_ids = {pattern_id};
       break;
     }
-
-    case SemIR::ClangDeclKey::Signature::EmptyStructPattern: {
-      // Form a single binding `_: {}`. Don't add a parameter; we just want to
-      // discard the struct value, not pass it to the function.
-      CARBON_CHECK(param_type_ids.empty());
-      SemIR::LocId param_loc_id =
-          AddImportIRInst(context.sem_ir(), clang_decl.getLocation());
-      SemIR::InstId pattern_id =
-          AddBindingPattern(
-              context, param_loc_id, SemIR::NameId::Underscore,
-              GetStructType(context, SemIR::StructTypeFieldsId::Empty),
-              SemIR::ExprRegionId::None, SemIR::ValueBindingPattern::Kind,
-              /*is_template=*/false)
-              .pattern_id;
-      param_ids.push_back(pattern_id);
-      break;
-    }
   }
 
   return context.inst_blocks().Add(param_ids);
