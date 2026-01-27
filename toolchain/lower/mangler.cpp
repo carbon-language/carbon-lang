@@ -83,11 +83,15 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         auto self_inst = insts().Get(self_const_inst_id);
         CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
-            auto next_name_scope_id =
-                sem_ir().classes().Get(class_type.class_id).scope_id;
-            names_to_render.push_back({.name_scope_id = next_name_scope_id,
-                                       .specific_id = class_type.specific_id,
-                                       .prefix = '\0'});
+            const auto& class_info =
+                sem_ir().classes().Get(class_type.class_id);
+
+            names_to_render.push_back(
+                {.name_scope_id = class_info.parent_scope_id,
+                 .specific_id = class_type.specific_id,
+                 .prefix = '.'});
+
+            MangleUnqualifiedClass(os, class_info, class_type.specific_id);
             break;
           }
           case SemIR::AutoType::Kind:
@@ -128,8 +132,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         continue;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        MangleNameId(os, sem_ir().classes().Get(class_decl.class_id).name_id);
-        MangleSpecificId(os, specific_id);
+        MangleUnqualifiedClass(os, sem_ir().classes().Get(class_decl.class_id),
+                               specific_id);
         break;
       }
       case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
@@ -264,4 +268,10 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
   return os.TakeStr();
 }
 
+auto Mangler::MangleUnqualifiedClass(llvm::raw_ostream& os,
+                                     const SemIR::Class& class_info,
+                                     SemIR::SpecificId specific_id) -> void {
+  MangleNameId(os, class_info.name_id);
+  MangleSpecificId(os, specific_id);
+}
 }  // namespace Carbon::Lower
