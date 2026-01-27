@@ -67,6 +67,13 @@ impl i32 as ImplicitAs(CppCompat.Long32) {
 }
 
 // TODO: Generalize ImplicitAs from Long32 to Int(N) for all N > 32.
+// N == 32 is explicitly skipped, as Core.Cpp.Long32 is considered to
+// be between i32 and i33 (details:
+// https://github.com/carbon-language/carbon-lang/issues/6275#issuecomment-3488010485).
+// This follows the rule that implicit conversions exist for all iN -> iM if
+// M > N. Otherwise, operations like i32 + Cpp.long result in i32, instead of
+// Cpp.long, which differs from the result for Cpp.long + i32 -> Cpp.long, as
+// the best match for the left operand is being selected.
 final impl CppCompat.Long32 as ImplicitAs(i64) {
   fn Convert[self: Self]() -> i64 = "int.convert";
 }
