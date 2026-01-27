@@ -220,8 +220,8 @@ static auto GetConversionSignatureToImport(
             context.inst_blocks().Get(tuple_type->type_elements_id).size())};
   }
 
-  // Any other initialization from an expression `a` using a constructor is
-  // calling a converting constructor:
+  // Any other initialization using a constructor is calling a converting
+  // constructor:
   //
   //   fn Class.Class(a: A) -> Class;
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
@@ -438,12 +438,16 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
         return SemIR::ErrorInst::InstId;
       }
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
-      auto result_id = ImportCppFunctionDecl(
-          context, loc_id, best_viable_fn->Function,
-          // If this is an operator method, the first arg will be used as self.
-          {.num_params = static_cast<int32_t>(
-               arg_ids.size() -
-               (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0))});
+
+      // If this is an operator method, the first arg will be used as self.
+      int32_t num_params = arg_ids.size();
+      if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
+        --num_params;
+      }
+
+      auto result_id =
+          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function,
+                                {.num_params = num_params});
       if (result_id != SemIR::ErrorInst::InstId) {
         CheckCppOverloadAccess(
             context, loc_id, best_viable_fn->FoundDecl,

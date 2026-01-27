@@ -1126,11 +1126,10 @@ static auto MakeImplicitParamPatternsBlockId(
 // Returns a block id for the explicit parameters of the given function
 // declaration. If the function declaration has no parameters, it returns
 // `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
-// produces an error and returns `SemIR::InstBlockId::None`.
+// produces an error and returns `SemIR::InstBlockId::None`. `signature`
+// specifies how to convert the C++ signature to the Carbon signature.
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
-// `signature` specifies how to convert the C++ signature to the Carbon
-// signature.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclKey::Signature signature)
@@ -1360,9 +1359,8 @@ struct FunctionSignatureInsts {
 // pattern match to create the `Call` parameters, and returns a
 // FunctionSignatureInsts containing the results. Produces a diagnostic and
 // returns `std::nullopt` if the function declaration has an unsupported
-// parameter type.
-// `signature` specifies how to convert the C++ function signature to the Carbon
-// function signature.
+// parameter type. `signature` specifies how to convert the C++ function
+// signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
     Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclKey::Signature signature)
@@ -1432,9 +1430,12 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
 }
 
 // Creates a `FunctionDecl` and a `Function` without C++ thunk information.
-// Returns std::nullopt on failure. The given Clang declaration is assumed to:
+// Returns std::nullopt on failure.
+//
+// The given Clang declaration is assumed to:
 // * Have not been imported before.
 // * Be of supported type (ignoring parameters).
+//
 // `signature` specifies how to convert the C++ function signature to the Carbon
 // function signature.
 static auto ImportFunction(Context& context, SemIR::LocId loc_id,
