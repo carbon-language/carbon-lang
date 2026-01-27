@@ -282,7 +282,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc9_38.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc9_38.1
 // CHECK:STDOUT:     %.loc9_39.2: ref @Outer.F.%T.binding.as_type (%T.binding.as_type) = class_element_access %return.param, element0
 // CHECK:STDOUT:     %Copy.Op.call: init @Outer.F.%T.binding.as_type (%T.binding.as_type) to %.loc9_39.2 = call %bound_method.loc9_38.2(%n.ref)
-// CHECK:STDOUT:     %.loc9_39.3: ref @Outer.F.%T.binding.as_type (%T.binding.as_type) to %.loc9_39.2 = materialize %Copy.Op.call
+// CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.binding.as_type (%T.binding.as_type) to %.loc9_39.2 = in_place_init %Copy.Op.call
 // CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.bcf) to %return.param = class_init (%.loc9_39.3)
 // CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.bcf) = converted %.loc9_39.1, %.loc9_39.4
 // CHECK:STDOUT:     return %.loc9_40 to %return.param

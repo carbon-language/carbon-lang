@@ -152,7 +152,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc16_29.2: init %i32 = converted %int_0.loc16_27, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %int_0.loc16_29: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc16_29.3: ref %i32 = array_index %x.var, %int_0.loc16_29
-// CHECK:STDOUT:   %.loc16_29.4: ref %i32 to %.loc16_29.3 = materialize %.loc16_29.2 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc16_29.4: init %i32 to %.loc16_29.3 = in_place_init %.loc16_29.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_29.5: init %array_type to %x.var = array_init (%.loc16_29.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc16_3: init %array_type = converted %.loc16_29.1, %.loc16_29.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %x.var, %.loc16_3

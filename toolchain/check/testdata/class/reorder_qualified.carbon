@@ -266,7 +266,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33: init %i32 = call %bound_method.loc33_25.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc33_25.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc33_25.3: ref %i32 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc33_25.4: ref %i32 to %.loc33_25.3 = materialize %.loc33_25.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc33_25.4: init %i32 to %.loc33_25.3 = in_place_init %.loc33_25.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc33_25.5: init %A to %a.var = class_init (%.loc33_25.4) [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc33_7: init %A = converted %.loc33_25.1, %.loc33_25.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   assign %a.var, %.loc33_7
@@ -286,7 +286,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34: init %i32 = call %bound_method.loc34_25.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc34_25.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc34_25.3: ref %i32 = class_element_access %b.var, element0
-// CHECK:STDOUT:   %.loc34_25.4: ref %i32 to %.loc34_25.3 = materialize %.loc34_25.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc34_25.4: init %i32 to %.loc34_25.3 = in_place_init %.loc34_25.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc34_25.5: init %B to %b.var = class_init (%.loc34_25.4) [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc34_7: init %B = converted %.loc34_25.1, %.loc34_25.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %b.var, %.loc34_7
@@ -306,7 +306,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc35: init %i32 = call %bound_method.loc35_25.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc35_25.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc35 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc35_25.3: ref %i32 = class_element_access %c.var, element0
-// CHECK:STDOUT:   %.loc35_25.4: ref %i32 to %.loc35_25.3 = materialize %.loc35_25.2 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc35_25.4: init %i32 to %.loc35_25.3 = in_place_init %.loc35_25.2 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc35_25.5: init %C to %c.var = class_init (%.loc35_25.4) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc35_7: init %C = converted %.loc35_25.1, %.loc35_25.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc35_7
@@ -326,7 +326,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_25.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc36_25.2: init %i32 = converted %int_4, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc36_25.3: ref %i32 = class_element_access %d.var, element0
-// CHECK:STDOUT:   %.loc36_25.4: ref %i32 to %.loc36_25.3 = materialize %.loc36_25.2 [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc36_25.4: init %i32 to %.loc36_25.3 = in_place_init %.loc36_25.2 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc36_25.5: init %D to %d.var = class_init (%.loc36_25.4) [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc36_7: init %D = converted %.loc36_25.1, %.loc36_25.5 [concrete = constants.%D.val]
 // CHECK:STDOUT:   assign %d.var, %.loc36_7

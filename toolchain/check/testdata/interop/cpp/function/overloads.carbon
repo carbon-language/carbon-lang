@@ -1270,7 +1270,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_44.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc22_44.2: %ptr.974 = addr_of %.loc22_44.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc22_44.1, %addr.loc22_44.2)
-// CHECK:STDOUT:   %.loc22_44.2: ref %i128 to %.loc22_44.1 = mark_materialized %foo__carbon_thunk.call.loc22
+// CHECK:STDOUT:   %.loc22_44.2: init %i128 to %.loc22_44.1 = mark_in_place_init %foo__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_10: type = splice_block %i128.loc22 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128.loc22: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc22: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
@@ -1302,7 +1302,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_45.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc25_45.2: %ptr.974 = addr_of %.loc25_45.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc25: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc25_45.1, %addr.loc25_45.2)
-// CHECK:STDOUT:   %.loc25_45.2: ref %i128 to %.loc25_45.1 = mark_materialized %foo__carbon_thunk.call.loc25
+// CHECK:STDOUT:   %.loc25_45.2: init %i128 to %.loc25_45.1 = mark_in_place_init %foo__carbon_thunk.call.loc25
 // CHECK:STDOUT:   %.loc25_10: type = splice_block %i128.loc25 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128.loc25: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc25: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
@@ -1334,7 +1334,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc28_45.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc28_45.2: %ptr.974 = addr_of %.loc28_45.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc28: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc28_45.1, %addr.loc28_45.2)
-// CHECK:STDOUT:   %.loc28_45.2: ref %i128 to %.loc28_45.1 = mark_materialized %foo__carbon_thunk.call.loc28
+// CHECK:STDOUT:   %.loc28_45.2: init %i128 to %.loc28_45.1 = mark_in_place_init %foo__carbon_thunk.call.loc28
 // CHECK:STDOUT:   %.loc28_10: type = splice_block %i128.loc28 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128.loc28: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc28: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
@@ -1366,7 +1366,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc31_64.1: ref %i128 = temporary_storage
 // CHECK:STDOUT:   %addr.loc31_64.2: %ptr.974 = addr_of %.loc31_64.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call.loc31: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc31_64.1, %addr.loc31_64.2)
-// CHECK:STDOUT:   %.loc31_64.2: ref %i128 to %.loc31_64.1 = mark_materialized %foo__carbon_thunk.call.loc31
+// CHECK:STDOUT:   %.loc31_64.2: init %i128 to %.loc31_64.1 = mark_in_place_init %foo__carbon_thunk.call.loc31
 // CHECK:STDOUT:   %.loc31_10: type = splice_block %i128.loc31 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128.loc31: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128.loc31: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
@@ -1821,7 +1821,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_27.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc7_27.2: %ptr.bcc = addr_of %.loc7_27.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc7_27.1, %addr.loc7_27.2)
-// CHECK:STDOUT:   %.loc7_27.2: ref %f64.d77 to %.loc7_27.1 = mark_materialized %foo__carbon_thunk.call
+// CHECK:STDOUT:   %.loc7_27.2: init %f64.d77 to %.loc7_27.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc7_10: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
@@ -1969,7 +1969,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_19.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc15_19.2: %ptr.bcc = addr_of %.loc15_19.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc15_19.1, %addr.loc15_19.2)
-// CHECK:STDOUT:   %.loc15_19.2: ref %f64.d77 to %.loc15_19.1 = mark_materialized %foo__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_19.2: init %f64.d77 to %.loc15_19.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_19.3: ref %f64.d77 = start_lifetime %.loc15_19.2
 // CHECK:STDOUT:   %DestroyOp.bound.loc15_19: <bound method> = bound_method %.loc15_19.3, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc15_19: init %empty_tuple.type = call %DestroyOp.bound.loc15_19(%.loc15_19.3)

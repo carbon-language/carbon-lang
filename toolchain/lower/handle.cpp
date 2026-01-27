@@ -78,8 +78,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
-                     inst.rhs_id);
+  context.InitializeStorage(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
+                            inst.rhs_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -199,9 +199,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
-                SemIR::Materialize inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
-                     inst.src_id);
+                SemIR::InPlaceInit inst) -> void {
+  context.InitializeStorage(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
+                            inst.src_id);
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -264,7 +264,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
-      context.FinishInit(result_type, inst.dest_id, inst.expr_id);
+      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::ByCopy:

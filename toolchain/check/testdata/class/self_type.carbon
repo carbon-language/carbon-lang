@@ -166,7 +166,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc19_15.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc19_15.2(%addr)
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.8e5 = class_element_access %s.ref.loc19_5, element0
-// CHECK:STDOUT:   %.loc19_17.3: ref %ptr.8e5 to %.loc19_17.2 = materialize %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc19_17.3: init %ptr.8e5 to %.loc19_17.2 = in_place_init %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc19_17.4: init %Class to %s.ref.loc19_5 = class_init (%.loc19_17.3)
 // CHECK:STDOUT:   %.loc19_7: init %Class = converted %.loc19_17.1, %.loc19_17.4
 // CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7

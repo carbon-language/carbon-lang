@@ -39,12 +39,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::MarkMaterialized inst) -> void {
+                SemIR::MarkInPlaceInit inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.dest_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::Dematerialize inst) -> void {
+                SemIR::MoveFromInPlace inst) -> void {
   auto type = context.GetTypeIdOfInst(inst_id);
   auto* value = context.GetValue(inst.src_id);
 
@@ -69,7 +69,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
           break;
         case SemIR::ValueRepr::Custom:
           CARBON_FATAL(
-              "TODO: Add support for Dematerialize with custom value rep");
+              "TODO: Add support for MoveFromInPlace with custom value rep");
       }
       break;
     case SemIR::InitRepr::Abstract:
@@ -89,8 +89,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst_id), inst.storage_id,
-                     inst.init_id);
+  context.InitializeStorage(context.GetTypeIdOfInst(inst_id), inst.storage_id,
+                            inst.init_id);
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
@@ -113,7 +113,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
-               SemIR::ExprCategory::Initializing);
+               SemIR::ExprCategory::ReprInitializing);
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);
   auto init_repr = context.GetInitRepr(inst_type);

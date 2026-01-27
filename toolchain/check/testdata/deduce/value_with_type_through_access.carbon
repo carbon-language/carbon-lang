@@ -736,7 +736,7 @@ fn G() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%C.ref) [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc37_12.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc37_12.3: ref type = class_element_access %.loc37_12.2, element0
-// CHECK:STDOUT:   %.loc37_12.4: ref type to %.loc37_12.3 = materialize %type.as.Copy.impl.Op.call [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc37_12.4: init type to %.loc37_12.3 = in_place_init %type.as.Copy.impl.Op.call [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc37_12.5: init %Class to %.loc37_12.2 = class_init (%.loc37_12.4) [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc37_12.6: ref %Class = temporary %.loc37_12.2, %.loc37_12.5
 // CHECK:STDOUT:   %.loc37_13.1: ref %Class = converted %.loc37_12.1, %.loc37_12.6
@@ -963,7 +963,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc24_25.2: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc24_25.3: ref type = array_index %.loc24_25.2, %int_0
-// CHECK:STDOUT:   %.loc24_25.4: ref type to %.loc24_25.3 = materialize %type.as.Copy.impl.Op.call [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc24_25.4: init type to %.loc24_25.3 = in_place_init %type.as.Copy.impl.Op.call [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc24_25.5: init %array_type to %.loc24_25.2 = array_init (%.loc24_25.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.1: init %array_type = converted %.loc24_25.1, %.loc24_25.5 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.2: ref %array_type = temporary %.loc24_25.2, %.loc24_27.1

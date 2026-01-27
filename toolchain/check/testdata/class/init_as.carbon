@@ -146,7 +146,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc21_26.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_26.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_26.4: ref %i32 = class_element_access %.loc21_26.3, element0
-// CHECK:STDOUT:   %.loc21_26.5: ref %i32 to %.loc21_26.4 = materialize %.loc21_26.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc21_26.5: init %i32 to %.loc21_26.4 = in_place_init %.loc21_26.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc21_26.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc21_26.3: <bound method> = bound_method %int_2, %impl.elem0.loc21_26.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc21_26.2: <specific function> = specific_function %impl.elem0.loc21_26.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -154,7 +154,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.2: init %i32 = call %bound_method.loc21_26.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.6: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.7: ref %i32 = class_element_access %.loc21_26.3, element1
-// CHECK:STDOUT:   %.loc21_26.8: ref %i32 to %.loc21_26.7 = materialize %.loc21_26.6 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc21_26.8: init %i32 to %.loc21_26.7 = in_place_init %.loc21_26.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.9: init %Class to %.loc21_26.3 = class_init (%.loc21_26.5, %.loc21_26.8) [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc21_26.10: ref %Class = temporary %.loc21_26.3, %.loc21_26.9
 // CHECK:STDOUT:   %.loc21_28: ref %Class = converted %.loc21_26.1, %.loc21_26.10

@@ -183,7 +183,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.1: init %i32 = converted @__global_init.%int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref %i32 = class_element_access %.loc13_27.2, element0
-// CHECK:STDOUT:   %.loc13_27.4: ref %i32 to %.loc13_27.3 = materialize %.loc13_27.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_27.4: init %i32 to %.loc13_27.3 = in_place_init %.loc13_27.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc13_27.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc13_27.3: <bound method> = bound_method @__global_init.%int_2, %impl.elem0.loc13_27.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc13_27.2: <specific function> = specific_function %impl.elem0.loc13_27.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -191,7 +191,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.2: init %i32 = call %bound_method.loc13_27.4(@__global_init.%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.5: init %i32 = converted @__global_init.%int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.6: ref %i32 = class_element_access %.loc13_27.2, element1
-// CHECK:STDOUT:   %.loc13_27.7: ref %i32 to %.loc13_27.6 = materialize %.loc13_27.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc13_27.7: init %i32 to %.loc13_27.6 = in_place_init %.loc13_27.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.8: init %C to %.loc13_27.2 = class_init (%.loc13_27.4, %.loc13_27.7) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9
@@ -389,7 +389,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.1: init %i32 = converted @__global_init.%int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref %i32 = class_element_access %.loc13_27.2, element0
-// CHECK:STDOUT:   %.loc13_27.4: ref %i32 to %.loc13_27.3 = materialize %.loc13_27.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_27.4: init %i32 to %.loc13_27.3 = in_place_init %.loc13_27.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc13_27.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc13_27.3: <bound method> = bound_method @__global_init.%int_2, %impl.elem0.loc13_27.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc13_27.2: <specific function> = specific_function %impl.elem0.loc13_27.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -397,7 +397,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.2: init %i32 = call %bound_method.loc13_27.4(@__global_init.%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.5: init %i32 = converted @__global_init.%int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_27.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.6: ref %i32 = class_element_access %.loc13_27.2, element1
-// CHECK:STDOUT:   %.loc13_27.7: ref %i32 to %.loc13_27.6 = materialize %.loc13_27.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc13_27.7: init %i32 to %.loc13_27.6 = in_place_init %.loc13_27.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.8: init %C to %.loc13_27.2 = class_init (%.loc13_27.4, %.loc13_27.7) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9

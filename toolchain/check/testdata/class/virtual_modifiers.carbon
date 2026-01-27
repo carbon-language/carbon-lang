@@ -738,7 +738,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc12_31.2: ref %Base = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc12_30.2: ref %ptr.454 = class_element_access %.loc12_31.2, element0
 // CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
-// CHECK:STDOUT:   %.loc12_30.3: ref %ptr.454 to %.loc12_30.2 = materialize %Derived.vtable_ptr [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %.loc12_30.3: init %ptr.454 to %.loc12_30.2 = in_place_init %Derived.vtable_ptr [concrete = constants.%Derived.vtable_ptr]
 // CHECK:STDOUT:   %.loc12_30.4: init %Base to %.loc12_31.2 = class_init (%.loc12_30.3) [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc12_31.3: init %Base = converted %.loc12_30.1, %.loc12_30.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc12_31.4: init %Derived to %d.var = class_init (%.loc12_31.3) [concrete = constants.%Derived.val]
@@ -922,7 +922,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
-// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 to %.loc7_28.2 = materialize %Base.vtable_ptr [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc7_28.3: init %ptr.454 to %.loc7_28.2 = in_place_init %Base.vtable_ptr [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_28.4: init %Base to %v.var = class_init (%.loc7_28.3) [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_3: init %Base = converted %.loc7_28.1, %.loc7_28.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign %v.var, %.loc7_3
@@ -1207,7 +1207,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.454 = class_element_access %b1.var, element0
 // CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete = constants.%B1.vtable_ptr]
-// CHECK:STDOUT:   %.loc19_17.3: ref %ptr.454 to %.loc19_17.2 = materialize %B1.vtable_ptr [concrete = constants.%B1.vtable_ptr]
+// CHECK:STDOUT:   %.loc19_17.3: init %ptr.454 to %.loc19_17.2 = in_place_init %B1.vtable_ptr [concrete = constants.%B1.vtable_ptr]
 // CHECK:STDOUT:   %.loc19_17.4: init %B1 to %b1.var = class_init (%.loc19_17.3) [concrete = constants.%B1.val.d17]
 // CHECK:STDOUT:   %.loc19_3: init %B1 = converted %.loc19_17.1, %.loc19_17.4 [concrete = constants.%B1.val.d17]
 // CHECK:STDOUT:   assign %b1.var, %.loc19_3
@@ -1223,7 +1223,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc20_27.2: ref %B1 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc20_26.2: ref %ptr.454 = class_element_access %.loc20_27.2, element0
 // CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete = constants.%B2.vtable_ptr]
-// CHECK:STDOUT:   %.loc20_26.3: ref %ptr.454 to %.loc20_26.2 = materialize %B2.vtable_ptr [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %.loc20_26.3: init %ptr.454 to %.loc20_26.2 = in_place_init %B2.vtable_ptr [concrete = constants.%B2.vtable_ptr]
 // CHECK:STDOUT:   %.loc20_26.4: init %B1 to %.loc20_27.2 = class_init (%.loc20_26.3) [concrete = constants.%B1.val.f0b]
 // CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.4 [concrete = constants.%B1.val.f0b]
 // CHECK:STDOUT:   %.loc20_27.4: init %B2 to %b2.var = class_init (%.loc20_27.3) [concrete = constants.%B2.val.e28]
@@ -1243,7 +1243,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc21_34.2: ref %B1 = class_element_access %.loc21_35.2, element0
 // CHECK:STDOUT:   %.loc21_33.2: ref %ptr.454 = class_element_access %.loc21_34.2, element0
 // CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
-// CHECK:STDOUT:   %.loc21_33.3: ref %ptr.454 to %.loc21_33.2 = materialize %C.vtable_ptr [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %.loc21_33.3: init %ptr.454 to %.loc21_33.2 = in_place_init %C.vtable_ptr [concrete = constants.%C.vtable_ptr]
 // CHECK:STDOUT:   %.loc21_33.4: init %B1 to %.loc21_34.2 = class_init (%.loc21_33.3) [concrete = constants.%B1.val.dd4]
 // CHECK:STDOUT:   %.loc21_34.3: init %B1 = converted %.loc21_33.1, %.loc21_33.4 [concrete = constants.%B1.val.dd4]
 // CHECK:STDOUT:   %.loc21_34.4: init %B2 to %.loc21_35.2 = class_init (%.loc21_34.3) [concrete = constants.%B2.val.b52]
@@ -1475,7 +1475,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc13_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc13_25, %i.ref.loc13_34)
 // CHECK:STDOUT:   %.loc13_35.2: ref %ptr.454 = class_element_access %b1.var, element0
 // CHECK:STDOUT:   %Base.vtable_ptr.loc13: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
-// CHECK:STDOUT:   %.loc13_35.3: ref %ptr.454 to %.loc13_35.2 = materialize %Base.vtable_ptr.loc13 [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc13_35.3: init %ptr.454 to %.loc13_35.2 = in_place_init %Base.vtable_ptr.loc13 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc13_34: %i32 = acquire_value %i.ref.loc13_34
 // CHECK:STDOUT:   %impl.elem0.loc13_34: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc13_34.1: <bound method> = bound_method %.loc13_34, %impl.elem0.loc13_34
@@ -1483,7 +1483,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %bound_method.loc13_34.2: <bound method> = bound_method %.loc13_34, %specific_fn.loc13_34
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_34: init %i32 = call %bound_method.loc13_34.2(%.loc13_34)
 // CHECK:STDOUT:   %.loc13_35.4: ref %i32 = class_element_access %b1.var, element2
-// CHECK:STDOUT:   %.loc13_35.5: ref %i32 to %.loc13_35.4 = materialize %Int.as.Copy.impl.Op.call.loc13_34
+// CHECK:STDOUT:   %.loc13_35.5: init %i32 to %.loc13_35.4 = in_place_init %Int.as.Copy.impl.Op.call.loc13_34
 // CHECK:STDOUT:   %.loc13_25: %i32 = acquire_value %i.ref.loc13_25
 // CHECK:STDOUT:   %impl.elem0.loc13_25: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc13_25.1: <bound method> = bound_method %.loc13_25, %impl.elem0.loc13_25
@@ -1491,7 +1491,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %bound_method.loc13_25.2: <bound method> = bound_method %.loc13_25, %specific_fn.loc13_25
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_25: init %i32 = call %bound_method.loc13_25.2(%.loc13_25)
 // CHECK:STDOUT:   %.loc13_35.6: ref %i32 = class_element_access %b1.var, element1
-// CHECK:STDOUT:   %.loc13_35.7: ref %i32 to %.loc13_35.6 = materialize %Int.as.Copy.impl.Op.call.loc13_25
+// CHECK:STDOUT:   %.loc13_35.7: init %i32 to %.loc13_35.6 = in_place_init %Int.as.Copy.impl.Op.call.loc13_25
 // CHECK:STDOUT:   %.loc13_35.8: init %Base to %b1.var = class_init (%.loc13_35.3, %.loc13_35.5, %.loc13_35.7)
 // CHECK:STDOUT:   %.loc13_3: init %Base = converted %.loc13_35.1, %.loc13_35.8
 // CHECK:STDOUT:   assign %b1.var, %.loc13_3
@@ -1507,7 +1507,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc14, %int_5) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %Base.vtable_ptr.loc14: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
-// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 to %.loc14_35.2 = materialize %Base.vtable_ptr.loc14 [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc14_35.3: init %ptr.454 to %.loc14_35.2 = in_place_init %Base.vtable_ptr.loc14 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %impl.elem0.loc14_35.1: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc14_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc14_35.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.005]
 // CHECK:STDOUT:   %specific_fn.loc14_35.1: <specific function> = specific_function %impl.elem0.loc14_35.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -1515,7 +1515,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35.1: init %i32 = call %bound_method.loc14_35.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc14_35.4: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b2.var, element2
-// CHECK:STDOUT:   %.loc14_35.6: ref %i32 to %.loc14_35.5 = materialize %.loc14_35.4 [concrete = constants.%int_5.0f6]
+// CHECK:STDOUT:   %.loc14_35.6: init %i32 to %.loc14_35.5 = in_place_init %.loc14_35.4 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %impl.elem0.loc14_35.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc14_35.3: <bound method> = bound_method %int_3.loc14, %impl.elem0.loc14_35.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc14_35.2: <specific function> = specific_function %impl.elem0.loc14_35.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -1523,7 +1523,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35.2: init %i32 = call %bound_method.loc14_35.4(%int_3.loc14) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc14_35.7: init %i32 = converted %int_3.loc14, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35.2 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc14_35.8: ref %i32 = class_element_access %b2.var, element1
-// CHECK:STDOUT:   %.loc14_35.9: ref %i32 to %.loc14_35.8 = materialize %.loc14_35.7 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc14_35.9: init %i32 to %.loc14_35.8 = in_place_init %.loc14_35.7 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc14_35.10: init %Base to %b2.var = class_init (%.loc14_35.3, %.loc14_35.6, %.loc14_35.9) [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc14_3: init %Base = converted %.loc14_35.1, %.loc14_35.10 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign %b2.var, %.loc14_3
@@ -4903,7 +4903,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc7_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.ae5]
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T1) [concrete = constants.%Base.vtable_ptr]
-// CHECK:STDOUT:   %.loc7_20.3: ref %ptr.454 to %.loc7_20.2 = materialize %Base.vtable_ptr [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 to %.loc7_20.2 = in_place_init %Base.vtable_ptr [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_20.4: init %Base.d5d to file.%v.var = class_init (%.loc7_20.3) [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_1: init %Base.d5d = converted %.loc7_20.1, %.loc7_20.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign file.%v.var, %.loc7_1

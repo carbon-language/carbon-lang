@@ -195,7 +195,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.1: init %i32 = call %bound_method.loc29_38.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc29_38.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc29_38.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc29_38.4: ref %i32 to %.loc29_38.3 = materialize %.loc29_38.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc29_38.4: init %i32 to %.loc29_38.3 = in_place_init %.loc29_38.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc29_38.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc29_38.3: <bound method> = bound_method %int_2, %impl.elem0.loc29_38.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc29_38.2: <specific function> = specific_function %impl.elem0.loc29_38.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -203,7 +203,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.2: init %i32 = call %bound_method.loc29_38.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc29_38.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc29_38.6: ref %i32 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc29_38.7: ref %i32 to %.loc29_38.6 = materialize %.loc29_38.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc29_38.7: init %i32 to %.loc29_38.6 = in_place_init %.loc29_38.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc29_38.8: init %C to %return.param = class_init (%.loc29_38.4, %.loc29_38.7) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc29_12: init %C = converted %.loc29_38.1, %.loc29_38.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return.param, %.loc29_12

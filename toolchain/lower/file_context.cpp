@@ -186,8 +186,8 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
   // initializing expressions, `FinishInit` will perform a copy if needed.
   switch (auto cat = SemIR::GetExprCategory(sem_ir(), const_inst_id)) {
     case SemIR::ExprCategory::Value:
-    case SemIR::ExprCategory::Initializing:
-    case SemIR::ExprCategory::EphemeralEntireRef:
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
       break;
 
     case SemIR::ExprCategory::DurableRef:

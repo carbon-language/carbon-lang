@@ -785,7 +785,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000016D:    {kind: BoundMethod, arg0: inst60000047, arg1: inst6000016A, type: type(inst(BoundMethodType))}
 // CHECK:STDOUT:     inst6000016E:    {kind: RequireCompleteType, arg0: inst6000001C, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000016F:    {kind: Call, arg0: inst6000016D, arg1: inst_block6000007F, type: type(symbolic_constant60000004)}
-// CHECK:STDOUT:     inst60000170:    {kind: Materialize, arg0: inst6000016F, arg1: inst6000004B, type: type(symbolic_constant60000004)}
+// CHECK:STDOUT:     inst60000170:    {kind: InPlaceInit, arg0: inst6000016F, arg1: inst6000004B, type: type(symbolic_constant60000004)}
 // CHECK:STDOUT:     inst60000171:    {kind: TupleAccess, arg0: inst6000003A, arg1: element1, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000172:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst60000171, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000173:    {kind: Converted, arg0: inst60000048, arg1: inst60000172, type: type(inst60000025)}

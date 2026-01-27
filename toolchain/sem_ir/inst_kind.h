@@ -17,7 +17,47 @@ namespace Carbon::SemIR {
 struct TypeId;
 
 // The expression category of an instruction. See /docs/design/values.md for
-// details.
+// background.
+//
+// Several categories are concerned with object initialization. At the SemIR
+// level, initialization consists of several phase transitions:
+// 1. A _repr-initializing_ expression forms an initializing representation of
+//    the object's eventual contents.
+// 2. An _in-place initializing_ expression commits to writing an object
+//    representation to memory.
+// 3. An _ephemeral entire reference_ expression commits to a particular memory
+//    location for the object.
+// 4. Finally, the owner/lifetime for that object is specified. This need not be
+//    an expression, so it doesn't correspond to a particular expression
+//    category. Instead, the inst kinds that perform this role are marked with
+//    has_cleanup = true.`
+//
+// If an inst combines more than one of those transitions, its category is
+// determined by the last one it performs (which means a non-expression inst may
+// perform some of the first three steps). Note that the language-level category
+// "initializing expression" is the union of the repr-initializing and in-place
+// initializing categories, which exist only in the implementation.
+//
+// An _initializer_ is an inst in any of those three categories. An inst that
+// directly depends on it is said to _consume_ it, and typically an initializer
+// must be consumed by exactly one inst.
+//
+// Thus, the key distinction between an initializing expression and a reference
+// expression is that the storage location of a reference expression is fixed as
+// soon as it is evaluated, but the storage location of an initializing
+// expression is notionally set by the inst that consumes it. "Notionally",
+// because that distinction is obscured by two optimizations:
+// - The storage location inst is always a direct or indirect argument of the
+//   in-place initializing inst. The ID of the storage argument inst is fixed
+//   when the initializing inst is created, and can be found with
+//   `FindStorageArgForInitializer`, but the inst stored at that ID may be
+//   overwritten when the consumer is created. This makes the final SemIR appear
+//   as though the location was set by the initializing inst.
+// - When the initializing inst and its consumer are created together, the
+//   initializing inst is typically created with its storage argument already
+//   set, rather than creating and then immediately overwriting a placeholder.
+//
+// TODO: Add an enumerator for ephemeral entire references, when needed.
 enum class ExprCategory : int8_t {
   // This instruction does not correspond to an expression, and as such has no
   // category.
@@ -28,31 +68,21 @@ enum class ExprCategory : int8_t {
   Pattern,
   // This instruction represents a value expression.
   Value,
-  // This instruction represents a durable reference expression, that denotes an
-  // object that outlives the current full expression context.
-  DurableRef,
-  // This instruction represents an ephemeral reference expression, that denotes
-  // an object that does not outlive the current full expression context. Note
-  // that ephemeral references that are known to be entire are represented by
-  // EntireEphemeralRef instead.
+  // This instruction represents a repr-initializing expression (see above),
+  // which initializes an object using the type's initializing representation.
+  // It must be consumed exactly once unless the type's initializing
+  // representation is known not to be in-place.
+  ReprInitializing,
+  // This instruction represents an in-place initializing expression (see
+  // above), which initializes an object in-place, regardless of the type's
+  // initializing representation. It must be consumed exactly once.
+  InPlaceInitializing,
+  // This instruction represents a ephemeral non-entire reference, which denotes
+  // an object that does not outlive the current full expression context.
   EphemeralRef,
-  // This instruction represents an entire ephemeral reference. An entire
-  // ephemeral reference represents an intermediate state between an
-  // initializing expression and an ephemeral reference expression: we have
-  // committed to storing the object in memory, but (as of when the inst is
-  // created) we have not yet committed to a storage location or lifetime for
-  // it. Concretely, an entire ephemeral reference inst always has a storage ID
-  // argument (which can be found with `FindStorageArgForInitializer`), but the
-  // inst it refers to may be rewritten later, when the actual storage location
-  // is chosen.
-  EphemeralEntireRef,
-  // This instruction represents an initializing expression that initializes an
-  // object using the type's initializing representation. If that representation
-  // is not in-place, the instruction doesn't actually initialize the target
-  // storage (and may not even specify the target storage), but a separate
-  // "final destination store" inst (such as `Temporary` or `Materialize`)
-  // can use it to perform that initialization.
-  Initializing,
+  // This instruction represents a durable reference expression, which denotes
+  // an object that outlives the current full expression context.
+  DurableRef,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can

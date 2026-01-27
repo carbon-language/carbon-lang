@@ -191,7 +191,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_39.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc19_39.4: ref %i32 to %.loc19_39.3 = materialize %.loc19_39.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_39.4: init %i32 to %.loc19_39.3 = in_place_init %.loc19_39.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.5: init %B to %return.param = class_init (%.loc19_39.4) [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc19_18: init %B = converted %.loc19_39.1, %.loc19_39.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %return.param, %.loc19_18

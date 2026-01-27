@@ -1015,7 +1015,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
 
   if (inst.kind().has_type()) {
     out_ << ": ";
-    switch (auto category = GetExprCategory(*sem_ir_, inst_id)) {
+    switch (GetExprCategory(*sem_ir_, inst_id)) {
       case ExprCategory::NotExpr:
       case ExprCategory::Error:
       case ExprCategory::Value:
@@ -1029,9 +1029,9 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
         out_ << "ref ";
         FormatTypeOfInst(inst_id);
         break;
-      case ExprCategory::EphemeralEntireRef:
-      case ExprCategory::Initializing: {
-        out_ << (category == ExprCategory::Initializing ? "init " : "ref ");
+      case ExprCategory::InPlaceInitializing:
+      case ExprCategory::ReprInitializing: {
+        out_ << "init ";
         FormatTypeOfInst(inst_id);
         auto init_target_id = FindStorageArgForInitializer(
             *sem_ir_, inst_id, /*allow_transitive=*/false);
@@ -1160,7 +1160,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(Materialize init): {
+    case CARBON_KIND(InPlaceInit init): {
       FormatArgs(init.src_id);
       return;
     }

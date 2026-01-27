@@ -307,13 +307,8 @@ initializer:
 -   `%N: init i32 = ...`: an initializing expression of type `i32` with no
     storage argument.
 -   `%N: init i32 to %s = ...`: an initializing expression of type `i32` that
-    uses `%s` is its backing storage if needed.
--   `%N: ref i32 = ...`: a durable or non-entire ephemeral reference of type
-    `i32`.
--   `%N: ref i32 to %s = ...`: an ephemeral entire reference of type `i32` whose
-    storage is specified by `%s` (as of this writing, the "entire reference"
-    category is pending in proposal
-    [#5545](https://github.com/carbon-language/carbon-lang/pull/5545)).
+    uses `%s` as its backing storage if needed.
+-   `%N: ref i32 = ...`: a reference of type `i32`.
 
 Instructions producing a constant value, like `assoc_const_decl` above, are
 followed by their phase, either `[symbolic]` or `[template]`, and then `=` the

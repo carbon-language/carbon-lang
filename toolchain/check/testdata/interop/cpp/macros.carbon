@@ -1045,7 +1045,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_35.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc10_35.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc10_35.4: ref %f32.97e to %.loc10_35.3 = materialize %.loc10_35.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10_35.4: init %f32.97e to %.loc10_35.3 = in_place_init %.loc10_35.2 [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc10_35.5: init %array_type to %a.var = array_init (%.loc10_35.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_35.1, %.loc10_35.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc10_3

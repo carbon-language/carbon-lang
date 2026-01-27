@@ -65,8 +65,8 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Pattern:
-    case SemIR::ExprCategory::Initializing:
-    case SemIR::ExprCategory::EphemeralEntireRef:
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL(
           "Unexpected expression category for aggregate access into {0}",
@@ -189,7 +189,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
               SemIR::FindStorageArgForInitializer(context.sem_ir(), ref_id);
           auto src_id = ref_id;
           auto storage_type = context.GetTypeIdOfInst(dest_id);
-          context.FinishInit(storage_type, dest_id, src_id);
+          context.InitializeStorage(storage_type, dest_id, src_id);
         }
       }
       // TODO: Add a helper to poison a value slot.

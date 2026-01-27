@@ -1137,7 +1137,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.1: ref %S = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_11.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_11.2: ref %S to %.loc8_11.1 = mark_materialized %foo__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_11.2: init %S to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %S = start_lifetime %.loc8_11.2
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_11.3)

@@ -47,11 +47,11 @@ struct ConversionTarget {
     // Convert to an initializing expression that uses `type_id`'s initializing
     // representation. `storage_id` is only used if that representation might be
     // in-place; if it is known not to be, `storage_id` can be `None`.
-    Initializing,
-    // Convert to an ephemeral entire reference to an object whose storage is
+    ReprInitializing,
+    // Convert to an in-place initializing expression whose storage is
     // designated by `storage_id` (which must not be `None`)
-    EphemeralEntireRef,
-    Last = EphemeralEntireRef
+    InPlaceInitializing,
+    Last = InPlaceInitializing
   };
   // The kind of the target for this conversion.
   Kind kind;
@@ -69,7 +69,7 @@ struct ConversionTarget {
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
-    return kind == Initializing || kind == EphemeralEntireRef;
+    return kind == ReprInitializing || kind == InPlaceInitializing;
   }
   // Is this some kind of explicit `as` conversion?
   auto is_explicit_as() const -> bool {

@@ -166,7 +166,8 @@ struct ArrayIndex {
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "array_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -198,8 +199,8 @@ struct AsCompatible {
 };
 
 // Performs a source-level initialization or assignment of `lhs_id` from
-// `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-// `Materialize`.
+// the repr-initializing expression `rhs_id`. This finishes initialization of
+// `lhs_id` in the same way as `Temporary`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
@@ -435,7 +436,8 @@ struct ClassElementAccess {
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
-      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "class_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1025,18 +1027,19 @@ struct ImportRefLoaded {
 
 // DO NOT SUBMIT until this file and inst_kind.def are re-alphabetized.
 
-// Records that the evaluation of the initializing expression `src_id`
-// fully initialized the storage at `dest_id` (even if its type's initializing
-// representation is not normally in-place), and forms an entire ephemeral
-// reference to the initialized object.
+// Records that evaluation of the expression `src_id` will initialize the
+// storage identified by `dest_id` (even if its type's initializing
+// representation is not normally in-place), and forms an in-place initializing
+// expression to represent it. Note that `src_id` must find its target storage
+// using the exact ID `dest_id`, not another ID that aliases it.
 //
 // This is used to model the initialization performed by C++ thunks, where
 // in-place initialization is used even for types that would normally have a
 // copy initializing representation.
-struct MarkMaterialized {
-  static constexpr auto Kind = InstKind::MarkMaterialized.Define<Parse::NodeId>(
-      {.ir_name = "mark_materialized",
-       .expr_category = ExprCategory::EphemeralEntireRef,
+struct MarkInPlaceInit {
+  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "mark_in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1062,17 +1065,17 @@ struct InitForm {
   CallParamIndex index;
 };
 
-// Materializes the initializing expression `src_id` into the storage `dest_id`,
-// and forms an entire ephemeral reference to the resulting object, by
-// performing a final copy from source to destination, for types whose
+// Consumes the repr-initializing expression `src_id` and forms an in-place
+// initializing expression that initializes the storage at `dest_id`, by
+// performing a final copy from source to destination for types whose
 // initialization is not in-place.
-struct Materialize {
-  // Note this Parse::NodeId is unused. Materialize is only constructed by
+struct InPlaceInit {
+  // Note this Parse::NodeId is unused. InPlaceInit is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
-  static constexpr auto Kind = InstKind::Materialize.Define<Parse::NodeId>(
-      {.ir_name = "materialize",
-       .expr_category = ExprCategory::EphemeralEntireRef});
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   InstId src_id;
@@ -1424,13 +1427,13 @@ struct RefTagExpr {
   InstId expr_id;
 };
 
-// Converts the ephemeral reference expression `src_id` to an initializing
-// expression. If the type has a copying initializing representation, this loads
+// Converts the in-place initializing expression `src_id` to a repr-initializing
+// expression. If the type has a by-copy initializing representation, this loads
 // it from memory.
-struct Dematerialize {
-  static constexpr auto Kind = InstKind::Dematerialize.Define<Parse::NodeId>(
-      {.ir_name = "dematerialize",
-       .expr_category = ExprCategory::Initializing,
+struct MoveFromInPlace {
+  static constexpr auto Kind = InstKind::MoveFromInPlace.Define<Parse::NodeId>(
+      {.ir_name = "move_from_in_place",
+       .expr_category = ExprCategory::ReprInitializing,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1745,7 +1748,8 @@ struct StructAccess {
 // Initializes a dest struct with the provided elements.
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
-      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "struct_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1833,9 +1837,8 @@ struct SymbolicBindingType {
   InstId facet_value_inst_id;
 };
 
-// Converts an initializing expression to an ephemeral reference expression
-// representing a temporary object. This is equivalent to `Materialize`
-// followed by `StartLifetime`.
+// Converts a repr-initializing expression to an ephemeral reference expression
+// representing a temporary object.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
@@ -1859,8 +1862,11 @@ struct TemporaryStorage {
   TypeId type_id;
 };
 
-// Converts an entire ephemeral reference to a non-entire ephemeral reference,
-// and starts its lifetime.
+// Starts the lifetime of the object referenced by the initializer `init_id`,
+// and returns a non-entire ephemeral reference to it. The object representation
+// must already have been written, meaning that `init_id` cannot be a
+// repr-initializing expression unless its type's initializing representation is
+// known to be in-place.
 struct StartLifetime {
   static constexpr auto Kind = InstKind::StartLifetime.Define<Parse::NodeId>(
       {.ir_name = "start_lifetime",
@@ -1889,7 +1895,8 @@ struct TupleAccess {
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
-      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "tuple_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;

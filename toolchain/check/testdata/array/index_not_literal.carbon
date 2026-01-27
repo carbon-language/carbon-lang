@@ -138,7 +138,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.3: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc10_20.4: ref %i32 = array_index %.loc10_20.3, %int_0
-// CHECK:STDOUT:   %.loc10_20.5: ref %i32 to %.loc10_20.4 = materialize %.loc10_20.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc10_20.5: init %i32 to %.loc10_20.4 = in_place_init %.loc10_20.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc10_20.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_20.3: <bound method> = bound_method %int_2.loc10_16, %impl.elem0.loc10_20.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc10_20.2: <specific function> = specific_function %impl.elem0.loc10_20.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -147,7 +147,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.6: init %i32 = converted %int_2.loc10_16, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_20.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %int_1.loc10_20: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc10_20.7: ref %i32 = array_index %.loc10_20.3, %int_1.loc10_20
-// CHECK:STDOUT:   %.loc10_20.8: ref %i32 to %.loc10_20.7 = materialize %.loc10_20.6 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc10_20.8: init %i32 to %.loc10_20.7 = in_place_init %.loc10_20.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %impl.elem0.loc10_20.3: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_20.5: <bound method> = bound_method %int_3, %impl.elem0.loc10_20.3 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc10_20.3: <specific function> = specific_function %impl.elem0.loc10_20.3, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -156,7 +156,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.9: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_20.3 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %int_2.loc10_20: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_20.10: ref %i32 = array_index %.loc10_20.3, %int_2.loc10_20
-// CHECK:STDOUT:   %.loc10_20.11: ref %i32 to %.loc10_20.10 = materialize %.loc10_20.9 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc10_20.11: init %i32 to %.loc10_20.10 = in_place_init %.loc10_20.9 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc10_20.12: init %array_type to %.loc10_20.3 = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.13: init %array_type = converted %.loc10_20.1, %.loc10_20.12 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.14: ref %array_type = temporary %.loc10_20.3, %.loc10_20.13

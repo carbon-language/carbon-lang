@@ -287,13 +287,13 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %.loc4_130.1: %tuple.type = tuple_literal (%AsI32.call.loc4_99, %AsI32.call.loc4_114, %AsI32.call.loc4_129) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc4_130.2: ref %i32.builtin = array_index file.%arr.var, %int_0
-// CHECK:STDOUT:   %.loc4_130.3: ref %i32.builtin to %.loc4_130.2 = materialize %AsI32.call.loc4_99 [concrete = constants.%int_1.f38]
+// CHECK:STDOUT:   %.loc4_130.3: init %i32.builtin to %.loc4_130.2 = in_place_init %AsI32.call.loc4_99 [concrete = constants.%int_1.f38]
 // CHECK:STDOUT:   %int_1.loc4_130: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc4_130.4: ref %i32.builtin = array_index file.%arr.var, %int_1.loc4_130
-// CHECK:STDOUT:   %.loc4_130.5: ref %i32.builtin to %.loc4_130.4 = materialize %AsI32.call.loc4_114 [concrete = constants.%int_2.5a1]
+// CHECK:STDOUT:   %.loc4_130.5: init %i32.builtin to %.loc4_130.4 = in_place_init %AsI32.call.loc4_114 [concrete = constants.%int_2.5a1]
 // CHECK:STDOUT:   %int_2.loc4_130: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc4_130.6: ref %i32.builtin = array_index file.%arr.var, %int_2.loc4_130
-// CHECK:STDOUT:   %.loc4_130.7: ref %i32.builtin to %.loc4_130.6 = materialize %AsI32.call.loc4_129 [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:   %.loc4_130.7: init %i32.builtin to %.loc4_130.6 = in_place_init %AsI32.call.loc4_129 [concrete = constants.%int_3.a0f]
 // CHECK:STDOUT:   %.loc4_130.8: init %array_type to file.%arr.var = array_init (%.loc4_130.3, %.loc4_130.5, %.loc4_130.7) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_130.1, %.loc4_130.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1

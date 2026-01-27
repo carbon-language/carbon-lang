@@ -18,17 +18,14 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns whether the given expression category is for a reference expression.
 inline auto IsRefCategory(ExprCategory cat) -> bool {
-  return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef ||
-         cat == ExprCategory::EphemeralEntireRef;
+  return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef;
 }
 
-// Returns whether the given expression category is for an initializer.
-// An initializer is an initializing or entire ephemeral reference expression;
-// in other words, an expression whose category indicates that it may have
-// a storage argument.
+// Returns whether the given expression category is for an initializer
+// (see inst_kind.h for background).
 inline auto IsInitializerCategory(ExprCategory cat) -> bool {
-  return cat == ExprCategory::Initializing ||
-         cat == ExprCategory::EphemeralEntireRef;
+  return cat == ExprCategory::ReprInitializing ||
+         cat == ExprCategory::InPlaceInitializing;
 }
 
 // If `init_id` is an initializer, find the inst ID that specifies the storage

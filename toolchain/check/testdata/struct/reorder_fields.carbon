@@ -180,7 +180,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21_10.1, %specific_fn.loc21_10.1
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_10.2(%.loc21_10.1)
 // CHECK:STDOUT:   %.loc21_10.2: ref %i32 = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc21_10.3: ref %i32 to %.loc21_10.2 = materialize %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc21_10.3: init %i32 to %.loc21_10.2 = in_place_init %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc21_10.4: %f64.d77 = struct_access %y.ref, element0
 // CHECK:STDOUT:   %impl.elem0.loc21_10.2: %.c41 = impl_witness_access constants.%Copy.impl_witness.1e3, element0 [concrete = constants.%Float.as.Copy.impl.Op.f05]
 // CHECK:STDOUT:   %bound_method.loc21_10.3: <bound method> = bound_method %.loc21_10.4, %impl.elem0.loc21_10.2
@@ -188,7 +188,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %bound_method.loc21_10.4: <bound method> = bound_method %.loc21_10.4, %specific_fn.loc21_10.2
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc21_10.4(%.loc21_10.4)
 // CHECK:STDOUT:   %.loc21_10.5: ref %f64.d77 = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc21_10.6: ref %f64.d77 to %.loc21_10.5 = materialize %Float.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 to %.loc21_10.5 = in_place_init %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b to %return.param = struct_init (%.loc21_10.3, %.loc21_10.6)
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
 // CHECK:STDOUT:   return %.loc21_11 to %return.param

@@ -400,7 +400,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc39_18.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc39_18.4: ref %i32 = class_element_access %.loc39_18.3, element0
-// CHECK:STDOUT:   %.loc39_18.5: ref %i32 to %.loc39_18.4 = materialize %.loc39_18.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc39_18.5: init %i32 to %.loc39_18.4 = in_place_init %.loc39_18.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.6: init %Class to %.loc39_18.3 = class_init (%.loc39_18.5) [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc39_18.7: ref %Class = temporary %.loc39_18.3, %.loc39_18.6
 // CHECK:STDOUT:   %.loc39_20.1: ref %Class = converted %.loc39_18.1, %.loc39_18.7

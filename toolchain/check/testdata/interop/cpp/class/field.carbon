@@ -295,14 +295,14 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %bound_method.loc8_12.2: <bound method> = bound_method %.loc8_12.2, %specific_fn.loc8_12
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_12: init %i32 = call %bound_method.loc8_12.2(%.loc8_12.2)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param, element0
-// CHECK:STDOUT:   %.loc8_43.2: ref %i32 to %tuple.elem0 = materialize %Int.as.Copy.impl.Op.call.loc8_12
+// CHECK:STDOUT:   %.loc8_43.2: init %i32 to %tuple.elem0 = in_place_init %Int.as.Copy.impl.Op.call.loc8_12
 // CHECK:STDOUT:   %impl.elem0.loc8_17: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc8_17.1: <bound method> = bound_method %.loc8_17.2, %impl.elem0.loc8_17
 // CHECK:STDOUT:   %specific_fn.loc8_17: <specific function> = specific_function %impl.elem0.loc8_17, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_17.2: <bound method> = bound_method %.loc8_17.2, %specific_fn.loc8_17
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_17: init %i32 = call %bound_method.loc8_17.2(%.loc8_17.2)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
-// CHECK:STDOUT:   %.loc8_43.3: ref %i32 to %tuple.elem1 = materialize %Int.as.Copy.impl.Op.call.loc8_17
+// CHECK:STDOUT:   %.loc8_43.3: init %i32 to %tuple.elem1 = in_place_init %Int.as.Copy.impl.Op.call.loc8_17
 // CHECK:STDOUT:   %.loc8_21.2: %i32 = acquire_value %.loc8_21.1
 // CHECK:STDOUT:   %impl.elem0.loc8_21: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc8_21.1: <bound method> = bound_method %.loc8_21.2, %impl.elem0.loc8_21
@@ -310,7 +310,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %bound_method.loc8_21.2: <bound method> = bound_method %.loc8_21.2, %specific_fn.loc8_21
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_21: init %i32 = call %bound_method.loc8_21.2(%.loc8_21.2)
 // CHECK:STDOUT:   %tuple.elem2: ref %i32 = tuple_access %return.param, element2
-// CHECK:STDOUT:   %.loc8_43.4: ref %i32 to %tuple.elem2 = materialize %Int.as.Copy.impl.Op.call.loc8_21
+// CHECK:STDOUT:   %.loc8_43.4: init %i32 to %tuple.elem2 = in_place_init %Int.as.Copy.impl.Op.call.loc8_21
 // CHECK:STDOUT:   %.loc8_27.2: %i32 = acquire_value %.loc8_27.1
 // CHECK:STDOUT:   %impl.elem0.loc8_27: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc8_27.1: <bound method> = bound_method %.loc8_27.2, %impl.elem0.loc8_27
@@ -318,7 +318,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %bound_method.loc8_27.2: <bound method> = bound_method %.loc8_27.2, %specific_fn.loc8_27
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_27: init %i32 = call %bound_method.loc8_27.2(%.loc8_27.2)
 // CHECK:STDOUT:   %tuple.elem3: ref %i32 = tuple_access %return.param, element3
-// CHECK:STDOUT:   %.loc8_43.5: ref %i32 to %tuple.elem3 = materialize %Int.as.Copy.impl.Op.call.loc8_27
+// CHECK:STDOUT:   %.loc8_43.5: init %i32 to %tuple.elem3 = in_place_init %Int.as.Copy.impl.Op.call.loc8_27
 // CHECK:STDOUT:   %.loc8_39.2: %i32 = acquire_value %.loc8_39.1
 // CHECK:STDOUT:   %impl.elem0.loc8_39: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc8_39.1: <bound method> = bound_method %.loc8_39.2, %impl.elem0.loc8_39
@@ -326,7 +326,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %bound_method.loc8_39.2: <bound method> = bound_method %.loc8_39.2, %specific_fn.loc8_39
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_39: init %i32 = call %bound_method.loc8_39.2(%.loc8_39.2)
 // CHECK:STDOUT:   %tuple.elem4: ref %i32 = tuple_access %return.param, element4
-// CHECK:STDOUT:   %.loc8_43.6: ref %i32 to %tuple.elem4 = materialize %Int.as.Copy.impl.Op.call.loc8_39
+// CHECK:STDOUT:   %.loc8_43.6: init %i32 to %tuple.elem4 = in_place_init %Int.as.Copy.impl.Op.call.loc8_39
 // CHECK:STDOUT:   %.loc8_43.7: init %tuple.type.a78 to %return.param = tuple_init (%.loc8_43.2, %.loc8_43.3, %.loc8_43.4, %.loc8_43.5, %.loc8_43.6)
 // CHECK:STDOUT:   %.loc8_44: init %tuple.type.a78 = converted %.loc8_43.1, %.loc8_43.7
 // CHECK:STDOUT:   return %.loc8_44 to %return.param
