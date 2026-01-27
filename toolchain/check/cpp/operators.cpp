@@ -207,6 +207,10 @@ static auto GetConversionSignatureToImport(
     auto source_type_id = context.insts().Get(source_id).type_id();
     if (auto tuple_type =
             context.types().TryGetAs<SemIR::TupleType>(source_type_id)) {
+      // Initialization from a tuple `(a, b, c)` results in a constructor
+      // function that takes a tuple pattern:
+      //
+      //   fn Class.Class((a: A, b: B, c: C)) -> Class;
       return {
           .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
           .num_params = static_cast<int32_t>(
@@ -215,6 +219,13 @@ static auto GetConversionSignatureToImport(
 
     if (auto struct_type =
             context.types().TryGetAs<SemIR::StructType>(source_type_id)) {
+      // Initialization from a struct `{}` results in a constructor function
+      // that takes an empty struct pattern:
+      //
+      //   fn Class.Class({}) -> Class;
+      //
+      // TODO: We currently use `_: {}` instead of `{}` because we don't yet
+      // support struct patterns.
       CARBON_CHECK(struct_type->fields_id == SemIR::StructTypeFieldsId::Empty,
                    "Mapped a non-empty struct to a constructor call");
       return {.kind = SemIR::ClangDeclKey::Signature::Kind::EmptyStructPattern,
@@ -225,14 +236,19 @@ static auto GetConversionSignatureToImport(
                  context.types().GetAsInst(source_type_id));
   }
 
-  // Otherwise, if this is a constructor, the source is passed as an argument.
+  // Any other initialization from an expression `a` using a constructor is
+  // calling a converting constructor:
+  //
+  //   fn Class.Class(a: A) -> Class;
   if (isa<clang::CXXConstructorDecl>(function_decl)) {
     return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
             .num_params = 1};
   }
 
-  // Otherwise, this is a conversion function and the source is passed as
-  // `self`.
+  // Otherwise, the initialization is calling a conversion function
+  // `Source::operator Dest`:
+  //
+  //   fn Source.<conversion function>[self: Source]() -> Dest;
   CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
   return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
           .num_params = 0};
