@@ -2,12 +2,15 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Ensure all builds have Carbon's workspace status attached. We have carefully
-# factored the stamping done by this to avoid excessive build performance impact
-# and so enable stamping with it by default. CI and systems especially dependent
-# on caching should explicitly use `--nostamp`.
+# Setup stamping with Carbon's workspace status attached but disable it by
+# default.
+#
+# Note that while we have minimized the impact of stamping on build caching, it
+# still has a meaningful impact, especially during development. So we disable
+# stamping by default and builds that need to include the workspace status
+# should explicitly enable it with `--stamp`.
 common --workspace_status_command=./scripts/workspace_status.py
-common --stamp
+common --nostamp
 
 # Provide aliases for configuring the release and pre-release version being
 # built. For documentation of these flags, see //bazel/version/BUILD.
