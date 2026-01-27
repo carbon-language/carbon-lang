@@ -54,7 +54,7 @@ interface Z {
 
 final impl forall [T:! type] T as Z where .X = () and .Y = () {}
 
-fn F[T:! Z where .X = ()](unused z: T) {
+fn F[T:! Z where .X = ()](z: T) {
   // z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
   // to be the concrete type (), which can then be used in this generic
   // function.
@@ -125,4 +125,4 @@ final impl forall [T:! type] T as Z where .X = () {}
 // TODO: This should be diagnosed as there is a final impl defining `.X = ()`,
 // which makes the LHS of this rewrite constraint concrete. And since the RHS is
 // not the same (or convertible from), the rewrite is impossible.
-fn F(ZZ:! Z where .X = {.r: ()}) {}
+fn F(unused ZZ:! Z where .X = {.r: ()}) {}

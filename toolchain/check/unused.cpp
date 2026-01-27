@@ -10,91 +10,45 @@
 
 namespace Carbon::Check {
 
-auto CheckUnusedBindings(Context& context, ScopeStack::ScopeView scope)
-    -> void {
-  // Don't warn about unused names in the prelude.
-  if (context.sem_ir().filename().contains("prelude")) {
+auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
+                        const LexicalLookup::Result& result) -> void {
+  // Don't warn about the special name `_`. Other special names, such as `self`,
+  // are warned if unused. `.Self` is also excluded as it is often implicit.
+  if (name_id == SemIR::NameId::Underscore ||
+      name_id == SemIR::NameId::PeriodSelf) {
     return;
   }
 
-  // We sort the diagnostics to ensure deterministic output.
-  struct UnusedDiag {
-    SemIR::LocId loc_id;
-    SemIR::NameId name_id;
-    SemIR::LocId use_loc;
-  };
-  llvm::SmallVector<UnusedDiag> unused_defs;
-  llvm::SmallVector<UnusedDiag> unused_but_used_defs;
-
-  scope.names.ForEach([&](SemIR::NameId name_id) {
-    auto& results = context.scope_stack().lexical_lookup().Get(name_id);
-    CARBON_CHECK(!results.empty());
-    auto& result = results.back();
-
-    // We only care about the result in the current scope.
-    if (result.scope_index != scope.index) {
-      return;
-    }
-
-    // Don't warn about names that aren't in the current file.
-    auto decl_loc = context.insts().GetCanonicalLocId(result.inst_id);
-    if (decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-      return;
-    }
-
-    auto inst = context.insts().Get(result.inst_id);
-    std::optional<SemIR::EntityNameId> entity_name_id;
-
-    if (auto binding = inst.TryAs<SemIR::AnyBinding>()) {
-      entity_name_id = binding->entity_name_id;
-    }
-
-    if (!entity_name_id) {
-      return;
-    }
-
-    // Don't warn about special names.
-    if (name_id.AsSpecialNameId().has_value()) {
-      return;
-    }
-
-    const auto& entity_name = context.entity_names().Get(*entity_name_id);
-    if (entity_name.is_unused) {
-      if (result.is_used) {
-        unused_but_used_defs.push_back(
-            {decl_loc, name_id, result.first_use_loc});
-      }
-    } else {
-      if (!result.is_used && result.is_declared_reachable) {
-        unused_defs.push_back({decl_loc, name_id, SemIR::LocId::None});
-      }
-    }
-  });
-
-  auto sort_diags = [&](const UnusedDiag& a, const UnusedDiag& b) {
-    return a.loc_id.index < b.loc_id.index;
-  };
-  llvm::sort(unused_defs, sort_diags);
-  llvm::sort(unused_but_used_defs, sort_diags);
-
-  for (const auto& diag_data : unused_but_used_defs) {
-    CARBON_DIAGNOSTIC(UnusedButUsed, Error,
-                      "variable `{0}` is marked `unused` but is used",
-                      SemIR::NameId);
-    CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage is here");
-    auto diag = context.emitter().Build(LocIdForDiagnostics(diag_data.loc_id),
-                                        UnusedButUsed, diag_data.name_id);
-    if (diag_data.use_loc.has_value()) {
-      diag.Note(LocIdForDiagnostics(diag_data.use_loc), UnusedButUsedHere);
-    }
-    diag.Emit();
+  // Don't warn about names that aren't in the current file.
+  auto decl_loc = context.insts().GetCanonicalLocId(result.inst_id);
+  if (decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
+    return;
   }
 
-  for (const auto& diag_data : unused_defs) {
-    CARBON_DIAGNOSTIC(UnusedBinding, Warning, "binding `{0}` is unused",
-                      SemIR::NameId);
-    context.emitter().Emit(LocIdForDiagnostics(diag_data.loc_id), UnusedBinding,
-                           diag_data.name_id);
+  auto inst = context.insts().Get(result.inst_id);
+  auto binding = inst.TryAs<SemIR::AnyBinding>();
+  if (!binding) {
+    return;
+  }
+
+  const auto& entity_name = context.entity_names().Get(binding->entity_name_id);
+  if (entity_name.is_unused) {
+    if (result.first_reachable_use_loc_id.has_value()) {
+      CARBON_DIAGNOSTIC(UnusedButUsed, Error,
+                        "variable `{0}` is marked `unused` but is used",
+                        SemIR::NameId);
+      CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage is here");
+      context.emitter()
+          .Build(decl_loc, UnusedButUsed, name_id)
+          .Note(result.first_reachable_use_loc_id, UnusedButUsedHere)
+          .Emit();
+    }
+  } else {
+    if (!result.first_any_use_loc_id.has_value() && result.is_decl_reachable) {
+      CARBON_DIAGNOSTIC(UnusedBinding, Warning, "binding `{0}` is unused",
+                        SemIR::NameId);
+      context.emitter().Emit(decl_loc, UnusedBinding, name_id);
+    }
   }
 }
 

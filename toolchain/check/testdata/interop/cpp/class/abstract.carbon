@@ -46,11 +46,15 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn f[ref self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+8]]:21: error: expected name in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR:   override fn f[ref unused self: Self]() {}
+  // CHECK:STDERR:                     ^~~~~~
   // CHECK:STDERR:
-  override fn f[ref self: Self]() {}
+  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   override fn f[ref unused self: Self]() {}
+  // CHECK:STDERR:                     ^~~~~~
+  // CHECK:STDERR:
+  override fn f[ref unused self: Self]() {}
 }
 
 // --- abstract_final.h

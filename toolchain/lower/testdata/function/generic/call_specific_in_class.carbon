@@ -15,7 +15,7 @@
 // generic function for an object, from a generic context.
 // The specifics with a pointer type could be deduplicated here.
 class C {
-  fn Cfn[self: Self, T:! Core.Copy](x: T) -> T {
+  fn Cfn[unused self: Self, T:! Core.Copy](x: T) -> T {
     return x;
   }
 }

@@ -17,7 +17,7 @@ fn F() {
     fn G[self: Self]();
   }
   impl () as I {
-    fn G[self: Self]() {}
+    fn G[unused self: Self]() {}
   }
   ().(I.G)();
 }

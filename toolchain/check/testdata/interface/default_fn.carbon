@@ -15,7 +15,7 @@
 class C {
   interface I {
     // TODO: Use `default` here.
-    fn F[self: Self]() {
+    fn F[unused self: Self]() {
       // I and F are both complete here, and the impl below is in scope.
       var c: C = {};
       c.(I.F)();
@@ -23,7 +23,7 @@ class C {
   }
 
   impl C as I {
-    fn F[self: Self]() {}
+    fn F[unused self: Self]() {}
   }
 }
 
@@ -84,10 +84,10 @@ class C {
 // CHECK:STDOUT:     %self.param_patt: @I.F.%pattern_type (%pattern_type.5e7) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.0dc) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_16.1: type = splice_block %.loc18_16.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0dc)] {
+// CHECK:STDOUT:     %.loc18_23.1: type = splice_block %.loc18_23.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0dc)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.095)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0dc)]
-// CHECK:STDOUT:       %.loc18_16.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0dc)]
+// CHECK:STDOUT:       %.loc18_23.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0dc)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type.0dc) = value_binding self, %self.param
 // CHECK:STDOUT:   }

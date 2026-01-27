@@ -102,13 +102,10 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
   if (existing_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "cannot declare a `returned var` in the scope of "
-                      "another `returned var`");
+                      "another `returned var` declaration");
     auto diag = context.emitter().Build(bind_id, ReturnedVarShadowed);
     NoteReturnedVar(diag, existing_id);
     diag.Emit();
-  } else {
-    // A `returned var` is always "used" by the return slot.
-    context.scope_stack().MarkUsed(name_id, SemIR::LocId(bind_id));
   }
 }
 

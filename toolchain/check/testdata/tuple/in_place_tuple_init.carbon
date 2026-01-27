@@ -17,7 +17,7 @@ fn F() -> (i32, i32);
 
 fn G() -> (i32, i32) {
   //@dump-sem-ir-begin
-  var unused v: (i32, i32) = F();
+  var v: (i32, i32) = F();
   v = F();
   return F();
   //@dump-sem-ir-end
@@ -94,13 +94,13 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_3: ref %tuple.type.d07 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call.loc7: init %tuple.type.d07 = call %F.ref.loc7() to %.loc7_3
 // CHECK:STDOUT:   assign %v.var, %F.call.loc7
-// CHECK:STDOUT:   %.loc7_26.1: type = splice_block %.loc7_26.3 [concrete = constants.%tuple.type.d07] {
-// CHECK:STDOUT:     %int_32.loc7_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc7_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc7_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc7_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc7_26.2: %tuple.type.24b = tuple_literal (%i32.loc7_18, %i32.loc7_23) [concrete = constants.%tuple.95a]
-// CHECK:STDOUT:     %.loc7_26.3: type = converted %.loc7_26.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%tuple.type.d07] {
+// CHECK:STDOUT:     %int_32.loc7_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc7_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc7_19.2: %tuple.type.24b = tuple_literal (%i32.loc7_11, %i32.loc7_16) [concrete = constants.%tuple.95a]
+// CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.d07 = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.d07 = name_ref v, %v

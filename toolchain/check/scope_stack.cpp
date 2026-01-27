@@ -107,18 +107,16 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   destroy_id_stack_.PushArray();
 }
 
-auto ScopeStack::Pop(llvm::function_ref<void(ScopeView)> on_pop) -> void {
-  if (on_pop) {
-    on_pop({.index = scope_stack_.back().index,
-            .names = scope_stack_.back().names});
-  }
-
+auto ScopeStack::Pop(OnNamePop on_name_pop) -> void {
   auto scope = scope_stack_.pop_back_val();
 
   scope.names.ForEach([&](SemIR::NameId str_id) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index,
                  "Inconsistent scope index for name {0}", str_id);
+    if (on_name_pop) {
+      on_name_pop(str_id, lexical_results.back());
+    }
     lexical_results.pop_back();
   });
 
@@ -149,10 +147,9 @@ auto ScopeStack::Pop(llvm::function_ref<void(ScopeView)> on_pop) -> void {
   compile_time_binding_stack_.PopArray();
 }
 
-auto ScopeStack::PopTo(ScopeIndex index,
-                       llvm::function_ref<void(ScopeView)> on_pop) -> void {
+auto ScopeStack::PopTo(ScopeIndex index, OnNamePop on_name_pop) -> void {
   while (PeekIndex() > index) {
-    Pop(on_pop);
+    Pop(on_name_pop);
   }
   CARBON_CHECK(PeekIndex() == index,
                "Scope index {0} does not enclose the current scope {1}", index,
@@ -163,15 +160,18 @@ auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id) -> void {
   auto& lexical_results = lexical_lookup_.Get(name_id);
   if (!lexical_results.empty()) {
     auto& result = lexical_results.back();
-    result.is_used = true;
-    if (!result.first_use_loc.has_value()) {
-      result.first_use_loc = loc_id;
+    if (!result.first_reachable_use_loc_id.has_value()) {
+      result.first_reachable_use_loc_id = loc_id;
+    }
+    if (!result.first_any_use_loc_id.has_value()) {
+      result.first_any_use_loc_id = loc_id;
     }
   }
 }
 
 auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
                                              ScopeIndex scope_index,
+                                             SemIR::LocId use_loc_id,
                                              bool is_reachable)
     -> SemIR::InstId {
   llvm::MutableArrayRef<LexicalLookup::Result> lexical_results =
@@ -185,13 +185,22 @@ auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
     return SemIR::InstId::None;
   }
 
-  if (is_reachable) {
-    result.is_used = true;
+  if (use_loc_id.has_value()) {
+    if (is_reachable) {
+      if (!result.first_reachable_use_loc_id.has_value()) {
+        result.first_reachable_use_loc_id = use_loc_id;
+      }
+    }
+    if (!result.first_any_use_loc_id.has_value()) {
+      result.first_any_use_loc_id = use_loc_id;
+    }
   }
   return result.inst_id;
 }
 
-auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id, bool is_reachable)
+auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
+                                       SemIR::LocId use_loc_id,
+                                       bool is_reachable)
     -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>> {
   // Find the results from lexical scopes. These will be combined with results
   // from non-lexical scopes such as namespaces and classes.
@@ -205,8 +214,16 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id, bool is_reachable)
             non_lexical_scope_stack_};
   }
 
-  if (is_reachable) {
-    lexical_results.back().is_used = true;
+  if (use_loc_id.has_value()) {
+    auto& result = lexical_results.back();
+    if (is_reachable) {
+      if (!result.first_reachable_use_loc_id.has_value()) {
+        result.first_reachable_use_loc_id = use_loc_id;
+      }
+    }
+    if (!result.first_any_use_loc_id.has_value()) {
+      result.first_any_use_loc_id = use_loc_id;
+    }
   }
   // Find the first non-lexical scope that is within the scope of the lexical
   // lookup result.
@@ -221,7 +238,7 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id, bool is_reachable)
 }
 
 auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
-                                 ScopeIndex scope_index, bool is_reachable)
+                                 ScopeIndex scope_index, bool is_decl_reachable)
     -> SemIR::InstId {
   // Find the corresponding scope depth.
   //
@@ -259,7 +276,7 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
   // Add a corresponding lexical lookup result.
   lexical_results.push_back({.inst_id = target_id,
                              .scope_index = scope_index,
-                             .is_declared_reachable = is_reachable});
+                             .is_decl_reachable = is_decl_reachable});
   return SemIR::InstId::None;
 }
 
@@ -278,6 +295,7 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id,
                "Scope has returned var but none is set");
   if (inst_id.has_value()) {
     scope_stack_.back().has_returned_var = true;
+    MarkUsed(name_id, SemIR::LocId(inst_id));
   }
   return SemIR::InstId::None;
 }
@@ -300,9 +318,9 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     result.suspended_items.push_back(
         {.index = suspended.index,
          .inst_id = suspended.inst_id,
-         .is_used = suspended.is_used,
-         .is_declared_reachable = suspended.is_declared_reachable,
-         .first_use_loc = suspended.first_use_loc});
+         .is_decl_reachable = suspended.is_decl_reachable,
+         .first_reachable_use_loc_id = suspended.first_reachable_use_loc_id,
+         .first_any_use_loc_id = suspended.first_any_use_loc_id});
   });
   CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
                result.entry.num_names);
@@ -312,9 +330,9 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     result.suspended_items.push_back(
         {.index = SuspendedScope::ScopeItem::IndexForCompileTimeBinding,
          .inst_id = inst_id,
-         .is_used = false,
-         .is_declared_reachable = true,
-         .first_use_loc = SemIR::LocId::None});
+         .is_decl_reachable = true,
+         .first_reachable_use_loc_id = SemIR::LocId::None,
+         .first_any_use_loc_id = SemIR::LocId::None});
   }
   compile_time_binding_stack_.PopArray();
 
@@ -333,9 +351,9 @@ auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
       lexical_lookup_.Restore(
           {.index = item.index,
            .inst_id = item.inst_id,
-           .is_used = item.is_used,
-           .is_declared_reachable = item.is_declared_reachable,
-           .first_use_loc = item.first_use_loc},
+           .is_decl_reachable = item.is_decl_reachable,
+           .first_reachable_use_loc_id = item.first_reachable_use_loc_id,
+           .first_any_use_loc_id = item.first_any_use_loc_id},
           scope.entry.index);
     }
   }

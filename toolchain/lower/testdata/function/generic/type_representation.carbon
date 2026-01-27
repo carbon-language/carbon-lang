@@ -45,7 +45,7 @@ fn F_X(a: X) -> X {
 }
 
 impl () as Copy {
-  fn Op[self: ()]() -> () {
+  fn Op[unused self: ()]() -> () {
     return ();
   }
 }

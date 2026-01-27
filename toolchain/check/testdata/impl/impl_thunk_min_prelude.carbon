@@ -31,12 +31,12 @@ class A {
     }
 
     impl ConvertsToB as Core.ImplicitAs(B) {
-      fn Convert[self: Self]() -> B { return {}; }
+      fn Convert[unused self: Self]() -> B { return {}; }
     }
   }
 
   impl ConvertsToA as Core.ImplicitAs(A) {
-    fn Convert[self: Self]() -> A { return {}; }
+    fn Convert[unused self: Self]() -> A { return {}; }
   }
 }
 

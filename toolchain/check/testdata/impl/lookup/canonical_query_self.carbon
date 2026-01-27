@@ -29,10 +29,10 @@ fn F(T:! I & J, t: T) {
 fn G() {
   class C {
     extend impl as I {
-      fn II[self: Self]() {}
+      fn II[unused self: Self]() {}
     }
     extend impl as J {
-      fn JJ[self: Self]() {}
+      fn JJ[unused self: Self]() {}
     }
   }
   // Nesting FacetValue and FacetAccessTypes, the impl lookup for `JJ` resolves

@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-fn F[U:! type](T:! Z) {
+fn F[unused U:! type](T:! Z) {
   // The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
   let unused a: T.X = {} as C;

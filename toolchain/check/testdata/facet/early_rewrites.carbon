@@ -39,7 +39,7 @@ interface J {
   let J1:! Z where .Z2 = C(.Self);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -80,7 +80,7 @@ interface J {
   let J1:! Z where .Z2 = C(.Z1);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -111,7 +111,7 @@ interface J {
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -149,7 +149,7 @@ interface J {
   let J1:! (Z where .Z2 = C(.Self)) where .Z1 = ();
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -187,7 +187,7 @@ interface J {
   let J1:! Z where .Z1 = () and .Z2 = C(.Self);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -225,7 +225,7 @@ interface J {
   let J1:! Z where .Z2 = C(.Self) and .Z1 = ();
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -258,7 +258,7 @@ interface J {
   let J1:! Z where .Z1 = () and .Z2 = C(.Z1);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -284,7 +284,7 @@ interface J {
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -314,7 +314,7 @@ interface J {
   let J1:! Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -350,7 +350,7 @@ interface J {
   let J1:! Z & Y where .Y1 = () and .Z1 = .Self and .Z2 = .Z1.Y1 and .Z3 = C(.Z2);
 }
 
-fn F(T:! J) {}
+fn F(unused T:! J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.

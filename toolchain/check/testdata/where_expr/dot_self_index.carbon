@@ -18,7 +18,7 @@ interface Empty(W:! type) {
 // .Self has index invalid, not 1
 // V has index 1, does not match .Self
 //@dump-sem-ir-begin
-fn H(T:! type, unused U: Empty(T) where .A = T*, V:! type) {}
+fn H(T:! type, unused U: Empty(T) where .A = T*, unused V:! type) {}
 //@dump-sem-ir-end
 
 fn G(U: Empty(i32) where .A = i32*) {
@@ -96,11 +96,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.334) = value_binding U, %U.param
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %V.loc21_50.2: type = symbolic_binding V, 1 [symbolic = %V.loc21_50.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc21_57.2: type = symbolic_binding V, 1 [symbolic = %V.loc21_57.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @H(%T.loc21_6.2: type, %V.loc21_50.2: type) {
+// CHECK:STDOUT: generic fn @H(%T.loc21_6.2: type, %V.loc21_57.2: type) {
 // CHECK:STDOUT:   %T.loc21_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:   %Empty.type.loc21_33.1: type = facet_type <@Empty, @Empty(%T.loc21_6.1)> [symbolic = %Empty.type.loc21_33.1 (constants.%Empty.type.e63200.2)]
 // CHECK:STDOUT:   <elided>
@@ -113,7 +113,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %ptr.loc21_47.1: type = ptr_type %T.loc21_6.1 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc21_6.1) where %impl.elem0.loc21_41.1 = %ptr.loc21_47.1> [symbolic = %Empty_where.type (constants.%Empty_where.type.334)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.649)]
-// CHECK:STDOUT:   %V.loc21_50.1: type = symbolic_binding V, 1 [symbolic = %V.loc21_50.1 (constants.%V)]
+// CHECK:STDOUT:   %V.loc21_57.1: type = symbolic_binding V, 1 [symbolic = %V.loc21_57.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc21_24: <witness> = require_complete_type %Empty_where.type [symbolic = %require_complete.loc21_24 (constants.%require_complete.6ec)]
@@ -137,7 +137,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.334
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.649
-// CHECK:STDOUT:   %V.loc21_50.1 => constants.%V
+// CHECK:STDOUT:   %V.loc21_57.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
@@ -153,7 +153,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.235
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.823
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3bd
-// CHECK:STDOUT:   %V.loc21_50.1 => bool
+// CHECK:STDOUT:   %V.loc21_57.1 => bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc21_24 => constants.%complete_type.98a

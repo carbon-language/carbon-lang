@@ -17,7 +17,7 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(A:! Animal) {}
+fn WalkAnimal(unused A:! Animal) {}
 
 fn F() {
   WalkAnimal(Goat);
@@ -74,7 +74,7 @@ fn F() {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %A.loc20_15.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_15.1 (constants.%A)]
+// CHECK:STDOUT:     %A.loc20_22.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_22.1 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -105,8 +105,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc20_15.2: %Animal.type) {
-// CHECK:STDOUT:   %A.loc20_15.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_15.1 (constants.%A)]
+// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc20_22.2: %Animal.type) {
+// CHECK:STDOUT:   %A.loc20_22.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_22.1 (constants.%A)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -128,11 +128,11 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%A) {
-// CHECK:STDOUT:   %A.loc20_15.1 => constants.%A
+// CHECK:STDOUT:   %A.loc20_22.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {
-// CHECK:STDOUT:   %A.loc20_15.1 => constants.%Animal.facet
+// CHECK:STDOUT:   %A.loc20_22.1 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

@@ -37,7 +37,7 @@ interface I {
 }
 
 impl (i32, i32) as I {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 fn G(x: (i32, i32)) {
@@ -60,7 +60,7 @@ impl (i32, i32) as I {
   // This requires a thunk due to the return type mismatch.
   // The thunk internally contains an element access of the form
   // `self.(RealF)()`.
-  fn F[self: Self]() -> Derived* { return &d; }
+  fn F[unused self: Self]() -> Derived* { return &d; }
 }
 
 fn G(x: (i32, i32)) {

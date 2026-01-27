@@ -66,14 +66,14 @@ library "[[@TEST_NAME]]";
 
 constraint Generic(T:! type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:10: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(T:! Generic((), ())) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:17: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(unused T:! Generic((), ())) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic constraint declared here [InCallToEntity]
 // CHECK:STDERR: constraint Generic(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! Generic((), ())) {}
+fn F(unused T:! Generic((), ())) {}
 
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:

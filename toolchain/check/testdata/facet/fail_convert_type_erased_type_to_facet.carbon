@@ -17,7 +17,7 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(a:! Animal) {}
+fn WalkAnimal(unused a:! Animal) {}
 
 fn F() {
   // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
@@ -66,7 +66,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_15: %Animal.type) {
+// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_22: %Animal.type) {
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

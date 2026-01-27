@@ -31,13 +31,13 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 interface I {
-  fn Op[self: Self]();
+  fn Op[unused self: Self]();
 }
 //@dump-sem-ir-end
 
 class C {
   impl C as I {
-    fn Op[self: Self]() {}
+    fn Op[unused self: Self]() {}
   }
 }
 
@@ -61,13 +61,13 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 interface I {
-  fn Op[self: Self]();
+  fn Op[unused self: Self]();
 }
 //@dump-sem-ir-end
 
 class C {
   impl C as I {
-    fn Op[self: Self]() {}
+    fn Op[unused self: Self]() {}
   }
 }
 
@@ -143,10 +143,10 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     %self.param_patt: @I.Op.%pattern_type (%pattern_type.0ed) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc8_15.1: type = splice_block %.loc8_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc8_15.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc8_22.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.Op.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
@@ -215,14 +215,14 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//included_with_range, loc16_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//included_with_range, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e7d: %I.assoc_type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.e7d: %I.assoc_type = import_ref Main//included_with_range, loc8_29, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
-// CHECK:STDOUT:   %Main.import_ref.10e: %I.Op.type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%I.Op]
+// CHECK:STDOUT:   %Main.import_ref.10e: %I.Op.type = import_ref Main//included_with_range, loc8_29, loaded [concrete = constants.%I.Op]
 // CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//included_with_range, loc7_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.bbf: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.e74: %C.as.I.impl.Op.type = import_ref Main//included_with_range, loc14_25, loaded [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.e74: %C.as.I.impl.Op.type = import_ref Main//included_with_range, loc14_32, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.e74), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,9 +320,9 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e7d: %I.assoc_type = import_ref Main//excluded_with_range, loc6_22, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.import_ref.10e: %I.Op.type = import_ref Main//excluded_with_range, loc6_22, loaded [concrete = constants.%I.Op]
-// CHECK:STDOUT:   %Main.import_ref.e74: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_25, loaded [concrete = constants.%C.as.I.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.e7d: %I.assoc_type = import_ref Main//excluded_with_range, loc6_29, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.10e: %I.Op.type = import_ref Main//excluded_with_range, loc6_29, loaded [concrete = constants.%I.Op]
+// CHECK:STDOUT:   %Main.import_ref.e74: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_32, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.e74), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

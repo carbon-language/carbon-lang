@@ -320,7 +320,7 @@ impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
 final impl forall [T:! type] T as Z(C) where .X = C {}
 
-fn F[U:! type](T:! Z(C)) {
+fn F[unused U:! type](T:! Z(C)) {
   // The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
   let unused a: T.X = {} as C;
@@ -337,7 +337,7 @@ class C {}
 
 impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
-fn F[U:! type](T:! Z(C)) {
+fn F[unused U:! type](T:! Z(C)) {
   // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
   // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let unused a: T.X = {} as C;

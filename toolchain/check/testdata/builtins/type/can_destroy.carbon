@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 
 fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! CanDestroy()) {}
+fn F(unused T:! CanDestroy()) {}
 
 fn G() {
   //@dump-sem-ir-begin
@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 
 fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! type where .Self impls CanDestroy()) {}
+fn F(unused T:! type where .Self impls CanDestroy()) {}
 
 fn G() {
   //@dump-sem-ir-begin
@@ -45,7 +45,7 @@ interface Z {}
 
 fn CanDestroy() -> type = "type.can_destroy";
 
-fn G(U:! CanDestroy()) {}
+fn G(unused U:! CanDestroy()) {}
 
 fn F(T:! Z & CanDestroy()) {
   // Requires a conversion (and thus impl lookup into `T`) since `T` and `U`
@@ -58,7 +58,7 @@ library "[[@TEST_NAME]]";
 
 fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! CanDestroy()) {}
+fn F(unused T:! CanDestroy()) {}
 
 class Incomplete;
 
@@ -66,9 +66,9 @@ fn G() {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: cannot convert type `Incomplete` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(Incomplete);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! CanDestroy()) {}
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused T:! CanDestroy()) {}
+  // CHECK:STDERR:             ^
   // CHECK:STDERR:
   F(Incomplete);
 }
@@ -78,7 +78,7 @@ library "[[@TEST_NAME]]";
 
 fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! CanDestroy()) {}
+fn F(unused T:! CanDestroy()) {}
 
 abstract class Abstract {}
 
@@ -86,9 +86,9 @@ fn G() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:3: error: cannot convert type `Abstract` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(Abstract);
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! CanDestroy()) {}
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused T:! CanDestroy()) {}
+  // CHECK:STDERR:             ^
   // CHECK:STDERR:
   F(Abstract);
 }

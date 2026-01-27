@@ -29,12 +29,13 @@ class LexicalLookup {
     SemIR::InstId inst_id;
     // The scope in which the instruction was added.
     ScopeIndex scope_index;
-    // Whether the name has been used.
-    bool is_used = false;
     // Whether the name was declared in a reachable position.
-    bool is_declared_reachable = true;
-    // The location of the first use of the name, if any.
-    SemIR::LocId first_use_loc = SemIR::LocId::None;
+    bool is_decl_reachable = true;
+    // The location of the first reachable use of the name, if any.
+    SemIR::LocId first_reachable_use_loc_id = SemIR::LocId::None;
+    // The location of the first use of the name, if any (including
+    // unreachable).
+    SemIR::LocId first_any_use_loc_id = SemIR::LocId::None;
   };
 
   // A lookup result that has been temporarily removed from scope.
@@ -44,12 +45,12 @@ class LexicalLookup {
     uint32_t index;
     // The lookup result.
     SemIR::InstId inst_id;
-    // Whether the name has been used.
-    bool is_used;
     // Whether the name was declared in a reachable position.
-    bool is_declared_reachable;
+    bool is_decl_reachable;
+    // The location of the first reachable use of the name, if any.
+    SemIR::LocId first_reachable_use_loc_id;
     // The location of the first use of the name, if any.
-    SemIR::LocId first_use_loc;
+    SemIR::LocId first_any_use_loc_id;
   };
 
   explicit LexicalLookup(const SharedValueStores::IdentifierStore& identifiers)
@@ -80,9 +81,9 @@ class LexicalLookup {
     auto result = results.pop_back_val();
     return {.index = static_cast<uint32_t>(index),
             .inst_id = result.inst_id,
-            .is_used = result.is_used,
-            .is_declared_reachable = result.is_declared_reachable,
-            .first_use_loc = result.first_use_loc};
+            .is_decl_reachable = result.is_decl_reachable,
+            .first_reachable_use_loc_id = result.first_reachable_use_loc_id,
+            .first_any_use_loc_id = result.first_any_use_loc_id};
   }
 
   // Restore a previously-suspended lookup result.
@@ -90,9 +91,9 @@ class LexicalLookup {
     lookup_[sus.index].push_back(
         {.inst_id = sus.inst_id,
          .scope_index = index,
-         .is_used = sus.is_used,
-         .is_declared_reachable = sus.is_declared_reachable,
-         .first_use_loc = sus.first_use_loc});
+         .is_decl_reachable = sus.is_decl_reachable,
+         .first_reachable_use_loc_id = sus.first_reachable_use_loc_id,
+         .first_any_use_loc_id = sus.first_any_use_loc_id});
   }
 
  private:

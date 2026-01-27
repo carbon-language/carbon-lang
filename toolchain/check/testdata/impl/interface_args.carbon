@@ -32,7 +32,7 @@ class B {}
 class C {}
 
 impl A as Action(B) {
-  fn Op[self: Self]() {}
+  fn Op[unused self: Self]() {}
 }
 
 fn F(a: A) { a.(Action(B).Op)(); }
@@ -487,9 +487,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.450 = import_ref Main//action, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d04: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.ec8: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.15e]
-// CHECK:STDOUT:   %Main.import_ref.7ad = import_ref Main//action, loc13_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7ad = import_ref Main//action, loc13_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d4fe9a.2 = import_ref Main//action, loc5_22, unloaded
-// CHECK:STDOUT:   %Main.import_ref.457: %A.as.Action.impl.Op.type = import_ref Main//action, loc13_23, loaded [concrete = constants.%A.as.Action.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.457: %A.as.Action.impl.Op.type = import_ref Main//action, loc13_30, loaded [concrete = constants.%A.as.Action.impl.Op]
 // CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%Main.import_ref.457), @A.as.Action.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -669,7 +669,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.450 = import_ref Main//action, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d04: type = import_ref Main//action, loc12_6, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.import_ref.ec8: type = import_ref Main//action, loc12_19, loaded [concrete = constants.%Action.type.15e]
-// CHECK:STDOUT:   %Main.import_ref.7ad = import_ref Main//action, loc13_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7ad = import_ref Main//action, loc13_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.743 = import_ref Main//action, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d4fe9a.2 = import_ref Main//action, loc5_22, unloaded

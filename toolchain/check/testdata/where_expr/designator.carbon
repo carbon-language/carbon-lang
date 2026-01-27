@@ -98,7 +98,7 @@ interface I {}
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! type, T:! type where U impls I) {}
+fn F(U:! type, unused T:! type where U impls I) {}
 
 // --- todo_fail_equality_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -109,7 +109,7 @@ interface I {
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! I, T:! type where U.X == ()) {}
+fn F(U:! I, unused T:! type where U.X == ()) {}
 
 // --- todo_fail_combined_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -120,7 +120,7 @@ interface I {
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! I, T:! type where U impls I and U.X == ()) {}
+fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
 
 // --- impls_constraint_does_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -129,9 +129,9 @@ interface I(T:! type) {}
 
 class C(T:! type);
 
-fn F(T:! type where C(.Self) impls I(())) {}
+fn F(unused T:! type where C(.Self) impls I(())) {}
 
-fn G(T:! type where C(()) impls I(.Self)) {}
+fn G(unused T:! type where C(()) impls I(.Self)) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:

@@ -20,10 +20,10 @@ interface J {
 }
 
 // Simple member access.
-fn Simple1(T:! J, S:! T.U) {}
+fn Simple1(T:! J, unused S:! T.U) {}
 
 // This should be equivalent to `Simple1` above, but using compound member access.
-fn Compound1(V:! J, W:! V.(J.U)) {}
+fn Compound1(V:! J, unused W:! V.(J.U)) {}
 
 // --- non_instance.carbon
 library "[[@TEST_NAME]]";
@@ -241,15 +241,15 @@ fn Works() {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_12.2: %J.type = symbolic_binding T, 0 [symbolic = %T.loc8_12.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc8_24.1: type = splice_block %impl.elem0.loc8_24.2 [symbolic = %impl.elem0.loc8_24.1 (constants.%impl.elem0.1cc570.1)] {
+// CHECK:STDOUT:     %.loc8_31.1: type = splice_block %impl.elem0.loc8_31.2 [symbolic = %impl.elem0.loc8_31.1 (constants.%impl.elem0.1cc570.1)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: %J.type = name_ref T, %T.loc8_12.2 [symbolic = %T.loc8_12.1 (constants.%T)]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc8_24.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %impl.elem0.loc8_24.2: type = impl_witness_access constants.%J.lookup_impl_witness.f8c694.1, element0 [symbolic = %impl.elem0.loc8_24.1 (constants.%impl.elem0.1cc570.1)]
+// CHECK:STDOUT:       %.loc8_31.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %impl.elem0.loc8_31.2: type = impl_witness_access constants.%J.lookup_impl_witness.f8c694.1, element0 [symbolic = %impl.elem0.loc8_31.1 (constants.%impl.elem0.1cc570.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %S.loc8_19.2: @Simple1.%impl.elem0.loc8_24.1 (%impl.elem0.1cc570.1) = symbolic_binding S, 1 [symbolic = %S.loc8_19.1 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_26.2: @Simple1.%impl.elem0.loc8_31.1 (%impl.elem0.1cc570.1) = symbolic_binding S, 1 [symbolic = %S.loc8_26.1 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound1.decl: %Compound1.type = fn_decl @Compound1 [concrete = constants.%Compound1] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.70b = symbolic_binding_pattern V, 0 [concrete]
@@ -260,14 +260,14 @@ fn Works() {
 // CHECK:STDOUT:       %J.ref.loc11_18: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc11_14.2: %J.type = symbolic_binding V, 0 [symbolic = %V.loc11_14.1 (constants.%V)]
-// CHECK:STDOUT:     %.loc11_26: type = splice_block %impl.elem0.loc11_26.2 [symbolic = %impl.elem0.loc11_26.1 (constants.%impl.elem0.1cc570.2)] {
+// CHECK:STDOUT:     %.loc11_33: type = splice_block %impl.elem0.loc11_33.2 [symbolic = %impl.elem0.loc11_33.1 (constants.%impl.elem0.1cc570.2)] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %V.ref: %J.type = name_ref V, %V.loc11_14.2 [symbolic = %V.loc11_14.1 (constants.%V)]
-// CHECK:STDOUT:       %J.ref.loc11_28: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:       %J.ref.loc11_35: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %impl.elem0.loc11_26.2: type = impl_witness_access constants.%J.lookup_impl_witness.f8c694.2, element0 [symbolic = %impl.elem0.loc11_26.1 (constants.%impl.elem0.1cc570.2)]
+// CHECK:STDOUT:       %impl.elem0.loc11_33.2: type = impl_witness_access constants.%J.lookup_impl_witness.f8c694.2, element0 [symbolic = %impl.elem0.loc11_33.1 (constants.%impl.elem0.1cc570.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc11_21.2: @Compound1.%impl.elem0.loc11_26.1 (%impl.elem0.1cc570.2) = symbolic_binding W, 1 [symbolic = %W.loc11_21.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc11_28.2: @Compound1.%impl.elem0.loc11_33.1 (%impl.elem0.1cc570.2) = symbolic_binding W, 1 [symbolic = %W.loc11_28.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -289,13 +289,13 @@ fn Works() {
 // CHECK:STDOUT:   assoc_const U:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Simple1(%T.loc8_12.2: %J.type, %S.loc8_19.2: @Simple1.%impl.elem0.loc8_24.1 (%impl.elem0.1cc570.1)) {
+// CHECK:STDOUT: generic fn @Simple1(%T.loc8_12.2: %J.type, %S.loc8_26.2: @Simple1.%impl.elem0.loc8_31.1 (%impl.elem0.1cc570.1)) {
 // CHECK:STDOUT:   %T.loc8_12.1: %J.type = symbolic_binding T, 0 [symbolic = %T.loc8_12.1 (constants.%T)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc8_12.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_12.1, @J [symbolic = %J.lookup_impl_witness (constants.%J.lookup_impl_witness.f8c694.1)]
-// CHECK:STDOUT:   %impl.elem0.loc8_24.1: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_24.1 (constants.%impl.elem0.1cc570.1)]
-// CHECK:STDOUT:   %S.loc8_19.1: @Simple1.%impl.elem0.loc8_24.1 (%impl.elem0.1cc570.1) = symbolic_binding S, 1 [symbolic = %S.loc8_19.1 (constants.%S)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc8_24.1 [symbolic = %pattern_type (constants.%pattern_type.f59f86.1)]
+// CHECK:STDOUT:   %impl.elem0.loc8_31.1: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_31.1 (constants.%impl.elem0.1cc570.1)]
+// CHECK:STDOUT:   %S.loc8_26.1: @Simple1.%impl.elem0.loc8_31.1 (%impl.elem0.1cc570.1) = symbolic_binding S, 1 [symbolic = %S.loc8_26.1 (constants.%S)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc8_31.1 [symbolic = %pattern_type (constants.%pattern_type.f59f86.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -305,12 +305,12 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Compound1(%V.loc11_14.2: %J.type, %W.loc11_21.2: @Compound1.%impl.elem0.loc11_26.1 (%impl.elem0.1cc570.2)) {
+// CHECK:STDOUT: generic fn @Compound1(%V.loc11_14.2: %J.type, %W.loc11_28.2: @Compound1.%impl.elem0.loc11_33.1 (%impl.elem0.1cc570.2)) {
 // CHECK:STDOUT:   %V.loc11_14.1: %J.type = symbolic_binding V, 0 [symbolic = %V.loc11_14.1 (constants.%V)]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %V.loc11_14.1, @J [symbolic = %J.lookup_impl_witness (constants.%J.lookup_impl_witness.f8c694.2)]
-// CHECK:STDOUT:   %impl.elem0.loc11_26.1: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_26.1 (constants.%impl.elem0.1cc570.2)]
-// CHECK:STDOUT:   %W.loc11_21.1: @Compound1.%impl.elem0.loc11_26.1 (%impl.elem0.1cc570.2) = symbolic_binding W, 1 [symbolic = %W.loc11_21.1 (constants.%W)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc11_26.1 [symbolic = %pattern_type (constants.%pattern_type.f59f86.2)]
+// CHECK:STDOUT:   %impl.elem0.loc11_33.1: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_33.1 (constants.%impl.elem0.1cc570.2)]
+// CHECK:STDOUT:   %W.loc11_28.1: @Compound1.%impl.elem0.loc11_33.1 (%impl.elem0.1cc570.2) = symbolic_binding W, 1 [symbolic = %W.loc11_28.1 (constants.%W)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc11_33.1 [symbolic = %pattern_type (constants.%pattern_type.f59f86.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -328,8 +328,8 @@ fn Works() {
 // CHECK:STDOUT:   %T.loc8_12.1 => constants.%T
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.f8c694.1
-// CHECK:STDOUT:   %impl.elem0.loc8_24.1 => constants.%impl.elem0.1cc570.1
-// CHECK:STDOUT:   %S.loc8_19.1 => constants.%S
+// CHECK:STDOUT:   %impl.elem0.loc8_31.1 => constants.%impl.elem0.1cc570.1
+// CHECK:STDOUT:   %S.loc8_26.1 => constants.%S
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f59f86.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,8 +338,8 @@ fn Works() {
 // CHECK:STDOUT: specific @Compound1(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc11_14.1 => constants.%V
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.f8c694.2
-// CHECK:STDOUT:   %impl.elem0.loc11_26.1 => constants.%impl.elem0.1cc570.2
-// CHECK:STDOUT:   %W.loc11_21.1 => constants.%W
+// CHECK:STDOUT:   %impl.elem0.loc11_33.1 => constants.%impl.elem0.1cc570.2
+// CHECK:STDOUT:   %W.loc11_28.1 => constants.%W
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f59f86.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

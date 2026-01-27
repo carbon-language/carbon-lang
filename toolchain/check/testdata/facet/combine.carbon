@@ -49,7 +49,7 @@ interface B {
 class C {}
 impl C as A {}
 impl C as B {
-  fn BB[self: Self]() {}
+  fn BB[unused self: Self]() {}
 }
 
 fn G[T:! A & B](unused t: T) {}

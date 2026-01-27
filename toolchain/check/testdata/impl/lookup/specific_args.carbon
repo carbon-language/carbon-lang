@@ -28,7 +28,7 @@ import library "types";
 
 class InInterfaceArgs {}
 
-impl X as I(InInterfaceArgs) { fn F[self: Self]() {} }
+impl X as I(InInterfaceArgs) { fn F[unused self: Self]() {} }
 
 // --- use_impl_in_interface_args.carbon
 
@@ -45,7 +45,7 @@ import library "types";
 
 class InClassArgs {}
 
-impl C(InClassArgs) as I(X) { fn F[self: Self]() {} }
+impl C(InClassArgs) as I(X) { fn F[unused self: Self]() {} }
 
 // --- use_impl_in_class_args.carbon
 
@@ -405,7 +405,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.6a1: <witness> = import_ref Main//impl_in_interface_args, loc7_30, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.044: type = import_ref Main//impl_in_interface_args, loc7_6, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.224: type = import_ref Main//impl_in_interface_args, loc7_28, loaded [concrete = constants.%I.type.a76]
-// CHECK:STDOUT:   %Main.import_ref.6cf: %X.as.I.impl.F.type = import_ref Main//impl_in_interface_args, loc7_51, loaded [concrete = constants.%X.as.I.impl.F]
+// CHECK:STDOUT:   %Main.import_ref.6cf: %X.as.I.impl.F.type = import_ref Main//impl_in_interface_args, loc7_58, loaded [concrete = constants.%X.as.I.impl.F]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.6cf), @X.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -774,7 +774,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.a4e: <witness> = import_ref Main//impl_in_class_args, loc7_29, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.7f4: type = import_ref Main//impl_in_class_args, loc7_19, loaded [concrete = constants.%C.83f]
 // CHECK:STDOUT:   %Main.import_ref.8c1: type = import_ref Main//impl_in_class_args, loc7_27, loaded [concrete = constants.%I.type.ce9]
-// CHECK:STDOUT:   %Main.import_ref.681: %C.as.I.impl.F.type = import_ref Main//impl_in_class_args, loc7_50, loaded [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:   %Main.import_ref.681: %C.as.I.impl.F.type = import_ref Main//impl_in_class_args, loc7_57, loaded [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.681), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

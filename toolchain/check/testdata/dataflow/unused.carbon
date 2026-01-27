@@ -177,7 +177,9 @@ fn F() -> i32 {
 }
 
 // --- fail_unused_decl.carbon
-// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` marker cannot be used on a declaration that is not a definition [UnusedMarkerInDeclaration]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` modifier on declaration [UnusedModifierOnDeclaration]
 // CHECK:STDERR: fn F(unused x: i32);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -215,13 +217,9 @@ fn F(unused y: i32) {}
 // --- unreachable.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: unreachable.carbon:[[@LINE+4]]:6: warning: binding `x` is unused [UnusedBinding]
-// CHECK:STDERR: fn F(x: i32) {
-// CHECK:STDERR:      ^
-// CHECK:STDERR:
 fn F(x: i32) {
   return;
-  // Unreachable use is ignored, so UnusedBinding warning.
+  // Unreachable use suppresses the UnusedBinding warning.
   var y: i32 = x;
 }
 
@@ -231,12 +229,27 @@ fn G(unused x: i32) {
   var y: i32 = x;
 }
 
-// CHECK:STDERR: unreachable.carbon:[[@LINE+4]]:10: warning: binding `x` is unused [UnusedBinding]
-// CHECK:STDERR: fn H(ref x: i32) {
-// CHECK:STDERR:          ^
-// CHECK:STDERR:
 fn H(ref x: i32) {
   return;
-  // Unreachable assignment is ignored. So UnusedBinding warning.
+  // Unreachable assignment suppresses the UnusedBinding warning.
   x = 0;
 }
+
+// --- fail_todo_unused_generic.carbon
+library "[[@TEST_NAME]]";
+
+fn F(T:! type);
+
+// CHECK:STDERR: fail_todo_unused_generic.carbon:[[@LINE+4]]:13: error: semantics TODO: `generic redeclaration differs from previous declaration` [SemanticsTodo]
+// CHECK:STDERR: fn F(unused T:! type) {}
+// CHECK:STDERR:             ^
+// CHECK:STDERR:
+fn F(unused T:! type) {}
+
+class C(T:! type);
+
+// CHECK:STDERR: fail_todo_unused_generic.carbon:[[@LINE+4]]:16: error: semantics TODO: `generic redeclaration differs from previous declaration` [SemanticsTodo]
+// CHECK:STDERR: class C(unused T:! type) {}
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
+class C(unused T:! type) {}

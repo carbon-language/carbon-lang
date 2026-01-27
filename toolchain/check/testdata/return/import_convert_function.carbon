@@ -20,14 +20,14 @@ class C(N:! i32) {}
 class D { var n: i32; var m: i32; }
 fn Make() -> D { return {.n = 0, .m = 0}; }
 
-impl C(0) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(1) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(2) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(3) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(4) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(5) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(6) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
-impl C(7) as Core.ImplicitAs(D) { fn Convert[self: Self]() -> D { return Make(); } }
+impl C(0) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(1) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(2) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(3) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(4) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(5) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(6) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
+impl C(7) as Core.ImplicitAs(D) { fn Convert[unused self: Self]() -> D { return Make(); } }
 
 // --- user.carbon
 
@@ -909,22 +909,22 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %P.import_ref.59e: <witness> = import_ref P//library, loc15_33, loaded [concrete = constants.%ImplicitAs.impl_witness.fa4]
 // CHECK:STDOUT:   %P.import_ref.854: type = import_ref P//library, loc15_9, loaded [concrete = constants.%C.304]
 // CHECK:STDOUT:   %P.import_ref.1f32be.8: type = import_ref P//library, loc15_31, loaded [concrete = constants.%ImplicitAs.type.bc5]
-// CHECK:STDOUT:   %P.import_ref.a6f: %C.as.ImplicitAs.impl.Convert.type.7ddb8 = import_ref P//library, loc8_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.43b]
+// CHECK:STDOUT:   %P.import_ref.a6f: %C.as.ImplicitAs.impl.Convert.type.7ddb8 = import_ref P//library, loc8_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.43b]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.381 = impl_witness_table (%P.import_ref.a6f), @C.as.ImplicitAs.impl.c36 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %P.import_ref.4f9: %C.as.ImplicitAs.impl.Convert.type.f4e = import_ref P//library, loc9_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.e68]
+// CHECK:STDOUT:   %P.import_ref.4f9: %C.as.ImplicitAs.impl.Convert.type.f4e = import_ref P//library, loc9_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.e68]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.b74 = impl_witness_table (%P.import_ref.4f9), @C.as.ImplicitAs.impl.4a1 [concrete]
-// CHECK:STDOUT:   %P.import_ref.22a: %C.as.ImplicitAs.impl.Convert.type.7cc = import_ref P//library, loc10_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.cb1]
+// CHECK:STDOUT:   %P.import_ref.22a: %C.as.ImplicitAs.impl.Convert.type.7cc = import_ref P//library, loc10_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.cb1]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.3e4 = impl_witness_table (%P.import_ref.22a), @C.as.ImplicitAs.impl.2ab [concrete]
-// CHECK:STDOUT:   %P.import_ref.187: %C.as.ImplicitAs.impl.Convert.type.cba = import_ref P//library, loc11_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.67e]
+// CHECK:STDOUT:   %P.import_ref.187: %C.as.ImplicitAs.impl.Convert.type.cba = import_ref P//library, loc11_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.67e]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.0ec = impl_witness_table (%P.import_ref.187), @C.as.ImplicitAs.impl.cce [concrete]
-// CHECK:STDOUT:   %P.import_ref.003: %C.as.ImplicitAs.impl.Convert.type.a2c = import_ref P//library, loc12_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.58d]
+// CHECK:STDOUT:   %P.import_ref.003: %C.as.ImplicitAs.impl.Convert.type.a2c = import_ref P//library, loc12_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.58d]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.aaf = impl_witness_table (%P.import_ref.003), @C.as.ImplicitAs.impl.d94 [concrete]
-// CHECK:STDOUT:   %P.import_ref.969: %C.as.ImplicitAs.impl.Convert.type.bf6 = import_ref P//library, loc13_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.a45]
+// CHECK:STDOUT:   %P.import_ref.969: %C.as.ImplicitAs.impl.Convert.type.bf6 = import_ref P//library, loc13_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.a45]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.655 = impl_witness_table (%P.import_ref.969), @C.as.ImplicitAs.impl.695 [concrete]
-// CHECK:STDOUT:   %P.import_ref.64e: %C.as.ImplicitAs.impl.Convert.type.e95 = import_ref P//library, loc14_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.ad0]
+// CHECK:STDOUT:   %P.import_ref.64e: %C.as.ImplicitAs.impl.Convert.type.e95 = import_ref P//library, loc14_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.ad0]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.3e1 = impl_witness_table (%P.import_ref.64e), @C.as.ImplicitAs.impl.7d7 [concrete]
-// CHECK:STDOUT:   %P.import_ref.5f0: %C.as.ImplicitAs.impl.Convert.type.7ddb0 = import_ref P//library, loc15_65, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.9be]
+// CHECK:STDOUT:   %P.import_ref.5f0: %C.as.ImplicitAs.impl.Convert.type.7ddb0 = import_ref P//library, loc15_72, loaded [concrete = constants.%C.as.ImplicitAs.impl.Convert.9be]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.60e = impl_witness_table (%P.import_ref.5f0), @C.as.ImplicitAs.impl.86a [concrete]
 // CHECK:STDOUT:   %P.Make: %Make.type = import_ref P//library, Make, loaded [concrete = constants.%Make]
 // CHECK:STDOUT: }

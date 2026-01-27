@@ -40,11 +40,11 @@ class C {
   // CHECK:STDERR:                                ^
   // CHECK:STDERR:
   impl as IMisuse where .Arg = T {
-    // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:35: error: name `T` not found [NameNotFound]
-    // CHECK:STDERR:     fn Op[self: Self]() -> ArgToI(T) {
-    // CHECK:STDERR:                                   ^
+    // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:42: error: name `T` not found [NameNotFound]
+    // CHECK:STDERR:     fn Op[unused self: Self]() -> ArgToI(T) {
+    // CHECK:STDERR:                                          ^
     // CHECK:STDERR:
-    fn Op[self: Self]() -> ArgToI(T) {
+    fn Op[unused self: Self]() -> ArgToI(T) {
       return {};
     }
   }
@@ -84,15 +84,15 @@ class ArgC {}
 
 class C {
   impl as IMisuse where .Arg = ArgC {
-    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:28: error: cannot convert type `ArgC` into type implementing `I` [ConversionFailureTypeToFacet]
-    // CHECK:STDERR:     fn Op[self: Self]() -> ArgToI(ArgC) {
-    // CHECK:STDERR:                            ^~~~~~~~~~~~
+    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:35: error: cannot convert type `ArgC` into type implementing `I` [ConversionFailureTypeToFacet]
+    // CHECK:STDERR:     fn Op[unused self: Self]() -> ArgToI(ArgC) {
+    // CHECK:STDERR:                                   ^~~~~~~~~~~~
     // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-9]]:1: in import [InImport]
     // CHECK:STDERR: fail_invalid_interface.carbon:5:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
     // CHECK:STDERR: class ArgToI(T:! I) {}
     // CHECK:STDERR:              ^
     // CHECK:STDERR:
-    fn Op[self: Self]() -> ArgToI(ArgC) {
+    fn Op[unused self: Self]() -> ArgToI(ArgC) {
       return {};
     }
   }

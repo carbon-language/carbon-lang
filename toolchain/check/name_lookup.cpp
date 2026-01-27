@@ -74,7 +74,7 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
     // we find the parameter in order to diagnose a redeclaration error.
     return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
         context.scope_stack().LookupInLexicalScopesWithin(
-            name_id, scope_index, /*is_reachable=*/false),
+            name_id, scope_index, /*use_loc_id=*/SemIR::LocId::None),
         SemIR::AccessKind::Public);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
@@ -101,10 +101,7 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   // results from non-lexical scopes such as namespaces and classes.
   auto [lexical_result, non_lexical_scopes] =
       context.scope_stack().LookupInLexicalScopes(
-          name_id, IsCurrentPositionReachable(context));
-  if (lexical_result.has_value() && IsCurrentPositionReachable(context)) {
-    context.scope_stack().MarkUsed(name_id, loc_id);
-  }
+          name_id, loc_id, IsCurrentPositionReachable(context));
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :

@@ -10,8 +10,13 @@
 
 namespace Carbon::Check {
 
-// Checks for unused bindings in the given scope.
-auto CheckUnusedBindings(Context& context, ScopeStack::ScopeView scope) -> void;
+// Checks for an unused binding. We track whether a name was declared in a
+// reachable position, and whether it was used (even in unreachable code), to
+// decide whether to warn. If a name is used in unreachable code, we don't warn
+// because changing it to `_` would be a name lookup error in that unreachable
+// code.
+auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
+                        const LexicalLookup::Result& result) -> void;
 
 }  // namespace Carbon::Check
 

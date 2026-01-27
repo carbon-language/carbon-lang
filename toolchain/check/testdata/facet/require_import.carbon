@@ -27,7 +27,7 @@ constraint X {
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-fn F(A:! X, B:! Y) {}
+fn F(unused A:! X, unused B:! Y) {}
 
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
@@ -77,16 +77,16 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:     %A.patt: %pattern_type.e25 = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:     %B.patt: %pattern_type.650 = symbolic_binding_pattern B, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_10: type = splice_block %X.ref [concrete = constants.%X.type] {
+// CHECK:STDOUT:     %.loc4_17: type = splice_block %X.ref [concrete = constants.%X.type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %A.loc4_6.2: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_6.1 (constants.%A)]
-// CHECK:STDOUT:     %.loc4_17: type = splice_block %Y.ref [concrete = constants.%Y.type] {
+// CHECK:STDOUT:     %A.loc4_13.2: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_13.1 (constants.%A)]
+// CHECK:STDOUT:     %.loc4_31: type = splice_block %Y.ref [concrete = constants.%Y.type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Y.ref: type = name_ref Y, imports.%Main.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.loc4_13.2: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_13.1 (constants.%B)]
+// CHECK:STDOUT:     %B.loc4_27.2: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_27.1 (constants.%B)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,9 +129,9 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b23)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%A.loc4_6.2: %X.type, %B.loc4_13.2: %Y.type) {
-// CHECK:STDOUT:   %A.loc4_6.1: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_6.1 (constants.%A)]
-// CHECK:STDOUT:   %B.loc4_13.1: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_13.1 (constants.%B)]
+// CHECK:STDOUT: generic fn @F(%A.loc4_13.2: %X.type, %B.loc4_27.2: %Y.type) {
+// CHECK:STDOUT:   %A.loc4_13.1: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_13.1 (constants.%A)]
+// CHECK:STDOUT:   %B.loc4_27.1: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_27.1 (constants.%B)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -152,7 +152,7 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
-// CHECK:STDOUT:   %A.loc4_6.1 => constants.%A
-// CHECK:STDOUT:   %B.loc4_13.1 => constants.%B
+// CHECK:STDOUT:   %A.loc4_13.1 => constants.%A
+// CHECK:STDOUT:   %B.loc4_27.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

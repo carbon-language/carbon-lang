@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 class C(T:! Core.Copy & Core.Destroy) {
-  fn GetC[self: Self]() -> T {
+  fn GetC[unused self: Self]() -> T {
     var value: T;
     return value;
   }
@@ -29,7 +29,7 @@ export import library "a";
 
 interface I {
   let T:! Core.Copy & Core.Destroy;
-  fn GetI[self: Self]() -> C(T);
+  fn GetI[unused self: Self]() -> C(T);
 }
 
 // --- c.carbon
@@ -38,7 +38,7 @@ export import library "b";
 
 class D(T:! type) {
   impl as I where .T = T* {
-    fn GetI[self: Self]() -> C(T*) {
+    fn GetI[unused self: Self]() -> C(T*) {
       return {};
     }
   }

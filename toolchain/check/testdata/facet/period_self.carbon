@@ -302,7 +302,7 @@ interface I(T:! type) {
 // TODO: This should be an error: The third `.Self` becomes is not able to be
 // bound to anything unambiguous here, as it could refer to `T` or to something
 // later being constrained by `T.A`.
-fn F(T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
+fn F(unused T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
 
 // --- period_self_parameter_sees_lhs_of_where_expr.carbon
@@ -311,7 +311,7 @@ library "[[@TEST_NAME]]";
 interface I(T:! Core.Destroy) {}
 
 // The `.Self` can see the LHS of the `where` to know `U` impls Core.Destroy.
-fn F(U:! Core.Destroy where .Self impls I(.Self)) {}
+fn F(unused U:! Core.Destroy where .Self impls I(.Self)) {}
 
 // --- fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon
 library "[[@TEST_NAME]]";
@@ -321,14 +321,14 @@ interface I(T:! Core.Destroy) {}
 // TODO: Implied constraints that `.Self` impls `Core.Destroy` are satisfied by
 // the `&` expression.
 //
-// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:25: error: cannot convert type `.Self` that implements `type` into type implementing `Core.Destroy` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(U:! Core.Destroy & I(.Self)) {}
-// CHECK:STDERR:                         ^~~~~~~~
+// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:32: error: cannot convert type `.Self` that implements `type` into type implementing `Core.Destroy` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(unused U:! Core.Destroy & I(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~
 // CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface I(T:! Core.Destroy) {}
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-fn F(U:! Core.Destroy & I(.Self)) {}
+fn F(unused U:! Core.Destroy & I(.Self)) {}
 
 // --- fail_todo_compound_lookup_on_returned_period_self_parameter.carbon
 library "[[@TEST_NAME]]";

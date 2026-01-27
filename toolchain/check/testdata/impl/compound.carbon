@@ -90,7 +90,7 @@ interface Instance1 {
 }
 
 impl {.d: ()} as Instance1 {
-  fn G1[self: Self]() {}
+  fn G1[unused self: Self]() {}
 }
 
 fn InstanceCall(n: {.d: ()}) {
@@ -109,7 +109,7 @@ interface Instance2 {
 }
 
 impl {.e: ()} as Instance2 {
-  fn G2[self: Self]() {}
+  fn G2[unused self: Self]() {}
 }
 
 fn InstanceCallFail() {

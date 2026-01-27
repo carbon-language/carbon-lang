@@ -595,9 +595,10 @@ auto CheckUnit::FinishRun() -> void {
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
-  context_.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
-    CheckUnusedBindings(context_, scope);
-  });
+  context_.scope_stack().Pop(
+      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
+        CheckUnusedBinding(context_, name_id, result);
+      });
 
   // Finalizes the list of exports on the IR.
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,

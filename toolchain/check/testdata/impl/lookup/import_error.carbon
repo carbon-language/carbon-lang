@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 
 import library "error_interface_z";
 
-fn F[U:! type](T:! Z) {
+fn F[unused U:! type](T:! Z) {
   // The value of `.X` is an error. It should not crash though.
   //
   // CHECK:STDERR: fail_import_error.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `T.(Z.X)` [ConversionFailure]

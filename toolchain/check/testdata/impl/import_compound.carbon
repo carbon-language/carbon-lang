@@ -28,7 +28,7 @@ interface Instance {
 }
 
 impl {.i: ()} as Instance {
-  fn G[self: Self]() {}
+  fn G[unused self: Self]() {}
 }
 
 // --- import_non-instance_success.carbon
@@ -560,7 +560,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.import_ref.079: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.2f8: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
-// CHECK:STDOUT:   %Main.import_ref.8be: %struct_type.i.as.Instance.impl.G.type = import_ref Main//lib, loc16_22, loaded [concrete = constants.%struct_type.i.as.Instance.impl.G]
+// CHECK:STDOUT:   %Main.import_ref.8be: %struct_type.i.as.Instance.impl.G.type = import_ref Main//lib, loc16_29, loaded [concrete = constants.%struct_type.i.as.Instance.impl.G]
 // CHECK:STDOUT:   %Instance.impl_witness_table = impl_witness_table (%Main.import_ref.8be), @struct_type.i.as.Instance.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

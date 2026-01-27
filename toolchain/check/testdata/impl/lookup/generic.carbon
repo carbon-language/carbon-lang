@@ -21,7 +21,7 @@ interface HasF {
 }
 
 impl forall [T:! type] T as HasF {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 fn G(x: {}) {
@@ -55,7 +55,7 @@ interface HasF {
 class C(T:! type) {}
 
 impl forall [T:! type] C(T) as HasF {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 fn G(x: C({})) {
@@ -71,7 +71,7 @@ interface HasF(T:! type) {
 }
 
 impl forall [T:! type] {} as HasF(T) {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 fn G(x: {}) {
@@ -91,7 +91,7 @@ interface HasF {
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! type, U:! type] T as HasF {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 fn G(x: {}) {
@@ -111,7 +111,7 @@ interface HasF(T:! type) {
 }
 
 impl forall [T:! type] T as HasF(T) {
-  fn F[self: Self]() {}
+  fn F[unused self: Self]() {}
 }
 
 class A {}

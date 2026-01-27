@@ -22,7 +22,7 @@ import Cpp library "enum.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  var unused a: Cpp.Enum = Cpp.Enum.a;
+  var a: Cpp.Enum = Cpp.Enum.a;
 
   a = Cpp.Enum.b;
 }
@@ -65,13 +65,13 @@ fn F() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.ebf = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Enum = var %a.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc8_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc8_31: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign %a.var, %a.ref.loc8
-// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_20 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc8_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %Enum = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc10: ref %Enum = name_ref a, %a

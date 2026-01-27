@@ -56,14 +56,14 @@ interface Z {
    // CHECK:STDERR:
    impl as Z {
     fn Zero() {}
-    fn Method[self: Self]() {}
+    fn Method[unused self: Self]() {}
   }
 }
 
 class Point {
    impl as Z {
     fn Zero() {}
-    fn Method[self: Self]() {}
+    fn Method[unused self: Self]() {}
   }
 }
 
@@ -335,10 +335,10 @@ class X {
 // CHECK:STDOUT:       %self.param_patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.834) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.f61) = value_param call_param0
-// CHECK:STDOUT:       %.loc13_21.1: type = splice_block %.loc13_21.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f61)] {
+// CHECK:STDOUT:       %.loc13_28.1: type = splice_block %.loc13_28.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f61)] {
 // CHECK:STDOUT:         %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.001)]
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f61)]
-// CHECK:STDOUT:         %.loc13_21.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f61)]
+// CHECK:STDOUT:         %.loc13_28.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f61)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.f61) = value_binding self, %self.param
 // CHECK:STDOUT:     }

@@ -30,7 +30,14 @@ library "[[@TEST_NAME]]";
 fn G() {
   var a: i32 = 0;
   let unused n: i32 = a;
-  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+11]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   n = 1;
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE-5]]:14: error: variable `n` is marked `unused` but is used [UnusedButUsed]
+  // CHECK:STDERR:   let unused n: i32 = a;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: note: usage is here [UnusedButUsedHere]
   // CHECK:STDERR:   n = 1;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:

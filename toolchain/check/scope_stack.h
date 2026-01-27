@@ -45,10 +45,8 @@ class ScopeStack {
   };
 
   // A view of a scope for iteration during Pop.
-  struct ScopeView {
-    ScopeIndex index;
-    const Set<SemIR::NameId>& names;
-  };
+  using OnNamePop =
+      llvm::function_ref<void(SemIR::NameId, const LexicalLookup::Result&)>;
 
   // Information about a scope that has been temporarily removed from the stack.
   // This type is large, so moves of this type should be avoided.
@@ -72,19 +70,17 @@ class ScopeStack {
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
   // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
-  auto Pop(llvm::function_ref<void(ScopeView)> on_pop = nullptr) -> void;
+  auto Pop(OnNamePop on_name_pop = nullptr) -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
-  auto PopIfEmpty(llvm::function_ref<void(ScopeView)> on_pop = nullptr)
-      -> void {
+  auto PopIfEmpty(OnNamePop on_name_pop = nullptr) -> void {
     if (scope_stack_.back().num_names == 0) {
-      Pop(on_pop);
+      Pop(on_name_pop);
     }
   }
 
   // Pops scopes until we return to the specified scope index.
-  auto PopTo(ScopeIndex index,
-             llvm::function_ref<void(ScopeView)> on_pop = nullptr) -> void;
+  auto PopTo(ScopeIndex index, OnNamePop on_name_pop = nullptr) -> void;
 
   // Returns the scope index associated with the current scope.
   auto PeekIndex() const -> ScopeIndex { return Peek().index; }
@@ -152,25 +148,46 @@ class ScopeStack {
   }
 
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
+
   // do not look past `scope_index`. Returns the existing lookup result, if any.
+
+  // If `use_loc_id` is specified, the name is marked as used at that location.
+
   auto LookupInLexicalScopesWithin(SemIR::NameId name_id,
+
                                    ScopeIndex scope_index,
+
+                                   SemIR::LocId use_loc_id = SemIR::LocId::None,
+
                                    bool is_reachable = true) -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope and related lexical
+
   // scopes. Returns the innermost lexical lookup result, if any, along with a
+
   // list of non-lexical scopes in which lookup should also be performed,
+
   // ordered from outermost to innermost.
-  auto LookupInLexicalScopes(SemIR::NameId name_id, bool is_reachable = true)
+
+  // If `use_loc_id` is specified, the name is marked as used at that location.
+
+  auto LookupInLexicalScopes(SemIR::NameId name_id,
+
+                             SemIR::LocId use_loc_id = SemIR::LocId::None,
+
+                             bool is_reachable = true)
+
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
   // in that scope or any unfinished scope within it, and otherwise adds the
   // name with the value `target_id` and returns `None`.
+  // `is_decl_reachable` indicates whether the name was declared in a reachable
+  // position.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
                        ScopeIndex scope_index = ScopeIndex::None,
-                       bool is_reachable = true) -> SemIR::InstId;
+                       bool is_decl_reachable = true) -> SemIR::InstId;
 
   // Prepares to add a compile-time binding in the current scope, and returns
   // its index. The added binding must then be pushed using
@@ -209,9 +226,9 @@ class ScopeStack {
 
   auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
 
+ private:
   auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
 
- private:
   // An entry in scope_stack_.
   struct ScopeStackEntry : public MoveOnly<ScopeStackEntry> {
     auto is_lexical_scope() const -> bool { return !scope_id.has_value(); }
@@ -359,12 +376,12 @@ struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
     uint32_t index;
     // The instruction within the scope.
     SemIR::InstId inst_id;
-    // Whether the name has been used.
-    bool is_used;
     // Whether the name was declared in a reachable position.
-    bool is_declared_reachable;
+    bool is_decl_reachable;
+    // The location of the first reachable use of the name, if any.
+    SemIR::LocId first_reachable_use_loc_id;
     // The location of the first use of the name, if any.
-    SemIR::LocId first_use_loc;
+    SemIR::LocId first_any_use_loc_id;
   };
 
   // The suspended scope stack entry.

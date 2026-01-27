@@ -485,9 +485,8 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-// Checks that "unused" marker does not appear in declarations that
-// are not definitions and emit a diagnostic for every binding that
-// is marked unused.
+// Checks that "unused" marker does not appear in declarations that are not
+// definitions and emit a diagnostic for every binding that is marked unused.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
@@ -514,12 +513,9 @@ static auto CheckUnusedBindingsInPattern(Context& context,
         // unused but actually permitted in declarations.
         if (entity_name.is_unused &&
             entity_name.name_id != SemIR::NameId::Underscore) {
-          CARBON_DIAGNOSTIC(
-              UnusedMarkerInDeclaration, Error,
-              "`unused` marker cannot be used on a declaration that is not a "
-              "definition");
-          context.emitter().Emit(LocIdForDiagnostics(current_id),
-                                 UnusedMarkerInDeclaration);
+          CARBON_DIAGNOSTIC(UnusedModifierOnDeclaration, Error,
+                            "`unused` modifier on declaration");
+          context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
         }
         break;
       }
@@ -627,9 +623,10 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   }
 
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
-    CheckUnusedBindings(context, scope);
-  });
+  context.scope_stack().Pop(
+      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
+        CheckUnusedBinding(context, name_id, result);
+      });
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 
   auto& function = context.functions().Get(function_id);

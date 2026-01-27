@@ -326,7 +326,7 @@ import Cpp library "function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F[unused self: Self]() {
     //@dump-sem-ir-begin
     static_fn();
     Derived.static_fn();

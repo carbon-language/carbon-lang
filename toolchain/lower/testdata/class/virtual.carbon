@@ -19,12 +19,12 @@ base class Base {
 
 base class Intermediate {
   extend base: Base;
-  virtual fn Fn[self: Self]() { }
+  virtual fn Fn[unused self: Self]() { }
 }
 
 class Derived {
   extend base: Intermediate;
-  override fn Fn[self: Self]() { }
+  override fn Fn[unused self: Self]() { }
 }
 
 // --- create.carbon
@@ -52,7 +52,7 @@ package MemberInit;
 
 base class Base {
   var m: i32;
-  virtual fn Fn[self: Self]() { }
+  virtual fn Fn[unused self: Self]() { }
 }
 
 fn Fn() {
@@ -113,7 +113,7 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[self: Self]() { }
+  virtual fn F[unused self: Self]() { }
 }
 
 // --- generic_use.carbon
@@ -121,7 +121,7 @@ base class Base(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! Core.Destroy) {
-  virtual fn F[self: Self]() {
+  virtual fn F[unused self: Self]() {
     var _: T;
   }
 }
@@ -141,7 +141,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[self: Self]() { }
+  virtual fn F[unused self: Self]() { }
 }
 
 class T1;

@@ -22,7 +22,7 @@ fn F(oi: Outer.Inner) -> i32 {
   return oi.n;
 }
 
-fn G(unused o: Outer) {
+fn G(o: Outer) {
   var unused i: o.Inner;
 }
 

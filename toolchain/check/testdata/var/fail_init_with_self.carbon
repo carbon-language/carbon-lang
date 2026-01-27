@@ -15,7 +15,14 @@
 // --- fail_basic.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:22: error: `x` used before initialization [UsedBeforeInitialization]
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+11]]:22: error: `x` used before initialization [UsedBeforeInitialization]
+  // CHECK:STDERR:   var unused x: () = x;
+  // CHECK:STDERR:                      ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+7]]:14: error: variable `x` is marked `unused` but is used [UnusedButUsed]
+  // CHECK:STDERR:   var unused x: () = x;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:22: note: usage is here [UnusedButUsedHere]
   // CHECK:STDERR:   var unused x: () = x;
   // CHECK:STDERR:                      ^
   // CHECK:STDERR:
@@ -65,9 +72,9 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc7_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_18.3: type = converted %.loc7_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc14_18.1: type = splice_block %.loc14_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc14_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc14_18.3: type = converted %.loc14_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144

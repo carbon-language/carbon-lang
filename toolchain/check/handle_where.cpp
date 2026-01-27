@@ -189,9 +189,10 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   context.rewrites_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
-  context.scope_stack().Pop([&](ScopeStack::ScopeView scope) {
-    CheckUnusedBindings(context, scope);
-  });
+  context.scope_stack().Pop(
+      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
+        CheckUnusedBinding(context, name_id, result);
+      });
   SemIR::InstId period_self_id =
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();

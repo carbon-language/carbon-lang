@@ -21,7 +21,7 @@ class ElementType {}
 class SubscriptType {}
 
 impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
-  fn At[self: Self](unused subscript: SubscriptType) -> ElementType {
+  fn At[unused self: Self](unused subscript: SubscriptType) -> ElementType {
     return {};
   }
 }
@@ -56,7 +56,7 @@ class ElementType {}
 class SubscriptType {}
 
 impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
-  fn At[self: Self](unused subscript: SubscriptType) -> ElementType {
+  fn At[unused self: Self](unused subscript: SubscriptType) -> ElementType {
     return {};
   }
 }

@@ -36,7 +36,7 @@ class C {
 
 interface WithImplicitArgs[T:! type](N:! T);
 
-fn Receive(T:! Simple(C)) {}
+fn Receive(unused T:! Simple(C)) {}
 fn Pass(T:! Simple(C)) {
   Receive(T);
 }
@@ -67,14 +67,14 @@ library "[[@TEST_NAME]]";
 
 interface Generic(T:! type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:10: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(T:! Generic((), ())) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:17: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(unused T:! Generic((), ())) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic interface declared here [InCallToEntity]
 // CHECK:STDERR: interface Generic(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! Generic((), ())) {}
+fn F(unused T:! Generic((), ())) {}
 
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
@@ -120,13 +120,14 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %WithImplicitArgs.type: type = generic_interface_type @WithImplicitArgs [concrete]
 // CHECK:STDOUT:   %WithImplicitArgs.generic: %WithImplicitArgs.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.901: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.90140c.1: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.bc1: type = pattern_type %Simple.type.1a3 [concrete]
+// CHECK:STDOUT:   %T.90140c.2: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Receive.type: type = fn_type @Receive [concrete]
 // CHECK:STDOUT:   %Receive: %Receive.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Pass.type: type = fn_type @Pass [concrete]
 // CHECK:STDOUT:   %Pass: %Pass.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Receive.specific_fn: <specific function> = specific_function %Receive, @Receive(%T.901) [symbolic]
+// CHECK:STDOUT:   %Receive.specific_fn: <specific function> = specific_function %Receive, @Receive(%T.90140c.1) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -174,7 +175,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.1a3]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc24_12.2: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc24_12.1 (constants.%T.901)]
+// CHECK:STDOUT:     %T.loc24_19.3: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc24_19.2 (constants.%T.90140c.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Pass.decl: %Pass.type = fn_decl @Pass [concrete = constants.%Pass] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.bc1 = symbolic_binding_pattern T, 0 [concrete]
@@ -185,7 +186,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.1a3]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc25_9.2: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc25_9.1 (constants.%T.901)]
+// CHECK:STDOUT:     %T.loc25_9.2: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc25_9.1 (constants.%T.90140c.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,8 +319,9 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   return %.loc17_16 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Receive(%T.loc24_12.2: %Simple.type.1a3) {
-// CHECK:STDOUT:   %T.loc24_12.1: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc24_12.1 (constants.%T.901)]
+// CHECK:STDOUT: generic fn @Receive(%T.loc24_19.3: %Simple.type.1a3) {
+// CHECK:STDOUT:   %T.loc24_19.1: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc24_19.1 (constants.%T.90140c.1)]
+// CHECK:STDOUT:   %T.loc24_19.2: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc24_19.2 (constants.%T.90140c.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -330,7 +332,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Pass(%T.loc25_9.2: %Simple.type.1a3) {
-// CHECK:STDOUT:   %T.loc25_9.1: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc25_9.1 (constants.%T.901)]
+// CHECK:STDOUT:   %T.loc25_9.1: %Simple.type.1a3 = symbolic_binding T, 0 [symbolic = %T.loc25_9.1 (constants.%T.90140c.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Receive.specific_fn.loc26_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc25_9.1) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
@@ -338,8 +340,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [concrete = constants.%Receive]
-// CHECK:STDOUT:     %T.ref: %Simple.type.1a3 = name_ref T, %T.loc25_9.2 [symbolic = %T.loc25_9.1 (constants.%T.901)]
-// CHECK:STDOUT:     %Receive.specific_fn.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.901) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
+// CHECK:STDOUT:     %T.ref: %Simple.type.1a3 = name_ref T, %T.loc25_9.2 [symbolic = %T.loc25_9.1 (constants.%T.90140c.1)]
+// CHECK:STDOUT:     %Receive.specific_fn.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.90140c.1) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
 // CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %Receive.specific_fn.loc26_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -383,14 +385,20 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Receive(constants.%T.901) {
-// CHECK:STDOUT:   %T.loc24_12.1 => constants.%T.901
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: specific @Receive(constants.%T.90140c.2) {
+// CHECK:STDOUT:   %T.loc24_19.1 => constants.%T.90140c.2
+// CHECK:STDOUT:   %T.loc24_19.2 => constants.%T.90140c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Pass(constants.%T.901) {
-// CHECK:STDOUT:   %T.loc25_9.1 => constants.%T.901
+// CHECK:STDOUT: specific @Pass(constants.%T.90140c.1) {
+// CHECK:STDOUT:   %T.loc25_9.1 => constants.%T.90140c.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Receive(constants.%T.90140c.1) {
+// CHECK:STDOUT:   %T.loc24_19.1 => constants.%T.90140c.1
+// CHECK:STDOUT:   %T.loc24_19.2 => constants.%T.90140c.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon
@@ -575,8 +583,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.835 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %.loc12_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc12_23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc12_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc12_30: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }

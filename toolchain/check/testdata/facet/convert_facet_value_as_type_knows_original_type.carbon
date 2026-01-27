@@ -21,7 +21,7 @@ class Goat {}
 impl Goat as Animal {}
 impl Goat as Eats {}
 
-fn Feed(e:! Eats) {}
+fn Feed(unused e:! Eats) {}
 
 fn F() {
   //@dump-sem-ir-begin
