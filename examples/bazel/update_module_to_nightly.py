@@ -19,7 +19,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import datetime
 import re
 import os
 import sys
@@ -31,11 +30,12 @@ import json
 MODULE_NAME = "carbon_toolchain"
 MODULE_FILENAME = "MODULE.bazel"
 DEP_PATTERN = re.compile(
-    rf'bazel_dep\s*\(\s*name\s*=\s*"{MODULE_NAME}".*?\)', re.DOTALL
+    rf'^bazel_dep\s*\(\s*name\s*=\s*"{MODULE_NAME}".*?\)',
+    re.DOTALL | re.MULTILINE,
 )
 OVERRIDE_PATTERN = re.compile(
-    rf'archive_override\s*\(\s*module_name\s*=\s*"{MODULE_NAME}".*?\)',
-    re.DOTALL,
+    rf'^archive_override\s*\(\s*module_name\s*=\s*"{MODULE_NAME}".*?\)',
+    re.DOTALL | re.MULTILINE,
 )
 
 # The nightly build starts at 2am UTC, and we give it up to 4 hours to complete.
@@ -44,37 +44,63 @@ BUFFER_HOURS = 6
 RELEASES_URL = (
     "https://github.com/carbon-language/carbon-lang/releases/download"
 )
-API_URL = (
-    "https://api.github.com/repos/carbon-language/carbon-lang/releases/tags"
+RELEASES_API_URL = (
+    "https://api.github.com/repos/carbon-language/carbon-lang/releases"
 )
+API_HEADERS = {
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    # GitHub API requires a User-Agent, urllib doesn't send one by default
+    "User-Agent": "python-urllib",
+}
 
 
 def log(msg: str) -> None:
     print(f"[update_module_to_nightly] {msg}", file=sys.stderr)
 
 
-def compute_version() -> str:
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    target_time = now_utc - datetime.timedelta(hours=BUFFER_HOURS)
-    date = target_time.strftime("%Y.%m.%d")
+def get_latest_version() -> str:
+    # Use the 'releases' list endpoint, NOT 'releases/latest'. Using the
+    # `latest` endpoint only works for full releases, not pre-releases. Carbon's
+    # nightly releases are classified as pre-releases so we have to get the full
+    # list and simply take the first one. That does mean we only need the first
+    # page of results.
+    url = f"{RELEASES_API_URL}?per_page=1"
+    req = urllib.request.Request(url, headers=API_HEADERS)
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.load(response)
+            if not data:
+                log("Error: no releases found for this repository.")
+                sys.exit(1)
 
-    return f"0.0.0-0.nightly.{date}"
+            # The API returns a list sorted by creation date (newest first).
+            latest_release = data[0]
+
+    except urllib.error.HTTPError as e:
+        log(f"Error: HTTP error {e.code} fetching latest release: {e.reason}")
+        # It's often useful to print the body for GitHub API errors (e.g. rate
+        # limit exceeded)
+        log(e.read().decode("utf-8"))
+        sys.exit(1)
+
+    # The release tag starts with `v` followed by the version.
+    latest_version = str(latest_release["tag_name"])
+    if not latest_version.startswith("v"):
+        log(f"Error: malformed release tag name: {latest_version}")
+        sys.exit(1)
+
+    return latest_version[1:]
 
 
 def get_digest(version: str, filename: str) -> str:
-    url = f"{API_URL}/v{version}"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        # GitHub API requires a User-Agent, urllib doesn't send one by default
-        "User-Agent": "python-urllib",
-    }
-    req = urllib.request.Request(url, headers=headers)
+    url = f"{RELEASES_API_URL}/tags/v{version}"
+    req = urllib.request.Request(url, headers=API_HEADERS)
     try:
         with urllib.request.urlopen(req) as response:
             release_data = json.load(response)
     except urllib.error.HTTPError as e:
-        log(f"Error: Unable to find `v{version}`: {e.code}: {e.reason}")
+        log(f"Error: unable to find `v{version}`: {e.code}: {e.reason}")
         sys.exit(1)
 
     assets = release_data.get("assets", [])
@@ -129,7 +155,7 @@ def main() -> None:
         )
         sys.exit(1)
 
-    version = compute_version()
+    version = get_latest_version()
     new_block = generate_override(version)
 
     (new_content, count) = OVERRIDE_PATTERN.subn(new_block, content)

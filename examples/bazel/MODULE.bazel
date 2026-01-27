@@ -4,7 +4,13 @@
 
 """Example Bazel module that builds C++ with the Carbon toolchain.
 
-To use this and build with the Carbon toolchain, there are several options:
+Note that this is at the root of an example Bazel project, not part of the
+larger Carbon Bazel project. To interact with this example, you'll want to
+`cd examples/bazel` so that you can operate Bazel entirely within this example
+(sub-)project.
+
+Once interacting with this subdirectory's project, you can use this and build
+with the Carbon toolchain in a few different ways:
 
 1) Override the module with a local installation on the command line:
    `bazel build --override_module=carbon_toolchain=/path/to/carbon_toolchain/installation/lib/carbon`
