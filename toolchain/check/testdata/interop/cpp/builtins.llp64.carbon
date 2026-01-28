@@ -187,6 +187,19 @@ fn ComparisonsHeterogeneousLongRightSide() {
   //@dump-sem-ir-end
 }
 
+// --- comparisons_heterogeneous_long_and_i64.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn ComparisonsHeterogeneousLongAndI64() {
+  let a: Cpp.long = 1;
+  let b: i64 = 1;
+  a == b;
+  b == a;
+}
+
 // --- fail_todo_comparisons_heterogeneous_long_and_i16.carbon
 
 library "[[@TEST_NAME]]";
@@ -208,16 +221,24 @@ fn ComparisonsHeterogeneousLongAndI16() {
   b == a;
 }
 
-// --- comparisons_heterogeneous_long_and_i64.carbon
+// --- fail_todo_comparisons_heterogeneous_long_and_i128.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn ComparisonsHeterogeneousLongAndI64() {
+fn ComparisonsHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;
-  let b: i64 = 1;
+  let b: i128 = 1;
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   a == b;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   a == b;
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   b == a;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   b == a;
 }
 
@@ -243,7 +264,7 @@ fn ArithmeticHomogeneousLong() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_arithmetic_heterogeneous_long.carbon
+// --- arithmetic_heterogeneous_long_left_side.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -251,27 +272,127 @@ import Cpp;
 
 fn AssertSameType[T:! type](a: T, b: T) {}
 
-fn ArithmeticHeterogeneousLong() {
+fn ArithmeticHeterogeneousLongLeftSide() {
+  //@dump-sem-ir-begin
   let x: Cpp.long = 1;
 
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i32)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(x + (1 as i32), x);
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
   AssertSameType(x + (1 as i32), x);
+  AssertSameType(x - (1 as i32), x);
+  AssertSameType(x * (1 as i32), x);
+  AssertSameType(x / (1 as i32), x);
+  AssertSameType(x % (1 as i32), x);
 
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType((1 as i32) + x, x);
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  AssertSameType((1 as i32) + x, x);
+  AssertSameType(x + 1, x);
+  AssertSameType(x - 1, x);
+  AssertSameType(x * 1, x);
+  AssertSameType(x / 1, x);
+  AssertSameType(x % 1, x);
 
-  let y: i64 = 1;
-  AssertSameType(x + y, y);
-
-  AssertSameType(y + x, y);
+  let y: i32 = 1;
+  AssertSameType(x + y, x);
+  AssertSameType(x - y, x);
+  AssertSameType(x * y, x);
+  AssertSameType(x / y, x);
+  AssertSameType(x % y, x);
+  //@dump-sem-ir-end
 }
 
+// --- arithmetic_heterogeneous_long_right_side.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLongRightSide() {
+  //@dump-sem-ir-begin
+  let x: Cpp.long = 1;
+  AssertSameType((1 as i32) + x, x);
+  AssertSameType((1 as i32) - x, x);
+  AssertSameType((1 as i32) * x, x);
+  AssertSameType((1 as i32) / x, x);
+  AssertSameType((1 as i32) % x, x);
+
+  AssertSameType(1 + x, x);
+  AssertSameType(1 - x, x);
+  AssertSameType(1 * x, x);
+  AssertSameType(1 / x, x);
+  AssertSameType(1 % x, x);
+
+  let y: i32 = 1;
+  AssertSameType(y + x, x);
+  AssertSameType(y - x, x);
+  AssertSameType(y * x, x);
+  AssertSameType(y / x, x);
+  AssertSameType(y % x, x);
+  //@dump-sem-ir-end
+}
+
+// --- arithmetic_heterogeneous_long_and_i64.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLongAndI64() {
+  //@dump-sem-ir-begin
+  let x: Cpp.long = 1;
+  let y: i64 = 1;
+  AssertSameType(x + y, y);
+  AssertSameType(y + x, y);
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_arithmetic_heterogeneous_long_and_i16.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLongAndI16() {
+  let x: Cpp.long = 1;
+  let y: i16 = 1;
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(x + y, x);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(x + y, x);
+
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(y + x, x);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(y + x, x);
+}
+
+// --- fail_todo_arithmetic_heterogeneous_long_and_i128.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLongAndI128() {
+  let x: Cpp.long = 1;
+  let y: i128 = 1;
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(x + y, y);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(x + y, y);
+
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   AssertSameType(y + x, y);
+  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR:
+  AssertSameType(y + x, y);
+}
 // --- bitwise_homogeneous_long.carbon
 
 library "[[@TEST_NAME]]";
@@ -2881,39 +3002,39 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op: %Cpp.long.as.Negate.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.9c2: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
 // CHECK:STDOUT:   %AddWith.Op.type.9a6: type = fn_type @AddWith.Op, @AddWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness imports.%AddWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.9c2 = facet_value %Cpp.long, (%AddWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.e9f: <witness> = impl_witness imports.%AddWith.impl_witness_table.2f5 [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.9c2 = facet_value %Cpp.long, (%AddWith.impl_witness.e9f) [concrete]
 // CHECK:STDOUT:   %.a81: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type: type = fn_type @Cpp.long.as.AddWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op: %Cpp.long.as.AddWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.094: type = fn_type @Cpp.long.as.AddWith.impl.Op.3 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.be0: %Cpp.long.as.AddWith.impl.Op.type.094 = struct_value () [concrete]
 // CHECK:STDOUT:   %SubWith.type.e8e: type = facet_type <@SubWith, @SubWith(%Cpp.long)> [concrete]
 // CHECK:STDOUT:   %SubWith.Op.type.533: type = fn_type @SubWith.Op, @SubWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %SubWith.impl_witness: <witness> = impl_witness imports.%SubWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %SubWith.facet: %SubWith.type.e8e = facet_value %Cpp.long, (%SubWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness.8a6: <witness> = impl_witness imports.%SubWith.impl_witness_table.e2e [concrete]
+// CHECK:STDOUT:   %SubWith.facet: %SubWith.type.e8e = facet_value %Cpp.long, (%SubWith.impl_witness.8a6) [concrete]
 // CHECK:STDOUT:   %.70d: type = fn_type_with_self_type %SubWith.Op.type.533, %SubWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type: type = fn_type @Cpp.long.as.SubWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op: %Cpp.long.as.SubWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.882: type = fn_type @Cpp.long.as.SubWith.impl.Op.3 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.37d: %Cpp.long.as.SubWith.impl.Op.type.882 = struct_value () [concrete]
 // CHECK:STDOUT:   %MulWith.type.a32: type = facet_type <@MulWith, @MulWith(%Cpp.long)> [concrete]
 // CHECK:STDOUT:   %MulWith.Op.type.44b: type = fn_type @MulWith.Op, @MulWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %MulWith.impl_witness: <witness> = impl_witness imports.%MulWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.a32 = facet_value %Cpp.long, (%MulWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness.87c: <witness> = impl_witness imports.%MulWith.impl_witness_table.20e [concrete]
+// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.a32 = facet_value %Cpp.long, (%MulWith.impl_witness.87c) [concrete]
 // CHECK:STDOUT:   %.0a7: type = fn_type_with_self_type %MulWith.Op.type.44b, %MulWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type: type = fn_type @Cpp.long.as.MulWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op: %Cpp.long.as.MulWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.31a: type = fn_type @Cpp.long.as.MulWith.impl.Op.3 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.4e5: %Cpp.long.as.MulWith.impl.Op.type.31a = struct_value () [concrete]
 // CHECK:STDOUT:   %DivWith.type.0c0: type = facet_type <@DivWith, @DivWith(%Cpp.long)> [concrete]
 // CHECK:STDOUT:   %DivWith.Op.type.494: type = fn_type @DivWith.Op, @DivWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness imports.%DivWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.0c0 = facet_value %Cpp.long, (%DivWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness.4ab: <witness> = impl_witness imports.%DivWith.impl_witness_table.1ae [concrete]
+// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.0c0 = facet_value %Cpp.long, (%DivWith.impl_witness.4ab) [concrete]
 // CHECK:STDOUT:   %.22b: type = fn_type_with_self_type %DivWith.Op.type.494, %DivWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type: type = fn_type @Cpp.long.as.DivWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op: %Cpp.long.as.DivWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.5e7: type = fn_type @Cpp.long.as.DivWith.impl.Op.3 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.33f: %Cpp.long.as.DivWith.impl.Op.type.5e7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ModWith.type.2fc: type = facet_type <@ModWith, @ModWith(%Cpp.long)> [concrete]
 // CHECK:STDOUT:   %ModWith.Op.type.c13: type = fn_type @ModWith.Op, @ModWith(%Cpp.long) [concrete]
-// CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness imports.%ModWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.2fc = facet_value %Cpp.long, (%ModWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness.c73: <witness> = impl_witness imports.%ModWith.impl_witness_table.ed4 [concrete]
+// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.2fc = facet_value %Cpp.long, (%ModWith.impl_witness.c73) [concrete]
 // CHECK:STDOUT:   %.300: type = fn_type_with_self_type %ModWith.Op.type.c13, %ModWith.facet [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type: type = fn_type @Cpp.long.as.ModWith.impl.Op [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op: %Cpp.long.as.ModWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.aa5: type = fn_type @Cpp.long.as.ModWith.impl.Op.3 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.06e: %Cpp.long.as.ModWith.impl.Op.type.aa5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2926,21 +3047,21 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.cb912f.1 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.412: %Cpp.long.as.Negate.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.Negate.impl.Op]
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.1, %Core.import_ref.412), @Cpp.long.as.Negate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.2 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.437: %Cpp.long.as.AddWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
-// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.2, %Core.import_ref.437), @Cpp.long.as.AddWith.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.3 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.51f: %Cpp.long.as.SubWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
-// CHECK:STDOUT:   %SubWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.3, %Core.import_ref.51f), @Cpp.long.as.SubWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cb912f.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ec4: %Cpp.long.as.MulWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
-// CHECK:STDOUT:   %MulWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.ec4), @Cpp.long.as.MulWith.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.d85: %Cpp.long.as.DivWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
-// CHECK:STDOUT:   %DivWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.5, %Core.import_ref.d85), @Cpp.long.as.DivWith.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cb912f.6 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.394: %Cpp.long.as.ModWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
-// CHECK:STDOUT:   %ModWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb912f.6, %Core.import_ref.394), @Cpp.long.as.ModWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.437: %Cpp.long.as.AddWith.impl.Op.type.094 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddWith.impl.Op.be0]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.2f5 = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.437), @Cpp.long.as.AddWith.impl.8b9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.7 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.51f: %Cpp.long.as.SubWith.impl.Op.type.882 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubWith.impl.Op.37d]
+// CHECK:STDOUT:   %SubWith.impl_witness_table.e2e = impl_witness_table (%Core.import_ref.cb912f.7, %Core.import_ref.51f), @Cpp.long.as.SubWith.impl.214 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.10 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.ec4: %Cpp.long.as.MulWith.impl.Op.type.31a = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulWith.impl.Op.4e5]
+// CHECK:STDOUT:   %MulWith.impl_witness_table.20e = impl_witness_table (%Core.import_ref.cb912f.10, %Core.import_ref.ec4), @Cpp.long.as.MulWith.impl.ee0 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.13 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.d85: %Cpp.long.as.DivWith.impl.Op.type.5e7 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op.33f]
+// CHECK:STDOUT:   %DivWith.impl_witness_table.1ae = impl_witness_table (%Core.import_ref.cb912f.13, %Core.import_ref.d85), @Cpp.long.as.DivWith.impl.cb9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.16 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.394: %Cpp.long.as.ModWith.impl.Op.type.aa5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModWith.impl.Op.06e]
+// CHECK:STDOUT:   %ModWith.impl_witness_table.ed4 = impl_witness_table (%Core.import_ref.cb912f.16, %Core.import_ref.394), @Cpp.long.as.ModWith.impl.2d7 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ArithmeticHomogeneousLong() {
@@ -2992,7 +3113,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc12: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc12: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc12: %.a81 = impl_witness_access constants.%AddWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc12: %.a81 = impl_witness_access constants.%AddWith.impl_witness.e9f, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.be0]
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %x.ref.loc12, %impl.elem1.loc12
 // CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call: init %Cpp.long = call %bound_method.loc12(%x.ref.loc12, %y.ref.loc12)
 // CHECK:STDOUT:   %.loc12_13: type = splice_block %long.ref.loc12 [concrete = constants.%Cpp.long] {
@@ -3007,7 +3128,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc13: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc13: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc13: %.70d = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc13: %.70d = impl_witness_access constants.%SubWith.impl_witness.8a6, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.37d]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %x.ref.loc13, %impl.elem1.loc13
 // CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call: init %Cpp.long = call %bound_method.loc13(%x.ref.loc13, %y.ref.loc13)
 // CHECK:STDOUT:   %.loc13_13: type = splice_block %long.ref.loc13 [concrete = constants.%Cpp.long] {
@@ -3022,7 +3143,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc14: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc14: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc14: %.0a7 = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc14: %.0a7 = impl_witness_access constants.%MulWith.impl_witness.87c, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.4e5]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %x.ref.loc14, %impl.elem1.loc14
 // CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call: init %Cpp.long = call %bound_method.loc14(%x.ref.loc14, %y.ref.loc14)
 // CHECK:STDOUT:   %.loc14_13: type = splice_block %long.ref.loc14 [concrete = constants.%Cpp.long] {
@@ -3037,7 +3158,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc15: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc15: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc15: %.22b = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc15: %.22b = impl_witness_access constants.%DivWith.impl_witness.4ab, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.33f]
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %x.ref.loc15, %impl.elem1.loc15
 // CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call: init %Cpp.long = call %bound_method.loc15(%x.ref.loc15, %y.ref.loc15)
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %long.ref.loc15 [concrete = constants.%Cpp.long] {
@@ -3052,7 +3173,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc16: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc16: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc16: %.300 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc16: %.300 = impl_witness_access constants.%ModWith.impl_witness.c73, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.06e]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %x.ref.loc16, %impl.elem1.loc16
 // CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call: init %Cpp.long = call %bound_method.loc16(%x.ref.loc16, %y.ref.loc16)
 // CHECK:STDOUT:   %.loc16_13: type = splice_block %long.ref.loc16 [concrete = constants.%Cpp.long] {
@@ -3062,6 +3183,1645 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc16_23.1: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call
 // CHECK:STDOUT:   %.loc16_23.2: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call, %.loc16_23.1
 // CHECK:STDOUT:   %f: %Cpp.long = value_binding f, %.loc16_23.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- arithmetic_heterogeneous_long_left_side.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %AssertSameType.type: type = fn_type @AssertSameType [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %AssertSameType: %AssertSameType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.eed: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.eed [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %As.type.047: type = facet_type <@As, @As(%i32)> [concrete]
+// CHECK:STDOUT:   %As.Convert.type.99b: type = fn_type @As.Convert, @As(%i32) [concrete]
+// CHECK:STDOUT:   %To.fe9: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.09e: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.dbe: %Core.IntLiteral.as.As.impl.Convert.type.09e = struct_value () [symbolic]
+// CHECK:STDOUT:   %As.impl_witness.ab6: <witness> = impl_witness imports.%As.impl_witness_table.9fc, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.8ec: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.29b: %Core.IntLiteral.as.As.impl.Convert.type.8ec = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.047 = facet_value Core.IntLiteral, (%As.impl_witness.ab6) [concrete]
+// CHECK:STDOUT:   %.97a: type = fn_type_with_self_type %As.Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.29b [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.29b, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.290: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %AddWith.type.452: type = facet_type <@AddWith, @AddWith(%i32)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.5eb: type = fn_type @AddWith.Op, @AddWith(%i32) [concrete]
+// CHECK:STDOUT:   %T.57d: %ImplicitAs.type.819 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.b730f9.1: type = fn_type @Cpp.long.as.AddWith.impl.Op.1, @Cpp.long.as.AddWith.impl.c72(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.7ff34c.1: %Cpp.long.as.AddWith.impl.Op.type.b730f9.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.b730f9.2: type = fn_type @Cpp.long.as.AddWith.impl.Op.2, @Cpp.long.as.AddWith.impl.c72(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.7ff34c.2: %Cpp.long.as.AddWith.impl.Op.type.b730f9.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %AddWith.type.4c0: type = facet_type <@AddWith, @AddWith(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.0ee: type = fn_type @AddWith.Op, @AddWith(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.0fc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.5ad [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.174: %ImplicitAs.type.819 = facet_value %i32, (%ImplicitAs.impl_witness.0fc) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.403: <witness> = impl_witness imports.%AddWith.impl_witness_table.34e, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1: type = fn_type @Cpp.long.as.AddWith.impl.Op.2, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.7beae3.1: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.3dbf51.2: type = fn_type @Cpp.long.as.AddWith.impl.Op.1, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.7beae3.2: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.0df: %AddWith.type.452 = facet_value %Cpp.long, (%AddWith.impl_witness.403) [concrete]
+// CHECK:STDOUT:   %.ef1: type = fn_type_with_self_type %AddWith.Op.type.5eb, %AddWith.facet.0df [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.1: <specific function> = specific_function %Cpp.long.as.AddWith.impl.Op.7beae3.2, @Cpp.long.as.AddWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %.c45: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.174 [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.type: type = fn_type @i32.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert: %i32.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5d2, %i32.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.2: <specific function> = specific_function %Cpp.long.as.AddWith.impl.Op.7beae3.1, @Cpp.long.as.AddWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %AssertSameType.specific_fn: <specific function> = specific_function %AssertSameType, @AssertSameType(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %SubWith.type.46f: type = facet_type <@SubWith, @SubWith(%i32)> [concrete]
+// CHECK:STDOUT:   %SubWith.Op.type.5b4: type = fn_type @SubWith.Op, @SubWith(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.432302.1: type = fn_type @Cpp.long.as.SubWith.impl.Op.1, @Cpp.long.as.SubWith.impl.b84(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.42d8b9.1: %Cpp.long.as.SubWith.impl.Op.type.432302.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.432302.2: type = fn_type @Cpp.long.as.SubWith.impl.Op.2, @Cpp.long.as.SubWith.impl.b84(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.42d8b9.2: %Cpp.long.as.SubWith.impl.Op.type.432302.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubWith.type.a89: type = facet_type <@SubWith, @SubWith(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %SubWith.Op.type.95d: type = fn_type @SubWith.Op, @SubWith(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness.bee: <witness> = impl_witness imports.%SubWith.impl_witness_table.694, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1: type = fn_type @Cpp.long.as.SubWith.impl.Op.2, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.65b61c.1: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.5b2a81.2: type = fn_type @Cpp.long.as.SubWith.impl.Op.1, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.65b61c.2: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %SubWith.facet.9b8: %SubWith.type.46f = facet_value %Cpp.long, (%SubWith.impl_witness.bee) [concrete]
+// CHECK:STDOUT:   %.494: type = fn_type_with_self_type %SubWith.Op.type.5b4, %SubWith.facet.9b8 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.1: <specific function> = specific_function %Cpp.long.as.SubWith.impl.Op.65b61c.2, @Cpp.long.as.SubWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.2: <specific function> = specific_function %Cpp.long.as.SubWith.impl.Op.65b61c.1, @Cpp.long.as.SubWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %MulWith.type.5e7: type = facet_type <@MulWith, @MulWith(%i32)> [concrete]
+// CHECK:STDOUT:   %MulWith.Op.type.e00: type = fn_type @MulWith.Op, @MulWith(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.4f6939.1: type = fn_type @Cpp.long.as.MulWith.impl.Op.1, @Cpp.long.as.MulWith.impl.c90(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.b232c0.1: %Cpp.long.as.MulWith.impl.Op.type.4f6939.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.4f6939.2: type = fn_type @Cpp.long.as.MulWith.impl.Op.2, @Cpp.long.as.MulWith.impl.c90(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.b232c0.2: %Cpp.long.as.MulWith.impl.Op.type.4f6939.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %MulWith.type.4ce: type = facet_type <@MulWith, @MulWith(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %MulWith.Op.type.ff6: type = fn_type @MulWith.Op, @MulWith(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness.ba5: <witness> = impl_witness imports.%MulWith.impl_witness_table.6e7, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1: type = fn_type @Cpp.long.as.MulWith.impl.Op.2, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.f095b7.1: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.2: type = fn_type @Cpp.long.as.MulWith.impl.Op.1, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.f095b7.2: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.facet.79b: %MulWith.type.5e7 = facet_value %Cpp.long, (%MulWith.impl_witness.ba5) [concrete]
+// CHECK:STDOUT:   %.057: type = fn_type_with_self_type %MulWith.Op.type.e00, %MulWith.facet.79b [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.1: <specific function> = specific_function %Cpp.long.as.MulWith.impl.Op.f095b7.2, @Cpp.long.as.MulWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.2: <specific function> = specific_function %Cpp.long.as.MulWith.impl.Op.f095b7.1, @Cpp.long.as.MulWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %DivWith.type.469: type = facet_type <@DivWith, @DivWith(%i32)> [concrete]
+// CHECK:STDOUT:   %DivWith.Op.type.c8e: type = fn_type @DivWith.Op, @DivWith(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.9ce9b6.1: type = fn_type @Cpp.long.as.DivWith.impl.Op.1, @Cpp.long.as.DivWith.impl.0e5(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.e35fb3.1: %Cpp.long.as.DivWith.impl.Op.type.9ce9b6.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.9ce9b6.2: type = fn_type @Cpp.long.as.DivWith.impl.Op.2, @Cpp.long.as.DivWith.impl.0e5(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.e35fb3.2: %Cpp.long.as.DivWith.impl.Op.type.9ce9b6.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DivWith.type.234: type = facet_type <@DivWith, @DivWith(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %DivWith.Op.type.c64: type = fn_type @DivWith.Op, @DivWith(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness.30d: <witness> = impl_witness imports.%DivWith.impl_witness_table.bcf, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.9156f2.1: type = fn_type @Cpp.long.as.DivWith.impl.Op.2, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.d06e88.1: %Cpp.long.as.DivWith.impl.Op.type.9156f2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.9156f2.2: type = fn_type @Cpp.long.as.DivWith.impl.Op.1, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.d06e88.2: %Cpp.long.as.DivWith.impl.Op.type.9156f2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DivWith.facet.4c5: %DivWith.type.469 = facet_value %Cpp.long, (%DivWith.impl_witness.30d) [concrete]
+// CHECK:STDOUT:   %.eec: type = fn_type_with_self_type %DivWith.Op.type.c8e, %DivWith.facet.4c5 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.1: <specific function> = specific_function %Cpp.long.as.DivWith.impl.Op.d06e88.2, @Cpp.long.as.DivWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.2: <specific function> = specific_function %Cpp.long.as.DivWith.impl.Op.d06e88.1, @Cpp.long.as.DivWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %ModWith.type.8ca: type = facet_type <@ModWith, @ModWith(%i32)> [concrete]
+// CHECK:STDOUT:   %ModWith.Op.type.aee: type = fn_type @ModWith.Op, @ModWith(%i32) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.4bf837.1: type = fn_type @Cpp.long.as.ModWith.impl.Op.1, @Cpp.long.as.ModWith.impl.0a5(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.0707cb.1: %Cpp.long.as.ModWith.impl.Op.type.4bf837.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.4bf837.2: type = fn_type @Cpp.long.as.ModWith.impl.Op.2, @Cpp.long.as.ModWith.impl.0a5(%T.57d) [symbolic]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.0707cb.2: %Cpp.long.as.ModWith.impl.Op.type.4bf837.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ModWith.type.920: type = facet_type <@ModWith, @ModWith(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %ModWith.Op.type.295: type = fn_type @ModWith.Op, @ModWith(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness.bd3: <witness> = impl_witness imports.%ModWith.impl_witness_table.9cf, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1: type = fn_type @Cpp.long.as.ModWith.impl.Op.2, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.6c7fa7.1: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.2: type = fn_type @Cpp.long.as.ModWith.impl.Op.1, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.6c7fa7.2: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ModWith.facet.e8e: %ModWith.type.8ca = facet_value %Cpp.long, (%ModWith.impl_witness.bd3) [concrete]
+// CHECK:STDOUT:   %.289: type = fn_type_with_self_type %ModWith.Op.type.aee, %ModWith.facet.e8e [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.1: <specific function> = specific_function %Cpp.long.as.ModWith.impl.Op.6c7fa7.2, @Cpp.long.as.ModWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.2: <specific function> = specific_function %Cpp.long.as.ModWith.impl.Op.6c7fa7.1, @Cpp.long.as.ModWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.e6c: <witness> = impl_witness imports.%AddWith.impl_witness_table.34e, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.1ece0d.1: type = fn_type @Cpp.long.as.AddWith.impl.Op.2, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.0f2d31.1: %Cpp.long.as.AddWith.impl.Op.type.1ece0d.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.1ece0d.2: type = fn_type @Cpp.long.as.AddWith.impl.Op.1, @Cpp.long.as.AddWith.impl.c72(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.0f2d31.2: %Cpp.long.as.AddWith.impl.Op.type.1ece0d.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.993: %AddWith.type.4c0 = facet_value %Cpp.long, (%AddWith.impl_witness.e6c) [concrete]
+// CHECK:STDOUT:   %.784: type = fn_type_with_self_type %AddWith.Op.type.0ee, %AddWith.facet.993 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.063c7e.1: <specific function> = specific_function %Cpp.long.as.AddWith.impl.Op.0f2d31.2, @Cpp.long.as.AddWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.063c7e.2: <specific function> = specific_function %Cpp.long.as.AddWith.impl.Op.0f2d31.1, @Cpp.long.as.AddWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness.dd6: <witness> = impl_witness imports.%SubWith.impl_witness_table.694, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.ef5597.1: type = fn_type @Cpp.long.as.SubWith.impl.Op.2, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.8a648c.1: %Cpp.long.as.SubWith.impl.Op.type.ef5597.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.ef5597.2: type = fn_type @Cpp.long.as.SubWith.impl.Op.1, @Cpp.long.as.SubWith.impl.b84(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.8a648c.2: %Cpp.long.as.SubWith.impl.Op.type.ef5597.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %SubWith.facet.eb2: %SubWith.type.a89 = facet_value %Cpp.long, (%SubWith.impl_witness.dd6) [concrete]
+// CHECK:STDOUT:   %.d5f: type = fn_type_with_self_type %SubWith.Op.type.95d, %SubWith.facet.eb2 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.0d5da2.1: <specific function> = specific_function %Cpp.long.as.SubWith.impl.Op.8a648c.2, @Cpp.long.as.SubWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.0d5da2.2: <specific function> = specific_function %Cpp.long.as.SubWith.impl.Op.8a648c.1, @Cpp.long.as.SubWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness.135: <witness> = impl_witness imports.%MulWith.impl_witness_table.6e7, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.8651ed.1: type = fn_type @Cpp.long.as.MulWith.impl.Op.2, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.17c39d.1: %Cpp.long.as.MulWith.impl.Op.type.8651ed.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.8651ed.2: type = fn_type @Cpp.long.as.MulWith.impl.Op.1, @Cpp.long.as.MulWith.impl.c90(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.17c39d.2: %Cpp.long.as.MulWith.impl.Op.type.8651ed.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.facet.cdc: %MulWith.type.4ce = facet_value %Cpp.long, (%MulWith.impl_witness.135) [concrete]
+// CHECK:STDOUT:   %.40a: type = fn_type_with_self_type %MulWith.Op.type.ff6, %MulWith.facet.cdc [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.fcc384.1: <specific function> = specific_function %Cpp.long.as.MulWith.impl.Op.17c39d.2, @Cpp.long.as.MulWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.fcc384.2: <specific function> = specific_function %Cpp.long.as.MulWith.impl.Op.17c39d.1, @Cpp.long.as.MulWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness.92c: <witness> = impl_witness imports.%DivWith.impl_witness_table.bcf, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.625951.1: type = fn_type @Cpp.long.as.DivWith.impl.Op.2, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.3687cc.1: %Cpp.long.as.DivWith.impl.Op.type.625951.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.625951.2: type = fn_type @Cpp.long.as.DivWith.impl.Op.1, @Cpp.long.as.DivWith.impl.0e5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.3687cc.2: %Cpp.long.as.DivWith.impl.Op.type.625951.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DivWith.facet.7f1: %DivWith.type.234 = facet_value %Cpp.long, (%DivWith.impl_witness.92c) [concrete]
+// CHECK:STDOUT:   %.b93: type = fn_type_with_self_type %DivWith.Op.type.c64, %DivWith.facet.7f1 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.ecf90c.1: <specific function> = specific_function %Cpp.long.as.DivWith.impl.Op.3687cc.2, @Cpp.long.as.DivWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.ecf90c.2: <specific function> = specific_function %Cpp.long.as.DivWith.impl.Op.3687cc.1, @Cpp.long.as.DivWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness.334: <witness> = impl_witness imports.%ModWith.impl_witness_table.9cf, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.3cf811.1: type = fn_type @Cpp.long.as.ModWith.impl.Op.2, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.28b8b4.1: %Cpp.long.as.ModWith.impl.Op.type.3cf811.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.3cf811.2: type = fn_type @Cpp.long.as.ModWith.impl.Op.1, @Cpp.long.as.ModWith.impl.0a5(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.28b8b4.2: %Cpp.long.as.ModWith.impl.Op.type.3cf811.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ModWith.facet.52c: %ModWith.type.920 = facet_value %Cpp.long, (%ModWith.impl_witness.334) [concrete]
+// CHECK:STDOUT:   %.e41: type = fn_type_with_self_type %ModWith.Op.type.295, %ModWith.facet.52c [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.175599.1: <specific function> = specific_function %Cpp.long.as.ModWith.impl.Op.28b8b4.2, @Cpp.long.as.ModWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.175599.2: <specific function> = specific_function %Cpp.long.as.ModWith.impl.Op.28b8b4.1, @Cpp.long.as.ModWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.6bc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.b94: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
+// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.b94 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.38b: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.1 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.3a8: @Cpp.long.as.AddWith.impl.c72.%Cpp.long.as.AddWith.impl.Op.type.2 (%Cpp.long.as.AddWith.impl.Op.type.b730f9.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.AddWith.impl.c72.%Cpp.long.as.AddWith.impl.Op.2 (constants.%Cpp.long.as.AddWith.impl.Op.7ff34c.1)]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.34e = impl_witness_table (%Core.import_ref.cb912f.1, %Core.import_ref.3a8), @Cpp.long.as.AddWith.impl.c72 [concrete]
+// CHECK:STDOUT:   %Core.Op.e41f: @Cpp.long.as.AddWith.impl.c72.%Cpp.long.as.AddWith.impl.Op.type.1 (%Cpp.long.as.AddWith.impl.Op.type.b730f9.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.AddWith.impl.c72.%Cpp.long.as.AddWith.impl.Op.1 (constants.%Cpp.long.as.AddWith.impl.Op.7ff34c.2)]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl.b2d [concrete]
+// CHECK:STDOUT:   %Core.import_ref.4fa: %i32.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.4fa), @i32.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.3 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.399: @Cpp.long.as.SubWith.impl.b84.%Cpp.long.as.SubWith.impl.Op.type.2 (%Cpp.long.as.SubWith.impl.Op.type.432302.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.SubWith.impl.b84.%Cpp.long.as.SubWith.impl.Op.2 (constants.%Cpp.long.as.SubWith.impl.Op.42d8b9.1)]
+// CHECK:STDOUT:   %SubWith.impl_witness_table.694 = impl_witness_table (%Core.import_ref.cb912f.3, %Core.import_ref.399), @Cpp.long.as.SubWith.impl.b84 [concrete]
+// CHECK:STDOUT:   %Core.Op.fce: @Cpp.long.as.SubWith.impl.b84.%Cpp.long.as.SubWith.impl.Op.type.1 (%Cpp.long.as.SubWith.impl.Op.type.432302.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.SubWith.impl.b84.%Cpp.long.as.SubWith.impl.Op.1 (constants.%Cpp.long.as.SubWith.impl.Op.42d8b9.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.5 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.674: @Cpp.long.as.MulWith.impl.c90.%Cpp.long.as.MulWith.impl.Op.type.2 (%Cpp.long.as.MulWith.impl.Op.type.4f6939.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.MulWith.impl.c90.%Cpp.long.as.MulWith.impl.Op.2 (constants.%Cpp.long.as.MulWith.impl.Op.b232c0.1)]
+// CHECK:STDOUT:   %MulWith.impl_witness_table.6e7 = impl_witness_table (%Core.import_ref.cb912f.5, %Core.import_ref.674), @Cpp.long.as.MulWith.impl.c90 [concrete]
+// CHECK:STDOUT:   %Core.Op.b1f: @Cpp.long.as.MulWith.impl.c90.%Cpp.long.as.MulWith.impl.Op.type.1 (%Cpp.long.as.MulWith.impl.Op.type.4f6939.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.MulWith.impl.c90.%Cpp.long.as.MulWith.impl.Op.1 (constants.%Cpp.long.as.MulWith.impl.Op.b232c0.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.7 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.228: @Cpp.long.as.DivWith.impl.0e5.%Cpp.long.as.DivWith.impl.Op.type.2 (%Cpp.long.as.DivWith.impl.Op.type.9ce9b6.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.DivWith.impl.0e5.%Cpp.long.as.DivWith.impl.Op.2 (constants.%Cpp.long.as.DivWith.impl.Op.e35fb3.1)]
+// CHECK:STDOUT:   %DivWith.impl_witness_table.bcf = impl_witness_table (%Core.import_ref.cb912f.7, %Core.import_ref.228), @Cpp.long.as.DivWith.impl.0e5 [concrete]
+// CHECK:STDOUT:   %Core.Op.d43: @Cpp.long.as.DivWith.impl.0e5.%Cpp.long.as.DivWith.impl.Op.type.1 (%Cpp.long.as.DivWith.impl.Op.type.9ce9b6.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.DivWith.impl.0e5.%Cpp.long.as.DivWith.impl.Op.1 (constants.%Cpp.long.as.DivWith.impl.Op.e35fb3.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.9 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.bd8: @Cpp.long.as.ModWith.impl.0a5.%Cpp.long.as.ModWith.impl.Op.type.2 (%Cpp.long.as.ModWith.impl.Op.type.4bf837.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.ModWith.impl.0a5.%Cpp.long.as.ModWith.impl.Op.2 (constants.%Cpp.long.as.ModWith.impl.Op.0707cb.1)]
+// CHECK:STDOUT:   %ModWith.impl_witness_table.9cf = impl_witness_table (%Core.import_ref.cb912f.9, %Core.import_ref.bd8), @Cpp.long.as.ModWith.impl.0a5 [concrete]
+// CHECK:STDOUT:   %Core.Op.4be: @Cpp.long.as.ModWith.impl.0a5.%Cpp.long.as.ModWith.impl.Op.type.1 (%Cpp.long.as.ModWith.impl.Op.type.4bf837.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.ModWith.impl.0a5.%Cpp.long.as.ModWith.impl.Op.1 (constants.%Cpp.long.as.ModWith.impl.Op.0707cb.2)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ArithmeticHeterogeneousLongLeftSide() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.68c = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc10_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc10: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %Cpp.long = call %bound_method.loc10(%int_1.loc10) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.2: %Cpp.long = converted %int_1.loc10, %.loc10_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc10_21.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc12: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc12_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc12_25.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc12_25.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc12_25: <specific function> = specific_function %impl.elem0.loc12_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc12_25.2: <bound method> = bound_method %int_1.loc12, %specific_fn.loc12_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc12: init %i32 = call %bound_method.loc12_25.2(%int_1.loc12) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc12 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_25.2: %i32 = converted %int_1.loc12, %.loc12_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc12: %.ef1 = impl_witness_access constants.%AddWith.impl_witness.403, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.2]
+// CHECK:STDOUT:   %bound_method.loc12_20.1: <bound method> = bound_method %x.ref.loc12_18, %impl.elem1.loc12
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc12_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc12_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc12_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc12_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc12_20: <specific function> = specific_function %impl.elem1.loc12, @Cpp.long.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.1]
+// CHECK:STDOUT:   %bound_method.loc12_20.2: <bound method> = bound_method %x.ref.loc12_18, %specific_fn.loc12_20
+// CHECK:STDOUT:   %.loc12_20.3: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1 = specific_constant imports.%Core.Op.e41f, @Cpp.long.as.AddWith.impl.c72(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.1]
+// CHECK:STDOUT:   %Op.ref.loc12: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1 = name_ref Op, %.loc12_20.3 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.1]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.bound.loc12: <bound method> = bound_method %x.ref.loc12_18, %Op.ref.loc12
+// CHECK:STDOUT:   %impl.elem0.loc12_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc12_20.3: <bound method> = bound_method %.loc12_25.2, %impl.elem0.loc12_20 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc12_20: init %Cpp.long = call %bound_method.loc12_20.3(%.loc12_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc12_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_20.5: %Cpp.long = converted %.loc12_25.2, %.loc12_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.loc12: <specific function> = specific_function %Op.ref.loc12, @Cpp.long.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.2]
+// CHECK:STDOUT:   %bound_method.loc12_20.4: <bound method> = bound_method %x.ref.loc12_18, %Cpp.long.as.AddWith.impl.Op.specific_fn.loc12
+// CHECK:STDOUT:   %impl.elem0.loc12_25.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc12_25.3: <bound method> = bound_method %.loc12_25.2, %impl.elem0.loc12_25.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc12_25: init %Cpp.long = call %bound_method.loc12_25.3(%.loc12_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_25.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc12_25 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_25.4: %Cpp.long = converted %.loc12_25.2, %.loc12_25.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call.loc12: init %Cpp.long = call %bound_method.loc12_20.4(%x.ref.loc12_18, %.loc12_25.4)
+// CHECK:STDOUT:   %x.ref.loc12_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc12: <specific function> = specific_function %AssertSameType.ref.loc12, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc12_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call.loc12
+// CHECK:STDOUT:   %.loc12_20.7: %Cpp.long = converted %Cpp.long.as.AddWith.impl.Op.call.loc12, %.loc12_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc12: init %empty_tuple.type = call %AssertSameType.specific_fn.loc12(%.loc12_20.7, %x.ref.loc12_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc13: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc13_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc13_25.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc13_25.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc13_25: <specific function> = specific_function %impl.elem0.loc13_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_25.2: <bound method> = bound_method %int_1.loc13, %specific_fn.loc13_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_25.2(%int_1.loc13) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_25.2: %i32 = converted %int_1.loc13, %.loc13_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc13: %.494 = impl_witness_access constants.%SubWith.impl_witness.bee, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.2]
+// CHECK:STDOUT:   %bound_method.loc13_20.1: <bound method> = bound_method %x.ref.loc13_18, %impl.elem1.loc13
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc13_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc13_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc13_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc13_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc13_20: <specific function> = specific_function %impl.elem1.loc13, @Cpp.long.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.1]
+// CHECK:STDOUT:   %bound_method.loc13_20.2: <bound method> = bound_method %x.ref.loc13_18, %specific_fn.loc13_20
+// CHECK:STDOUT:   %.loc13_20.3: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1 = specific_constant imports.%Core.Op.fce, @Cpp.long.as.SubWith.impl.b84(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.1]
+// CHECK:STDOUT:   %Op.ref.loc13: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1 = name_ref Op, %.loc13_20.3 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.1]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.bound.loc13: <bound method> = bound_method %x.ref.loc13_18, %Op.ref.loc13
+// CHECK:STDOUT:   %impl.elem0.loc13_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc13_20.3: <bound method> = bound_method %.loc13_25.2, %impl.elem0.loc13_20 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc13_20: init %Cpp.long = call %bound_method.loc13_20.3(%.loc13_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc13_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_20.5: %Cpp.long = converted %.loc13_25.2, %.loc13_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.loc13: <specific function> = specific_function %Op.ref.loc13, @Cpp.long.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.2]
+// CHECK:STDOUT:   %bound_method.loc13_20.4: <bound method> = bound_method %x.ref.loc13_18, %Cpp.long.as.SubWith.impl.Op.specific_fn.loc13
+// CHECK:STDOUT:   %impl.elem0.loc13_25.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc13_25.3: <bound method> = bound_method %.loc13_25.2, %impl.elem0.loc13_25.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc13_25: init %Cpp.long = call %bound_method.loc13_25.3(%.loc13_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_25.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc13_25 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_25.4: %Cpp.long = converted %.loc13_25.2, %.loc13_25.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call.loc13: init %Cpp.long = call %bound_method.loc13_20.4(%x.ref.loc13_18, %.loc13_25.4)
+// CHECK:STDOUT:   %x.ref.loc13_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc13: <specific function> = specific_function %AssertSameType.ref.loc13, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc13_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call.loc13
+// CHECK:STDOUT:   %.loc13_20.7: %Cpp.long = converted %Cpp.long.as.SubWith.impl.Op.call.loc13, %.loc13_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc13: init %empty_tuple.type = call %AssertSameType.specific_fn.loc13(%.loc13_20.7, %x.ref.loc13_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc14: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc14_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc14_25.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc14_25.1: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc14_25: <specific function> = specific_function %impl.elem0.loc14_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_25.2: <bound method> = bound_method %int_1.loc14, %specific_fn.loc14_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc14: init %i32 = call %bound_method.loc14_25.2(%int_1.loc14) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc14 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_25.2: %i32 = converted %int_1.loc14, %.loc14_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc14: %.057 = impl_witness_access constants.%MulWith.impl_witness.ba5, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.2]
+// CHECK:STDOUT:   %bound_method.loc14_20.1: <bound method> = bound_method %x.ref.loc14_18, %impl.elem1.loc14
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc14_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc14_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc14_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc14_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc14_20: <specific function> = specific_function %impl.elem1.loc14, @Cpp.long.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.1]
+// CHECK:STDOUT:   %bound_method.loc14_20.2: <bound method> = bound_method %x.ref.loc14_18, %specific_fn.loc14_20
+// CHECK:STDOUT:   %.loc14_20.3: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1 = specific_constant imports.%Core.Op.b1f, @Cpp.long.as.MulWith.impl.c90(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.1]
+// CHECK:STDOUT:   %Op.ref.loc14: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1 = name_ref Op, %.loc14_20.3 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.1]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.bound.loc14: <bound method> = bound_method %x.ref.loc14_18, %Op.ref.loc14
+// CHECK:STDOUT:   %impl.elem0.loc14_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc14_20.3: <bound method> = bound_method %.loc14_25.2, %impl.elem0.loc14_20 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc14_20: init %Cpp.long = call %bound_method.loc14_20.3(%.loc14_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc14_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_20.5: %Cpp.long = converted %.loc14_25.2, %.loc14_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.loc14: <specific function> = specific_function %Op.ref.loc14, @Cpp.long.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.2]
+// CHECK:STDOUT:   %bound_method.loc14_20.4: <bound method> = bound_method %x.ref.loc14_18, %Cpp.long.as.MulWith.impl.Op.specific_fn.loc14
+// CHECK:STDOUT:   %impl.elem0.loc14_25.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc14_25.3: <bound method> = bound_method %.loc14_25.2, %impl.elem0.loc14_25.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc14_25: init %Cpp.long = call %bound_method.loc14_25.3(%.loc14_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_25.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc14_25 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_25.4: %Cpp.long = converted %.loc14_25.2, %.loc14_25.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call.loc14: init %Cpp.long = call %bound_method.loc14_20.4(%x.ref.loc14_18, %.loc14_25.4)
+// CHECK:STDOUT:   %x.ref.loc14_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc14: <specific function> = specific_function %AssertSameType.ref.loc14, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc14_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call.loc14
+// CHECK:STDOUT:   %.loc14_20.7: %Cpp.long = converted %Cpp.long.as.MulWith.impl.Op.call.loc14, %.loc14_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc14: init %empty_tuple.type = call %AssertSameType.specific_fn.loc14(%.loc14_20.7, %x.ref.loc14_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc15: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc15_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc15_25.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc15_25.1: <bound method> = bound_method %int_1.loc15, %impl.elem0.loc15_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc15_25: <specific function> = specific_function %impl.elem0.loc15_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_25.2: <bound method> = bound_method %int_1.loc15, %specific_fn.loc15_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc15: init %i32 = call %bound_method.loc15_25.2(%int_1.loc15) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc15 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_25.2: %i32 = converted %int_1.loc15, %.loc15_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc15: %.eec = impl_witness_access constants.%DivWith.impl_witness.30d, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.2]
+// CHECK:STDOUT:   %bound_method.loc15_20.1: <bound method> = bound_method %x.ref.loc15_18, %impl.elem1.loc15
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc15_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc15_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc15_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc15_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc15_20: <specific function> = specific_function %impl.elem1.loc15, @Cpp.long.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.1]
+// CHECK:STDOUT:   %bound_method.loc15_20.2: <bound method> = bound_method %x.ref.loc15_18, %specific_fn.loc15_20
+// CHECK:STDOUT:   %.loc15_20.3: %Cpp.long.as.DivWith.impl.Op.type.9156f2.1 = specific_constant imports.%Core.Op.d43, @Cpp.long.as.DivWith.impl.0e5(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.1]
+// CHECK:STDOUT:   %Op.ref.loc15: %Cpp.long.as.DivWith.impl.Op.type.9156f2.1 = name_ref Op, %.loc15_20.3 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.1]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.bound.loc15: <bound method> = bound_method %x.ref.loc15_18, %Op.ref.loc15
+// CHECK:STDOUT:   %impl.elem0.loc15_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc15_20.3: <bound method> = bound_method %.loc15_25.2, %impl.elem0.loc15_20 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc15_20: init %Cpp.long = call %bound_method.loc15_20.3(%.loc15_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc15_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_20.5: %Cpp.long = converted %.loc15_25.2, %.loc15_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.loc15: <specific function> = specific_function %Op.ref.loc15, @Cpp.long.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.2]
+// CHECK:STDOUT:   %bound_method.loc15_20.4: <bound method> = bound_method %x.ref.loc15_18, %Cpp.long.as.DivWith.impl.Op.specific_fn.loc15
+// CHECK:STDOUT:   %impl.elem0.loc15_25.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc15_25.3: <bound method> = bound_method %.loc15_25.2, %impl.elem0.loc15_25.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc15_25: init %Cpp.long = call %bound_method.loc15_25.3(%.loc15_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_25.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc15_25 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_25.4: %Cpp.long = converted %.loc15_25.2, %.loc15_25.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call.loc15: init %Cpp.long = call %bound_method.loc15_20.4(%x.ref.loc15_18, %.loc15_25.4)
+// CHECK:STDOUT:   %x.ref.loc15_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc15: <specific function> = specific_function %AssertSameType.ref.loc15, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc15_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call.loc15
+// CHECK:STDOUT:   %.loc15_20.7: %Cpp.long = converted %Cpp.long.as.DivWith.impl.Op.call.loc15, %.loc15_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc15: init %empty_tuple.type = call %AssertSameType.specific_fn.loc15(%.loc15_20.7, %x.ref.loc15_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc16: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc16_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc16_25.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc16_25.1: <bound method> = bound_method %int_1.loc16, %impl.elem0.loc16_25.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc16_25: <specific function> = specific_function %impl.elem0.loc16_25.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc16_25.2: <bound method> = bound_method %int_1.loc16, %specific_fn.loc16_25 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc16: init %i32 = call %bound_method.loc16_25.2(%int_1.loc16) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc16_25.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc16 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc16_25.2: %i32 = converted %int_1.loc16, %.loc16_25.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem1.loc16: %.289 = impl_witness_access constants.%ModWith.impl_witness.bd3, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.2]
+// CHECK:STDOUT:   %bound_method.loc16_20.1: <bound method> = bound_method %x.ref.loc16_18, %impl.elem1.loc16
+// CHECK:STDOUT:   %ImplicitAs.facet.loc16_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc16_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc16_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc16_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc16_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc16_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc16_20: <specific function> = specific_function %impl.elem1.loc16, @Cpp.long.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.1]
+// CHECK:STDOUT:   %bound_method.loc16_20.2: <bound method> = bound_method %x.ref.loc16_18, %specific_fn.loc16_20
+// CHECK:STDOUT:   %.loc16_20.3: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1 = specific_constant imports.%Core.Op.4be, @Cpp.long.as.ModWith.impl.0a5(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.1]
+// CHECK:STDOUT:   %Op.ref.loc16: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1 = name_ref Op, %.loc16_20.3 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.1]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.bound.loc16: <bound method> = bound_method %x.ref.loc16_18, %Op.ref.loc16
+// CHECK:STDOUT:   %impl.elem0.loc16_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc16_20.3: <bound method> = bound_method %.loc16_25.2, %impl.elem0.loc16_20 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc16_20: init %Cpp.long = call %bound_method.loc16_20.3(%.loc16_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc16_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc16_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc16_20.5: %Cpp.long = converted %.loc16_25.2, %.loc16_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.loc16: <specific function> = specific_function %Op.ref.loc16, @Cpp.long.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.2]
+// CHECK:STDOUT:   %bound_method.loc16_20.4: <bound method> = bound_method %x.ref.loc16_18, %Cpp.long.as.ModWith.impl.Op.specific_fn.loc16
+// CHECK:STDOUT:   %impl.elem0.loc16_25.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc16_25.3: <bound method> = bound_method %.loc16_25.2, %impl.elem0.loc16_25.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc16_25: init %Cpp.long = call %bound_method.loc16_25.3(%.loc16_25.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc16_25.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc16_25 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc16_25.4: %Cpp.long = converted %.loc16_25.2, %.loc16_25.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call.loc16: init %Cpp.long = call %bound_method.loc16_20.4(%x.ref.loc16_18, %.loc16_25.4)
+// CHECK:STDOUT:   %x.ref.loc16_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc16: <specific function> = specific_function %AssertSameType.ref.loc16, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc16_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call.loc16
+// CHECK:STDOUT:   %.loc16_20.7: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call.loc16, %.loc16_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc16: init %empty_tuple.type = call %AssertSameType.specific_fn.loc16(%.loc16_20.7, %x.ref.loc16_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc18: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc18_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem1.loc18: %.784 = impl_witness_access constants.%AddWith.impl_witness.e6c, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.0f2d31.2]
+// CHECK:STDOUT:   %bound_method.loc18_20.1: <bound method> = bound_method %x.ref.loc18_18, %impl.elem1.loc18
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_20.1: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc18_20.1: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc18_20.1 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_20.2: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc18_20.2: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc18_20.2 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem1.loc18, @Cpp.long.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.063c7e.1]
+// CHECK:STDOUT:   %bound_method.loc18_20.2: <bound method> = bound_method %x.ref.loc18_18, %specific_fn.loc18
+// CHECK:STDOUT:   %.loc18_20.3: %Cpp.long.as.AddWith.impl.Op.type.1ece0d.1 = specific_constant imports.%Core.Op.e41f, @Cpp.long.as.AddWith.impl.c72(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.0f2d31.1]
+// CHECK:STDOUT:   %Op.ref.loc18: %Cpp.long.as.AddWith.impl.Op.type.1ece0d.1 = name_ref Op, %.loc18_20.3 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.0f2d31.1]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.bound.loc18: <bound method> = bound_method %x.ref.loc18_18, %Op.ref.loc18
+// CHECK:STDOUT:   %impl.elem0.loc18_20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc18_20.3: <bound method> = bound_method %int_1.loc18, %impl.elem0.loc18_20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_20: init %Cpp.long = call %bound_method.loc18_20.3(%int_1.loc18) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_20.4: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_20.5: %Cpp.long = converted %int_1.loc18, %.loc18_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.loc18: <specific function> = specific_function %Op.ref.loc18, @Cpp.long.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.063c7e.2]
+// CHECK:STDOUT:   %bound_method.loc18_20.4: <bound method> = bound_method %x.ref.loc18_18, %Cpp.long.as.AddWith.impl.Op.specific_fn.loc18
+// CHECK:STDOUT:   %impl.elem0.loc18_22: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc18_22: <bound method> = bound_method %int_1.loc18, %impl.elem0.loc18_22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_22: init %Cpp.long = call %bound_method.loc18_22(%int_1.loc18) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_22.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_22 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_22.2: %Cpp.long = converted %int_1.loc18, %.loc18_22.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call.loc18: init %Cpp.long = call %bound_method.loc18_20.4(%x.ref.loc18_18, %.loc18_22.2)
+// CHECK:STDOUT:   %x.ref.loc18_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc18: <specific function> = specific_function %AssertSameType.ref.loc18, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc18_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call.loc18
+// CHECK:STDOUT:   %.loc18_20.7: %Cpp.long = converted %Cpp.long.as.AddWith.impl.Op.call.loc18, %.loc18_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc18: init %empty_tuple.type = call %AssertSameType.specific_fn.loc18(%.loc18_20.7, %x.ref.loc18_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc19: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc19_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem1.loc19: %.d5f = impl_witness_access constants.%SubWith.impl_witness.dd6, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.8a648c.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.1: <bound method> = bound_method %x.ref.loc19_18, %impl.elem1.loc19
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_20.1: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc19_20.1: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc19_20.1 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_20.2: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc19_20.2: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc19_20.2 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem1.loc19, @Cpp.long.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.0d5da2.1]
+// CHECK:STDOUT:   %bound_method.loc19_20.2: <bound method> = bound_method %x.ref.loc19_18, %specific_fn.loc19
+// CHECK:STDOUT:   %.loc19_20.3: %Cpp.long.as.SubWith.impl.Op.type.ef5597.1 = specific_constant imports.%Core.Op.fce, @Cpp.long.as.SubWith.impl.b84(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.8a648c.1]
+// CHECK:STDOUT:   %Op.ref.loc19: %Cpp.long.as.SubWith.impl.Op.type.ef5597.1 = name_ref Op, %.loc19_20.3 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.8a648c.1]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.bound.loc19: <bound method> = bound_method %x.ref.loc19_18, %Op.ref.loc19
+// CHECK:STDOUT:   %impl.elem0.loc19_20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc19_20.3: <bound method> = bound_method %int_1.loc19, %impl.elem0.loc19_20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_20: init %Cpp.long = call %bound_method.loc19_20.3(%int_1.loc19) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_20.4: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_20.5: %Cpp.long = converted %int_1.loc19, %.loc19_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.loc19: <specific function> = specific_function %Op.ref.loc19, @Cpp.long.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.0d5da2.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.4: <bound method> = bound_method %x.ref.loc19_18, %Cpp.long.as.SubWith.impl.Op.specific_fn.loc19
+// CHECK:STDOUT:   %impl.elem0.loc19_22: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc19_22: <bound method> = bound_method %int_1.loc19, %impl.elem0.loc19_22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_22: init %Cpp.long = call %bound_method.loc19_22(%int_1.loc19) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_22.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19_22 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_22.2: %Cpp.long = converted %int_1.loc19, %.loc19_22.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call.loc19: init %Cpp.long = call %bound_method.loc19_20.4(%x.ref.loc19_18, %.loc19_22.2)
+// CHECK:STDOUT:   %x.ref.loc19_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc19: <specific function> = specific_function %AssertSameType.ref.loc19, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc19_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call.loc19
+// CHECK:STDOUT:   %.loc19_20.7: %Cpp.long = converted %Cpp.long.as.SubWith.impl.Op.call.loc19, %.loc19_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc19: init %empty_tuple.type = call %AssertSameType.specific_fn.loc19(%.loc19_20.7, %x.ref.loc19_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc20: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc20_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc20: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem1.loc20: %.40a = impl_witness_access constants.%MulWith.impl_witness.135, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.17c39d.2]
+// CHECK:STDOUT:   %bound_method.loc20_20.1: <bound method> = bound_method %x.ref.loc20_18, %impl.elem1.loc20
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_20.1: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc20_20.1: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc20_20.1 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_20.2: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc20_20.2: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc20_20.2 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem1.loc20, @Cpp.long.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.fcc384.1]
+// CHECK:STDOUT:   %bound_method.loc20_20.2: <bound method> = bound_method %x.ref.loc20_18, %specific_fn.loc20
+// CHECK:STDOUT:   %.loc20_20.3: %Cpp.long.as.MulWith.impl.Op.type.8651ed.1 = specific_constant imports.%Core.Op.b1f, @Cpp.long.as.MulWith.impl.c90(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.17c39d.1]
+// CHECK:STDOUT:   %Op.ref.loc20: %Cpp.long.as.MulWith.impl.Op.type.8651ed.1 = name_ref Op, %.loc20_20.3 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.17c39d.1]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.bound.loc20: <bound method> = bound_method %x.ref.loc20_18, %Op.ref.loc20
+// CHECK:STDOUT:   %impl.elem0.loc20_20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc20_20.3: <bound method> = bound_method %int_1.loc20, %impl.elem0.loc20_20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20_20: init %Cpp.long = call %bound_method.loc20_20.3(%int_1.loc20) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_20.4: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_20.5: %Cpp.long = converted %int_1.loc20, %.loc20_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.loc20: <specific function> = specific_function %Op.ref.loc20, @Cpp.long.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.fcc384.2]
+// CHECK:STDOUT:   %bound_method.loc20_20.4: <bound method> = bound_method %x.ref.loc20_18, %Cpp.long.as.MulWith.impl.Op.specific_fn.loc20
+// CHECK:STDOUT:   %impl.elem0.loc20_22: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc20_22: <bound method> = bound_method %int_1.loc20, %impl.elem0.loc20_22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20_22: init %Cpp.long = call %bound_method.loc20_22(%int_1.loc20) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_22.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20_22 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_22.2: %Cpp.long = converted %int_1.loc20, %.loc20_22.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call.loc20: init %Cpp.long = call %bound_method.loc20_20.4(%x.ref.loc20_18, %.loc20_22.2)
+// CHECK:STDOUT:   %x.ref.loc20_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc20: <specific function> = specific_function %AssertSameType.ref.loc20, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc20_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call.loc20
+// CHECK:STDOUT:   %.loc20_20.7: %Cpp.long = converted %Cpp.long.as.MulWith.impl.Op.call.loc20, %.loc20_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc20: init %empty_tuple.type = call %AssertSameType.specific_fn.loc20(%.loc20_20.7, %x.ref.loc20_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc21: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc21_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem1.loc21: %.b93 = impl_witness_access constants.%DivWith.impl_witness.92c, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.3687cc.2]
+// CHECK:STDOUT:   %bound_method.loc21_20.1: <bound method> = bound_method %x.ref.loc21_18, %impl.elem1.loc21
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_20.1: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc21_20.1: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc21_20.1 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_20.2: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc21_20.2: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc21_20.2 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem1.loc21, @Cpp.long.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.ecf90c.1]
+// CHECK:STDOUT:   %bound_method.loc21_20.2: <bound method> = bound_method %x.ref.loc21_18, %specific_fn.loc21
+// CHECK:STDOUT:   %.loc21_20.3: %Cpp.long.as.DivWith.impl.Op.type.625951.1 = specific_constant imports.%Core.Op.d43, @Cpp.long.as.DivWith.impl.0e5(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.3687cc.1]
+// CHECK:STDOUT:   %Op.ref.loc21: %Cpp.long.as.DivWith.impl.Op.type.625951.1 = name_ref Op, %.loc21_20.3 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.3687cc.1]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.bound.loc21: <bound method> = bound_method %x.ref.loc21_18, %Op.ref.loc21
+// CHECK:STDOUT:   %impl.elem0.loc21_20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc21_20.3: <bound method> = bound_method %int_1.loc21, %impl.elem0.loc21_20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_20: init %Cpp.long = call %bound_method.loc21_20.3(%int_1.loc21) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_20.4: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_20.5: %Cpp.long = converted %int_1.loc21, %.loc21_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.loc21: <specific function> = specific_function %Op.ref.loc21, @Cpp.long.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.ecf90c.2]
+// CHECK:STDOUT:   %bound_method.loc21_20.4: <bound method> = bound_method %x.ref.loc21_18, %Cpp.long.as.DivWith.impl.Op.specific_fn.loc21
+// CHECK:STDOUT:   %impl.elem0.loc21_22: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc21_22: <bound method> = bound_method %int_1.loc21, %impl.elem0.loc21_22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_22: init %Cpp.long = call %bound_method.loc21_22(%int_1.loc21) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_22.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_22 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_22.2: %Cpp.long = converted %int_1.loc21, %.loc21_22.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call.loc21: init %Cpp.long = call %bound_method.loc21_20.4(%x.ref.loc21_18, %.loc21_22.2)
+// CHECK:STDOUT:   %x.ref.loc21_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc21: <specific function> = specific_function %AssertSameType.ref.loc21, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc21_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call.loc21
+// CHECK:STDOUT:   %.loc21_20.7: %Cpp.long = converted %Cpp.long.as.DivWith.impl.Op.call.loc21, %.loc21_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc21: init %empty_tuple.type = call %AssertSameType.specific_fn.loc21(%.loc21_20.7, %x.ref.loc21_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc22: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc22_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem1.loc22: %.e41 = impl_witness_access constants.%ModWith.impl_witness.334, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.28b8b4.2]
+// CHECK:STDOUT:   %bound_method.loc22_20.1: <bound method> = bound_method %x.ref.loc22_18, %impl.elem1.loc22
+// CHECK:STDOUT:   %ImplicitAs.facet.loc22_20.1: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc22_20.1: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc22_20.1 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc22_20.2: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.2ce) [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %.loc22_20.2: %ImplicitAs.type.819 = converted Core.IntLiteral, %ImplicitAs.facet.loc22_20.2 [concrete = constants.%ImplicitAs.facet.eed]
+// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem1.loc22, @Cpp.long.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.175599.1]
+// CHECK:STDOUT:   %bound_method.loc22_20.2: <bound method> = bound_method %x.ref.loc22_18, %specific_fn.loc22
+// CHECK:STDOUT:   %.loc22_20.3: %Cpp.long.as.ModWith.impl.Op.type.3cf811.1 = specific_constant imports.%Core.Op.4be, @Cpp.long.as.ModWith.impl.0a5(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.28b8b4.1]
+// CHECK:STDOUT:   %Op.ref.loc22: %Cpp.long.as.ModWith.impl.Op.type.3cf811.1 = name_ref Op, %.loc22_20.3 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.28b8b4.1]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.bound.loc22: <bound method> = bound_method %x.ref.loc22_18, %Op.ref.loc22
+// CHECK:STDOUT:   %impl.elem0.loc22_20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc22_20.3: <bound method> = bound_method %int_1.loc22, %impl.elem0.loc22_20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22_20: init %Cpp.long = call %bound_method.loc22_20.3(%int_1.loc22) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc22_20.4: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22_20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc22_20.5: %Cpp.long = converted %int_1.loc22, %.loc22_20.4 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.loc22: <specific function> = specific_function %Op.ref.loc22, @Cpp.long.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.175599.2]
+// CHECK:STDOUT:   %bound_method.loc22_20.4: <bound method> = bound_method %x.ref.loc22_18, %Cpp.long.as.ModWith.impl.Op.specific_fn.loc22
+// CHECK:STDOUT:   %impl.elem0.loc22_22: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc22_22: <bound method> = bound_method %int_1.loc22, %impl.elem0.loc22_22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22_22: init %Cpp.long = call %bound_method.loc22_22(%int_1.loc22) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc22_22.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22_22 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc22_22.2: %Cpp.long = converted %int_1.loc22, %.loc22_22.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call.loc22: init %Cpp.long = call %bound_method.loc22_20.4(%x.ref.loc22_18, %.loc22_22.2)
+// CHECK:STDOUT:   %x.ref.loc22_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc22: <specific function> = specific_function %AssertSameType.ref.loc22, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc22_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call.loc22
+// CHECK:STDOUT:   %.loc22_20.7: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call.loc22, %.loc22_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc22: init %empty_tuple.type = call %AssertSameType.specific_fn.loc22(%.loc22_20.7, %x.ref.loc22_25)
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = value_binding_pattern y [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc24_10: type = splice_block %i32.loc24 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc24: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc24_16.1: <bound method> = bound_method %int_1.loc24, %impl.elem0.loc24 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
+// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc24_16.2: <bound method> = bound_method %int_1.loc24, %specific_fn.loc24 [concrete = constants.%bound_method.38b]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24: init %i32 = call %bound_method.loc24_16.2(%int_1.loc24) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc24_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc24_16.2: %i32 = converted %int_1.loc24, %.loc24_16.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %y: %i32 = value_binding y, %.loc24_16.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc25: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc25_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc25: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc25: %.ef1 = impl_witness_access constants.%AddWith.impl_witness.403, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.2]
+// CHECK:STDOUT:   %bound_method.loc25_20.1: <bound method> = bound_method %x.ref.loc25_18, %impl.elem1.loc25
+// CHECK:STDOUT:   %ImplicitAs.facet.loc25_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc25_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc25_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc25_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc25_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc25_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem1.loc25, @Cpp.long.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.1]
+// CHECK:STDOUT:   %bound_method.loc25_20.2: <bound method> = bound_method %x.ref.loc25_18, %specific_fn.loc25
+// CHECK:STDOUT:   %.loc25_20.3: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1 = specific_constant imports.%Core.Op.e41f, @Cpp.long.as.AddWith.impl.c72(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.1]
+// CHECK:STDOUT:   %Op.ref.loc25: %Cpp.long.as.AddWith.impl.Op.type.3dbf51.1 = name_ref Op, %.loc25_20.3 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.7beae3.1]
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.bound.loc25: <bound method> = bound_method %x.ref.loc25_18, %Op.ref.loc25
+// CHECK:STDOUT:   %impl.elem0.loc25_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc25_20.3: <bound method> = bound_method %y.ref.loc25, %impl.elem0.loc25_20
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc25_20: init %Cpp.long = call %bound_method.loc25_20.3(%y.ref.loc25)
+// CHECK:STDOUT:   %.loc25_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc25_20
+// CHECK:STDOUT:   %.loc25_20.5: %Cpp.long = converted %y.ref.loc25, %.loc25_20.4
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.specific_fn.loc25: <specific function> = specific_function %Op.ref.loc25, @Cpp.long.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.AddWith.impl.Op.specific_fn.88f499.2]
+// CHECK:STDOUT:   %bound_method.loc25_20.4: <bound method> = bound_method %x.ref.loc25_18, %Cpp.long.as.AddWith.impl.Op.specific_fn.loc25
+// CHECK:STDOUT:   %impl.elem0.loc25_22: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc25_22: <bound method> = bound_method %y.ref.loc25, %impl.elem0.loc25_22
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc25_22: init %Cpp.long = call %bound_method.loc25_22(%y.ref.loc25)
+// CHECK:STDOUT:   %.loc25_22.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc25_22
+// CHECK:STDOUT:   %.loc25_22.2: %Cpp.long = converted %y.ref.loc25, %.loc25_22.1
+// CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call.loc25: init %Cpp.long = call %bound_method.loc25_20.4(%x.ref.loc25_18, %.loc25_22.2)
+// CHECK:STDOUT:   %x.ref.loc25_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc25: <specific function> = specific_function %AssertSameType.ref.loc25, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc25_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call.loc25
+// CHECK:STDOUT:   %.loc25_20.7: %Cpp.long = converted %Cpp.long.as.AddWith.impl.Op.call.loc25, %.loc25_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc25: init %empty_tuple.type = call %AssertSameType.specific_fn.loc25(%.loc25_20.7, %x.ref.loc25_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc26: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc26_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc26: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc26: %.494 = impl_witness_access constants.%SubWith.impl_witness.bee, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.2]
+// CHECK:STDOUT:   %bound_method.loc26_20.1: <bound method> = bound_method %x.ref.loc26_18, %impl.elem1.loc26
+// CHECK:STDOUT:   %ImplicitAs.facet.loc26_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc26_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc26_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc26_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc26_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc26_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem1.loc26, @Cpp.long.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.1]
+// CHECK:STDOUT:   %bound_method.loc26_20.2: <bound method> = bound_method %x.ref.loc26_18, %specific_fn.loc26
+// CHECK:STDOUT:   %.loc26_20.3: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1 = specific_constant imports.%Core.Op.fce, @Cpp.long.as.SubWith.impl.b84(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.1]
+// CHECK:STDOUT:   %Op.ref.loc26: %Cpp.long.as.SubWith.impl.Op.type.5b2a81.1 = name_ref Op, %.loc26_20.3 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.65b61c.1]
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.bound.loc26: <bound method> = bound_method %x.ref.loc26_18, %Op.ref.loc26
+// CHECK:STDOUT:   %impl.elem0.loc26_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc26_20.3: <bound method> = bound_method %y.ref.loc26, %impl.elem0.loc26_20
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc26_20: init %Cpp.long = call %bound_method.loc26_20.3(%y.ref.loc26)
+// CHECK:STDOUT:   %.loc26_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc26_20
+// CHECK:STDOUT:   %.loc26_20.5: %Cpp.long = converted %y.ref.loc26, %.loc26_20.4
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.specific_fn.loc26: <specific function> = specific_function %Op.ref.loc26, @Cpp.long.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.SubWith.impl.Op.specific_fn.8caeaa.2]
+// CHECK:STDOUT:   %bound_method.loc26_20.4: <bound method> = bound_method %x.ref.loc26_18, %Cpp.long.as.SubWith.impl.Op.specific_fn.loc26
+// CHECK:STDOUT:   %impl.elem0.loc26_22: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc26_22: <bound method> = bound_method %y.ref.loc26, %impl.elem0.loc26_22
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc26_22: init %Cpp.long = call %bound_method.loc26_22(%y.ref.loc26)
+// CHECK:STDOUT:   %.loc26_22.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc26_22
+// CHECK:STDOUT:   %.loc26_22.2: %Cpp.long = converted %y.ref.loc26, %.loc26_22.1
+// CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call.loc26: init %Cpp.long = call %bound_method.loc26_20.4(%x.ref.loc26_18, %.loc26_22.2)
+// CHECK:STDOUT:   %x.ref.loc26_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc26: <specific function> = specific_function %AssertSameType.ref.loc26, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc26_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call.loc26
+// CHECK:STDOUT:   %.loc26_20.7: %Cpp.long = converted %Cpp.long.as.SubWith.impl.Op.call.loc26, %.loc26_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc26: init %empty_tuple.type = call %AssertSameType.specific_fn.loc26(%.loc26_20.7, %x.ref.loc26_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc27: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc27_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc27: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc27: %.057 = impl_witness_access constants.%MulWith.impl_witness.ba5, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.2]
+// CHECK:STDOUT:   %bound_method.loc27_20.1: <bound method> = bound_method %x.ref.loc27_18, %impl.elem1.loc27
+// CHECK:STDOUT:   %ImplicitAs.facet.loc27_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc27_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc27_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc27_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc27_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc27_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem1.loc27, @Cpp.long.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.1]
+// CHECK:STDOUT:   %bound_method.loc27_20.2: <bound method> = bound_method %x.ref.loc27_18, %specific_fn.loc27
+// CHECK:STDOUT:   %.loc27_20.3: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1 = specific_constant imports.%Core.Op.b1f, @Cpp.long.as.MulWith.impl.c90(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.1]
+// CHECK:STDOUT:   %Op.ref.loc27: %Cpp.long.as.MulWith.impl.Op.type.ea5ff6.1 = name_ref Op, %.loc27_20.3 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.f095b7.1]
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.bound.loc27: <bound method> = bound_method %x.ref.loc27_18, %Op.ref.loc27
+// CHECK:STDOUT:   %impl.elem0.loc27_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc27_20.3: <bound method> = bound_method %y.ref.loc27, %impl.elem0.loc27_20
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc27_20: init %Cpp.long = call %bound_method.loc27_20.3(%y.ref.loc27)
+// CHECK:STDOUT:   %.loc27_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc27_20
+// CHECK:STDOUT:   %.loc27_20.5: %Cpp.long = converted %y.ref.loc27, %.loc27_20.4
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.specific_fn.loc27: <specific function> = specific_function %Op.ref.loc27, @Cpp.long.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.MulWith.impl.Op.specific_fn.3be598.2]
+// CHECK:STDOUT:   %bound_method.loc27_20.4: <bound method> = bound_method %x.ref.loc27_18, %Cpp.long.as.MulWith.impl.Op.specific_fn.loc27
+// CHECK:STDOUT:   %impl.elem0.loc27_22: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc27_22: <bound method> = bound_method %y.ref.loc27, %impl.elem0.loc27_22
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc27_22: init %Cpp.long = call %bound_method.loc27_22(%y.ref.loc27)
+// CHECK:STDOUT:   %.loc27_22.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc27_22
+// CHECK:STDOUT:   %.loc27_22.2: %Cpp.long = converted %y.ref.loc27, %.loc27_22.1
+// CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call.loc27: init %Cpp.long = call %bound_method.loc27_20.4(%x.ref.loc27_18, %.loc27_22.2)
+// CHECK:STDOUT:   %x.ref.loc27_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc27: <specific function> = specific_function %AssertSameType.ref.loc27, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc27_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call.loc27
+// CHECK:STDOUT:   %.loc27_20.7: %Cpp.long = converted %Cpp.long.as.MulWith.impl.Op.call.loc27, %.loc27_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc27: init %empty_tuple.type = call %AssertSameType.specific_fn.loc27(%.loc27_20.7, %x.ref.loc27_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc28: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc28_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc28: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc28: %.eec = impl_witness_access constants.%DivWith.impl_witness.30d, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.2]
+// CHECK:STDOUT:   %bound_method.loc28_20.1: <bound method> = bound_method %x.ref.loc28_18, %impl.elem1.loc28
+// CHECK:STDOUT:   %ImplicitAs.facet.loc28_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc28_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc28_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc28_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc28_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc28_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc28: <specific function> = specific_function %impl.elem1.loc28, @Cpp.long.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.1]
+// CHECK:STDOUT:   %bound_method.loc28_20.2: <bound method> = bound_method %x.ref.loc28_18, %specific_fn.loc28
+// CHECK:STDOUT:   %.loc28_20.3: %Cpp.long.as.DivWith.impl.Op.type.9156f2.1 = specific_constant imports.%Core.Op.d43, @Cpp.long.as.DivWith.impl.0e5(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.1]
+// CHECK:STDOUT:   %Op.ref.loc28: %Cpp.long.as.DivWith.impl.Op.type.9156f2.1 = name_ref Op, %.loc28_20.3 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.d06e88.1]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.bound.loc28: <bound method> = bound_method %x.ref.loc28_18, %Op.ref.loc28
+// CHECK:STDOUT:   %impl.elem0.loc28_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc28_20.3: <bound method> = bound_method %y.ref.loc28, %impl.elem0.loc28_20
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc28_20: init %Cpp.long = call %bound_method.loc28_20.3(%y.ref.loc28)
+// CHECK:STDOUT:   %.loc28_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc28_20
+// CHECK:STDOUT:   %.loc28_20.5: %Cpp.long = converted %y.ref.loc28, %.loc28_20.4
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.specific_fn.loc28: <specific function> = specific_function %Op.ref.loc28, @Cpp.long.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.DivWith.impl.Op.specific_fn.6489e2.2]
+// CHECK:STDOUT:   %bound_method.loc28_20.4: <bound method> = bound_method %x.ref.loc28_18, %Cpp.long.as.DivWith.impl.Op.specific_fn.loc28
+// CHECK:STDOUT:   %impl.elem0.loc28_22: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc28_22: <bound method> = bound_method %y.ref.loc28, %impl.elem0.loc28_22
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc28_22: init %Cpp.long = call %bound_method.loc28_22(%y.ref.loc28)
+// CHECK:STDOUT:   %.loc28_22.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc28_22
+// CHECK:STDOUT:   %.loc28_22.2: %Cpp.long = converted %y.ref.loc28, %.loc28_22.1
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call.loc28: init %Cpp.long = call %bound_method.loc28_20.4(%x.ref.loc28_18, %.loc28_22.2)
+// CHECK:STDOUT:   %x.ref.loc28_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc28: <specific function> = specific_function %AssertSameType.ref.loc28, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc28_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call.loc28
+// CHECK:STDOUT:   %.loc28_20.7: %Cpp.long = converted %Cpp.long.as.DivWith.impl.Op.call.loc28, %.loc28_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc28: init %empty_tuple.type = call %AssertSameType.specific_fn.loc28(%.loc28_20.7, %x.ref.loc28_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc29: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc29_18: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc29: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc29: %.289 = impl_witness_access constants.%ModWith.impl_witness.bd3, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.2]
+// CHECK:STDOUT:   %bound_method.loc29_20.1: <bound method> = bound_method %x.ref.loc29_18, %impl.elem1.loc29
+// CHECK:STDOUT:   %ImplicitAs.facet.loc29_20.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc29_20.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc29_20.1 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc29_20.2: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %.loc29_20.2: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc29_20.2 [concrete = constants.%ImplicitAs.facet.174]
+// CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem1.loc29, @Cpp.long.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.1]
+// CHECK:STDOUT:   %bound_method.loc29_20.2: <bound method> = bound_method %x.ref.loc29_18, %specific_fn.loc29
+// CHECK:STDOUT:   %.loc29_20.3: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1 = specific_constant imports.%Core.Op.4be, @Cpp.long.as.ModWith.impl.0a5(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.1]
+// CHECK:STDOUT:   %Op.ref.loc29: %Cpp.long.as.ModWith.impl.Op.type.f6cdb5.1 = name_ref Op, %.loc29_20.3 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.6c7fa7.1]
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.bound.loc29: <bound method> = bound_method %x.ref.loc29_18, %Op.ref.loc29
+// CHECK:STDOUT:   %impl.elem0.loc29_20: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc29_20.3: <bound method> = bound_method %y.ref.loc29, %impl.elem0.loc29_20
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc29_20: init %Cpp.long = call %bound_method.loc29_20.3(%y.ref.loc29)
+// CHECK:STDOUT:   %.loc29_20.4: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc29_20
+// CHECK:STDOUT:   %.loc29_20.5: %Cpp.long = converted %y.ref.loc29, %.loc29_20.4
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.specific_fn.loc29: <specific function> = specific_function %Op.ref.loc29, @Cpp.long.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%Cpp.long.as.ModWith.impl.Op.specific_fn.127c5b.2]
+// CHECK:STDOUT:   %bound_method.loc29_20.4: <bound method> = bound_method %x.ref.loc29_18, %Cpp.long.as.ModWith.impl.Op.specific_fn.loc29
+// CHECK:STDOUT:   %impl.elem0.loc29_22: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc29_22: <bound method> = bound_method %y.ref.loc29, %impl.elem0.loc29_22
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc29_22: init %Cpp.long = call %bound_method.loc29_22(%y.ref.loc29)
+// CHECK:STDOUT:   %.loc29_22.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc29_22
+// CHECK:STDOUT:   %.loc29_22.2: %Cpp.long = converted %y.ref.loc29, %.loc29_22.1
+// CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call.loc29: init %Cpp.long = call %bound_method.loc29_20.4(%x.ref.loc29_18, %.loc29_22.2)
+// CHECK:STDOUT:   %x.ref.loc29_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc29: <specific function> = specific_function %AssertSameType.ref.loc29, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc29_20.6: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call.loc29
+// CHECK:STDOUT:   %.loc29_20.7: %Cpp.long = converted %Cpp.long.as.ModWith.impl.Op.call.loc29, %.loc29_20.6
+// CHECK:STDOUT:   %AssertSameType.call.loc29: init %empty_tuple.type = call %AssertSameType.specific_fn.loc29(%.loc29_20.7, %x.ref.loc29_25)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- arithmetic_heterogeneous_long_right_side.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %AssertSameType.type: type = fn_type @AssertSameType [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %AssertSameType: %AssertSameType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.eed: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.eed [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %As.type.047: type = facet_type <@As, @As(%i32)> [concrete]
+// CHECK:STDOUT:   %As.Convert.type.99b: type = fn_type @As.Convert, @As(%i32) [concrete]
+// CHECK:STDOUT:   %To.fe9: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.09e: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.dbe: %Core.IntLiteral.as.As.impl.Convert.type.09e = struct_value () [symbolic]
+// CHECK:STDOUT:   %As.impl_witness.ab6: <witness> = impl_witness imports.%As.impl_witness_table.9fc, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.8ec: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.29b: %Core.IntLiteral.as.As.impl.Convert.type.8ec = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.047 = facet_value Core.IntLiteral, (%As.impl_witness.ab6) [concrete]
+// CHECK:STDOUT:   %.97a: type = fn_type_with_self_type %As.Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.29b [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.29b, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.290: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %AddWith.type.9c2: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.9a6: type = fn_type @AddWith.Op, @AddWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %T.57d: %ImplicitAs.type.819 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.704168.1: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.1, @T.binding.as_type.as.AddWith.impl.f1a(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.399102.1: %T.binding.as_type.as.AddWith.impl.Op.type.704168.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.704168.2: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.2, @T.binding.as_type.as.AddWith.impl.f1a(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.399102.2: %T.binding.as_type.as.AddWith.impl.Op.type.704168.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%To.fe9) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.0fc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.5ad [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.174: %ImplicitAs.type.819 = facet_value %i32, (%ImplicitAs.impl_witness.0fc) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.a1d: <witness> = impl_witness imports.%AddWith.impl_witness_table.0dc, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.2, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.3fccd2.1: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.2: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.1, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.3fccd2.2: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.704: %AddWith.type.9c2 = facet_value %i32, (%AddWith.impl_witness.a1d) [concrete]
+// CHECK:STDOUT:   %.285: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet.704 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.c4a0e7.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.AddWith.impl.Op.3fccd2.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.1: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.3fccd2.2, @T.binding.as_type.as.AddWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.3892d6.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.c4a0e7.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.AddWith.impl.Op.3fccd2.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.2: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.3fccd2.1, @T.binding.as_type.as.AddWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.3892d6.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.2 [concrete]
+// CHECK:STDOUT:   %.c45: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.174 [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.type: type = fn_type @i32.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert: %i32.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5d2, %i32.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %AssertSameType.specific_fn: <specific function> = specific_function %AssertSameType, @AssertSameType(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %SubWith.type.e8e: type = facet_type <@SubWith, @SubWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %SubWith.Op.type.533: type = fn_type @SubWith.Op, @SubWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.d77f83.1: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.1, @T.binding.as_type.as.SubWith.impl.e1e(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.600de1.1: %T.binding.as_type.as.SubWith.impl.Op.type.d77f83.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.d77f83.2: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.2, @T.binding.as_type.as.SubWith.impl.e1e(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.600de1.2: %T.binding.as_type.as.SubWith.impl.Op.type.d77f83.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubWith.impl_witness.702: <witness> = impl_witness imports.%SubWith.impl_witness_table.125, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.2, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.caca02.2: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.1, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.2: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %SubWith.facet.6af: %SubWith.type.e8e = facet_value %i32, (%SubWith.impl_witness.702) [concrete]
+// CHECK:STDOUT:   %.040: type = fn_type_with_self_type %SubWith.Op.type.533, %SubWith.facet.6af [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.301bba.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.1: <specific function> = specific_function %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.2, @T.binding.as_type.as.SubWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.2298ce.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.301bba.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.2: <specific function> = specific_function %T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1, @T.binding.as_type.as.SubWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.2298ce.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.2 [concrete]
+// CHECK:STDOUT:   %MulWith.type.a32: type = facet_type <@MulWith, @MulWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %MulWith.Op.type.44b: type = fn_type @MulWith.Op, @MulWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.20586f.1: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.1, @T.binding.as_type.as.MulWith.impl.6d9(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.036dac.1: %T.binding.as_type.as.MulWith.impl.Op.type.20586f.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.20586f.2: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.2, @T.binding.as_type.as.MulWith.impl.6d9(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.036dac.2: %T.binding.as_type.as.MulWith.impl.Op.type.20586f.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %MulWith.impl_witness.f85: <witness> = impl_witness imports.%MulWith.impl_witness_table.ef7, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.2, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.461492.1: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.2: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.1, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.461492.2: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.facet.b19: %MulWith.type.a32 = facet_value %i32, (%MulWith.impl_witness.f85) [concrete]
+// CHECK:STDOUT:   %.1b4: type = fn_type_with_self_type %MulWith.Op.type.44b, %MulWith.facet.b19 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.0aabbc.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.MulWith.impl.Op.461492.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.1: <specific function> = specific_function %T.binding.as_type.as.MulWith.impl.Op.461492.2, @T.binding.as_type.as.MulWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.c765fa.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.0aabbc.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.MulWith.impl.Op.461492.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.2: <specific function> = specific_function %T.binding.as_type.as.MulWith.impl.Op.461492.1, @T.binding.as_type.as.MulWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.c765fa.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.2 [concrete]
+// CHECK:STDOUT:   %DivWith.type.0c0: type = facet_type <@DivWith, @DivWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %DivWith.Op.type.494: type = fn_type @DivWith.Op, @DivWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.c7967e.1: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.1, @T.binding.as_type.as.DivWith.impl.67f(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.f3fb3f.1: %T.binding.as_type.as.DivWith.impl.Op.type.c7967e.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.c7967e.2: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.2, @T.binding.as_type.as.DivWith.impl.67f(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.f3fb3f.2: %T.binding.as_type.as.DivWith.impl.Op.type.c7967e.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DivWith.impl_witness.996: <witness> = impl_witness imports.%DivWith.impl_witness_table.4bd, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.2, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.e5dcee.1: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.2: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.1, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.e5dcee.2: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DivWith.facet.fbd: %DivWith.type.0c0 = facet_value %i32, (%DivWith.impl_witness.996) [concrete]
+// CHECK:STDOUT:   %.0f3: type = fn_type_with_self_type %DivWith.Op.type.494, %DivWith.facet.fbd [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.1f2168.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.DivWith.impl.Op.e5dcee.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.1: <specific function> = specific_function %T.binding.as_type.as.DivWith.impl.Op.e5dcee.2, @T.binding.as_type.as.DivWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.0beaeb.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.1f2168.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.DivWith.impl.Op.e5dcee.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.2: <specific function> = specific_function %T.binding.as_type.as.DivWith.impl.Op.e5dcee.1, @T.binding.as_type.as.DivWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.0beaeb.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.2 [concrete]
+// CHECK:STDOUT:   %ModWith.type.2fc: type = facet_type <@ModWith, @ModWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ModWith.Op.type.c13: type = fn_type @ModWith.Op, @ModWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.302b2e.1: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.1, @T.binding.as_type.as.ModWith.impl.5ca(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.02226a.1: %T.binding.as_type.as.ModWith.impl.Op.type.302b2e.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.302b2e.2: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.2, @T.binding.as_type.as.ModWith.impl.5ca(%T.57d) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.02226a.2: %T.binding.as_type.as.ModWith.impl.Op.type.302b2e.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ModWith.impl_witness.e1d: <witness> = impl_witness imports.%ModWith.impl_witness_table.644, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.2, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.c5465f.1: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.2: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.1, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.c5465f.2: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ModWith.facet.cf9: %ModWith.type.2fc = facet_value %i32, (%ModWith.impl_witness.e1d) [concrete]
+// CHECK:STDOUT:   %.e68: type = fn_type_with_self_type %ModWith.Op.type.c13, %ModWith.facet.cf9 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.55509c.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.ModWith.impl.Op.c5465f.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.1: <specific function> = specific_function %T.binding.as_type.as.ModWith.impl.Op.c5465f.2, @T.binding.as_type.as.ModWith.impl.Op.1(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.08657b.1: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.55509c.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.ModWith.impl.Op.c5465f.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.2: <specific function> = specific_function %T.binding.as_type.as.ModWith.impl.Op.c5465f.1, @T.binding.as_type.as.ModWith.impl.Op.2(%ImplicitAs.facet.174) [concrete]
+// CHECK:STDOUT:   %bound_method.08657b.2: <bound method> = bound_method %int_1.5d2, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.2 [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.740: <witness> = impl_witness imports.%AddWith.impl_witness_table.0dc, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.75226a.1: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.2, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.b037a1.1: %T.binding.as_type.as.AddWith.impl.Op.type.75226a.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.75226a.2: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.1, @T.binding.as_type.as.AddWith.impl.f1a(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.b037a1.2: %T.binding.as_type.as.AddWith.impl.Op.type.75226a.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.07d: %AddWith.type.9c2 = facet_value Core.IntLiteral, (%AddWith.impl_witness.740) [concrete]
+// CHECK:STDOUT:   %.26f: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet.07d [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.083bd2.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.AddWith.impl.Op.b037a1.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.1: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.b037a1.2, @T.binding.as_type.as.AddWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.76c7cf.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.083bd2.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.AddWith.impl.Op.b037a1.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.2: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.b037a1.1, @T.binding.as_type.as.AddWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.76c7cf.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.2 [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness.980: <witness> = impl_witness imports.%SubWith.impl_witness_table.125, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.1: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.2, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.d20ebd.1: %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.2: type = fn_type @T.binding.as_type.as.SubWith.impl.Op.1, @T.binding.as_type.as.SubWith.impl.e1e(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.d20ebd.2: %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %SubWith.facet.dc9: %SubWith.type.e8e = facet_value Core.IntLiteral, (%SubWith.impl_witness.980) [concrete]
+// CHECK:STDOUT:   %.4fb: type = fn_type_with_self_type %SubWith.Op.type.533, %SubWith.facet.dc9 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.09e45c.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.SubWith.impl.Op.d20ebd.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.1: <specific function> = specific_function %T.binding.as_type.as.SubWith.impl.Op.d20ebd.2, @T.binding.as_type.as.SubWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.bedc54.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.09e45c.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.SubWith.impl.Op.d20ebd.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.2: <specific function> = specific_function %T.binding.as_type.as.SubWith.impl.Op.d20ebd.1, @T.binding.as_type.as.SubWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.bedc54.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.2 [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness.824: <witness> = impl_witness imports.%MulWith.impl_witness_table.ef7, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.1: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.2, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.075f45.1: %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.2: type = fn_type @T.binding.as_type.as.MulWith.impl.Op.1, @T.binding.as_type.as.MulWith.impl.6d9(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.075f45.2: %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.facet.603: %MulWith.type.a32 = facet_value Core.IntLiteral, (%MulWith.impl_witness.824) [concrete]
+// CHECK:STDOUT:   %.da9: type = fn_type_with_self_type %MulWith.Op.type.44b, %MulWith.facet.603 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.9ab9cd.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.MulWith.impl.Op.075f45.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.1: <specific function> = specific_function %T.binding.as_type.as.MulWith.impl.Op.075f45.2, @T.binding.as_type.as.MulWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.82b41e.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.9ab9cd.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.MulWith.impl.Op.075f45.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.2: <specific function> = specific_function %T.binding.as_type.as.MulWith.impl.Op.075f45.1, @T.binding.as_type.as.MulWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.82b41e.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.2 [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness.fea: <witness> = impl_witness imports.%DivWith.impl_witness_table.4bd, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.b86756.1: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.2, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.637574.1: %T.binding.as_type.as.DivWith.impl.Op.type.b86756.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.type.b86756.2: type = fn_type @T.binding.as_type.as.DivWith.impl.Op.1, @T.binding.as_type.as.DivWith.impl.67f(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.637574.2: %T.binding.as_type.as.DivWith.impl.Op.type.b86756.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DivWith.facet.5a3: %DivWith.type.0c0 = facet_value Core.IntLiteral, (%DivWith.impl_witness.fea) [concrete]
+// CHECK:STDOUT:   %.0bb: type = fn_type_with_self_type %DivWith.Op.type.494, %DivWith.facet.5a3 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.53c922.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.DivWith.impl.Op.637574.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.1: <specific function> = specific_function %T.binding.as_type.as.DivWith.impl.Op.637574.2, @T.binding.as_type.as.DivWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.7598a7.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.53c922.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.DivWith.impl.Op.637574.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.2: <specific function> = specific_function %T.binding.as_type.as.DivWith.impl.Op.637574.1, @T.binding.as_type.as.DivWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.7598a7.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.2 [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness.770: <witness> = impl_witness imports.%ModWith.impl_witness_table.644, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.1: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.2, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.5c95af.1: %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.2: type = fn_type @T.binding.as_type.as.ModWith.impl.Op.1, @T.binding.as_type.as.ModWith.impl.5ca(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.5c95af.2: %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ModWith.facet.ef7: %ModWith.type.2fc = facet_value Core.IntLiteral, (%ModWith.impl_witness.770) [concrete]
+// CHECK:STDOUT:   %.930: type = fn_type_with_self_type %ModWith.Op.type.c13, %ModWith.facet.ef7 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.468823.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.ModWith.impl.Op.5c95af.2 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.1: <specific function> = specific_function %T.binding.as_type.as.ModWith.impl.Op.5c95af.2, @T.binding.as_type.as.ModWith.impl.Op.1(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.83c96c.1: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.468823.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.ModWith.impl.Op.5c95af.1 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.2: <specific function> = specific_function %T.binding.as_type.as.ModWith.impl.Op.5c95af.1, @T.binding.as_type.as.ModWith.impl.Op.2(%ImplicitAs.facet.eed) [concrete]
+// CHECK:STDOUT:   %bound_method.83c96c.2: <bound method> = bound_method %int_1.5b8, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.2 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.6bc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.b94: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
+// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.b94 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.38b: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.2 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.6ee: @T.binding.as_type.as.AddWith.impl.f1a.%T.binding.as_type.as.AddWith.impl.Op.type.2 (%T.binding.as_type.as.AddWith.impl.Op.type.704168.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.AddWith.impl.f1a.%T.binding.as_type.as.AddWith.impl.Op.2 (constants.%T.binding.as_type.as.AddWith.impl.Op.399102.1)]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.0dc = impl_witness_table (%Core.import_ref.cb912f.2, %Core.import_ref.6ee), @T.binding.as_type.as.AddWith.impl.f1a [concrete]
+// CHECK:STDOUT:   %Core.Op.af2: @T.binding.as_type.as.AddWith.impl.f1a.%T.binding.as_type.as.AddWith.impl.Op.type.1 (%T.binding.as_type.as.AddWith.impl.Op.type.704168.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @T.binding.as_type.as.AddWith.impl.f1a.%T.binding.as_type.as.AddWith.impl.Op.1 (constants.%T.binding.as_type.as.AddWith.impl.Op.399102.2)]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl.b2d [concrete]
+// CHECK:STDOUT:   %Core.import_ref.4fa: %i32.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.4fa), @i32.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.c70: @T.binding.as_type.as.SubWith.impl.e1e.%T.binding.as_type.as.SubWith.impl.Op.type.2 (%T.binding.as_type.as.SubWith.impl.Op.type.d77f83.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.SubWith.impl.e1e.%T.binding.as_type.as.SubWith.impl.Op.2 (constants.%T.binding.as_type.as.SubWith.impl.Op.600de1.1)]
+// CHECK:STDOUT:   %SubWith.impl_witness_table.125 = impl_witness_table (%Core.import_ref.cb912f.4, %Core.import_ref.c70), @T.binding.as_type.as.SubWith.impl.e1e [concrete]
+// CHECK:STDOUT:   %Core.Op.fcc: @T.binding.as_type.as.SubWith.impl.e1e.%T.binding.as_type.as.SubWith.impl.Op.type.1 (%T.binding.as_type.as.SubWith.impl.Op.type.d77f83.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @T.binding.as_type.as.SubWith.impl.e1e.%T.binding.as_type.as.SubWith.impl.Op.1 (constants.%T.binding.as_type.as.SubWith.impl.Op.600de1.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.6 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.7df: @T.binding.as_type.as.MulWith.impl.6d9.%T.binding.as_type.as.MulWith.impl.Op.type.2 (%T.binding.as_type.as.MulWith.impl.Op.type.20586f.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.MulWith.impl.6d9.%T.binding.as_type.as.MulWith.impl.Op.2 (constants.%T.binding.as_type.as.MulWith.impl.Op.036dac.1)]
+// CHECK:STDOUT:   %MulWith.impl_witness_table.ef7 = impl_witness_table (%Core.import_ref.cb912f.6, %Core.import_ref.7df), @T.binding.as_type.as.MulWith.impl.6d9 [concrete]
+// CHECK:STDOUT:   %Core.Op.6a1: @T.binding.as_type.as.MulWith.impl.6d9.%T.binding.as_type.as.MulWith.impl.Op.type.1 (%T.binding.as_type.as.MulWith.impl.Op.type.20586f.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @T.binding.as_type.as.MulWith.impl.6d9.%T.binding.as_type.as.MulWith.impl.Op.1 (constants.%T.binding.as_type.as.MulWith.impl.Op.036dac.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.8 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.425: @T.binding.as_type.as.DivWith.impl.67f.%T.binding.as_type.as.DivWith.impl.Op.type.2 (%T.binding.as_type.as.DivWith.impl.Op.type.c7967e.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.DivWith.impl.67f.%T.binding.as_type.as.DivWith.impl.Op.2 (constants.%T.binding.as_type.as.DivWith.impl.Op.f3fb3f.1)]
+// CHECK:STDOUT:   %DivWith.impl_witness_table.4bd = impl_witness_table (%Core.import_ref.cb912f.8, %Core.import_ref.425), @T.binding.as_type.as.DivWith.impl.67f [concrete]
+// CHECK:STDOUT:   %Core.Op.ace: @T.binding.as_type.as.DivWith.impl.67f.%T.binding.as_type.as.DivWith.impl.Op.type.1 (%T.binding.as_type.as.DivWith.impl.Op.type.c7967e.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @T.binding.as_type.as.DivWith.impl.67f.%T.binding.as_type.as.DivWith.impl.Op.1 (constants.%T.binding.as_type.as.DivWith.impl.Op.f3fb3f.2)]
+// CHECK:STDOUT:   %Core.import_ref.cb912f.10 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.0d4: @T.binding.as_type.as.ModWith.impl.5ca.%T.binding.as_type.as.ModWith.impl.Op.type.2 (%T.binding.as_type.as.ModWith.impl.Op.type.302b2e.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.ModWith.impl.5ca.%T.binding.as_type.as.ModWith.impl.Op.2 (constants.%T.binding.as_type.as.ModWith.impl.Op.02226a.1)]
+// CHECK:STDOUT:   %ModWith.impl_witness_table.644 = impl_witness_table (%Core.import_ref.cb912f.10, %Core.import_ref.0d4), @T.binding.as_type.as.ModWith.impl.5ca [concrete]
+// CHECK:STDOUT:   %Core.Op.c8c: @T.binding.as_type.as.ModWith.impl.5ca.%T.binding.as_type.as.ModWith.impl.Op.type.1 (%T.binding.as_type.as.ModWith.impl.Op.type.302b2e.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @T.binding.as_type.as.ModWith.impl.5ca.%T.binding.as_type.as.ModWith.impl.Op.1 (constants.%T.binding.as_type.as.ModWith.impl.Op.02226a.2)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ArithmeticHeterogeneousLongRightSide() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.68c = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc10_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc10: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %Cpp.long = call %bound_method.loc10(%int_1.loc10) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.2: %Cpp.long = converted %int_1.loc10, %.loc10_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc10_21.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc11: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc11_21.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc11_21.1: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11_21.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc11_21: <specific function> = specific_function %impl.elem0.loc11_21.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc11_21.2: <bound method> = bound_method %int_1.loc11, %specific_fn.loc11_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_21.2(%int_1.loc11) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc11 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_21.2: %i32 = converted %int_1.loc11, %.loc11_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %x.ref.loc11_31: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc11: %.285 = impl_witness_access constants.%AddWith.impl_witness.a1d, element1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.2]
+// CHECK:STDOUT:   %bound_method.loc11_29.1: <bound method> = bound_method %.loc11_21.2, %impl.elem1.loc11 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.bound.c4a0e7.1]
+// CHECK:STDOUT:   %specific_fn.loc11_29: <specific function> = specific_function %impl.elem1.loc11, @T.binding.as_type.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.1]
+// CHECK:STDOUT:   %bound_method.loc11_29.2: <bound method> = bound_method %.loc11_21.2, %specific_fn.loc11_29 [concrete = constants.%bound_method.3892d6.1]
+// CHECK:STDOUT:   %.loc11_29.1: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1 = specific_constant imports.%Core.Op.af2, @T.binding.as_type.as.AddWith.impl.f1a(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.1]
+// CHECK:STDOUT:   %Op.ref.loc11: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1 = name_ref Op, %.loc11_29.1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_21.2, %Op.ref.loc11 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.bound.c4a0e7.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc11: <specific function> = specific_function %Op.ref.loc11, @T.binding.as_type.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.2]
+// CHECK:STDOUT:   %bound_method.loc11_29.3: <bound method> = bound_method %.loc11_21.2, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc11 [concrete = constants.%bound_method.3892d6.2]
+// CHECK:STDOUT:   %impl.elem0.loc11_21.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc11_21.3: <bound method> = bound_method %.loc11_21.2, %impl.elem0.loc11_21.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc11: init %Cpp.long = call %bound_method.loc11_21.3(%.loc11_21.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc11_21.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc11_21.4: %Cpp.long = converted %.loc11_21.2, %.loc11_21.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.call.loc11: init %Cpp.long = call %bound_method.loc11_29.3(%.loc11_21.4, %x.ref.loc11_31)
+// CHECK:STDOUT:   %x.ref.loc11_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc11: <specific function> = specific_function %AssertSameType.ref.loc11, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc11_29.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.AddWith.impl.Op.call.loc11
+// CHECK:STDOUT:   %.loc11_29.3: %Cpp.long = converted %T.binding.as_type.as.AddWith.impl.Op.call.loc11, %.loc11_29.2
+// CHECK:STDOUT:   %AssertSameType.call.loc11: init %empty_tuple.type = call %AssertSameType.specific_fn.loc11(%.loc11_29.3, %x.ref.loc11_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc12: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc12_21.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc12_21.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_21.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc12_21: <specific function> = specific_function %impl.elem0.loc12_21.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc12_21.2: <bound method> = bound_method %int_1.loc12, %specific_fn.loc12_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc12: init %i32 = call %bound_method.loc12_21.2(%int_1.loc12) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc12 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_21.2: %i32 = converted %int_1.loc12, %.loc12_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %x.ref.loc12_31: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc12: %.040 = impl_witness_access constants.%SubWith.impl_witness.702, element1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.2]
+// CHECK:STDOUT:   %bound_method.loc12_29.1: <bound method> = bound_method %.loc12_21.2, %impl.elem1.loc12 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.bound.301bba.1]
+// CHECK:STDOUT:   %specific_fn.loc12_29: <specific function> = specific_function %impl.elem1.loc12, @T.binding.as_type.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.1]
+// CHECK:STDOUT:   %bound_method.loc12_29.2: <bound method> = bound_method %.loc12_21.2, %specific_fn.loc12_29 [concrete = constants.%bound_method.2298ce.1]
+// CHECK:STDOUT:   %.loc12_29.1: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1 = specific_constant imports.%Core.Op.fcc, @T.binding.as_type.as.SubWith.impl.e1e(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1]
+// CHECK:STDOUT:   %Op.ref.loc12: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1 = name_ref Op, %.loc12_29.1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_21.2, %Op.ref.loc12 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.bound.301bba.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc12: <specific function> = specific_function %Op.ref.loc12, @T.binding.as_type.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.2]
+// CHECK:STDOUT:   %bound_method.loc12_29.3: <bound method> = bound_method %.loc12_21.2, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc12 [concrete = constants.%bound_method.2298ce.2]
+// CHECK:STDOUT:   %impl.elem0.loc12_21.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc12_21.3: <bound method> = bound_method %.loc12_21.2, %impl.elem0.loc12_21.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc12: init %Cpp.long = call %bound_method.loc12_21.3(%.loc12_21.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_21.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc12 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc12_21.4: %Cpp.long = converted %.loc12_21.2, %.loc12_21.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.call.loc12: init %Cpp.long = call %bound_method.loc12_29.3(%.loc12_21.4, %x.ref.loc12_31)
+// CHECK:STDOUT:   %x.ref.loc12_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc12: <specific function> = specific_function %AssertSameType.ref.loc12, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc12_29.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.SubWith.impl.Op.call.loc12
+// CHECK:STDOUT:   %.loc12_29.3: %Cpp.long = converted %T.binding.as_type.as.SubWith.impl.Op.call.loc12, %.loc12_29.2
+// CHECK:STDOUT:   %AssertSameType.call.loc12: init %empty_tuple.type = call %AssertSameType.specific_fn.loc12(%.loc12_29.3, %x.ref.loc12_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc13: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc13_21.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc13_21.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_21.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc13_21: <specific function> = specific_function %impl.elem0.loc13_21.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %int_1.loc13, %specific_fn.loc13_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_21.2(%int_1.loc13) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_21.2: %i32 = converted %int_1.loc13, %.loc13_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %x.ref.loc13_31: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc13: %.1b4 = impl_witness_access constants.%MulWith.impl_witness.f85, element1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.2]
+// CHECK:STDOUT:   %bound_method.loc13_29.1: <bound method> = bound_method %.loc13_21.2, %impl.elem1.loc13 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.bound.0aabbc.1]
+// CHECK:STDOUT:   %specific_fn.loc13_29: <specific function> = specific_function %impl.elem1.loc13, @T.binding.as_type.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.1]
+// CHECK:STDOUT:   %bound_method.loc13_29.2: <bound method> = bound_method %.loc13_21.2, %specific_fn.loc13_29 [concrete = constants.%bound_method.c765fa.1]
+// CHECK:STDOUT:   %.loc13_29.1: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1 = specific_constant imports.%Core.Op.6a1, @T.binding.as_type.as.MulWith.impl.6d9(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.1]
+// CHECK:STDOUT:   %Op.ref.loc13: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1 = name_ref Op, %.loc13_29.1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_21.2, %Op.ref.loc13 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.bound.0aabbc.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc13: <specific function> = specific_function %Op.ref.loc13, @T.binding.as_type.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.2]
+// CHECK:STDOUT:   %bound_method.loc13_29.3: <bound method> = bound_method %.loc13_21.2, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc13 [concrete = constants.%bound_method.c765fa.2]
+// CHECK:STDOUT:   %impl.elem0.loc13_21.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc13_21.3: <bound method> = bound_method %.loc13_21.2, %impl.elem0.loc13_21.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc13: init %Cpp.long = call %bound_method.loc13_21.3(%.loc13_21.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_21.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc13_21.4: %Cpp.long = converted %.loc13_21.2, %.loc13_21.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call.loc13: init %Cpp.long = call %bound_method.loc13_29.3(%.loc13_21.4, %x.ref.loc13_31)
+// CHECK:STDOUT:   %x.ref.loc13_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc13: <specific function> = specific_function %AssertSameType.ref.loc13, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc13_29.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.MulWith.impl.Op.call.loc13
+// CHECK:STDOUT:   %.loc13_29.3: %Cpp.long = converted %T.binding.as_type.as.MulWith.impl.Op.call.loc13, %.loc13_29.2
+// CHECK:STDOUT:   %AssertSameType.call.loc13: init %empty_tuple.type = call %AssertSameType.specific_fn.loc13(%.loc13_29.3, %x.ref.loc13_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc14: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc14_21.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc14_21.1: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14_21.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc14_21: <specific function> = specific_function %impl.elem0.loc14_21.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_21.2: <bound method> = bound_method %int_1.loc14, %specific_fn.loc14_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc14: init %i32 = call %bound_method.loc14_21.2(%int_1.loc14) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc14 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_21.2: %i32 = converted %int_1.loc14, %.loc14_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %x.ref.loc14_31: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc14: %.0f3 = impl_witness_access constants.%DivWith.impl_witness.996, element1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.2]
+// CHECK:STDOUT:   %bound_method.loc14_29.1: <bound method> = bound_method %.loc14_21.2, %impl.elem1.loc14 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.bound.1f2168.1]
+// CHECK:STDOUT:   %specific_fn.loc14_29: <specific function> = specific_function %impl.elem1.loc14, @T.binding.as_type.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.1]
+// CHECK:STDOUT:   %bound_method.loc14_29.2: <bound method> = bound_method %.loc14_21.2, %specific_fn.loc14_29 [concrete = constants.%bound_method.0beaeb.1]
+// CHECK:STDOUT:   %.loc14_29.1: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1 = specific_constant imports.%Core.Op.ace, @T.binding.as_type.as.DivWith.impl.67f(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.1]
+// CHECK:STDOUT:   %Op.ref.loc14: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1 = name_ref Op, %.loc14_29.1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.loc14: <bound method> = bound_method %.loc14_21.2, %Op.ref.loc14 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.bound.1f2168.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc14: <specific function> = specific_function %Op.ref.loc14, @T.binding.as_type.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.2]
+// CHECK:STDOUT:   %bound_method.loc14_29.3: <bound method> = bound_method %.loc14_21.2, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc14 [concrete = constants.%bound_method.0beaeb.2]
+// CHECK:STDOUT:   %impl.elem0.loc14_21.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc14_21.3: <bound method> = bound_method %.loc14_21.2, %impl.elem0.loc14_21.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc14: init %Cpp.long = call %bound_method.loc14_21.3(%.loc14_21.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_21.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc14 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc14_21.4: %Cpp.long = converted %.loc14_21.2, %.loc14_21.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.call.loc14: init %Cpp.long = call %bound_method.loc14_29.3(%.loc14_21.4, %x.ref.loc14_31)
+// CHECK:STDOUT:   %x.ref.loc14_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc14: <specific function> = specific_function %AssertSameType.ref.loc14, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc14_29.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.DivWith.impl.Op.call.loc14
+// CHECK:STDOUT:   %.loc14_29.3: %Cpp.long = converted %T.binding.as_type.as.DivWith.impl.Op.call.loc14, %.loc14_29.2
+// CHECK:STDOUT:   %AssertSameType.call.loc14: init %empty_tuple.type = call %AssertSameType.specific_fn.loc14(%.loc14_29.3, %x.ref.loc14_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc15: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc15_21.1: %.97a = impl_witness_access constants.%As.impl_witness.ab6, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.29b]
+// CHECK:STDOUT:   %bound_method.loc15_21.1: <bound method> = bound_method %int_1.loc15, %impl.elem0.loc15_21.1 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc15_21: <specific function> = specific_function %impl.elem0.loc15_21.1, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_21.2: <bound method> = bound_method %int_1.loc15, %specific_fn.loc15_21 [concrete = constants.%bound_method.290]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call.loc15: init %i32 = call %bound_method.loc15_21.2(%int_1.loc15) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc15 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_21.2: %i32 = converted %int_1.loc15, %.loc15_21.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %x.ref.loc15_31: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc15: %.e68 = impl_witness_access constants.%ModWith.impl_witness.e1d, element1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.2]
+// CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %.loc15_21.2, %impl.elem1.loc15 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.bound.55509c.1]
+// CHECK:STDOUT:   %specific_fn.loc15_29: <specific function> = specific_function %impl.elem1.loc15, @T.binding.as_type.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.1]
+// CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %.loc15_21.2, %specific_fn.loc15_29 [concrete = constants.%bound_method.08657b.1]
+// CHECK:STDOUT:   %.loc15_29.1: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1 = specific_constant imports.%Core.Op.c8c, @T.binding.as_type.as.ModWith.impl.5ca(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.1]
+// CHECK:STDOUT:   %Op.ref.loc15: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1 = name_ref Op, %.loc15_29.1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.loc15: <bound method> = bound_method %.loc15_21.2, %Op.ref.loc15 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.bound.55509c.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc15: <specific function> = specific_function %Op.ref.loc15, @T.binding.as_type.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.2]
+// CHECK:STDOUT:   %bound_method.loc15_29.3: <bound method> = bound_method %.loc15_21.2, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc15 [concrete = constants.%bound_method.08657b.2]
+// CHECK:STDOUT:   %impl.elem0.loc15_21.2: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc15_21.3: <bound method> = bound_method %.loc15_21.2, %impl.elem0.loc15_21.2 [concrete = constants.%i32.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc15: init %Cpp.long = call %bound_method.loc15_21.3(%.loc15_21.2) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_21.3: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc15 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc15_21.4: %Cpp.long = converted %.loc15_21.2, %.loc15_21.3 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.call.loc15: init %Cpp.long = call %bound_method.loc15_29.3(%.loc15_21.4, %x.ref.loc15_31)
+// CHECK:STDOUT:   %x.ref.loc15_34: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc15: <specific function> = specific_function %AssertSameType.ref.loc15, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc15_29.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.ModWith.impl.Op.call.loc15
+// CHECK:STDOUT:   %.loc15_29.3: %Cpp.long = converted %T.binding.as_type.as.ModWith.impl.Op.call.loc15, %.loc15_29.2
+// CHECK:STDOUT:   %AssertSameType.call.loc15: init %empty_tuple.type = call %AssertSameType.specific_fn.loc15(%.loc15_29.3, %x.ref.loc15_34)
+// CHECK:STDOUT:   %AssertSameType.ref.loc17: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %x.ref.loc17_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc17: %.26f = impl_witness_access constants.%AddWith.impl_witness.740, element1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.b037a1.2]
+// CHECK:STDOUT:   %bound_method.loc17_20.1: <bound method> = bound_method %int_1.loc17, %impl.elem1.loc17 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.bound.083bd2.1]
+// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem1.loc17, @T.binding.as_type.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.1]
+// CHECK:STDOUT:   %bound_method.loc17_20.2: <bound method> = bound_method %int_1.loc17, %specific_fn.loc17 [concrete = constants.%bound_method.76c7cf.1]
+// CHECK:STDOUT:   %.loc17_20.1: %T.binding.as_type.as.AddWith.impl.Op.type.75226a.1 = specific_constant imports.%Core.Op.af2, @T.binding.as_type.as.AddWith.impl.f1a(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.b037a1.1]
+// CHECK:STDOUT:   %Op.ref.loc17: %T.binding.as_type.as.AddWith.impl.Op.type.75226a.1 = name_ref Op, %.loc17_20.1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.b037a1.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.loc17: <bound method> = bound_method %int_1.loc17, %Op.ref.loc17 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.bound.083bd2.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc17: <specific function> = specific_function %Op.ref.loc17, @T.binding.as_type.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.6a47c4.2]
+// CHECK:STDOUT:   %bound_method.loc17_20.3: <bound method> = bound_method %int_1.loc17, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc17 [concrete = constants.%bound_method.76c7cf.2]
+// CHECK:STDOUT:   %impl.elem0.loc17: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc17_18: <bound method> = bound_method %int_1.loc17, %impl.elem0.loc17 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17: init %Cpp.long = call %bound_method.loc17_18(%int_1.loc17) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc17_18.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc17_18.2: %Cpp.long = converted %int_1.loc17, %.loc17_18.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.call.loc17: init %Cpp.long = call %bound_method.loc17_20.3(%.loc17_18.2, %x.ref.loc17_22)
+// CHECK:STDOUT:   %x.ref.loc17_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc17: <specific function> = specific_function %AssertSameType.ref.loc17, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc17_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.AddWith.impl.Op.call.loc17
+// CHECK:STDOUT:   %.loc17_20.3: %Cpp.long = converted %T.binding.as_type.as.AddWith.impl.Op.call.loc17, %.loc17_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc17: init %empty_tuple.type = call %AssertSameType.specific_fn.loc17(%.loc17_20.3, %x.ref.loc17_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc18: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %x.ref.loc18_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc18: %.4fb = impl_witness_access constants.%SubWith.impl_witness.980, element1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.d20ebd.2]
+// CHECK:STDOUT:   %bound_method.loc18_20.1: <bound method> = bound_method %int_1.loc18, %impl.elem1.loc18 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.bound.09e45c.1]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem1.loc18, @T.binding.as_type.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.1]
+// CHECK:STDOUT:   %bound_method.loc18_20.2: <bound method> = bound_method %int_1.loc18, %specific_fn.loc18 [concrete = constants.%bound_method.bedc54.1]
+// CHECK:STDOUT:   %.loc18_20.1: %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.1 = specific_constant imports.%Core.Op.fcc, @T.binding.as_type.as.SubWith.impl.e1e(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.d20ebd.1]
+// CHECK:STDOUT:   %Op.ref.loc18: %T.binding.as_type.as.SubWith.impl.Op.type.8ada84.1 = name_ref Op, %.loc18_20.1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.d20ebd.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.loc18: <bound method> = bound_method %int_1.loc18, %Op.ref.loc18 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.bound.09e45c.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc18: <specific function> = specific_function %Op.ref.loc18, @T.binding.as_type.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.8885f5.2]
+// CHECK:STDOUT:   %bound_method.loc18_20.3: <bound method> = bound_method %int_1.loc18, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc18 [concrete = constants.%bound_method.bedc54.2]
+// CHECK:STDOUT:   %impl.elem0.loc18: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc18_18: <bound method> = bound_method %int_1.loc18, %impl.elem0.loc18 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18: init %Cpp.long = call %bound_method.loc18_18(%int_1.loc18) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_18.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc18_18.2: %Cpp.long = converted %int_1.loc18, %.loc18_18.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.call.loc18: init %Cpp.long = call %bound_method.loc18_20.3(%.loc18_18.2, %x.ref.loc18_22)
+// CHECK:STDOUT:   %x.ref.loc18_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc18: <specific function> = specific_function %AssertSameType.ref.loc18, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc18_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.SubWith.impl.Op.call.loc18
+// CHECK:STDOUT:   %.loc18_20.3: %Cpp.long = converted %T.binding.as_type.as.SubWith.impl.Op.call.loc18, %.loc18_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc18: init %empty_tuple.type = call %AssertSameType.specific_fn.loc18(%.loc18_20.3, %x.ref.loc18_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc19: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %x.ref.loc19_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc19: %.da9 = impl_witness_access constants.%MulWith.impl_witness.824, element1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.075f45.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.1: <bound method> = bound_method %int_1.loc19, %impl.elem1.loc19 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.bound.9ab9cd.1]
+// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem1.loc19, @T.binding.as_type.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.1]
+// CHECK:STDOUT:   %bound_method.loc19_20.2: <bound method> = bound_method %int_1.loc19, %specific_fn.loc19 [concrete = constants.%bound_method.82b41e.1]
+// CHECK:STDOUT:   %.loc19_20.1: %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.1 = specific_constant imports.%Core.Op.6a1, @T.binding.as_type.as.MulWith.impl.6d9(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.075f45.1]
+// CHECK:STDOUT:   %Op.ref.loc19: %T.binding.as_type.as.MulWith.impl.Op.type.2affc8.1 = name_ref Op, %.loc19_20.1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.075f45.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.loc19: <bound method> = bound_method %int_1.loc19, %Op.ref.loc19 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.bound.9ab9cd.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc19: <specific function> = specific_function %Op.ref.loc19, @T.binding.as_type.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.785270.2]
+// CHECK:STDOUT:   %bound_method.loc19_20.3: <bound method> = bound_method %int_1.loc19, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc19 [concrete = constants.%bound_method.82b41e.2]
+// CHECK:STDOUT:   %impl.elem0.loc19: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc19_18: <bound method> = bound_method %int_1.loc19, %impl.elem0.loc19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19: init %Cpp.long = call %bound_method.loc19_18(%int_1.loc19) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_18.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc19_18.2: %Cpp.long = converted %int_1.loc19, %.loc19_18.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call.loc19: init %Cpp.long = call %bound_method.loc19_20.3(%.loc19_18.2, %x.ref.loc19_22)
+// CHECK:STDOUT:   %x.ref.loc19_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc19: <specific function> = specific_function %AssertSameType.ref.loc19, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc19_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.MulWith.impl.Op.call.loc19
+// CHECK:STDOUT:   %.loc19_20.3: %Cpp.long = converted %T.binding.as_type.as.MulWith.impl.Op.call.loc19, %.loc19_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc19: init %empty_tuple.type = call %AssertSameType.specific_fn.loc19(%.loc19_20.3, %x.ref.loc19_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc20: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc20: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %x.ref.loc20_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc20: %.0bb = impl_witness_access constants.%DivWith.impl_witness.fea, element1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.637574.2]
+// CHECK:STDOUT:   %bound_method.loc20_20.1: <bound method> = bound_method %int_1.loc20, %impl.elem1.loc20 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.bound.53c922.1]
+// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem1.loc20, @T.binding.as_type.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.1]
+// CHECK:STDOUT:   %bound_method.loc20_20.2: <bound method> = bound_method %int_1.loc20, %specific_fn.loc20 [concrete = constants.%bound_method.7598a7.1]
+// CHECK:STDOUT:   %.loc20_20.1: %T.binding.as_type.as.DivWith.impl.Op.type.b86756.1 = specific_constant imports.%Core.Op.ace, @T.binding.as_type.as.DivWith.impl.67f(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.637574.1]
+// CHECK:STDOUT:   %Op.ref.loc20: %T.binding.as_type.as.DivWith.impl.Op.type.b86756.1 = name_ref Op, %.loc20_20.1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.637574.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.loc20: <bound method> = bound_method %int_1.loc20, %Op.ref.loc20 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.bound.53c922.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc20: <specific function> = specific_function %Op.ref.loc20, @T.binding.as_type.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.332c8a.2]
+// CHECK:STDOUT:   %bound_method.loc20_20.3: <bound method> = bound_method %int_1.loc20, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc20 [concrete = constants.%bound_method.7598a7.2]
+// CHECK:STDOUT:   %impl.elem0.loc20: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc20_18: <bound method> = bound_method %int_1.loc20, %impl.elem0.loc20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %Cpp.long = call %bound_method.loc20_18(%int_1.loc20) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_18.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc20_18.2: %Cpp.long = converted %int_1.loc20, %.loc20_18.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.call.loc20: init %Cpp.long = call %bound_method.loc20_20.3(%.loc20_18.2, %x.ref.loc20_22)
+// CHECK:STDOUT:   %x.ref.loc20_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc20: <specific function> = specific_function %AssertSameType.ref.loc20, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc20_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.DivWith.impl.Op.call.loc20
+// CHECK:STDOUT:   %.loc20_20.3: %Cpp.long = converted %T.binding.as_type.as.DivWith.impl.Op.call.loc20, %.loc20_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc20: init %empty_tuple.type = call %AssertSameType.specific_fn.loc20(%.loc20_20.3, %x.ref.loc20_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc21: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %x.ref.loc21_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc21: %.930 = impl_witness_access constants.%ModWith.impl_witness.770, element1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.5c95af.2]
+// CHECK:STDOUT:   %bound_method.loc21_20.1: <bound method> = bound_method %int_1.loc21, %impl.elem1.loc21 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.bound.468823.1]
+// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem1.loc21, @T.binding.as_type.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.1]
+// CHECK:STDOUT:   %bound_method.loc21_20.2: <bound method> = bound_method %int_1.loc21, %specific_fn.loc21 [concrete = constants.%bound_method.83c96c.1]
+// CHECK:STDOUT:   %.loc21_20.1: %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.1 = specific_constant imports.%Core.Op.c8c, @T.binding.as_type.as.ModWith.impl.5ca(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.5c95af.1]
+// CHECK:STDOUT:   %Op.ref.loc21: %T.binding.as_type.as.ModWith.impl.Op.type.84d6b7.1 = name_ref Op, %.loc21_20.1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.5c95af.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.loc21: <bound method> = bound_method %int_1.loc21, %Op.ref.loc21 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.bound.468823.2]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc21: <specific function> = specific_function %Op.ref.loc21, @T.binding.as_type.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.eed) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.4b7f8c.2]
+// CHECK:STDOUT:   %bound_method.loc21_20.3: <bound method> = bound_method %int_1.loc21, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc21 [concrete = constants.%bound_method.83c96c.2]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc21_18: <bound method> = bound_method %int_1.loc21, %impl.elem0.loc21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21: init %Cpp.long = call %bound_method.loc21_18(%int_1.loc21) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_18.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc21_18.2: %Cpp.long = converted %int_1.loc21, %.loc21_18.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.call.loc21: init %Cpp.long = call %bound_method.loc21_20.3(%.loc21_18.2, %x.ref.loc21_22)
+// CHECK:STDOUT:   %x.ref.loc21_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc21: <specific function> = specific_function %AssertSameType.ref.loc21, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc21_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.ModWith.impl.Op.call.loc21
+// CHECK:STDOUT:   %.loc21_20.3: %Cpp.long = converted %T.binding.as_type.as.ModWith.impl.Op.call.loc21, %.loc21_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc21: init %empty_tuple.type = call %AssertSameType.specific_fn.loc21(%.loc21_20.3, %x.ref.loc21_25)
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = value_binding_pattern y [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc23_10: type = splice_block %i32.loc23 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc23: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc23_16.1: <bound method> = bound_method %int_1.loc23, %impl.elem0.loc23 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
+// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc23_16.2: <bound method> = bound_method %int_1.loc23, %specific_fn.loc23 [concrete = constants.%bound_method.38b]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23: init %i32 = call %bound_method.loc23_16.2(%int_1.loc23) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc23_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc23_16.2: %i32 = converted %int_1.loc23, %.loc23_16.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %y: %i32 = value_binding y, %.loc23_16.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc24: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc24: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc24_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc24: %.285 = impl_witness_access constants.%AddWith.impl_witness.a1d, element1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.2]
+// CHECK:STDOUT:   %bound_method.loc24_20.1: <bound method> = bound_method %y.ref.loc24, %impl.elem1.loc24
+// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem1.loc24, @T.binding.as_type.as.AddWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.1]
+// CHECK:STDOUT:   %bound_method.loc24_20.2: <bound method> = bound_method %y.ref.loc24, %specific_fn.loc24
+// CHECK:STDOUT:   %.loc24_20.1: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1 = specific_constant imports.%Core.Op.af2, @T.binding.as_type.as.AddWith.impl.f1a(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.1]
+// CHECK:STDOUT:   %Op.ref.loc24: %T.binding.as_type.as.AddWith.impl.Op.type.5105fb.1 = name_ref Op, %.loc24_20.1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.3fccd2.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound.loc24: <bound method> = bound_method %y.ref.loc24, %Op.ref.loc24
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc24: <specific function> = specific_function %Op.ref.loc24, @T.binding.as_type.as.AddWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.09578f.2]
+// CHECK:STDOUT:   %bound_method.loc24_20.3: <bound method> = bound_method %y.ref.loc24, %T.binding.as_type.as.AddWith.impl.Op.specific_fn.loc24
+// CHECK:STDOUT:   %impl.elem0.loc24: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc24_18: <bound method> = bound_method %y.ref.loc24, %impl.elem0.loc24
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc24: init %Cpp.long = call %bound_method.loc24_18(%y.ref.loc24)
+// CHECK:STDOUT:   %.loc24_18.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc24
+// CHECK:STDOUT:   %.loc24_18.2: %Cpp.long = converted %y.ref.loc24, %.loc24_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.call.loc24: init %Cpp.long = call %bound_method.loc24_20.3(%.loc24_18.2, %x.ref.loc24_22)
+// CHECK:STDOUT:   %x.ref.loc24_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc24: <specific function> = specific_function %AssertSameType.ref.loc24, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc24_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.AddWith.impl.Op.call.loc24
+// CHECK:STDOUT:   %.loc24_20.3: %Cpp.long = converted %T.binding.as_type.as.AddWith.impl.Op.call.loc24, %.loc24_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc24: init %empty_tuple.type = call %AssertSameType.specific_fn.loc24(%.loc24_20.3, %x.ref.loc24_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc25: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc25: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc25_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc25: %.040 = impl_witness_access constants.%SubWith.impl_witness.702, element1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.2]
+// CHECK:STDOUT:   %bound_method.loc25_20.1: <bound method> = bound_method %y.ref.loc25, %impl.elem1.loc25
+// CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem1.loc25, @T.binding.as_type.as.SubWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.1]
+// CHECK:STDOUT:   %bound_method.loc25_20.2: <bound method> = bound_method %y.ref.loc25, %specific_fn.loc25
+// CHECK:STDOUT:   %.loc25_20.1: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1 = specific_constant imports.%Core.Op.fcc, @T.binding.as_type.as.SubWith.impl.e1e(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1]
+// CHECK:STDOUT:   %Op.ref.loc25: %T.binding.as_type.as.SubWith.impl.Op.type.caca02.1 = name_ref Op, %.loc25_20.1 [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.f9b5c3.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.bound.loc25: <bound method> = bound_method %y.ref.loc25, %Op.ref.loc25
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc25: <specific function> = specific_function %Op.ref.loc25, @T.binding.as_type.as.SubWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.SubWith.impl.Op.specific_fn.b0f48e.2]
+// CHECK:STDOUT:   %bound_method.loc25_20.3: <bound method> = bound_method %y.ref.loc25, %T.binding.as_type.as.SubWith.impl.Op.specific_fn.loc25
+// CHECK:STDOUT:   %impl.elem0.loc25: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc25_18: <bound method> = bound_method %y.ref.loc25, %impl.elem0.loc25
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc25: init %Cpp.long = call %bound_method.loc25_18(%y.ref.loc25)
+// CHECK:STDOUT:   %.loc25_18.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc25
+// CHECK:STDOUT:   %.loc25_18.2: %Cpp.long = converted %y.ref.loc25, %.loc25_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.SubWith.impl.Op.call.loc25: init %Cpp.long = call %bound_method.loc25_20.3(%.loc25_18.2, %x.ref.loc25_22)
+// CHECK:STDOUT:   %x.ref.loc25_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc25: <specific function> = specific_function %AssertSameType.ref.loc25, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc25_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.SubWith.impl.Op.call.loc25
+// CHECK:STDOUT:   %.loc25_20.3: %Cpp.long = converted %T.binding.as_type.as.SubWith.impl.Op.call.loc25, %.loc25_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc25: init %empty_tuple.type = call %AssertSameType.specific_fn.loc25(%.loc25_20.3, %x.ref.loc25_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc26: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc26: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc26_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc26: %.1b4 = impl_witness_access constants.%MulWith.impl_witness.f85, element1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.2]
+// CHECK:STDOUT:   %bound_method.loc26_20.1: <bound method> = bound_method %y.ref.loc26, %impl.elem1.loc26
+// CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem1.loc26, @T.binding.as_type.as.MulWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.1]
+// CHECK:STDOUT:   %bound_method.loc26_20.2: <bound method> = bound_method %y.ref.loc26, %specific_fn.loc26
+// CHECK:STDOUT:   %.loc26_20.1: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1 = specific_constant imports.%Core.Op.6a1, @T.binding.as_type.as.MulWith.impl.6d9(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.1]
+// CHECK:STDOUT:   %Op.ref.loc26: %T.binding.as_type.as.MulWith.impl.Op.type.1189b3.1 = name_ref Op, %.loc26_20.1 [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.461492.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.bound.loc26: <bound method> = bound_method %y.ref.loc26, %Op.ref.loc26
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc26: <specific function> = specific_function %Op.ref.loc26, @T.binding.as_type.as.MulWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.MulWith.impl.Op.specific_fn.475813.2]
+// CHECK:STDOUT:   %bound_method.loc26_20.3: <bound method> = bound_method %y.ref.loc26, %T.binding.as_type.as.MulWith.impl.Op.specific_fn.loc26
+// CHECK:STDOUT:   %impl.elem0.loc26: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc26_18: <bound method> = bound_method %y.ref.loc26, %impl.elem0.loc26
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc26: init %Cpp.long = call %bound_method.loc26_18(%y.ref.loc26)
+// CHECK:STDOUT:   %.loc26_18.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc26
+// CHECK:STDOUT:   %.loc26_18.2: %Cpp.long = converted %y.ref.loc26, %.loc26_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.MulWith.impl.Op.call.loc26: init %Cpp.long = call %bound_method.loc26_20.3(%.loc26_18.2, %x.ref.loc26_22)
+// CHECK:STDOUT:   %x.ref.loc26_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc26: <specific function> = specific_function %AssertSameType.ref.loc26, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc26_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.MulWith.impl.Op.call.loc26
+// CHECK:STDOUT:   %.loc26_20.3: %Cpp.long = converted %T.binding.as_type.as.MulWith.impl.Op.call.loc26, %.loc26_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc26: init %empty_tuple.type = call %AssertSameType.specific_fn.loc26(%.loc26_20.3, %x.ref.loc26_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc27: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc27: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc27_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc27: %.0f3 = impl_witness_access constants.%DivWith.impl_witness.996, element1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.2]
+// CHECK:STDOUT:   %bound_method.loc27_20.1: <bound method> = bound_method %y.ref.loc27, %impl.elem1.loc27
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem1.loc27, @T.binding.as_type.as.DivWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.1]
+// CHECK:STDOUT:   %bound_method.loc27_20.2: <bound method> = bound_method %y.ref.loc27, %specific_fn.loc27
+// CHECK:STDOUT:   %.loc27_20.1: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1 = specific_constant imports.%Core.Op.ace, @T.binding.as_type.as.DivWith.impl.67f(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.1]
+// CHECK:STDOUT:   %Op.ref.loc27: %T.binding.as_type.as.DivWith.impl.Op.type.bc0f3d.1 = name_ref Op, %.loc27_20.1 [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.e5dcee.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.bound.loc27: <bound method> = bound_method %y.ref.loc27, %Op.ref.loc27
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc27: <specific function> = specific_function %Op.ref.loc27, @T.binding.as_type.as.DivWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.DivWith.impl.Op.specific_fn.8f9bff.2]
+// CHECK:STDOUT:   %bound_method.loc27_20.3: <bound method> = bound_method %y.ref.loc27, %T.binding.as_type.as.DivWith.impl.Op.specific_fn.loc27
+// CHECK:STDOUT:   %impl.elem0.loc27: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc27_18: <bound method> = bound_method %y.ref.loc27, %impl.elem0.loc27
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc27: init %Cpp.long = call %bound_method.loc27_18(%y.ref.loc27)
+// CHECK:STDOUT:   %.loc27_18.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc27
+// CHECK:STDOUT:   %.loc27_18.2: %Cpp.long = converted %y.ref.loc27, %.loc27_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.DivWith.impl.Op.call.loc27: init %Cpp.long = call %bound_method.loc27_20.3(%.loc27_18.2, %x.ref.loc27_22)
+// CHECK:STDOUT:   %x.ref.loc27_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc27: <specific function> = specific_function %AssertSameType.ref.loc27, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc27_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.DivWith.impl.Op.call.loc27
+// CHECK:STDOUT:   %.loc27_20.3: %Cpp.long = converted %T.binding.as_type.as.DivWith.impl.Op.call.loc27, %.loc27_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc27: init %empty_tuple.type = call %AssertSameType.specific_fn.loc27(%.loc27_20.3, %x.ref.loc27_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc28: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc28: %i32 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc28_22: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc28: %.e68 = impl_witness_access constants.%ModWith.impl_witness.e1d, element1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.2]
+// CHECK:STDOUT:   %bound_method.loc28_20.1: <bound method> = bound_method %y.ref.loc28, %impl.elem1.loc28
+// CHECK:STDOUT:   %specific_fn.loc28: <specific function> = specific_function %impl.elem1.loc28, @T.binding.as_type.as.ModWith.impl.Op.1(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.1]
+// CHECK:STDOUT:   %bound_method.loc28_20.2: <bound method> = bound_method %y.ref.loc28, %specific_fn.loc28
+// CHECK:STDOUT:   %.loc28_20.1: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1 = specific_constant imports.%Core.Op.c8c, @T.binding.as_type.as.ModWith.impl.5ca(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.1]
+// CHECK:STDOUT:   %Op.ref.loc28: %T.binding.as_type.as.ModWith.impl.Op.type.9786fd.1 = name_ref Op, %.loc28_20.1 [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.c5465f.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.bound.loc28: <bound method> = bound_method %y.ref.loc28, %Op.ref.loc28
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc28: <specific function> = specific_function %Op.ref.loc28, @T.binding.as_type.as.ModWith.impl.Op.2(constants.%ImplicitAs.facet.174) [concrete = constants.%T.binding.as_type.as.ModWith.impl.Op.specific_fn.ee32ad.2]
+// CHECK:STDOUT:   %bound_method.loc28_20.3: <bound method> = bound_method %y.ref.loc28, %T.binding.as_type.as.ModWith.impl.Op.specific_fn.loc28
+// CHECK:STDOUT:   %impl.elem0.loc28: %.c45 = impl_witness_access constants.%ImplicitAs.impl_witness.0fc, element0 [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc28_18: <bound method> = bound_method %y.ref.loc28, %impl.elem0.loc28
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call.loc28: init %Cpp.long = call %bound_method.loc28_18(%y.ref.loc28)
+// CHECK:STDOUT:   %.loc28_18.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc28
+// CHECK:STDOUT:   %.loc28_18.2: %Cpp.long = converted %y.ref.loc28, %.loc28_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.ModWith.impl.Op.call.loc28: init %Cpp.long = call %bound_method.loc28_20.3(%.loc28_18.2, %x.ref.loc28_22)
+// CHECK:STDOUT:   %x.ref.loc28_25: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc28: <specific function> = specific_function %AssertSameType.ref.loc28, @AssertSameType(constants.%Cpp.long) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc28_20.2: %Cpp.long = value_of_initializer %T.binding.as_type.as.ModWith.impl.Op.call.loc28
+// CHECK:STDOUT:   %.loc28_20.3: %Cpp.long = converted %T.binding.as_type.as.ModWith.impl.Op.call.loc28, %.loc28_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc28: init %empty_tuple.type = call %AssertSameType.specific_fn.loc28(%.loc28_20.3, %x.ref.loc28_25)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- arithmetic_heterogeneous_long_and_i64.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %AssertSameType.type: type = fn_type @AssertSameType [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %AssertSameType: %AssertSameType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %Int.fc6021.1: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.2ad: type = facet_type <@ImplicitAs, @ImplicitAs(%i64)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.94e: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.eed: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet.eed [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %pattern_type.95b: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.556: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b78: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b2d(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b78 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.d48: %ImplicitAs.type.2ad = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.556) [concrete]
+// CHECK:STDOUT:   %.567: type = fn_type_with_self_type %ImplicitAs.Convert.type.94e, %ImplicitAs.facet.d48 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.102: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.57d, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(%int_64) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.41a: %i64 = int_value 1 [concrete]
+// CHECK:STDOUT:   %AddWith.type.f83: type = facet_type <@AddWith, @AddWith(%i64)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.c7f: type = fn_type @AddWith.Op, @AddWith(%i64) [concrete]
+// CHECK:STDOUT:   %AddWith.type.9c2: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %AddWith.Op.type.9a6: type = fn_type @AddWith.Op, @AddWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.39a54f.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Int.fc6021.1)> [symbolic]
+// CHECK:STDOUT:   %U.354: %ImplicitAs.type.39a54f.2 = symbolic_binding U, 1 [symbolic]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.type.188570.1: type = fn_type @Int.as.AddWith.impl.Op.2, @Int.as.AddWith.impl.b14(%N, %U.354) [symbolic]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.fecf95.1: %Int.as.AddWith.impl.Op.type.188570.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.type.188570.2: type = fn_type @Int.as.AddWith.impl.Op.3, @Int.as.AddWith.impl.b14(%N, %U.354) [symbolic]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.fecf95.2: %Int.as.AddWith.impl.Op.type.188570.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.354: %ImplicitAs.type.39a54f.2 = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.1: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.3, @T.binding.as_type.as.AddWith.impl.83e(%N, %T.354) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.363ab3.1: %T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.2: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.4, @T.binding.as_type.as.AddWith.impl.83e(%N, %T.354) [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.363ab3.2: %T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.bbc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.cb1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.ba4: %ImplicitAs.type.2ad = facet_value %Cpp.long, (%ImplicitAs.impl_witness.bbc) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.525: <witness> = impl_witness imports.%AddWith.impl_witness_table.787, @T.binding.as_type.as.AddWith.impl.83e(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.1: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.4, @T.binding.as_type.as.AddWith.impl.83e(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.86dab9.1: %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.2: type = fn_type @T.binding.as_type.as.AddWith.impl.Op.3, @T.binding.as_type.as.AddWith.impl.83e(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.86dab9.2: %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.393: %AddWith.type.f83 = facet_value %Cpp.long, (%AddWith.impl_witness.525) [concrete]
+// CHECK:STDOUT:   %.e8e: type = fn_type_with_self_type %AddWith.Op.type.c7f, %AddWith.facet.393 [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.dee524.1: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.86dab9.2, @T.binding.as_type.as.AddWith.impl.Op.3(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn.dee524.2: <specific function> = specific_function %T.binding.as_type.as.AddWith.impl.Op.86dab9.1, @T.binding.as_type.as.AddWith.impl.Op.4(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %.8a2: type = fn_type_with_self_type %ImplicitAs.Convert.type.94e, %ImplicitAs.facet.ba4 [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.type: type = fn_type @Cpp.long.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert: %Cpp.long.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AssertSameType.specific_fn: <specific function> = specific_function %AssertSameType, @AssertSameType(%i64) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.023: <witness> = impl_witness imports.%AddWith.impl_witness_table.c46, @Int.as.AddWith.impl.b14(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.type.0fadc0.1: type = fn_type @Int.as.AddWith.impl.Op.3, @Int.as.AddWith.impl.b14(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.f0aafc.1: %Int.as.AddWith.impl.Op.type.0fadc0.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.type.0fadc0.2: type = fn_type @Int.as.AddWith.impl.Op.2, @Int.as.AddWith.impl.b14(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.f0aafc.2: %Int.as.AddWith.impl.Op.type.0fadc0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.facet.1c5: %AddWith.type.9c2 = facet_value %i64, (%AddWith.impl_witness.023) [concrete]
+// CHECK:STDOUT:   %.f5b: type = fn_type_with_self_type %AddWith.Op.type.9a6, %AddWith.facet.1c5 [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.specific_fn.153203.1: <specific function> = specific_function %Int.as.AddWith.impl.Op.f0aafc.2, @Int.as.AddWith.impl.Op.2(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.specific_fn.153203.2: <specific function> = specific_function %Int.as.AddWith.impl.Op.f0aafc.1, @Int.as.AddWith.impl.Op.3(%int_64, %ImplicitAs.facet.ba4) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.b38 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.b2d.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl.b2d [concrete]
+// CHECK:STDOUT:   %Core.import_ref.475cb3.2 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.266: @Int.as.AddWith.impl.b14.%Int.as.AddWith.impl.Op.type.2 (%Int.as.AddWith.impl.Op.type.188570.1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AddWith.impl.b14.%Int.as.AddWith.impl.Op.2 (constants.%Int.as.AddWith.impl.Op.fecf95.1)]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.c46 = impl_witness_table (%Core.import_ref.475cb3.2, %Core.import_ref.266), @Int.as.AddWith.impl.b14 [concrete]
+// CHECK:STDOUT:   %Core.Op.a76: @Int.as.AddWith.impl.b14.%Int.as.AddWith.impl.Op.type.1 (%Int.as.AddWith.impl.Op.type.188570.2) = import_ref Core//prelude/types/int, Op, loaded [symbolic = @Int.as.AddWith.impl.b14.%Int.as.AddWith.impl.Op.1 (constants.%Int.as.AddWith.impl.Op.fecf95.2)]
+// CHECK:STDOUT:   %Core.import_ref.475cb3.3 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.bba: @T.binding.as_type.as.AddWith.impl.83e.%T.binding.as_type.as.AddWith.impl.Op.type.2 (%T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.AddWith.impl.83e.%T.binding.as_type.as.AddWith.impl.Op.2 (constants.%T.binding.as_type.as.AddWith.impl.Op.363ab3.1)]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.787 = impl_witness_table (%Core.import_ref.475cb3.3, %Core.import_ref.bba), @T.binding.as_type.as.AddWith.impl.83e [concrete]
+// CHECK:STDOUT:   %Core.Op.fcd: @T.binding.as_type.as.AddWith.impl.83e.%T.binding.as_type.as.AddWith.impl.Op.type.1 (%T.binding.as_type.as.AddWith.impl.Op.type.4c3f59.2) = import_ref Core//prelude/types/int, Op, loaded [symbolic = @T.binding.as_type.as.AddWith.impl.83e.%T.binding.as_type.as.AddWith.impl.Op.1 (constants.%T.binding.as_type.as.AddWith.impl.Op.363ab3.2)]
+// CHECK:STDOUT:   %Core.import_ref.297: %Cpp.long.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.cb1 = impl_witness_table (%Core.import_ref.297), @Cpp.long.as.ImplicitAs.impl.e6d [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ArithmeticHeterogeneousLongAndI64() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.68c = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc10_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc10: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f2a]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.cc8]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %Cpp.long = call %bound_method.loc10(%int_1.loc10) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc10_21.2: %Cpp.long = converted %int_1.loc10, %.loc10_21.1 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc10_21.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.95b = value_binding_pattern y [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc11_10: type = splice_block %i64 [concrete = constants.%i64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0.loc11: %.567 = impl_witness_access constants.%ImplicitAs.impl_witness.556, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.57d]
+// CHECK:STDOUT:   %bound_method.loc11_16.1: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.102]
+// CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Core.IntLiteral.as.ImplicitAs.impl.Convert.2(constants.%int_64) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc11_16.2: <bound method> = bound_method %int_1.loc11, %specific_fn.loc11 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i64 = call %bound_method.loc11_16.2(%int_1.loc11) [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc11_16.1: %i64 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc11_16.2: %i64 = converted %int_1.loc11, %.loc11_16.1 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %y: %i64 = value_binding y, %.loc11_16.2
+// CHECK:STDOUT:   %AssertSameType.ref.loc12: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %x.ref.loc12: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %y.ref.loc12_22: %i64 = name_ref y, %y
+// CHECK:STDOUT:   %impl.elem1.loc12: %.e8e = impl_witness_access constants.%AddWith.impl_witness.525, element1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.86dab9.2]
+// CHECK:STDOUT:   %bound_method.loc12_20.1: <bound method> = bound_method %x.ref.loc12, %impl.elem1.loc12
+// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem1.loc12, @T.binding.as_type.as.AddWith.impl.Op.3(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.dee524.1]
+// CHECK:STDOUT:   %bound_method.loc12_20.2: <bound method> = bound_method %x.ref.loc12, %specific_fn.loc12
+// CHECK:STDOUT:   %.loc12_20.1: %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.1 = specific_constant imports.%Core.Op.fcd, @T.binding.as_type.as.AddWith.impl.83e(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.86dab9.1]
+// CHECK:STDOUT:   %Op.ref.loc12: %T.binding.as_type.as.AddWith.impl.Op.type.e6cc8e.1 = name_ref Op, %.loc12_20.1 [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.86dab9.1]
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.bound: <bound method> = bound_method %x.ref.loc12, %Op.ref.loc12
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc12, @T.binding.as_type.as.AddWith.impl.Op.4(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%T.binding.as_type.as.AddWith.impl.Op.specific_fn.dee524.2]
+// CHECK:STDOUT:   %bound_method.loc12_20.3: <bound method> = bound_method %x.ref.loc12, %T.binding.as_type.as.AddWith.impl.Op.specific_fn
+// CHECK:STDOUT:   %impl.elem0.loc12: %.8a2 = impl_witness_access constants.%ImplicitAs.impl_witness.bbc, element0 [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc12_18: <bound method> = bound_method %x.ref.loc12, %impl.elem0.loc12
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.call.loc12: init %i64 = call %bound_method.loc12_18(%x.ref.loc12)
+// CHECK:STDOUT:   %.loc12_18.1: %i64 = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc12
+// CHECK:STDOUT:   %.loc12_18.2: %i64 = converted %x.ref.loc12, %.loc12_18.1
+// CHECK:STDOUT:   %T.binding.as_type.as.AddWith.impl.Op.call: init %i64 = call %bound_method.loc12_20.3(%.loc12_18.2, %y.ref.loc12_22)
+// CHECK:STDOUT:   %y.ref.loc12_25: %i64 = name_ref y, %y
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc12: <specific function> = specific_function %AssertSameType.ref.loc12, @AssertSameType(constants.%i64) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc12_20.2: %i64 = value_of_initializer %T.binding.as_type.as.AddWith.impl.Op.call
+// CHECK:STDOUT:   %.loc12_20.3: %i64 = converted %T.binding.as_type.as.AddWith.impl.Op.call, %.loc12_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc12: init %empty_tuple.type = call %AssertSameType.specific_fn.loc12(%.loc12_20.3, %y.ref.loc12_25)
+// CHECK:STDOUT:   %AssertSameType.ref.loc13: %AssertSameType.type = name_ref AssertSameType, file.%AssertSameType.decl [concrete = constants.%AssertSameType]
+// CHECK:STDOUT:   %y.ref.loc13_18: %i64 = name_ref y, %y
+// CHECK:STDOUT:   %x.ref.loc13: %Cpp.long = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem1.loc13: %.f5b = impl_witness_access constants.%AddWith.impl_witness.023, element1 [concrete = constants.%Int.as.AddWith.impl.Op.f0aafc.2]
+// CHECK:STDOUT:   %bound_method.loc13_20.1: <bound method> = bound_method %y.ref.loc13_18, %impl.elem1.loc13
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem1.loc13, @Int.as.AddWith.impl.Op.2(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%Int.as.AddWith.impl.Op.specific_fn.153203.1]
+// CHECK:STDOUT:   %bound_method.loc13_20.2: <bound method> = bound_method %y.ref.loc13_18, %specific_fn.loc13
+// CHECK:STDOUT:   %.loc13_20.1: %Int.as.AddWith.impl.Op.type.0fadc0.1 = specific_constant imports.%Core.Op.a76, @Int.as.AddWith.impl.b14(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%Int.as.AddWith.impl.Op.f0aafc.1]
+// CHECK:STDOUT:   %Op.ref.loc13: %Int.as.AddWith.impl.Op.type.0fadc0.1 = name_ref Op, %.loc13_20.1 [concrete = constants.%Int.as.AddWith.impl.Op.f0aafc.1]
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.bound: <bound method> = bound_method %y.ref.loc13_18, %Op.ref.loc13
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc13, @Int.as.AddWith.impl.Op.3(constants.%int_64, constants.%ImplicitAs.facet.ba4) [concrete = constants.%Int.as.AddWith.impl.Op.specific_fn.153203.2]
+// CHECK:STDOUT:   %bound_method.loc13_20.3: <bound method> = bound_method %y.ref.loc13_18, %Int.as.AddWith.impl.Op.specific_fn
+// CHECK:STDOUT:   %impl.elem0.loc13: %.8a2 = impl_witness_access constants.%ImplicitAs.impl_witness.bbc, element0 [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc13_22: <bound method> = bound_method %x.ref.loc13, %impl.elem0.loc13
+// CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.call.loc13: init %i64 = call %bound_method.loc13_22(%x.ref.loc13)
+// CHECK:STDOUT:   %.loc13_22.1: %i64 = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc13
+// CHECK:STDOUT:   %.loc13_22.2: %i64 = converted %x.ref.loc13, %.loc13_22.1
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call: init %i64 = call %bound_method.loc13_20.3(%y.ref.loc13_18, %.loc13_22.2)
+// CHECK:STDOUT:   %y.ref.loc13_25: %i64 = name_ref y, %y
+// CHECK:STDOUT:   %AssertSameType.specific_fn.loc13: <specific function> = specific_function %AssertSameType.ref.loc13, @AssertSameType(constants.%i64) [concrete = constants.%AssertSameType.specific_fn]
+// CHECK:STDOUT:   %.loc13_20.2: %i64 = value_of_initializer %Int.as.AddWith.impl.Op.call
+// CHECK:STDOUT:   %.loc13_20.3: %i64 = converted %Int.as.AddWith.impl.Op.call, %.loc13_20.2
+// CHECK:STDOUT:   %AssertSameType.call.loc13: init %empty_tuple.type = call %AssertSameType.specific_fn.loc13(%.loc13_20.3, %y.ref.loc13_25)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

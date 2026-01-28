@@ -56,10 +56,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     clang_decl_id60000000: {key: "<translation unit>", inst_id: inst60000011}
 // CHECK:STDOUT:     clang_decl_id60000001: {key: "struct X {}", inst_id: inst60000014}
 // CHECK:STDOUT:     clang_decl_id60000002: {key: "X * _Nonnull p", inst_id: inst60000022}
-// CHECK:STDOUT:     clang_decl_id60000003: {key: {decl: "void f(X x = {})", num_params: 0}, inst_id: inst6000002D}
-// CHECK:STDOUT:     clang_decl_id60000004: {key: {decl: "extern void f__carbon_thunk()", num_params: 0}, inst_id: inst60000030}
-// CHECK:STDOUT:     clang_decl_id60000005: {key: {decl: "void f(X x = {})", num_params: 1}, inst_id: inst6000003B}
-// CHECK:STDOUT:     clang_decl_id60000006: {key: {decl: "extern void f__carbon_thunk(X * _Nonnull x)", num_params: 1}, inst_id: inst60000043}
+// CHECK:STDOUT:     clang_decl_id60000003: {key: {decl: "void f(X x = {})", kind: normal, num_params: 0}, inst_id: inst6000002D}
+// CHECK:STDOUT:     clang_decl_id60000004: {key: {decl: "extern void f__carbon_thunk()", kind: normal, num_params: 0}, inst_id: inst60000030}
+// CHECK:STDOUT:     clang_decl_id60000005: {key: {decl: "void f(X x = {})", kind: normal, num_params: 1}, inst_id: inst6000003B}
+// CHECK:STDOUT:     clang_decl_id60000006: {key: {decl: "extern void f__carbon_thunk(X * _Nonnull x)", kind: normal, num_params: 1}, inst_id: inst60000043}
 // CHECK:STDOUT:     clang_decl_id60000007: {key: "X * _Nonnull global", inst_id: inst6000004E}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Cpp): inst60000011, name0: inst6000001D}}

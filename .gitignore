@@ -9,6 +9,11 @@
 /github_tools/bazel-*
 /github_tools/MODULE.bazel.lock
 
+# We also have example Bazel projects that shouldn't have their implementation
+# details committed.
+/examples/**/bazel-*
+/examples/**/MODULE.bazel.lock
+
 # Directories created by python.
 **/__pycache__/
 

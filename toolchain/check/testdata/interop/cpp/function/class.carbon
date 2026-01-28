@@ -18,85 +18,66 @@
 
 class C;
 
-auto foo(C) -> void;
+auto foo1(C) -> void;
+auto foo2(C) -> void;
 
 // --- fail_import_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'C' is incomplete [CppInteropParseError]
+// CHECK:STDERR:     4 | auto foo1(C) -> void;
+// CHECK:STDERR:       |      ^~~~
+// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'C' [CppInteropParseNote]
+// CHECK:STDERR:     2 | class C;
+// CHECK:STDERR:       |       ^
 import Cpp library "decl_value_param_type.h";
 
-fn F() {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:11: error: invalid use of incomplete type `Cpp.C` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+fn F(p: Cpp.C*) {
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo1(*p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:5:6: error: argument type 'C' is incomplete [CppInteropParseError]
+  // CHECK:STDERR:     5 | auto foo2(C) -> void;
+  // CHECK:STDERR:       |      ^~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'C' [CppInteropParseNote]
+  // CHECK:STDERR:     2 | class C;
+  // CHECK:STDERR:       |       ^
+  Cpp.foo1(*p);
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+28]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:   Cpp.foo2(*p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:   Cpp.foo1(*p);
+  // CHECK:STDERR:            ^~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:4:12: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo1(C) -> void;
+  // CHECK:STDERR:            ^
   // CHECK:STDERR:
-  Cpp.foo({} as Cpp.C);
-}
-
-// --- fail_import_decl_value_param_type_previously_imported.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "decl_value_param_type.h";
-
-fn F() {
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+12]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   let c: Cpp.C;
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:   Cpp.foo2(*p);
+  // CHECK:STDERR:            ^~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:5:12: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo2(C) -> void;
+  // CHECK:STDERR:            ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
-  // CHECK:STDERR:   let c: Cpp.C;
-  // CHECK:STDERR:               ^
-  // CHECK:STDERR:
-  let c: Cpp.C;
-  Cpp.foo(c);
-}
-
-// ============================================================================
-// Forward-declared class as parameter type imported twice
-// ============================================================================
-
-// --- double_decl_value_param_type.h
-
-class C;
-
-auto foo1(C) -> void;
-auto foo2(C) -> void;
-
-// --- fail_import_double_decl_value_param_type.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "double_decl_value_param_type.h";
-
-fn F() {
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.C` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.C);
-  // CHECK:STDERR:            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  Cpp.foo1({} as Cpp.C);
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.C` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.C);
-  // CHECK:STDERR:            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  Cpp.foo2({} as Cpp.C);
+  Cpp.foo2(*p);
 }
 
 // ============================================================================
@@ -115,9 +96,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_no_data_members_value_param_type.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -151,13 +132,13 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       |           ^
 import Cpp library "non_copyable_param_type.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   Cpp.foo(c);
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -175,21 +156,15 @@ class C {
 
 auto foo(C) -> void;
 
-// --- fail_todo_import_definition_single_data_member_value_param_type.carbon
+// --- import_definition_single_data_member_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "definition_single_data_member_value_param_type.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+6]]:11: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: zero initialization [class C] -> list initialization via constructor [class C]
-  // CHECK:STDERR: ` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -209,21 +184,15 @@ class C {
 
 auto foo(C) -> void;
 
-// --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
+// --- import_definition_multiple_data_members_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "definition_multiple_data_members_value_param_type.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+6]]:11: error: semantics TODO: `Unsupported initialization sequence:
-  // CHECK:STDERR: Normal sequence: zero initialization [class C] -> list initialization via constructor [class C]
-  // CHECK:STDERR: ` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
-  // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -243,9 +212,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_in_namespace_value_param_type.h";
 
-fn F() {
+fn F(c: Cpp.N.C) {
   //@dump-sem-ir-begin
-  Cpp.foo({} as Cpp.N.C);
+  Cpp.foo(c);
   // Check that the parameter type was imported correctly.
   var x: Cpp.N.C;
   //@dump-sem-ir-end
@@ -268,9 +237,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_in_relative_namespace_value_param_type.h";
 
-fn F() {
+fn F(c: Cpp.N1.N2.C) {
   //@dump-sem-ir-begin
-  Cpp.N1.foo({} as Cpp.N1.N2.C);
+  Cpp.N1.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -293,9 +262,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_in_outer_definition.h";
 
-fn F() {
+fn F(c: Cpp.O.C) {
   //@dump-sem-ir-begin
-  Cpp.foo({} as Cpp.O.C);
+  Cpp.foo(c);
   var x: Cpp.O;
   //@dump-sem-ir-end
 }
@@ -319,10 +288,10 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_with_static_method.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
   Cpp.C.bar();
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   //@dump-sem-ir-end
 }
 
@@ -332,9 +301,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "definition_with_static_method.h";
 
-fn F() {
+fn F(c: Cpp.C) {
   //@dump-sem-ir-begin
-  Cpp.foo({} as Cpp.C);
+  Cpp.foo(c);
   Cpp.C.bar();
   //@dump-sem-ir-end
 }
@@ -527,27 +496,22 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -555,52 +519,36 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc8_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %C to %.loc8_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_12.4: ref %C = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_14.1: ref %C = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_14.2: %C = acquire_value %.loc8_14.1
-// CHECK:STDOUT:   %.loc8_14.3: ref %C = value_as_ref %.loc8_14.2
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8_14.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_non_copyable_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -608,85 +556,88 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc24_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc24_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc24_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc24_12.3: init %C to %.loc24_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc24_12.4: ref %C = temporary %.loc24_12.2, %.loc24_12.3
-// CHECK:STDOUT:   %.loc24_14.1: ref %C = converted %.loc24_12.1, %.loc24_12.4
-// CHECK:STDOUT:   %.loc24_14.2: %C = acquire_value %.loc24_14.1
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc24_14.2)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc24_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc24_12.4)
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc14_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc14_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc14_14: %C = converted %.loc14_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc14_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc14_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc14_14: %C = converted %.loc14_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -694,13 +645,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
@@ -710,16 +658,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -727,21 +675,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N.ref.loc8: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc8_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %C to %.loc8_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_12.4: ref %C = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_14.1: ref %C = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_14.2: %C = acquire_value %.loc8_14.1
-// CHECK:STDOUT:   %.loc8_14.3: ref %C = value_as_ref %.loc8_14.2
-// CHECK:STDOUT:   %addr: %ptr.838 = addr_of %.loc8_14.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.838 = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.69f = ref_binding_pattern x [concrete]
@@ -754,10 +694,8 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %C = ref_binding x, %x.var
-// CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %x.var, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%x.var)
-// CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_12.4)
+// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%C.cpp_destructor
+// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -767,17 +705,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c0c: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -786,16 +719,16 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .N2 = %N2
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -803,61 +736,42 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N1.ref.loc8_6: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N1.ref.loc8: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc8_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N1.ref.loc8_23: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
-// CHECK:STDOUT:   %N2.ref: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc8_15.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc8_15.3: init %C to %.loc8_15.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_15.4: ref %C = temporary %.loc8_15.2, %.loc8_15.3
-// CHECK:STDOUT:   %.loc8_17.1: ref %C = converted %.loc8_15.1, %.loc8_15.4
-// CHECK:STDOUT:   %.loc8_17.2: %C = acquire_value %.loc8_17.1
-// CHECK:STDOUT:   %.loc8_17.3: ref %C = value_as_ref %.loc8_17.2
-// CHECK:STDOUT:   %addr: %ptr.c0c = addr_of %.loc8_17.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.c0c = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_15.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_15.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.de2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor.type: type = fn_type @O.cpp_destructor [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor: %O.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .O = %O.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -865,21 +779,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %O.ref.loc8: type = name_ref O, imports.%O.decl [concrete = constants.%O]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc8_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %C to %.loc8_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_12.4: ref %C = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_14.1: ref %C = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_14.2: %C = acquire_value %.loc8_14.1
-// CHECK:STDOUT:   %.loc8_14.3: ref %C = value_as_ref %.loc8_14.2
-// CHECK:STDOUT:   %addr: %ptr.de2 = addr_of %.loc8_14.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.de2 = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cff = ref_binding_pattern x [concrete]
@@ -893,34 +799,25 @@ fn F() {
 // CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %O) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %O) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %C.bar.cpp_overload_set.type: type = cpp_overload_set_type @C.bar.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.bar.cpp_overload_set.value: %C.bar.cpp_overload_set.type = cpp_overload_set_value @C.bar.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.bar.type: type = fn_type @C.bar [concrete]
 // CHECK:STDOUT:   %C.bar: %C.bar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -940,42 +837,28 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %bar.ref: %C.bar.cpp_overload_set.type = name_ref bar, imports.%C.bar.cpp_overload_set.value [concrete = constants.%C.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.bar.call: init %empty_tuple.type = call imports.%C.bar.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc9_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc9_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc9_12.3: init %C to %.loc9_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_12.4: ref %C = temporary %.loc9_12.2, %.loc9_12.3
-// CHECK:STDOUT:   %.loc9_14.1: ref %C = converted %.loc9_12.1, %.loc9_12.4
-// CHECK:STDOUT:   %.loc9_14.2: %C = acquire_value %.loc9_14.1
-// CHECK:STDOUT:   %.loc9_14.3: ref %C = value_as_ref %.loc9_14.2
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc9_14.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc9: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc9
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc9_12.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
@@ -983,18 +866,16 @@ fn F() {
 // CHECK:STDOUT:   %C.bar.cpp_overload_set.value: %C.bar.cpp_overload_set.type = cpp_overload_set_value @C.bar.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.bar.type: type = fn_type @C.bar [concrete]
 // CHECK:STDOUT:   %C.bar: %C.bar.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
-// CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1004,31 +885,20 @@ fn F() {
 // CHECK:STDOUT:   %C.bar.decl: %C.bar.type = fn_decl @C.bar [concrete = constants.%C.bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc8_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.3: init %C to %.loc8_12.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_12.4: ref %C = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_14.1: ref %C = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_14.2: %C = acquire_value %.loc8_14.1
-// CHECK:STDOUT:   %.loc8_14.3: ref %C = value_as_ref %.loc8_14.2
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8_14.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc8: ref %C = value_as_ref %c.ref
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %bar.ref: %C.bar.cpp_overload_set.type = name_ref bar, imports.%C.bar.cpp_overload_set.value [concrete = constants.%C.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.bar.call: init %empty_tuple.type = call imports.%C.bar.decl()
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:

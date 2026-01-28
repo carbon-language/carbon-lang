@@ -46,3 +46,20 @@ config_setting(
     name = "fastbuild",
     values = {"compilation_mode": "fastbuild"},
 )
+
+filegroup(
+    name = "installed_cc_toolchain_starlark",
+    srcs = [
+        "cc_toolchain_actions.bzl",
+        "cc_toolchain_base_features.bzl",
+        "cc_toolchain_config_features.bzl",
+        "cc_toolchain_cpp_features.bzl",
+        "cc_toolchain_debugging.bzl",
+        "cc_toolchain_features.bzl",
+        "cc_toolchain_linking.bzl",
+        "cc_toolchain_modules.bzl",
+        "cc_toolchain_optimization.bzl",
+        "cc_toolchain_sanitizer_features.bzl",
+        "cc_toolchain_tools.bzl",
+    ],
+)

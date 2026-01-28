@@ -66,7 +66,14 @@ impl i32 as ImplicitAs(CppCompat.Long32) {
   fn Convert[self: Self]() -> CppCompat.Long32 = "int.convert";
 }
 
-// TODO: ImplicitAs from Long32 to Int(N) if N > 32.
+// TODO: Generalize ImplicitAs from Long32 to Int(N) for all N > 32.
+// N == 32 is explicitly skipped, as Core.Cpp.Long32 is considered to
+// be between i32 and i33 (details:
+// https://github.com/carbon-language/carbon-lang/issues/6275#issuecomment-3488010485).
+// This follows the rule that implicit conversions exist for all iN -> iM if
+// M > N. Otherwise, operations like i32 + Cpp.long result in i32, instead of
+// Cpp.long, which differs from the result for Cpp.long + i32 -> Cpp.long, as
+// the best match for the left operand is being selected.
 final impl CppCompat.Long32 as ImplicitAs(i64) {
   fn Convert[self: Self]() -> i64 = "int.convert";
 }
@@ -273,8 +280,63 @@ final impl CppCompat.Long32 as ModWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 
-// TODO: ULong32, LongLong64, ULongLong64: homogeneous arithmetic operators.
-// TODO: Long32, ULong32, LongLong64, ULongLong64: heterogeneous arithmetic operators.
+// - Heterogeneous.
+
+// - CppCompat.Long32 on left-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    CppCompat.Long32 as AddWith(T) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.sadd";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    CppCompat.Long32 as SubWith(T) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.ssub";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    CppCompat.Long32 as MulWith(T) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smul";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    CppCompat.Long32 as DivWith(T) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.sdiv";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    CppCompat.Long32 as ModWith(T) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smod";
+}
+
+// - CppCompat.Long32 on right-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    T as AddWith(CppCompat.Long32) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.sadd";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    T as SubWith(CppCompat.Long32) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.ssub";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    T as MulWith(CppCompat.Long32) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smul";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    T as DivWith(CppCompat.Long32) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.sdiv";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.Long32)]
+    T as ModWith(CppCompat.Long32) where .Result = CppCompat.Long32 {
+  fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smod";
+}
+
+// TODO: ULong32, LongLong64, ULongLong64: arithmetic operators.
 
 // Bitwise operators.
 

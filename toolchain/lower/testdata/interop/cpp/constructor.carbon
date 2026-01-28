@@ -35,6 +35,10 @@ fn F() {
   let _: Cpp.C = Cpp.C.C();
 }
 
+fn G() {
+  let _: Cpp.C = ();
+}
+
 // ============================================================================
 // Copy constructor
 // ============================================================================
@@ -80,6 +84,53 @@ fn F() {
   let _: Cpp.Derived = Cpp.Derived.Derived();
 }
 
+// ============================================================================
+// Multiple arguments
+// ============================================================================
+
+// --- multi_argument.h
+
+class C {
+ public:
+  C() {}
+  C(int) {}
+  C(int, int) {}
+  C(int, int, int, int = 0) {}
+};
+
+// --- call_multi_argument.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "multi_argument.h";
+
+fn Zero() {
+  let _: Cpp.C = Cpp.C.C();
+  let _: Cpp.C = ();
+  let _: Cpp.C = {};
+}
+
+fn One() {
+  let _: Cpp.C = Cpp.C.C(1);
+  let _: Cpp.C = 2;
+  let _: Cpp.C = (3,);
+}
+
+fn Two() {
+  let _: Cpp.C = Cpp.C.C(1, 2);
+  let _: Cpp.C = (3, 4);
+}
+
+fn Three() {
+  let _: Cpp.C = Cpp.C.C(1, 2, 3);
+  let _: Cpp.C = (4, 5, 6);
+}
+
+fn Four() {
+  let _: Cpp.C = Cpp.C.C(1, 2, 3, 4);
+  let _: Cpp.C = (5, 6, 7, 8);
+}
+
 // CHECK:STDOUT: ; ModuleID = 'import_default.carbon'
 // CHECK:STDOUT: source_filename = "import_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -112,6 +163,16 @@ fn F() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk_tuple(ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 4 dereferenceable(8) %0)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #2 !dbg !18 {
 // CHECK:STDOUT: entry:
@@ -121,8 +182,21 @@ fn F() {
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #2 !dbg !23 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc11_19.2.temp = alloca [8 x i8], align 1, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_19.2.temp), !dbg !24
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple(ptr %.loc11_19.2.temp), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -156,6 +230,9 @@ fn F() {
 // CHECK:STDOUT: !20 = !{null}
 // CHECK:STDOUT: !21 = !DILocation(line: 7, column: 18, scope: !18)
 // CHECK:STDOUT: !22 = !DILocation(line: 6, column: 1, scope: !18)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !7, line: 10, type: !19, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 18, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 10, column: 1, scope: !23)
 // CHECK:STDOUT: ; ModuleID = 'call_copy.carbon'
 // CHECK:STDOUT: source_filename = "call_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -327,3 +404,356 @@ fn F() {
 // CHECK:STDOUT: !19 = !{null}
 // CHECK:STDOUT: !20 = !DILocation(line: 7, column: 24, scope: !17)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !17)
+// CHECK:STDOUT: ; ModuleID = 'call_multi_argument.carbon'
+// CHECK:STDOUT: source_filename = "call_multi_argument.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN1CC2Ev = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN1CC2Ei = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN1CC2Eii = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_ZN1CC2Eiiii = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: @C.val.loc9_19.3 = internal constant {} zeroinitializer
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %0)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #1 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk_tuple(ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %0)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Ei.carbon_thunk(i32 noundef %0, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %2 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %1, i32 noundef %2)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0) unnamed_addr #1 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Ei.carbon_thunk_tuple(i32 noundef %0, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %2 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Ei(ptr noundef nonnull align 1 dereferenceable(1) %1, i32 noundef %2)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eii.carbon_thunk(i32 noundef %0, i32 noundef %1, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %3 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eii(ptr noundef nonnull align 1 dereferenceable(1) %2, i32 noundef %3, i32 noundef %4)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1) unnamed_addr #1 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   %this2 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eii.carbon_thunk_tuple(i32 noundef %0, i32 noundef %1, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %2 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %3 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eii(ptr noundef nonnull align 1 dereferenceable(1) %2, i32 noundef %3, i32 noundef %4)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eiiii.carbon_thunk3(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %3 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   %6 = load i32, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %3, i32 noundef %4, i32 noundef %5, i32 noundef %6, i32 noundef 0)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %this, i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3) unnamed_addr #1 comdat align 2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr3 = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %3, ptr %.addr3, align 4, !tbaa !8
+// CHECK:STDOUT:   %this4 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 noundef %0, i32 noundef %1, i32 noundef %2, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %3 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   %6 = load i32, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %3, i32 noundef %4, i32 noundef %5, i32 noundef %6, i32 noundef 0)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eiiii.carbon_thunk(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr3 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %3, ptr %.addr3, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %4 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %6 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   %7 = load i32, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   %8 = load i32, ptr %.addr3, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %4, i32 noundef %5, i32 noundef %6, i32 noundef %7, i32 noundef %8)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca i32, align 4
+// CHECK:STDOUT:   %.addr1 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr3 = alloca i32, align 4
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 %3, ptr %.addr3, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %4 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr, align 4, !tbaa !8
+// CHECK:STDOUT:   %6 = load i32, ptr %.addr1, align 4, !tbaa !8
+// CHECK:STDOUT:   %7 = load i32, ptr %.addr2, align 4, !tbaa !8
+// CHECK:STDOUT:   %8 = load i32, ptr %.addr3, align 4, !tbaa !8
+// CHECK:STDOUT:   call void @_ZN1CC2Eiiii(ptr noundef nonnull align 1 dereferenceable(1) %4, i32 noundef %5, i32 noundef %6, i32 noundef %7, i32 noundef %8)
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CZero.Main() #2 !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7_26.1.temp = alloca {}, align 8, !dbg !18
+// CHECK:STDOUT:   %.loc8_19.2.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc9_19.2.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !19
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple(ptr %.loc8_19.2.temp), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.2.temp), !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_19.2.temp, ptr align 1 @C.val.loc9_19.3, i64 0, i1 false), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_COne.Main() #2 !dbg !22 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc13_27.1.temp = alloca {}, align 8, !dbg !23
+// CHECK:STDOUT:   %.loc14_18.1.temp = alloca {}, align 8, !dbg !24
+// CHECK:STDOUT:   %.loc15_21.2.temp = alloca {}, align 8, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_27.1.temp), !dbg !23
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 1, ptr %.loc13_27.1.temp), !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_18.1.temp), !dbg !24
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 2, ptr %.loc14_18.1.temp), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_21.2.temp), !dbg !25
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 3, ptr %.loc15_21.2.temp), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTwo.Main() #2 !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc19_30.1.temp = alloca {}, align 8, !dbg !28
+// CHECK:STDOUT:   %.loc20_23.2.temp = alloca {}, align 8, !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_30.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk(i32 1, i32 2, ptr %.loc19_30.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_23.2.temp), !dbg !29
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 3, i32 4, ptr %.loc20_23.2.temp), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CThree.Main() #2 !dbg !31 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc24_33.1.temp = alloca {}, align 8, !dbg !32
+// CHECK:STDOUT:   %.loc25_26.2.temp = alloca {}, align 8, !dbg !33
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_33.1.temp), !dbg !32
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk3(i32 1, i32 2, i32 3, ptr %.loc24_33.1.temp), !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_26.2.temp), !dbg !33
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 4, i32 5, i32 6, ptr %.loc25_26.2.temp), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CFour.Main() #2 !dbg !35 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc29_36.1.temp = alloca {}, align 8, !dbg !36
+// CHECK:STDOUT:   %.loc30_29.2.temp = alloca {}, align 8, !dbg !37
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_36.1.temp), !dbg !36
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk(i32 1, i32 2, i32 3, i32 4, ptr %.loc29_36.1.temp), !dbg !36
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_29.2.temp), !dbg !37
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 5, i32 6, i32 7, i32 8, ptr %.loc30_29.2.temp), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #4
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ei, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Eii, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN1CC2Eiiii, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "call_multi_argument.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"p1 _ZTS1C", !14, i64 0}
+// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Zero", linkageName: "_CZero.Main", scope: null, file: !7, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{null}
+// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 18, scope: !15)
+// CHECK:STDOUT: !19 = !DILocation(line: 8, column: 18, scope: !15)
+// CHECK:STDOUT: !20 = !DILocation(line: 9, column: 18, scope: !15)
+// CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !15)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "One", linkageName: "_COne.Main", scope: null, file: !7, line: 12, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 18, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 14, column: 18, scope: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 15, column: 18, scope: !22)
+// CHECK:STDOUT: !26 = !DILocation(line: 12, column: 1, scope: !22)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !7, line: 18, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !28 = !DILocation(line: 19, column: 18, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 20, column: 18, scope: !27)
+// CHECK:STDOUT: !30 = !DILocation(line: 18, column: 1, scope: !27)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !7, line: 23, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !32 = !DILocation(line: 24, column: 18, scope: !31)
+// CHECK:STDOUT: !33 = !DILocation(line: 25, column: 18, scope: !31)
+// CHECK:STDOUT: !34 = !DILocation(line: 23, column: 1, scope: !31)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !7, line: 28, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !36 = !DILocation(line: 29, column: 18, scope: !35)
+// CHECK:STDOUT: !37 = !DILocation(line: 30, column: 18, scope: !35)
+// CHECK:STDOUT: !38 = !DILocation(line: 28, column: 1, scope: !35)

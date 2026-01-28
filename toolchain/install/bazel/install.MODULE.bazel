@@ -1,0 +1,23 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+"""Carbon toolchain Bazel module.
+
+This module exposes Bazel `cc_toolchain`s built from this Carbon toolchain.
+
+Add the repository to your `MODULES.bazel` and then use
+`register_toolchains("@carbon_toolchain//:all")` to get these toolchains. For
+more detailed examples, see the Carbon project examples in examples/bazel
+"""
+
+module(name = "carbon_toolchain")
+
+bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+carbon_toolchain_config = use_extension(
+    "//bazel:carbon_toolchain.bzl",
+    "carbon_toolchain_config",
+)
+use_repo(carbon_toolchain_config, "carbon_toolchain_config")
