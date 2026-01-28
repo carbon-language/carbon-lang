@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 6305bf1ae645ab7541be4f5028a86239316178eb # frozen: 26.1.0
+    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # frozen: 25.1.0
     hooks:
       - id: black
   - repo: local

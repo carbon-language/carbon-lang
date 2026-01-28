@@ -21,6 +21,7 @@ import re
 import sys
 from typing import Dict, List, NamedTuple, Set
 
+
 # Example or test diagnostics, ignored because they're expected to not pass.
 IGNORED = set(["MyDiagnostic", "TestDiagnostic", "TestDiagnosticNote"])
 

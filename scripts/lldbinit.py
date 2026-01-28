@@ -39,7 +39,8 @@ dump_re = re.compile(r'\(std::string\) "([\s\S]+)"', re.MULTILINE)
 # A helper to ease calling the Dump() free functions.
 def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
     def print_usage() -> None:
-        print("""
+        print(
+            """
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
@@ -65,7 +66,8 @@ Example usage:
   # Dumps the instruction with id 42, with a `context()` method for accessing
   # the `Check::Context&`.
   dump context() inst42
-""")
+"""
+        )
 
     args = command.split(" ")
     if len(args) < 2:
