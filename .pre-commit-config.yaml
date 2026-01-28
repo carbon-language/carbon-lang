@@ -90,7 +90,7 @@ repos:
         types_or: [c++, def]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==20.1.8']
+        additional_dependencies: ['clang-format==21.1.8']
 
   - repo: local
     hooks:
