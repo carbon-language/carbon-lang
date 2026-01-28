@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # frozen: 25.1.0
+    rev: 6305bf1ae645ab7541be4f5028a86239316178eb # frozen: 26.1.0
     hooks:
       - id: black
   - repo: local
@@ -134,7 +134,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '850d8bf806620ef89a99381c5cf5ea2c1ea826dd' # frozen: v1.17.0
+    rev: 'a66e98df7b4aeeb3724184b332785976d062b92e' # frozen: v1.19.1
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.

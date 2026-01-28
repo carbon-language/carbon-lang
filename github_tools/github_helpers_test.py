@@ -11,7 +11,6 @@ from unittest import mock
 
 import github_helpers
 
-
 _TEST_QUERY = """
 query {
   top(login: "foo") {
