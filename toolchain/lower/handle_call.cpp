@@ -8,8 +8,10 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "toolchain/lower/aggregate.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -253,6 +255,61 @@ static auto CreateBinaryOperatorForBuiltin(
     }
     default: {
       CARBON_FATAL("Unexpected binary operator {0}", builtin_kind);
+    }
+  }
+}
+
+// Handles a call to `cpp.std.initializer_list.make`.
+static auto StoreArrayAsStdInitializerList(FunctionContext& context,
+                                           SemIR::InstId init_list_id,
+                                           SemIR::InstId array_inst_id)
+    -> void {
+  // Extract the bound from the array type.
+  auto [array_type_file, array_type_id] =
+      context.GetTypeIdOfInst(array_inst_id);
+  auto array_type = array_type_file->types().GetAs<SemIR::ArrayType>(
+      array_type_file->types().GetObjectRepr(array_type_id));
+  auto array_bound = array_type_file->GetArrayBoundValue(array_type.bound_id);
+  CARBON_CHECK(array_bound, "Array type with non-constant bound");
+
+  // Store the array pointer in the first element of the initializer list.
+  auto* array_ptr = context.GetValue(array_inst_id);
+  auto* begin_ptr =
+      GetAggregateElement(context, init_list_id, SemIR::ElementIndex(0),
+                          SemIR::InstId::None, "init_list.begin");
+  context.builder().CreateStore(array_ptr, begin_ptr);
+
+  // Store the end or size to the second element, depending on the layout.
+  auto init_list_type = context.GetTypeIdOfInst(init_list_id);
+  switch (auto layout = SemIR::GetStdInitializerListLayout(
+              *init_list_type.file, init_list_type.type_id);
+          layout.kind) {
+    case SemIR::StdInitializerListLayout::None: {
+      CARBON_FATAL("Unrecognized initializer list");
+      break;
+    }
+
+    case SemIR::StdInitializerListLayout::PointerPointer: {
+      auto* end_ptr =
+          GetAggregateElement(context, init_list_id, SemIR::ElementIndex(1),
+                              SemIR::InstId::None, "init_list.end");
+      auto* array_end_ptr = context.builder().CreateConstInBoundsGEP1_32(
+          context.GetTypeOfInst(array_inst_id), array_ptr, 1, "array.end");
+      context.builder().CreateStore(array_end_ptr, end_ptr);
+      break;
+    }
+
+    case SemIR::StdInitializerListLayout::PointerInt: {
+      auto* size_ptr =
+          GetAggregateElement(context, init_list_id, SemIR::ElementIndex(1),
+                              SemIR::InstId::None, "init_list.size");
+      context.builder().CreateStore(
+          llvm::ConstantInt::get(
+              context.GetType(FunctionContext::TypeInFile{
+                  .file = &context.sem_ir(), .type_id = layout.size_type_id}),
+              *array_bound),
+          size_ptr);
+      break;
     }
   }
 }
@@ -509,6 +566,15 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
       context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
+      return;
+    }
+
+    case SemIR::BuiltinFunctionKind::CppStdInitializerListMake: {
+      // TODO: We assume that the initializer list uses an in-place initializing
+      // representation, but we don't enforce that when type-checking the
+      // builtin.
+      StoreArrayAsStdInitializerList(context, arg_ids[1], arg_ids[0]);
+      context.SetLocal(inst_id, context.GetValue(arg_ids[1]));
       return;
     }
   }

@@ -133,4 +133,7 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PointerUnsafeConvert)
 // Facet type combination.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAnd)
 
+// C++ interop builtins.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(CppStdInitializerListMake)
+
 #undef CARBON_SEM_IR_BUILTIN_FUNCTION_KIND
