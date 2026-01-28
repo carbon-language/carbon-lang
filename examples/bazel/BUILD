@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# Note that this is not a BUILD file that part of the larger Carbon project, and
+# Note that this is not a BUILD file that is part of the larger Carbon project, and
 # is not built by running `bazel build //examples/bazel/...`. This is its own
 # _distinct_ example Bazel project rooted at `examples/bazel`. You will need to
 # `cd` into this directory to interact with it.
