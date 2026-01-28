@@ -24,9 +24,12 @@ auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
 auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
   // TODO: this does some unnecessary work to compute non-lexical scopes,
   // so a separate API on ScopeStack could be more efficient.
-  auto return_slot_id = context.scope_stack()
-                            .LookupInLexicalScopes(SemIR::NameId::ReturnSlot)
-                            .first;
+  auto return_slot_id =
+      context.scope_stack()
+          .LookupInLexicalScopes(SemIR::NameId::ReturnSlot,
+                                 /*use_loc_id=*/SemIR::LocId::None,
+                                 /*is_reachable=*/true)
+          .first;
   return return_slot_id;
 }
 

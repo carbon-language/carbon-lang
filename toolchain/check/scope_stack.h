@@ -148,35 +148,20 @@ class ScopeStack {
   }
 
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
-
   // do not look past `scope_index`. Returns the existing lookup result, if any.
-
   // If `use_loc_id` is specified, the name is marked as used at that location.
-
   auto LookupInLexicalScopesWithin(SemIR::NameId name_id,
-
                                    ScopeIndex scope_index,
-
-                                   SemIR::LocId use_loc_id = SemIR::LocId::None,
-
-                                   bool is_reachable = true) -> SemIR::InstId;
+                                   SemIR::LocId use_loc_id, bool is_reachable)
+      -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope and related lexical
-
   // scopes. Returns the innermost lexical lookup result, if any, along with a
-
   // list of non-lexical scopes in which lookup should also be performed,
-
   // ordered from outermost to innermost.
-
   // If `use_loc_id` is specified, the name is marked as used at that location.
-
-  auto LookupInLexicalScopes(SemIR::NameId name_id,
-
-                             SemIR::LocId use_loc_id = SemIR::LocId::None,
-
-                             bool is_reachable = true)
-
+  auto LookupInLexicalScopes(SemIR::NameId name_id, SemIR::LocId use_loc_id,
+                             bool is_reachable)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if

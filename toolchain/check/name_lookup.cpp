@@ -74,7 +74,8 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
     // we find the parameter in order to diagnose a redeclaration error.
     return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
         context.scope_stack().LookupInLexicalScopesWithin(
-            name_id, scope_index, /*use_loc_id=*/SemIR::LocId::None),
+            name_id, scope_index, /*use_loc_id=*/SemIR::LocId::None,
+            /*is_reachable=*/true),
         SemIR::AccessKind::Public);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
