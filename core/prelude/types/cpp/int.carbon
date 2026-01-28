@@ -67,7 +67,7 @@ impl i32 as ImplicitAs(CppCompat.Long32) {
 }
 
 // TODO: Generalize ImplicitAs from Long32 to Int(N) for all N > 32.
-// N == 32 is explicitly skipped, as Core.Cpp.Long32 is considered to
+// N == 32 is explicitly skipped, as Long32 is considered to
 // be between i32 and i33 (details:
 // https://github.com/carbon-language/carbon-lang/issues/6275#issuecomment-3488010485).
 // This follows the rule that implicit conversions exist for all iN -> iM if
@@ -120,8 +120,11 @@ impl i64 as ImplicitAs(CppCompat.LongLong64) {
 }
 
 // TODO: ImplicitAs from LongLong64 to Int(N) if N > 64.
-final impl CppCompat.LongLong64 as ImplicitAs(i64) {
-  fn Convert[self: Self]() -> i64 = "int.convert";
+// N == 64 is explicitly skipped as LongLong64 is considered to
+// be between i64 and i65 (details:
+// https://github.com/carbon-language/carbon-lang/issues/6275#issuecomment-3488010485).
+final impl CppCompat.LongLong64 as ImplicitAs(i128) {
+  fn Convert[self: Self]() -> i128 = "int.convert";
 }
 
 impl IntLiteral() as ImplicitAs(CppCompat.ULongLong64) {
@@ -256,6 +259,8 @@ impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
 
 // - Homogeneous.
 
+// - CppCompat.Long32
+
 final impl CppCompat.Long32 as Negate where .Result = Self {
   fn Op[self: Self]() -> Self = "int.snegate";
 }
@@ -277,6 +282,32 @@ final impl CppCompat.Long32 as DivWith(Self) where .Result = Self {
 }
 
 final impl CppCompat.Long32 as ModWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
+}
+
+// - CppCompat.LongLong64
+
+final impl CppCompat.LongLong64 as Negate where .Result = Self {
+  fn Op[self: Self]() -> Self = "int.snegate";
+}
+
+final impl CppCompat.LongLong64 as AddWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+}
+
+final impl CppCompat.LongLong64 as SubWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+}
+
+final impl CppCompat.LongLong64 as MulWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
+}
+
+final impl CppCompat.LongLong64 as DivWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+}
+
+final impl CppCompat.LongLong64 as ModWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 
@@ -309,6 +340,38 @@ impl forall [T:! ImplicitAs(CppCompat.Long32)]
   fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smod";
 }
 
+// - CppCompat.LongLong64 on left-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as AddWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.sadd";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as SubWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.ssub";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as MulWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.smul";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as DivWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.sdiv";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as ModWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.smod";
+}
+
 // - CppCompat.Long32 on right-hand side.
 
 impl forall [T:! ImplicitAs(CppCompat.Long32)]
@@ -336,11 +399,45 @@ impl forall [T:! ImplicitAs(CppCompat.Long32)]
   fn Op[self: CppCompat.Long32](other: CppCompat.Long32) -> CppCompat.Long32 = "int.smod";
 }
 
-// TODO: ULong32, LongLong64, ULongLong64: arithmetic operators.
+// - CppCompat.LongLong64 on right-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as AddWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.sadd";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as SubWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.ssub";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as MulWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.smul";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as DivWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.sdiv";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as ModWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.smod";
+}
+
+// TODO: ULong32, ULongLong64: arithmetic operators.
 
 // Bitwise operators.
 
 // - Homogeneous.
+
+// - CppCompat.Long32
 
 final impl CppCompat.Long32 as BitComplement where .Result = Self {
   fn Op[self: Self]() -> Self = "int.complement";
@@ -366,12 +463,105 @@ final impl CppCompat.Long32 as RightShiftWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
 
-// TODO: ULong32, LongLong64, ULongLong64: bitwise operators.
-// TODO: Long32: heterogeneous bitwise operators.
+// - CppCompat.LongLong64
+
+final impl CppCompat.LongLong64 as BitComplement where .Result = Self {
+  fn Op[self: Self]() -> Self = "int.complement";
+}
+
+final impl CppCompat.LongLong64 as BitAndWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.and";
+}
+
+final impl CppCompat.LongLong64 as BitOrWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.or";
+}
+
+final impl CppCompat.LongLong64 as BitXorWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.xor";
+}
+
+final impl CppCompat.LongLong64 as LeftShiftWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
+}
+
+final impl CppCompat.LongLong64 as RightShiftWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.right_shift";
+}
+
+// - Heterogeneous.
+
+// - CppCompat.LongLong64 on left-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as BitAndWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other:CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.and";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as BitOrWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.or";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as BitXorWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.xor";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as LeftShiftWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.left_shift";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    CppCompat.LongLong64 as RightShiftWith(T) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.right_shift";
+}
+
+// - CppCompat.LongLong64 on right-hand side.
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as BitAndWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.and";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as BitOrWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.or";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as BitXorWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.xor";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as LeftShiftWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.left_shift";
+}
+
+impl forall [T:! ImplicitAs(CppCompat.LongLong64)]
+    T as RightShiftWith(CppCompat.LongLong64) where .Result = CppCompat.LongLong64 {
+  fn Op[self: CppCompat.LongLong64](
+    other: CppCompat.LongLong64) -> CppCompat.LongLong64 = "int.right_shift";
+}
+
+// TODO: ULong32, ULongLong64: bitwise operators.
 
 // Compound assignments.
 
 // Compound arithmetic assignments.
+
+// - CppCompat.Long32
 
 impl forall [U:! ImplicitAs(CppCompat.Long32)]
 	  CppCompat.Long32 as AddAssignWith(U) {
@@ -398,7 +588,36 @@ impl forall [U:! ImplicitAs(CppCompat.Long32)]
   fn Op[ref self: Self](other: Self) = "int.smod_assign";
 }
 
+// - CppCompat.LongLong64
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as AddAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.sadd_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as SubAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.ssub_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as MulAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.smul_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as DivAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.sdiv_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as ModAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.smod_assign";
+}
+
 // Compound bitwise assignments.
+
+// - CppCompat.Long32
 
 impl forall [U:! ImplicitAs(CppCompat.Long32)]
 	  CppCompat.Long32 as BitAndAssignWith(U) {
@@ -425,9 +644,39 @@ impl forall [U:! ImplicitAs(CppCompat.Long32)]
   fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
 }
 
-// TODO: ULong32, LongLong64, ULongLong64: compound assignments.
+// - CppCompat.LongLong64
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as BitAndAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.and_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as BitOrAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.or_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as BitXorAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.xor_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as LeftShiftAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.left_shift_assign";
+}
+
+impl forall [U:! ImplicitAs(CppCompat.LongLong64)]
+	  CppCompat.LongLong64 as RightShiftAssignWith(U) {
+  fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
+}
+
+// TODO: ULong32, ULongLong64: compound assignments.
 
 // Increment and decrement.
+
+// - CppCompat.Long32
+
 impl CppCompat.Long32 as Dec {
   fn Op[ref self: Self]() {
     self -= (1 as CppCompat.Long32);
@@ -440,4 +689,18 @@ impl CppCompat.Long32 as Inc {
   }
 }
 
-// TODO: Increment/decrement operations for ULong32, LongLong64, ULongLong64.
+// - CppCompat.LongLong64
+
+impl CppCompat.LongLong64 as Dec {
+  fn Op[ref self: Self]() {
+    self -= (1 as CppCompat.LongLong64);
+  }
+}
+
+impl CppCompat.LongLong64 as Inc {
+  fn Op[ref self: Self]() {
+    self += (1 as CppCompat.LongLong64);
+  }
+}
+
+// TODO: Increment/decrement operations for ULong32, ULongLong64.
