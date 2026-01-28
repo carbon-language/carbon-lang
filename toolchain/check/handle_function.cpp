@@ -485,8 +485,8 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-// Checks that "unused" marker does not appear in declarations that are not
-// definitions and emit a diagnostic for every binding that is marked unused.
+// Checks that "unused" marker is only used in definitions, and emits a
+// diagnostic for every binding that is marked unused.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
