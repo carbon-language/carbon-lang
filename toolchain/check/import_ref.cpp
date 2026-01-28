@@ -2628,8 +2628,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // declarations always identify the facet type.
   if (auto facet_type = resolver.local_insts().TryGetAs<SemIR::FacetType>(
           resolver.local_constant_values().GetInstId(constraint_const_id))) {
+    // Lookups later will be with the unattached constant, whereas
+    // GetLocalConstantId gave us an attached constant.
+    auto unattached_self_const_id =
+        resolver.local_constant_values().GetUnattachedConstant(self_const_id);
     RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
-                               self_const_id, *facet_type, nullptr);
+                               unattached_self_const_id, *facet_type, nullptr);
   }
   if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);

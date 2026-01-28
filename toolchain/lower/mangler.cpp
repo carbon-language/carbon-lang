@@ -13,6 +13,8 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -66,16 +68,21 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
 
         auto facet_type = insts().GetAs<SemIR::FacetType>(
             constant_values().GetConstantInstId(impl.constraint_id));
-        const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type.facet_type_id);
-        CARBON_CHECK(facet_type_info.extend_constraints.size() == 1,
-                     "Mangling of an impl of something other than a single "
-                     "interface is not yet supported.");
-        auto interface_type = facet_type_info.extend_constraints.front();
+
+        auto identified_facet_type_id =
+            sem_ir().identified_facet_types().Lookup(
+                {.facet_type_id = facet_type.facet_type_id,
+                 .self_const_id =
+                     sem_ir().constant_values().Get(impl.self_id)});
+        CARBON_CHECK(identified_facet_type_id.has_value(),
+                     "ImplDecl with unidentified facet type constraint");
+        const auto& identified =
+            sem_ir().identified_facet_types().Get(identified_facet_type_id);
+        auto impl_target = identified.impl_as_target_interface();
         const auto& interface =
-            sem_ir().interfaces().Get(interface_type.interface_id);
+            sem_ir().interfaces().Get(impl_target.interface_id);
         names_to_render.push_back({.name_scope_id = interface.scope_id,
-                                   .specific_id = interface_type.specific_id,
+                                   .specific_id = impl_target.specific_id,
                                    .prefix = ':'});
 
         auto self_const_inst_id =
