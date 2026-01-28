@@ -512,9 +512,8 @@ auto HandleParseNode(Context& context, Parse::UnusedPatternId node_id) -> bool {
   auto [child_node, child_inst_id] =
       context.node_stack().PopPatternWithNodeId();
   if (!MarkPatternUnused(context, child_inst_id)) {
-    CARBON_DIAGNOSTIC(
-        UnusedPatternNoBindings, Warning,
-        "`unused` modifier has no effect on pattern without bindings");
+    CARBON_DIAGNOSTIC(UnusedPatternNoBindings, Warning,
+                      "`unused` modifier on pattern without bindings");
     context.emitter().Emit(node_id, UnusedPatternNoBindings);
   }
   context.node_stack().Push(node_id, child_inst_id);
