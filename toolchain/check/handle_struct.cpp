@@ -138,10 +138,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
   auto elements_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralStart);
 
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructLiteralStart>();
 
@@ -167,10 +164,7 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   llvm::SmallVector<Parse::NodeId> field_name_nodes =
       PopFieldNameNodes(context, fields.size());
 
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 

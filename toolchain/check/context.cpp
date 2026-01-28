@@ -29,7 +29,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       param_and_arg_refs_stack_(*sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_),
+      scope_stack_(*this),
       deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       check_ir_map_(FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::

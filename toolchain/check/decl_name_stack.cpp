@@ -89,14 +89,8 @@ auto DeclNameStack::FinishImplName() -> NameContext {
 auto DeclNameStack::PopScope(bool check_unused) -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished,
                "Missing call to FinishName before PopScope");
-  auto on_name_pop = [&](SemIR::NameId name_id,
-                         const LexicalLookup::Result& result) {
-    if (check_unused) {
-      CheckUnusedBinding(*context_, name_id, result);
-    }
-  };
   context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index,
-                                on_name_pop);
+                                check_unused);
   decl_name_stack_.pop_back();
 }
 
@@ -223,10 +217,7 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
                                    bool has_error = false) -> void {
   // If the qualifier has no parameters, we don't need to keep around a
   // parameter scope.
-  context.scope_stack().PopIfEmpty(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().PopIfEmpty(/*check_unused=*/true);
 
   auto self_specific_id = SemIR::SpecificId::None;
   if (generic_id.has_value()) {

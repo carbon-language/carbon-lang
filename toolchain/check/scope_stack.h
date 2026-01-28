@@ -17,14 +17,13 @@
 
 namespace Carbon::Check {
 
+class Context;
+
 // A stack of lexical and semantic scopes that we are currently performing
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const SemIR::File* sem_ir)
-      : sem_ir_(sem_ir),
-        lexical_lookup_(sem_ir->identifiers()),
-        full_pattern_stack_(&lexical_lookup_) {}
+  explicit ScopeStack(Context& context);
 
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
@@ -43,10 +42,6 @@ class ScopeStack {
     // The corresponding specific.
     SemIR::SpecificId specific_id;
   };
-
-  // A view of a scope for iteration during Pop.
-  using OnNamePop =
-      llvm::function_ref<void(SemIR::NameId, const LexicalLookup::Result&)>;
 
   // Information about a scope that has been temporarily removed from the stack.
   // This type is large, so moves of this type should be avoided.
@@ -70,17 +65,18 @@ class ScopeStack {
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
   // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
-  auto Pop(OnNamePop on_name_pop = nullptr) -> void;
+  // If `check_unused` is set, checks and emits diagnostics for unused names.
+  auto Pop(bool check_unused = false) -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
-  auto PopIfEmpty(OnNamePop on_name_pop = nullptr) -> void {
+  auto PopIfEmpty(bool check_unused = false) -> void {
     if (scope_stack_.back().num_names == 0) {
-      Pop(on_name_pop);
+      Pop(check_unused);
     }
   }
 
   // Pops scopes until we return to the specified scope index.
-  auto PopTo(ScopeIndex index, OnNamePop on_name_pop = nullptr) -> void;
+  auto PopTo(ScopeIndex index, bool check_unused = false) -> void;
 
   // Returns the scope index associated with the current scope.
   auto PeekIndex() const -> ScopeIndex { return Peek().index; }
@@ -312,6 +308,8 @@ class ScopeStack {
 
   // The current file.
   const SemIR::File* sem_ir_;
+  // Context, used only for checks and emitting diagnostics.
+  Context* context_;
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;

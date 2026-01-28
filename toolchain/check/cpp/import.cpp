@@ -1360,10 +1360,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;

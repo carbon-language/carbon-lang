@@ -623,10 +623,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   }
 
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 
   auto& function = context.functions().Get(function_id);

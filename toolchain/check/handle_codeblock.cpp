@@ -16,10 +16,7 @@ auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();
   return true;

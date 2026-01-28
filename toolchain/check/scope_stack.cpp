@@ -7,9 +7,17 @@
 #include <utility>
 
 #include "common/check.h"
+#include "toolchain/check/context.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+ScopeStack::ScopeStack(Context& context)
+    : sem_ir_(&context.sem_ir()),
+      context_(&context),
+      lexical_lookup_(sem_ir_->identifiers()),
+      full_pattern_stack_(&lexical_lookup_) {}
 
 auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(return_scope_stack_.empty(), "{0}", return_scope_stack_.size());
@@ -107,15 +115,15 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   destroy_id_stack_.PushArray();
 }
 
-auto ScopeStack::Pop(OnNamePop on_name_pop) -> void {
+auto ScopeStack::Pop(bool check_unused) -> void {
   auto scope = scope_stack_.pop_back_val();
 
   scope.names.ForEach([&](SemIR::NameId str_id) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index,
                  "Inconsistent scope index for name {0}", str_id);
-    if (on_name_pop) {
-      on_name_pop(str_id, lexical_results.back());
+    if (check_unused) {
+      CheckUnusedBinding(*context_, str_id, lexical_results.back());
     }
     lexical_results.pop_back();
   });
@@ -147,9 +155,9 @@ auto ScopeStack::Pop(OnNamePop on_name_pop) -> void {
   compile_time_binding_stack_.PopArray();
 }
 
-auto ScopeStack::PopTo(ScopeIndex index, OnNamePop on_name_pop) -> void {
+auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
   while (PeekIndex() > index) {
-    Pop(on_name_pop);
+    Pop(check_unused);
   }
   CARBON_CHECK(PeekIndex() == index,
                "Scope index {0} does not enclose the current scope {1}", index,

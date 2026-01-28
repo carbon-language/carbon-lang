@@ -332,10 +332,7 @@ auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
   // Pop the `.Self` facet value name introduced by the
   // CompileTimeBindingPatternStart.
-  context.scope_stack().Pop(
-      [&](SemIR::NameId name_id, const LexicalLookup::Result& result) {
-        CheckUnusedBinding(context, name_id, result);
-      });
+  context.scope_stack().Pop(/*check_unused=*/true);
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   const DeclIntroducerState& introducer =
