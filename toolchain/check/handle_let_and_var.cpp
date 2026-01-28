@@ -296,9 +296,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
     const auto& interface =
         context.interfaces().Get(interface_scope->interface_id);
-    // FIXME: Switch to scope_with_self_id when the entities in interface move
-    // there.
-    context.name_scopes().Get(interface.scope_without_self_id).set_has_error();
+    context.name_scopes().Get(interface.scope_with_self_id).set_has_error();
     if (decl_info.init_id.has_value()) {
       DiscardGenericDecl(context);
     }

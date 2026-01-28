@@ -119,13 +119,6 @@ auto HandleParseNode(Context& context,
   interface_info.definition_id = decl_inst_id;
   interface_info.scope_without_self_id = context.name_scopes().Add(
       decl_inst_id, SemIR::NameId::None, interface_info.parent_scope_id);
-  // Set on the name scope where `M` is replaced by `Self.M`.
-  //
-  // FIXME: Remove when the entities in interface move to the
-  // interface-with-self scope.
-  context.name_scopes()
-      .Get(interface_info.scope_without_self_id)
-      .set_is_interface_definition();
 
   // Start the definition of interface-without-self.
   StartGenericDefinition(context, interface_info.generic_id);
@@ -182,11 +175,6 @@ auto HandleParseNode(Context& context,
   context.scope_stack().PushForEntity(
       decl_inst_id, interface_info.scope_with_self_id,
       context.generics().GetSelfSpecific(interface_info.generic_with_self_id));
-  // FIXME: Remove these.
-#if 1
-  FinishGenericDefinition(context, interface_info.generic_with_self_id);
-  context.scope_stack().Pop();
-#endif
 
   interface_info.body_block_without_self_id =
       context.inst_block_stack().PeekOrAdd();
@@ -230,13 +218,10 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     interface_info.associated_entities_id = associated_entities_id;
   }
 
-  // FIXME: Put these back.
-#if 0
   // Finish the definition of interface-with-self.
   FinishGenericDefinition(context, interface_info.generic_with_self_id);
   // Pop the scope for the interface-with-self.
   context.scope_stack().Pop();
-#endif
 
   // Pop the body_block_without_self.
   context.inst_block_stack().Pop();

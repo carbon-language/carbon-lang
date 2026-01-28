@@ -41,16 +41,16 @@ interface Outer {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.887: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
-// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F, @Interface(%Self.887) [symbolic]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [concrete]
 // CHECK:STDOUT:   %Self.672: %Outer.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.672)> [symbolic]
 // CHECK:STDOUT:   %Self.eac: %Inner.type = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Inner.F.type.4b0134.1: type = fn_type @Inner.F.loc30, @Inner(%Self.672) [symbolic]
-// CHECK:STDOUT:   %Inner.F.a5d5f7.1: %Inner.F.type.4b0134.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Inner.F.type.4b0134.2: type = fn_type @Inner.F.loc36, @Inner(%Self.672) [symbolic]
-// CHECK:STDOUT:   %Inner.F.a5d5f7.2: %Inner.F.type.4b0134.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner.F.type.4b0: type = fn_type @Inner.F.loc30, @Inner(%Self.672) [symbolic]
+// CHECK:STDOUT:   %Inner.F.a5d: %Inner.F.type.4b0 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner.F.type.925: type = fn_type @Inner.F.loc36, @Inner(%Self.672, %Self.eac) [symbolic]
+// CHECK:STDOUT:   %Inner.F.023: %Inner.F.type.925 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,7 +59,7 @@ interface Outer {
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
+// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [symbolic = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [concrete = constants.%Outer.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +81,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [symbolic = constants.%Inner.type] {} {}
-// CHECK:STDOUT:   %Inner.F.decl: %Inner.F.type.4b0134.2 = fn_decl @Inner.F.loc36 [symbolic = constants.%Inner.F.a5d5f7.2] {} {}
+// CHECK:STDOUT:   %Inner.F.decl: %Inner.F.type.925 = fn_decl @Inner.F.loc36 [symbolic = constants.%Inner.F.023] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -96,15 +96,15 @@ interface Outer {
 // CHECK:STDOUT:   %Self.loc25_19.2: %Outer.type = symbolic_binding Self, 0 [symbolic = %Self.loc25_19.2 (constants.%Self.672)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.loc25_19.2)> [symbolic = %Inner.type (constants.%Inner.type)]
 // CHECK:STDOUT:   %Self.loc25_19.3: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc25_19.3 (constants.%Self.eac)]
-// CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F.loc30, @Inner(%Self.loc25_19.2) [symbolic = %Inner.F.type (constants.%Inner.F.type.4b0134.1)]
-// CHECK:STDOUT:   %Inner.F: @Inner.%Inner.F.type (%Inner.F.type.4b0134.1) = struct_value () [symbolic = %Inner.F (constants.%Inner.F.a5d5f7.1)]
+// CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F.loc30, @Inner(%Self.loc25_19.2) [symbolic = %Inner.F.type (constants.%Inner.F.type.4b0)]
+// CHECK:STDOUT:   %Inner.F: @Inner.%Inner.F.type (%Inner.F.type.4b0) = struct_value () [symbolic = %Inner.F (constants.%Inner.F.a5d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc25_19.1: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc25_19.3 (constants.%Self.eac)]
 // CHECK:STDOUT:     interface_with_self_decl @Inner [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.4b0134.1) = fn_decl @Inner.F.loc30 [symbolic = @Inner.%Inner.F (constants.%Inner.F.a5d5f7.1)] {} {}
+// CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.4b0) = fn_decl @Inner.F.loc30 [symbolic = @Inner.%Inner.F (constants.%Inner.F.a5d)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc25_19.1
@@ -132,22 +132,19 @@ interface Outer {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface(constants.%Self.887) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%Self.672) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%Self.672) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc25_19.2 => constants.%Self.672
-// CHECK:STDOUT:   %Inner.type => constants.%Inner.type
-// CHECK:STDOUT:   %Self.loc25_19.3 => constants.%Self.eac
-// CHECK:STDOUT:   %Inner.F.type => constants.%Inner.F.type.4b0134.1
-// CHECK:STDOUT:   %Inner.F => constants.%Inner.F.a5d5f7.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Inner(constants.%Self.672) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%Self.672, constants.%Self.eac) {}
+// CHECK:STDOUT: specific @Inner(constants.%Self.672, constants.%Self.eac) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.F.loc30(constants.%Self.672, constants.%Self.eac) {}
 // CHECK:STDOUT:

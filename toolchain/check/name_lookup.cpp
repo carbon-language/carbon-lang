@@ -337,10 +337,27 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       // Name lookup into "extend" constraints but not "self impls" constraints.
       for (const auto& extend : facet_type_info.extend_constraints) {
         auto& interface = context.interfaces().Get(extend.interface_id);
-        // FIXME: Change to scope_with_self_id when the entities in interface
-        // move there.
-        scopes->push_back({.name_scope_id = interface.scope_without_self_id,
-                           .specific_id = extend.specific_id,
+
+        // When looking in a FacetType, the self type is a facet. If it were a
+        // type, we couldn't use it to form a specific for the
+        // interface-with-self without knowing a witness that the type
+        // implements this interface.
+        auto specific_with_self_id =
+            MakeSpecificWithInnerSelf(context, loc_id, interface.generic_id,
+                                      interface.generic_with_self_id,
+                                      extend.specific_id, self_type_const_id);
+#if 0
+        if (auto self_type_id =
+                context.types().TryGetTypeIdForTypeConstantId(self_type_const_id);
+            self_type_id.has_value()) {
+          // The self for member lookup is a type, we need a facet value to
+          // replace `Self`.
+          self_facet_value = GetConstantFacetValueForType(
+              context, context.types().GetInstId(self_type_id));
+          }
+#endif
+        scopes->push_back({.name_scope_id = interface.scope_with_self_id,
+                           .specific_id = specific_with_self_id,
                            .self_const_id = self_type_const_id});
       }
       for (const auto& extend : facet_type_info.extend_named_constraints) {
@@ -468,6 +485,10 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
+        // FIXME: Remove this. Not needed anymore, the specific already has self
+        // as a replacement for Self in the generic that extended_id is from
+        // (the interface-with-self).
+#if 0
         // Apply self_const_id to the extended_id, replacing inner_self_id
         // inside.
         //
@@ -504,6 +525,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
               {.bind_id = bind_index, .replacement_id = facet_value}};
           const_id = SubstConstant(context, loc_id, const_id, substitutions);
         }
+#endif
 
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            self_const_id, &scopes)) {

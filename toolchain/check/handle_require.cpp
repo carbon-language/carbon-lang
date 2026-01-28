@@ -325,6 +325,10 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     // using the instruction later. To do so, we wrap the constraint facet type
     // it in a SpecificConstant, which preserves the require declaration's
     // specific along with the facet type.
+    //
+    // TODO: Remove the separate generic for each require decl, then we don't
+    // need a SpecificConstant anymore, as the constraint_inst_id will already
+    // be in the generic of the interface-with-self.
     auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
         context, node_id,
         {.type_id = SemIR::TypeType::TypeId,

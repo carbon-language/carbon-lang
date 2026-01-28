@@ -2805,12 +2805,6 @@ static auto AddInterfaceDefinition(ImportContext& context,
   InitializeNameScopeAndImportRefs(
       context, import_scope, new_scope, new_interface.first_owning_decl_id,
       SemIR::NameId::None, new_interface.parent_scope_id);
-  // FIXME: Remove this when the entities move to the interface-with-self.
-  new_scope.set_is_interface_definition();
-  // FIXME: Move these to the interface-with-self in the InterfaceWithSelfDecl.
-  new_interface.associated_entities_id =
-      AddAssociatedEntities(context, new_interface.scope_without_self_id,
-                            import_interface.associated_entities_id);
   new_interface.body_block_without_self_id =
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
@@ -3024,7 +3018,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                    SemIR::NameId::None,
                                    local_interface.scope_without_self_id);
   new_scope.set_is_interface_definition();
-  // FIXME: Add the associated entities here.
+  local_interface.associated_entities_id =
+      AddAssociatedEntities(resolver, local_interface.scope_with_self_id,
+                            import_interface.associated_entities_id);
   local_interface.body_block_with_self_id =
       resolver.local_context().inst_block_stack().Pop();
 
