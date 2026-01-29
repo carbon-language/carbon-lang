@@ -12,7 +12,6 @@ observe T impls I;
 observe T == U impls I;
 observe A == B == C impls I;
 
-
 // CHECK:STDOUT: - filename: observe.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

@@ -21,10 +21,6 @@ auto HandleObserveAfterIntroducer(Context& context) -> void {
 auto HandleObserveOperator(Context& context) -> void {
   auto state = context.PopState();
 
-  if (state.has_error) {
-    context.ReturnErrorOnState();
-  }
-
   switch (context.PositionKind()) {
     case Lex::TokenKind::EqualEqual: {
       context.AddLeafNode(NodeKind::ObserveEqualEqual, context.Consume());
@@ -44,7 +40,8 @@ auto HandleObserveOperator(Context& context) -> void {
                           "observe should use `==` or `impls` operator");
         context.emitter().Emit(*context.position(), ExpectedObserveOperator);
       }
-      context.ReturnErrorOnState();
+      context.RecoverFromDeclError(state, NodeKind::ObserveDecl,
+                                   /*skip_past_likely_end=*/true);
       return;
     }
   }
