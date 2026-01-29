@@ -25,6 +25,8 @@ namespace Carbon::Parse {
   X(MemberName)                                        \
   X(Modifier)                                          \
   X(NonExprName)                                       \
+  /* `==` or `impls` in `observe` declaration */       \
+  X(ObserveOperator)                                   \
   X(PackageName)                                       \
   X(Pattern)                                           \
   /* `require <type> impls` or just `require impls` */ \
