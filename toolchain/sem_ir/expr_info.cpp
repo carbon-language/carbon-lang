@@ -22,9 +22,8 @@ static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
-  const File* ir = &file;
-
+static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
+    -> ExprCategory {
   // The overall expression category if the current instruction is a value
   // expression.
   ExprCategory value_category = ExprCategory::Value;
@@ -58,21 +57,21 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        auto callee = GetCallee(file, inst.callee_id);
+        auto callee = GetCallee(*ir, inst.callee_id);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
           }
           case CARBON_KIND(SemIR::CalleeFunction callee_function): {
             const auto& function =
-                file.functions().Get(callee_function.function_id);
+                ir->functions().Get(callee_function.function_id);
             auto return_form_id = function.GetDeclaredReturnForm(
-                file, callee_function.resolved_specific_id);
+                *ir, callee_function.resolved_specific_id);
             if (!return_form_id.has_value()) {
               // Treat as equivalent to `-> ()`.
               return ExprCategory::Initializing;
             }
-            auto return_form = file.insts().Get(return_form_id);
+            auto return_form = ir->insts().Get(return_form_id);
             CARBON_KIND_SWITCH(return_form) {
               case CARBON_KIND(InitForm _):
                 return ExprCategory::Initializing;
@@ -135,6 +134,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
     }
   }
+}
+
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
+  return GetExprCategoryImpl(&file, inst_id);
 }
 
 auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,

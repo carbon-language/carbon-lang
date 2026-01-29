@@ -89,8 +89,8 @@ static auto GetConstantInSpecific(const File& specific_ir,
     CARBON_CHECK(
         specific_ir.generics().GetSelfSpecific(
             specific_ir.specifics().Get(specific_id).generic_id) == specific_id,
-        "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
-        specific_id,
+        "Queried {0} {1} in {2} for generic {3} before it was resolved.",
+        symbolic.index, const_ir.insts().Get(symbolic.inst_id), specific_id,
         specific_ir.insts().Get(
             specific_ir.generics().Get(specific.generic_id).decl_id));
     // TODO: Make sure this is the same value that we put in the self specific
