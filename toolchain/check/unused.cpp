@@ -25,8 +25,7 @@ auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
     return;
   }
 
-  auto inst = context.insts().Get(result.inst_id);
-  auto binding = inst.TryAs<SemIR::AnyBinding>();
+  auto binding = context.insts().TryGetAs<SemIR::AnyBinding>(result.inst_id);
   if (!binding) {
     return;
   }
