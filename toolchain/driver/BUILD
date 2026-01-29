@@ -44,7 +44,7 @@ cc_library(
         "//toolchain/base:clang_invocation",
         "//toolchain/base:install_paths",
         "//toolchain/base:kind_switch",
-        "//toolchain/base:runtime_sources",
+        "//toolchain/base:runtimes_build_info",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:codegen",

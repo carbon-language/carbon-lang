@@ -38,7 +38,7 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/runtime_sources.h"
+#include "toolchain/base/runtimes_build_info.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
 
@@ -293,54 +293,23 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   if constexpr (Component == Runtimes::LibUnwind) {
     return llvm::to_vector_of<llvm::StringRef>(llvm::make_filter_range(
-        RuntimeSources::LibunwindSrcs, [](llvm::StringRef src) {
+        RuntimesBuildInfo::LibunwindSrcs, [](llvm::StringRef src) {
           return src.ends_with(".c") || src.ends_with(".cpp") ||
                  src.ends_with(".S");
         }));
   } else if constexpr (Component == Runtimes::Libcxx) {
+    auto libcxx_target_srcs =
+        target_triple_.isOSWindows()
+            ? llvm::ArrayRef(RuntimesBuildInfo::LibcxxWin32Srcs)
+        : target_triple_.isMacOSX()
+            ? llvm::ArrayRef(RuntimesBuildInfo::LibcxxMacosSrcs)
+            : llvm::ArrayRef(RuntimesBuildInfo::LibcxxLinuxSrcs);
     auto libcxx_srcs = llvm::make_filter_range(
-        RuntimeSources::LibcxxSrcs, [this](llvm::StringRef src) {
-          if (!src.ends_with(".cpp")) {
-            return false;
-          }
+        libcxx_target_srcs,
+        [](llvm::StringRef src) { return src.ends_with(".cpp"); });
 
-          // We include libc++abi and so don't need new/delete definitions.
-          if (src == "libcxx/src/new.cpp") {
-            return false;
-          }
-          // We use compiler-rt for builtins, so we don't need int128 helpers.
-          if (src == "libcxx/src/filesystem/int128_builtins.cpp") {
-            return false;
-          }
-
-          // We don't currently use the libdispatch PSTL backend.
-          // TODO: We should evaluate enabling this on macOS.
-          if (src == "libcxx/src/pstl/libdispatch.cpp") {
-            return false;
-          }
-
-          // Skip platform-specific code for unsupported platforms.
-          // TODO: We should revisit this and include the code for these targets
-          // along with testing to make sure it works.
-          if (src.starts_with("libcxx/src/support/ibm/") ||
-              src.starts_with("libcxx/src/support/win32/")) {
-            return false;
-          }
-
-          // The timezone database is currently only enabled on Linux in
-          // upstream.
-          if (!target_triple_.isOSLinux() &&
-              (src == "libcxx/src/experimental/chrono_exception.cpp" ||
-               src == "libcxx/src/experimental/time_zone.cpp" ||
-               src == "libcxx/src/experimental/tzdb.cpp" ||
-               src == "libcxx/src/experimental/tzdb_list.cpp")) {
-            return false;
-          }
-
-          return true;
-        });
     auto libcxxabi_srcs = llvm::make_filter_range(
-        RuntimeSources::LibcxxabiSrcs,
+        RuntimesBuildInfo::LibcxxabiSrcs,
         [](llvm::StringRef src) { return src.ends_with(".cpp"); });
     return llvm::to_vector(
         llvm::concat<llvm::StringRef>(libcxx_srcs, libcxxabi_srcs));
@@ -354,38 +323,20 @@ template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
     -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> cflags;
-
+  // Start with some hard-coded flags used across any runtime.
+  //
   // TODO: It would be nice to plumb through an option to enable (some) warnings
   // when building runtimes, especially for folks working directly on the Carbon
   // toolchain to validate our builds of runtimes.
+  llvm::SmallVector<llvm::StringRef> cflags = {
+      "-no-canonical-prefixes",
+      "-w",
+  };
 
   if constexpr (Component == Runtimes::LibUnwind) {
-    // TODO: Should libunwind also limit symbol visibility?
-    cflags = {
-        "-no-canonical-prefixes",
-        "-D_LIBUNWIND_IS_NATIVE_ONLY",
-        "-O3",
-        "-fPIC",
-        "-fno-exceptions",
-        "-fno-rtti",
-        "-funwind-tables",
-        "-nostdinc++",
-        "-w",
-    };
+    llvm::append_range(cflags, RuntimesBuildInfo::LibunwindCopts);
   } else if constexpr (Component == Runtimes::Libcxx) {
-    cflags = {
-        "-no-canonical-prefixes",
-        "-DLIBCXX_BUILDING_LIBCXXABI",
-        "-D_LIBCPP_BUILDING_LIBRARY",
-        "-D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
-        "-O3",
-        "-fPIC",
-        "-fvisibility-inlines-hidden",
-        "-fvisibility=hidden",
-        "-nostdinc++",
-        "-w",
-    };
+    llvm::append_range(cflags, RuntimesBuildInfo::LibcxxCopts);
   } else {
     static_assert(false,
                   "Invalid runtimes component for an archive runtime builder.");
@@ -485,21 +436,21 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
           src_files.push_back(input_src);
         }
       };
-  append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsGenericSrcs));
-  append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsBf16Srcs));
+  append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsGenericSrcs));
+  append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsBf16Srcs));
   if (target_triple_.isArch64Bit()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsTfSrcs));
+    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsTfSrcs));
   }
   auto filter_out_chkstk = [&](llvm::StringRef src) {
     return !target_triple_.isOSWindows() || !src.ends_with("chkstk.S");
   };
   if (target_triple_.isAArch64()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsAarch64Srcs),
+    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsAarch64Srcs),
                      filter_out_chkstk);
   } else if (target_triple_.isX86()) {
-    append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsX86ArchSrcs));
+    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsX86ArchSrcs));
     if (target_triple_.isArch64Bit()) {
-      append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsX86_64Srcs),
+      append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsX86_64Srcs),
                        filter_out_chkstk);
     } else {
       // TODO: This should be turned into a nice user-facing diagnostic about an
@@ -507,7 +458,7 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
       CARBON_CHECK(
           target_triple_.isArch32Bit(),
           "The Carbon toolchain doesn't currently support 16-bit x86.");
-      append_src_files(llvm::ArrayRef(RuntimeSources::BuiltinsI386Srcs),
+      append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsI386Srcs),
                        filter_out_chkstk);
     }
   } else {
@@ -545,10 +496,10 @@ auto ClangResourceDirBuilder::Setup() -> void {
   // provide the CRT begin/end files, and so we need to build them.
   if (target_triple_.isOSLinux()) {
     tasks_.async([this, latch_handle] {
-      crt_begin_result_ = BuildCrtFile(RuntimeSources::CrtBegin);
+      crt_begin_result_ = BuildCrtFile(RuntimesBuildInfo::CrtBegin);
     });
     tasks_.async([this, latch_handle] {
-      crt_end_result_ = BuildCrtFile(RuntimeSources::CrtEnd);
+      crt_end_result_ = BuildCrtFile(RuntimesBuildInfo::CrtEnd);
     });
   }
 
@@ -575,12 +526,12 @@ auto ClangResourceDirBuilder::Finish() -> void {
 
 auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
     -> ErrorOr<Success> {
-  CARBON_CHECK(src_file == RuntimeSources::CrtBegin ||
-               src_file == RuntimeSources::CrtEnd);
+  CARBON_CHECK(src_file == RuntimesBuildInfo::CrtBegin ||
+               src_file == RuntimesBuildInfo::CrtEnd);
   std::filesystem::path out_path =
       runtimes_builder_->path() / lib_path_ /
-      (src_file == RuntimeSources::CrtBegin ? "clang_rt.crtbegin.o"
-                                            : "clang_rt.crtend.o");
+      (src_file == RuntimesBuildInfo::CrtBegin ? "clang_rt.crtbegin.o"
+                                               : "clang_rt.crtend.o");
   std::filesystem::path src_path =
       installation().runtimes_root() / std::string_view(src_file);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
