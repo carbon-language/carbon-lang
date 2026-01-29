@@ -471,76 +471,39 @@ interface N {
 
 fn F(T:! N where .Y1 = () and .Y2 = .Y1 and .Y2 = .Self.Y1) { }
 
-// --- fail_todo_cycle_through_self_reference.carbon
+// --- fail_cycle_through_self_reference.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let U:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let U:! Z;
 }
 
-// TODO: Should be diagnosed as a cycle.
+// CHECK:STDERR: fail_cycle_through_self_reference.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(A:! Z where .T = .U.T and .U = .Self) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(A:! Z where .T = .U.T and .U = .Self) {}
 
-// --- fail_todo_reference_same_constant_in_different_self.carbon
+// --- reference_same_constant_in_different_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let U:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let U:! Z;
 }
 
-// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
-// fixed.
 fn F(A:! Z where .T = (), B:! Z where .T = .U.T and .U = A) {}
 
-// --- fail_todo_non_cycle_with_self_reference.carbon
+// --- non_cycle_with_self_reference.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let T:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-6]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let T:! Z;
+  let T:! type;
   let U:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let V:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-17]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let V:! Z;
 }
 
-// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
-// fixed.
 fn F(A:! Z where .T = .V.U and .V = .Self and .U = ()) -> A.T {
   return ();
 }

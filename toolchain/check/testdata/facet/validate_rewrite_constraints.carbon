@@ -698,25 +698,16 @@ fn G(U:! I where .X1 = {} and .X2 = (), T:! I where .X1 = U.X2 and .X2 = {}) {
   F(U, T);
 }
 
-// --- fail_todo_value_through_self_value.carbon
+// --- value_through_self_value.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
-  // TODO: This should not be diagnosed.
-  //
-  // CHECK:STDERR: fail_todo_value_through_self_value.carbon:[[@LINE+7]]:12: error: associated constant has incomplete type `I` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let X1:! I;
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_todo_value_through_self_value.carbon:[[@LINE-6]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface I {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let X1:! I;
   let X2:! type;
   let X3:! type;
 }
 
-fn F(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ());
+fn F(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
 
 fn G(T:! I where .X1 = .Self and .X2 = () and .X3 = ()) {
   F(T);
