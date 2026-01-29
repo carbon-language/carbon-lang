@@ -33,18 +33,18 @@ auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
 
   const auto& entity_name = context.entity_names().Get(binding->entity_name_id);
   if (entity_name.is_unused) {
-    if (result.first_reachable_use_loc_id.has_value()) {
+    if (result.use_loc_id.has_value()) {
       CARBON_DIAGNOSTIC(UnusedButUsed, Error,
                         "variable `{0}` marked `unused` but used",
                         SemIR::NameId);
       CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage here");
       context.emitter()
           .Build(decl_loc, UnusedButUsed, name_id)
-          .Note(result.first_reachable_use_loc_id, UnusedButUsedHere)
+          .Note(result.use_loc_id, UnusedButUsedHere)
           .Emit();
     }
   } else {
-    if (!result.first_any_use_loc_id.has_value() && result.is_decl_reachable) {
+    if (!result.use_loc_id.has_value() && result.is_decl_reachable) {
       CARBON_DIAGNOSTIC(UnusedBinding, Warning, "binding `{0}` unused",
                         SemIR::NameId);
       context.emitter().Emit(decl_loc, UnusedBinding, name_id);

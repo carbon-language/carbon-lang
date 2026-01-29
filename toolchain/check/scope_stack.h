@@ -134,7 +134,8 @@ class ScopeStack {
   }
 
   // Marks the name `name_id` as used at the given location.
-  auto MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id) -> void;
+  auto MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id, bool is_reachable)
+      -> void;
 
   // Returns the name ID for the current `returned var`, or `None` if there
   // isn't one.
@@ -361,10 +362,8 @@ struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
     SemIR::InstId inst_id;
     // Whether the name was declared in a reachable position.
     bool is_decl_reachable;
-    // The location of the first reachable use of the name, if any.
-    SemIR::LocId first_reachable_use_loc_id;
     // The location of the first use of the name, if any.
-    SemIR::LocId first_any_use_loc_id;
+    SemIR::LocId use_loc_id;
   };
 
   // The suspended scope stack entry.
