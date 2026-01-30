@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+// EXTRA-ARGS: --target=x86_64-linux-gnu --clang-arg=-std=c++20
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/class/non_aggregate_init.carbon
@@ -26,7 +29,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_aggregate.h";
 
 fn Make() {
-  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+3]]:18: error: cannot initialize `Cpp.X` from `{}` [CannotImplicitlyConvertInit]
+  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+6]]:18: error: cannot implicitly convert expression of type `{}` to `Cpp.X` [ConversionFailure]
+  // CHECK:STDERR:   var x: Cpp.X = {};
+  // CHECK:STDERR:                  ^~
+  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+3]]:18: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: Cpp.X = {};
   // CHECK:STDERR:                  ^~
   var x: Cpp.X = {};
