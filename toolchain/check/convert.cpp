@@ -76,7 +76,7 @@ static auto OverwriteStorageArg(SemIR::File& sem_ir, SemIR::InstId init_id,
 // this returns `None` and avoids allocating temporary storage, but still
 // performs the other steps if a storage arg was present.
 //
-// TODO: this should probably unconditionally do something equivalent to
+// TODO: This should probably unconditionally do something equivalent to
 // starting the lifetime, in order to ensure the destructor (if any) gets run.
 static auto FinalizeInitialization(Context& context, SemIR::InstId init_id,
                                    bool discarded) -> SemIR::InstId {
@@ -90,7 +90,7 @@ static auto FinalizeInitialization(Context& context, SemIR::InstId init_id,
     if (discarded) {
       // If the initializer doesn't intrinsically write to storage, and we're
       // discarding it, don't allocate or write to useless storage for it.
-      // TODO: as noted above, we probably need to do something analogous to
+      // TODO: As noted above, we probably need to do something analogous to
       // starting the lifetime here.
       return SemIR::InstId::None;
     }
@@ -1529,7 +1529,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                                const SemIR::ExprCategory category) const
     -> State {
   CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category ||
-                // TODO: drop this special case once PerformCopy on C++ enums
+                // TODO: Drop this special case once PerformCopy on C++ enums
                 // produces an initializing expression.
                 IsCppEnum(context_, target_.type_id));
   switch (category) {
