@@ -43,6 +43,9 @@ struct BuiltinFunctionSignature {
 };
 
 // Creates and returns a new builtin function declaration.
+//
+// TODO: Instead of synthesizing builtin function declarations, we should
+// ideally declare the builtin functions in Carbon code instead.
 auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
                          SemIR::BuiltinFunctionKind builtin_kind,
                          SemIR::NameScopeId name_scope_id,

@@ -18,11 +18,6 @@ namespace std {
   template <typename T> class initializer_list {
    public:
     initializer_list() {}
-    initializer_list(T, T, T) {}
-
-    T* begin() const { return begin_; }
-    T* end() const { return end_; }
-    size_t size() const { return end_ - begin_; }
 
    private:
     T* begin_ = nullptr;
@@ -43,11 +38,6 @@ namespace std {
   template <typename T> class initializer_list {
    public:
     initializer_list() {}
-    initializer_list(T, T, T) {}
-
-    T* begin() const { return begin_; }
-    T* end() const { return begin_ + size_; }
-    size_t size() const { return size_; }
 
    private:
     T* begin_ = nullptr;
