@@ -288,8 +288,7 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, AssociatedEntityType inst) -> void {
     *out_ << "<associated entity in ";
     step_stack_->Push(">");
-    step_stack_->PushSpecificInterface(
-        SpecificInterface{inst.interface_id, inst.interface_specific_id});
+    step_stack_->PushSpecificInterface(inst.GetSpecificInterface());
   }
 
   auto StringifyInst(InstId /*inst_id*/, BoolLiteral inst) -> void {

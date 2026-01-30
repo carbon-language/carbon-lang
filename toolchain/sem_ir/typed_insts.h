@@ -252,10 +252,11 @@ struct AssociatedEntityType {
   // The interface in which the entity was declared.
   InterfaceId interface_id;
   // The specific for the interface in which the entity was declared.
-  SpecificId interface_specific_id;
+  SpecificId interface_without_self_specific_id;
 
   auto GetSpecificInterface() -> SpecificInterface {
-    return {.interface_id = interface_id, .specific_id = interface_specific_id};
+    return {.interface_id = interface_id,
+            .specific_id = interface_without_self_specific_id};
   }
 };
 

@@ -13,6 +13,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -27,6 +28,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -175,12 +177,10 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
-static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
-                                      SemIR::TypeId self_type_id,
-                                      SemIR::InstId witness_id,
-                                      SemIR::SpecificId interface_specific_id,
-                                      SemIR::InstId member_id)
-    -> SemIR::InstId {
+static auto AccessMemberOfImplWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_id, SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::InstId member_id) -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.has_value()) {
     if (member_value_id != SemIR::ErrorInst::InstId) {
@@ -200,7 +200,7 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
   // associated entity to find the type of the member access.
   LoadImportRef(context, assoc_entity->decl_id);
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_specific_id, assoc_entity->decl_id,
+      context, loc_id, interface_with_self_specific_id, assoc_entity->decl_id,
       self_type_id, witness_id);
 
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
@@ -238,8 +238,9 @@ static auto PerformImplLookup(
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
-  auto interface_type_id = GetInterfaceType(context, assoc_type.interface_id,
-                                            assoc_type.interface_specific_id);
+  auto interface_type_id =
+      GetInterfaceType(context, assoc_type.interface_id,
+                       assoc_type.interface_without_self_specific_id);
   auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
                                          interface_type_id.AsConstantId());
   if (!lookup_result.has_value()) {
@@ -266,8 +267,16 @@ static auto PerformImplLookup(
 
   auto witness_id =
       GetWitnessFromSingleImplLookupResult(context, lookup_result);
+
+  auto self_facet = GetConstantFacetValueForTypeAndInterface(
+      context, context.types().GetInstId(self_type_id),
+      assoc_type.GetSpecificInterface(), witness_id);
+  const auto& interface = context.interfaces().Get(assoc_type.interface_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      assoc_type.interface_without_self_specific_id, self_facet);
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
-                                   assoc_type.interface_specific_id, member_id);
+                                   interface_with_self_specific_id, member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing

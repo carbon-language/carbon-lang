@@ -1677,9 +1677,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto specific_interface =
       GetLocalSpecificInterface(resolver, inst.GetSpecificInterface(), data);
   return ResolveResult::Deduplicated<SemIR::AssociatedEntityType>(
-      resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .interface_id = specific_interface.interface_id,
-                 .interface_specific_id = specific_interface.specific_id});
+      resolver,
+      {.type_id = SemIR::TypeType::TypeId,
+       .interface_id = specific_interface.interface_id,
+       .interface_without_self_specific_id = specific_interface.specific_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

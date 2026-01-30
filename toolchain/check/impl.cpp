@@ -459,11 +459,17 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     // value to that type now we know the value of `Self`.
     SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
     if (assoc_const_type_id.is_symbolic()) {
+      auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
+      auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+          context, loc_id, interface.generic_id, interface.generic_with_self_id,
+          impl.interface.specific_id, self_facet);
+
       // Get the type of the associated constant in this interface with this
       // value for `Self`.
       assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-          context, SemIR::LocId(impl.constraint_id), impl.interface.specific_id,
-          decl_id, context.types().GetTypeIdForTypeInstId(impl.self_id),
+          context, SemIR::LocId(impl.constraint_id),
+          interface_with_self_specific_id, decl_id,
+          context.types().GetTypeIdForTypeInstId(impl.self_id),
           witness_inst_id);
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
@@ -762,11 +768,13 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
-  auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
-  if (facet_type_id == SemIR::ErrorInst::TypeId) {
+  auto facet_type_as_type_id =
+      context.types().GetTypeIdForTypeInstId(constraint_id);
+  if (facet_type_as_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::SpecificInterface::None;
   }
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  auto facet_type =
+      context.types().TryGetAs<SemIR::FacetType>(facet_type_as_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
                       InstIdAsType);

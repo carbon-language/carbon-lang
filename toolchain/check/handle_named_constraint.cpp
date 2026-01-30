@@ -137,8 +137,12 @@ auto HandleParseNode(Context& context,
   // `require` declarations. This makes it an empty facet type.
   SemIR::TypeId self_type_id =
       GetNamedConstraintType(context, named_constraint_id, self_specific_id);
-  constraint_info.self_param_id = AddSelfGenericParameter(
+  constraint_info.self_param_id = MakeSelfGenericParameter(
       context, node_id, self_type_id, constraint_info.scope_id, is_template);
+  context.scope_stack().PushCompileTimeBinding(constraint_info.self_param_id);
+  context.name_scopes().AddRequiredName(constraint_info.scope_id,
+                                        SemIR::NameId::SelfType,
+                                        constraint_info.self_param_id);
 
   // Enter the constraint scope.
   context.scope_stack().PushForEntity(decl_inst_id, constraint_info.scope_id,

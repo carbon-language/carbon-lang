@@ -143,12 +143,18 @@ auto HandleParseNode(Context& context,
   SemIR::TypeId self_type_id = GetInterfaceType(
       context, interface_id,
       context.generics().GetSelfSpecific(interface_info.generic_id));
-  interface_info.self_param_id = AddSelfGenericParameter(
+  interface_info.self_param_id = MakeSelfGenericParameter(
       context, node_id, self_type_id, interface_info.scope_without_self_id,
       /*is_template=*/false);
+  context.name_scopes().AddRequiredName(interface_info.scope_without_self_id,
+                                        SemIR::NameId::SelfType,
+                                        interface_info.self_param_id);
 
   // Start the declaration of interface-with-self.
   StartGenericDecl(context);
+
+  // Push `Self` as a parameter of the interface-with-self.
+  context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
 
   // Add the interface-with-self declaration and build the generic for it. This
   // captures the `interface_info.self_param_id` as a parameter of the generic.

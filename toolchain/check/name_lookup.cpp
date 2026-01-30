@@ -338,26 +338,34 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       for (const auto& extend : facet_type_info.extend_constraints) {
         auto& interface = context.interfaces().Get(extend.interface_id);
 
-        // When looking in a FacetType, the self type is a facet. If it were a
-        // type, we couldn't use it to form a specific for the
-        // interface-with-self without knowing a witness that the type
-        // implements this interface.
-        auto specific_with_self_id =
-            MakeSpecificWithInnerSelf(context, loc_id, interface.generic_id,
-                                      interface.generic_with_self_id,
-                                      extend.specific_id, self_type_const_id);
-#if 0
-        if (auto self_type_id =
-                context.types().TryGetTypeIdForTypeConstantId(self_type_const_id);
-            self_type_id.has_value()) {
-          // The self for member lookup is a type, we need a facet value to
-          // replace `Self`.
-          self_facet_value = GetConstantFacetValueForType(
-              context, context.types().GetInstId(self_type_id));
-          }
-#endif
+        auto self_facet = SemIR::ConstantId::None;
+        if (!context.insts().Is<SemIR::FacetType>(
+                context.constant_values().GetInstId(self_type_const_id))) {
+          // TODO: We are looking in the FacetType for names in a facet value.
+          // According to the design, we shouldn't we doing that, as the facet
+          // should have member names that directly name members of the `impl`.
+          //
+          // Copy the self facet from the query onto the end of the
+          // interface-without-self specific. If it's a facet-as-type then get
+          // the underlying facet.
+          self_facet =
+              GetCanonicalFacetOrTypeValue(context, self_type_const_id);
+        } else {
+          // We are looking directly in a facet type, like `I.F` for an
+          // interface `I`. Copy `Self` from the self-specific onto the end of
+          // the interface-without-self specific.
+          auto self_specific_id = context.generics().GetSelfSpecific(
+              interface.generic_with_self_id);
+          self_facet = context.constant_values().Get(
+              context.inst_blocks()
+                  .Get(context.specifics().GetArgsOrEmpty(self_specific_id))
+                  .back());
+        }
+        auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+            context, loc_id, interface.generic_id,
+            interface.generic_with_self_id, extend.specific_id, self_facet);
         scopes->push_back({.name_scope_id = interface.scope_with_self_id,
-                           .specific_id = specific_with_self_id,
+                           .specific_id = interface_with_self_specific_id,
                            .self_const_id = self_type_const_id});
       }
       for (const auto& extend : facet_type_info.extend_named_constraints) {

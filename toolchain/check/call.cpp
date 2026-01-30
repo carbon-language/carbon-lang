@@ -85,8 +85,10 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   // Perform argument deduction.
   auto specific_id = SemIR::SpecificId::None;
   if (entity.generic_id.has_value()) {
+    // FIXME: Remove self_type_id.
+    (void)self_type_id;
     specific_id = DeduceGenericCallArguments(
-        context, loc_id, entity.generic_id, enclosing_specific_id, self_type_id,
+        context, loc_id, entity.generic_id, enclosing_specific_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
         arg_ids);
     if (!specific_id.has_value()) {

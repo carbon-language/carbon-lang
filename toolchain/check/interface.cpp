@@ -33,9 +33,10 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // This associated entity is being declared as a member of the self specific
-  // of the interface.
-  auto interface_specific_id =
+  // This associated entity is being declared as a member of an interface. We
+  // use the self-specific of the interface-without-self as the AssociatedEntity
+  // names the externally facing SpecificInterface (without self).
+  auto interface_without_self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);
 
   // Register this declaration as declaring an associated entity.
@@ -45,8 +46,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
-  auto type_id =
-      GetAssociatedEntityType(context, interface_id, interface_specific_id);
+  auto type_id = GetAssociatedEntityType(context, interface_id,
+                                         interface_without_self_specific_id);
   return AddInst<SemIR::AssociatedEntity>(
       context, SemIR::LocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
@@ -55,17 +56,20 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 // Returns the `Self` binding for an interface, given a specific for the
 // interface and a generic for an associated entity within it.
 static auto GetSelfBinding(Context& context,
-                           SemIR::SpecificId interface_specific_id,
+                           SemIR::SpecificId interface_with_self_specific_id,
                            SemIR::GenericId assoc_entity_generic_id)
     -> SemIR::InstId {
   const auto& generic = context.generics().Get(assoc_entity_generic_id);
   auto bindings = context.inst_blocks().Get(generic.bindings_id);
   auto interface_args_id =
-      context.specifics().GetArgsOrEmpty(interface_specific_id);
+      context.specifics().GetArgsOrEmpty(interface_with_self_specific_id);
   auto interface_args = context.inst_blocks().Get(interface_args_id);
 
-  // The `Self` binding is the first binding after the interface's arguments.
-  auto self_binding_id = bindings[interface_args.size()];
+  // The `Self` binding is the last binding of the interface-with-self's
+  // arguments.
+  auto self_binding_id = bindings[interface_args.size() - 1];
+
+  // FIXME: Can we just construct a `Self: Z` binding for interface Z?
 
   // Check that we found the self binding. The binding might be a
   // `SymbolicBinding` or an `ImportRef` naming one.
@@ -94,13 +98,13 @@ static auto GetSelfBinding(Context& context,
 // the generic member of the interface, and can appear in its specific. As such,
 // this is a building block of GetSelfSpecificForInterfaceMemberWithSelfType.
 static auto GetSelfFacetValueForInterfaceMemberSpecific(
-    Context& context, SemIR::SpecificId interface_specific_id,
+    Context& context, SemIR::SpecificId interface_with_self_specific_id,
     SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
     SemIR::InstId self_witness_id) -> SemIR::InstId {
   auto self_binding_id =
-      GetSelfBinding(context, interface_specific_id, generic_id);
+      GetSelfBinding(context, interface_with_self_specific_id, generic_id);
   auto self_facet_type_id = SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), interface_specific_id, self_binding_id);
+      context.sem_ir(), interface_with_self_specific_id, self_binding_id);
   // Create a facet value to be the value of `Self` in the interface.
   // TODO: Pass this in instead of creating it here. The caller sometimes
   // already has a facet value.
@@ -116,43 +120,67 @@ static auto GetSelfFacetValueForInterfaceMemberSpecific(
 
 // Builds and returns the argument list from `interface_specific_id` with a
 // value for the `Self` parameter of `generic_id` appended.
-static auto GetGenericArgsWithSelfType(Context& context,
-                                       SemIR::SpecificId interface_specific_id,
-                                       SemIR::GenericId generic_id,
-                                       SemIR::TypeId self_type_id,
-                                       SemIR::InstId witness_inst_id,
-                                       std::size_t reserve_args_size = 0)
+static auto GetGenericArgsWithSelfType(
+    Context& context, SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_inst_id, std::size_t reserve_args_size = 0)
     -> llvm::SmallVector<SemIR::InstId> {
   auto interface_args_id =
-      context.specifics().GetArgsOrEmpty(interface_specific_id);
+      context.specifics().GetArgsOrEmpty(interface_with_self_specific_id);
   auto interface_args = context.inst_blocks().Get(interface_args_id);
 
   llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(std::max(reserve_args_size, interface_args.size() + 1));
+  // FIXME: Add back +1 when we receive a SpecificInterface (without the self
+  // in the specific).
+  arg_ids.reserve(std::max(reserve_args_size, interface_args.size()));
 
   // Start with the enclosing arguments from the interface.
   llvm::append_range(arg_ids, interface_args);
 
+  // Drop the self from the incoming specific, to be replaced.
+  arg_ids.pop_back();
+
+#if 1
   // Add the `Self` argument.
   arg_ids.push_back(GetSelfFacetValueForInterfaceMemberSpecific(
-      context, interface_specific_id, generic_id, self_type_id,
+      context, interface_with_self_specific_id, generic_id, self_type_id,
       witness_inst_id));
+#else
+  // FIXME: Hack to find the SpecificInterface.
+  auto self_binding_id =
+      GetSelfBinding(context, interface_with_self_specific_id, generic_id);
+  auto self_facet_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), interface_with_self_specific_id, self_binding_id);
+  const auto& facet_type_info =
+      context.facet_types().Get(context.types()
+                                    .GetAs<SemIR::FacetType>(self_facet_type_id)
+                                    .facet_Type_id);
+  auto extend = *facet_type_info.TryAsSingleExtend();
+  auto specific_interface = std::get<SemIR::SpecificInterface>(extend);
+
+  // Does this work? We need to pass along the SpecificInterface, and can drop
+  // the interface_with_self_specific_id and generic_id.
+  arg_ids.push_back(GetConstantFacetValueForTypeAndInterface(
+                        context, context.types().GetInstId(self_type_id),
+                        specific_interface, witness_inst_id););
+#endif
 
   return arg_ids;
 }
 
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId interface_specific_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
+    SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
+    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
+    -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto self_specific_args = context.inst_blocks().Get(
       context.specifics().Get(generic.self_specific_id).args_id);
 
   auto arg_ids = GetGenericArgsWithSelfType(
-      context, interface_specific_id, generic_id, self_type_id, witness_inst_id,
-      self_specific_args.size());
+      context, interface_with_self_specific_id, generic_id, self_type_id,
+      witness_inst_id, self_specific_args.size());
 
   // Determine the number of specific arguments that enclose the point where
   // this self specific will be used from. In an impl, this will be the number
@@ -189,11 +217,10 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   return MakeSpecific(context, loc_id, generic_id, arg_ids);
 }
 
-auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
-                                        SemIR::SpecificId interface_specific_id,
-                                        SemIR::InstId decl_id,
-                                        SemIR::TypeId self_type_id,
-                                        SemIR::InstId self_witness_id)
+auto GetTypeForSpecificAssociatedEntity(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId decl_id,
+    SemIR::TypeId self_type_id, SemIR::InstId self_witness_id)
     -> SemIR::TypeId {
   auto decl_constant_inst_id =
       context.constant_values().GetConstantInstId(decl_id);
@@ -209,8 +236,8 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
                           .Get(assoc_const->assoc_const_id)
                           .generic_id;
     auto arg_ids =
-        GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
-                                   self_type_id, self_witness_id);
+        GetGenericArgsWithSelfType(context, interface_with_self_specific_id,
+                                   generic_id, self_type_id, self_witness_id);
     auto const_specific_id = MakeSpecific(context, loc_id, generic_id, arg_ids);
     return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
                                           decl_id);
@@ -220,9 +247,9 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     // Form the type of the function within the interface, and attach the `Self`
     // type.
     auto interface_fn_type_id = SemIR::GetTypeOfInstInSpecific(
-        context.sem_ir(), interface_specific_id, decl_id);
+        context.sem_ir(), interface_with_self_specific_id, decl_id);
     auto self_facet_id = GetSelfFacetValueForInterfaceMemberSpecific(
-        context, interface_specific_id,
+        context, interface_with_self_specific_id,
         context.functions().Get(fn->function_id).generic_id, self_type_id,
         self_witness_id);
     return GetFunctionTypeWithSelfType(
@@ -233,7 +260,7 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
   CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
 }
 
-auto AddSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
+auto MakeSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
                              SemIR::TypeId type_id, SemIR::NameScopeId scope_id,
                              bool is_template) -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
@@ -246,9 +273,6 @@ auto AddSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
                                       {.type_id = type_id,
                                        .entity_name_id = entity_name_id,
                                        .value_id = SemIR::InstId::None});
-  context.scope_stack().PushCompileTimeBinding(self_param_inst_id);
-  context.name_scopes().AddRequiredName(scope_id, SemIR::NameId::SelfType,
-                                        self_param_inst_id);
   return self_param_inst_id;
 }
 
