@@ -13,6 +13,7 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -78,8 +79,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  context.InitializeStorage(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
-                            inst.rhs_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), inst.rhs_id) !=
+      SemIR::ExprCategory::InPlaceInitializing) {
+    context.InitializeStorage(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
+                              inst.rhs_id);
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -264,13 +268,36 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
+      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
+                       SemIR::ValueRepr::Pointer,
+                   "TODO: Add support for ReturnExpr with custom value repr");
+      // TODO: find a way to avoid the redundant call to GetInitRepr inside
+      // InitializeStorage.
       context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitRepr::ByCopy:
-      // The expression produces the value representation for the type.
-      context.builder().CreateRet(context.GetValue(inst.expr_id));
+    case SemIR::InitRepr::ByCopy: {
+      auto* value = context.GetValue(inst.expr_id);
+      switch (SemIR::GetExprCategory(context.sem_ir(), inst.expr_id)) {
+        case SemIR::ExprCategory::Value:
+        case SemIR::ExprCategory::ReprInitializing:
+        case SemIR::ExprCategory::EphemeralRef:
+        case SemIR::ExprCategory::DurableRef:
+          break;
+        case SemIR::ExprCategory::InPlaceInitializing:
+          value =
+              context.builder().CreateLoad(context.GetType(result_type), value);
+          break;
+        case SemIR::ExprCategory::Mixed:
+        case SemIR::ExprCategory::RefTagged:
+        case SemIR::ExprCategory::NotExpr:
+        case SemIR::ExprCategory::Error:
+        case SemIR::ExprCategory::Pattern:
+          CARBON_FATAL("Unexpected category for `return` expression");
+      }
+      context.builder().CreateRet(value);
       return;
+    }
     case SemIR::InitRepr::Abstract:
       CARBON_FATAL("Lowering return of abstract type {0}",
                    result_type.file->types().GetAsInst(result_type.type_id));

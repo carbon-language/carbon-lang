@@ -45,9 +45,12 @@ struct ConversionTarget {
     // expression, but can be anything else.
     Discarded,
     // Convert to an initializing expression that uses `type_id`'s initializing
-    // representation. `storage_id` is only used if that representation might be
-    // in-place; if it is known not to be, `storage_id` can be `None`.
-    ReprInitializing,
+    // representation. The resulting expression will usually be a
+    // repr-initializing expression, but may be an in-place initializing
+    // expression if the source expression was. If `storage_id` is present, it
+    // is used as the storage argument for the converted expression, and it must
+    // be present if the initializing representation might be in-place.
+    Initializing,
     // Convert to an in-place initializing expression whose storage is
     // designated by `storage_id` (which must not be `None`)
     InPlaceInitializing,
@@ -69,7 +72,7 @@ struct ConversionTarget {
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
-    return kind == ReprInitializing || kind == InPlaceInitializing;
+    return kind == Initializing || kind == InPlaceInitializing;
   }
   // Is this some kind of explicit `as` conversion?
   auto is_explicit_as() const -> bool {
@@ -88,16 +91,22 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
 
 // Converts `value_id` to an initializing expression of the type of
-// `storage_id`, and returns the possibly-converted initializing expression. If
-// initialization is in-place, `storage_id` is used as the in-place storage;
-// otherwise it is used only to determine the target type. The caller is
-// responsible for assigning the returned initializing expression to the target
-// using a suitable node for the kind of initialization.
+// `storage_id`, and returns the possibly-converted initializing expression.
+// `storage_id` is used as the storage argument of the resulting expression
+// except as noted below. The caller is responsible for passing the result to an
+// inst that is documented as consuming it, such as `Assign`.
+//
+// `for_return` indicates that this conversion is initializing the operand of a
+// `return` statement. This means that `storage_id` will be the return slot
+// parameter, which isn't valid to access if the type's initializing
+// representation is not in-place, so in that case `storage_id` will be used
+// solely for its type.
 //
 // TODO: Consider making the target type a separate parameter, and making
 // storage_id optional.
 auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
-                SemIR::InstId value_id) -> SemIR::InstId;
+                SemIR::InstId value_id, bool for_return = false)
+    -> SemIR::InstId;
 
 // Convert the given expression to a value expression of the same type.
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)

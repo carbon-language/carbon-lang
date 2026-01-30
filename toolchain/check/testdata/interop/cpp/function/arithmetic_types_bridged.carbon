@@ -2108,7 +2108,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: ref bool = start_lifetime %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.3: ref bool = temporary %.loc8_30.1, %.loc8_30.2
 // CHECK:STDOUT:   %.loc8_30.4: bool = acquire_value %.loc8_30.3
 // CHECK:STDOUT:   %x: bool = value_binding x, %.loc8_30.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc8_30.3, constants.%DestroyOp
@@ -2162,7 +2162,7 @@ fn F() {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: ref %i16 = start_lifetime %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.3: ref %i16 = temporary %.loc8_30.1, %.loc8_30.2
 // CHECK:STDOUT:   %.loc8_30.4: %i16 = acquire_value %.loc8_30.3
 // CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc8_30.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc8_30.3, constants.%DestroyOp
@@ -2240,7 +2240,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.3: ref %f64.d77 = start_lifetime %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.3: ref %f64.d77 = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %f64.d77 = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %x: %f64.d77 = value_binding x, %.loc8_31.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc8_31.3, constants.%DestroyOp

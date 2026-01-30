@@ -110,7 +110,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc15_29.2(%float) [concrete = constants.%float.d15]
 // CHECK:STDOUT:   %.loc15_29.2: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.d15]
-// CHECK:STDOUT:   %.loc15_29.3: init %struct_type.a.5e8 = struct_init (%.loc15_29.2) [concrete = constants.%struct.d6a]
+// CHECK:STDOUT:   %.loc15_29.3: init %struct_type.a.5e8 to file.%x.var = struct_init (%.loc15_29.2) [concrete = constants.%struct.d6a]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.5e8 = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%struct.d6a]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.5e8 = name_ref x, file.%x [concrete = file.%x.var]

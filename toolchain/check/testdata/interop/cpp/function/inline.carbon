@@ -324,7 +324,7 @@ fn MyF() {
 // CHECK:STDOUT:     %int_16.loc15: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc15: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_36.3: ref %i16 = start_lifetime %.loc15_36.2
+// CHECK:STDOUT:   %.loc15_36.3: ref %i16 = temporary %.loc15_36.1, %.loc15_36.2
 // CHECK:STDOUT:   %.loc15_36.4: %i16 = acquire_value %.loc15_36.3
 // CHECK:STDOUT:   %r3: %i16 = value_binding r3, %.loc15_36.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -356,7 +356,7 @@ fn MyF() {
 // CHECK:STDOUT:     %int_16.loc16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_34.3: ref %i16 = start_lifetime %.loc16_34.2
+// CHECK:STDOUT:   %.loc16_34.3: ref %i16 = temporary %.loc16_34.1, %.loc16_34.2
 // CHECK:STDOUT:   %.loc16_34.4: %i16 = acquire_value %.loc16_34.3
 // CHECK:STDOUT:   %r4: %i16 = value_binding r4, %.loc16_34.4
 // CHECK:STDOUT:   %DestroyOp.bound.loc16_34: <bound method> = bound_method %.loc16_34.3, constants.%DestroyOp

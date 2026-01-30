@@ -608,7 +608,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc16_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongLongResult.ref.loc16: type = name_ref LongLongResult, imports.%LongLongResult.decl [concrete = constants.%LongLongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_80.3: ref %LongLongResult = start_lifetime %.loc16_80.2
+// CHECK:STDOUT:   %.loc16_80.3: ref %LongLongResult = temporary %.loc16_80.1, %.loc16_80.2
 // CHECK:STDOUT:   %.loc16_80.4: %LongLongResult = acquire_value %.loc16_80.3
 // CHECK:STDOUT:   %cpp_long_long_result: %LongLongResult = value_binding cpp_long_long_result, %.loc16_80.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -635,7 +635,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc19_36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongLongResult.ref.loc19: type = name_ref LongLongResult, imports.%LongLongResult.decl [concrete = constants.%LongLongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_94.3: ref %LongLongResult = start_lifetime %.loc19_94.2
+// CHECK:STDOUT:   %.loc19_94.3: ref %LongLongResult = temporary %.loc19_94.1, %.loc19_94.2
 // CHECK:STDOUT:   %.loc19_94.4: %LongLongResult = acquire_value %.loc19_94.3
 // CHECK:STDOUT:   %cpp_compat_long_long_result: %LongLongResult = value_binding cpp_compat_long_long_result, %.loc19_94.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -666,7 +666,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_70.3: ref %LongResult = start_lifetime %.loc22_70.2
+// CHECK:STDOUT:   %.loc22_70.3: ref %LongResult = temporary %.loc22_70.1, %.loc22_70.2
 // CHECK:STDOUT:   %.loc22_70.4: %LongResult = acquire_value %.loc22_70.3
 // CHECK:STDOUT:   %carbon_i64_result: %LongResult = value_binding carbon_i64_result, %.loc22_70.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -903,7 +903,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc16_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongLongResult.ref.loc16: type = name_ref ULongLongResult, imports.%ULongLongResult.decl [concrete = constants.%ULongLongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_100.3: ref %ULongLongResult = start_lifetime %.loc16_100.2
+// CHECK:STDOUT:   %.loc16_100.3: ref %ULongLongResult = temporary %.loc16_100.1, %.loc16_100.2
 // CHECK:STDOUT:   %.loc16_100.4: %ULongLongResult = acquire_value %.loc16_100.3
 // CHECK:STDOUT:   %cpp_unsigned_long_long_result: %ULongLongResult = value_binding cpp_unsigned_long_long_result, %.loc16_100.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -930,7 +930,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc19_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongLongResult.ref.loc19: type = name_ref ULongLongResult, imports.%ULongLongResult.decl [concrete = constants.%ULongLongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_98.3: ref %ULongLongResult = start_lifetime %.loc19_98.2
+// CHECK:STDOUT:   %.loc19_98.3: ref %ULongLongResult = temporary %.loc19_98.1, %.loc19_98.2
 // CHECK:STDOUT:   %.loc19_98.4: %ULongLongResult = acquire_value %.loc19_98.3
 // CHECK:STDOUT:   %cpp_compat_ulong_long_result: %ULongLongResult = value_binding cpp_compat_ulong_long_result, %.loc19_98.4
 // CHECK:STDOUT:   name_binding_decl {
@@ -961,7 +961,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_72.3: ref %ULongResult = start_lifetime %.loc22_72.2
+// CHECK:STDOUT:   %.loc22_72.3: ref %ULongResult = temporary %.loc22_72.1, %.loc22_72.2
 // CHECK:STDOUT:   %.loc22_72.4: %ULongResult = acquire_value %.loc22_72.3
 // CHECK:STDOUT:   %carbon_u64_result: %ULongResult = value_binding carbon_u64_result, %.loc22_72.4
 // CHECK:STDOUT:   name_binding_decl {

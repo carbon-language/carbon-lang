@@ -114,7 +114,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.3: %struct_type.discriminant = struct_literal (%.loc6_1.2) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_1.4: ref %Always = temporary_storage
 // CHECK:STDOUT:   %.loc6_1.5: ref %empty_tuple.type = class_element_access %.loc6_1.4, element0
-// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type to %.loc6_1.5 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1.7: init %empty_tuple.type = converted %.loc6_1.2, %.loc6_1.6 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1.8: init %Always to %.loc6_1.4 = class_init (%.loc6_1.7) [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.9: ref %Always = temporary %.loc6_1.4, %.loc6_1.8

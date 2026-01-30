@@ -198,9 +198,9 @@ struct AsCompatible {
   InstId source_id;
 };
 
-// Performs a source-level initialization or assignment of `lhs_id` from
-// the repr-initializing expression `rhs_id`. This finishes initialization of
-// `lhs_id` in the same way as `Temporary`.
+// Consumes the initializer `rhs_id`, and uses it to performs a source-level
+// initialization or assignment of `lhs_id`. If `rhs_id` has a storage argument,
+// it is required to already be `lhs_id`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
@@ -1427,19 +1427,6 @@ struct RefTagExpr {
   InstId expr_id;
 };
 
-// Converts the in-place initializing expression `src_id` to a repr-initializing
-// expression. If the type has a by-copy initializing representation, this loads
-// it from memory.
-struct MoveFromInPlace {
-  static constexpr auto Kind = InstKind::MoveFromInPlace.Define<Parse::NodeId>(
-      {.ir_name = "move_from_in_place",
-       .expr_category = ExprCategory::ReprInitializing,
-       .constant_kind = InstConstantKind::Never});
-
-  TypeId type_id;
-  InstId src_id;
-};
-
 // Requires a type to be complete. This is only created for generic types and
 // produces a witness that the type is complete.
 //
@@ -1565,6 +1552,9 @@ struct Return {
 };
 
 // A `return expr;` statement.
+//
+// If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
+// and `expr_id` has a storage argument, the storage argument must be `dest_id`.
 struct ReturnExpr {
   static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
       {.ir_name = "return",
@@ -1837,8 +1827,9 @@ struct SymbolicBindingType {
   InstId facet_value_inst_id;
 };
 
-// Converts a repr-initializing expression to an ephemeral reference expression
-// representing a temporary object.
+// Consumes the initializer `init_id`, uses it to initialize a temporary
+// object, and forms an ephemeral reference to it. If `init_id` has a
+// storage arg, it must be a `TemporaryStorage` inst.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
@@ -1860,22 +1851,6 @@ struct TemporaryStorage {
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
-};
-
-// Starts the lifetime of the object referenced by the initializer `init_id`,
-// and returns a non-entire ephemeral reference to it. The object representation
-// must already have been written, meaning that `init_id` cannot be a
-// repr-initializing expression unless its type's initializing representation is
-// known to be in-place.
-struct StartLifetime {
-  static constexpr auto Kind = InstKind::StartLifetime.Define<Parse::NodeId>(
-      {.ir_name = "start_lifetime",
-       .expr_category = ExprCategory::EphemeralRef,
-       .constant_kind = InstConstantKind::Never,
-       .has_cleanup = true});
-
-  TypeId type_id;
-  InstId init_id;
 };
 
 // Access to a tuple member.
