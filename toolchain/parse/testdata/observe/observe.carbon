@@ -11,6 +11,7 @@
 observe T impls I;
 observe T == U impls I;
 observe A == B == C impls I;
+observe A == B == C == D impls I;
 
 // CHECK:STDOUT: - filename: observe.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -21,20 +22,31 @@ observe A == B == C impls I;
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:       {kind: 'ObserveEqualEqual', text: '==', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'U'},
+// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:       {kind: 'ObserveEqualEqual', text: '==', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ObserveEqualEqual', text: '==', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'A'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'B'},
+// CHECK:STDOUT:           {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'A'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'B'},
+// CHECK:STDOUT:             {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
+// CHECK:STDOUT:           {kind: 'ObserveEqualEqual', text: '==', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'D'},
+// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
+// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

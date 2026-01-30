@@ -1566,12 +1566,19 @@ CARBON_PARSE_STATE(ObserveAfterIntroducer)
 // observe TypeExpression == TypeExpression ...
 //                        ^~
 //   1. Expr
-//   2. ObserveOperator
+//   2. ObserveFinishEqualEqual
 // observe TypeExpression impls ...
 //                        ^~~~~
 //   1. Expr
 //   2. ObserveDecl
 CARBON_PARSE_STATE(ObserveOperator)
+
+// Finishes an `==` operator in `observe...impls` declaration.
+//
+// observe TypeExpression == TypeExpression ...
+//                                         ^
+//   1. ObserveOperator
+CARBON_PARSE_STATE(ObserveFinishEqualEqual)
 
 // Handles processing of a completed `observe...impls` declaration.
 //

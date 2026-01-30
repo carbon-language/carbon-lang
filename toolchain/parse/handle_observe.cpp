@@ -23,13 +23,14 @@ auto HandleObserveOperator(Context& context) -> void {
 
   switch (context.PositionKind()) {
     case Lex::TokenKind::EqualEqual: {
-      context.AddLeafNode(NodeKind::ObserveEqualEqual, context.Consume());
-      context.PushState(state, StateKind::ObserveOperator);
+      state.token = context.Consume();
+      context.PushState(state, StateKind::ObserveFinishEqualEqual);
       context.PushStateForExpr(PrecedenceGroup::ForRequirements());
       return;
     }
     case Lex::TokenKind::Impls: {
-      context.AddLeafNode(NodeKind::ObserveImpls, context.Consume());
+      context.AddNode(NodeKind::ObserveImpls, context.Consume(),
+                      state.has_error);
       context.PushState(state, StateKind::ObserveDecl);
       context.PushState(StateKind::Expr);
       return;
@@ -45,6 +46,13 @@ auto HandleObserveOperator(Context& context) -> void {
       return;
     }
   }
+}
+
+auto HandleObserveFinishEqualEqual(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::ObserveEqualEqual, state.token, state.has_error);
+  context.PushState(state, StateKind::ObserveOperator);
 }
 
 auto HandleObserveDecl(Context& context) -> void {

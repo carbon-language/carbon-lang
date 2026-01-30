@@ -37,7 +37,7 @@ observe T ;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'impls', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

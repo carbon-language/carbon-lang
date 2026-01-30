@@ -1599,20 +1599,23 @@ using ObserveIntroducer =
 // `==`
 struct ObserveEqualEqual {
   static constexpr auto Kind = NodeKind::ObserveEqualEqual.Define(
-      {.category = NodeCategory::ObserveOperator, .child_count = 1});
+      {.category = NodeCategory::ObserveEqualEqual, .child_count = 2});
 
-  AnyExprId lhs;
+  AnyObserveOperandId lhs;
   Lex::EqualEqualTokenIndex token;
+  AnyExprId rhs;
 };
 
+// `impls`
 struct ObserveImpls {
   static constexpr auto Kind = NodeKind::ObserveImpls.Define(
-      {.category = NodeCategory::ObserveOperator, .child_count = 1});
+      {.category = NodeCategory::ObserveImpls, .child_count = 1});
 
-  AnyExprId lhs;
+  AnyObserveOperandId lhs;
   Lex::ImplsTokenIndex token;
 };
 
+// `observe T == U impls I`
 struct ObserveDecl {
   static constexpr auto Kind =
       NodeKind::ObserveDecl.Define({.category = NodeCategory::Decl,
@@ -1620,9 +1623,8 @@ struct ObserveDecl {
 
   ObserveIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  llvm::SmallVector<ObserveEqualEqualId> equal_equals;
   ObserveImplsId impls;
-  AnyExprId facet_type;
+  AnyExprId interface;
   Lex::SemiTokenIndex token;
 };
 
