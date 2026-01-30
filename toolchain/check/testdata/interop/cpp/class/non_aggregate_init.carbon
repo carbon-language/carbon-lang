@@ -1,0 +1,53 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/class/non_aggregate_init.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/non_aggregate_init.carbon
+
+// ============================================================================
+// Non-aggregate class should not be initializable from {}
+// ============================================================================
+
+// --- non_aggregate.h
+
+// A class with a user-declared constructor is not an aggregate.
+struct X {
+  X();
+};
+
+// --- fail_non_aggregate_init.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "non_aggregate.h";
+
+fn Make() {
+  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+3]]:18: error: cannot initialize `Cpp.X` from `{}` [CannotImplicitlyConvertInit]
+  // CHECK:STDERR:   var x: Cpp.X = {};
+  // CHECK:STDERR:                  ^~
+  var x: Cpp.X = {};
+}
+
+// ============================================================================
+// Aggregate class should be initializable from {}
+// ============================================================================
+
+// --- aggregate.h
+
+// A class with no user-declared constructors is an aggregate.
+struct Y {};
+
+// --- aggregate_init.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "aggregate.h";
+
+fn Make() {
+  // This should succeed because Y is an aggregate.
+  var y: Cpp.Y = {};
+}
