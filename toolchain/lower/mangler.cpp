@@ -49,6 +49,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     if (prefix) {
       os << prefix;
     }
+    if (!name_scope_id.has_value()) {
+      continue;
+    }
     if (name_scope_id == SemIR::NameScopeId::Package) {
       auto package_id = sem_ir().package_id();
       if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
