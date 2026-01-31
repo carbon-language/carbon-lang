@@ -28,6 +28,9 @@ struct FunctionFields {
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
+  // Kinds of evaluation modifiers that can apply to functions.
+  enum class EvaluationMode : uint8_t { None, Eval, MustEval };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -74,6 +77,10 @@ struct FunctionFields {
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
   VirtualModifier virtual_modifier = VirtualModifier::None;
+
+  // Which, if any, evaluation modifier (eval or musteval) is applied to this
+  // function.
+  EvaluationMode evaluation_mode = EvaluationMode::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).

@@ -29,9 +29,9 @@ struct DeclIntroducerState {
   // Nodes of modifiers on this declaration, in expected order. `None` if no
   // modifier of that kind is present.
   Parse::NodeId
-      ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Decl) + 1] =
+      ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Last) + 1] =
           {Parse::NodeId::None, Parse::NodeId::None, Parse::NodeId::None,
-           Parse::NodeId::None};
+           Parse::NodeId::None, Parse::NodeId::None};
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet();

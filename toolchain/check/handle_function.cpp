@@ -86,10 +86,11 @@ static auto DiagnoseModifiers(Context& context,
                               std::optional<SemIR::Inst> parent_scope_inst,
                               SemIR::InstId self_param_id) -> void {
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
-                           KeywordModifierSet::Method |
-                           KeywordModifierSet::Interface);
+  LimitModifiersOnDecl(
+      context, introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Extern |
+          KeywordModifierSet::Export | KeywordModifierSet::Method |
+          KeywordModifierSet::Interface | KeywordModifierSet::Evaluation);
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
@@ -122,6 +123,16 @@ static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
       .Case(KeywordModifierSet::Override,
             SemIR::Function::VirtualModifier::Override)
       .Default(SemIR::Function::VirtualModifier::None);
+}
+
+// Returns the evaluation modifier as an enum.
+static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::EvaluationMode {
+  return modifier_set.ToEnum<SemIR::Function::EvaluationMode>()
+      .Case(KeywordModifierSet::Eval, SemIR::Function::EvaluationMode::Eval)
+      .Case(KeywordModifierSet::MustEval,
+            SemIR::Function::EvaluationMode::MustEval)
+      .Default(SemIR::Function::EvaluationMode::None);
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -164,6 +175,7 @@ static auto MergeFunctionRedecl(Context& context,
     prev_function.return_type_inst_id = new_function.return_type_inst_id;
     prev_function.return_form_inst_id = new_function.return_form_inst_id;
     prev_function.return_patterns_id = new_function.return_patterns_id;
+    prev_function.evaluation_mode = new_function.evaluation_mode;
     prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
@@ -418,6 +430,7 @@ static auto BuildFunctionDecl(Context& context,
                     parent_scope_inst_id, parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
+  auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -436,6 +449,7 @@ static auto BuildFunctionDecl(Context& context,
                        .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,
                        .virtual_modifier = virtual_modifier,
+                       .evaluation_mode = evaluation_mode,
                        .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
