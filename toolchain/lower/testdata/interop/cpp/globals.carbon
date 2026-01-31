@@ -204,7 +204,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: @inline_global = linkonce_odr dso_local global %struct.C zeroinitializer, comdat, align 1
 // CHECK:STDOUT: @_ZGV13inline_global = linkonce_odr dso_local global i64 0, comdat($inline_global), align 8
 // CHECK:STDOUT: @__dso_handle = external hidden global i8
-// CHECK:STDOUT: @inline_global.1 = external global {}
+// CHECK:STDOUT: @inline_global.1 = external global [1 x i8]
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @__cxx_global_var_init, ptr @inline_global }]
 // CHECK:STDOUT: @llvm.used = appending global [1 x ptr] [ptr @inline_global], section "llvm.metadata"
 // CHECK:STDOUT:
