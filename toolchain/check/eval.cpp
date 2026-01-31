@@ -48,6 +48,12 @@ struct SpecificEvalInfo {
   llvm::ArrayRef<SemIR::InstId> values;
 };
 
+// Information about a local scope such as a function that we're currently
+// evaluating.
+struct LocalEvalInfo {
+  Map<SemIR::InstId, SemIR::ConstantId>* locals;
+};
+
 // Information about the context within which we are performing evaluation.
 // `context` must not be null.
 class EvalContext {
@@ -60,6 +66,14 @@ class EvalContext {
         fallback_loc_id_(fallback_loc_id),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
+
+  explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
+                       SemIR::SpecificId specific_id,
+                       std::optional<LocalEvalInfo> local_eval_info)
+      : context_(context),
+        fallback_loc_id_(fallback_loc_id),
+        specific_id_(specific_id),
+        local_eval_info_(local_eval_info) {}
 
   // Gets the location to use for diagnostics if a better location is
   // unavailable.
@@ -129,6 +143,18 @@ class EvalContext {
   // Gets the constant value of the specified instruction in this context.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = constant_values().GetAttached(inst_id);
+
+    // While evaluating a function, map from local non-constant instructions to
+    // their earlier-evaluated values.
+    if (!const_id.is_constant()) {
+      if (local_eval_info_) {
+        if (auto local = local_eval_info_->locals->Lookup(inst_id)) {
+          return local.value();
+        }
+      }
+      return const_id;
+    }
+
     if (!const_id.is_symbolic()) {
       return const_id;
     }
@@ -222,6 +248,9 @@ class EvalContext {
   // If we are currently evaluating an eval block for `specific_id_`,
   // information about that evaluation.
   std::optional<SpecificEvalInfo> specific_eval_info_;
+  // If we are currently evaluating within a local scope, values of local
+  // instructions that have already been evaluated.
+  std::optional<LocalEvalInfo> local_eval_info_;
 };
 }  // namespace
 
@@ -2001,6 +2030,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
   return SemIR::ConstantId::NotConstant;
 }
 
+// Evaluates a call to an `eval` or `musteval` function.
+static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
+                        const SemIR::Function& function,
+                        SemIR::SpecificId specific_id,
+                        SemIR::InstBlockId args_id) -> SemIR::ConstantId;
+
 // Makes a constant for a call instruction.
 static auto MakeConstantForCall(EvalContext& eval_context,
                                 SemIR::InstId inst_id, SemIR::Call call)
@@ -2020,14 +2055,17 @@ static auto MakeConstantForCall(EvalContext& eval_context,
       eval_context, &call, &SemIR::Call::callee_id, &phase);
 
   auto callee = SemIR::GetCallee(eval_context.sem_ir(), call.callee_id);
+  const SemIR::Function* function = nullptr;
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (auto* fn = std::get_if<SemIR::CalleeFunction>(&callee)) {
-    // Calls to builtins might be constant.
-    builtin_kind =
-        eval_context.functions().Get(fn->function_id).builtin_function_kind();
-    if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-      // TODO: Eventually we'll want to treat some kinds of non-builtin
-      // functions as producing constants.
+  auto evaluation_mode = SemIR::Function::EvaluationMode::None;
+  if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
+    function = &eval_context.functions().Get(callee_function->function_id);
+    builtin_kind = function->builtin_function_kind();
+    evaluation_mode = function->evaluation_mode;
+    // Calls to builtins and to `eval` or `musteval` functions might be
+    // constant.
+    if (builtin_kind == SemIR::BuiltinFunctionKind::None &&
+        evaluation_mode == SemIR::Function::EvaluationMode::None) {
       return SemIR::ConstantId::NotConstant;
     }
   } else {
@@ -2050,7 +2088,8 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   if (!has_constant_operands) {
     if (builtin_kind.IsCompTimeOnly(
             eval_context.sem_ir(), eval_context.inst_blocks().Get(call.args_id),
-            call.type_id)) {
+            call.type_id) ||
+        evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
@@ -2070,6 +2109,24 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     return MakeConstantForBuiltinCall(
         eval_context, SemIR::LocId(inst_id), call, builtin_kind,
         eval_context.inst_blocks().Get(call.args_id), phase);
+  }
+
+  // Handle calls to `eval` and `musteval` functions.
+  if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
+    // A non-concrete call to `eval` or `musteval` is a template symbolic
+    // constant, regardless of the phase of the arguments.
+    if (phase != Phase::Concrete) {
+      CARBON_CHECK(phase <= Phase::TemplateSymbolic);
+      return MakeConstantResult(eval_context.context(), call,
+                                Phase::TemplateSymbolic);
+    }
+
+    // TODO: Instead of performing the call immediately, add it to a work queue
+    // and do it non-recursively.
+    return TryEvalCall(
+        eval_context, SemIR::LocId(inst_id), *function,
+        std::get<SemIR::CalleeFunction>(callee).resolved_specific_id,
+        call.args_id);
   }
 
   return SemIR::ConstantId::NotConstant;
@@ -2461,6 +2518,83 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   }
 
   return context.inst_blocks().Add(result);
+}
+
+static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
+                        const SemIR::Function& function,
+                        SemIR::SpecificId specific_id,
+                        SemIR::InstBlockId args_id) -> SemIR::ConstantId {
+  if (function.body_block_ids.empty()) {
+    // TODO: Diagnose this.
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  // TODO: Consider tracking the lowest and highest inst_id in the function and
+  // using an array instead of a map. We would still need a map for instantiated
+  // portions of a function template.
+  Map<SemIR::InstId, SemIR::ConstantId> locals;
+
+  // Add parameter values to the locals map.
+  for (auto [param_id, arg_id] :
+       llvm::zip(outer_eval_context.inst_blocks().Get(function.call_params_id),
+                 outer_eval_context.inst_blocks().Get(args_id))) {
+    locals.Insert(param_id, SemIR::ConstantId::ForConcreteConstant(arg_id));
+  }
+
+  EvalContext eval_context(&outer_eval_context.context(), loc_id, specific_id,
+                           LocalEvalInfo{.locals = &locals});
+
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &eval_context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
+                          SemIR::NameId);
+        builder.Note(loc_id, InCallToEvalFn, function.name_id);
+      });
+
+  auto block_id = function.body_block_ids.front();
+
+perform_branch:
+  for (auto inst_id : eval_context.context().inst_blocks().Get(block_id)) {
+    auto inst = eval_context.context().insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::Branch branch): {
+        block_id = branch.target_id;
+        goto perform_branch;
+      }
+
+      case CARBON_KIND(SemIR::Return _): {
+        // TODO: Factor this out (shared with at least the NoOp builtin).
+        auto type_id = GetTupleType(eval_context.context(), {});
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::TupleValue{.type_id = type_id,
+                              .elements_id = SemIR::InstBlockId::Empty},
+            Phase::Concrete);
+      }
+
+      case CARBON_KIND(SemIR::ReturnExpr return_expr): {
+        return eval_context.constant_values().Get(return_expr.expr_id);
+      }
+
+      default: {
+        auto const_id = TryEvalInstInContext(eval_context, inst_id, inst);
+        locals.Update(inst_id, const_id);
+        if (!const_id.has_value()) {
+          // TODO: Diagnose this properly.
+          eval_context.context().TODO(SemIR::LocId(inst_id),
+                                      "Failed to evaluate");
+          return SemIR::ErrorInst::ConstantId;
+        }
+        if (const_id == SemIR::ErrorInst::ConstantId) {
+          return const_id;
+        }
+      }
+    }
+  }
+
+  // TODO: Diagnose this properly or CHECK-fail.
+  eval_context.context().TODO(loc_id, "Fell off end of inst block");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 }  // namespace Carbon::Check
