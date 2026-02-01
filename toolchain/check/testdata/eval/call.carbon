@@ -48,3 +48,12 @@ fn G(N:! i32) {
 
 // TODO: Crashes.
 // fn H() { G(3); }
+
+// --- param_and_return.carbon
+
+library "[[TEST_NAME]]";
+
+eval fn F(x: i32) -> i32 { return x; }
+
+var a: array(i32, F(3)) = (1, 2, 3);
+

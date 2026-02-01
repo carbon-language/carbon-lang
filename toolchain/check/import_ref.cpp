@@ -2193,7 +2193,8 @@ static auto MakeFunctionDecl(ImportContext& context,
         .return_form_inst_id = SemIR::InstId::None,
         .return_patterns_id = SemIR::InstBlockId::None,
         .virtual_modifier = import_function.virtual_modifier,
-        .virtual_index = import_function.virtual_index}});
+        .virtual_index = import_function.virtual_index,
+        .evaluation_mode = import_function.evaluation_mode}});
 
   // Directly add the function type constant. Don't use `GetFunctionType`
   // because that will evaluate the function type, which we can't do if the

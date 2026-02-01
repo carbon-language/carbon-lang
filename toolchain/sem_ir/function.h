@@ -78,13 +78,13 @@ struct FunctionFields {
   // this function.
   VirtualModifier virtual_modifier = VirtualModifier::None;
 
-  // Which, if any, evaluation modifier (eval or musteval) is applied to this
-  // function.
-  EvaluationMode evaluation_mode = EvaluationMode::None;
-
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
   int32_t virtual_index = -1;
+
+  // Which, if any, evaluation modifier (eval or musteval) is applied to this
+  // function.
+  EvaluationMode evaluation_mode = EvaluationMode::None;
 
   // The implicit self parameter pattern, if any, in
   // implicit_param_patterns_id from EntityWithParamsBase.
