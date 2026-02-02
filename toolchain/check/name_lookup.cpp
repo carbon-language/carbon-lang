@@ -110,6 +110,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
             context, loc_id, name_id,
             LookupScope{.name_scope_id = lookup_scope_id,
                         .specific_id = specific_id,
+                        // A non-lexical lookup does not know what `Self` will
+                        // be; it remains symbolic if needed.
                         .self_const_id = SemIR::ConstantId::None},
             /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
@@ -286,6 +288,56 @@ struct ProhibitedAccessInfo {
   bool is_parent_access;
 };
 
+static auto GetSelfFacetForInterfaceFromLookupSelfType(
+    Context& context, const SemIR::GenericId generic_with_self_id,
+    SemIR::ConstantId self_type_const_id) -> SemIR::ConstantId {
+  if (!self_type_const_id.has_value()) {
+    // In a lookup into a non-lexical scope, there is no self-type from the
+    // lookup for the interface-with-self specific. So the self-type we use is
+    // the abstract symbolic Self from the self specific of the
+    // interface-with-self.
+    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+        context.generics().GetSelfSpecific(generic_with_self_id));
+    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+    return context.constant_values().Get(self_specific_args.back());
+  }
+
+  if (context.insts().Is<SemIR::FacetType>(
+          context.constant_values().GetInstId(self_type_const_id))) {
+    // We are looking directly in a facet type, like `I.F` for an interface `I`,
+    // which means there is no self-type from the lookup for the
+    // interface-with-self specific. So the self-type we use is the abstract
+    // symbolic Self from the self specific of the interface-with-self.
+    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+        context.generics().GetSelfSpecific(generic_with_self_id));
+    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+    return context.constant_values().Get(self_specific_args.back());
+  }
+
+  // Extended name lookup into a type, like `x.F`, can find a facet
+  // type extended scope from the type of `x`. The type of `x` maybe a
+  // facet converted to a type, so drop the `as type` conversion if
+  // so.
+  auto canonical_facet_or_type =
+      GetCanonicalFacetOrTypeValue(context, self_type_const_id);
+
+  auto type_of_canonical_facet_or_type =
+      context.insts()
+          .Get(context.constant_values().GetInstId(canonical_facet_or_type))
+          .type_id();
+  if (type_of_canonical_facet_or_type == SemIR::TypeType::TypeId) {
+    // If we still have a type, turn it into a facet for use in the
+    // interface-with-self specific.
+    return GetConstantFacetValueForType(
+        context, context.types().GetAsTypeInstId(
+                     context.constant_values().GetInstId(self_type_const_id)));
+  }
+
+  // We have a facet for the self-type (or perhaps an ErrorInst), which we can
+  // use directly in the interface-with-self specific.
+  return canonical_facet_or_type;
+}
+
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
                                    SemIR::ConstantId self_type_const_id,
@@ -341,48 +393,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 
         // We need to build the inner interface-with-self specific. To do that
         // we need to determine the self facet value to use.
-        auto self_facet = SemIR::ConstantId::None;
-
-        auto type_of_self =
-            context.insts()
-                .Get(context.constant_values().GetInstId(self_type_const_id))
-                .type_id();
-        if (context.types().Is<SemIR::FacetType>(type_of_self)) {
-          // We are looking directly in a facet type, like `I.F` for an
-          // interface `I`. Copy `Self` from the self-specific onto the end of
-          // the interface-without-self specific.
-          auto self_specific_id = context.generics().GetSelfSpecific(
-              interface.generic_with_self_id);
-          self_facet = context.constant_values().Get(
-              context.inst_blocks()
-                  .Get(context.specifics().GetArgsOrEmpty(self_specific_id))
-                  .back());
-        } else {
-          // Extended name lookup into a type, like `x.F`, can find a facet type
-          // extended scope from the type of `x`. The type of `x` maybe a facet
-          // converted to a type, so drop thet `as type` conversion if so.
-          auto canonical_facet_or_type =
-              GetCanonicalFacetOrTypeValue(context, self_type_const_id);
-
-          auto type_of_canonical_facet_or_type =
-              context.insts()
-                  .Get(context.constant_values().GetInstId(
-                      canonical_facet_or_type))
-                  .type_id();
-          if (type_of_canonical_facet_or_type == SemIR::TypeType::TypeId) {
-            // If we still have a type, turn it into a facet for use in the
-            // interface-with-self specific.
-            self_facet = GetConstantFacetValueForType(
-                context,
-                context.types().GetAsTypeInstId(
-                    context.constant_values().GetInstId(self_type_const_id)));
-          } else {
-            // We have a facet for the self-type, which we can use directly in
-            // the interface-with-self specific.
-            self_facet = canonical_facet_or_type;
-          }
-        }
-
+        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+            context, interface.generic_with_self_id, self_type_const_id);
         auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
             context, loc_id, interface.generic_id,
             interface.generic_with_self_id, extend.specific_id, self_facet);
