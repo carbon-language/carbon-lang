@@ -269,7 +269,7 @@ static auto PerformImplLookup(
       GetWitnessFromSingleImplLookupResult(context, lookup_result);
 
   auto self_facet = GetConstantFacetValueForTypeAndInterface(
-      context, context.types().GetInstId(self_type_id),
+      context, context.types().GetTypeInstId(self_type_id),
       assoc_type.GetSpecificInterface(), witness_id);
   const auto& interface = context.interfaces().Get(assoc_type.interface_id);
   auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(

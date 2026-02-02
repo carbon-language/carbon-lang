@@ -5,7 +5,9 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -83,13 +85,25 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
              .query_specific_interface_id = query_specific_interface_id}));
   };
 
+  auto self_facet = query_self_const_id;
+  if (context.insts()
+          .Get(context.constant_values().GetInstId(self_facet))
+          .type_id() == SemIR::TypeType::TypeId) {
+    self_facet = GetConstantFacetValueForType(
+        context, context.types().GetAsTypeInstId(
+                     context.constant_values().GetInstId(self_facet)));
+  }
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      query_specific_interface.specific_id, self_facet);
+
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), query_specific_interface.specific_id,
+            context.sem_ir(), interface_with_self_specific_id,
             assoc_entity_id));
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
