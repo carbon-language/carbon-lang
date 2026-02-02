@@ -193,31 +193,21 @@ auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
   }
 
   // Determine if we should set use_loc_id.
-  bool should_set = false;
   if (result.inst_id.index >= 0) {
-    auto inst = context_->insts().Get(result.inst_id);
-    if (auto binding = inst.TryAs<SemIR::AnyBinding>()) {
+    if (auto binding =
+            context_->insts().TryGetAs<SemIR::AnyBinding>(result.inst_id)) {
       const auto& entity_name =
           context_->entity_names().Get(binding->entity_name_id);
-      if (entity_name.is_unused) {
-        should_set = is_reachable;
-      } else {
-        should_set = true;
+      if (entity_name.is_unused && !is_reachable) {
+        return;
       }
-    } else {
-      // For non-bindings (like namespaces), we just mark them as used.
-      should_set = true;
     }
-  } else {
-    // If the instruction is not valid (e.g. InitTombstone), we mark it as used
-    // to avoid spurious "unused" warnings, assuming the invalid state will be
-    // diagnosed elsewhere (e.g. used before init).
-    should_set = true;
   }
-
-  if (should_set) {
-    result.use_loc_id = loc_id;
-  }
+  // For non-bindings (like namespaces), we just mark them as used.
+  // If the instruction is not valid (e.g. InitTombstone), we mark it as used
+  // to avoid spurious "unused" warnings, assuming the invalid state will be
+  // diagnosed elsewhere (e.g. used before init).
+  result.use_loc_id = loc_id;
 }
 
 auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
