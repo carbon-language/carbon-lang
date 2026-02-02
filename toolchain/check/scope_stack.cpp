@@ -14,10 +14,13 @@
 namespace Carbon::Check {
 
 ScopeStack::ScopeStack(Context& context)
-    : sem_ir_(&context.sem_ir()),
-      context_(&context),
-      lexical_lookup_(sem_ir_->identifiers()),
+    : context_(&context),
+      lexical_lookup_(context.sem_ir().identifiers()),
       full_pattern_stack_(&lexical_lookup_) {}
+
+auto ScopeStack::sem_ir() const -> const SemIR::File& {
+  return context_->sem_ir();
+}
 
 auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(return_scope_stack_.empty(), "{0}", return_scope_stack_.size());
@@ -96,7 +99,8 @@ auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
                                SemIR::SpecificId specific_id,
                                bool lexical_lookup_has_load_error) -> void {
   CARBON_CHECK(scope_inst_id.has_value());
-  CARBON_DCHECK(!sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  CARBON_DCHECK(
+      !context_->sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);
   MarkNestingIfInReturnScope();
 }
@@ -107,7 +111,8 @@ auto ScopeStack::PushForSameRegion() -> void {
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
-  CARBON_DCHECK(sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  CARBON_DCHECK(
+      context_->sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
        /*lexical_lookup_has_load_error=*/false);
 

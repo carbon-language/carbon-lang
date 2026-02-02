@@ -111,7 +111,7 @@ class ScopeStack {
     if (!inst_id.has_value()) {
       return std::nullopt;
     }
-    return sem_ir_->insts().TryGetAs<InstT>(inst_id);
+    return sem_ir().insts().TryGetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be
@@ -204,6 +204,8 @@ class ScopeStack {
   auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
 
  private:
+  auto sem_ir() const -> const SemIR::File&;
+
   auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
 
   // An entry in scope_stack_.
@@ -306,8 +308,6 @@ class ScopeStack {
   auto VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
                                       const ScopeStackEntry& scope) -> void;
 
-  // The current file.
-  const SemIR::File* sem_ir_;
   // Context, used only for checks and emitting diagnostics.
   Context* context_;
 
