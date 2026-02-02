@@ -221,7 +221,7 @@ auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
     return SemIR::InstId::None;
   }
 
-  auto& result = lexical_results.back();
+  auto result = lexical_results.back();
   if (result.scope_index < scope_index) {
     return SemIR::InstId::None;
   }
@@ -383,7 +383,6 @@ auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
   }
 
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
-  // ...
 
   if (!scope.entry.is_lexical_scope()) {
     non_lexical_scope_stack_.push_back(
