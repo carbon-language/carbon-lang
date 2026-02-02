@@ -2520,6 +2520,230 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   return context.inst_blocks().Add(result);
 }
 
+static auto GetValueOrDiagnose(EvalContext& eval_context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  auto phase = Phase::Concrete;
+  auto value_inst_id = GetConstantValue(eval_context, inst_id, &phase);
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::InstId::None;
+  }
+  if (phase == Phase::Runtime) {
+    // TODO: Diagnose this properly.
+    eval_context.context().TODO(inst_id, "Runtime value");
+    return SemIR::InstId::None;
+  }
+  return value_inst_id;
+}
+
+static auto HandleEvaluatedInstResult(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    SemIR::ConstantId const_id, Map<SemIR::InstId, SemIR::ConstantId>& locals)
+    -> std::optional<SemIR::ConstantId> {
+  if (!const_id.has_value() || !const_id.is_constant()) {
+    // TODO: Diagnose this properly.
+    eval_context.context().TODO(
+        SemIR::LocId(inst_id),
+        ("Failed to evaluate " + inst.kind().name()).str());
+    return SemIR::ErrorInst::ConstantId;
+  }
+  if (const_id == SemIR::ErrorInst::ConstantId) {
+    return const_id;
+  }
+  locals.Update(inst_id, const_id);
+  return std::nullopt;
+}
+
+// Evaluates an instruction for TryEvalCall.
+template <typename InstT>
+static auto ExecTypedInst(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto const_id = TryEvalTypedInst<InstT>(eval_context, inst_id, inst);
+  return HandleEvaluatedInstResult(eval_context, inst_id, inst, const_id,
+                                   locals);
+}
+
+template <>
+auto ExecTypedInst<SemIR::Branch>(
+    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
+    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto branch = inst.As<SemIR::Branch>();
+  blocks.back() = eval_context.context().inst_blocks().Get(branch.target_id);
+  return std::nullopt;
+}
+
+template <>
+auto ExecTypedInst<SemIR::BranchIf>(
+    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
+    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto branch_if = inst.As<SemIR::BranchIf>();
+  auto cond_id = GetValueOrDiagnose(eval_context, branch_if.cond_id);
+  if (!cond_id.has_value()) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  if (auto cond = eval_context.insts().TryGetAs<SemIR::BoolLiteral>(cond_id);
+      cond && cond->value == SemIR::BoolValue::True) {
+    blocks.back() =
+        eval_context.context().inst_blocks().Get(branch_if.target_id);
+  }
+  return std::nullopt;
+}
+
+template <>
+auto ExecTypedInst<SemIR::Return>(
+    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst /*inst*/,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  // TODO: Factor this out (shared with at least the NoOp builtin).
+  auto type_id = GetTupleType(eval_context.context(), {});
+  return MakeConstantResult(
+      eval_context.context(),
+      SemIR::TupleValue{.type_id = type_id,
+                        .elements_id = SemIR::InstBlockId::Empty},
+      Phase::Concrete);
+}
+
+template <>
+auto ExecTypedInst<SemIR::ReturnExpr>(
+    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto return_expr = inst.As<SemIR::ReturnExpr>();
+  auto result_id = GetValueOrDiagnose(eval_context, return_expr.expr_id);
+  if (!result_id.has_value()) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return eval_context.constant_values().Get(result_id);
+}
+
+template <>
+auto ExecTypedInst<SemIR::ReturnSlot>(
+    EvalContext& /*eval_context*/, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto return_slot = inst.As<SemIR::ReturnSlot>();
+  locals.Insert(inst_id, locals.Lookup(return_slot.storage_id).value());
+  return std::nullopt;
+}
+
+template <>
+auto ExecTypedInst<SemIR::SpliceBlock>(
+    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
+    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto splice_block = inst.As<SemIR::SpliceBlock>();
+  blocks.push_back(
+      eval_context.context().inst_blocks().Get(splice_block.block_id));
+  // TODO: Copy the values from the result_id instruction to the result of
+  // the splice_block instruction once the spliced block finishes.
+  return std::nullopt;
+}
+
+template <typename ParamT>
+static auto ExecTypedParam(EvalContext& eval_context, SemIR::InstId inst_id,
+                           SemIR::Inst inst,
+                           Map<SemIR::InstId, SemIR::ConstantId>& locals,
+                           llvm::ArrayRef<SemIR::InstId> args)
+    -> std::optional<SemIR::ConstantId> {
+  auto param = inst.As<SemIR::AnyParam>();
+  if (static_cast<size_t>(param.index.index) < args.size()) {
+    locals.Insert(inst_id,
+                  eval_context.constant_values().Get(args[param.index.index]));
+  } else {
+    // TODO: We generate an OutParam with an index that has no
+    // corresponding argument for return values that have a copy
+    // initializing representation.
+    CARBON_CHECK(inst.Is<SemIR::OutParam>());
+    locals.Insert(inst_id, SemIR::ConstantId::None);
+  }
+  return std::nullopt;
+}
+
+template <>
+auto ExecTypedInst<SemIR::OutParam>(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
+  return ExecTypedParam<SemIR::OutParam>(eval_context, inst_id, inst, locals,
+                                         args);
+}
+
+template <>
+auto ExecTypedInst<SemIR::RefParam>(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
+  return ExecTypedParam<SemIR::RefParam>(eval_context, inst_id, inst, locals,
+                                         args);
+}
+
+template <>
+auto ExecTypedInst<SemIR::ValueParam>(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
+  return ExecTypedParam<SemIR::ValueParam>(eval_context, inst_id, inst, locals,
+                                           args);
+}
+
+template <>
+auto ExecTypedInst<SemIR::ValueBinding>(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> /*args*/)
+    -> std::optional<SemIR::ConstantId> {
+  auto value_binding = inst.As<SemIR::ValueBinding>();
+  // Local bindings are constant, non-local bindings are not.
+  if (auto local_value = locals.Lookup(value_binding.value_id)) {
+    locals.Insert(inst_id, local_value.value());
+  } else {
+    // TODO: Diagnose this properly.
+    eval_context.context().TODO(SemIR::LocId(inst_id), "Non-local binding");
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return std::nullopt;
+}
+
+static auto ExecInstInContext(
+    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
+    Map<SemIR::InstId, SemIR::ConstantId>& locals,
+    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
+  using ExecInstFn =
+      auto(EvalContext & eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
+           llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>> & blocks,
+           Map<SemIR::InstId, SemIR::ConstantId> & locals,
+           llvm::ArrayRef<SemIR::InstId> args)
+          ->std::optional<SemIR::ConstantId>;
+  static constexpr ExecInstFn* ExecInstFns[] = {
+#define CARBON_SEM_IR_INST_KIND(Kind) &ExecTypedInst<SemIR::Kind>,
+#include "toolchain/sem_ir/inst_kind.def"
+  };
+  [[clang::musttail]] return ExecInstFns[inst.kind().AsInt()](
+      eval_context, inst_id, inst, blocks, locals, args);
+}
+
 static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
@@ -2552,30 +2776,12 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   auto push_block = [&](SemIR::InstBlockId block_id) {
     blocks.push_back(eval_context.context().inst_blocks().Get(block_id));
   };
-  auto branch_to = [&](SemIR::InstBlockId block_id) {
-    blocks.back() = eval_context.context().inst_blocks().Get(block_id);
-  };
 
   // Evaluate the function decl block followed by the body.
   push_block(function.body_block_ids.front());
   push_block(eval_context.insts()
                  .GetAs<SemIR::FunctionDecl>(function.definition_id)
                  .decl_block_id);
-
-  // Get the value of an operand of the current instruction.
-  auto get_value_or_diagnose = [&](SemIR::InstId inst_id) -> SemIR::InstId {
-    auto phase = Phase::Concrete;
-    auto value_inst_id = GetConstantValue(eval_context, inst_id, &phase);
-    if (phase == Phase::UnknownDueToError) {
-      return SemIR::InstId::None;
-    }
-    if (phase == Phase::Runtime) {
-      // TODO: Diagnose this properly.
-      eval_context.context().TODO(inst_id, "Runtime value");
-      return SemIR::InstId::None;
-    }
-    return value_inst_id;
-  };
 
   // Evaluate the blocks. This is mostly expression evaluation, with special
   // handling for control flow.
@@ -2588,102 +2794,10 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 
     auto inst_id = blocks.back().consume_front();
     auto inst = eval_context.context().insts().Get(inst_id);
-    CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::Branch branch): {
-        branch_to(branch.target_id);
-        break;
-      }
-
-      case CARBON_KIND(SemIR::BranchIf branch_if): {
-        auto cond_id = get_value_or_diagnose(branch_if.cond_id);
-        if (!cond_id.has_value()) {
-          return SemIR::ErrorInst::ConstantId;
-        }
-        if (auto cond =
-                eval_context.insts().TryGetAs<SemIR::BoolLiteral>(cond_id);
-            cond && cond->value == SemIR::BoolValue::True) {
-          branch_to(branch_if.target_id);
-        }
-        break;
-      }
-
-        // TODO: Handle BranchWithArg and BlockArg.
-
-      case CARBON_KIND(SemIR::Return _): {
-        // TODO: Factor this out (shared with at least the NoOp builtin).
-        auto type_id = GetTupleType(eval_context.context(), {});
-        return MakeConstantResult(
-            eval_context.context(),
-            SemIR::TupleValue{.type_id = type_id,
-                              .elements_id = SemIR::InstBlockId::Empty},
-            Phase::Concrete);
-      }
-
-      case CARBON_KIND(SemIR::ReturnExpr return_expr): {
-        auto result_id = get_value_or_diagnose(return_expr.expr_id);
-        if (!result_id.has_value()) {
-          return SemIR::ErrorInst::ConstantId;
-        }
-        return eval_context.constant_values().Get(result_id);
-      }
-
-      case CARBON_KIND(SemIR::ReturnSlot return_slot): {
-        // TODO: Should this be a regular EvalConstantInst?
-        locals.Insert(inst_id, locals.Lookup(return_slot.storage_id).value());
-        break;
-      }
-
-      case CARBON_KIND(SemIR::SpliceBlock splice_block): {
-        push_block(splice_block.block_id);
-        // TODO: Copy the values from the result_id instruction to the result of
-        // the splice_block instruction once the spliced block finishes.
-        break;
-      }
-
-      case SemIR::OutParam::Kind:
-      case SemIR::RefParam::Kind:
-      case SemIR::ValueParam::Kind: {
-        auto param = inst.As<SemIR::AnyParam>();
-        if (static_cast<size_t>(param.index.index) < args.size()) {
-          locals.Insert(inst_id, outer_eval_context.constant_values().Get(
-                                     args[param.index.index]));
-        } else {
-          // TODO: We generate an OutParam with an index that has no
-          // corresponding argument for return values that have a copy
-          // initializing representation.
-          CARBON_CHECK(inst.Is<SemIR::OutParam>());
-          locals.Insert(inst_id, SemIR::ConstantId::None);
-        }
-        break;
-      }
-
-      case CARBON_KIND(SemIR::ValueBinding value_binding): {
-        // Local bindings are constant, non-local bindings are not.
-        if (auto local_value = locals.Lookup(value_binding.value_id)) {
-          locals.Insert(inst_id, local_value.value());
-        } else {
-          // TODO: Diagnose this properly.
-          eval_context.context().TODO(SemIR::LocId(inst_id),
-                                      "Non-local binding");
-          return SemIR::ErrorInst::ConstantId;
-        }
-        break;
-      }
-
-      default: {
-        auto const_id = TryEvalInstInContext(eval_context, inst_id, inst);
-        if (!const_id.has_value() || !const_id.is_constant()) {
-          // TODO: Diagnose this properly.
-          eval_context.context().TODO(
-              SemIR::LocId(inst_id),
-              ("Failed to evaluate " + inst.kind().name()).str());
-          return SemIR::ErrorInst::ConstantId;
-        }
-        if (const_id == SemIR::ErrorInst::ConstantId) {
-          return const_id;
-        }
-        locals.Update(inst_id, const_id);
-      }
+    if (auto result = ExecInstInContext(eval_context, inst_id, inst, blocks,
+                                        locals, args);
+        result.has_value()) {
+      return *result;
     }
   }
 }
