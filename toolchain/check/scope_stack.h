@@ -133,10 +133,6 @@ class ScopeStack {
     return return_scope_stack_.back().decl_id;
   }
 
-  // Marks the name `name_id` as used at the given location.
-  auto MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id, bool is_reachable)
-      -> void;
-
   // Returns the name ID for the current `returned var`, or `None` if there
   // isn't one.
   auto GetReturnedVarNameId() -> SemIR::NameId {
@@ -164,9 +160,8 @@ class ScopeStack {
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
   // in that scope or any unfinished scope within it, and otherwise adds the
-  // name with the value `target_id` and returns `None`.
-  // `is_decl_reachable` indicates whether the name was declared in a reachable
-  // position.
+  // name with the value `target_id` and returns `None`. `is_decl_reachable`
+  // indicates whether the name was declared in a reachable position.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
                        ScopeIndex scope_index = ScopeIndex::None,
                        bool is_decl_reachable = true) -> SemIR::InstId;
@@ -299,6 +294,10 @@ class ScopeStack {
       return_scope_stack_.back().nested_scope_index = scope_stack_.back().index;
     }
   }
+
+  // Marks the name `name_id` as used at the given location.
+  auto MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id, bool is_reachable)
+      -> void;
 
   // Checks that the provided scope's `next_compile_time_bind_index` matches the
   // full size of the current `compile_time_binding_stack_`. The values should

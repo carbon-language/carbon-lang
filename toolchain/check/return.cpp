@@ -105,7 +105,7 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
   if (existing_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "cannot declare a `returned var` in the scope of "
-                      "another `returned var` declaration");
+                      "another `returned var`");
     auto diag = context.emitter().Build(bind_id, ReturnedVarShadowed);
     NoteReturnedVar(diag, existing_id);
     diag.Emit();
