@@ -760,10 +760,6 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                  generic_without_self_id);
   }
 
-  auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
-  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
-      context.insts().Get(self_facet_inst_id).type_id()));
-
   auto outer_args_id =
       context.specifics().GetArgsOrEmpty(specific_without_self_id);
   auto outer_args = context.inst_blocks().Get(outer_args_id);
@@ -771,7 +767,15 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::InstId> args;
   args.reserve(outer_args.size() + 1);
   llvm::append_range(args, outer_args);
-  args.push_back(self_facet_inst_id);
+
+  if (self_facet == SemIR::ErrorInst::ConstantId) {
+    args.push_back(SemIR::ErrorInst::InstId);
+  } else {
+    auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
+    CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+        context.insts().Get(self_facet_inst_id).type_id()));
+    args.push_back(self_facet_inst_id);
+  }
 
   auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
 
