@@ -210,6 +210,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
+  // Pop the body_block_with_self.
   context.inst_block_stack().Pop();
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
@@ -226,8 +227,6 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
 
   // Finish the definition of interface-with-self.
   FinishGenericDefinition(context, interface_info.generic_with_self_id);
-  // Pop the scope for the interface-with-self.
-  context.scope_stack().Pop();
 
   // Pop the body_block_without_self.
   context.inst_block_stack().Pop();
