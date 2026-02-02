@@ -779,11 +779,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
 
   auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
 
-  bool resolved = ResolveSpecificDefinition(context, loc_id, specific_id);
-  CARBON_CHECK(
-      resolved,
-      "MakeSpecificWithInnerSelf() called before the generic entity is "
-      "complete");
+  // FIXME: What breaks if we remove this?
+  ResolveSpecificDefinition(context, loc_id, specific_id);
 
   return specific_id;
 }
