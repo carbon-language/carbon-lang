@@ -40,10 +40,16 @@ class SortingConsumer : public Consumer {
 
   // Sorts and flushes buffered diagnostics.
   auto Flush() -> void override {
-    llvm::stable_sort(diagnostics_,
-                      [](const Diagnostic& lhs, const Diagnostic& rhs) {
-                        return lhs.last_byte_offset < rhs.last_byte_offset;
-                      });
+    llvm::stable_sort(diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
+      // Sort first based on the end of the diagnostic range, then the
+      // start.
+      const auto& lhs_msg = lhs.messages[0];
+      const auto& rhs_msg = rhs.messages[0];
+      return std::tie(lhs.last_byte_offset, lhs_msg.loc.line_number,
+                      lhs_msg.loc.column_number) <
+             std::tie(rhs.last_byte_offset, rhs_msg.loc.line_number,
+                      rhs_msg.loc.column_number);
+    });
     for (auto& diag : diagnostics_) {
       next_consumer_->HandleDiagnostic(std::move(diag));
     }

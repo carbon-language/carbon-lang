@@ -58,23 +58,23 @@ library "[[@TEST_NAME]]";
 
 class FailIncomplete;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+18]]:20: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
-// CHECK:STDERR:                    ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class FailIncomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+11]]:20: error: parameter has incomplete type `FailIncomplete` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
-// CHECK:STDERR:                    ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class FailIncomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+18]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+14]]:20: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
+// CHECK:STDERR:                    ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-9]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class FailIncomplete;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:20: error: parameter has incomplete type `FailIncomplete` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
+// CHECK:STDERR:                    ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-16]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class FailIncomplete;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
 
