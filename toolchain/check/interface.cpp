@@ -178,9 +178,11 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   auto self_specific_args = context.inst_blocks().Get(
       context.specifics().Get(generic.self_specific_id).args_id);
 
-  auto arg_ids = GetGenericArgsWithSelfType(
-      context, interface_with_self_specific_id, generic_id, self_type_id,
-      witness_inst_id, self_specific_args.size());
+  auto arg_ids = llvm::SmallVector<SemIR::InstId>(context.inst_blocks().Get(
+      context.specifics().GetArgsOrEmpty(interface_with_self_specific_id)));
+  // FIXME: Remove these.
+  (void)self_type_id;
+  (void)witness_inst_id;
 
   // Determine the number of specific arguments that enclose the point where
   // this self specific will be used from. In an impl, this will be the number
@@ -261,8 +263,9 @@ auto GetTypeForSpecificAssociatedEntity(
 }
 
 auto MakeSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
-                             SemIR::TypeId type_id, SemIR::NameScopeId scope_id,
-                             bool is_template) -> SemIR::InstId {
+                              SemIR::TypeId type_id,
+                              SemIR::NameScopeId scope_id, bool is_template)
+    -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, scope_id,
       context.scope_stack().AddCompileTimeBinding(), is_template);

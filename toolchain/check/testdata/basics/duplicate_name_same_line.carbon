@@ -64,8 +64,10 @@ fn A() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc18_25: <bound method> = bound_method %n.var.loc18_25, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc18_25: init %empty_tuple.type = call %DestroyOp.bound.loc18_25(%n.var.loc18_25)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc18_5: init %empty_tuple.type = call %DestroyOp.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>

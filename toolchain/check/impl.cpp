@@ -615,11 +615,17 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
+  auto self_facet = GetConstantFacetValueForTypeAndInterface(
+      context, impl.self_id, impl.interface, impl.witness_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, SemIR::LocId(impl.definition_id), interface.generic_id,
+      interface.generic_with_self_id, impl.interface.specific_id, self_facet);
+
   for (auto [assoc_entity, witness_value] :
        llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), impl.interface.specific_id, assoc_entity));
+            context.sem_ir(), interface_with_self_specific_id, assoc_entity));
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
