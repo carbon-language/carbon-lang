@@ -37,8 +37,8 @@ observe T ;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'impls', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'I'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -47,8 +47,8 @@ observe T ;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -1589,7 +1589,7 @@ struct RequireDecl {
   Lex::SemiTokenIndex token;
 };
 
-// `observe`...`impls` declarations
+// `observe` declarations
 // --------------------------------
 
 // `observe`
@@ -1599,7 +1599,7 @@ using ObserveIntroducer =
 // `==`
 struct ObserveEqualEqual {
   static constexpr auto Kind = NodeKind::ObserveEqualEqual.Define(
-      {.category = NodeCategory::ObserveEqualEqual, .child_count = 2});
+      {.category = NodeCategory::ObserveOperator, .child_count = 2});
 
   AnyObserveOperandId lhs;
   Lex::EqualEqualTokenIndex token;
@@ -1609,10 +1609,11 @@ struct ObserveEqualEqual {
 // `impls`
 struct ObserveImpls {
   static constexpr auto Kind = NodeKind::ObserveImpls.Define(
-      {.category = NodeCategory::ObserveImpls, .child_count = 1});
+      {.category = NodeCategory::ObserveOperator, .child_count = 2});
 
   AnyObserveOperandId lhs;
   Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
 };
 
 // `observe T == U impls I`
@@ -1623,8 +1624,7 @@ struct ObserveDecl {
 
   ObserveIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  ObserveImplsId impls;
-  AnyExprId interface;
+  AnyObserveOperatorId op;
   Lex::SemiTokenIndex token;
 };
 
