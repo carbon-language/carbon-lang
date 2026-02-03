@@ -129,4 +129,3 @@ fn Four() {
   let _: Cpp.C = Cpp.C.C(1, 2, 3, 4);
   let _: Cpp.C = (5, 6, 7, 8);
 }
-
