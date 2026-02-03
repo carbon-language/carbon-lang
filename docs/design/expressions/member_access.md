@@ -740,7 +740,7 @@ on what instance member `M` was found:
 -   For a field member of a struct type or tuple type, `x` is converted to a
     struct or tuple form by
     [form decomposition](/docs/design/values.md#category-conversions), and the
-    `.f` element of the outcome of that conversion becomes the outcome of `x.f`.
+    `.f` element of the result of that conversion becomes the result of `x.f`.
     All other elements are [discarded](/docs/design/values.md#form-conversions).
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.

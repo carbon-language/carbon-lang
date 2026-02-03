@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
 -   [Expression forms](#expression-forms)
-    -   [Initializing outcomes](#initializing-outcomes)
+    -   [Initializing results](#initializing-results)
     -   [Form conversions](#form-conversions)
         -   [Type conversions](#type-conversions)
         -   [Category conversions](#category-conversions)
@@ -628,10 +628,10 @@ expression.
 
 ### Function calls and returns
 
-The [outcome](#expression-forms) of a function call can have an almost arbitrary
+The [result](#expression-forms) of a function call can have an almost arbitrary
 form. The return clause of a function signature consists of `->` followed by a
 _return form_, an expression-like syntax that specifies not only the type but
-also the form of the function call's outcome. `return` expressions in the
+also the form of the function call's result. `return` expressions in the
 function body are expected to have that form, and are converted to it if
 necessary. When a function is declared without a return clause, it behaves from
 the caller's point of view as if the return clause were `-> ()`, but `return`
@@ -831,23 +831,23 @@ category component of a tuple form is called a _tuple category_.
 
 The type of an expression is the type component of the expression's form.
 
-An _outcome_ is the result of evaluating an expression. It can be defined
-recursively in terms of the expression's form:
+Evaluating an expression produces a _result_. It can be defined recursively in
+terms of the expression's form:
 
--   The outcome of an initializing expression is an
-    [initializing outcome](#initializing-outcomes).
--   The outcome of a value expression is a value.
--   The outcome of a reference expression is a reference of the same kind.
--   The outcome of an expression with tuple form is a tuple of outcomes.
--   The outcome of an expression with struct form is a struct of outcomes.
+-   The result of an initializing expression is an
+    [initializing result](#initializing-results).
+-   The result of a value expression is a value.
+-   The result of a reference expression is a reference of the same kind.
+-   The result of an expression with tuple form is a tuple of results.
+-   The result of an expression with struct form is a struct of results.
 
-An expression and its outcome always have the same form.
+An expression and its result always have the same form.
 
-### Initializing outcomes
+### Initializing results
 
 > **TODO:** Find a clearer way to articulate this concept.
 
-An _initializing outcome_ is the notional result of evaluating an initializing
+An _initializing result_ is the notional result of evaluating an initializing
 expression, and represents an obligation to provide storage for an object of the
 expression's type. This obligation can be fulfilled directly by providing
 suitable storage (as with temporary materialization, for example), or it can be
@@ -859,7 +859,7 @@ by the core language, such as forming a tuple or struct literal from its
 elements, or [converting between composite forms](#form-conversions), where the
 generated code can compute the storage location beforehand, and use it as a
 hidden output parameter when evaluating the initializing expression. The
-initializing outcome abstracts away that hidden output parameter and lets us use
+initializing result abstracts away that hidden output parameter and lets us use
 the conventional vocabulary of expression evaluation, where information flows
 into an operation from its operands and not the other way around.
 
@@ -879,12 +879,12 @@ requirements on the corresponding component. Most commonly, an operand position
 requires its operand to have a primitive form with a particular category,
 usually with a particular type, and sometimes with a particular phase.
 
-In some cases an expression's outcome is _discarded_, such as when the
-expression is used as a statement, or is matched with an
+In some cases an expression's result is _discarded_, such as when the expression
+is used as a statement, or is matched with an
 [unused binding pattern](pattern_matching.md#unused-bindings). Discarding an
-outcome is a form conversion that does nothing except materialize any
-initializing sub-outcomes, in order to satisfy the obligation to provide storage
-to every initializing outcome.
+result is a form conversion that does nothing except materialize any
+initializing sub-results, in order to satisfy the obligation to provide storage
+to every initializing result.
 
 Phase conversions cannot change the form structure; they can only apply
 primitive phase conversions to primitive sub-forms. Type and category
@@ -923,24 +923,24 @@ invokes another explicit type conversion. Otherwise, it is implicit.
 
 A type conversion of a primitive-form expression to a
 [compatible type](generics/terminology.md#compatible-types) just re-interprets
-the expression's outcome with a new type, so it requires no run-time work, and
+the expression's result with a new type, so it requires no run-time work, and
 has the same category as the input expression.
 
-An outcome `source` that has a struct type can be converted to a struct type
+A result `source` that has a struct type can be converted to a struct type
 `Dest` if they have the same set of field names:
 
 -   If the type of `source` is `Dest`, return `source`.
--   If `source` is a struct outcome, for each field name `F` in `Dest`,
-    type-convert `source.F` to `Dest.F`. Return a struct outcome where each
-    field `F` is set to the outcome of the corresponding conversion.
--   If `source` is a primitive outcome, convert it to a struct outcome by
+-   If `source` is a struct result, for each field name `F` in `Dest`,
+    type-convert `source.F` to `Dest.F`. Return a struct result where each field
+    `F` is set to the result of the corresponding conversion.
+-   If `source` is a primitive result, convert it to a struct result by
     [form decomposition](#category-conversions), and then type-convert the
-    outcome to `Dest` and return the result.
+    result to `Dest` and return the result.
 
 Note that the sub-conversions invoked here are not necessarily defined; if so,
 the conversion itself is not defined.
 
-There is a conversion to a class type `Dest` from an outcome `source` that has a
+There is a conversion to a class type `Dest` from a result `source` that has a
 struct type, if there is a conversion from `source` to a struct type that has
 the same field names as `Dest` (including a `.base` field if `Dest` is a derived
 class), with the same types, in the same order. The conversion type-converts
@@ -1007,7 +1007,7 @@ exceptions:
     decomposition implicitly ends the lifetime of the original aggregate,
     promoting its elements to complete objects with independent lifetimes.
 -   If `C` is "initializing", `CC` will be "ephemeral entire reference", because
-    the initializing outcome must be materialized before it can be decomposed.
+    the initializing result must be materialized before it can be decomposed.
 
 By convention, form decomposition is a no-op when applied to an expression with
 struct or tuple form.

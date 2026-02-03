@@ -346,7 +346,7 @@ The scrutinee is required to be of tuple type, with the same arity as the number
 of nested _patterns_. It is converted to a tuple form by
 [form decomposition](values.md#form-conversions), and then each nested _pattern_
 is matched against the corresponding element of the converted scrutinee's
-[outcome](values.md#expression-forms). The tuple pattern matches if all of these
+[result](values.md#expression-forms). The tuple pattern matches if all of these
 sub-matches succeed.
 
 ### Struct patterns
@@ -375,8 +375,8 @@ The scrutinee is required to be of struct type, and every field name in the
 pattern must be a field name in the scrutinee. It is converted to a struct form
 by [form decomposition](values.md#form-conversions) and then each
 _field-pattern_ is matched with the same-named element of the converted
-scrutinee's [outcome](values.md#expression-forms). If the scrutinee outcome has
-any field names not present in the pattern, those sub-outcomes are
+scrutinee's [result](values.md#expression-forms). If the scrutinee result has
+any field names not present in the pattern, those sub-results are
 [discarded](values.md#form-conversions) in lexical order if the pattern has a
 trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does not. The
 struct pattern matches if all of these sub-matches succeed.
