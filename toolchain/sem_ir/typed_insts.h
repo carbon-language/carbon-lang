@@ -373,6 +373,8 @@ struct Call {
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
        .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -1198,6 +1200,7 @@ struct NameBindingDecl {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
       {.ir_name = "name_binding_decl",
+       .expr_category = ExprCategory::NotExpr,
        .constant_kind = InstConstantKind::Never});
 
   InstBlockId pattern_block_id;

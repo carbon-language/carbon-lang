@@ -343,6 +343,16 @@ static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
                                            : SemIR::ConstantId::NotConstant;
 }
 
+// Forms a constant for an empty tuple value.
+static auto MakeEmptyTupleResult(EvalContext& eval_context) {
+  auto type_id = GetTupleType(eval_context.context(), {});
+  return MakeConstantResult(
+      eval_context.context(),
+      SemIR::TupleValue{.type_id = type_id,
+                        .elements_id = SemIR::InstBlockId::Empty},
+      Phase::Concrete);
+}
+
 // Converts a bool value into a ConstantId.
 static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
                            bool result) -> SemIR::ConstantId {
@@ -408,6 +418,18 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   return eval_context.constant_values().GetInstId(const_id);
 }
 
+// Issue a suitable diagnostic for an instruction that evaluated to a
+// non-constant value but was required to evaluate to a constant.
+static auto DiagnoseNonConstantValue(EvalContext& eval_context,
+                                     SemIR::InstId inst_id) -> void {
+  if (inst_id != SemIR::ErrorInst::InstId) {
+    CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
+                      "expression is runtime; expected constant");
+    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
+                                EvalRequiresConstantValue);
+  }
+}
+
 // Gets a constant value for an `inst_id`, diagnosing when the input is not a
 // constant value.
 static auto RequireConstantValue(EvalContext& eval_context,
@@ -423,12 +445,7 @@ static auto RequireConstantValue(EvalContext& eval_context,
     return eval_context.constant_values().GetInstId(const_id);
   }
 
-  if (inst_id != SemIR::ErrorInst::InstId) {
-    CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
-                      "expression is runtime; expected constant");
-    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
-                                EvalRequiresConstantValue);
-  }
+  DiagnoseNonConstantValue(eval_context, inst_id);
   *phase = Phase::UnknownDueToError;
   return SemIR::ErrorInst::InstId;
 }
@@ -458,6 +475,26 @@ static auto RequireConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
     *phase = LatestPhase(*phase, constant_phase);
   }
   return const_inst_id;
+}
+
+// Gets a concrete value for an `inst_id`, diagnosing when the input is not
+// concrete.
+static auto RequireConcreteValue(EvalContext& eval_context,
+                                 SemIR::InstId inst_id) -> SemIR::InstId {
+  auto phase = Phase::Concrete;
+  auto value_inst_id = RequireConstantValue(eval_context, inst_id, &phase);
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::InstId;
+  }
+  if (phase > Phase::Concrete) {
+    CARBON_DIAGNOSTIC(EvalRequiresConcreteValue, Error,
+                      "expression evaluates to symbolic value {0}",
+                      InstIdAsConstant);
+    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
+                                EvalRequiresConcreteValue, value_inst_id);
+    return SemIR::ErrorInst::InstId;
+  }
+  return value_inst_id;
 }
 
 // Find the instruction that the given instruction instantiates to, and return
@@ -1720,13 +1757,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::NoOp: {
-      // Return an empty tuple value.
-      auto type_id = GetTupleType(eval_context.context(), {});
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::TupleValue{.type_id = type_id,
-                            .elements_id = SemIR::InstBlockId::Empty},
-          phase);
+      return MakeEmptyTupleResult(eval_context);
     }
 
     case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
@@ -2548,21 +2579,6 @@ class FunctionEvalContext : public EvalContext {
   llvm::ArrayRef<SemIR::InstId> args_;
 };
 
-static auto GetValueOrDiagnose(EvalContext& eval_context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  auto phase = Phase::Concrete;
-  auto value_inst_id = GetConstantValue(eval_context, inst_id, &phase);
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::InstId::None;
-  }
-  if (phase == Phase::Runtime) {
-    // TODO: Diagnose this properly.
-    eval_context.context().TODO(inst_id, "Runtime value");
-    return SemIR::InstId::None;
-  }
-  return value_inst_id;
-}
-
 // Handles the result of evaluating an instruction in a function. Terminates the
 // overall evaluation if the result is not a constant, and otherwise updates the
 // locals map to track the result as an input to later evaluations in this
@@ -2572,11 +2588,7 @@ static auto HandleEvalResultInFunction(FunctionEvalContext& eval_context,
                                        SemIR::ConstantId const_id)
     -> std::optional<SemIR::ConstantId> {
   if (!const_id.has_value() || !const_id.is_constant()) {
-    // TODO: Diagnose this properly.
-    eval_context.context().TODO(
-        SemIR::LocId(inst_id), ("Failed to evaluate " +
-                                eval_context.insts().Get(inst_id).kind().name())
-                                   .str());
+    DiagnoseNonConstantValue(eval_context, inst_id);
     return SemIR::ErrorInst::ConstantId;
   }
   if (const_id == SemIR::ErrorInst::ConstantId) {
@@ -2594,6 +2606,12 @@ template <typename InstT>
 static auto TryEvalTypedInstInFunction(FunctionEvalContext& eval_context,
                                        SemIR::InstId inst_id, SemIR::Inst inst)
     -> std::optional<SemIR::ConstantId> {
+  if constexpr (InstT::Kind.expr_category().TryAsFixedCategory() ==
+                SemIR::ExprCategory::NotExpr) {
+    // Instructions in this category are assumed to not have a runtime effect.
+    // This includes some kinds of declaration.
+    return std::nullopt;
+  }
   auto const_id = TryEvalTypedInst<InstT>(eval_context, inst_id, inst);
   return HandleEvalResultInFunction(eval_context, inst_id, const_id);
 }
@@ -2613,12 +2631,12 @@ auto TryEvalTypedInstInFunction<SemIR::BranchIf>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
     SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto branch_if = inst.As<SemIR::BranchIf>();
-  auto cond_id = GetValueOrDiagnose(eval_context, branch_if.cond_id);
-  if (!cond_id.has_value()) {
+  auto cond_id = RequireConcreteValue(eval_context, branch_if.cond_id);
+  if (cond_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::ConstantId;
   }
-  if (auto cond = eval_context.insts().TryGetAs<SemIR::BoolLiteral>(cond_id);
-      cond && cond->value == SemIR::BoolValue::True) {
+  auto cond = eval_context.insts().GetAs<SemIR::BoolLiteral>(cond_id);
+  if (cond.value == SemIR::BoolValue::True) {
     eval_context.blocks().back() =
         eval_context.context().inst_blocks().Get(branch_if.target_id);
   }
@@ -2629,13 +2647,7 @@ template <>
 auto TryEvalTypedInstInFunction<SemIR::Return>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
     SemIR::Inst /*inst*/) -> std::optional<SemIR::ConstantId> {
-  // TODO: Factor this out (shared with at least the NoOp builtin).
-  auto type_id = GetTupleType(eval_context.context(), {});
-  return MakeConstantResult(
-      eval_context.context(),
-      SemIR::TupleValue{.type_id = type_id,
-                        .elements_id = SemIR::InstBlockId::Empty},
-      Phase::Concrete);
+  return MakeEmptyTupleResult(eval_context);
 }
 
 template <>
@@ -2643,8 +2655,10 @@ auto TryEvalTypedInstInFunction<SemIR::ReturnExpr>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
     SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto return_expr = inst.As<SemIR::ReturnExpr>();
-  auto result_id = GetValueOrDiagnose(eval_context, return_expr.expr_id);
-  if (!result_id.has_value()) {
+  auto phase = Phase::Concrete;
+  auto result_id =
+      RequireConstantValue(eval_context, return_expr.expr_id, &phase);
+  if (phase == Phase::UnknownDueToError) {
     return SemIR::ErrorInst::ConstantId;
   }
   return eval_context.constant_values().Get(result_id);

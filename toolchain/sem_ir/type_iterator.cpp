@@ -67,6 +67,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case SymbolicBindingPattern::Kind: {
       return Step::SymbolicType{.facet_type_id = type_id};
     }
+    case Call::Kind:
     case TypeOfInst::Kind: {
       return Step::TemplateType();
     }

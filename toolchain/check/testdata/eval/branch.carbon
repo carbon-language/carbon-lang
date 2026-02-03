@@ -41,7 +41,7 @@ class A {}
 class B {}
 
 eval fn F(b: bool) -> type {
-  // CHECK:STDERR: fail_todo_if_expression_in_eval_fn.carbon:[[@LINE+3]]:10: error: semantics TODO: `Failed to evaluate BranchWithArg` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_if_expression_in_eval_fn.carbon:[[@LINE+3]]:10: error: expression is runtime; expected constant [EvalRequiresConstantValue]
   // CHECK:STDERR:   return if b then A else B;
   // CHECK:STDERR:          ^~~~
   return if b then A else B;
@@ -51,7 +51,7 @@ eval fn F(b: bool) -> type {
 // CHECK:STDERR: var a: F(true) = {} as A;
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_if_expression_in_eval_fn.carbon:[[@LINE-7]]:10: error: semantics TODO: `Failed to evaluate BranchWithArg` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_if_expression_in_eval_fn.carbon:[[@LINE-7]]:10: error: expression is runtime; expected constant [EvalRequiresConstantValue]
 // CHECK:STDERR:   return if b then A else B;
 // CHECK:STDERR:          ^~~~
 var a: F(true) = {} as A;

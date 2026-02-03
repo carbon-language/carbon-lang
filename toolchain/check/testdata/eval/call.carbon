@@ -32,6 +32,14 @@ eval fn F() -> i32 { return 3; }
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2, 3);
 
+// --- param_and_return.carbon
+
+library "[[@TEST_NAME]]";
+
+eval fn F(x: i32) -> i32 { return x; }
+
+var a: array(i32, F(3)) = (1, 2, 3);
+
 // --- fail_todo_dependent_call.carbon
 
 library "[[@TEST_NAME]]";
@@ -46,14 +54,33 @@ fn G(N:! i32) {
   var a: array(i32, F(N)) = (0, 1, 2);
 }
 
-// TODO: Crashes.
-// fn H() { G(3); }
+fn H() { G(3); }
 
-// --- param_and_return.carbon
+// --- fail_todo_dependent_call_type.carbon
 
-library "[[TEST_NAME]]";
+library "[[@TEST_NAME]]";
 
-eval fn F(x: i32) -> i32 { return x; }
+class C {}
+eval fn F(_: i32) -> type {
+  return C;
+}
 
-var a: array(i32, F(3)) = (1, 2, 3);
+fn UseFGenerically(X:! i32) {
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+12]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:   var v: F(X) = {};
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+8]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   var v: F(X) = {};
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst6800017A: {kind: Call, arg0: inst6800003F, arg1: inst_block68000081, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   var v: F(X) = {};
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  var v: F(X) = {};
+}
 
+fn UseFSpecifically() {
+  UseFGenerically(3);
+}
