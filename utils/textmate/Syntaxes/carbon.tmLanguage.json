@@ -177,7 +177,7 @@
           ]
         },
         {
-          "comment": "Matches chioces.",
+          "comment": "Matches choices.",
           "begin": "\\bchoice\\b",
           "beginCaptures": {
             "0": { "name": "storage.type.carbon" }
