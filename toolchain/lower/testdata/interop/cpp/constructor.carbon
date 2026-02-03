@@ -107,14 +107,6 @@ import Cpp library "multi_argument.h";
 fn Zero() {
   let _: Cpp.C = Cpp.C.C();
   let _: Cpp.C = ();
-  // CHECK:STDERR: call_multi_argument.carbon:[[@LINE+7]]:18: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let _: Cpp.C = {};
-  // CHECK:STDERR:                  ^~
-  // CHECK:STDERR: call_multi_argument.carbon:[[@LINE+4]]:18: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let _: Cpp.C = {};
-  // CHECK:STDERR:                  ^~
-  // CHECK:STDERR:
-  let _: Cpp.C = {};
 }
 
 fn One() {

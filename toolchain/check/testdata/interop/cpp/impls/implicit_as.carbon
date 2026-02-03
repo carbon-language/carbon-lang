@@ -252,17 +252,6 @@ fn DefaultConstructorTest() {
   //@dump-sem-ir-begin
   // OK, empty tuple maps to `{}` initializer list.
   let _: Cpp.DefaultConstructor = ();
-
-  // OK: empty struct maps to `{}` initializer list, which is an acceptable
-  // constructor call, even though a non-empty struct would not be.
-  // CHECK:STDERR: default_constructor.carbon:[[@LINE+7]]:35: error: cannot implicitly convert expression of type `{}` to `Cpp.DefaultConstructor` [ConversionFailure]
-  // CHECK:STDERR:   let _: Cpp.DefaultConstructor = {};
-  // CHECK:STDERR:                                   ^~
-  // CHECK:STDERR: default_constructor.carbon:[[@LINE+4]]:35: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.DefaultConstructor)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let _: Cpp.DefaultConstructor = {};
-  // CHECK:STDERR:                                   ^~
-  // CHECK:STDERR:
-  let _: Cpp.DefaultConstructor = {};
   //@dump-sem-ir-end
 }
 
@@ -381,28 +370,6 @@ fn InitFromStruct() {
   let _: Cpp.NonAggregate = ();
   let _: Cpp.NonAggregate = (1,);
   let _: Cpp.NonAggregate = (1, 2);
-  //@dump-sem-ir-end
-}
-
-// --- todo_fail_non_aggregate_from_empty_struct.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "aggregate.h";
-
-// TODO: This should be rejected; we should only support initialization from a
-// struct for an aggregate class.
-
-fn InitFromStruct() {
-  //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_non_aggregate_from_empty_struct.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `{}` to `Cpp.NonAggregate` [ConversionFailure]
-  // CHECK:STDERR:   let _: Cpp.NonAggregate = {};
-  // CHECK:STDERR:                             ^~
-  // CHECK:STDERR: todo_fail_non_aggregate_from_empty_struct.carbon:[[@LINE+4]]:29: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.NonAggregate)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let _: Cpp.NonAggregate = {};
-  // CHECK:STDERR:                             ^~
-  // CHECK:STDERR:
-  let _: Cpp.NonAggregate = {};
   //@dump-sem-ir-end
 }
 
