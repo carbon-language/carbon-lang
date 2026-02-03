@@ -67,14 +67,6 @@ class EvalContext {
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
 
-  explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
-                       SemIR::SpecificId specific_id,
-                       std::optional<LocalEvalInfo> local_eval_info)
-      : context_(context),
-        fallback_loc_id_(fallback_loc_id),
-        specific_id_(specific_id),
-        local_eval_info_(local_eval_info) {}
-
   // Gets the location to use for diagnostics if a better location is
   // unavailable.
   // TODO: This is also sometimes unavailable.
@@ -238,7 +230,16 @@ class EvalContext {
 
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
- private:
+ protected:
+  explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
+                       SemIR::SpecificId specific_id,
+                       std::optional<LocalEvalInfo> local_eval_info)
+      : context_(context),
+        fallback_loc_id_(fallback_loc_id),
+        specific_id_(specific_id),
+        local_eval_info_(local_eval_info) {}
+
+ protected:
   // The type-checking context in which we're performing evaluation.
   Context* context_;
   // The location to use for diagnostics when a better location isn't available.
@@ -249,7 +250,8 @@ class EvalContext {
   // information about that evaluation.
   std::optional<SpecificEvalInfo> specific_eval_info_;
   // If we are currently evaluating within a local scope, values of local
-  // instructions that have already been evaluated.
+  // instructions that have already been evaluated. This is here rather than in
+  // `FunctionEvalContext` so we can reference it from `GetConstantValue`.
   std::optional<LocalEvalInfo> local_eval_info_;
 };
 }  // namespace
@@ -2030,7 +2032,6 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
   return SemIR::ConstantId::NotConstant;
 }
 
-// Evaluates a call to an `eval` or `musteval` function.
 static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
@@ -2520,6 +2521,33 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   return context.inst_blocks().Add(result);
 }
 
+// Information about the local function context within which we are performing
+// evaluation.
+class FunctionEvalContext : public EvalContext {
+ public:
+  FunctionEvalContext(Context* context, SemIR::LocId loc_id,
+                      SemIR::SpecificId specific_id,
+                      Map<SemIR::InstId, SemIR::ConstantId>* locals,
+                      SemIR::InstBlockId args_id)
+      : EvalContext(context, loc_id, specific_id,
+                    LocalEvalInfo{.locals = locals}),
+        args_(context->inst_blocks().Get(args_id)) {}
+
+  auto blocks() -> llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& {
+    return blocks_;
+  }
+
+  auto args() const -> llvm::ArrayRef<SemIR::InstId> { return args_; }
+
+  auto locals() -> Map<SemIR::InstId, SemIR::ConstantId>& {
+    return *local_eval_info_->locals;
+  }
+
+ private:
+  llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
+  llvm::ArrayRef<SemIR::InstId> args_;
+};
+
 static auto GetValueOrDiagnose(EvalContext& eval_context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto phase = Phase::Concrete;
@@ -2535,56 +2563,55 @@ static auto GetValueOrDiagnose(EvalContext& eval_context, SemIR::InstId inst_id)
   return value_inst_id;
 }
 
-static auto HandleEvaluatedInstResult(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    SemIR::ConstantId const_id, Map<SemIR::InstId, SemIR::ConstantId>& locals)
+// Handles the result of evaluating an instruction in a function. Terminates the
+// overall evaluation if the result is not a constant, and otherwise updates the
+// locals map to track the result as an input to later evaluations in this
+// function.
+static auto HandleEvalResultInFunction(FunctionEvalContext& eval_context,
+                                       SemIR::InstId inst_id,
+                                       SemIR::ConstantId const_id)
     -> std::optional<SemIR::ConstantId> {
   if (!const_id.has_value() || !const_id.is_constant()) {
     // TODO: Diagnose this properly.
     eval_context.context().TODO(
-        SemIR::LocId(inst_id),
-        ("Failed to evaluate " + inst.kind().name()).str());
+        SemIR::LocId(inst_id), ("Failed to evaluate " +
+                                eval_context.insts().Get(inst_id).kind().name())
+                                   .str());
     return SemIR::ErrorInst::ConstantId;
   }
   if (const_id == SemIR::ErrorInst::ConstantId) {
     return const_id;
   }
-  locals.Update(inst_id, const_id);
+  eval_context.locals().Update(inst_id, const_id);
   return std::nullopt;
 }
 
-// Evaluates an instruction for TryEvalCall.
+// Evaluates an instruction for TryEvalCall. By default, performs normal
+// evaluation of the instruction. This is specialized for instructions that have
+// special handling in function evaluation, such as those that access parameters
+// or perform flow control.
 template <typename InstT>
-static auto ExecTypedInst(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
+static auto TryEvalTypedInstInFunction(FunctionEvalContext& eval_context,
+                                       SemIR::InstId inst_id, SemIR::Inst inst)
     -> std::optional<SemIR::ConstantId> {
   auto const_id = TryEvalTypedInst<InstT>(eval_context, inst_id, inst);
-  return HandleEvaluatedInstResult(eval_context, inst_id, inst, const_id,
-                                   locals);
+  return HandleEvalResultInFunction(eval_context, inst_id, const_id);
 }
 
 template <>
-auto ExecTypedInst<SemIR::Branch>(
-    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
-    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
-    -> std::optional<SemIR::ConstantId> {
+auto TryEvalTypedInstInFunction<SemIR::Branch>(
+    FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
+    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto branch = inst.As<SemIR::Branch>();
-  blocks.back() = eval_context.context().inst_blocks().Get(branch.target_id);
+  eval_context.blocks().back() =
+      eval_context.context().inst_blocks().Get(branch.target_id);
   return std::nullopt;
 }
 
 template <>
-auto ExecTypedInst<SemIR::BranchIf>(
-    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
-    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
-    -> std::optional<SemIR::ConstantId> {
+auto TryEvalTypedInstInFunction<SemIR::BranchIf>(
+    FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
+    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto branch_if = inst.As<SemIR::BranchIf>();
   auto cond_id = GetValueOrDiagnose(eval_context, branch_if.cond_id);
   if (!cond_id.has_value()) {
@@ -2592,19 +2619,16 @@ auto ExecTypedInst<SemIR::BranchIf>(
   }
   if (auto cond = eval_context.insts().TryGetAs<SemIR::BoolLiteral>(cond_id);
       cond && cond->value == SemIR::BoolValue::True) {
-    blocks.back() =
+    eval_context.blocks().back() =
         eval_context.context().inst_blocks().Get(branch_if.target_id);
   }
   return std::nullopt;
 }
 
 template <>
-auto ExecTypedInst<SemIR::Return>(
-    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst /*inst*/,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
-    -> std::optional<SemIR::ConstantId> {
+auto TryEvalTypedInstInFunction<SemIR::Return>(
+    FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
+    SemIR::Inst /*inst*/) -> std::optional<SemIR::ConstantId> {
   // TODO: Factor this out (shared with at least the NoOp builtin).
   auto type_id = GetTupleType(eval_context.context(), {});
   return MakeConstantResult(
@@ -2615,12 +2639,9 @@ auto ExecTypedInst<SemIR::Return>(
 }
 
 template <>
-auto ExecTypedInst<SemIR::ReturnExpr>(
-    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
-    -> std::optional<SemIR::ConstantId> {
+auto TryEvalTypedInstInFunction<SemIR::ReturnExpr>(
+    FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
+    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto return_expr = inst.As<SemIR::ReturnExpr>();
   auto result_id = GetValueOrDiagnose(eval_context, return_expr.expr_id);
   if (!result_id.has_value()) {
@@ -2630,120 +2651,101 @@ auto ExecTypedInst<SemIR::ReturnExpr>(
 }
 
 template <>
-auto ExecTypedInst<SemIR::ReturnSlot>(
-    EvalContext& /*eval_context*/, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
+auto TryEvalTypedInstInFunction<SemIR::ReturnSlot>(
+    FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> std::optional<SemIR::ConstantId> {
   auto return_slot = inst.As<SemIR::ReturnSlot>();
-  locals.Insert(inst_id, locals.Lookup(return_slot.storage_id).value());
+  eval_context.locals().Insert(
+      inst_id, eval_context.locals().Lookup(return_slot.storage_id).value());
   return std::nullopt;
 }
 
 template <>
-auto ExecTypedInst<SemIR::SpliceBlock>(
-    EvalContext& eval_context, SemIR::InstId /*inst_id*/, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
-    Map<SemIR::InstId, SemIR::ConstantId>& /*locals*/,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
-    -> std::optional<SemIR::ConstantId> {
+auto TryEvalTypedInstInFunction<SemIR::SpliceBlock>(
+    FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
+    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto splice_block = inst.As<SemIR::SpliceBlock>();
-  blocks.push_back(
+  eval_context.blocks().push_back(
       eval_context.context().inst_blocks().Get(splice_block.block_id));
   // TODO: Copy the values from the result_id instruction to the result of
   // the splice_block instruction once the spliced block finishes.
   return std::nullopt;
 }
 
-template <typename ParamT>
-static auto ExecTypedParam(EvalContext& eval_context, SemIR::InstId inst_id,
-                           SemIR::Inst inst,
-                           Map<SemIR::InstId, SemIR::ConstantId>& locals,
-                           llvm::ArrayRef<SemIR::InstId> args)
+static auto TryEvalTypedParamInFunction(FunctionEvalContext& eval_context,
+                                        SemIR::InstId inst_id, SemIR::Inst inst)
     -> std::optional<SemIR::ConstantId> {
   auto param = inst.As<SemIR::AnyParam>();
-  if (static_cast<size_t>(param.index.index) < args.size()) {
-    locals.Insert(inst_id,
-                  eval_context.constant_values().Get(args[param.index.index]));
-  } else {
-    // TODO: We generate an OutParam with an index that has no
-    // corresponding argument for return values that have a copy
-    // initializing representation.
-    CARBON_CHECK(inst.Is<SemIR::OutParam>());
-    locals.Insert(inst_id, SemIR::ConstantId::None);
-  }
+  CARBON_CHECK(static_cast<size_t>(param.index.index) <
+               eval_context.args().size());
+  eval_context.locals().Insert(inst_id,
+                               eval_context.constant_values().Get(
+                                   eval_context.args()[param.index.index]));
   return std::nullopt;
 }
 
 template <>
-auto ExecTypedInst<SemIR::OutParam>(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
-  return ExecTypedParam<SemIR::OutParam>(eval_context, inst_id, inst, locals,
-                                         args);
+auto TryEvalTypedInstInFunction<SemIR::OutParam>(
+    FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
+    -> std::optional<SemIR::ConstantId> {
+  auto param = inst.As<SemIR::OutParam>();
+  if (static_cast<size_t>(param.index.index) >= eval_context.args().size()) {
+    // TODO: We generate an OutParam with an index that has no
+    // corresponding argument for return values that have a copy
+    // initializing representation.
+    eval_context.locals().Insert(inst_id, SemIR::ConstantId::None);
+    return std::nullopt;
+  }
+
+  return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
 }
 
 template <>
-auto ExecTypedInst<SemIR::RefParam>(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
-  return ExecTypedParam<SemIR::RefParam>(eval_context, inst_id, inst, locals,
-                                         args);
+auto TryEvalTypedInstInFunction<SemIR::RefParam>(
+    FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
+    -> std::optional<SemIR::ConstantId> {
+  return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
 }
 
 template <>
-auto ExecTypedInst<SemIR::ValueParam>(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
-  return ExecTypedParam<SemIR::ValueParam>(eval_context, inst_id, inst, locals,
-                                           args);
+auto TryEvalTypedInstInFunction<SemIR::ValueParam>(
+    FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
+    -> std::optional<SemIR::ConstantId> {
+  return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
 }
 
 template <>
-auto ExecTypedInst<SemIR::ValueBinding>(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& /*blocks*/,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> /*args*/)
+auto TryEvalTypedInstInFunction<SemIR::ValueBinding>(
+    FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> std::optional<SemIR::ConstantId> {
   auto value_binding = inst.As<SemIR::ValueBinding>();
   // Local bindings are constant, non-local bindings are not.
-  if (auto local_value = locals.Lookup(value_binding.value_id)) {
-    locals.Insert(inst_id, local_value.value());
+  if (auto local_value = eval_context.locals().Lookup(value_binding.value_id)) {
+    eval_context.locals().Insert(inst_id, local_value.value());
   } else {
     // TODO: Diagnose this properly.
-    eval_context.context().TODO(SemIR::LocId(inst_id), "Non-local binding");
+    eval_context.context().TODO(SemIR::LocId(inst_id),
+                                "Referenced non-local binding");
     return SemIR::ErrorInst::ConstantId;
   }
   return std::nullopt;
 }
 
-static auto ExecInstInContext(
-    EvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-    llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& blocks,
-    Map<SemIR::InstId, SemIR::ConstantId>& locals,
-    llvm::ArrayRef<SemIR::InstId> args) -> std::optional<SemIR::ConstantId> {
-  using ExecInstFn =
-      auto(EvalContext & eval_context, SemIR::InstId inst_id, SemIR::Inst inst,
-           llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>> & blocks,
-           Map<SemIR::InstId, SemIR::ConstantId> & locals,
-           llvm::ArrayRef<SemIR::InstId> args)
-          ->std::optional<SemIR::ConstantId>;
-  static constexpr ExecInstFn* ExecInstFns[] = {
-#define CARBON_SEM_IR_INST_KIND(Kind) &ExecTypedInst<SemIR::Kind>,
+static auto TryEvalInstInFunction(FunctionEvalContext& eval_context,
+                                  SemIR::InstId inst_id, SemIR::Inst inst)
+    -> std::optional<SemIR::ConstantId> {
+  using EvalInstFn = auto(FunctionEvalContext & eval_context,
+                          SemIR::InstId inst_id, SemIR::Inst inst)
+                         ->std::optional<SemIR::ConstantId>;
+  static constexpr EvalInstFn* EvalInstFns[] = {
+#define CARBON_SEM_IR_INST_KIND(Kind) &TryEvalTypedInstInFunction<SemIR::Kind>,
 #include "toolchain/sem_ir/inst_kind.def"
   };
-  [[clang::musttail]] return ExecInstFns[inst.kind().AsInt()](
-      eval_context, inst_id, inst, blocks, locals, args);
+  [[clang::musttail]] return EvalInstFns[inst.kind().AsInt()](eval_context,
+                                                              inst_id, inst);
 }
 
+// Evaluates a call to an `eval` or `musteval` function.
 static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
@@ -2753,15 +2755,13 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
     return SemIR::ConstantId::NotConstant;
   }
 
-  auto args = outer_eval_context.inst_blocks().Get(args_id);
-
   // TODO: Consider tracking the lowest and highest inst_id in the function and
   // using an array instead of a map. We would still need a map for instantiated
   // portions of a function template.
   Map<SemIR::InstId, SemIR::ConstantId> locals;
 
-  EvalContext eval_context(&outer_eval_context.context(), loc_id, specific_id,
-                           LocalEvalInfo{.locals = &locals});
+  FunctionEvalContext eval_context(&outer_eval_context.context(), loc_id,
+                                   specific_id, &locals, args_id);
 
   Diagnostics::AnnotationScope annotate_diagnostics(
       &eval_context.emitter(), [&](auto& builder) {
@@ -2770,14 +2770,11 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
         builder.Note(loc_id, InCallToEvalFn, function.name_id);
       });
 
-  // We track a stack of blocks to evaluate. This allows us to handle
-  // splice_block and to run the function body after the decl block.
-  llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks = {};
-  auto push_block = [&](SemIR::InstBlockId block_id) {
-    blocks.push_back(eval_context.context().inst_blocks().Get(block_id));
-  };
-
   // Evaluate the function decl block followed by the body.
+  auto push_block = [&](SemIR::InstBlockId block_id) {
+    eval_context.blocks().push_back(
+        eval_context.context().inst_blocks().Get(block_id));
+  };
   push_block(function.body_block_ids.front());
   push_block(eval_context.insts()
                  .GetAs<SemIR::FunctionDecl>(function.definition_id)
@@ -2786,16 +2783,15 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   // Evaluate the blocks. This is mostly expression evaluation, with special
   // handling for control flow.
   while (true) {
-    if (blocks.back().empty()) {
-      blocks.pop_back();
-      CARBON_CHECK(!blocks.empty(), "Fell off end of function");
+    if (eval_context.blocks().back().empty()) {
+      eval_context.blocks().pop_back();
+      CARBON_CHECK(!eval_context.blocks().empty(), "Fell off end of function");
       continue;
     }
 
-    auto inst_id = blocks.back().consume_front();
+    auto inst_id = eval_context.blocks().back().consume_front();
     auto inst = eval_context.context().insts().Get(inst_id);
-    if (auto result = ExecInstInContext(eval_context, inst_id, inst, blocks,
-                                        locals, args);
+    if (auto result = TryEvalInstInFunction(eval_context, inst_id, inst);
         result.has_value()) {
       return *result;
     }
