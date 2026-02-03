@@ -25,7 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/check/context.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"

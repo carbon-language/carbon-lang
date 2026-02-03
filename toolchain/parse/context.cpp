@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"

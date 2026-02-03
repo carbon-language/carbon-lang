@@ -13,7 +13,7 @@
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/kind.h"
 
 namespace Carbon::Diagnostics {
 

@@ -12,7 +12,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 

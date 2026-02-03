@@ -11,7 +11,7 @@
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/expr_info.h"
 

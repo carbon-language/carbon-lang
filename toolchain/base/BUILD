@@ -57,7 +57,7 @@ cc_library(
         ":install_paths",
         "//common:check",
         "//common:string_helpers",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",

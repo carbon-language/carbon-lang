@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
-#define CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
 
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Diagnostics {
 
@@ -60,4 +60,4 @@ class SortingConsumer : public Consumer {
 
 }  // namespace Carbon::Diagnostics
 
-#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
-#define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_EMITTER_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_EMITTER_H_
 
 #include <cstdint>
 #include <string>
@@ -14,9 +14,9 @@
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/kind.h"
 
 namespace Carbon::Diagnostics {
 
@@ -457,4 +457,4 @@ auto Emitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
 
 }  // namespace Carbon::Diagnostics
 
-#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_EMITTER_H_

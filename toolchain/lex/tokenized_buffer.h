@@ -17,7 +17,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"

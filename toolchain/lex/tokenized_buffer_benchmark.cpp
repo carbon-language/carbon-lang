@@ -16,7 +16,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "testing/base/source_gen.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/token_kind.h"

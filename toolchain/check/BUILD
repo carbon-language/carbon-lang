@@ -161,7 +161,7 @@ cc_library(
         "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_info",
         "//toolchain/lex:token_kind",
@@ -224,8 +224,8 @@ cc_library(
     deps = [
         ":context",
         ":core_identifier",
-        ":diagnostic_emitter",
         ":dump",
+        ":emitter",
         ":scope_stack",
         "//common:check",
         "//common:error",
@@ -239,7 +239,7 @@ cc_library(
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:timings",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
@@ -343,14 +343,14 @@ cc_library(
 )
 
 cc_library(
-    name = "diagnostic_emitter",
+    name = "emitter",
     srcs = ["diagnostic_emitter.cpp"],
     hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":context",
         "//common:ostream",
         "//common:raw_string_ostream",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/lex:token_index",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",

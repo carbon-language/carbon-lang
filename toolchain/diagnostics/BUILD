@@ -8,19 +8,19 @@ load("//bazel/manifest:defs.bzl", "manifest")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "diagnostic_emitter",
+    name = "emitter",
     srcs = [
+        "consumer.cpp",
         "diagnostic.cpp",
-        "diagnostic_consumer.cpp",
     ],
     hdrs = [
+        "consumer.h",
         "diagnostic.h",
-        "diagnostic_consumer.h",
-        "diagnostic_emitter.h",
+        "emitter.h",
     ],
     deps = [
-        ":diagnostic_kind",
         ":format_providers",
+        ":kind",
         "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
@@ -28,11 +28,11 @@ cc_library(
 )
 
 cc_test(
-    name = "diagnostic_emitter_test",
+    name = "emitter_test",
     size = "small",
-    srcs = ["diagnostic_emitter_test.cpp"],
+    srcs = ["emitter_test.cpp"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         ":mocks",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
@@ -41,11 +41,11 @@ cc_test(
 )
 
 cc_library(
-    name = "diagnostic_kind",
-    srcs = ["diagnostic_kind.cpp"],
-    hdrs = ["diagnostic_kind.h"],
+    name = "kind",
+    srcs = ["kind.cpp"],
+    hdrs = ["kind.h"],
     textual_hdrs = [
-        "diagnostic_kind.def",
+        "kind.def",
     ],
     deps = [
         "//common:enum_base",
@@ -67,7 +67,7 @@ cc_test(
         "//toolchain/testing:all_testdata",
     ],
     deps = [
-        ":diagnostic_kind",
+        ":kind",
         "//testing/base:gtest_main",
         "//toolchain/testing:coverage_helper",
         "@abseil-cpp//absl/flags:flag",
@@ -79,7 +79,7 @@ cc_library(
     name = "file_diagnostics",
     hdrs = ["file_diagnostics.h"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -100,7 +100,7 @@ cc_test(
     size = "small",
     srcs = ["format_providers_test.cpp"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         ":format_providers",
         ":mocks",
         "//testing/base:gtest_main",
@@ -114,29 +114,29 @@ cc_library(
     testonly = 1,
     hdrs = ["null_diagnostics.h"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
-    name = "sorting_diagnostic_consumer",
-    hdrs = ["sorting_diagnostic_consumer.h"],
+    name = "sorting_consumer",
+    hdrs = ["sorting_consumer.h"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         "//common:check",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_test(
-    name = "sorting_diagnostic_consumer_test",
+    name = "sorting_consumer_test",
     size = "small",
-    srcs = ["sorting_diagnostic_consumer_test.cpp"],
+    srcs = ["sorting_consumer_test.cpp"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         ":mocks",
-        ":sorting_diagnostic_consumer",
+        ":sorting_consumer",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -149,7 +149,7 @@ cc_library(
     srcs = ["mocks.cpp"],
     hdrs = ["mocks.h"],
     deps = [
-        ":diagnostic_emitter",
+        ":emitter",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

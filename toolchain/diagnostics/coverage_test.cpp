@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "absl/flags/flag.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/kind.h"
 #include "toolchain/testing/coverage_helper.h"
 
 ABSL_FLAG(std::string, testdata_manifest, "",
@@ -16,7 +16,7 @@ namespace {
 
 constexpr Kind Kinds[] = {
 #define CARBON_DIAGNOSTIC_KIND(Name) Kind::Name,
-#include "toolchain/diagnostics/diagnostic_kind.def"
+#include "toolchain/diagnostics/kind.def"
 };
 
 constexpr Kind UntestedKinds[] = {

@@ -26,7 +26,7 @@
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_stack.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"

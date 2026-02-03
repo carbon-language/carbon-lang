@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
+#include "toolchain/diagnostics/sorting_consumer.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 
 namespace Carbon::Diagnostics {
