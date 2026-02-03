@@ -1340,9 +1340,8 @@ static auto AddNameScopeImportRefs(ImportContext& context,
                            .result = SemIR::ScopeLookupResult::MakeFound(
                                ref_id, result.access_kind())});
   }
-  for (auto [scope_inst_id, inner_self_id] : import_scope.extended_scopes()) {
-    new_scope.AddExtendedScope({AddImportRef(context, scope_inst_id),
-                                AddImportRef(context, inner_self_id)});
+  for (auto scope_inst_id : import_scope.extended_scopes()) {
+    new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));
   }
 }
 

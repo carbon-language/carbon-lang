@@ -519,56 +519,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
       scopes.reserve(scopes.size() + extended.size());
-      for (auto [extended_id, inner_self_id] : llvm::reverse(extended)) {
+      for (auto extended_id : llvm::reverse(extended)) {
         // Substitute into the constant describing the extended scope to
         // determine its corresponding specific.
         CARBON_CHECK(extended_id.has_value());
         LoadImportRef(context, extended_id);
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
-
-        // FIXME: Remove this. Not needed anymore, the specific already has self
-        // as a replacement for Self in the generic that extended_id is from
-        // (the interface-with-self).
-#if 0
-        // Apply self_const_id to the extended_id, replacing inner_self_id
-        // inside.
-        //
-        // TODO: We do this by substituting a `Self` value that the extended
-        // scope provides us with the self type/facet of the name lookup. But
-        // we'd like to avoid using substitution, and do this through the
-        // generic system with a specific and/or eval. Ideally it's somehow done
-        // as part of the `GetConstantValueInSpecific` call above, but with
-        // providing the additional information of the self type/facet of the
-        // name lookup. Further thoughts here:
-        // https://discord.com/channels/655572317891461132/941071822756143115/1463277684082737214
-        if (inner_self_id.has_value() && self_const_id.has_value()) {
-          LoadImportRef(context, inner_self_id);
-
-          auto inner_self_binding =
-              context.insts().GetAs<SemIR::SymbolicBinding>(
-                  context.constant_values().GetConstantInstId(inner_self_id));
-          auto entity_id = inner_self_binding.entity_name_id;
-          auto bind_index = context.entity_names().Get(entity_id).bind_index();
-          auto facet_value = SemIR::ConstantId::None;
-          if (auto self_type_id =
-                  context.types().TryGetTypeIdForTypeConstantId(self_const_id);
-              self_type_id.has_value()) {
-            // The self for member lookup is a type, we need a facet value to
-            // replace `Self`.
-            facet_value = GetConstantFacetValueForType(
-                context, context.types().GetTypeInstId(self_type_id));
-          } else {
-            // The self for member lookup is a facet value, use it as is to
-            // replace `Self`.
-            facet_value = self_const_id;
-          }
-          llvm::SmallVector<Substitution> substitutions = {
-              {.bind_id = bind_index, .replacement_id = facet_value}};
-          const_id = SubstConstant(context, loc_id, const_id, substitutions);
-        }
-#endif
-
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            self_const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
