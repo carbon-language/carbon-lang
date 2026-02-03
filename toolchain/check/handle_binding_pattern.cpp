@@ -466,7 +466,6 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
 // is needed to emit a diagnostic when the unused-marker is
 // unnecessary.
 static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
-  bool any_marked = false;
   auto inst = context.insts().Get(inst_id);
   CARBON_KIND_SWITCH(inst) {
     case SemIR::OutParamPattern::Kind:
@@ -474,10 +473,7 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
     case SemIR::ValueParamPattern::Kind:
     case SemIR::VarParamPattern::Kind: {
       auto param = inst.As<SemIR::AnyParamPattern>();
-      if (MarkPatternUnused(context, param.subpattern_id)) {
-        any_marked = true;
-      }
-      break;
+      return MarkPatternUnused(context, param.subpattern_id);
     }
     case SemIR::RefBindingPattern::Kind:
     case SemIR::SymbolicBindingPattern::Kind:
@@ -489,29 +485,22 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
       // deciding whether to issue a warning for `unused` on a pattern that
       // doesn't contain any bindings. `_` is implicitly unused, so marking it
       // `unused` is redundant but harmless.
-      if (name.name_id != SemIR::NameId::Underscore) {
-        any_marked = true;
-      }
-      break;
+      return name.name_id != SemIR::NameId::Underscore;
     }
     case CARBON_KIND(SemIR::TuplePattern tuple): {
       for (auto elem_id : context.inst_blocks().Get(tuple.elements_id)) {
         if (MarkPatternUnused(context, elem_id)) {
-          any_marked = true;
+          return true;
         }
       }
-      break;
+      return false;
     }
     case CARBON_KIND(SemIR::VarPattern var): {
-      if (MarkPatternUnused(context, var.subpattern_id)) {
-        any_marked = true;
-      }
-      break;
+      return MarkPatternUnused(context, var.subpattern_id);
     }
     default:
-      break;
+      return false;
   }
-  return any_marked;
 }
 
 auto HandleParseNode(Context& context, Parse::UnusedPatternId node_id) -> bool {
