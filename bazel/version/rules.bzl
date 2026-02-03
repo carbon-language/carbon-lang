@@ -134,7 +134,7 @@ expand_version_build_info_internal = rule(
 def expand_version_build_info(name, **kwargs):
     expand_version_build_info_internal(
         name = name,
-        internal_stamp_flag_detect = select({
+        internal_stamp_flag_detect = False if kwargs.get("stamp") == 0 else select({
             "//bazel/version:internal_stamp_flag_detect": True,
             "//conditions:default": False,
         }),
