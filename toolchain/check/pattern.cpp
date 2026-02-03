@@ -67,15 +67,11 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   }
   bool is_generic = pattern_kind == SemIR::SymbolicBindingPattern::Kind;
 
-  if (name_id == SemIR::NameId::Underscore) {
-    is_unused = true;
-  }
-
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
-      is_template, is_unused);
+      is_template, is_unused || name_id == SemIR::NameId::Underscore);
 
   auto bind_id = AddInstInNoBlock(
       context,
