@@ -725,7 +725,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
                         SemIR::ConstantId assoc_entity_const_id,
-                        SemIR::SpecificInterface interface) -> SemIR::InstId {
+                        SemIR::SpecificInterface specific_interface) -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
@@ -737,7 +737,7 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
   LoadImportRef(context, decl_id);
 
   return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
-                                interface);
+                                specific_interface);
 }
 
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
