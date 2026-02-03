@@ -110,6 +110,15 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     if (interface.generic_id.has_value()) {
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
     }
+
+    auto interface_with_self_self_specific_args = context.inst_blocks().Get(
+        context.specifics().GetArgsOrEmpty(context.generics().GetSelfSpecific(
+            interface.generic_with_self_id)));
+    auto self_facet = interface_with_self_self_specific_args.back();
+    auto specific_with_self_id = MakeSpecificWithInnerSelf(
+        context, loc_id, interface.generic_id, interface.generic_with_self_id,
+        extends.specific_id, context.constant_values().Get(self_facet));
+    ResolveSpecificDefinition(context, loc_id, specific_with_self_id);
   }
 
   for (auto extends : facet_type_info.extend_named_constraints) {
@@ -127,6 +136,15 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     if (constraint.generic_id.has_value()) {
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
     }
+
+    auto constraint_with_self_self_specific_args = context.inst_blocks().Get(
+        context.specifics().GetArgsOrEmpty(context.generics().GetSelfSpecific(
+            constraint.generic_with_self_id)));
+    auto self_facet = constraint_with_self_self_specific_args.back();
+    auto specific_with_self_id = MakeSpecificWithInnerSelf(
+        context, loc_id, constraint.generic_id, constraint.generic_with_self_id,
+        extends.specific_id, context.constant_values().Get(self_facet));
+    ResolveSpecificDefinition(context, loc_id, specific_with_self_id);
   }
 
   return true;

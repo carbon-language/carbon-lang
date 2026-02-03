@@ -214,8 +214,22 @@ class StepStack {
       return;
     }
     const auto& specific = sem_ir_->specifics().Get(specific_id);
-    auto args =
-        sem_ir_->inst_blocks().Get(specific.args_id).take_back(num_params);
+
+    auto drop_back_count = 0;
+    const auto& generic = sem_ir_->generics().Get(specific.generic_id);
+    if (sem_ir_->insts()
+            .IsOneOf<InterfaceWithSelfDecl, NamedConstraintWithSelfDecl>(
+                generic.decl_id)) {
+      // The with-self generic contains an additional `Self` parameter beyond
+      // the parameters of the entity, the argument for which we do not include
+      // in the display.
+      drop_back_count = 1;
+    }
+
+    auto args = sem_ir_->inst_blocks()
+                    .Get(specific.args_id)
+                    .drop_back(drop_back_count)
+                    .take_back(num_params);
     bool last = true;
     for (auto arg : llvm::reverse(args)) {
       PushString(last ? ")" : ", ");
