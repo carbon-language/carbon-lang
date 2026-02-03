@@ -310,11 +310,11 @@ auto CheckFunctionDefinitionSignature(Context& context,
   auto params_to_complete =
       context.inst_blocks().GetOrEmpty(function.call_params_id);
 
-  // Check the return type is complete.
-  for (auto return_pattern_id :
-       context.inst_blocks().GetOrEmpty(function.return_patterns_id)) {
-    CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
-                                   return_pattern_id, SemIR::SpecificId::None);
+  // The return parameter will be diagnosed after and differently from other
+  // parameters.
+  auto return_call_param = SemIR::InstId::None;
+  if (!params_to_complete.empty() && function.return_patterns_id.has_value()) {
+    return_call_param = params_to_complete.consume_back();
   }
 
   // Check the parameter types are complete.
@@ -334,6 +334,25 @@ auto CheckFunctionDefinitionSignature(Context& context,
           return context.emitter().Build(
               param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
         });
+  }
+
+  // Check the return type is complete.
+  if (function.return_patterns_id.has_value()) {
+    for (auto return_pattern_id :
+         context.inst_blocks().Get(function.return_patterns_id)) {
+      CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
+                                     return_pattern_id,
+                                     SemIR::SpecificId::None);
+    }
+
+    // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
+    // so don't `RequireCompleteType` on the return type.
+    if (return_call_param.has_value()) {
+      TryToCompleteType(
+          context,
+          context.insts().GetAs<SemIR::AnyParam>(return_call_param).type_id,
+          SemIR::LocId(return_call_param));
+    }
   }
 }
 

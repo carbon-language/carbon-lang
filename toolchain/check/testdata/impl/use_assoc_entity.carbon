@@ -1074,8 +1074,8 @@ fn F() {
 // CHECK:STDOUT:   %.722: form = init_form %impl.elem0.560, call_param2 [symbolic]
 // CHECK:STDOUT:   %GenericCallF.type: type = fn_type @GenericCallF [concrete]
 // CHECK:STDOUT:   %GenericCallF: %GenericCallF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.06a: <witness> = require_complete_type %impl.elem0.560 [symbolic]
 // CHECK:STDOUT:   %require_complete.19a: <witness> = require_complete_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.06a: <witness> = require_complete_type %impl.elem0.560 [symbolic]
 // CHECK:STDOUT:   %.322: type = fn_type_with_self_type %J.F.type, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem1: %.322 = impl_witness_access %J.lookup_impl_witness.264, element1 [symbolic]
 // CHECK:STDOUT:   %.873: form = init_form %impl.elem0.560, call_param1 [symbolic]
@@ -1500,8 +1500,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc28_42.2: form = init_form %impl.elem0.loc28_34.1, call_param2 [symbolic = %.loc28_42.2 (constants.%.722)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc28_42: <witness> = require_complete_type %impl.elem0.loc28_34.1 [symbolic = %require_complete.loc28_42 (constants.%require_complete.06a)]
 // CHECK:STDOUT:   %require_complete.loc28_25: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc28_25 (constants.%require_complete.19a)]
+// CHECK:STDOUT:   %require_complete.loc28_31: <witness> = require_complete_type %impl.elem0.loc28_34.1 [symbolic = %require_complete.loc28_31 (constants.%require_complete.06a)]
 // CHECK:STDOUT:   %.loc29: type = fn_type_with_self_type constants.%J.F.type, %T.loc28_17.1 [symbolic = %.loc29 (constants.%.322)]
 // CHECK:STDOUT:   %impl.elem1.loc29_11.2: @GenericCallF.%.loc29 (%.322) = impl_witness_access %J.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc29_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc29_11.2: <specific function> = specific_impl_function %impl.elem1.loc29_11.2, @J.F(%T.loc28_17.1) [symbolic = %specific_impl_fn.loc29_11.2 (constants.%specific_impl_fn)]
@@ -1610,8 +1610,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc28_42.2 => constants.%.88a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc28_42 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %require_complete.loc28_25 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc28_31 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc29 => constants.%.013
 // CHECK:STDOUT:   %impl.elem1.loc29_11.2 => constants.%E.as.J.impl.F
 // CHECK:STDOUT:   %specific_impl_fn.loc29_11.2 => constants.%E.as.J.impl.F
@@ -1659,8 +1659,8 @@ fn F() {
 // CHECK:STDOUT:   %.997: form = init_form %as_type.baf, call_param2 [symbolic]
 // CHECK:STDOUT:   %GenericResult.type: type = fn_type @GenericResult [concrete]
 // CHECK:STDOUT:   %GenericResult: %GenericResult.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.9b3: <witness> = require_complete_type %as_type.baf [symbolic]
 // CHECK:STDOUT:   %require_complete.19a: <witness> = require_complete_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.9b3: <witness> = require_complete_type %as_type.baf [symbolic]
 // CHECK:STDOUT:   %.322: type = fn_type_with_self_type %J.F.type, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem1: %.322 = impl_witness_access %J.lookup_impl_witness.264, element1 [symbolic]
 // CHECK:STDOUT:   %.d40: form = init_form %as_type.baf, call_param1 [symbolic]
@@ -1859,8 +1859,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_43.2: form = init_form %as_type.loc12_35.1, call_param2 [symbolic = %.loc12_43.2 (constants.%.997)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc12_43: <witness> = require_complete_type %as_type.loc12_35.1 [symbolic = %require_complete.loc12_43 (constants.%require_complete.9b3)]
 // CHECK:STDOUT:   %require_complete.loc12_26: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc12_26 (constants.%require_complete.19a)]
+// CHECK:STDOUT:   %require_complete.loc12_32: <witness> = require_complete_type %as_type.loc12_35.1 [symbolic = %require_complete.loc12_32 (constants.%require_complete.9b3)]
 // CHECK:STDOUT:   %.loc13_11: type = fn_type_with_self_type constants.%J.F.type, %T.loc12_18.1 [symbolic = %.loc13_11 (constants.%.322)]
 // CHECK:STDOUT:   %impl.elem1.loc13_11.2: @GenericResult.%.loc13_11 (%.322) = impl_witness_access %J.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc13_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc13_11.2: <specific function> = specific_impl_function %impl.elem1.loc13_11.2, @J.F(%T.loc12_18.1) [symbolic = %specific_impl_fn.loc13_11.2 (constants.%specific_impl_fn.c25)]
@@ -1995,8 +1995,8 @@ fn F() {
 // CHECK:STDOUT:   %.722: form = init_form %impl.elem0.560, call_param2 [symbolic]
 // CHECK:STDOUT:   %GenericCallInterfaceQualified.type: type = fn_type @GenericCallInterfaceQualified [concrete]
 // CHECK:STDOUT:   %GenericCallInterfaceQualified: %GenericCallInterfaceQualified.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.06a: <witness> = require_complete_type %impl.elem0.560 [symbolic]
 // CHECK:STDOUT:   %require_complete.19a: <witness> = require_complete_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.06a: <witness> = require_complete_type %impl.elem0.560 [symbolic]
 // CHECK:STDOUT:   %.588: type = fn_type_with_self_type %J.G.type, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem1: %.588 = impl_witness_access %J.lookup_impl_witness.264, element1 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem1, @J.G(%T) [symbolic]
@@ -2127,8 +2127,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_59.2: form = init_form %impl.elem0.loc8_51.1, call_param2 [symbolic = %.loc8_59.2 (constants.%.722)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_59: <witness> = require_complete_type %impl.elem0.loc8_51.1 [symbolic = %require_complete.loc8_59 (constants.%require_complete.06a)]
 // CHECK:STDOUT:   %require_complete.loc8_42: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc8_42 (constants.%require_complete.19a)]
+// CHECK:STDOUT:   %require_complete.loc8_48: <witness> = require_complete_type %impl.elem0.loc8_51.1 [symbolic = %require_complete.loc8_48 (constants.%require_complete.06a)]
 // CHECK:STDOUT:   %.loc9: type = fn_type_with_self_type constants.%J.G.type, %T.loc8_34.1 [symbolic = %.loc9 (constants.%.588)]
 // CHECK:STDOUT:   %impl.elem1.loc9_11.2: @GenericCallInterfaceQualified.%.loc9 (%.588) = impl_witness_access %J.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc9_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_11.2: <specific function> = specific_impl_function %impl.elem1.loc9_11.2, @J.G(%T.loc8_34.1) [symbolic = %specific_impl_fn.loc9_11.2 (constants.%specific_impl_fn)]

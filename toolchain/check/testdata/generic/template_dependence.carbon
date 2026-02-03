@@ -42,8 +42,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %pattern_type.4f4b84.1: type = pattern_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %require_complete.fbe: <witness> = require_complete_type %ptr.125 [template]
+// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67db0b.1) [template]
@@ -91,8 +91,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %pattern_type.loc5_33: type = pattern_type %ptr.loc5_29.1 [template = %pattern_type.loc5_33 (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_37: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_37 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.fbe)]
+// CHECK:STDOUT:   %require_complete.loc5_37: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_37 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_15.1) [template = %.loc6_10.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]

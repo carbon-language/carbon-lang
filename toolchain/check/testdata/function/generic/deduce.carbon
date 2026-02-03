@@ -538,8 +538,8 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced: %ExplicitAndAlsoDeduced.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.7e7: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T) [symbolic]
 // CHECK:STDOUT:   %ptr.643: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %.a25: form = init_form %ptr.643, call_param0 [concrete]
@@ -621,8 +621,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43: type = pattern_type %ptr.loc6_47.1 [symbolic = %pattern_type.loc6_43 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_47: <witness> = require_complete_type %ptr.loc6_47.1 [symbolic = %require_complete.loc6_47 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %require_complete.loc6_38: <witness> = require_complete_type %T.loc6_27.1 [symbolic = %require_complete.loc6_38 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_47: <witness> = require_complete_type %ptr.loc6_47.1 [symbolic = %require_complete.loc6_47 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2: <specific function> = specific_function constants.%ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T.loc6_27.1) [symbolic = %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 (constants.%ExplicitAndAlsoDeduced.specific_fn.7e7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @ExplicitAndAlsoDeduced.%T.loc6_27.1 (%T)) -> out %return.param: @ExplicitAndAlsoDeduced.%ptr.loc6_47.1 (%ptr.e8f) {
@@ -663,8 +663,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.4f4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%require_complete.ef1
 // CHECK:STDOUT:   %require_complete.loc6_38 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%require_complete.ef1
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.7e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -676,8 +676,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.f29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%complete_type.8a0
 // CHECK:STDOUT:   %require_complete.loc6_38 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%complete_type.8a0
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.1f3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -694,8 +694,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.type: type = fn_type @ImplicitGenericParam [concrete]
 // CHECK:STDOUT:   %ImplicitGenericParam: %ImplicitGenericParam.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.7cc: <specific function> = specific_function %ImplicitGenericParam, @ImplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -776,8 +776,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41: type = pattern_type %ptr.loc4_45.1 [symbolic = %pattern_type.loc4_41 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_45: <witness> = require_complete_type %ptr.loc4_45.1 [symbolic = %require_complete.loc4_45 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %require_complete.loc4_36: <witness> = require_complete_type %T.loc4_25.1 [symbolic = %require_complete.loc4_36 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc4_45: <witness> = require_complete_type %ptr.loc4_45.1 [symbolic = %require_complete.loc4_45 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2: <specific function> = specific_function constants.%ImplicitGenericParam, @ImplicitGenericParam(%T.loc4_25.1) [symbolic = %ImplicitGenericParam.specific_fn.loc4_56.2 (constants.%ImplicitGenericParam.specific_fn.7cc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @ImplicitGenericParam.%T.loc4_25.1 (%T)) -> out %return.param: @ImplicitGenericParam.%ptr.loc4_45.1 (%ptr.e8f) {
@@ -807,8 +807,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41 => constants.%pattern_type.4f4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%require_complete.ef1
 // CHECK:STDOUT:   %require_complete.loc4_36 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%require_complete.ef1
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.7cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -820,8 +820,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41 => constants.%pattern_type.fe8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%complete_type.3d0
 // CHECK:STDOUT:   %require_complete.loc4_36 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%complete_type.3d0
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.be5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

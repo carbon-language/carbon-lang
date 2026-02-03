@@ -88,6 +88,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.9b9f0c.1: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Base.ab3: type = class_type @Base, @Base(%T.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %require_complete.b68: <witness> = require_complete_type %Base.ab3 [symbolic]
+// CHECK:STDOUT:   %require_complete.67c: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Derived.elem.d6f: type = unbound_element_type %Derived.ad7, %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Base.elem.384: type = unbound_element_type %Base.ab3, %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -106,6 +107,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived.loc13_45.1, %T.binding.as_type [symbolic = %Derived.elem (constants.%Derived.elem.d6f)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc15 (constants.%require_complete.67c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_18.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
 // CHECK:STDOUT:   %.loc15_11.3: type = fn_type_with_self_type constants.%Copy.Op.type, %T.loc13_18.1 [symbolic = %.loc15_11.3 (constants.%.72e)]
 // CHECK:STDOUT:   %impl.elem0.loc15_11.2: @AccessDerived.%.loc15_11.3 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.07b)]
@@ -133,8 +135,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.binding.as_type) [symbolic = %Base (constants.%Base.ab3)]
-// CHECK:STDOUT:   %require_complete.loc21: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21 (constants.%require_complete.b68)]
+// CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21_11 (constants.%require_complete.b68)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.binding.as_type [symbolic = %Base.elem (constants.%Base.elem.384)]
+// CHECK:STDOUT:   %require_complete.loc21_13: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc21_13 (constants.%require_complete.67c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc19_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
 // CHECK:STDOUT:   %.loc21_11.5: type = fn_type_with_self_type constants.%Copy.Op.type, %T.loc19_15.1 [symbolic = %.loc21_11.5 (constants.%.72e)]
 // CHECK:STDOUT:   %impl.elem0.loc21_11.2: @AccessBase.%.loc21_11.5 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.07b)]
