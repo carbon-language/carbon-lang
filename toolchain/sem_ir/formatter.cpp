@@ -454,16 +454,27 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
 
   llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  if (constraint_info.scope_id.has_value()) {
+  if (constraint_info.is_complete()) {
     out_ << ' ';
     OpenBrace();
-    FormatCodeBlock(constraint_info.body_block_id);
+    FormatCodeBlock(constraint_info.body_block_without_self_id);
+
+    bool body_block_empty =
+        sem_ir_->inst_blocks()
+            .GetOrEmpty(constraint_info.body_block_with_self_id)
+            .empty();
+    if (!body_block_empty) {
+      IndentLabel();
+      out_ << "!with Self:\n";
+      FormatCodeBlock(constraint_info.body_block_with_self_id);
+    }
 
     // Always include the !members label because we always list the witness in
     // this section.
     IndentLabel();
     out_ << "!members:\n";
-    FormatNameScope(constraint_info.scope_id);
+    FormatNameScope(constraint_info.scope_without_self_id);
+    FormatNameScope(constraint_info.scope_with_self_id);
 
     FormatRequireImplsBlock(constraint_info.require_impls_block_id);
 

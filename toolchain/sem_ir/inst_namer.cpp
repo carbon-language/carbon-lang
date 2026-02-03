@@ -737,12 +737,16 @@ auto InstNamer::PushEntity(NamedConstraintId named_constraint_id,
   scope.name = globals_.AllocateName(
       *this, constraint_loc,
       sem_ir_->names().GetIRBaseName(constraint.name_id).str());
-  AddBlockLabel(scope_id, constraint.body_block_id, "constraint",
+  AddBlockLabel(scope_id, constraint.body_block_without_self_id,
+                "constraint_without_self", constraint_loc);
+  AddBlockLabel(scope_id, constraint.body_block_with_self_id, "constraint",
                 constraint_loc);
 
   // Push blocks in reverse order.
+  PushGeneric(scope_id, constraint.generic_with_self_id);
   PushGeneric(scope_id, constraint.generic_id);
-  PushBlockId(scope_id, constraint.body_block_id);
+  PushBlockId(scope_id, constraint.body_block_without_self_id);
+  PushBlockId(scope_id, constraint.body_block_with_self_id);
   PushBlockId(scope_id, constraint.pattern_block_id);
 }
 

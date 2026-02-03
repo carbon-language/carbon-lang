@@ -749,13 +749,19 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                specific_without_self_id.has_value());
   if (generic_without_self_id.has_value()) {
     // If there's an outer generic, then the inner and outer generics are for
-    // the same interface, and the specific is for the correct generic.
+    // the same interface/constraint, and the specific is for the correct
+    // generic.
     CARBON_CHECK(generic_with_self_id.has_value());
-    // FIXME: Check the interface ids match?
-    CARBON_CHECK(context.insts().Is<SemIR::InterfaceDecl>(
-        context.generics().Get(generic_without_self_id).decl_id));
-    CARBON_CHECK(context.insts().Is<SemIR::InterfaceWithSelfDecl>(
-        context.generics().Get(generic_with_self_id).decl_id));
+    // FIXME: Check the interface/constraint ids match?
+    CARBON_CHECK(
+        (context.insts()
+             .IsOneOf<SemIR::InterfaceDecl, SemIR::NamedConstraintDecl>(
+                 context.generics().Get(generic_without_self_id).decl_id)));
+    CARBON_CHECK(
+        (context.insts()
+             .IsOneOf<SemIR::InterfaceWithSelfDecl,
+                      SemIR::NamedConstraintWithSelfDecl>(
+                 context.generics().Get(generic_with_self_id).decl_id)));
     CARBON_CHECK(context.specifics().Get(specific_without_self_id).generic_id ==
                  generic_without_self_id);
   }

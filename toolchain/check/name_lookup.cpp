@@ -398,6 +398,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
         auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
             context, loc_id, interface.generic_id,
             interface.generic_with_self_id, extend.specific_id, self_facet);
+
         scopes->push_back({.name_scope_id = interface.scope_with_self_id,
                            .specific_id = interface_with_self_specific_id,
                            .self_const_id = self_type_const_id});
@@ -405,8 +406,17 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       for (const auto& extend : facet_type_info.extend_named_constraints) {
         auto& constraint =
             context.named_constraints().Get(extend.named_constraint_id);
-        scopes->push_back({.name_scope_id = constraint.scope_id,
-                           .specific_id = extend.specific_id,
+
+        // We need to build the inner constraint-with-self specific. To do that
+        // we need to determine the self facet value to use.
+        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+            context, constraint.generic_with_self_id, self_type_const_id);
+        auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
+            context, loc_id, constraint.generic_id,
+            constraint.generic_with_self_id, extend.specific_id, self_facet);
+
+        scopes->push_back({.name_scope_id = constraint.scope_with_self_id,
+                           .specific_id = constraint_with_self_specific_id,
                            .self_const_id = self_type_const_id});
       }
     } else {

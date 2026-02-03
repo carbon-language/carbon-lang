@@ -1228,6 +1228,17 @@ struct NamedConstraintDecl {
   DeclInstBlockId decl_block_id;
 };
 
+struct NamedConstraintWithSelfDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintWithSelfDecl
+          .Define<Parse::AnyNamedConstraintDeclId>(
+              {.ir_name = "constraint_with_self_decl",
+               .constant_kind = InstConstantKind::AlwaysUnique,
+               .is_lowered = false});
+  // No type: an constraint-with-self declaration is not a value.
+  NamedConstraintId constraint_id;
+};
+
 // A name reference, with the value of the name. This only handles name
 // resolution; the value may be used for reading or writing.
 struct NameRef {
