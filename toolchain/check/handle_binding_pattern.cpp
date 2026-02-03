@@ -468,39 +468,48 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
 static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
   bool any_marked = false;
   auto inst = context.insts().Get(inst_id);
-  if (auto bind = inst.TryAs<SemIR::AnyBindingPattern>()) {
-    auto& name = context.entity_names().Get(bind->entity_name_id);
-    name.is_unused = true;
-    // We treat `_` as not marking the pattern as unused for the purpose of
-    // deciding whether to issue a warning for `unused` on a pattern that
-    // doesn't contain any bindings. `_` is implicitly unused, so marking it
-    // `unused` is redundant but harmless.
-    if (name.name_id != SemIR::NameId::Underscore) {
-      any_marked = true;
-    }
-  } else if (auto param = inst.TryAs<SemIR::AnyParamPattern>()) {
-    if (MarkPatternUnused(context, param->subpattern_id)) {
-      any_marked = true;
-    }
-  } else {
-    CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::TuplePattern tuple): {
-        for (auto elem_id : context.inst_blocks().Get(tuple.elements_id)) {
-          if (MarkPatternUnused(context, elem_id)) {
-            any_marked = true;
-          }
-        }
-        break;
+  CARBON_KIND_SWITCH(inst) {
+    case SemIR::OutParamPattern::Kind:
+    case SemIR::RefParamPattern::Kind:
+    case SemIR::ValueParamPattern::Kind:
+    case SemIR::VarParamPattern::Kind: {
+      auto param = inst.As<SemIR::AnyParamPattern>();
+      if (MarkPatternUnused(context, param.subpattern_id)) {
+        any_marked = true;
       }
-      case CARBON_KIND(SemIR::VarPattern var): {
-        if (MarkPatternUnused(context, var.subpattern_id)) {
+      break;
+    }
+    case SemIR::RefBindingPattern::Kind:
+    case SemIR::SymbolicBindingPattern::Kind:
+    case SemIR::ValueBindingPattern::Kind: {
+      auto bind = inst.As<SemIR::AnyBindingPattern>();
+      auto& name = context.entity_names().Get(bind.entity_name_id);
+      name.is_unused = true;
+      // We treat `_` as not marking the pattern as unused for the purpose of
+      // deciding whether to issue a warning for `unused` on a pattern that
+      // doesn't contain any bindings. `_` is implicitly unused, so marking it
+      // `unused` is redundant but harmless.
+      if (name.name_id != SemIR::NameId::Underscore) {
+        any_marked = true;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::TuplePattern tuple): {
+      for (auto elem_id : context.inst_blocks().Get(tuple.elements_id)) {
+        if (MarkPatternUnused(context, elem_id)) {
           any_marked = true;
         }
-        break;
       }
-      default:
-        break;
+      break;
     }
+    case CARBON_KIND(SemIR::VarPattern var): {
+      if (MarkPatternUnused(context, var.subpattern_id)) {
+        any_marked = true;
+      }
+      break;
+    }
+    default:
+      break;
   }
   return any_marked;
 }
