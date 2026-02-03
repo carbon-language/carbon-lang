@@ -105,6 +105,9 @@ class ScopeStack {
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
+  //
+  // FIXME: Rename to TryGetCurrentScopeAs. Move InterfaceWithSelfDecl callers
+  // to GetCurrentScope as without any Try.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();

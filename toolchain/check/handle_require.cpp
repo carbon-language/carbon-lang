@@ -38,8 +38,8 @@ auto HandleParseNode(Context& context, Parse::RequireIntroducerId node_id)
   auto scope_id = context.scope_stack().PeekNameScopeId();
   auto scope_inst_id = context.name_scopes().Get(scope_id).inst_id();
   auto scope_inst = context.insts().Get(scope_inst_id);
-  if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-      !scope_inst.Is<SemIR::NamedConstraintDecl>()) {
+  if (!scope_inst.Is<SemIR::InterfaceWithSelfDecl>() &&
+      !scope_inst.Is<SemIR::NamedConstraintWithSelfDecl>()) {
     CARBON_DIAGNOSTIC(
         RequireInWrongScope, Error,
         "`require` can only be used in an `interface` or `constraint`");

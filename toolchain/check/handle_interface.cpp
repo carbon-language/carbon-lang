@@ -167,8 +167,9 @@ auto HandleParseNode(Context& context,
   ReplaceInstBeforeConstantUse(context, decl_with_self_inst_id,
                                interface_with_self_decl);
 
-  interface_info.scope_with_self_id = context.name_scopes().Add(
-      decl_inst_id, SemIR::NameId::None, interface_info.scope_without_self_id);
+  interface_info.scope_with_self_id =
+      context.name_scopes().Add(decl_with_self_inst_id, SemIR::NameId::None,
+                                interface_info.scope_without_self_id);
   // Set on the name scope where `M` is replaced by `Self.M`.
   context.name_scopes()
       .Get(interface_info.scope_with_self_id)
@@ -179,7 +180,7 @@ auto HandleParseNode(Context& context,
 
   // Enter a scope for the interace-with-self.
   context.scope_stack().PushForEntity(
-      decl_inst_id, interface_info.scope_with_self_id,
+      decl_with_self_inst_id, interface_info.scope_with_self_id,
       context.generics().GetSelfSpecific(interface_info.generic_with_self_id));
 
   interface_info.body_block_without_self_id =

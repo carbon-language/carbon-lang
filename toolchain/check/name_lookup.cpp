@@ -127,7 +127,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                         context.sem_ir(), non_lexical_result.specific_id,
                         target_inst_id))) {
           auto interface_decl =
-              context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
+              context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
+                  scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
           SemIR::InstId result_inst_id = GetAssociatedValue(

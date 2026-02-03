@@ -1236,7 +1236,7 @@ struct NamedConstraintWithSelfDecl {
                .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});
   // No type: an constraint-with-self declaration is not a value.
-  NamedConstraintId constraint_id;
+  NamedConstraintId named_constraint_id;
 };
 
 // A name reference, with the value of the name. This only handles name

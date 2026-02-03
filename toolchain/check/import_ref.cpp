@@ -920,7 +920,7 @@ static auto GetLocalGenericId(ImportContext& context,
     case CARBON_KIND(
         SemIR::NamedConstraintWithSelfDecl constraint_with_self_decl): {
       return context.local_named_constraints()
-          .Get(constraint_with_self_decl.constraint_id)
+          .Get(constraint_with_self_decl.named_constraint_id)
           .generic_with_self_id;
     }
     case CARBON_KIND(SemIR::RequireImplsDecl require_decl): {
@@ -1226,7 +1226,7 @@ static auto GetLocalNameScopeIdImpl(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::NamedConstraintWithSelfDecl constraint_with_self): {
       return resolver.local_named_constraints()
-          .Get(constraint_with_self.constraint_id)
+          .Get(constraint_with_self.named_constraint_id)
           .scope_with_self_id;
     }
     case SemIR::StructValue::Kind: {
@@ -3218,7 +3218,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ConstantId const_id) -> ResolveResult {
   auto constraint_const_id =
       GetLocalConstantId(resolver, resolver.import_named_constraints()
-                                       .Get(inst.constraint_id)
+                                       .Get(inst.named_constraint_id)
                                        .first_owning_decl_id);
 
   // These are set differently in each phase.
@@ -3231,7 +3231,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // already existing.
 
   auto import_generic_with_self_id = resolver.import_named_constraints()
-                                         .Get(inst.constraint_id)
+                                         .Get(inst.named_constraint_id)
                                          .generic_with_self_id;
 
   if (!const_id.has_value()) {
@@ -3276,12 +3276,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         resolver.import_generics().Get(import_generic_with_self_id);
 
     SemIR::NamedConstraintWithSelfDecl constraint_with_self_decl = {
-        .constraint_id = SemIR::NamedConstraintId::None};
+        .named_constraint_id = SemIR::NamedConstraintId::None};
     decl_id = AddPlaceholderImportedInst(resolver, import_generic.decl_id,
                                          constraint_with_self_decl);
     generic_with_self_id =
         MakeIncompleteGeneric(resolver, decl_id, import_generic_with_self_id);
-    constraint_with_self_decl.constraint_id = local_constraint_id;
+    constraint_with_self_decl.named_constraint_id = local_constraint_id;
     const_id = ReplacePlaceholderImportedInst(resolver, decl_id,
                                               constraint_with_self_decl);
 
@@ -3294,7 +3294,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto decl =
         resolver.local_insts().GetAs<SemIR::NamedConstraintWithSelfDecl>(
             resolver.local_constant_values().GetInstId(const_id));
-    local_constraint_id = decl.constraint_id;
+    local_constraint_id = decl.named_constraint_id;
     generic_with_self_id = resolver.local_named_constraints()
                                .Get(local_constraint_id)
                                .generic_with_self_id;
@@ -3310,9 +3310,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto& local_constraint = resolver.local_named_constraints().Get(
       resolver.local_insts()
           .GetAs<SemIR::NamedConstraintWithSelfDecl>(decl_id)
-          .constraint_id);
+          .named_constraint_id);
   const auto& import_constraint =
-      resolver.import_named_constraints().Get(inst.constraint_id);
+      resolver.import_named_constraints().Get(inst.named_constraint_id);
 
   auto& new_scope =
       resolver.local_name_scopes().Get(local_constraint.scope_with_self_id);

@@ -133,7 +133,9 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
 // Handle the end of the full-pattern of a let/var declaration (before the
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+  auto scope_id = context.scope_stack().PeekNameScopeId();
+  if (scope_id.has_value() &&
+      context.name_scopes().Get(scope_id).is_interface_definition()) {
     // Don't emit NameBindingDecl for an associated constant, because it will
     // always be empty.
     context.pattern_block_stack().PopAndDiscard();
@@ -168,7 +170,7 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
   auto interface_decl =
-      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
   auto generic_id =
       EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
 
@@ -223,7 +225,8 @@ static auto HandleDecl(Context& context) -> DeclInfo {
     // now. We will have done this at the `=` if there was an initializer.
     if (IntroducerNodeKind == Parse::NodeKind::AssociatedConstantIntroducer) {
       auto interface_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+          context.scope_stack()
+              .GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
       EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
     }
 
@@ -262,7 +265,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   // constant. We use this rather than `LimitModifiersOnDecl` to get a more
   // specific error.
   RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
-                                      std::nullopt);
+                                      SemIR::NameScopeId::None);
 
   if (decl_info.init_id.has_value()) {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
@@ -288,7 +291,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
       KeywordModifierSet::Access | KeywordModifierSet::Interface);
 
   auto interface_scope =
-      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
   // The `AssociatedConstantDecl` instruction and the
   // corresponding `AssociatedConstant` entity are built as part of handling the
   // binding pattern, but we still need to finish building the `Generic` object

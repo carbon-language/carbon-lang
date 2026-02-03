@@ -209,7 +209,6 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 // between the scope containing the declaration of `T` and the scope
 // containing the declaration of `n`.
 static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
-                                   SemIR::InstId scope_inst_id,
                                    SemIR::NameScopeId scope_id,
                                    SemIR::GenericId generic_id,
                                    bool has_error = false) -> void {
@@ -233,14 +232,17 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   // providing the definition.
   StartGenericDecl(context);
 
-  context.scope_stack().PushForEntity(scope_inst_id, scope_id, self_specific_id,
-                                      has_error);
+  const auto& scope = context.name_scopes().Get(scope_id);
+
+  context.scope_stack().PushForEntity(scope.inst_id(), scope_id,
+                                      self_specific_id, has_error);
 
   // An interface also introduces its 'Self' parameter into scope, despite it
   // not being redeclared as part of the qualifier.
-  if (auto interface_decl =
-          context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
-    auto& interface = context.interfaces().Get(interface_decl->interface_id);
+  if (scope.is_interface_definition()) {
+    auto interface_decl =
+        context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(scope.inst_id());
+    auto& interface = context.interfaces().Get(interface_decl.interface_id);
     context.scope_stack().AddCompileTimeBinding();
     context.scope_stack().PushCompileTimeBinding(interface.self_param_id);
   }
@@ -257,8 +259,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   // Resolve the qualifier as a scope and enter the new scope.
   auto [scope_id, generic_id] = ResolveAsScope(name_context, name);
   if (scope_id.has_value()) {
-    PushNameQualifierScope(*context_, name_context.loc_id,
-                           name_context.resolved_inst_id, scope_id, generic_id,
+    PushNameQualifierScope(*context_, name_context.loc_id, scope_id, generic_id,
                            context_->name_scopes().Get(scope_id).has_error());
     name_context.parent_scope_id = scope_id;
   } else {

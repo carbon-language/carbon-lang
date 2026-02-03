@@ -158,8 +158,8 @@ auto HandleParseNode(Context& context,
 
   // Add the interface-with-self declaration and build the generic for it. This
   // captures the `interface_info.self_param_id` as a parameter of the generic.
-  auto constraint_with_self_decl =
-      SemIR::NamedConstraintWithSelfDecl{.constraint_id = named_constraint_id};
+  auto constraint_with_self_decl = SemIR::NamedConstraintWithSelfDecl{
+      .named_constraint_id = named_constraint_id};
   auto decl_with_self_inst_id =
       AddPlaceholderInst(context, node_id, constraint_with_self_decl);
   auto generic_with_self_id = BuildGenericDecl(context, decl_with_self_inst_id);
@@ -167,15 +167,16 @@ auto HandleParseNode(Context& context,
   ReplaceInstBeforeConstantUse(context, decl_with_self_inst_id,
                                constraint_with_self_decl);
 
-  constraint_info.scope_with_self_id = context.name_scopes().Add(
-      decl_inst_id, SemIR::NameId::None, constraint_info.scope_without_self_id);
+  constraint_info.scope_with_self_id =
+      context.name_scopes().Add(decl_with_self_inst_id, SemIR::NameId::None,
+                                constraint_info.scope_without_self_id);
 
   // Start the definition of constraint-with-self.
   StartGenericDefinition(context, constraint_info.generic_with_self_id);
 
   // Enter a scope for the constraint-with-self.
   context.scope_stack().PushForEntity(
-      decl_inst_id, constraint_info.scope_with_self_id,
+      decl_with_self_inst_id, constraint_info.scope_with_self_id,
       context.generics().GetSelfSpecific(constraint_info.generic_with_self_id));
 
   constraint_info.body_block_without_self_id =

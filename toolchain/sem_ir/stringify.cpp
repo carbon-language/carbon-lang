@@ -849,9 +849,10 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       break;
     }
     case CARBON_KIND(NamedConstraintWithSelfDecl constraint_with_self_decl): {
-      step_stack.PushEntityName(sem_ir.named_constraints().Get(
-                                    constraint_with_self_decl.constraint_id),
-                                specific_id);
+      step_stack.PushEntityName(
+          sem_ir.named_constraints().Get(
+              constraint_with_self_decl.named_constraint_id),
+          specific_id);
       break;
     }
     case CARBON_KIND(RequireImplsDecl _): {

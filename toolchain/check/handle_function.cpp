@@ -86,6 +86,7 @@ static auto DiagnoseModifiers(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               DeclIntroducerState& introducer,
                               bool is_definition,
+                              SemIR::NameScopeId parent_scope_id,
                               SemIR::InstId parent_scope_inst_id,
                               std::optional<SemIR::Inst> parent_scope_inst,
                               SemIR::InstId self_param_id) -> void {
@@ -98,7 +99,7 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
 
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
@@ -255,11 +256,11 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 }
 
 // Adds the declaration to name lookup when appropriate.
-static auto MaybeAddToNameLookup(
-    Context& context, const DeclNameStack::NameContext& name_context,
-    const KeywordModifierSet& modifier_set,
-    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
-    -> void {
+static auto MaybeAddToNameLookup(Context& context,
+                                 const DeclNameStack::NameContext& name_context,
+                                 const KeywordModifierSet& modifier_set,
+                                 SemIR::NameScopeId parent_scope_id,
+                                 SemIR::InstId decl_id) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
       name_context.prev_inst_id().has_value()) {
     return;
@@ -268,11 +269,13 @@ static auto MaybeAddToNameLookup(
   // At interface scope, a function declaration introduces an associated
   // function.
   auto lookup_result_id = decl_id;
-  if (parent_scope_inst && !name_context.has_qualifiers) {
-    if (auto interface_scope =
-            parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
-      lookup_result_id = BuildAssociatedEntity(
-          context, interface_scope->interface_id, decl_id);
+  if (parent_scope_id.has_value() && !name_context.has_qualifiers) {
+    const auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+    if (parent_scope.is_interface_definition()) {
+      auto interface_decl = context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
+          parent_scope.inst_id());
+      lookup_result_id =
+          BuildAssociatedEntity(context, interface_decl.interface_id, decl_id);
     }
   }
 
@@ -419,7 +422,8 @@ static auto BuildFunctionDecl(Context& context,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
   DiagnoseModifiers(context, node_id, introducer, is_definition,
-                    parent_scope_inst_id, parent_scope_inst, self_param_id);
+                    name_context.parent_scope_id, parent_scope_inst_id,
+                    parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
 
@@ -486,7 +490,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // Add to name lookup if needed, now that the decl is built.
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
-                       parent_scope_inst, decl_id);
+                       name_context.parent_scope_id, decl_id);
 
   ValidateForEntryPoint(context, node_id, function_decl.function_id,
                         function_info);

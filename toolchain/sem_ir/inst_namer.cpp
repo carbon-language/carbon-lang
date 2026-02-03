@@ -576,7 +576,13 @@ auto InstNamer::GetNameForParentNameScope(NameScopeId name_scope_id)
     case CARBON_KIND(InterfaceDecl interface): {
       return MaybePushEntity(interface.interface_id);
     }
+    case CARBON_KIND(InterfaceWithSelfDecl interface): {
+      return MaybePushEntity(interface.interface_id);
+    }
     case CARBON_KIND(NamedConstraintDecl named_constraint): {
+      return MaybePushEntity(named_constraint.named_constraint_id);
+    }
+    case CARBON_KIND(NamedConstraintWithSelfDecl named_constraint): {
       return MaybePushEntity(named_constraint.named_constraint_id);
     }
     case SemIR::Namespace::Kind: {
