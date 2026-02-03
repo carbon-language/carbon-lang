@@ -373,7 +373,7 @@
       "patterns": [
         {
           "name": "constant.numeric.carbon",
-          "match": "0x[_0-9a-fA-F]*(\\.[_0-9a-fA-F]+([pP][-+]?[0-9]+)?)?"
+          "match": "0x[_0-9a-fA-F]*(\\.[_0-9a-fA-F]+(p[-+]?[0-9]+)?)?"
         },
         {
           "name": "constant.numeric.carbon",
@@ -381,7 +381,7 @@
         },
         {
           "name": "constant.numeric.carbon",
-          "match": "[0-9][_0-9]*(\\.[_0-9]+([eE][-+]?[0-9]+)?)?"
+          "match": "[0-9][_0-9]*(\\.[_0-9]+(e[-+]?[0-9]+)?)?"
         }
       ]
     },
