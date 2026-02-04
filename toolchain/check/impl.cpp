@@ -19,7 +19,6 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
-#include "toolchain/check/require_impls.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -702,18 +701,29 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   }
 
   // Make a facet value for the self type.
-  auto self_facet_value = GetConstantFacetValueForType(context, impl.self_id);
+  auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      impl.interface.specific_id, self_facet);
 
   for (auto require_id : require_ids) {
     const auto& require = context.require_impls().Get(require_id);
 
-    auto require_specific =
-        GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
-            context, require, impl.interface.specific_id, self_facet_value);
-    auto self_const_id = GetConstantValueInRequireImplsSpecific(
-        context, require_specific, require.self_id);
-    auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(
-        context, require_specific, require.facet_type_inst_id);
+    // Each require is in its own generic, with no additional bindings and no
+    // definition, so that they can have their specifics independently
+    // instantiated.
+    auto require_specific_id = CopySpecificToGeneric(
+        context, SemIR::LocId(require.decl_id), interface_with_self_specific_id,
+        require.generic_id);
+    auto self_const_id = GetConstantValueInSpecific(
+        context.sem_ir(), require_specific_id, require.self_id);
+    auto facet_type_const_id = GetConstantValueInSpecific(
+        context.sem_ir(), require_specific_id, require.facet_type_inst_id);
+    if (self_const_id == SemIR::ErrorInst::ConstantId ||
+        facet_type_const_id == SemIR::ErrorInst::ConstantId) {
+      FillImplWitnessWithErrors(context, impl);
+      break;
+    }
 
     auto result =
         LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);

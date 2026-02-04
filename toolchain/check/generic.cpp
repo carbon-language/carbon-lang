@@ -791,4 +791,33 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   return specific_id;
 }
 
+auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
+                           SemIR::SpecificId specific_id,
+                           SemIR::GenericId target_generic_id)
+    -> SemIR::SpecificId {
+  if (!specific_id.has_value()) {
+    const auto& target_generic = context.generics().Get(target_generic_id);
+    auto target_bindings =
+        context.inst_blocks().Get(target_generic.bindings_id);
+    CARBON_CHECK(target_bindings.empty());
+    return SemIR::SpecificId::None;
+  }
+
+  const auto& specific = context.specifics().Get(specific_id);
+  auto source_generic_id = specific.generic_id;
+
+  const auto& source_generic = context.generics().Get(source_generic_id);
+  const auto& target_generic = context.generics().Get(target_generic_id);
+  auto source_bindings = context.inst_blocks().Get(source_generic.bindings_id);
+  auto target_bindings = context.inst_blocks().Get(target_generic.bindings_id);
+  for (auto [source, target] :
+       llvm::zip_equal(source_bindings, target_bindings)) {
+    CARBON_CHECK(context.constant_values().Get(source) ==
+                 context.constant_values().Get(target));
+  }
+
+  auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
+  return MakeSpecific(context, loc_id, target_generic_id, args_id);
+}
+
 }  // namespace Carbon::Check

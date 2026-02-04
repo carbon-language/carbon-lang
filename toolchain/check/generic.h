@@ -139,6 +139,13 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::ConstantId self_facet)
     -> SemIR::SpecificId;
 
+// Copy the arguments of a specific into the context of another generic. The
+// target generic must have the exact same bindings as the specific's generic.
+auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
+                           SemIR::SpecificId specific_id,
+                           SemIR::GenericId target_generic_id)
+    -> SemIR::SpecificId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

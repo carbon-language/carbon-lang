@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
-// is invalid. So the constraint J is seen as having 0 interfaces to impl.
+// is invalid, so the impl as a whole is invalid.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
@@ -37,22 +37,25 @@ impl {} as J(-1) {}
 library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
-// is invalid. So the constraint J is seen as having 0 interfaces to impl.
+// is invalid, so the impl as a whole is invalid.
 //
-// `extend require` is identified in the same way as the non-extend case.
+// `extend require` is mostly identified in the same way as the non-extend case,
+// but the constraint requires the facet type to be complete. This makes the
+// require facet type part of the enclosing constraint in a way that it is not
+// for the non-extend case.
+//
+// TODO: Diagnostics should look the same as for non-extend though. We should be
+// able to point them at the `require`.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+6]]:37: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:24: error: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:                                     ^
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:3: note: in `require` used here [ResolvingSpecificHere]
-  // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
   extend require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: in `J(-1)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
 // CHECK:STDERR:
