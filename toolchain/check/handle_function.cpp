@@ -224,6 +224,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_type_id = SemIR::TypeId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
+      // This is a function in an interface definition scope (see
+      // NameScope::is_interface_definition()).
+      auto function_decl =
+          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
+      prev_function_id = function_decl.function_id;
+      prev_type_id = function_decl.type_id;
+      break;
+    }
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       prev_function_id = function_decl.function_id;
       prev_type_id = function_decl.type_id;

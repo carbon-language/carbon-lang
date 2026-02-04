@@ -14,10 +14,10 @@
 
 interface Interface {
   fn F();
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+7]]:6: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+7]]:3: error: redeclaration of `fn F` is redundant [RedeclRedundant]
   // CHECK:STDERR:   fn F();
-  // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: note: name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: note: previously declared here [RedeclPrevDecl]
   // CHECK:STDERR:   fn F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -29,12 +29,10 @@ interface Interface {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type.3f3064.1: type = fn_type @Interface.F.loc16 [concrete]
-// CHECK:STDOUT:   %Interface.F.77c12a.1: %Interface.F.type.3f3064.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface.F.decl.loc16 [concrete]
-// CHECK:STDOUT:   %Interface.F.type.3f3064.2: type = fn_type @Interface.F.loc24 [concrete]
-// CHECK:STDOUT:   %Interface.F.77c12a.2: %Interface.F.type.3f3064.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,9 +44,9 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Interface.F.decl.loc16: %Interface.F.type.3f3064.1 = fn_decl @Interface.F.loc16 [concrete = constants.%Interface.F.77c12a.1] {} {}
+// CHECK:STDOUT:   %Interface.F.decl.loc16: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl.loc16 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.F.decl.loc24: %Interface.F.type.3f3064.2 = fn_decl @Interface.F.loc24 [concrete = constants.%Interface.F.77c12a.2] {} {}
+// CHECK:STDOUT:   %Interface.F.decl.loc24: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -58,15 +56,9 @@ interface Interface {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F.loc16(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F.loc24(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:   fn();
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F.loc16(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F.loc24(constants.%Self) {}
+// CHECK:STDOUT: specific @Interface.F(constants.%Self) {}
 // CHECK:STDOUT:

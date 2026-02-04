@@ -28,22 +28,8 @@ interface Interface {
   default fn G(a: i32, b: i32) -> i32;
 }
 
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn Interface.F() {}
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-12]]:3: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:   default fn F();
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn Interface.F() {}
 
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:14: error: duplicate name `G` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-15]]:3: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32;
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 
 // --- dependent_return_type.carbon
@@ -73,8 +59,8 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type.3f3064.1: type = fn_type @Interface.F.loc7 [concrete]
-// CHECK:STDOUT:   %Interface.F.77c12a.1: %Interface.F.type.3f3064.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface.F.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -83,13 +69,9 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %.88a: form = init_form %i32, call_param2 [concrete]
-// CHECK:STDOUT:   %Interface.G.type.cde93b.1: type = fn_type @Interface.G.loc13 [concrete]
-// CHECK:STDOUT:   %Interface.G.433e0c.1: %Interface.G.type.cde93b.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.G.type: type = fn_type @Interface.G [concrete]
+// CHECK:STDOUT:   %Interface.G: %Interface.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%Interface.G.decl [concrete]
-// CHECK:STDOUT:   %Interface.F.type.3f3064.2: type = fn_type @Interface.F.loc23 [concrete]
-// CHECK:STDOUT:   %Interface.F.77c12a.2: %Interface.F.type.3f3064.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Interface.G.type.cde93b.2: type = fn_type @Interface.G.loc32 [concrete]
-// CHECK:STDOUT:   %Interface.G.433e0c.2: %Interface.G.type.cde93b.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -108,8 +90,8 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type.3f3064.2 = fn_decl @Interface.F.loc23 [concrete = constants.%Interface.F.77c12a.2] {} {}
-// CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type.cde93b.2 = fn_decl @Interface.G.loc32 [concrete = constants.%Interface.G.433e0c.2] {
+// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
+// CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type = fn_decl @Interface.G [concrete = constants.%Interface.G] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
@@ -117,31 +99,31 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc32_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc32_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc32_35: form = init_form %i32.loc32_35, call_param2 [concrete = constants.%.88a]
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc32_19: type = splice_block %i32.loc32_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc32_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc32_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_35: form = init_form %i32.loc18_35, call_param2 [concrete = constants.%.88a]
+// CHECK:STDOUT:     %a.param.loc18: %i32 = value_param call_param0
+// CHECK:STDOUT:     %.loc18_19: type = splice_block %i32.loc18_19 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc32_27: type = splice_block %i32.loc32_27 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc32_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc32_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %a.loc18: %i32 = value_binding a, %a.param.loc18
+// CHECK:STDOUT:     %b.param.loc18: %i32 = value_param call_param1
+// CHECK:STDOUT:     %.loc18_27: type = splice_block %i32.loc18_27 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %b.loc18: %i32 = value_binding b, %b.param.loc18
+// CHECK:STDOUT:     %return.param.loc18: ref %i32 = out_param call_param2
+// CHECK:STDOUT:     %return.loc18: ref %i32 = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type.3f3064.1 = fn_decl @Interface.F.loc7 [concrete = constants.%Interface.F.77c12a.1] {} {}
+// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type.cde93b.1 = fn_decl @Interface.G.loc13 [concrete = constants.%Interface.G.433e0c.1] {
+// CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type = fn_decl @Interface.G [concrete = constants.%Interface.G] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
@@ -152,20 +134,20 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %int_32.loc13_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc13_35: form = init_form %i32.loc13_35, call_param2 [concrete = constants.%.88a]
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %a.param.loc13: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_19: type = splice_block %i32.loc13_19 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc13_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
+// CHECK:STDOUT:     %a.loc13: %i32 = value_binding a, %a.param.loc13
+// CHECK:STDOUT:     %b.param.loc13: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc13_27: type = splice_block %i32.loc13_27 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc13_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %b.loc13: %i32 = value_binding b, %b.param.loc13
+// CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param2
+// CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, %Interface.G.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
@@ -178,15 +160,7 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F.loc7(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:   fn();
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.G.loc13(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F.loc23(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -195,19 +169,15 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.G.loc32(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.G(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param.loc18: %i32, %b.param.loc18: %i32) -> out %return.param.loc18: %i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F.loc7(constants.%Self) {}
+// CHECK:STDOUT: specific @Interface.F(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.G.loc13(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F.loc23(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.G.loc32(constants.%Self) {}
+// CHECK:STDOUT: specific @Interface.G(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dependent_return_type.carbon
 // CHECK:STDOUT:
