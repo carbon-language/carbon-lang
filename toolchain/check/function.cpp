@@ -7,10 +7,12 @@
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -90,10 +92,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
                          SemIR::NameScopeId name_scope_id,
                          SemIR::NameId name_id,
                          BuiltinFunctionSignature signature) -> SemIR::InstId {
-  // TODO: Refactor with function construction in thunk.cpp and cpp/import.cpp.
-  context.scope_stack().PushForDeclName();
-  context.inst_block_stack().Push();
-  context.pattern_block_stack().Push();
+  StartFunctionSignature(context);
 
   // Build and add a `[ref self: Self]` parameter if needed.
   auto implicit_param_patterns_id = SemIR::InstBlockId::None;
@@ -150,53 +149,47 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
                          return_patterns_id);
 
   context.full_pattern_stack().PopFullPattern();
-  auto pattern_block_id = context.pattern_block_stack().Pop();
-  auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
 
   // Add the function declaration.
-  SemIR::FunctionDecl function_decl = {.type_id = SemIR::TypeId::None,
-                                       .function_id = SemIR::FunctionId::None,
-                                       .decl_block_id = decl_block_id};
-  auto decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
-
-  // Build the function entity.
-  auto function = SemIR::Function{
-      {
-          .name_id = name_id,
-          .parent_scope_id = name_scope_id,
-          .generic_id = SemIR::GenericId::None,
-          .first_param_node_id = Parse::NodeId::None,
-          .last_param_node_id = Parse::NodeId::None,
-          .pattern_block_id = pattern_block_id,
-          .implicit_param_patterns_id = implicit_param_patterns_id,
-          .param_patterns_id = param_patterns_id,
-          .is_extern = false,
-          .extern_library_id = SemIR::LibraryNameId::None,
-          .non_owning_decl_id = SemIR::InstId::None,
-          .first_owning_decl_id = decl_id,
-          .definition_id = decl_id,
-      },
-      {
-          .call_param_patterns_id = call_param_patterns_id,
-          .call_params_id = call_params_id,
-          .return_type_inst_id = return_form.type_component_id,
-          .return_form_inst_id = return_form.form_inst_id,
-          .return_patterns_id = return_patterns_id,
-          .self_param_id = self_param_id,
-      }};
-  CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));
-  function.SetBuiltinFunction(builtin_kind);
-  function_decl.function_id = context.functions().Add(function);
-  function_decl.type_id = GetFunctionType(context, function_decl.function_id,
-                                          SemIR::SpecificId::None);
-  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  // TODO: This should probably handle generics.
+  auto [decl_id, function_id] = MakeFunctionDecl(
+      context, loc_id, decl_block_id, /*build_generic=*/false,
+      /*set_definition_id=*/true,
+      SemIR::Function{
+          {
+              .name_id = name_id,
+              .parent_scope_id = name_scope_id,
+              .generic_id = SemIR::GenericId::None,
+              .first_param_node_id = Parse::NodeId::None,
+              .last_param_node_id = Parse::NodeId::None,
+              .pattern_block_id = pattern_block_id,
+              .implicit_param_patterns_id = implicit_param_patterns_id,
+              .param_patterns_id = param_patterns_id,
+              .is_extern = false,
+              .extern_library_id = SemIR::LibraryNameId::None,
+              .non_owning_decl_id = SemIR::InstId::None,
+              // Set by `MakeFunctionDecl`.
+              .first_owning_decl_id = SemIR::InstId::None,
+          },
+          {
+              .call_param_patterns_id = call_param_patterns_id,
+              .call_params_id = call_params_id,
+              .return_type_inst_id = return_form.type_component_id,
+              .return_form_inst_id = return_form.form_inst_id,
+              .return_patterns_id = return_patterns_id,
+              .self_param_id = self_param_id,
+          }});
   // Add the builtin to the imports block so that it appears in the formatted
   // IR.
   // TODO: Find a better way to handle this. Ideally we should stop using this
   // function entirely and declare builtins in the prelude.
   context.imports().push_back(decl_id);
+
+  auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));
+  function.SetBuiltinFunction(builtin_kind);
+
   return decl_id;
 }
 
@@ -354,6 +347,73 @@ auto CheckFunctionDefinitionSignature(Context& context,
           SemIR::LocId(return_call_param));
     }
   }
+}
+
+auto StartFunctionSignature(Context& context) -> void {
+  context.scope_stack().PushForDeclName();
+  context.inst_block_stack().Push();
+  context.pattern_block_stack().Push();
+}
+
+auto FinishFunctionSignature(Context& context)
+    -> FinishFunctionSignatureResult {
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
+  return {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id};
+}
+
+auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
+                      SemIR::InstBlockId decl_block_id, bool build_generic,
+                      bool set_definition_id, SemIR::Function function)
+    -> std::pair<SemIR::InstId, SemIR::FunctionId> {
+  CARBON_CHECK(!function.first_owning_decl_id.has_value());
+
+  SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
+                                       SemIR::FunctionId::None, decl_block_id};
+  auto decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
+  function.first_owning_decl_id = decl_id;
+  if (set_definition_id) {
+    function.definition_id = decl_id;
+  }
+
+  if (build_generic) {
+    function.generic_id = BuildGenericDecl(context, decl_id);
+  }
+
+  // Create the `Function` object.
+  function_decl.function_id = context.functions().Add(std::move(function));
+  function_decl.type_id =
+      GetFunctionType(context, function_decl.function_id,
+                      build_generic ? context.scope_stack().PeekSpecificId()
+                                    : SemIR::SpecificId::None);
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  return {decl_id, function_decl.function_id};
+}
+
+auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
+                             SemIR::FunctionId function_id) -> void {
+  // Create the function scope and the entry block.
+  context.scope_stack().PushForFunctionBody(decl_id);
+  context.inst_block_stack().Push();
+  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
+  StartGenericDefinition(context,
+                         context.functions().Get(function_id).generic_id);
+
+  CheckFunctionDefinitionSignature(context, function_id);
+}
+
+auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
+    -> void {
+  context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
+
+  auto& function = context.functions().Get(function_id);
+  function.body_block_ids = context.region_stack().PopRegion();
+
+  // If this is a generic function, collect information about the definition.
+  FinishGenericDefinition(context, function.generic_id);
 }
 
 }  // namespace Carbon::Check

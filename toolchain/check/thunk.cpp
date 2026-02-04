@@ -200,41 +200,39 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Create the `FunctionDecl` instruction.
-  SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
-                                       SemIR::FunctionId::None, decl_block_id};
-  auto decl_id = AddPlaceholderInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
-  auto generic_id = BuildGenericDecl(context, decl_id);
-
-  // Create the `Function` object.
   auto& callee = context.functions().Get(callee_id);
-  function_decl.function_id = context.functions().Add(
-      SemIR::Function{{.name_id = signature.name_id,
-                       .parent_scope_id = callee.parent_scope_id,
-                       .generic_id = generic_id,
-                       .first_param_node_id = signature.first_param_node_id,
-                       .last_param_node_id = signature.last_param_node_id,
-                       .pattern_block_id = pattern_block_id,
-                       .implicit_param_patterns_id = implicit_param_patterns_id,
-                       .param_patterns_id = param_patterns_id,
-                       .is_extern = false,
-                       .extern_library_id = SemIR::LibraryNameId::None,
-                       .non_owning_decl_id = SemIR::InstId::None,
-                       .first_owning_decl_id = decl_id,
-                       .definition_id = decl_id},
-                      {.call_param_patterns_id = call_param_patterns_id,
-                       .call_params_id = call_params_id,
-                       .return_type_inst_id = return_type_inst_id,
-                       .return_form_inst_id = return_form_inst_id,
-                       .return_patterns_id = return_patterns_id,
-                       .virtual_modifier = callee.virtual_modifier,
-                       .virtual_index = callee.virtual_index,
-                       .self_param_id = self_param_id}});
-  function_decl.type_id =
-      GetFunctionType(context, function_decl.function_id,
-                      context.scope_stack().PeekSpecificId());
-  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
-  return {function_decl.function_id, decl_id};
+  auto [decl_id, function_id] = MakeFunctionDecl(
+      context, loc_id, decl_block_id, /*build_generic=*/true,
+      /*set_definition_id=*/true,
+      SemIR::Function{
+          {
+              .name_id = signature.name_id,
+              .parent_scope_id = callee.parent_scope_id,
+              // Set by `MakeFunctionDecl`.
+              .generic_id = SemIR::GenericId::None,
+              .first_param_node_id = signature.first_param_node_id,
+              .last_param_node_id = signature.last_param_node_id,
+              .pattern_block_id = pattern_block_id,
+              .implicit_param_patterns_id = implicit_param_patterns_id,
+              .param_patterns_id = param_patterns_id,
+              .is_extern = false,
+              .extern_library_id = SemIR::LibraryNameId::None,
+              .non_owning_decl_id = SemIR::InstId::None,
+              // Set by `MakeFunctionDecl`.
+              .first_owning_decl_id = SemIR::InstId::None,
+          },
+          {
+              .call_param_patterns_id = call_param_patterns_id,
+              .call_params_id = call_params_id,
+              .return_type_inst_id = return_type_inst_id,
+              .return_form_inst_id = return_form_inst_id,
+              .return_patterns_id = return_patterns_id,
+              .virtual_modifier = callee.virtual_modifier,
+              .virtual_index = callee.virtual_index,
+              .self_param_id = self_param_id,
+          }});
+  context.inst_block_stack().AddInstId(decl_id);
+  return {function_id, decl_id};
 }
 
 static auto HasDeclaredReturnType(Context& context,
@@ -351,16 +349,8 @@ static auto BuildThunkDefinition(Context& context,
           builder.Note(callee_id, ThunkCallee);
         });
 
-    CheckFunctionDefinitionSignature(context, function_id);
+    StartFunctionDefinition(context, thunk_id, function_id);
   }
-
-  // TODO: This duplicates much of the handling for FunctionDefinitionStart and
-  // FunctionDefinition parse nodes. Consider refactoring.
-  context.scope_stack().PushForFunctionBody(thunk_id);
-  context.inst_block_stack().Push();
-  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context,
-                         context.functions().Get(function_id).generic_id);
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
@@ -381,12 +371,7 @@ static auto BuildThunkDefinition(Context& context,
     BuildReturnWithNoExpr(context, SemIR::LocId(callee_id));
   }
 
-  context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-
-  auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.region_stack().PopRegion();
-  FinishGenericDefinition(context, function.generic_id);
+  FinishFunctionDefinition(context, function_id);
 }
 
 auto BuildThunkDefinition(Context& context,
