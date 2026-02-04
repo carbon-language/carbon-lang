@@ -366,7 +366,9 @@ template <typename... Args>
 Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
                                 const DiagnosticBase<Args...>& diagnostic_base,
                                 llvm::SmallVector<llvm::Any> args)
-    : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
+    : emitter_(emitter),
+      diagnostic_({.level = diagnostic_base.Level,
+                   .is_on_scope = diagnostic_base.IsOnScope}) {
   AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }

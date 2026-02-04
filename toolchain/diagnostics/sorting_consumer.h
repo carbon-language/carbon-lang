@@ -40,10 +40,23 @@ class SortingConsumer : public Consumer {
 
   // Sorts and flushes buffered diagnostics.
   auto Flush() -> void override {
-    llvm::stable_sort(diagnostics_,
-                      [](const Diagnostic& lhs, const Diagnostic& rhs) {
-                        return lhs.last_byte_offset < rhs.last_byte_offset;
-                      });
+    llvm::stable_sort(
+        diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
+          if (lhs.last_byte_offset != rhs.last_byte_offset) {
+            return lhs.last_byte_offset < rhs.last_byte_offset;
+          }
+
+          if (lhs.is_on_scope && rhs.is_on_scope) {
+            // When both are on-scope, we need to compare the locations.
+            const auto& lhs_loc = lhs.messages[0].loc;
+            const auto& rhs_loc = rhs.messages[0].loc;
+            return std::tie(lhs_loc.line_number, lhs_loc.column_number) <
+                   std::tie(rhs_loc.line_number, rhs_loc.column_number);
+          } else {
+            // Order non-on-scope before on-scope diagnostics.
+            return !lhs.is_on_scope && rhs.is_on_scope;
+          }
+        });
     for (auto& diag : diagnostics_) {
       next_consumer_->HandleDiagnostic(std::move(diag));
     }
