@@ -301,6 +301,11 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
                                  Parse::NodeKind::VarBindingPattern);
 }
 
+auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "Implement :? support");
+}
+
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternStartId /*node_id*/)
     -> bool {

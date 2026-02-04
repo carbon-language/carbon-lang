@@ -365,6 +365,16 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A form binding pattern, such as `name:? Form`.
+struct FormBindingPattern {
+  static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A template binding name: `template T`.
 struct TemplateBindingName {
   static constexpr auto Kind =
@@ -452,6 +462,14 @@ struct ReturnType {
   AnyExprId type;
 };
 
+// A return form: `->? form(var i32)`
+struct ReturnForm {
+  static constexpr auto Kind = NodeKind::ReturnForm.Define({.child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A function signature: `fn F() -> i32`.
 template <const NodeKind& KindT, typename TokenKind,
           NodeCategory::RawEnumType Category>
@@ -462,7 +480,7 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<NodeIdOneOf<ReturnTypeId, ReturnFormId>> return_type;
   TokenKind token;
 };
 
@@ -961,6 +979,33 @@ struct ArrayExpr {
   AnyExprId type;
   ArrayExprCommaId comma;
   AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
+};
+
+using RefCategoryModifier =
+    LeafNode<NodeKind::RefCategoryModifier, Lex::RefTokenIndex>;
+using VarCategoryModifier =
+    LeafNode<NodeKind::VarCategoryModifier, Lex::VarTokenIndex>;
+using ValCategoryModifier =
+    LeafNode<NodeKind::ValCategoryModifier, Lex::ValTokenIndex>;
+
+using FormLiteralKeyword =
+    LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
+
+using FormLiteralOpenParen =
+    LeafNode<NodeKind::FormLiteralOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `form` literal: `form(ref i32)`
+struct FormLiteral {
+  static constexpr auto Kind = NodeKind::FormLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = NodeKind::FormLiteralKeyword,
+       .child_count = 4});
+
+  FormLiteralKeywordId keyword;
+  FormLiteralOpenParenId start;
+  AnyCategoryModifierId category;
+  AnyExprId type;
   Lex::CloseParenTokenIndex token;
 };
 

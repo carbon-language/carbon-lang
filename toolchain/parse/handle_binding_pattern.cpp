@@ -14,9 +14,10 @@ auto HandleBindingPattern(Context& context) -> void {
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&](bool expected_name) {
     if (!state.has_error) {
-      CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
-                        "expected {0:name|`:` or `:!`} in binding pattern",
-                        Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC(
+          ExpectedBindingPattern, Error,
+          "expected {0:name|`:`, `:!`, or `:?`} in binding pattern",
+          Diagnostics::BoolAsSelect);
       context.emitter().Emit(*context.position(), ExpectedBindingPattern,
                              expected_name);
       state.has_error = true;
@@ -51,7 +52,8 @@ auto HandleBindingPattern(Context& context) -> void {
 
   if (auto token_kind = context.PositionKind();
       token_kind == Lex::TokenKind::Colon ||
-      token_kind == Lex::TokenKind::ColonExclaim) {
+      token_kind == Lex::TokenKind::ColonExclaim ||
+      token_kind == Lex::TokenKind::ColonQuestion) {
     // Add the wrapper node for the `template` keyword if present.
     if (template_token) {
       if (token_kind != Lex::TokenKind::ColonExclaim && !state.has_error) {
@@ -75,10 +77,21 @@ auto HandleBindingPattern(Context& context) -> void {
       context.AddNode(NodeKind::RefBindingName, *ref_token, state.has_error);
     }
 
-    state.kind = token_kind == Lex::TokenKind::Colon
-                     ? StateKind::BindingPatternFinishAsRegular
-                     : StateKind::BindingPatternFinishAsGeneric;
-    // Use the `:` or `:!` for the root node.
+    switch (token_kind) {
+      case Lex::TokenKind::Colon:
+        state.kind = StateKind::BindingPatternFinishAsRegular;
+        break;
+      case Lex::TokenKind::ColonExclaim:
+        state.kind = StateKind::BindingPatternFinishAsGeneric;
+        break;
+      case Lex::TokenKind::ColonQuestion:
+        state.kind = StateKind::BindingPatternFinishAsForm;
+        break;
+      default:
+        CARBON_FATAL("Unexpected token kind");
+    }
+
+    // Use the `:`, `:!`, or `:?` for the root node.
     state.token = context.Consume();
 
     if (token_kind == Lex::TokenKind::ColonExclaim) {
@@ -99,24 +112,32 @@ auto HandleBindingPattern(Context& context) -> void {
 }
 
 // Handles BindingPatternFinishAs(Generic|Regular).
-static auto HandleBindingPatternFinish(Context& context, bool is_compile_time)
+static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
     -> void {
   auto state = context.PopState();
 
   auto node_kind = NodeKind::InvalidParse;
   if (state.in_var_pattern) {
     node_kind = NodeKind::VarBindingPattern;
-    if (is_compile_time) {
+    if (finish_kind == StateKind::BindingPatternFinishAsGeneric) {
       CARBON_DIAGNOSTIC(CompileTimeBindingInVarDecl, Error,
                         "`var` pattern cannot declare a compile-time binding");
       context.emitter().Emit(*context.position(), CompileTimeBindingInVarDecl);
       state.has_error = true;
     }
   } else {
-    if (is_compile_time) {
-      node_kind = NodeKind::CompileTimeBindingPattern;
-    } else {
-      node_kind = NodeKind::LetBindingPattern;
+    switch (finish_kind) {
+      case StateKind::BindingPatternFinishAsGeneric:
+        node_kind = NodeKind::CompileTimeBindingPattern;
+        break;
+      case StateKind::BindingPatternFinishAsRegular:
+        node_kind = NodeKind::LetBindingPattern;
+        break;
+      case StateKind::BindingPatternFinishAsForm:
+        node_kind = NodeKind::FormBindingPattern;
+        break;
+      default:
+        CARBON_FATAL("Unexpected StateKind {0}", finish_kind);
     }
   }
   context.AddNode(node_kind, state.token, state.has_error);
@@ -129,11 +150,15 @@ static auto HandleBindingPatternFinish(Context& context, bool is_compile_time)
 }
 
 auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
-  HandleBindingPatternFinish(context, /*is_compile_time=*/true);
+  HandleBindingPatternFinish(context, StateKind::BindingPatternFinishAsGeneric);
 }
 
 auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
-  HandleBindingPatternFinish(context, /*is_compile_time=*/false);
+  HandleBindingPatternFinish(context, StateKind::BindingPatternFinishAsRegular);
+}
+
+auto HandleBindingPatternFinishAsForm(Context& context) -> void {
+  HandleBindingPatternFinish(context, StateKind::BindingPatternFinishAsForm);
 }
 
 }  // namespace Carbon::Parse

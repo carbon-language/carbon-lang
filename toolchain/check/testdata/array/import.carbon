@@ -31,16 +31,16 @@ fn G(n: i32) -> i32 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let val:! array(i32, 1);
+  let value:! array(i32, 1);
 }
 
 class C {}
 
-// CHECK:STDERR: fail_todo_symbolic_decl.carbon:[[@LINE+4]]:26: error: expression is runtime; expected constant [EvalRequiresConstantValue]
-// CHECK:STDERR: impl C as I where .val = (1,) {}
-// CHECK:STDERR:                          ^~~~
+// CHECK:STDERR: fail_todo_symbolic_decl.carbon:[[@LINE+4]]:28: error: expression is runtime; expected constant [EvalRequiresConstantValue]
+// CHECK:STDERR: impl C as I where .value = (1,) {}
+// CHECK:STDERR:                            ^~~~
 // CHECK:STDERR:
-impl C as I where .val = (1,) {}
+impl C as I where .value = (1,) {}
 
 // --- fail_todo_import_symbolic_decl.carbon
 
@@ -50,10 +50,10 @@ import library "symbolic_decl";
 fn F() -> array(i32, 1) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_symbolic_decl.carbon:[[@LINE+4]]:11: error: cannot convert type `C` into type implementing `I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   return (C as I).val;
+  // CHECK:STDERR:   return (C as I).value;
   // CHECK:STDERR:           ^~~~~~
   // CHECK:STDERR:
-  return (C as I).val;
+  return (C as I).value;
   //@dump-sem-ir-end
 }
 
@@ -131,7 +131,7 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:   %val.ref: <error> = name_ref val, <error> [concrete = <error>]
+// CHECK:STDOUT:   %value.ref: <error> = name_ref value, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

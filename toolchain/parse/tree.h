@@ -196,7 +196,7 @@ class Tree : public Printable<Tree> {
 
   // The in-memory representation of data used for a particular node in the
   // tree.
-  class NodeImpl {
+  class NodeImpl : public Printable<NodeImpl> {
    public:
     explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
         : kind_(kind), has_error_(has_error), token_index_(token.index) {
@@ -208,6 +208,11 @@ class Tree : public Printable<Tree> {
     auto has_error() const -> bool { return has_error_; }
     auto token() const -> Lex::TokenIndex {
       return Lex::TokenIndex(token_index_);
+    }
+
+    auto Print(llvm::raw_ostream& output) const -> void {
+      output << "{kind: " << kind_ << ", has_error: " << has_error_
+             << ", token_index: " << token_index_ << "}\n";
     }
 
    private:

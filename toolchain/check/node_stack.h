@@ -427,6 +427,7 @@ class NodeStack {
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileConditionStart:
       case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::ReturnForm:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
@@ -497,6 +498,8 @@ class NodeStack {
       case Parse::NodeKind::FileStart:
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::Forall:
+      case Parse::NodeKind::FormLiteralKeyword:
+      case Parse::NodeKind::FormLiteralOpenParen:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
@@ -528,6 +531,7 @@ class NodeStack {
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:
       case Parse::NodeKind::Placeholder:
+      case Parse::NodeKind::RefCategoryModifier:
       case Parse::NodeKind::RequirementAnd:
       case Parse::NodeKind::RequirementEqual:
       case Parse::NodeKind::RequirementEqualEqual:
@@ -537,6 +541,8 @@ class NodeStack {
       case Parse::NodeKind::StructTypeLiteralComma:
       case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
+      case Parse::NodeKind::ValCategoryModifier:
+      case Parse::NodeKind::VarCategoryModifier:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:

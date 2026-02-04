@@ -76,6 +76,10 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
+  return context.TODO(node_id, "Support ->?");
+}
+
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
 // present.
 static auto DiagnoseModifiers(Context& context,

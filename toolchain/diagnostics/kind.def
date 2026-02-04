@@ -95,6 +95,7 @@ CARBON_DIAGNOSTIC_KIND(CharLiteralUnderflow)
 
 CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(ExpectedArrayComma)
+CARBON_DIAGNOSTIC_KIND(ExpectedCategoryModifier)
 CARBON_DIAGNOSTIC_KIND(ExpectedCloseSymbol)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedLambdaBody)

@@ -61,12 +61,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let val:! {.x: i32};
+  let value:! {.x: i32};
 }
 
 class C {}
 
-impl C as I where .val = {.x = 1} {}
+impl C as I where .value = {.x = 1} {}
 
 // --- import_symbolic_decl.carbon
 
@@ -75,7 +75,7 @@ import library "symbolic_decl";
 
 fn F() -> {.x: i32} {
   //@dump-sem-ir-begin
-  return (C as I).val;
+  return (C as I).value;
   //@dump-sem-ir-end
 }
 
@@ -294,7 +294,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.696: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.b51 [concrete]
+// CHECK:STDOUT:   %assoc0.7f5: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.8d8 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -312,11 +312,11 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.0f2: %I.assoc_type = import_ref Main//symbolic_decl, loc5_10, loaded [concrete = constants.%assoc0.696]
-// CHECK:STDOUT:   %Main.import_ref.1ec: %struct_type.x = import_ref Main//symbolic_decl, loc10_35, loaded [concrete = constants.%struct]
+// CHECK:STDOUT:   %Main.import_ref.dfb: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.7f5]
+// CHECK:STDOUT:   %Main.import_ref.1ec: %struct_type.x = import_ref Main//symbolic_decl, loc10_37, loaded [concrete = constants.%struct]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.1ec), @C.as.I.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.b51: %struct_type.x = import_ref Main//symbolic_decl, loc5_10, loaded [concrete = %val]
-// CHECK:STDOUT:   %val: %struct_type.x = assoc_const_decl @val [concrete] {}
+// CHECK:STDOUT:   %Main.import_ref.8d8: %struct_type.x = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
+// CHECK:STDOUT:   %value: %struct_type.x = assoc_const_decl @value [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -329,7 +329,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %.loc7_13: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_13 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc7_18.1: type = converted %.loc7_13, %as_type [concrete = constants.%C]
-// CHECK:STDOUT:   %val.ref: %I.assoc_type = name_ref val, imports.%Main.import_ref.0f2 [concrete = constants.%assoc0.696]
+// CHECK:STDOUT:   %value.ref: %I.assoc_type = name_ref value, imports.%Main.import_ref.dfb [concrete = constants.%assoc0.7f5]
 // CHECK:STDOUT:   %impl.elem0.loc7_18.1: %struct_type.x = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_18.2: %i32 = struct_access %impl.elem0.loc7_18.1, element0 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %impl.elem0.loc7_18.2: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -338,7 +338,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %bound_method.loc7_18.2: <bound method> = bound_method %.loc7_18.2, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_18.2(%.loc7_18.2) [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc7_18.3: init %struct_type.x = struct_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc7_22: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
-// CHECK:STDOUT:   return %.loc7_22
+// CHECK:STDOUT:   %.loc7_24: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
+// CHECK:STDOUT:   return %.loc7_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

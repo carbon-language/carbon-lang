@@ -145,6 +145,10 @@ class Context {
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
     tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+    CARBON_VLOG("Add #node{0}: {1}",
+                llvm::format_hex_no_prefix(tree_->node_impls_.size() - 1, 0,
+                                           /*Upper=*/true),
+                tree_->node_impls_.back());
   }
 
   // Adds a node and returns its typed NodeId.
