@@ -31,6 +31,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       decl_name_stack_(this),
       scope_stack_(sem_ir_),
       deferred_definition_worklist_(vlog_stream),
+      generic_region_stack_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       check_ir_map_(CheckIRToImpportIRStore::MakeWithExplicitSize(
           total_ir_count_, SemIR::ImportIRId::None)),
