@@ -99,8 +99,7 @@ auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
                                SemIR::SpecificId specific_id,
                                bool lexical_lookup_has_load_error) -> void {
   CARBON_CHECK(scope_inst_id.has_value());
-  CARBON_DCHECK(
-      !context_->sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  CARBON_DCHECK(!sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);
   MarkNestingIfInReturnScope();
 }
@@ -111,8 +110,7 @@ auto ScopeStack::PushForSameRegion() -> void {
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
-  CARBON_DCHECK(
-      context_->sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  CARBON_DCHECK(sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
        /*lexical_lookup_has_load_error=*/false);
 
@@ -123,32 +121,17 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
 auto ScopeStack::Pop(bool check_unused) -> void {
   auto scope = scope_stack_.pop_back_val();
 
-  if (check_unused) {
-    // Sort names by instruction ID to ensure deterministic diagnostic order,
-    // as iteration over the `Set` is based on name hashes.
-    llvm::SmallVector<SemIR::NameId> sorted_names;
-    scope.names.ForEach(
-        [&](SemIR::NameId name_id) { sorted_names.push_back(name_id); });
-    llvm::sort(sorted_names, [&](SemIR::NameId a, SemIR::NameId b) {
-      return lexical_lookup_.Get(a).back().inst_id.index <
-             lexical_lookup_.Get(b).back().inst_id.index;
-    });
-
-    for (auto name_id : sorted_names) {
-      auto& lexical_results = lexical_lookup_.Get(name_id);
-      CARBON_CHECK(lexical_results.back().scope_index == scope.index,
-                   "Inconsistent scope index for name {0}", name_id);
+  // TODO: Multiple diagnostics on same line has non-deterministic order.
+  // Add second sort key in diagnostics sorting.
+  scope.names.ForEach([&, check_unused](SemIR::NameId name_id) {
+    auto& lexical_results = lexical_lookup_.Get(name_id);
+    CARBON_CHECK(lexical_results.back().scope_index == scope.index,
+                 "Inconsistent scope index for name {0}", name_id);
+    if (check_unused) {
       CheckUnusedBinding(*context_, name_id, lexical_results.back());
-      lexical_results.pop_back();
     }
-  } else {
-    scope.names.ForEach([&](SemIR::NameId str_id) {
-      auto& lexical_results = lexical_lookup_.Get(str_id);
-      CARBON_CHECK(lexical_results.back().scope_index == scope.index,
-                   "Inconsistent scope index for name {0}", str_id);
-      lexical_results.pop_back();
-    });
-  }
+    lexical_results.pop_back();
+  });
 
   if (!scope.is_lexical_scope()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
@@ -220,7 +203,7 @@ auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
                                              SemIR::LocId use_loc_id,
                                              bool is_reachable)
     -> SemIR::InstId {
-  llvm::MutableArrayRef<LexicalLookup::Result> lexical_results =
+  llvm::ArrayRef<LexicalLookup::Result> lexical_results =
       lexical_lookup_.Get(name_id);
   if (lexical_results.empty()) {
     return SemIR::InstId::None;
@@ -243,7 +226,7 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
     -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>> {
   // Find the results from lexical scopes. These will be combined with results
   // from non-lexical scopes such as namespaces and classes.
-  llvm::MutableArrayRef<LexicalLookup::Result> lexical_results =
+  llvm::ArrayRef<LexicalLookup::Result> lexical_results =
       lexical_lookup_.Get(name_id);
 
   // If we have no lexical results, check all non-lexical scopes.
