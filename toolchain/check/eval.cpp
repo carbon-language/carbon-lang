@@ -1784,7 +1784,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::IntRightShiftAssign:
     case SemIR::BuiltinFunctionKind::PointerMakeNull:
     case SemIR::BuiltinFunctionKind::PointerIsNull:
-    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
+    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert:
+    case SemIR::BuiltinFunctionKind::CppStdInitializerListMake: {
       // These are runtime-only builtins.
       // TODO: Consider tracking this on the `BuiltinFunctionKind`.
       return SemIR::ConstantId::NotConstant;
@@ -1866,6 +1867,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvertChar: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvert: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);

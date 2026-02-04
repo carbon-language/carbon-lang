@@ -202,9 +202,9 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %pattern_type.loc10_22: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc10_22 (constants.%pattern_type.9b9f0c.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_12: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10_12 (constants.%require_complete.904)]
-// CHECK:STDOUT:   %require_complete.loc10_25: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc10_25 (constants.%require_complete.67c)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10 (constants.%require_complete.904)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %require_complete.loc11: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc11 (constants.%require_complete.67c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
 // CHECK:STDOUT:   %.loc11_16.3: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc11_16.3 (constants.%.72e)]
 // CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.G.%.loc11_16.3 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.07b)]

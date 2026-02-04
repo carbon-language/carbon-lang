@@ -227,8 +227,8 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete.56d: <witness> = require_complete_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %require_complete.03c: <witness> = require_complete_type %C [symbolic]
+// CHECK:STDOUT:   %require_complete.56d: <witness> = require_complete_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %.f1d: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.091) [symbolic]
@@ -353,8 +353,8 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %.loc14_43.1: form = init_form %ptr.loc14_36.1, call_param2 [symbolic = %.loc14_43.1 (constants.%.2cd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_51: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_51 (constants.%require_complete.56d)]
 // CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_22 (constants.%require_complete.03c)]
+// CHECK:STDOUT:   %require_complete.loc20_41: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_41 (constants.%require_complete.56d)]
 // CHECK:STDOUT:   %.loc20_62.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_22.1) [symbolic = %.loc20_62.1 (constants.%.f1d)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc14_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.484)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc14_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]

@@ -64,7 +64,8 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 // Checks that any `require` declarations in the interface being implemented by
 // `impl` are satisfied. Otherwise, a diagnostic is issued and the `impl` is
 // made invalid.
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void;
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
+                                SemIR::Impl& impl) -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.

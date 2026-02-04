@@ -848,7 +848,7 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
     out_ << "\n";
   }
 
-  for (auto extended_scope_id : scope.extended_scopes()) {
+  for (auto [extended_scope_id, _] : scope.extended_scopes()) {
     Indent();
     out_ << "extend ";
     FormatName(extended_scope_id);

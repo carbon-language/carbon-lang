@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -146,13 +147,23 @@ struct CharCompatible {
   }
 };
 
-// Constraint that requires the type to be a sized integer type.
-struct AnySizedInt {
+// Constraint that requires the type to be an type of the specified kind.
+template <typename InstT>
+struct Any {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
                         TypeId type_id) -> bool {
-    return sem_ir.types().Is<IntType>(type_id);
+    return sem_ir.types().Is<InstT>(type_id);
   }
 };
+
+// Constraint that requires the type to be a sized integer type.
+using AnySizedInt = Any<IntType>;
+
+// Constraint that requires the type to be a sized floating-point type.
+using AnySizedFloat = Any<FloatType>;
+
+// Constraint that requires the type to be an array type.
+using AnyArray = Any<ArrayType>;
 
 // Constraint that requires the type to be an integer type: either a sized
 // integer type or a literal.
@@ -162,14 +173,6 @@ struct AnyInt {
     return AnySizedInt::CheckType(sem_ir, state, type_id) ||
            BuiltinType<IntLiteralType::TypeInstId>::CheckType(sem_ir, state,
                                                               type_id);
-  }
-};
-
-// Constraint that requires the type to be a sized floating-point type.
-struct AnySizedFloat {
-  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
-                        TypeId type_id) -> bool {
-    return sem_ir.types().Is<FloatType>(type_id);
   }
 };
 
@@ -219,6 +222,16 @@ struct CoreCharType {
 
     const auto& class_info = sem_ir.classes().Get(class_type->class_id);
     return sem_ir.names().GetFormatted(class_info.name_id).str() == "Char";
+  }
+};
+
+// Constraint that requires the type to have a recognized layout, compatible
+// with `std::initializer_list<T>`.
+struct StdInitializerList {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
+    return GetStdInitializerListLayout(sem_ir, type_id).kind !=
+           StdInitializerListLayout::None;
   }
 };
 
@@ -445,6 +458,10 @@ constexpr BuiltinInfo MaybeUnformedMakeType = {
 constexpr BuiltinInfo CharConvertChecked = {
     "char.convert_checked",
     ValidateSignature<auto(CharLiteral)->CharCompatible>};
+
+// Converts from an integer type to a char-compatible type (u8/adapted Char).
+constexpr BuiltinInfo IntConvertChar = {
+    "int.convert_char", ValidateSignature<auto(AnyInt)->CharCompatible>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
@@ -730,6 +747,12 @@ constexpr BuiltinInfo PointerUnsafeConvert = {
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
+// "cpp.std.initializer_list.make": construct a std::initializer_list from an
+// array.
+constexpr BuiltinInfo CppStdInitializerListMake = {
+    "cpp.std.initializer_list.make",
+    ValidateSignature<auto(AnyArray)->StdInitializerList>};
+
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) {
@@ -816,6 +839,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       return true;
 
     case IntConvert:
+    case IntConvertChar:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:

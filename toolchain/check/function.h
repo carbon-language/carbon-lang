@@ -19,6 +19,39 @@ auto FindSelfPattern(Context& context,
                      SemIR::InstBlockId implicit_param_patterns_id)
     -> SemIR::InstId;
 
+// Creates suitable return patterns for the given return form, and adds them to
+// the current pattern block.
+auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
+                       Context::FormExpr form_expr) -> SemIR::InstBlockId;
+
+// Returns whether `function` is a valid declaration of `builtin_kind`.
+auto IsValidBuiltinDeclaration(Context& context,
+                               const SemIR::Function& function,
+                               SemIR::BuiltinFunctionKind builtin_kind) -> bool;
+
+// The signature to declare for a builtin function.
+struct BuiltinFunctionSignature {
+  // The type of the implicit `[self: Self]` parameter, or `None` if there is
+  // none.
+  SemIR::TypeId self_type_id = SemIR::TypeId::None;
+  // Whether `self` is a ref parameter.
+  bool self_is_ref = true;
+  // The types of the explicit parameters.
+  llvm::ArrayRef<SemIR::TypeId> param_type_ids = {};
+  // The return type, or `None` if the function doesn't declare a return type.
+  SemIR::TypeId return_type_id = SemIR::TypeId::None;
+};
+
+// Creates and returns a new builtin function declaration.
+//
+// TODO: Instead of synthesizing builtin function declarations, we should
+// ideally declare the builtin functions in Carbon code instead.
+auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
+                         SemIR::BuiltinFunctionKind builtin_kind,
+                         SemIR::NameScopeId name_scope_id,
+                         SemIR::NameId name_id,
+                         BuiltinFunctionSignature signature) -> SemIR::InstId;
+
 // Checks that `new_function` has the same return type as `prev_function`, or if
 // `prev_function_id` is specified, a specific version of `prev_function`.
 // Prints a suitable diagnostic and returns false if not. Never checks for a

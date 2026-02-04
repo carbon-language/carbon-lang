@@ -39,6 +39,7 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "aggregate.cpp",
         "clang_global_decl.cpp",
         "clang_global_decl.h",
         "constant.cpp",
@@ -55,6 +56,7 @@ cc_library(
         "handle*.cpp",
     ]),
     hdrs = [
+        "aggregate.h",
         "context.h",
         "file_context.h",
         "function_context.h",

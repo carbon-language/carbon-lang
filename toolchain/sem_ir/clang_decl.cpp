@@ -21,9 +21,17 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
     decl->print(decl_stream, policy);
   }
 
-  if (num_params != -1) {
-    out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr())
-        << "\", num_params: " << num_params << "}";
+  if (signature.num_params != -1) {
+    out << "{decl: \"" << FormatEscaped(decl_stream.TakeStr()) << "\", kind: ";
+    switch (signature.kind) {
+      case ClangDeclKey::Signature::Normal:
+        out << "normal";
+        break;
+      case ClangDeclKey::Signature::TuplePattern:
+        out << "tuple";
+        break;
+    }
+    out << ", num_params: " << signature.num_params << "}";
   } else {
     out << "\"" << FormatEscaped(decl_stream.TakeStr()) << "\"";
   }

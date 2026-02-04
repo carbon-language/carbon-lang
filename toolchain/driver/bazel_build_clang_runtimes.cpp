@@ -164,10 +164,8 @@ static auto GetClangPath(const std::filesystem::path& exe_path)
 
 static auto ParseOptions(int argc, char** argv) -> ErrorOr<Options> {
   Options options;
-  llvm::OwningArrayRef<llvm::StringRef> args(argc - 1);
-  for (auto [i, arg] : llvm::enumerate(args)) {
-    arg = argv[i + 1];
-  }
+  llvm::SmallVector<llvm::StringRef> args(
+      llvm::ArrayRef<char*>(argv, argc).drop_front());
   CARBON_ASSIGN_OR_RETURN(
       auto result, CommandLine::Parse(args, llvm::outs(), Options::Info,
                                       [&](CommandLine::CommandBuilder& b) {

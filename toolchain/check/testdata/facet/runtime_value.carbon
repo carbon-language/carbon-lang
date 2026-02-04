@@ -72,7 +72,11 @@ interface Z {
   let X:! type;
 }
 
-// CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// TODO: Improve this diagnostic. The problem is that T is a runtime facet
+// _and_ its facet type doesn't specific a value for `.X`. Or make this work
+// by producing an ImplWitnessAccess that functions against a runtime facet.
+//
+// CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T: Z, v: T.X);
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -104,7 +108,7 @@ interface Z {
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
 // `T`.
 //
-// CHECK:STDERR: fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot access member of interface `Z` in type `Z where .(Z.X) = ()` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T: Z where .X = (), v: T.X);
 // CHECK:STDERR:                             ^~~
 // CHECK:STDERR:
@@ -118,7 +122,7 @@ interface Z {
 }
 
 fn F(T: Z) {
-  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:

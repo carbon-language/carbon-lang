@@ -86,18 +86,6 @@ class FunctionContext {
     SemIR::InstId inst_id;
   };
 
-  // Information about a function's return type in a particular file. By
-  // convention, this represents a value whose initializing representation has
-  // been added to the fingerprint but whose type has not.
-  struct ReturnTypeInfoInFile {
-    const SemIR::File* file;
-    SemIR::ReturnTypeInfo info;
-
-    auto type() -> TypeInFile {
-      return {.file = file, .type_id = info.type_id};
-    }
-  };
-
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
   auto GetBlock(SemIR::InstBlockId block_id) -> llvm::BasicBlock*;
@@ -152,10 +140,6 @@ class FunctionContext {
   // Returns the initializing representation of the given type. This adds the
   // kind of initializing representation to the fingerprint.
   auto GetInitRepr(TypeInFile type) -> SemIR::InitRepr;
-
-  // Returns the return type information for the given callee inst. This adds
-  // the kind of initializing representation to the fingerprint.
-  auto GetReturnTypeInfo(InstInFile callee) -> ReturnTypeInfoInFile;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {

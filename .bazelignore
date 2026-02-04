@@ -10,3 +10,6 @@ github_tools
 
 # Used as part of repo patching.
 third_party/boost_unordered
+
+# Example Bazel project.
+examples/bazel

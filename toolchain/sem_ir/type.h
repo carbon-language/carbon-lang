@@ -62,6 +62,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
+  // Like GetTypeIdForTypeConstantId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
+
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
   //

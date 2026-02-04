@@ -168,8 +168,8 @@ class IntId : public Printable<IntId> {
   // comparison, and so all of this ends up carefully constructed to enable very
   // small code size when testing for an embedded value and when that test fails
   // computing and using the index.
-  static constexpr int32_t ZeroIndexId = std::numeric_limits<int32_t>::min() >>
-                                         (TokenIdBitsShift + 1);
+  static constexpr int32_t ZeroIndexId =
+      std::numeric_limits<int32_t>::min() >> (TokenIdBitsShift + 1);
 
   // The minimum embedded value in an ID.
   static constexpr int32_t MinValue = ZeroIndexId + 1;

@@ -13,6 +13,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -37,10 +38,11 @@ auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
 // imported, returns the mapped instruction.
 inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                                   clang::FunctionDecl* clang_decl,
-                                  int num_params) -> SemIR::InstId {
+                                  SemIR::ClangDeclKey::Signature signature)
+    -> SemIR::InstId {
   return ImportCppDecl(
       context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature));
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
@@ -73,6 +75,11 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
+
+// Gets the identifier info for a name. Returns `nullptr` if the name is not an
+// identifier name.
+auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
+    -> clang::IdentifierInfo*;
 
 }  // namespace Carbon::Check
 

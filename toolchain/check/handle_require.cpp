@@ -107,7 +107,7 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 }
 
 static auto TypeStructureReferencesSelf(
-    Context& context, SemIR::TypeInstId inst_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId inst_id,
     const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
@@ -143,18 +143,35 @@ static auto TypeStructureReferencesSelf(
   }
 
   if (identified_facet_type.required_impls().empty()) {
+    CARBON_DIAGNOSTIC(
+        RequireImplsMissingSelfEmptyFacetType, Error,
+        "no `Self` reference found in `require` declaration; `Self` must "
+        "appear in the self-type or as a generic argument for each required "
+        "interface, but no interfaces were found");
+    context.emitter().Emit(loc_id, RequireImplsMissingSelfEmptyFacetType);
     return false;
   }
 
+  bool interfaces_all_reference_self = true;
   for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
     if (!find_self(type_iter)) {
-      return false;
+      // TODO: The IdentifiedFacetType loses the location (since it's
+      // canonical), but it would be nice to somehow point this diagnostic at
+      // the particular interface in the facet type that is missing `Self`.
+      CARBON_DIAGNOSTIC(
+          RequireImplsMissingSelf, Error,
+          "no `Self` reference found in `require` declaration; `Self` must "
+          "appear in the self-type or as a generic argument for each required "
+          "interface, but found interface `{0}` without a `Self` argument",
+          SemIR::SpecificInterface);
+      context.emitter().Emit(loc_id, RequireImplsMissingSelf,
+                             specific_interface);
+      interfaces_all_reference_self = false;
     }
   }
-
-  return true;
+  return interfaces_all_reference_self;
 }
 
 struct ValidateRequireResult {
@@ -215,12 +232,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
   const auto& identified =
       context.identified_facet_types().Get(identified_facet_type_id);
 
-  if (!TypeStructureReferencesSelf(context, self_inst_id, identified)) {
-    CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
-                      "no `Self` reference found in `require` declaration; "
-                      "`Self` must appear in the self-type or as a generic "
-                      "parameter for each `interface` or `constraint`");
-    context.emitter().Emit(loc_id, RequireImplsMissingSelf);
+  if (!TypeStructureReferencesSelf(context, loc_id, self_inst_id, identified)) {
     return std::nullopt;
   }
 
@@ -301,6 +313,31 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             })) {
       return true;
     }
+
+    // The generic of a require declaration is always inside an interface or
+    // constraint, which makes its last generic binding the inner `Self` facet
+    // of the interface/constraint definition. Thus the last argument of its
+    // `self_specific` is that inner `Self`.
+    auto self_specific_id = context.generics().GetSelfSpecific(
+        context.require_impls().Get(require_impls_id).generic_id);
+    const auto& self_specific = context.specifics().Get(self_specific_id);
+    auto self_specific_args = context.inst_blocks().Get(self_specific.args_id);
+    auto inner_self_inst_id = self_specific_args.back();
+
+    // The extended scope instruction must be part of the enclosing scope (and
+    // generic). A specific for the enclosing scope will be applied to it when
+    // using the instruction later. To do so, we wrap the constraint facet type
+    // it in a SpecificConstant, which preserves the require declaration's
+    // specific along with the facet type.
+    auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
+        context, node_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .inst_id = constraint_inst_id,
+         .specific_id = self_specific_id});
+    auto enclosing_scope_id = context.scope_stack().PeekNameScopeId();
+    auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
+    enclosing_scope.AddExtendedScope(
+        {constraint_id_in_self_specific, inner_self_inst_id});
   }
 
   context.require_impls_stack().AppendToTop(require_impls_id);

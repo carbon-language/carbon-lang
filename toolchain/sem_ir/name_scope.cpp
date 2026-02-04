@@ -22,8 +22,12 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
 
   out << ", extended_scopes: [";
   llvm::ListSeparator scope_sep;
-  for (auto id : extended_scopes_) {
-    out << scope_sep << id;
+  for (auto [id, inner_self_id] : extended_scopes_) {
+    if (inner_self_id.has_value()) {
+      out << scope_sep << "(" << id << ", inner self: " << inner_self_id << ")";
+    } else {
+      out << scope_sep << id;
+    }
   }
   out << "]";
 

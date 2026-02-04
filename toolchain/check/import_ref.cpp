@@ -475,6 +475,9 @@ class ImportRefResolver : public ImportContext {
 static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
                          SemIR::EntityNameId entity_name_id =
                              SemIR::EntityNameId::None) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
   return AddImportRef(context.local_context(),
                       SemIR::ImportIRInst(context.import_ir_id(), inst_id),
                       entity_name_id);
@@ -1323,8 +1326,9 @@ static auto AddNameScopeImportRefs(ImportContext& context,
                            .result = SemIR::ScopeLookupResult::MakeFound(
                                ref_id, result.access_kind())});
   }
-  for (auto scope_inst_id : import_scope.extended_scopes()) {
-    new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));
+  for (auto [scope_inst_id, inner_self_id] : import_scope.extended_scopes()) {
+    new_scope.AddExtendedScope({AddImportRef(context, scope_inst_id),
+                                AddImportRef(context, inner_self_id)});
   }
 }
 
@@ -2624,8 +2628,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // declarations always identify the facet type.
   if (auto facet_type = resolver.local_insts().TryGetAs<SemIR::FacetType>(
           resolver.local_constant_values().GetInstId(constraint_const_id))) {
+    // Lookups later will be with the unattached constant, whereas
+    // GetLocalConstantId gave us an attached constant.
+    auto unattached_self_const_id =
+        resolver.local_constant_values().GetUnattachedConstant(self_const_id);
     RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
-                               self_const_id, *facet_type, nullptr);
+                               unattached_self_const_id, *facet_type, nullptr);
   }
   if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);
@@ -2779,9 +2787,6 @@ static auto AddInterfaceDefinition(ImportContext& context,
   new_interface.body_block_id =
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
-
-  CARBON_CHECK(import_scope.extended_scopes().empty(),
-               "Interfaces don't currently have extended scopes to support.");
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2930,10 +2935,6 @@ static auto AddNamedConstraintDefinition(
       context.local_context().inst_block_stack().Pop();
   new_named_constraint.self_param_id = self_param_id;
   new_named_constraint.complete = import_named_constraint.complete;
-
-  CARBON_CHECK(
-      import_scope.extended_scopes().empty(),
-      "Named constraints don't currently have extended scopes to support.");
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

@@ -273,10 +273,10 @@ fn F() {
 // CHECK:STDOUT: !93 = distinct !DISubprogram(name: "None", linkageName: "_CNone.3e8267224c5dc9c2:OptionalStorage.Core.329e9a7481f16207", scope: null, file: !37, line: 110, type: !65, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !94 = !DILocation(line: 112, column: 5, scope: !93)
 // CHECK:STDOUT: !95 = !DILocation(line: 113, column: 5, scope: !93)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.1e58d10da180d7d9:ImplicitAs.39e2e54f50ee65cc.Core.255ef555a3d2f793", scope: null, file: !97, line: 32, type: !98, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !100)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.1e58d10da180d7d9:ImplicitAs.39e2e54f50ee65cc.Core.255ef555a3d2f793", scope: null, file: !97, line: 35, type: !98, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !100)
 // CHECK:STDOUT: !97 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
 // CHECK:STDOUT: !98 = !DISubroutineType(types: !99)
 // CHECK:STDOUT: !99 = !{!16, !16}
 // CHECK:STDOUT: !100 = !{!101}
 // CHECK:STDOUT: !101 = !DILocalVariable(arg: 1, scope: !96, type: !16)
-// CHECK:STDOUT: !102 = !DILocation(line: 32, column: 38, scope: !96)
+// CHECK:STDOUT: !102 = !DILocation(line: 35, column: 38, scope: !96)

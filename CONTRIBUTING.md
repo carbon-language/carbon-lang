@@ -98,7 +98,7 @@ early, before even writing a proposal, and the process explains how to do that.
 
 Helping with
 [pull requests](https://github.com/carbon-language/carbon-lang/pulls) review is
-a good way to provide feedback, while getting a acquainted with the code base.
+a good way to provide feedback, while getting acquainted with the code base.
 
 #### Implement Carbon's design
 

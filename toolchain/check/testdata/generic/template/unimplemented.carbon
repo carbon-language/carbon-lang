@@ -344,8 +344,8 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     assign %v.var, <error>
 // CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.2 [template = %T.binding.as_type (constants.%T.binding.as_type.140)] {
 // CHECK:STDOUT:       %T.ref.loc14: %Destroy.type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T.765)]
-// CHECK:STDOUT:       %T.as_type.loc14_10: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.140)]
-// CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref.loc14, %T.as_type.loc14_10 [template = %T.binding.as_type (constants.%T.binding.as_type.140)]
+// CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.140)]
+// CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.140)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%T.binding.as_type (%T.binding.as_type.140) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
@@ -363,7 +363,6 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:     %DestroyOp.bound.loc22: <bound method> = bound_method %w.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:     %DestroyOp.call.loc22: init %empty_tuple.type = call %DestroyOp.bound.loc22(%w.var)
-// CHECK:STDOUT:     %T.as_type.loc14_3: type = facet_access_type constants.%T.765 [template = %T.binding.as_type (constants.%T.binding.as_type.140)]
 // CHECK:STDOUT:     %DestroyOp.bound.loc14: <bound method> = bound_method %v.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:     %DestroyOp.call.loc14: init %empty_tuple.type = call %DestroyOp.bound.loc14(%v.var)
 // CHECK:STDOUT:     return

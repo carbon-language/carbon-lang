@@ -37,6 +37,12 @@ fn Uint32ToUint64(a: u32) -> u64 = "int.convert";
 fn Int32ToIntLiteral(a: i32) -> Core.IntLiteral() = "int.convert";
 fn Uint32ToIntLiteral(a: u32) -> Core.IntLiteral() = "int.convert";
 
+// char conversion
+fn UInt8ToChar(a: u8)   -> u8 = "int.convert_char";
+fn UInt16ToChar(a: u16) -> u8 = "int.convert_char";
+fn UInt32ToChar(a: u32) -> u8 = "int.convert_char";
+fn UInt64ToChar(a: u64) -> u8 = "int.convert_char";
+
 class Expect[T:! type](N:! T) {}
 fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
 
@@ -248,6 +254,38 @@ let not_constant: Core.IntLiteral() = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
+
+
+// --- char_conversion.carbon
+
+library "[[@TEST_NAME]]";
+import library "int_ops";
+
+fn F() {
+  // u8 \u2192 char
+  Test(UInt8ToChar(0x00)) as Expect(0x00 as u8);
+  Test(UInt8ToChar(0x80)) as Expect(0x80 as u8);
+  Test(UInt8ToChar(0xFF)) as Expect(0xFF as u8);
+
+  // u16 \u2192 i64
+  Test(UInt16ToChar(0x0000)) as Expect(0x00 as u8);
+  Test(UInt16ToChar(0xFF12)) as Expect(0x12 as u8);
+  Test(UInt16ToChar(0xFFFF)) as Expect(0xFF as u8);
+
+  // u32 \u2192 char
+  Test(UInt32ToChar(0x0000_0000)) as Expect(0x00 as u8);
+  Test(UInt32ToChar(0x8000_0012)) as Expect(0x12 as u8);
+  Test(UInt32ToChar(0xFFFF_FF12)) as Expect(0x12 as u8);
+  Test(UInt32ToChar(0xFFFF_FFFF)) as Expect(0xFF as u8);
+
+  // u64 \u2192 char
+  Test(UInt64ToChar(0x0)) as Expect(0x00 as u8);
+  Test(UInt64ToChar(0x8000_0000_0000_0012)) as Expect(0x12 as u8);
+  Test(UInt64ToChar(0xFFFF_FFFF_FFFF_FF12)) as Expect(0x12 as u8);
+
+  Test(UInt64ToChar(0xFFFF_FFFF_FFFF_FFFF)) as Expect(0xFF as u8);
+
+}
 
 // CHECK:STDOUT: --- runtime_call.carbon
 // CHECK:STDOUT:

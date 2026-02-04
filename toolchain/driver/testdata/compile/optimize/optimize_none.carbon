@@ -155,10 +155,10 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 2, scope: !36, type: !7)
 // CHECK:STDOUT: !42 = !DILocation(line: 4294967295, scope: !36)
 // CHECK:STDOUT: !43 = !DILocation(line: 277, column: 3, scope: !36)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !45, line: 32, type: !46, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !45, line: 35, type: !46, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !48)
 // CHECK:STDOUT: !45 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
 // CHECK:STDOUT: !46 = !DISubroutineType(types: !47)
 // CHECK:STDOUT: !47 = !{!7, !7}
 // CHECK:STDOUT: !48 = !{!49}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !44, type: !7)
-// CHECK:STDOUT: !50 = !DILocation(line: 32, column: 38, scope: !44)
+// CHECK:STDOUT: !50 = !DILocation(line: 35, column: 38, scope: !44)

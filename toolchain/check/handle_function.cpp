@@ -71,37 +71,8 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto form_expr = ExprAsReturnForm(context, type_node_id, type_inst_id);
   context.PushReturnForm(form_expr);
-
-  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
-  auto form_inst = context.insts().Get(form_expr.form_inst_id);
-  CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind: {
-      break;
-    }
-    case CARBON_KIND(SemIR::InitForm init_form): {
-      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
-      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, node_id,
-          {.type_id = pattern_type_id,
-           .type_inst_id = form_expr.type_component_id});
-      return_patterns.push_back(AddPatternInst(
-          context,
-          SemIR::LocIdAndInst::UncheckedLoc(
-              type_node_id,
-              SemIR::OutParamPattern{.type_id = pattern_type_id,
-                                     .subpattern_id = return_slot_pattern_id,
-                                     .index = init_form.index})));
-      break;
-    }
-    case SemIR::ErrorInst::Kind: {
-      break;
-    }
-    default:
-      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
-  }
-
-  context.node_stack().Push(
-      node_id, context.inst_blocks().AddCanonical(return_patterns));
+  auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
+  context.node_stack().Push(node_id, return_patterns_id);
   return true;
 }
 
@@ -629,33 +600,6 @@ static auto LookupBuiltinFunctionKind(Context& context,
                            builtin_name.str());
   }
   return kind;
-}
-
-// Returns whether `function` is a valid declaration of `builtin_kind`.
-static auto IsValidBuiltinDeclaration(Context& context,
-                                      const SemIR::Function& function,
-                                      SemIR::BuiltinFunctionKind builtin_kind)
-    -> bool {
-  if (!function.call_params_id.has_value()) {
-    // For now, we have no builtins that support positional parameters.
-    return false;
-  }
-
-  // Find the list of call parameters other than the implicit return slots.
-  auto call_params = context.inst_blocks()
-                         .Get(function.call_params_id)
-                         .drop_back(context.inst_blocks()
-                                        .GetOrEmpty(function.return_patterns_id)
-                                        .size());
-
-  // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
-  if (!return_type_id.has_value()) {
-    return_type_id = GetTupleType(context, {});
-  }
-
-  return builtin_kind.IsValidType(context.sem_ir(), call_params,
-                                  return_type_id);
 }
 
 auto HandleParseNode(Context& context,

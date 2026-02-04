@@ -89,10 +89,10 @@ fn IncrSigned() {
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !19, type: !14)
 // CHECK:STDOUT: !25 = !DILocation(line: 4294967295, scope: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 277, column: 3, scope: !19)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !28, line: 32, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !28, line: 35, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
 // CHECK:STDOUT: !28 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{!14, !14}
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !14)
-// CHECK:STDOUT: !33 = !DILocation(line: 32, column: 38, scope: !27)
+// CHECK:STDOUT: !33 = !DILocation(line: 35, column: 38, scope: !27)
