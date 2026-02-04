@@ -255,7 +255,7 @@
         },
         {
           "name": "keyword.control.carbon",
-          "match": "\\b(addr|and|as|impls|in|like|not|or|partial|ref|template|where)\\b"
+          "match": "\\b(and|as|impls|in|like|not|or|partial|ref|template|where)\\b"
         }
       ]
     },
