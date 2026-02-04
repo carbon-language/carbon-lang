@@ -372,11 +372,11 @@ Carbon focused talks from the community:
 
 ### 2025
 
--   Memory safety everywhere with both Carbon and Rust, RustConf
-    ([video](https://www.youtube.com/watch?v=FYLuom6gg_s),
-    [slides](https://chandlerc.blog/slides/2025-rustconf-memory-safety-everywhere))
--   Carbon: from C++ to Memory Safety, REBASE
+-   Carbon: from C++ to Memory Safety, REBASE - ICFP/SPLASH
     ([slides](https://chandlerc.blog/slides/2025-rebase-carbon))
+-   Memory safety everywhere with both Carbon and Rust, RustConf
+    ([video](https://youtu.be/FYLuom6gg_s),
+    [slides](https://chandlerc.blog/slides/2025-rustconf-memory-safety-everywhere))
 
 ### 2024
 
