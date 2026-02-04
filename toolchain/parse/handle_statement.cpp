@@ -156,7 +156,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
 auto HandleStatementForHeaderFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::ForHeader);
 
   context.PushState(StateKind::CodeBlock);
 }
