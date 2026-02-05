@@ -424,7 +424,7 @@ auto DiscardGenericDecl(Context& context) -> void {
 
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   auto all_bindings =
-      context.scope_stack().compile_time_bindings_stack().PeekAllValues();
+      context.scope_stack().compile_time_binding_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),
