@@ -98,24 +98,46 @@ CARBON_PARSE_STATE(ArrayExprFinish)
 
 // Handles the start of a form literal.
 //
-// form ( val ...
-// ^~~~~~~~~~
-// form ( var ...
-// ^~~~~~~~~~
-// form ( ref ...
-// ^~~~~~~~~~
-// form ( ???
+// form ( ...
 // ^~~~~~
-//   1. Expr
+//   1. PrimitiveForm
 //   2. FormLiteralFinish
+//
+// form ???
+// ^~~~
+//   1. FormLiteralFinish
 CARBON_PARSE_STATE(FormLiteral)
+
+// Handles the category modifier and type of a form literal.
+//
+// form ( val ...
+//        ^~~
+// form ( var ...
+//        ^~~
+// form ( ref ...
+//        ^~~
+// form ( ???
+//       ^
+//   1. Expr
+//   2. PrimitiveFormFinish
+CARBON_PARSE_STATE(PrimitiveForm)
+
+// Finishes handling of PrimitiveForm.
+//
+// form ( ... )
+//           ^
+// form ???
+//         ^
+CARBON_PARSE_STATE(PrimitiveFormFinish)
 
 // Handles the end of a form literal.
 //
 // form ( ... )
 //            ^
 // form ( ??? )
-//            ^
+//        ^~~~~
+// form ???
+//     ^
 //   (state done)
 CARBON_PARSE_STATE(FormLiteralFinish)
 

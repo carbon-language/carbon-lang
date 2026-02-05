@@ -531,7 +531,6 @@ class NodeStack {
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:
       case Parse::NodeKind::Placeholder:
-      case Parse::NodeKind::RefCategoryModifier:
       case Parse::NodeKind::RequirementAnd:
       case Parse::NodeKind::RequirementEqual:
       case Parse::NodeKind::RequirementEqualEqual:
@@ -541,8 +540,6 @@ class NodeStack {
       case Parse::NodeKind::StructTypeLiteralComma:
       case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
-      case Parse::NodeKind::ValCategoryModifier:
-      case Parse::NodeKind::VarCategoryModifier:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:

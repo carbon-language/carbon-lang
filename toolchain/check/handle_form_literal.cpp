@@ -8,17 +8,17 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context, Parse::RefCategoryModifierId node_id)
+auto HandleParseNode(Context& context, Parse::RefPrimitiveFormId node_id)
     -> bool {
   return context.TODO(node_id, "Implement form literals");
 }
 
-auto HandleParseNode(Context& context, Parse::ValCategoryModifierId node_id)
+auto HandleParseNode(Context& context, Parse::ValPrimitiveFormId node_id)
     -> bool {
   return context.TODO(node_id, "Implement form literals");
 }
 
-auto HandleParseNode(Context& context, Parse::VarCategoryModifierId node_id)
+auto HandleParseNode(Context& context, Parse::VarPrimitiveFormId node_id)
     -> bool {
   return context.TODO(node_id, "Implement form literals");
 }

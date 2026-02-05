@@ -982,12 +982,29 @@ struct ArrayExpr {
   Lex::CloseParenTokenIndex token;
 };
 
-using RefCategoryModifier =
-    LeafNode<NodeKind::RefCategoryModifier, Lex::RefTokenIndex>;
-using VarCategoryModifier =
-    LeafNode<NodeKind::VarCategoryModifier, Lex::VarTokenIndex>;
-using ValCategoryModifier =
-    LeafNode<NodeKind::ValCategoryModifier, Lex::ValTokenIndex>;
+struct RefPrimitiveForm {
+  static constexpr auto Kind = NodeKind::RefPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId type;
+};
+
+struct VarPrimitiveForm {
+  static constexpr auto Kind = NodeKind::VarPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyExprId type;
+};
+
+struct ValPrimitiveForm {
+  static constexpr auto Kind = NodeKind::ValPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::ValTokenIndex token;
+  AnyExprId type;
+};
 
 using FormLiteralKeyword =
     LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
@@ -1000,12 +1017,11 @@ struct FormLiteral {
   static constexpr auto Kind = NodeKind::FormLiteral.Define(
       {.category = NodeCategory::Expr,
        .bracketed_by = NodeKind::FormLiteralKeyword,
-       .child_count = 4});
+       .child_count = 3});
 
   FormLiteralKeywordId keyword;
   FormLiteralOpenParenId start;
-  AnyCategoryModifierId category;
-  AnyExprId type;
+  AnyPrimitiveFormIdId category;
   Lex::CloseParenTokenIndex token;
 };
 

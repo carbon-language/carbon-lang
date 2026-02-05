@@ -23,24 +23,51 @@ auto HandleFormLiteral(Context& context) -> void {
   } else {
     state.has_error = true;
   }
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Ref,
-                                       NodeKind::RefCategoryModifier) &&
-      !context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Var,
-                                       NodeKind::VarCategoryModifier) &&
-      !context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Val,
-                                       NodeKind::ValCategoryModifier)) {
-    // If we didn't even have an open paren, diagnosing the lack of a category
-    // probably won't be useful.
-    if (!state.has_error) {
-      CARBON_DIAGNOSTIC(ExpectedCategoryModifier, Error,
-                        "expected `ref`, `var`, or `val` after `form(`");
-      context.emitter().Emit(*context.position(), ExpectedCategoryModifier);
-      state.has_error = true;
-    }
-    context.AddInvalidParse(*context.position());
-  }
   context.PushState(state, StateKind::FormLiteralFinish);
+  if (state.has_error) {
+    context.AddInvalidParse(keyword);
+  } else {
+    context.PushState(StateKind::PrimitiveForm, keyword);
+  }
+}
+
+auto HandlePrimitiveForm(Context& context) -> void {
+  auto state = context.PopState();
+  if (context.PositionIs(Lex::TokenKind::Ref) ||
+      context.PositionIs(Lex::TokenKind::Var) ||
+      context.PositionIs(Lex::TokenKind::Val)) {
+    state.token = context.Consume();
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedCategoryModifier, Error,
+                      "expected `ref`, `var`, or `val` after `form(`");
+    context.emitter().Emit(*context.position(), ExpectedCategoryModifier);
+    state.has_error = true;
+  }
+  context.PushState(state, StateKind::PrimitiveFormFinish);
   context.PushState(StateKind::Expr);
+}
+
+auto HandlePrimitiveFormFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  // Arbitrary default, only used in error recovery.
+  auto node_kind = NodeKind::ValPrimitiveForm;
+  switch (context.tokens().GetKind(state.token)) {
+    case Lex::TokenKind::Ref:
+      node_kind = NodeKind::RefPrimitiveForm;
+      break;
+    case Lex::TokenKind::Var:
+      node_kind = NodeKind::VarPrimitiveForm;
+      break;
+    case Lex::TokenKind::Val:
+      node_kind = NodeKind::ValPrimitiveForm;
+      break;
+    default:
+      CARBON_CHECK(state.has_error);
+      // Use the default node_kind set earlier for error recovery.
+      break;
+  }
+  context.AddNode(node_kind, state.token, state.has_error);
 }
 
 auto HandleFormLiteralFinish(Context& context) -> void {
