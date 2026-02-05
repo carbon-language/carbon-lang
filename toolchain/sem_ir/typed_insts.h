@@ -1025,8 +1025,6 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
-// DO NOT SUBMIT until this file and inst_kind.def are re-alphabetized.
-
 // An initializing primitive form.
 struct InitForm {
   static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
