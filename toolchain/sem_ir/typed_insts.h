@@ -743,6 +743,51 @@ struct FloatValue {
   FloatId float_id;
 };
 
+// A form binding, such as the `x` declared by `x:? F`. See AnyBinding for
+// member documentation.
+struct FormBinding {
+  static constexpr auto Kind =
+      InstKind::FormBinding.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_binding",
+           .expr_category = ComputedExprCategory::DependsOnOperands,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
+// A form binding pattern, such as `x:? F`. See AnyBindingPattern for member
+// documentation.
+struct FormBindingPattern {
+  static constexpr auto Kind =
+      InstKind::FormBindingPattern.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // Note that the EntityName's form_id represents the scrutinee form, so it
+  // doesn't directly correspond to type_id (which is a pattern type).
+  EntityNameId entity_name_id;
+};
+
+// A pattern that represents a form-parameterized parameter, such as `x:? F`.
+// See AnyParamPattern for member documentation.
+struct FormParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::FormParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "form_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
 // The type `Core.Form`.
 struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
   // `FormType` is always set complete in file.cpp.
@@ -1369,7 +1414,8 @@ struct RefBindingPattern {
 
 struct RefForm {
   static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
+                                                  Parse::RefPrimitiveFormId>>(
           {.ir_name = "ref_form",
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
@@ -1927,6 +1973,21 @@ struct TupleValue {
 
   TypeId type_id;
   InstBlockId elements_id;
+};
+
+// Extracts the type component of form_inst_id, which must have type
+// `Core.Form`.
+struct TypeComponentOf {
+  static constexpr auto Kind =
+      InstKind::TypeComponentOf.Define<Parse::NoneNodeId>(
+          {.ir_name = "type_component_of",
+           .is_type = InstIsType::Never,
+           .constant_kind = InstConstantKind::Indirect,
+           .is_lowered = false});
+
+  // Always TypeType
+  TypeId type_id;
+  InstId form_inst_id;
 };
 
 // Returns the type of the instruction produced by an action. For example, given

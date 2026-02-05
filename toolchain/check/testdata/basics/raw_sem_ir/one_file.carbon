@@ -35,6 +35,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir60000003: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:     import_ir60000004: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:     import_ir60000005: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir60000006: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir60000004, inst_id: inst48000010}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir60000004, inst_id: inst48000010}
@@ -257,69 +258,69 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     name_scope6000000B: {inst: inst600000D1, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:     name_scope6000000C: {inst: inst60000111, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name60000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000003: {name: name3, parent_scope: name_scope60000001, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000004: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000005: {name: name4, parent_scope: name_scope60000002, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000007: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000008: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000009: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000A: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000B: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000000F: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000010: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000011: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000012: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000013: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000014: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000015: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000016: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000017: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000018: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000019: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001B: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001D: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001E: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000020: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000021: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000022: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000023: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000024: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000025: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000026: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000027: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000028: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000029: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002A: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002B: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002C: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002D: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002E: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000030: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000031: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000032: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000033: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name60000034: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000035: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000036: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name60000037: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000038: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name60000039: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000003A: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000003B: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000003C: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
-// CHECK:STDOUT:     entity_name6000003D: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name6000003E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name60000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000003: {name: name3, parent_scope: name_scope60000001, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000004: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000005: {name: name4, parent_scope: name_scope60000002, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000007: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000008: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000009: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000A: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000B: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000000F: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000010: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000011: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000012: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000013: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000014: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000015: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000016: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000017: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000018: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000019: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001B: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001D: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001E: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000001F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000020: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000021: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000022: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000023: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000024: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000025: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000026: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000027: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000028: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000029: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002A: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002B: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002C: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002D: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002E: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000002F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000030: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000031: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000032: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000033: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000034: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000035: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000036: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000037: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000038: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000039: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000003A: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000003B: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000003C: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000003D: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name6000003E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, form: constant<none>}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block60000010, call_params_id: inst_block60000011, return_type_inst_id: inst6000002F, return_form_inst_id: inst60000031, return_patterns_id: inst_block6000000F, body: [inst_block60000018]}

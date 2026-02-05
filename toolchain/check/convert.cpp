@@ -2012,7 +2012,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
+  if (type_inst_id == SemIR::ErrorInst::InstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }
@@ -2030,12 +2030,41 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
           .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
+auto ExprAsForm(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
+                bool diagnose) -> Context::FormExpr {
+  constexpr Context::FormExpr ErrorFormExpr = {
+      .form_inst_id = SemIR::ErrorInst::InstId,
+      .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+      .type_component_id = SemIR::ErrorInst::TypeId};
+  auto form_inst_id =
+      ConvertToValueOfType(context, loc_id, value_id, SemIR::FormType::TypeId);
+  if (form_inst_id == SemIR::ErrorInst::InstId) {
+    return ErrorFormExpr;
+  }
+
+  auto form_const_id = context.constant_values().Get(form_inst_id);
+  if (!form_const_id.is_constant()) {
+    if (diagnose) {
+      CARBON_DIAGNOSTIC(FormExprEvaluationFailure, Error,
+                        "cannot evaluate form expression");
+      context.emitter().Emit(loc_id, FormExprEvaluationFailure);
+    }
+    return ErrorFormExpr;
+  }
+
+  auto type_id = GetTypeComponent(context, form_inst_id);
+  auto type_inst_id = context.types().GetTypeInstId(type_id);
+  return {.form_inst_id = form_inst_id,
+          .type_component_inst_id = type_inst_id,
+          .type_component_id = type_id};
+}
+
 auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr {
   constexpr Context::FormExpr ErrorFormExpr = {
       .form_inst_id = SemIR::ErrorInst::InstId,
-      .type_component_id = SemIR::ErrorInst::TypeInstId,
-      .type_id = SemIR::ErrorInst::TypeId};
+      .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+      .type_component_id = SemIR::ErrorInst::TypeId};
   auto form_inst_id = SemIR::InstId::None;
   auto type_inst_id = SemIR::InstId::None;
   if (auto ref_tag = context.insts().TryGetAs<SemIR::RefTagExpr>(value_id)) {
@@ -2080,9 +2109,11 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());
 
-  return {.form_inst_id = form_inst_id,
-          .type_component_id = context.types().GetAsTypeInstId(type_inst_id),
-          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
+  return {
+      .form_inst_id = form_inst_id,
+      .type_component_inst_id = context.types().GetAsTypeInstId(type_inst_id),
+      .type_component_id =
+          context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {

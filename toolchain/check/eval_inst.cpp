@@ -690,6 +690,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::TypeComponentOf inst)
+    -> ConstantEvalResult {
+  auto form_constant_inst_id =
+      context.constant_values().GetConstantInstId(inst.form_inst_id);
+  auto primitive_form =
+      context.insts().GetAs<SemIR::AnyPrimitiveForm>(form_constant_inst_id);
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(primitive_form.type_component_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::TypeOfInst inst)
     -> ConstantEvalResult {
   // Grab the type from the instruction produced as our operand.

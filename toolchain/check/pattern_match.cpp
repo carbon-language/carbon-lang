@@ -97,8 +97,12 @@ class MatchContext {
   auto EmitPatternMatch(Context& context, MatchContext::WorkItem entry) -> void;
 
   // Implementations of `EmitPatternMatch` for particular pattern inst kinds.
-  // The pattern argument is always equal to
-  // `context.insts().Get(entry.pattern_id)`.
+  // Note that the pattern argument is not necessarily equal to
+  // `context.insts().Get(entry.pattern_id)`: it may have been coerced to a
+  // different kind in order to facilitate code reuse.
+  //
+  // TODO: Is there a more principled way for those use cases to share code?
+  // TODO: adjust order of arguments to match DoEmitPatternMatchOffStack.
   auto DoEmitPatternMatch(Context& context,
                           SemIR::AnyBindingPattern binding_pattern,
                           WorkItem entry) -> void;
@@ -114,12 +118,25 @@ class MatchContext {
                           SemIR::OutParamPattern param_pattern, WorkItem entry)
       -> void;
   auto DoEmitPatternMatch(Context& context,
+                          SemIR::FormParamPattern param_pattern, WorkItem entry)
+      -> void;
+  auto DoEmitPatternMatch(Context& context,
+                          SemIR::FormBindingPattern binding_pattern,
+                          WorkItem entry) -> void;
+  auto DoEmitPatternMatch(Context& context,
                           SemIR::ReturnSlotPattern return_slot_pattern,
                           WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context, SemIR::VarPattern var_pattern,
                           WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context, SemIR::TuplePattern tuple_pattern,
                           WorkItem entry) -> void;
+
+  // Variant of `DoEmitPatternMatch` which doesn't modify the stack, and instead
+  // returns the entry that would be pushed. This requires that the underlying
+  // DoEmitPatternMatch call would not push more than one entry onto the stack.
+  template <typename InstT>
+  auto DoEmitPatternMatchOffStack(Context& context, WorkItem entry, InstT inst)
+      -> std::optional<WorkItem>;
 
   // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
@@ -241,9 +258,24 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
   return region.result_id;
 }
 
+template <typename InstT>
+auto MatchContext::DoEmitPatternMatchOffStack(Context& context, WorkItem entry,
+                                              InstT inst)
+    -> std::optional<WorkItem> {
+  auto initial_size = stack_.size();
+  DoEmitPatternMatch(context, inst, entry);
+  if (stack_.size() == initial_size) {
+    return std::nullopt;
+  }
+  CARBON_CHECK(stack_.size() == initial_size + 1);
+  return stack_.pop_back_val();
+}
+
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::AnyBindingPattern binding_pattern,
                                       MatchContext::WorkItem entry) -> void {
+  CARBON_CHECK(binding_pattern.kind != SemIR::FormBindingPattern::Kind,
+               "FormBindingPattern is handled by a separate overload");
   if (kind_ == MatchKind::Caller) {
     CARBON_CHECK(
         binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind,
@@ -436,6 +468,87 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   }
 }
 
+auto MatchContext::DoEmitPatternMatch(Context& context,
+                                      SemIR::FormParamPattern param_pattern,
+                                      WorkItem entry) -> void {
+  auto binding_pattern = context.insts().GetAs<SemIR::FormBindingPattern>(
+      param_pattern.subpattern_id);
+  auto form_id =
+      context.entity_names().Get(binding_pattern.entity_name_id).form_id;
+  if (form_id.is_symbolic()) {
+    context.TODO(entry.pattern_id, "Support symbolic form parameters");
+    return;
+  }
+  auto form_inst_id = context.constant_values().GetInstId(form_id);
+  auto form_inst = context.insts().Get(form_inst_id);
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::InitForm::Kind: {
+      if (auto new_entry = DoEmitPatternMatchOffStack(
+              context, entry,
+              SemIR::VarPattern{
+                  .type_id = param_pattern.type_id,
+                  .subpattern_id = param_pattern.subpattern_id})) {
+        entry.scrutinee_id = new_entry->scrutinee_id;
+      } else {
+        CARBON_FATAL("VarPattern should always add a WorkItem");
+      }
+
+      if (auto new_entry = DoEmitPatternMatchOffStack(
+              context, entry,
+              SemIR::VarParamPattern{
+                  .type_id = param_pattern.type_id,
+                  .subpattern_id = param_pattern.subpattern_id,
+                  .index = param_pattern.index})) {
+        CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
+        AddWork(*new_entry);
+      }
+      break;
+    }
+    case SemIR::RefForm::Kind: {
+      if (auto new_entry = DoEmitPatternMatchOffStack(
+              context, entry,
+              SemIR::RefParamPattern{
+                  .type_id = param_pattern.type_id,
+                  .subpattern_id = param_pattern.subpattern_id,
+                  .index = param_pattern.index})) {
+        CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
+        AddWork(*new_entry);
+      }
+      break;
+    }
+    case SemIR::ErrorInst::Kind:
+      break;
+    default:
+      CARBON_FATAL("Unexpected form {0}", form_inst);
+  }
+}
+
+auto MatchContext::DoEmitPatternMatch(Context& context,
+                                      SemIR::FormBindingPattern binding_pattern,
+                                      WorkItem entry) -> void {
+  auto form_id =
+      context.entity_names().Get(binding_pattern.entity_name_id).form_id;
+  if (form_id.is_symbolic()) {
+    context.TODO(entry.pattern_id, "Support symbolic form parameters");
+    return;
+  }
+  auto form_inst_id = context.constant_values().GetInstId(form_id);
+  auto form_inst = context.insts().Get(form_inst_id);
+  auto new_binding_pattern =
+      SemIR::Inst(binding_pattern).As<SemIR::AnyBindingPattern>();
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::InitForm::Kind:
+    case SemIR::RefForm::Kind: {
+      new_binding_pattern.kind = SemIR::RefBindingPattern::Kind;
+      break;
+    }
+    default:
+      CARBON_FATAL("Unexpected form {0}", form_inst);
+  }
+  CARBON_CHECK(
+      !DoEmitPatternMatchOffStack(context, entry, new_binding_pattern));
+}
+
 auto MatchContext::DoEmitPatternMatch(
     Context& context, SemIR::ReturnSlotPattern return_slot_pattern,
     WorkItem entry) -> void {
@@ -611,6 +724,10 @@ auto MatchContext::EmitPatternMatch(Context& context,
                          entry);
       break;
     }
+    case CARBON_KIND(SemIR::FormBindingPattern binding_pattern): {
+      DoEmitPatternMatch(context, binding_pattern, entry);
+      break;
+    }
     case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
       DoEmitPatternMatch(context, param_pattern, entry);
       break;
@@ -624,6 +741,10 @@ auto MatchContext::EmitPatternMatch(Context& context,
       break;
     }
     case CARBON_KIND(SemIR::OutParamPattern param_pattern): {
+      DoEmitPatternMatch(context, param_pattern, entry);
+      break;
+    }
+    case CARBON_KIND(SemIR::FormParamPattern param_pattern): {
       DoEmitPatternMatch(context, param_pattern, entry);
       break;
     }

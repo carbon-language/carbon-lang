@@ -17,7 +17,7 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << "}";
+        << ", form: " << form_id << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -56,6 +56,14 @@ struct EntityName : public Printable<EntityName> {
   int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
+
+  // If *this is the name of a `:?` form binding, form_id is its declared form.
+  // Otherwise, form_id is None.
+  //
+  // TODO: This field is currently only populated for a form binding. Consider
+  // making it a union with the previous two fields, and/or factoring it out
+  // along with them.
+  ConstantId form_id = ConstantId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore

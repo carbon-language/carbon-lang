@@ -411,7 +411,7 @@ static auto BuildFunctionDecl(Context& context,
       maybe_return_patterns_id) {
     return_patterns_id = *maybe_return_patterns_id;
     auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_id;
+    return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
   }
 

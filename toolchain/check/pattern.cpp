@@ -48,6 +48,7 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
 
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
+                       SemIR::ConstantId form_id,
                        SemIR::ExprRegionId type_region_id,
                        SemIR::InstKind pattern_kind, bool is_template)
     -> BindingPatternInfo {
@@ -62,16 +63,27 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     case SemIR::InstKind::ValueBindingPattern:
       bind_name_kind = SemIR::InstKind::ValueBinding;
       break;
+    case SemIR::InstKind::FormBindingPattern:
+      bind_name_kind = SemIR::InstKind::FormBinding;
+      break;
     default:
-      CARBON_FATAL("pattern_kind is not a binding pattern kind");
+      CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
+                   pattern_kind);
   }
   bool is_generic = pattern_kind == SemIR::SymbolicBindingPattern::Kind;
 
-  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
-      name_id, context.scope_stack().PeekNameScopeId(),
-      is_generic ? context.scope_stack().AddCompileTimeBinding()
-                 : SemIR::CompileTimeBindIndex::None,
-      is_template);
+  SemIR::EntityName entity_name = {
+      .name_id = name_id,
+      .parent_scope_id = context.scope_stack().PeekNameScopeId()};
+  if (is_generic) {
+    entity_name.bind_index_value =
+        context.scope_stack().AddCompileTimeBinding().index;
+    entity_name.is_template = is_template;
+  }
+  if (pattern_kind == SemIR::InstKind::FormBindingPattern) {
+    entity_name.form_id = form_id;
+  }
+  auto entity_name_id = context.entity_names().Add(entity_name);
 
   auto bind_id = AddInstInNoBlock(
       context,
@@ -145,8 +157,9 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
   const auto& binding_pattern_kind = is_ref ? SemIR::RefBindingPattern::Kind
                                             : SemIR::ValueBindingPattern::Kind;
   SemIR::InstId pattern_id =
-      AddBindingPattern(context, loc_id, name_id, type_id, type_expr_region_id,
-                        binding_pattern_kind,
+      AddBindingPattern(context, loc_id, name_id, type_id,
+                        /*form_id=*/SemIR::ConstantId::None,
+                        type_expr_region_id, binding_pattern_kind,
                         /*is_template=*/false)
           .pattern_id;
 

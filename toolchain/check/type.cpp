@@ -137,6 +137,11 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
   return GetTypeImpl<SemIR::ConstType>(context, inner_type_id);
 }
 
+auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::TypeComponentOf>(context, form_inst_id);
+}
+
 auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
                       SemIR::TypeQualifiers quals) -> SemIR::TypeId {
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {

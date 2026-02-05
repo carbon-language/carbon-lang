@@ -1249,14 +1249,14 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                          orig_ret_type.getAsString()));
       return {.form_inst_id = SemIR::ErrorInst::InstId,
-              .type_component_id = SemIR::ErrorInst::TypeInstId,
-              .type_id = SemIR::ErrorInst::TypeId};
+              .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+              .type_component_id = SemIR::ErrorInst::TypeId};
     }
     Context::FormExpr result = {
         .form_inst_id = is_reference ? make_ref_form(orig_type_inst_id)
                                      : make_init_form(orig_type_inst_id),
-        .type_component_id = orig_type_inst_id,
-        .type_id = type_id};
+        .type_component_inst_id = orig_type_inst_id,
+        .type_component_id = type_id};
 
     return result;
   }
@@ -1265,17 +1265,17 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ctor) {
     // void.
     return {.form_inst_id = SemIR::InstId::None,
-            .type_component_id = SemIR::TypeInstId::None,
-            .type_id = SemIR::TypeId::None};
+            .type_component_inst_id = SemIR::TypeInstId::None,
+            .type_component_id = SemIR::TypeId::None};
   }
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
       LookupClangDeclInstId(context, SemIR::ClangDeclKey(ctor->getParent())));
-  return {
-      .form_inst_id = make_init_form(record_type_inst_id),
-      .type_component_id = record_type_inst_id,
-      .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
+  return {.form_inst_id = make_init_form(record_type_inst_id),
+          .type_component_inst_id = record_type_inst_id,
+          .type_component_id =
+              context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
 // Information about a function's declared return type, corresponding to the
@@ -1701,10 +1701,9 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
 
   // Create an entity name to identify this variable.
-  SemIR::EntityNameId entity_name_id =
-      context.entity_names().AddSymbolicBindingName(
-          var_name_id, GetParentNameScopeId(context, var_decl),
-          SemIR::CompileTimeBindIndex::None, false);
+  SemIR::EntityNameId entity_name_id = context.entity_names().Add(
+      {.name_id = var_name_id,
+       .parent_scope_id = GetParentNameScopeId(context, var_decl)});
 
   // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
   // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
