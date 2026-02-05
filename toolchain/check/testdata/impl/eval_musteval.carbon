@@ -143,4 +143,3 @@ impl B as MustEval {
   // CHECK:STDERR:
   musteval fn F[self: BView]() {}
 }
-
