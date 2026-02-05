@@ -41,11 +41,12 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
       break;
     }
     case CARBON_KIND(SemIR::InitForm init_form): {
-      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
+      auto pattern_type_id =
+          GetPatternType(context, form_expr.type_component_id);
       auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
           context, loc_id,
           {.type_id = pattern_type_id,
-           .type_inst_id = form_expr.type_component_id});
+           .type_inst_id = form_expr.type_component_inst_id});
       return_patterns.push_back(AddPatternInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
@@ -136,9 +137,10 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
 
   // Build and add the return type. We always use an initializing form for now.
   auto return_patterns_id = SemIR::InstBlockId::None;
-  Context::FormExpr return_form = {.form_inst_id = SemIR::InstId::None,
-                                   .type_component_id = SemIR::TypeInstId::None,
-                                   .type_id = SemIR::TypeId::None};
+  Context::FormExpr return_form = {
+      .form_inst_id = SemIR::InstId::None,
+      .type_component_inst_id = SemIR::TypeInstId::None,
+      .type_component_id = SemIR::TypeId::None};
   if (signature.return_type_id.has_value()) {
     return_form = ExprAsReturnForm(
         context, loc_id,
@@ -177,7 +179,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = call_param_patterns_id,
               .call_params_id = call_params_id,
-              .return_type_inst_id = return_form.type_component_id,
+              .return_type_inst_id = return_form.type_component_inst_id,
               .return_form_inst_id = return_form.form_inst_id,
               .return_patterns_id = return_patterns_id,
               .self_param_id = self_param_id,

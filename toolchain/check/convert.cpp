@@ -2030,8 +2030,8 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr {
   constexpr Context::FormExpr ErrorFormExpr = {
       .form_inst_id = SemIR::ErrorInst::InstId,
-      .type_component_id = SemIR::ErrorInst::TypeInstId,
-      .type_id = SemIR::ErrorInst::TypeId};
+      .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+      .type_component_id = SemIR::ErrorInst::TypeId};
   auto form_inst_id = SemIR::InstId::None;
   auto type_inst_id = SemIR::InstId::None;
   if (auto ref_tag = context.insts().TryGetAs<SemIR::RefTagExpr>(value_id)) {
@@ -2076,9 +2076,11 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());
 
-  return {.form_inst_id = form_inst_id,
-          .type_component_id = context.types().GetAsTypeInstId(type_inst_id),
-          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
+  return {
+      .form_inst_id = form_inst_id,
+      .type_component_inst_id = context.types().GetAsTypeInstId(type_inst_id),
+      .type_component_id =
+          context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {
