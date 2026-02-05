@@ -519,15 +519,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 static auto HandleFunctionDefinitionAfterSignature(
     Context& context, Parse::FunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  // Create the function scope and the entry block.
-  context.scope_stack().PushForFunctionBody(decl_id);
-  context.inst_block_stack().Push();
-  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context,
-                         context.functions().Get(function_id).generic_id);
-
-  CheckFunctionDefinitionSignature(context, function_id);
-
+  StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
@@ -579,15 +571,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope();
-
-  auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.region_stack().PopRegion();
-
-  // If this is a generic function, collect information about the definition.
-  FinishGenericDefinition(context, function.generic_id);
 
   return true;
 }

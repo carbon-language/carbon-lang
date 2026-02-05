@@ -101,6 +101,37 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
 auto CheckFunctionDefinitionSignature(Context& context,
                                       SemIR::FunctionId function_id) -> void;
 
+// Prepares for a function signature. Handles necessary stack setup. This is
+// used for generated functions/thunks, not user-declared functions.
+auto StartFunctionSignature(Context& context) -> void;
+
+// Results for `FinishFunctionSignature`.
+struct FinishFunctionSignatureResult {
+  SemIR::InstBlockId pattern_block_id;
+  SemIR::InstBlockId decl_block_id;
+};
+
+// Finishes signatures started by `StartFunctionSignature`.
+auto FinishFunctionSignature(Context& context) -> FinishFunctionSignatureResult;
+
+// Creates a function object for the given function declaration. The caller must
+// add the returned `decl_id` to a block (typically the current block or
+// imports).
+auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
+                      SemIR::InstBlockId decl_block_id, bool build_generic,
+                      bool is_definition, SemIR::Function function)
+    -> std::pair<SemIR::InstId, SemIR::FunctionId>;
+
+// Starts a function definition. Handles necessary stack setup, creating the
+// function scope and entry block, and definition validation. This is used for
+// both generated functions/thunks and user-declared functions.
+auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
+                             SemIR::FunctionId function_id) -> void;
+
+// Finishes definitions started by `StartFunctionDefinition`.
+auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
+    -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FUNCTION_H_

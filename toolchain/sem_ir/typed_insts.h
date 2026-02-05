@@ -1027,30 +1027,6 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
-// DO NOT SUBMIT until this file and inst_kind.def are re-alphabetized.
-
-// Records that evaluation of the expression `src_id` will initialize the
-// storage identified by `dest_id` (even if its type's initializing
-// representation is not normally in-place), and forms an in-place initializing
-// expression to represent it. Note that `src_id` must find its target storage
-// using the exact ID `dest_id`, not another ID that aliases it.
-//
-// This is used to model the initialization performed by C++ thunks, where
-// in-place initialization is used even for types that would normally have a
-// copy initializing representation.
-struct MarkInPlaceInit {
-  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "mark_in_place_init",
-       .expr_category = ExprCategory::InPlaceInitializing,
-       .constant_kind = InstConstantKind::Never});
-
-  TypeId type_id;
-  // Used only to track the source of the initialization; this has no semantic
-  // meaning.
-  InstId src_id;
-  DestInstId dest_id;
-};
-
 // An initializing primitive form.
 struct InitForm {
   static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
@@ -1176,6 +1152,28 @@ struct LookupImplWitness {
   // The self type (or facet value) and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
+};
+
+// Records that evaluation of the expression `src_id` will initialize the
+// storage identified by `dest_id` (even if its type's initializing
+// representation is not normally in-place), and forms an in-place initializing
+// expression to represent it. Note that `src_id` must find its target storage
+// using the exact ID `dest_id`, not another ID that aliases it.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct MarkInPlaceInit {
+  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "mark_in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
 };
 
 // A type that holds an object representation of another type, that may or may
