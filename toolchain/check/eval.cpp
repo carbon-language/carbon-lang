@@ -477,23 +477,19 @@ static auto RequireConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
   return const_inst_id;
 }
 
-// Gets a concrete value for an `inst_id`, diagnosing when the input is not
-// concrete.
-static auto RequireConcreteValue(EvalContext& eval_context,
-                                 SemIR::InstId inst_id) -> SemIR::InstId {
+// Gets a constant value for an `inst_id`, diagnosing when the input is not
+// constant, and CHECKing that it is concrete. Should only be used in contexts
+// where non-concrete constants cannot appear.
+static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
   auto phase = Phase::Concrete;
   auto value_inst_id = RequireConstantValue(eval_context, inst_id, &phase);
   if (phase == Phase::UnknownDueToError) {
     return SemIR::ErrorInst::InstId;
   }
-  if (phase > Phase::Concrete) {
-    CARBON_DIAGNOSTIC(EvalRequiresConcreteValue, Error,
-                      "expression evaluates to symbolic value {0}",
-                      InstIdAsConstant);
-    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
-                                EvalRequiresConcreteValue, value_inst_id);
-    return SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(phase == Phase::Concrete,
+               "expression evaluates to symbolic value {0}",
+               eval_context.insts().Get(value_inst_id));
   return value_inst_id;
 }
 
@@ -2631,7 +2627,7 @@ auto TryEvalTypedInstInFunction<SemIR::BranchIf>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
     SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
   auto branch_if = inst.As<SemIR::BranchIf>();
-  auto cond_id = RequireConcreteValue(eval_context, branch_if.cond_id);
+  auto cond_id = CheckConcreteValue(eval_context, branch_if.cond_id);
   if (cond_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::ConstantId;
   }

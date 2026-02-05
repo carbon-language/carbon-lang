@@ -95,3 +95,78 @@ eval var x: i32;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 eval class C {};
+
+// --- redecl.carbon
+
+library "[[@TEST_NAME]]";
+
+eval fn A() -> i32;
+eval fn A() -> i32 { return 0; }
+
+musteval fn B() -> i32;
+musteval fn B() -> i32 { return 0; }
+
+// --- fail_differ_in_redecl.carbon
+
+library "[[@TEST_NAME]]";
+
+fn NoneThenEval();
+fn NoneThenMustEval();
+eval fn EvalThenNone();
+eval fn EvalThenMustEval();
+musteval fn MustEvalThenNone();
+musteval fn MustEvalThenEval();
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is `eval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: eval fn NoneThenEval() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-10]]:1: note: previously not declared as `eval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: fn NoneThenEval();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+eval fn NoneThenEval() {}
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is `musteval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: musteval fn NoneThenMustEval() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-18]]:1: note: previously not declared as `musteval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: fn NoneThenMustEval();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+musteval fn NoneThenMustEval() {}
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is not `eval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: fn EvalThenNone() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-26]]:1: note: previously declared as `eval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: eval fn EvalThenNone();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn EvalThenNone() {}
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is `musteval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: musteval fn EvalThenMustEval() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-34]]:1: note: previously declared as `eval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: eval fn EvalThenMustEval();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+musteval fn EvalThenMustEval() {}
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is not `musteval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: fn MustEvalThenNone() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-42]]:1: note: previously declared as `musteval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: musteval fn MustEvalThenNone();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MustEvalThenNone() {}
+
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE+7]]:1: error: function redeclaration differs because new function is `eval` [FunctionRedeclEvaluationModeDiffers]
+// CHECK:STDERR: eval fn MustEvalThenEval() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_differ_in_redecl.carbon:[[@LINE-50]]:1: note: previously declared as `musteval` [FunctionRedeclEvaluationModePrevious]
+// CHECK:STDERR: musteval fn MustEvalThenEval();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+eval fn MustEvalThenEval() {}

@@ -175,7 +175,6 @@ static auto MergeFunctionRedecl(Context& context,
     prev_function.return_type_inst_id = new_function.return_type_inst_id;
     prev_function.return_form_inst_id = new_function.return_form_inst_id;
     prev_function.return_patterns_id = new_function.return_patterns_id;
-    prev_function.evaluation_mode = new_function.evaluation_mode;
     prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {

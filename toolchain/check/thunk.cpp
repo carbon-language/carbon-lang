@@ -229,6 +229,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                        .return_patterns_id = return_patterns_id,
                        .virtual_modifier = callee.virtual_modifier,
                        .virtual_index = callee.virtual_index,
+                       .evaluation_mode = signature.evaluation_mode,
                        .self_param_id = self_param_id}});
   function_decl.type_id =
       GetFunctionType(context, function_decl.function_id,

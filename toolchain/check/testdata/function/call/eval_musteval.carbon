@@ -52,3 +52,21 @@ fn CompileTimeArg() {
   Eval(1);
   MustEval(1);
 }
+
+// --- fail_todo_musteval_calls_musteval.carbon
+
+library "[[@TEST_NAME]]";
+
+musteval fn MustEval(n: i32) {}
+
+// TODO: This should be accepted.
+musteval fn CallMustEval(n: i32) {
+  // CHECK:STDERR: fail_todo_musteval_calls_musteval.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   MustEval(n);
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_musteval_calls_musteval.carbon:[[@LINE-7]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: musteval fn MustEval(n: i32) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  MustEval(n);
+}

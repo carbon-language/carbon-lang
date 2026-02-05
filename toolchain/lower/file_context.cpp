@@ -80,10 +80,14 @@ auto FileContext::PrepareToLower() -> void {
   }
 
   // Lower function declarations.
-  for (auto [id, _] : sem_ir_->functions().enumerate()) {
+  for (auto [id, function] : sem_ir_->functions().enumerate()) {
     if (id == sem_ir().global_ctor_id()) {
       // The global constructor is only lowered when we generate its definition.
       // LLVM doesn't allow an internal linkage function to be undefined.
+      continue;
+    }
+    if (function.evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
+      // musteval functions are never lowered.
       continue;
     }
     functions_.Set(id, BuildFunctionDecl(id));
