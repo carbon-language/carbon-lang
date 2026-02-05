@@ -1472,7 +1472,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   auto [decl_id, function_id] = MakeFunctionDecl(
       context, import_ir_inst_id, decl_block_id, /*build_generic=*/false,
-      /*set_definition_id=*/false,
+      /*is_definition=*/false,
       SemIR::Function{
           {
               .name_id = GetFunctionName(context, clang_decl),

@@ -203,7 +203,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto& callee = context.functions().Get(callee_id);
   auto [decl_id, function_id] = MakeFunctionDecl(
       context, loc_id, decl_block_id, /*build_generic=*/true,
-      /*set_definition_id=*/true,
+      /*is_definition=*/true,
       SemIR::Function{
           {
               .name_id = signature.name_id,

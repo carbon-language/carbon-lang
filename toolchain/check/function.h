@@ -119,7 +119,7 @@ auto FinishFunctionSignature(Context& context) -> FinishFunctionSignatureResult;
 // imports).
 auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
                       SemIR::InstBlockId decl_block_id, bool build_generic,
-                      bool set_definition_id, SemIR::Function function)
+                      bool is_definition, SemIR::Function function)
     -> std::pair<SemIR::InstId, SemIR::FunctionId>;
 
 // Starts a function definition. Handles necessary stack setup, creating the

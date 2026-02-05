@@ -155,7 +155,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
   // TODO: This should probably handle generics.
   auto [decl_id, function_id] = MakeFunctionDecl(
       context, loc_id, decl_block_id, /*build_generic=*/false,
-      /*set_definition_id=*/true,
+      /*is_definition=*/true,
       SemIR::Function{
           {
               .name_id = name_id,
@@ -365,7 +365,7 @@ auto FinishFunctionSignature(Context& context)
 
 auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
                       SemIR::InstBlockId decl_block_id, bool build_generic,
-                      bool set_definition_id, SemIR::Function function)
+                      bool is_definition, SemIR::Function function)
     -> std::pair<SemIR::InstId, SemIR::FunctionId> {
   CARBON_CHECK(!function.first_owning_decl_id.has_value());
 
@@ -374,7 +374,7 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto decl_id = AddPlaceholderInstInNoBlock(
       context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
   function.first_owning_decl_id = decl_id;
-  if (set_definition_id) {
+  if (is_definition) {
     function.definition_id = decl_id;
   }
 
