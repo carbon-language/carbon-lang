@@ -1537,6 +1537,10 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
     case SemIR::ExprCategory::Error:
       return Done{SemIR::ErrorInst::InstId};
 
+    case SemIR::ExprCategory::Dependent:
+      context_.TODO(expr_id, "Support symbolic expression forms");
+      return Done{SemIR::ErrorInst::InstId};
+
     case SemIR::ExprCategory::InPlaceInitializing:
     case SemIR::ExprCategory::ReprInitializing:
       if (target_.is_initializer()) {

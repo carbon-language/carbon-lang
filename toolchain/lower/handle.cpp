@@ -293,6 +293,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
         case SemIR::ExprCategory::NotExpr:
         case SemIR::ExprCategory::Error:
         case SemIR::ExprCategory::Pattern:
+        case SemIR::ExprCategory::Dependent:
           CARBON_FATAL("Unexpected category for `return` expression");
       }
       context.builder().CreateRet(value);
