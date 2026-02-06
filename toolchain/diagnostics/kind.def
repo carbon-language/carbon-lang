@@ -36,6 +36,8 @@ CARBON_DIAGNOSTIC_KIND(FailureBuildingRuntimes)
 CARBON_DIAGNOSTIC_KIND(FailureRunningClang)
 CARBON_DIAGNOSTIC_KIND(FailureRunningClangToLink)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LinkObjectFilesMissing)
+CARBON_DIAGNOSTIC_KIND(LinkOutputOptionMissing)
 CARBON_DIAGNOSTIC_KIND(ToolFuzzingDisallowed)
 
 // ============================================================================

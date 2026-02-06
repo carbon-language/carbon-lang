@@ -248,10 +248,11 @@ TEST_F(DriverTest, Link) {
       << test_error_stream_.TakeStr();
 
   // Now link this into a binary. Note that we suppress building runtimes on
-  // demand here as no runtimes should be needed for the empty program.
+  // demand here as no runtimes should be needed for the empty program. We also
+  // pass some system library link flags through to the underlying Clang layer.
   EXPECT_TRUE(driver_
                   .RunCommand({"--no-build-runtimes", "link", "--output=test",
-                               "test.o"})
+                               "test.o", "--", "-lc", "-lm"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
 
