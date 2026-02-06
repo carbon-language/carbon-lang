@@ -245,20 +245,22 @@ def main() -> None:
     with open(final_path, "w") as final_file:
         final_file.write(content)
 
+    # Run pre-commit for a ToC update, then push the PR update.
     final_desc = "Filling out template with PR %d" % pr_num
     if git_bin:
-        # Run pre-commit.
         _run([git_bin, "add", temp_path, final_path])
-        _run([precommit_bin, "run"], check=False)  # Needs a ToC update.
+        _run([precommit_bin, "run"], check=False)
         _run([git_bin, "commit", "--amend", "-m", final_desc])
 
-        # Push the PR update.
         _run([git_bin, "push", "--force-with-lease"])
     else:
         assert jj_bin  # For mypy.
-        # TODO: Figure out an ideal way to run pre-commit, to mirror git.
+
+        _run(
+            [precommit_bin, "run", "--files", "$(jj diff --name-only)"],
+            check=False,
+        )
         _run([jj_bin, "describe", "-m", final_desc])
-        # Push the PR update.
         _run([jj_bin, "git", "push"])
 
     print(
