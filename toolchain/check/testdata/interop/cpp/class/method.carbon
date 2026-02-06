@@ -423,8 +423,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr.235 = ref_binding b, %b.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc9: <bound method> = bound_method %b.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc9: init %empty_tuple.type = call %DestroyOp.bound.loc9(%b.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc8: <bound method> = bound_method %a.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc8: init %empty_tuple.type = call %DestroyOp.bound.loc8(%a.var)
 // CHECK:STDOUT:   <elided>

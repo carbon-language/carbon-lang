@@ -970,7 +970,6 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.139: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.71e: type = fn_type @ImplicitAs.Convert, @ImplicitAs(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %From: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.2ed: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%From) [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.d29: %Int.as.ImplicitAs.impl.Convert.type.2ed = struct_value () [symbolic]
@@ -978,7 +977,8 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.240: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.dd4: %Int.as.ImplicitAs.impl.Convert.type.240 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.290: %ImplicitAs.type.139 = facet_value %i32, (%ImplicitAs.impl_witness.640) [concrete]
-// CHECK:STDOUT:   %.71e: type = fn_type_with_self_type %ImplicitAs.Convert.type.71e, %ImplicitAs.facet.290 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.462: type = fn_type @ImplicitAs.Convert, @ImplicitAs(Core.IntLiteral, %ImplicitAs.facet.290) [concrete]
+// CHECK:STDOUT:   %.0a7: type = fn_type_with_self_type %ImplicitAs.Convert.type.462, %ImplicitAs.facet.290 [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5d2, %Int.as.ImplicitAs.impl.Convert.dd4 [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Int.as.ImplicitAs.impl.Convert.dd4, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.04c: <bound method> = bound_method %int_1.5d2, %Int.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -990,14 +990,14 @@ fn F() {
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%float.674) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.223: type = facet_type <@ImplicitAs, @ImplicitAs(%f32.97e)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.b8c: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%f32.97e) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.02f: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.1f0: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.02f = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.bc6: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.31a, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.461: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.e55: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.461 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.945: %ImplicitAs.type.223 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.bc6) [concrete]
-// CHECK:STDOUT:   %.a6f: type = fn_type_with_self_type %ImplicitAs.Convert.type.b8c, %ImplicitAs.facet.945 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.e4d: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%f32.97e, %ImplicitAs.facet.945) [concrete]
+// CHECK:STDOUT:   %.98d: type = fn_type_with_self_type %ImplicitAs.Convert.type.e4d, %ImplicitAs.facet.945 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.e55 [concrete]
 // CHECK:STDOUT:   %pattern_type.201: type = pattern_type %f32.97e [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.e55, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
@@ -1037,7 +1037,8 @@ fn F() {
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
 // CHECK:STDOUT:   %.loc10_35.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %impl.elem0.loc10_35: %.a6f = impl_witness_access constants.%ImplicitAs.impl_witness.bc6, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.e55]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc10_35: %.98d = impl_witness_access constants.%ImplicitAs.impl_witness.bc6, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.e55]
 // CHECK:STDOUT:   %bound_method.loc10_35.1: <bound method> = bound_method %float, %impl.elem0.loc10_35 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc10_35: <specific function> = specific_function %impl.elem0.loc10_35, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %float, %specific_fn.loc10_35 [concrete = constants.%bound_method.1e4]
@@ -1055,7 +1056,8 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %n.ref.loc10: %i32 = name_ref n, imports.%int_1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc10_24: %.71e = impl_witness_access constants.%ImplicitAs.impl_witness.640, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.dd4]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %impl.elem0.loc10_24: %.0a7 = impl_witness_access constants.%ImplicitAs.impl_witness.640, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.dd4]
 // CHECK:STDOUT:     %bound_method.loc10_24.1: <bound method> = bound_method %n.ref.loc10, %impl.elem0.loc10_24 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:     %specific_fn.loc10_24: <specific function> = specific_function %impl.elem0.loc10_24, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_24.2: <bound method> = bound_method %n.ref.loc10, %specific_fn.loc10_24 [concrete = constants.%bound_method.04c]
@@ -1078,6 +1080,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_21: %f32.97e = acquire_value %n.ref.loc12
 // CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc12_21
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -1752,14 +1755,14 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.01c: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.b3c)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.4db: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Optional.b3c) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.10f: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.4eb: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.10f = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.cee: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.d72, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.c2c: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.8e7: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.c2c = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.01c = facet_value %Cpp.nullptr_t, (%ImplicitAs.impl_witness.cee) [concrete]
-// CHECK:STDOUT:   %.a76: type = fn_type_with_self_type %ImplicitAs.Convert.type.4db, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.01c: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Optional.b3c, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.a4f: type = fn_type_with_self_type %ImplicitAs.Convert.type.01c, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.8e7 [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.8e7, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -1803,7 +1806,8 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc11_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %MyNullPtr.ref: %Cpp.nullptr_t = name_ref MyNullPtr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %impl.elem0: %.a76 = impl_witness_access constants.%ImplicitAs.impl_witness.cee, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.8e7]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0: %.a4f = impl_witness_access constants.%ImplicitAs.impl_witness.cee, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.8e7]
 // CHECK:STDOUT:   %bound_method.loc11_14.1: <bound method> = bound_method %MyNullPtr.ref, %impl.elem0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(constants.%i32) [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_14.2: <bound method> = bound_method %MyNullPtr.ref, %specific_fn [concrete = constants.%bound_method]
@@ -1813,6 +1817,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_14.3: ref %Optional.b3c = temporary %.loc11_14.2, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.4: %Optional.b3c = acquire_value %.loc11_14.3
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc11_14.4)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc11_14.3, constants.%DestroyOp.b0ebf8.5
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc11_14.3)
 // CHECK:STDOUT:   <elided>

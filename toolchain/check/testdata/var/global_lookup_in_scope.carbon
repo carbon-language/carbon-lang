@@ -87,6 +87,7 @@ fn Main() {
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.v = ref_binding y, %y.var
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %y.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%y.var)
 // CHECK:STDOUT:   return

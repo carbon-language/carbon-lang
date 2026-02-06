@@ -30,13 +30,13 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.c49: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness @Animal.type.as.Eats.impl.%Eats.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -95,6 +95,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Animal.type.as.Eats.impl: %Animal.ref as %Eats.ref {
+// CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Animal.type.as.Eats.impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:
@@ -117,7 +118,13 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Self.247) {}
+// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Animal(constants.%Self.c49) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Eats.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

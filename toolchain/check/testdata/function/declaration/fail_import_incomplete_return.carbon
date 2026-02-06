@@ -279,8 +279,10 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc34_15.1 = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call
+// CHECK:STDOUT:   %Destroy.type.1: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%.loc34_15.2)
+// CHECK:STDOUT:   %Destroy.type.2: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc33: init %empty_tuple.type = call %DestroyOp.bound.loc33(%.loc33_17.2)
 // CHECK:STDOUT:   return

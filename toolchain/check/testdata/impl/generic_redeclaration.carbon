@@ -149,6 +149,10 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %pattern_type.88f: type = pattern_type %L.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.29d: type = symbolic_binding_type T, 0, %T.0fc [symbolic]
 // CHECK:STDOUT:   %Interface.impl_witness.8e9: <witness> = impl_witness @T.binding.as_type.as.Interface.impl.410.%Interface.impl_witness_table, @T.binding.as_type.as.Interface.impl.410(%T.0fc) [symbolic]
+// CHECK:STDOUT:   %Interface.facet.9bb: %Interface.type = facet_value %T.binding.as_type.3af, (%Interface.impl_witness.779) [symbolic]
+// CHECK:STDOUT:   %Interface.facet.08d: %Interface.type = facet_value %T.binding.as_type.50b, (%Interface.impl_witness.8e2) [symbolic]
+// CHECK:STDOUT:   %Interface.facet.842: %Interface.type = facet_value %T.binding.as_type.bec, (%Interface.impl_witness.84e) [symbolic]
+// CHECK:STDOUT:   %Interface.facet.f9d: %Interface.type = facet_value %T.binding.as_type.29d, (%Interface.impl_witness.8e9) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -342,6 +346,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc12_21 as %Interface.ref.loc12 {
+// CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface> [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %Interface.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.Interface.impl.973 [concrete]
 // CHECK:STDOUT:     %Interface.impl_witness.loc12_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.binding.as_type.as.Interface.impl.973(constants.%T.651) [symbolic = %Interface.impl_witness.loc12_35.2 (constants.%Interface.impl_witness.779)]
 // CHECK:STDOUT:
@@ -358,6 +363,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc13_21 as %Interface.ref.loc13 {
+// CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface> [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %Interface.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.Interface.impl.5eb [concrete]
 // CHECK:STDOUT:     %Interface.impl_witness.loc13_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.binding.as_type.as.Interface.impl.5eb(constants.%T.612) [symbolic = %Interface.impl_witness.loc13_35.2 (constants.%Interface.impl_witness.8e2)]
 // CHECK:STDOUT:
@@ -374,6 +380,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc14_21 as %Interface.ref.loc14 {
+// CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface> [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %Interface.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.Interface.impl.edf [concrete]
 // CHECK:STDOUT:     %Interface.impl_witness.loc14_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.binding.as_type.as.Interface.impl.edf(constants.%T.9b2) [symbolic = %Interface.impl_witness.loc14_35.2 (constants.%Interface.impl_witness.84e)]
 // CHECK:STDOUT:
@@ -390,6 +397,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc15_21 as %Interface.ref.loc15 {
+// CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface> [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %Interface.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.Interface.impl.410 [concrete]
 // CHECK:STDOUT:     %Interface.impl_witness.loc15_35.1: <witness> = impl_witness %Interface.impl_witness_table, @T.binding.as_type.as.Interface.impl.410(constants.%T.0fc) [symbolic = %Interface.impl_witness.loc15_35.2 (constants.%Interface.impl_witness.8e9)]
 // CHECK:STDOUT:
@@ -398,15 +406,25 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface(constants.%Self.887) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K(constants.%Self.44d) {}
+// CHECK:STDOUT: specific @K(constants.%Self.44d) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @L(constants.%Self.cbc) {}
+// CHECK:STDOUT: specific @L(constants.%Self.cbc) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.binding.as_type.as.Interface.impl.973(constants.%T.651) {
 // CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.651
@@ -432,6 +450,22 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Interface.impl_witness.loc15_35.2 => constants.%Interface.impl_witness.8e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.9bb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.08d) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.842) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.f9d) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -445,6 +479,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @T.binding.as_type.as.J.impl.c4ee06.1.%J.impl_witness_table, @T.binding.as_type.as.J.impl.c4ee06.1(%T) [symbolic]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %T.binding.as_type, (%J.impl_witness) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -521,6 +556,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7_21 as %J.ref {
+// CHECK:STDOUT:     %J.type: type = facet_type <@J> [concrete = constants.%J.type]
 // CHECK:STDOUT:     %J.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.J.impl.c4ee06.1 [concrete]
 // CHECK:STDOUT:     %J.impl_witness.loc7_28.1: <witness> = impl_witness %J.impl_witness_table, @T.binding.as_type.as.J.impl.c4ee06.1(constants.%T) [symbolic = %J.impl_witness.loc7_28.2 (constants.%J.impl_witness)]
 // CHECK:STDOUT:
@@ -541,14 +577,22 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self.8a1) {}
+// CHECK:STDOUT: specific @J(constants.%Self.8a1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.binding.as_type.as.J.impl.c4ee06.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %J.impl_witness.loc7_28.2 => constants.%J.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%J.facet) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.binding.as_type.as.J.impl.c4ee06.2(constants.%T) {
@@ -563,10 +607,12 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.6465e0.1: <witness> = impl_witness @C.as.I.impl.e47215.1.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet.f94759.1: %I.type = facet_value %C, (%I.impl_witness.6465e0.1) [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.6465e0.2: <witness> = impl_witness @C.as.I.impl.e47215.2.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet.f94759.2: %I.type = facet_value %C, (%I.impl_witness.6465e0.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -613,6 +659,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl.e47215.1: %C.ref as %I.ref {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.e47215.1 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6465e0.1]
 // CHECK:STDOUT:
@@ -621,6 +668,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl.e47215.2: %tuple.elem0 as %I.ref {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.e47215.2 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6465e0.2]
 // CHECK:STDOUT:
@@ -630,7 +678,17 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet.f94759.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet.f94759.2) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redefinition_generic_regions.carbon
 // CHECK:STDOUT:
@@ -645,6 +703,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %T.as.I.impl.A.type: type = fn_type @T.as.I.impl.A, @T.as.I.impl.f7b5a3.1(%T) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.A: %T.as.I.impl.A.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.B.type: type = fn_type @T.as.I.impl.B, @T.as.I.impl.f7b5a3.2(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.B: %T.as.I.impl.B.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -710,6 +769,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %I.ref {
 // CHECK:STDOUT:     %T.as.I.impl.A.decl: @T.as.I.impl.f7b5a3.1.%T.as.I.impl.A.type (%T.as.I.impl.A.type) = fn_decl @T.as.I.impl.A [symbolic = @T.as.I.impl.f7b5a3.1.%T.as.I.impl.A (constants.%T.as.I.impl.A)] {} {}
+// CHECK:STDOUT:     %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @T.as.I.impl.f7b5a3.1 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc4_31.1: <witness> = impl_witness %I.impl_witness_table, @T.as.I.impl.f7b5a3.1(constants.%T) [symbolic = %I.impl_witness.loc4_31.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
@@ -808,7 +868,9 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl.f7b5a3.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
@@ -820,6 +882,10 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl.A(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl.f7b5a3.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.1 => constants.%T

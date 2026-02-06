@@ -34,7 +34,7 @@ interface J {
   let Member:! type;
 }
 
-// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
 // CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
 // CHECK:STDERR:                               ^~~~~~~~~
 // CHECK:STDERR:
@@ -192,6 +192,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc11_23.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {

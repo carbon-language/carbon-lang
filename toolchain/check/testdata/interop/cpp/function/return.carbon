@@ -168,6 +168,7 @@ fn Var() {
 // CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %foo2.call
 // CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %foo2.call, %.loc12_22.1
 // CHECK:STDOUT:   %IngestI32.call: init %empty_tuple.type = call %IngestI32.ref(%.loc12_22.2)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc11_22.3, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc11_22.3)
 // CHECK:STDOUT:   <elided>
@@ -223,6 +224,7 @@ fn Var() {
 // CHECK:STDOUT:     %nullptr_t.ref: type = name_ref nullptr_t, constants.%Cpp.nullptr_t [concrete = constants.%Cpp.nullptr_t]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = ref_binding c, %c.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
 // CHECK:STDOUT:   <elided>
@@ -386,6 +388,7 @@ fn Var() {
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %my_u32: ref %u32 = ref_binding my_u32, %my_u32.var
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %my_u32.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%my_u32.var)
 // CHECK:STDOUT:   return

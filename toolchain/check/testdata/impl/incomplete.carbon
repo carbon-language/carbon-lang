@@ -460,6 +460,7 @@ interface B {
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where .Self impls @Incomplete> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -500,6 +501,7 @@ interface B {
 // CHECK:STDOUT: interface @Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %.loc8_13 {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -515,7 +517,13 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- declaration_incomplete_where_rewrite.carbon
 // CHECK:STDOUT:
@@ -536,6 +544,7 @@ interface B {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %C, (%J.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -559,6 +568,7 @@ interface B {
 // CHECK:STDOUT:     %.Self.as_type.loc8_46: type = facet_access_type %.Self.ref.loc8_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc8_46: type = converted %.Self.ref.loc8_46, %.Self.as_type.loc8_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %T.ref.loc8: %J.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %J.type.2: type = facet_type <@J> [concrete = constants.%J.type]
 // CHECK:STDOUT:     %impl.elem0.loc8: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc8_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_52.2: type = converted %.loc8_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -580,6 +590,7 @@ interface B {
 // CHECK:STDOUT:     %.Self.as_type.loc10_46: type = facet_access_type %.Self.ref.loc10_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_46: type = converted %.Self.ref.loc10_46, %.Self.as_type.loc10_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %T.ref.loc10: %J.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %J.type.1: type = facet_type <@J> [concrete = constants.%J.type]
 // CHECK:STDOUT:     %impl.elem0.loc10: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_52.2: type = converted %.loc10_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -615,6 +626,7 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.J.impl: %C.ref.loc8 as %.loc8_13 {
+// CHECK:STDOUT:   %J.type.3: type = facet_type <@J> [concrete = constants.%J.type]
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -631,11 +643,21 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self) {}
+// CHECK:STDOUT: specific @J(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%.Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%.Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%J.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_declaration_lookup_into_incomplete.carbon
 // CHECK:STDOUT:
@@ -652,6 +674,7 @@ interface B {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -697,6 +720,7 @@ interface B {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -716,7 +740,13 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.F() -> <error>;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_unidentified_constraint.carbon
 // CHECK:STDOUT:
@@ -800,6 +830,7 @@ interface B {
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc16_18: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %X1.ref: %X.assoc_type = name_ref X1, @X1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %X.type: type = facet_type <@X> [concrete = constants.%X.type]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%X.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc16_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc16_25.2: type = converted %.loc16_25.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -831,6 +862,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .X1 = @X1.%assoc0
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = (%X1)
@@ -843,6 +875,9 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.550]
+// CHECK:STDOUT:   constraint_with_self_decl @Y [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Y.Self.binding.as_type.impls.Z.type.require.decl = require_decl @Y.Self.binding.as_type.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Z.ref
 // CHECK:STDOUT:   } {
@@ -852,6 +887,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -885,12 +921,16 @@ interface B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y(constants.%Self.550) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%Self.550) {
 // CHECK:STDOUT:   %Self => constants.%Self.550
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5cb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.e52) {}
+// CHECK:STDOUT: specific @X(constants.%Self.e52) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%Self.e52) {}
 // CHECK:STDOUT:
@@ -902,6 +942,10 @@ interface B {
 // CHECK:STDOUT: specific @X.Self.binding.as_type.impls.Y.type.require(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X(constants.%.Self.637) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%.Self.637) {}
@@ -933,6 +977,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:

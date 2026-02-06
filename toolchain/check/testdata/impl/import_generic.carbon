@@ -201,7 +201,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type.04e: type = facet_type <@J, @J(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.a60: %J.type.04e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.a60 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -248,8 +247,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.loc4_13.1)> [symbolic = %J.type (constants.%J.type.04e)]
 // CHECK:STDOUT:   %Self.loc4_23.2: @J.%J.type (%J.type.04e) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.a60)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_13.1)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @J.%J.type (%J.type.04e) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.a60)]
@@ -268,6 +265,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_23.1
+// CHECK:STDOUT:     .I = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     extend %.loc5
@@ -296,7 +295,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.fdb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
@@ -327,18 +328,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.ab5: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.025: %I.type.ab5 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.ab5 = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %J.type.885: type = generic_interface_type @J [concrete]
 // CHECK:STDOUT:   %J.generic: %J.type.885 = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.04e: type = facet_type <@J, @J(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.c25: %J.type.04e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.c25 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT:   %J.type.d6f: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %Self.9e4: %J.type.d6f = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.5b1: <witness> = complete_type_witness %I.type.ab5 [concrete]
+// CHECK:STDOUT:   %J.facet: %J.type.d6f = facet_value %C, (%J.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -346,13 +348,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.J: %J.type.885 = import_ref Main//basic_import_generic_interface, J, loaded [concrete = constants.%J.generic]
 // CHECK:STDOUT:   %Main.import_ref.3fa = import_ref Main//basic_import_generic_interface, loc3_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//basic_import_generic_interface, loc3_13, loaded [symbolic = @I.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.7bf = import_ref Main//basic_import_generic_interface, loc5_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2ff: type = import_ref Main//basic_import_generic_interface, loc5_18, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.358: type = import_ref Main//basic_import_generic_interface, loc5_27, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T.1 (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.99f327.2: @J.%J.type (%J.type.04e) = import_ref Main//basic_import_generic_interface, loc4_23, loaded [symbolic = @J.%Self (constants.%Self.c25)]
-// CHECK:STDOUT:   %Main.import_ref.e9be38.1 = import_ref Main//basic_import_generic_interface, loc4_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b55 = import_ref Main//basic_import_generic_interface, loc5_28, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.e9b = import_ref Main//basic_import_generic_interface, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//basic_import_generic_interface, loc4_13, loaded [symbolic = @J.%T.1 (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -369,14 +371,14 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %.loc5_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
+// CHECK:STDOUT:     %I.type.loc5: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: %J.type.885 = name_ref J, imports.%Main.J [concrete = constants.%J.generic]
 // CHECK:STDOUT:     %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
+// CHECK:STDOUT:     %J.type.loc7: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -397,18 +399,16 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @J(imports.%Main.import_ref.b3bc94.5: type) [from "basic_import_generic_interface.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.04e)]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.1)> [symbolic = %J.type (constants.%J.type.04e)]
 // CHECK:STDOUT:   %Self: @J.%J.type (%J.type.04e) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.c25)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.e9be38.1
-// CHECK:STDOUT:     extend imports.%Main.import_ref.b55
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.e9b
+// CHECK:STDOUT:     extend imports.%Main.import_ref.7bf
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -426,7 +426,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.type {
+// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.type.loc5 {
+// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -434,7 +435,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.type {
+// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.type.loc7 {
+// CHECK:STDOUT:   %J.type.1: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:
@@ -458,7 +460,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.c1b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
@@ -468,8 +472,16 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.025
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T, constants.%Self.c25) {}
@@ -483,13 +495,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.d6f
 // CHECK:STDOUT:   %Self => constants.%Self.9e4
-// CHECK:STDOUT:   %I.type => constants.%I.type.ab5
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.Self.binding.as_type.impls.I.type.require(constants.%empty_struct_type, constants.%C.type.facet) {
@@ -498,6 +508,20 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%C.type.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.ab5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%empty_struct_type, constants.%Self.c25) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %I.type => constants.%I.type.ab5
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%empty_struct_type, constants.%J.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %I.type => constants.%I.type.ab5
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic_import_generic_constraint.carbon
@@ -516,7 +540,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type.d68: type = facet_type <@J, @J(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.31c: %J.type.d68 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.31c [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -563,11 +586,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.loc4_14.1)> [symbolic = %J.type (constants.%J.type.d68)]
 // CHECK:STDOUT:   %Self.loc4_24.2: @J.%J.type (%J.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_24.2 (constants.%Self.31c)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_14.1)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc4_24.1: @J.%J.type (%J.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_24.2 (constants.%Self.31c)]
+// CHECK:STDOUT:     constraint_with_self_decl @J [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %J.Self.binding.as_type.impls.I.type.require.decl = require_decl @J.Self.binding.as_type.impls.I.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %I.type.loc5_27.1
 // CHECK:STDOUT:     } {
@@ -580,6 +604,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_24.1
+// CHECK:STDOUT:     .I = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     extend %.loc5
@@ -607,11 +633,15 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.fdb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.31c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.31c) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -635,7 +665,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.1ab: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.c1b: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.e1f642.1 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.d682d6.2: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
@@ -645,20 +674,21 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.e1f642.2: %J.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.025: %I.type.ab5 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.5b1: <witness> = complete_type_witness %I.type.ab5 [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type.ab5 = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//basic_import_generic_constraint, I, unloaded
 // CHECK:STDOUT:   %Main.J: %J.type.d08 = import_ref Main//basic_import_generic_constraint, J, loaded [concrete = constants.%empty_struct.d2a]
+// CHECK:STDOUT:   %Main.import_ref.7b1 = import_ref Main//basic_import_generic_constraint, loc5_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.3fa = import_ref Main//basic_import_generic_constraint, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//basic_import_generic_constraint, loc3_13, loaded [symbolic = @I.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//basic_import_generic_constraint, loc3_13, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//basic_import_generic_constraint, loc5_18, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.358: type = import_ref Main//basic_import_generic_constraint, loc5_27, loaded [symbolic = @J.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.2fc: @J.%J.type (%J.type.d682d6.1) = import_ref Main//basic_import_generic_constraint, loc4_24, loaded [symbolic = @J.%Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//basic_import_generic_constraint, loc4_24, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//basic_import_generic_constraint, loc5_28, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.2fc394.2: @J.%J.type (%J.type.d682d6.1) = import_ref Main//basic_import_generic_constraint, loc4_24, loaded [symbolic = @J.%Self (constants.%Self.e1f642.1)]
+// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//basic_import_generic_constraint, loc4_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//basic_import_generic_constraint, loc4_14, loaded [symbolic = @J.%T.1 (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -679,7 +709,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.2: type) [from "basic_import_generic_constraint.carbon"] {
+// CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.3: type) [from "basic_import_generic_constraint.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -695,19 +725,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @J(imports.%Main.import_ref.b3bc94.4: type) [from "basic_import_generic_constraint.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic constraint @J(imports.%Main.import_ref.b3bc94.5: type) [from "basic_import_generic_constraint.carbon"] {
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.d682d6.1)]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.1)> [symbolic = %J.type (constants.%J.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @J.%J.type (%J.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
-// CHECK:STDOUT:     extend imports.%Main.import_ref.b41
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     extend imports.%Main.import_ref.7b1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:     @J.Self.binding.as_type.impls.I.type.require {
@@ -716,7 +744,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @J.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.2fc: @J.%J.type (%J.type.d682d6.1)) [from "basic_import_generic_constraint.carbon"] {
+// CHECK:STDOUT: generic require @J.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.4: type, imports.%Main.import_ref.2fc394.2: @J.%J.type (%J.type.d682d6.1)) [from "basic_import_generic_constraint.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @J.Self.binding.as_type.impls.I.type.require.%J.type (%J.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f642.1)]
@@ -725,6 +753,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %J.type {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -741,7 +770,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -752,7 +781,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.c1b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.e1f642.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.e1f642.1) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -763,13 +796,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %J.type => constants.%J.type.d682d6.2
 // CHECK:STDOUT:   %Self => constants.%Self.e1f642.2
-// CHECK:STDOUT:   %I.type => constants.%I.type.ab5
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.Self.binding.as_type.impls.I.type.require(constants.%empty_struct_type, constants.%C.type.facet) {
@@ -788,6 +819,21 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.025
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%empty_struct_type, constants.%Self.e1f642.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %I.type => constants.%I.type.ab5
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -804,11 +850,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.fdb: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.9f5: <witness> = impl_witness @C.as.I.impl.431.%I.impl_witness_table, @C.as.I.impl.431(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.e36: <witness> = require_complete_type %I.type.1ab [symbolic]
+// CHECK:STDOUT:   %I.facet.b43: %I.type.1ab = facet_value %C, (%I.impl_witness.9f5) [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.e19: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.18a: <witness> = impl_witness @C.as.I.impl.815.%I.impl_witness_table, @C.as.I.impl.815(%T) [symbolic]
 // CHECK:STDOUT:   %Self.eff: %I.type.e19 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.ffd: <witness> = require_complete_type %I.type.e19 [symbolic]
+// CHECK:STDOUT:   %I.facet.064: %I.type.e19 = facet_value %C, (%I.impl_witness.18a) [symbolic]
 // CHECK:STDOUT:   %N.type.b47: type = generic_named_constaint_type @N [concrete]
 // CHECK:STDOUT:   %empty_struct: %N.type.b47 = struct_value () [concrete]
 // CHECK:STDOUT:   %N.type.d68: type = facet_type <@N, @N(%T)> [symbolic]
@@ -893,11 +941,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.loc14_14.1)> [symbolic = %N.type (constants.%N.type.d68)]
 // CHECK:STDOUT:   %Self.loc14_24.2: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc14_24.2 (constants.%Self.31c)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc14_14.1)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.e36)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc14_24.1: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc14_24.2 (constants.%Self.31c)]
+// CHECK:STDOUT:     constraint_with_self_decl @N [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %N.Self.binding.as_type.impls.I.type.require.decl = require_decl @N.Self.binding.as_type.impls.I.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %I.type.loc15_27.1
 // CHECK:STDOUT:     } {
@@ -910,6 +959,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc14_24.1
+// CHECK:STDOUT:     .I = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     extend %.loc15
@@ -938,6 +989,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc8_32.2 [symbolic = %require_complete (constants.%require_complete.e36)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref.loc8 as %I.type.loc8_32.1 {
+// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc8_32.2 (constants.%I.type.1ab)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.431 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc8_33.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.431(constants.%T) [symbolic = %I.impl_witness.loc8_33.2 (constants.%I.impl_witness.9f5)]
 // CHECK:STDOUT:
@@ -956,6 +1008,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc12_33.2 [symbolic = %require_complete (constants.%require_complete.ffd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc12_33.1 {
+// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr)> [symbolic = %I.type.loc12_33.2 (constants.%I.type.e19)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.815 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc12_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc12_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
@@ -980,12 +1033,18 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.loc5_23.2 => constants.%Self.fdb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.431(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %I.type.loc8_32.2 => constants.%I.type.1ab
 // CHECK:STDOUT:   %I.impl_witness.loc8_33.2 => constants.%I.impl_witness.9f5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%T, constants.%I.facet.b43) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%ptr) {
@@ -1003,9 +1062,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness.loc12_35.2 => constants.%I.impl_witness.18a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%ptr, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%ptr, constants.%I.facet.064) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%T) {
 // CHECK:STDOUT:   %T.loc14_14.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.31c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.31c) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1063,13 +1132,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.61cd7d.2: type = import_ref Main//import_generic, loc12_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ada: type = import_ref Main//import_generic, loc12_33, loaded [symbolic = @C.as.I.impl.8159c7.1.%I.type (constants.%I.type.e19)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic, loc12_14, loaded [symbolic = @C.as.I.impl.8159c7.1.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.a5e = import_ref Main//import_generic, loc15_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//import_generic, loc15_18, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.3582b1.2: type = import_ref Main//import_generic, loc15_27, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic, loc14_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic, loc14_24, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//import_generic, loc15_28, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.6: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.6: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic, loc14_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
+// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic, loc14_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.7: type = import_ref Main//import_generic, loc14_14, loaded [symbolic = @N.%T.1 (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1161,19 +1230,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.6: type) [from "import_generic.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.7: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
+// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.1)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.e36)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
-// CHECK:STDOUT:     extend imports.%Main.import_ref.b41
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     extend imports.%Main.import_ref.a5e
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:     @N.Self.binding.as_type.impls.I.type.require {
@@ -1182,7 +1249,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.5: type, imports.%Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1)) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.6: type, imports.%Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1)) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.Self.binding.as_type.impls.I.type.require.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f)]
@@ -1289,7 +1356,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.c1b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.431d5e.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1335,8 +1404,10 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.e1f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.e1f) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1360,7 +1431,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%ptr) {
-// CHECK:STDOUT:   %T => constants.%ptr
+// CHECK:STDOUT:   %T.1 => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%ptr, constants.%C.type.facet) {
@@ -1393,6 +1464,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.fdb: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.1ab = facet_value %C, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %N.type.b47: type = generic_named_constaint_type @N [concrete]
 // CHECK:STDOUT:   %empty_struct: %N.type.b47 = struct_value () [concrete]
 // CHECK:STDOUT:   %N.type.d68: type = facet_type <@N, @N(%T)> [symbolic]
@@ -1456,11 +1528,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.loc9_14.1)> [symbolic = %N.type (constants.%N.type.d68)]
 // CHECK:STDOUT:   %Self.loc9_24.2: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc9_24.2 (constants.%Self.31c)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc9_14.1)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc9_24.1: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc9_24.2 (constants.%Self.31c)]
+// CHECK:STDOUT:     constraint_with_self_decl @N [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %N.Self.binding.as_type.impls.I.type.require.decl = require_decl @N.Self.binding.as_type.impls.I.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %I.type.loc10_27.1
 // CHECK:STDOUT:     } {
@@ -1473,6 +1546,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc9_24.1
+// CHECK:STDOUT:     .I = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .I = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     extend %.loc10
@@ -1501,6 +1576,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc7_32.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc7_32.1 {
+// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc7_32.2 (constants.%I.type.1ab)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc7_34.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T) [symbolic = %I.impl_witness.loc7_34.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
@@ -1525,7 +1601,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.loc5_23.2 => constants.%Self.fdb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
@@ -1533,9 +1611,15 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness.loc7_34.2 => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%T, constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_14.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.31c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.31c) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1566,6 +1650,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness.18a: <witness> = impl_witness @C.as.I.impl.815.%I.impl_witness_table, @C.as.I.impl.815(%T) [symbolic]
 // CHECK:STDOUT:   %Self.dda: %I.type.e19 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.ffd: <witness> = require_complete_type %I.type.e19 [symbolic]
+// CHECK:STDOUT:   %I.facet.064: %I.type.e19 = facet_value %C, (%I.impl_witness.18a) [symbolic]
 // CHECK:STDOUT:   %N.type.b47: type = generic_named_constaint_type @N [concrete]
 // CHECK:STDOUT:   %empty_struct: %N.type.b47 = struct_value () [concrete]
 // CHECK:STDOUT:   %N.type.d682d6.1: type = facet_type <@N, @N(%T)> [symbolic]
@@ -1579,6 +1664,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.e1f642.2: %N.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.ea6: <witness> = require_complete_type %I.type.08a [symbolic]
 // CHECK:STDOUT:   %require_complete.533: <witness> = require_complete_type %N.type.d682d6.2 [symbolic]
+// CHECK:STDOUT:   %I.facet.3e9: %I.type.08a = facet_value %C, (%I.impl_witness.d57) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1594,13 +1680,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//import_generic_with_different_specific, loc7_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.3582b1.1: type = import_ref Main//import_generic_with_different_specific, loc7_32, loaded [symbolic = @C.as.I.impl.431.%I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//import_generic_with_different_specific, loc7_14, loaded [symbolic = @C.as.I.impl.431.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.a5e = import_ref Main//import_generic_with_different_specific, loc10_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//import_generic_with_different_specific, loc10_18, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.3582b1.2: type = import_ref Main//import_generic_with_different_specific, loc10_27, loaded [symbolic = @N.Self.binding.as_type.impls.I.type.require.%I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_with_different_specific, loc9_24, loaded [symbolic = @N.%Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic_with_different_specific, loc9_24, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b41 = import_ref Main//import_generic_with_different_specific, loc10_28, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_with_different_specific, loc9_24, loaded [symbolic = @N.%Self (constants.%Self.e1f642.1)]
+// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic_with_different_specific, loc9_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.6: type = import_ref Main//import_generic_with_different_specific, loc9_14, loaded [symbolic = @N.%T.1 (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1652,19 +1738,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.5: type) [from "import_generic_with_different_specific.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.6: type) [from "import_generic_with_different_specific.carbon"] {
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
+// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.1)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f642.1)]
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.e36)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
-// CHECK:STDOUT:     extend imports.%Main.import_ref.b41
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     extend imports.%Main.import_ref.a5e
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:     @N.Self.binding.as_type.impls.I.type.require {
@@ -1673,7 +1757,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.4: type, imports.%Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1)) [from "import_generic_with_different_specific.carbon"] {
+// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.b3bc94.5: type, imports.%Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1)) [from "import_generic_with_different_specific.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.Self.binding.as_type.impls.I.type.require.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f642.1)]
@@ -1705,6 +1789,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc5_33.2 [symbolic = %require_complete (constants.%require_complete.ffd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc5_33.1 {
+// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr.e8f)> [symbolic = %I.type.loc5_33.2 (constants.%I.type.e19)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.815 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc5_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc5_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
@@ -1722,8 +1807,10 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %N.type.loc6_34.2 [symbolic = %require_complete (constants.%require_complete.533)]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%ptr.loc6_33.2)> [symbolic = %I.type.2 (constants.%I.type.08a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %N.type.loc6_34.1 {
+// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr.125)> [symbolic = %I.type.2 (constants.%I.type.08a)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.c93 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc6_36.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.c93(constants.%T) [symbolic = %I.impl_witness.loc6_36.2 (constants.%I.impl_witness.d57)]
 // CHECK:STDOUT:
@@ -1747,7 +1834,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.c1b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {}
+// CHECK:STDOUT: specific @I(constants.%T, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.431(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1770,9 +1859,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness.loc5_35.2 => constants.%I.impl_witness.18a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: specific @I(constants.%ptr.e8f, constants.%Self.c1b) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%ptr.e8f, constants.%I.facet.064) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.e1f642.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%T, constants.%Self.e1f642.1) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1783,13 +1882,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%ptr.125) {
-// CHECK:STDOUT:   %T => constants.%ptr.125
+// CHECK:STDOUT:   %T.1 => constants.%ptr.125
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
 // CHECK:STDOUT:   %Self => constants.%Self.e1f642.2
-// CHECK:STDOUT:   %I.type => constants.%I.type.08a
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.ea6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.I.type.require(constants.%ptr.125, constants.%C.type.facet) {
@@ -1812,6 +1909,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.impl_witness.loc6_36.2 => constants.%I.impl_witness.d57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%ptr.125, constants.%Self.e1f642.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%ptr.125
+// CHECK:STDOUT:   %I.type => constants.%I.type.08a
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.ea6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%ptr.125, constants.%I.facet.3e9) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1831,7 +1939,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %N.type.d68: type = facet_type <@N, @N(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.31c: %N.type.d68 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.31c [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type.04e [symbolic]
 // CHECK:STDOUT:   %J.impl_witness.861: <witness> = impl_witness @D.as.J.impl.b25.%J.impl_witness_table, @D.as.J.impl.b25(%T) [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %J.type.80f: type = facet_type <@J, @J(%ptr)> [symbolic]
@@ -1905,11 +2012,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.loc7_14.1)> [symbolic = %N.type (constants.%N.type.d68)]
 // CHECK:STDOUT:   %Self.loc7_24.2: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_24.2 (constants.%Self.31c)]
-// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T.loc7_14.1)> [symbolic = %J.type (constants.%J.type.04e)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc7_24.1: @N.%N.type (%N.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_24.2 (constants.%Self.31c)]
+// CHECK:STDOUT:     constraint_with_self_decl @N [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %N.Self.binding.as_type.impls.J.type.require.decl = require_decl @N.Self.binding.as_type.impls.J.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %J.type.loc8_27.1
 // CHECK:STDOUT:     } {
@@ -1922,6 +2030,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_24.1
+// CHECK:STDOUT:     .J = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .J = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     extend %.loc8
@@ -1974,11 +2084,15 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.loc5_23.2 => constants.%Self.a60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.a60) {}
+// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.a60) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.31c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.J.type.require(constants.%T, constants.%Self.31c) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -2028,7 +2142,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %N.type.d682d6.1: type = facet_type <@N, @N(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.e1f: %N.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.e1f [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type.04e [symbolic]
 // CHECK:STDOUT:   %D.type.facet: %type = facet_value %D, () [concrete]
 // CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr)> [symbolic]
 // CHECK:STDOUT: }
@@ -2049,13 +2162,13 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.4ae308.2: type = import_ref Main//import_generic_decl, loc21_24, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.739: type = import_ref Main//import_generic_decl, loc21_33, loaded [symbolic = @D.as.J.impl.f050b9.1.%J.type (constants.%J.type.80f)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//import_generic_decl, loc21_14, loaded [symbolic = @D.as.J.impl.f050b9.1.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.9d6 = import_ref Main//import_generic_decl, loc8_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.213: type = import_ref Main//import_generic_decl, loc8_18, loaded [symbolic = @N.Self.binding.as_type.impls.J.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.f2a55c.2: type = import_ref Main//import_generic_decl, loc8_27, loaded [symbolic = @N.Self.binding.as_type.impls.J.type.require.%J.type (constants.%J.type.04e)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.5: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_decl, loc7_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %Main.import_ref.830896.1 = import_ref Main//import_generic_decl, loc7_24, unloaded
-// CHECK:STDOUT:   %Main.import_ref.105 = import_ref Main//import_generic_decl, loc8_28, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.6: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.6: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1) = import_ref Main//import_generic_decl, loc7_24, loaded [symbolic = @N.%Self (constants.%Self.e1f)]
+// CHECK:STDOUT:   %Main.import_ref.830 = import_ref Main//import_generic_decl, loc7_24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.7: type = import_ref Main//import_generic_decl, loc7_14, loaded [symbolic = @N.%T.1 (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2147,19 +2260,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.6: type) [from "fail_import_generic_decl.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic constraint @N(imports.%Main.import_ref.b3bc94.7: type) [from "fail_import_generic_decl.carbon"] {
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
+// CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T.1)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f)]
-// CHECK:STDOUT:   %J.type: type = facet_type <@J, @J(%T)> [symbolic = %J.type (constants.%J.type.04e)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830896.1
-// CHECK:STDOUT:     extend imports.%Main.import_ref.105
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.830
+// CHECK:STDOUT:     extend imports.%Main.import_ref.9d6
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:     @N.Self.binding.as_type.impls.J.type.require {
@@ -2168,7 +2279,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.J.type.require(imports.%Main.import_ref.b3bc94.5: type, imports.%Main.import_ref.2fc: @N.%N.type (%N.type.d682d6.1)) [from "fail_import_generic_decl.carbon"] {
+// CHECK:STDOUT: generic require @N.Self.binding.as_type.impls.J.type.require(imports.%Main.import_ref.b3bc94.6: type, imports.%Main.import_ref.2fc394.2: @N.%N.type (%N.type.d682d6.1)) [from "fail_import_generic_decl.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N, @N(%T)> [symbolic = %N.type (constants.%N.type.d682d6.1)]
 // CHECK:STDOUT:   %Self: @N.Self.binding.as_type.impls.J.type.require.%N.type (%N.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.e1f)]
@@ -2273,7 +2384,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.c25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.c25) {}
+// CHECK:STDOUT: specific @J(constants.%T, constants.%Self.c25) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.J.impl.b25a4e.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -2315,8 +2428,10 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T, constants.%Self.e1f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.J.type.require(constants.%T, constants.%Self.e1f) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -2340,7 +2455,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%ptr) {
-// CHECK:STDOUT:   %T => constants.%ptr
+// CHECK:STDOUT:   %T.1 => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.Self.binding.as_type.impls.J.type.require(constants.%ptr, constants.%D.type.facet) {

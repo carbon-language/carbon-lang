@@ -1165,10 +1165,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_27.3: ref %C = temporary %.loc18_27.1, %.loc18_27.2
 // CHECK:STDOUT:   %.loc18_27.4: %C = acquire_value %.loc18_27.3
 // CHECK:STDOUT:   %complement: %C = value_binding complement, %.loc18_27.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc18: <bound method> = bound_method %.loc18_27.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc18: init %empty_tuple.type = call %C.cpp_destructor.bound.loc18(%.loc18_27.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc15: init %empty_tuple.type = call %C.cpp_destructor.bound.loc15(%.loc15_22.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c.var)
 // CHECK:STDOUT:   <elided>
@@ -1210,7 +1213,6 @@ fn F() {
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk.type: type = fn_type @operator_LessLess__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk: %operator_LessLess__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
@@ -1218,7 +1220,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
-// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.b37: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs.Convert.type.b37, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.fa7: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -1654,7 +1657,8 @@ fn F() {
 // CHECK:STDOUT:   %int_3.loc22: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc22_30.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc22_27.1: %C = acquire_value %c1.ref.loc22
-// CHECK:STDOUT:   %impl.elem0.loc22: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc22: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc22_33.1: <bound method> = bound_method %int_3.loc22, %impl.elem0.loc22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_33.2: <bound method> = bound_method %int_3.loc22, %specific_fn.loc22 [concrete = constants.%bound_method.fa7]
@@ -1680,7 +1684,8 @@ fn F() {
 // CHECK:STDOUT:   %int_5.loc23: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc23_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc23_28.1: %C = acquire_value %c1.ref.loc23
-// CHECK:STDOUT:   %impl.elem0.loc23: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc23: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc23_34.1: <bound method> = bound_method %int_5.loc23, %impl.elem0.loc23 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.005]
 // CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_34.2: <bound method> = bound_method %int_5.loc23, %specific_fn.loc23 [concrete = constants.%bound_method.e9d]
@@ -1749,7 +1754,8 @@ fn F() {
 // CHECK:STDOUT:   %operator_CaretEqual__carbon_thunk.call: ref %C = call imports.%operator_CaretEqual__carbon_thunk.decl(%c1.ref.loc35, %addr.loc35)
 // CHECK:STDOUT:   %c1.ref.loc36: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_3.loc36: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc36: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc36: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc36_10.1: <bound method> = bound_method %int_3.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc36_10.2: <bound method> = bound_method %int_3.loc36, %specific_fn.loc36 [concrete = constants.%bound_method.fa7]
@@ -1759,7 +1765,8 @@ fn F() {
 // CHECK:STDOUT:   %cpp_operator.call.loc36: ref %C = call imports.%cpp_operator.decl.4206c9.19(%c1.ref.loc36, %.loc36_10.2)
 // CHECK:STDOUT:   %c1.ref.loc37: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_5.loc37: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:   %impl.elem0.loc37: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc37: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc37_10.1: <bound method> = bound_method %int_5.loc37, %impl.elem0.loc37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.005]
 // CHECK:STDOUT:   %specific_fn.loc37: <specific function> = specific_function %impl.elem0.loc37, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc37_10.2: <bound method> = bound_method %int_5.loc37, %specific_fn.loc37 [concrete = constants.%bound_method.e9d]
@@ -1911,7 +1918,8 @@ fn F() {
 // CHECK:STDOUT:   %c1.ref.loc48: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %C.cpp_operator.bound: <bound method> = bound_method %c1.ref.loc48, imports.%C.cpp_operator.decl
-// CHECK:STDOUT:   %impl.elem0.loc48: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc48: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc48_23.1: <bound method> = bound_method %int_42, %impl.elem0.loc48 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c83]
 // CHECK:STDOUT:   %specific_fn.loc48: <specific function> = specific_function %impl.elem0.loc48, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc48_23.2: <bound method> = bound_method %int_42, %specific_fn.loc48 [concrete = constants.%bound_method.cb9]
@@ -1926,40 +1934,58 @@ fn F() {
 // CHECK:STDOUT:   %.loc48_25.1: %i32 = value_of_initializer %C.cpp_operator.call
 // CHECK:STDOUT:   %.loc48_25.2: %i32 = converted %C.cpp_operator.call, %.loc48_25.1
 // CHECK:STDOUT:   %index: %i32 = value_binding index, %.loc48_25.2
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc45: <bound method> = bound_method %.loc45_37.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc45: init %empty_tuple.type = call %DestroyOp.bound.loc45(%.loc45_37.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc44: <bound method> = bound_method %.loc44_40.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc44: init %empty_tuple.type = call %DestroyOp.bound.loc44(%.loc44_40.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc43: <bound method> = bound_method %.loc43_28.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc43: init %empty_tuple.type = call %DestroyOp.bound.loc43(%.loc43_28.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc42: <bound method> = bound_method %.loc42_31.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc42: init %empty_tuple.type = call %DestroyOp.bound.loc42(%.loc42_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc41: <bound method> = bound_method %.loc41_28.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc41: init %empty_tuple.type = call %DestroyOp.bound.loc41(%.loc41_28.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc40: <bound method> = bound_method %.loc40_24.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc40: init %empty_tuple.type = call %DestroyOp.bound.loc40(%.loc40_24.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc23: <bound method> = bound_method %.loc23_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc23: init %empty_tuple.type = call %C.cpp_destructor.bound.loc23(%.loc23_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_30.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc22: init %empty_tuple.type = call %C.cpp_destructor.bound.loc22(%.loc22_30.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc21: <bound method> = bound_method %.loc21_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc21: init %empty_tuple.type = call %C.cpp_destructor.bound.loc21(%.loc21_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc20: <bound method> = bound_method %.loc20_30.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc20: init %empty_tuple.type = call %C.cpp_destructor.bound.loc20(%.loc20_30.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc19: init %empty_tuple.type = call %C.cpp_destructor.bound.loc19(%.loc19_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_26.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc16: init %empty_tuple.type = call %C.cpp_destructor.bound.loc16(%.loc16_26.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_28.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc15: init %empty_tuple.type = call %C.cpp_destructor.bound.loc15(%.loc15_28.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc14: <bound method> = bound_method %.loc14_34.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc14: init %empty_tuple.type = call %C.cpp_destructor.bound.loc14(%.loc14_34.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc13: init %empty_tuple.type = call %C.cpp_destructor.bound.loc13(%.loc13_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_28.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc12: init %empty_tuple.type = call %C.cpp_destructor.bound.loc12(%.loc12_28.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%c2.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c1.var)
 // CHECK:STDOUT:   <elided>
@@ -2101,14 +2127,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_22.3: ref %C = temporary %.loc12_22.1, %.loc12_22.2
 // CHECK:STDOUT:   %.loc12_22.4: %C = acquire_value %.loc12_22.3
 // CHECK:STDOUT:   %c5: %C = value_binding c5, %.loc12_22.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc12: init %empty_tuple.type = call %C.cpp_destructor.bound.loc12(%.loc12_22.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc11: init %empty_tuple.type = call %C.cpp_destructor.bound.loc11(%.loc11_22.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_22.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_27.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_27.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_27.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_27.3)
 // CHECK:STDOUT:   <elided>
@@ -2271,12 +2302,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc36_37.3: ref bool = temporary %.loc36_37.1, %.loc36_37.2
 // CHECK:STDOUT:   %.loc36_37.4: bool = acquire_value %.loc36_37.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc36_37.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc36: <bound method> = bound_method %.loc36_37.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc36: init %empty_tuple.type = call %DestroyOp.bound.loc36(%.loc36_37.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc19: <bound method> = bound_method %.loc19_31.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc19: init %empty_tuple.type = call %DestroyOp.bound.loc19(%.loc19_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc16: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc16: init %empty_tuple.type = call %C.cpp_destructor.bound.loc16(%c2.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc15: init %empty_tuple.type = call %C.cpp_destructor.bound.loc15(%c1.var)
 // CHECK:STDOUT:   <elided>
@@ -2400,10 +2435,13 @@ fn F() {
 // CHECK:STDOUT:     %.loc23_18.3: type = converted %Bool.call.loc23, %.loc23_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc16_24.3, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc16_24.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc13: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc13: init %empty_tuple.type = call %C.cpp_destructor.bound.loc13(%c2.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc12: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc12: init %empty_tuple.type = call %C.cpp_destructor.bound.loc12(%c1.var)
 // CHECK:STDOUT:   <elided>
@@ -2514,10 +2552,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_24.3: ref %C = temporary %.loc10_24.1, %.loc10_24.2
 // CHECK:STDOUT:   %.loc10_24.4: %C = acquire_value %.loc10_24.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_24.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_24.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_24.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
@@ -2675,12 +2716,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_26.3: ref %C2 = temporary %.loc11_26.1, %.loc11_26.2
 // CHECK:STDOUT:   %.loc11_26.4: %C2 = acquire_value %.loc11_26.3
 // CHECK:STDOUT:   %c4: %C2 = value_binding c4, %.loc11_26.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C2.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_26.3, constants.%C2.cpp_destructor
 // CHECK:STDOUT:   %C2.cpp_destructor.call.loc11: init %empty_tuple.type = call %C2.cpp_destructor.bound.loc11(%.loc11_26.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C2.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_26.3, constants.%C2.cpp_destructor
 // CHECK:STDOUT:   %C2.cpp_destructor.call.loc10: init %empty_tuple.type = call %C2.cpp_destructor.bound.loc10(%.loc10_26.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C2.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_36.3, constants.%C2.cpp_destructor
 // CHECK:STDOUT:   %C2.cpp_destructor.call.loc9: init %empty_tuple.type = call %C2.cpp_destructor.bound.loc9(%.loc9_36.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C1.cpp_destructor.bound: <bound method> = bound_method %.loc8_36.3, constants.%C1.cpp_destructor
 // CHECK:STDOUT:   %C1.cpp_destructor.call: init %empty_tuple.type = call %C1.cpp_destructor.bound(%.loc8_36.3)
 // CHECK:STDOUT:   <elided>
@@ -2774,8 +2819,10 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = value_binding c3, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
@@ -2882,10 +2929,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_24.3: ref %C = temporary %.loc10_24.1, %.loc10_24.2
 // CHECK:STDOUT:   %.loc10_24.4: %C = acquire_value %.loc10_24.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_24.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_24.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_24.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_31.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
@@ -3001,10 +3051,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_26.3: ref %C = temporary %.loc10_26.1, %.loc10_26.2
 // CHECK:STDOUT:   %.loc10_26.4: %C = acquire_value %.loc10_26.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_26.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_26.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_26.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_35.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_35.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_35.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_35.3)
 // CHECK:STDOUT:   <elided>
@@ -3135,10 +3188,13 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: ref %C = ref_binding c3, %c3.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %c3.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%c3.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%c2.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c1.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c1.var)
 // CHECK:STDOUT:   <elided>
@@ -3226,6 +3282,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
 // CHECK:STDOUT:   %.loc10_22.4: %C = acquire_value %.loc10_22.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_22.4
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_22.3)
 // CHECK:STDOUT:   <elided>

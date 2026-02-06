@@ -693,6 +693,7 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc10: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %S = ref_binding x, %x.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -796,6 +797,7 @@ fn F() {
 // CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -1007,6 +1009,7 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %S to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %S = temporary %.loc8_11.1, %.loc8_11.2
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>

@@ -212,6 +212,7 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_19: type = ptr_type %.loc17_10 [concrete = constants.%ptr.314]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.314 = value_binding b, %.loc17_27.2
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
 // CHECK:STDOUT:   <elided>
@@ -280,10 +281,13 @@ fn Use() {
 // CHECK:STDOUT:   assign %k.var, <error>
 // CHECK:STDOUT:   %X.ref.loc34_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %k: ref %X = ref_binding k, %k.var
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc34: <bound method> = bound_method %k.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%k.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc26: <bound method> = bound_method %j.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc26: init %empty_tuple.type = call %DestroyOp.bound.loc26(%j.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc18: <bound method> = bound_method %i.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc18: init %empty_tuple.type = call %DestroyOp.bound.loc18(%i.var)
 // CHECK:STDOUT:   <elided>

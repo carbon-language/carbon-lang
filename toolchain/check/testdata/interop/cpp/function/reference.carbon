@@ -367,6 +367,7 @@ fn F() {
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %.loc9: %S = ref_tag %s.ref
 // CHECK:STDOUT:   %TakesLValue.call: init %empty_tuple.type = call imports.%TakesLValue.decl(%.loc9)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -467,10 +468,13 @@ fn F() {
 // CHECK:STDOUT:   %const.loc50: type = const_type %S.ref.loc50 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc50_21.1: ref %const = as_compatible %u.ref
 // CHECK:STDOUT:   %.loc50_21.2: ref %const = converted %u.ref, %.loc50_21.1
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc41: <bound method> = bound_method %u.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc41: init %empty_tuple.type = call %S.cpp_destructor.bound.loc41(%u.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc8: init %empty_tuple.type = call %S.cpp_destructor.bound.loc8(%v.var)
 // CHECK:STDOUT:   <elided>
@@ -527,6 +531,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_22.3: ref %S = value_as_ref %.loc8_22.2
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_22.3
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_20.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_20.4)
 // CHECK:STDOUT:   <elided>
@@ -589,6 +594,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13: ref %S = value_as_ref %s.ref
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc13
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc12_19.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc12_19.4)
 // CHECK:STDOUT:   <elided>
@@ -670,10 +676,13 @@ fn F() {
 // CHECK:STDOUT:   %const: type = const_type %S.ref.loc38_45 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc38_33.1: ref %const = as_compatible %.loc38_23
 // CHECK:STDOUT:   %.loc38_33.2: ref %const = converted %.loc38_23, %.loc38_33.1
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc38: <bound method> = bound_method %.loc38_21.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc38: init %empty_tuple.type = call %S.cpp_destructor.bound.loc38(%.loc38_21.4)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc8: init %empty_tuple.type = call %S.cpp_destructor.bound.loc8(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -759,6 +768,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_25.1: %ptr.ff5 = as_compatible %addr.loc11
 // CHECK:STDOUT:   %.loc11_25.2: %ptr.ff5 = converted %addr.loc11, %.loc11_25.1
 // CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc11_25.2)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -840,6 +850,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_40.1: %ptr.ff5 = as_compatible %addr.loc11
 // CHECK:STDOUT:   %.loc11_40.2: %ptr.ff5 = converted %addr.loc11, %.loc11_40.1
 // CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc11_40.2)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_19.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_19.4)
 // CHECK:STDOUT:   <elided>

@@ -68,6 +68,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc23: type = converted %int_1.loc23_10, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -54,25 +54,25 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness @C.as.Inc.impl.%Inc.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Inc.Op.type: type = fn_type @Inc.Op [concrete]
 // CHECK:STDOUT:   %pattern_type.476: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
+// CHECK:STDOUT:   %Inc.Op.type.700: type = fn_type @Inc.Op, @Inc(%Inc.facet) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.fc6: type = generic_interface_type @AddAssignWith [concrete]
 // CHECK:STDOUT:   %AddAssignWith.generic: %AddAssignWith.type.fc6 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.16b: type = facet_type <@AddAssignWith, @AddAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness @C.as.AddAssignWith.impl.%AddAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %AddAssignWith.Op.type.98e: type = fn_type @AddAssignWith.Op, @AddAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.type: type = fn_type @C.as.AddAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op: %C.as.AddAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.16b = facet_value %C, (%AddAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %AddAssignWith.Op.type.2b1: type = fn_type @AddAssignWith.Op, @AddAssignWith(%C, %AddAssignWith.facet) [concrete]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.176: type = fn_type_with_self_type %Inc.Op.type, %Inc.facet [concrete]
+// CHECK:STDOUT:   %.38a: type = fn_type_with_self_type %Inc.Op.type.700, %Inc.facet [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.a9d: type = fn_type_with_self_type %AddAssignWith.Op.type.98e, %AddAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.168: type = fn_type_with_self_type %AddAssignWith.Op.type.2b1, %AddAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,7 +105,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AddAssignWith.ref: %AddAssignWith.type.fc6 = name_ref AddAssignWith, imports.%Core.AddAssignWith [concrete = constants.%AddAssignWith.generic]
 // CHECK:STDOUT:     %C.ref.loc22_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %AddAssignWith.type: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.16b]
+// CHECK:STDOUT:     %AddAssignWith.type.loc22: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.16b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [concrete = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
@@ -139,6 +139,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (%C.as.Inc.impl.Op.decl), @C.as.Inc.impl [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
 // CHECK:STDOUT:
@@ -148,7 +149,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   witness = %Inc.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.AddAssignWith.impl: %C.ref.loc22_6 as %AddAssignWith.type {
+// CHECK:STDOUT: impl @C.as.AddAssignWith.impl: %C.ref.loc22_6 as %AddAssignWith.type.loc22 {
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.decl: %C.as.AddAssignWith.impl.Op.type = fn_decl @C.as.AddAssignWith.impl.Op [concrete = constants.%C.as.AddAssignWith.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.476 = ref_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = ref_param_pattern %self.patt, call_param0 [concrete]
@@ -162,6 +163,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %C.ref.loc23_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %other: %C = value_binding other, %other.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AddAssignWith.type.1: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.16b]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%C.as.AddAssignWith.impl.Op.decl), @C.as.AddAssignWith.impl [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness %AddAssignWith.impl_witness_table [concrete = constants.%AddAssignWith.impl_witness]
 // CHECK:STDOUT:
@@ -186,7 +188,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.176 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
+// CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete = constants.%Inc.type]
+// CHECK:STDOUT:   %impl.elem0: %.38a = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>)
 // CHECK:STDOUT:   return
@@ -196,7 +199,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.a9d = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
+// CHECK:STDOUT:   %AddAssignWith.type: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.16b]
+// CHECK:STDOUT:   %impl.elem0: %.168 = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
 // CHECK:STDOUT:   return

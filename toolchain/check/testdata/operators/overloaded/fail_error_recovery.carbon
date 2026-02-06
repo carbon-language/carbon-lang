@@ -39,6 +39,7 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %AddWith.type.e05: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.e05 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.type.4c0: type = facet_type <@AddWith, @AddWith(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -85,6 +86,7 @@ fn G(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(Core.IntLiteral)> [concrete = constants.%AddWith.type.4c0]
 // CHECK:STDOUT:   %impl.elem1: <error> = impl_witness_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

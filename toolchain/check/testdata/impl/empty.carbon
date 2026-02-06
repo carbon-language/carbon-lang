@@ -28,6 +28,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness @i32.as.Empty.impl.%Empty.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Empty.facet: %Empty.type = facet_value %i32, (%Empty.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,6 +66,7 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.Empty.impl: %i32 as %Empty.ref {
+// CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   %Empty.impl_witness_table = impl_witness_table (), @i32.as.Empty.impl [concrete]
 // CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness %Empty.impl_witness_table [concrete = constants.%Empty.impl_witness]
 // CHECK:STDOUT:
@@ -72,5 +74,11 @@ impl i32 as Empty {
 // CHECK:STDOUT:   witness = %Empty.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Self) {}
+// CHECK:STDOUT: specific @Empty(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Empty.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

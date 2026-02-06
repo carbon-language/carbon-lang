@@ -310,6 +310,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6)
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc28_25.4, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc28_25.4)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param

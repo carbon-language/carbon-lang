@@ -258,7 +258,9 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Def(constants.%Self) {}
+// CHECK:STDOUT: specific @Def(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
 // CHECK:STDOUT:
@@ -371,7 +373,9 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {}
+// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward_with_def.carbon
 // CHECK:STDOUT:

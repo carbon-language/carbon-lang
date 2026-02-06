@@ -118,6 +118,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc16_28.1: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_28.2 (constants.%Self.31c17c.1)]
+// CHECK:STDOUT:     constraint_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc16_28.1
@@ -213,6 +214,8 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %T.loc16_18.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%T.67d, constants.%Self.31c17c.1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d, constants.%U.e1f642.1) {
 // CHECK:STDOUT:   %T.loc18_6.1 => constants.%T.67d
 // CHECK:STDOUT:   %Empty.type.loc18_27.1 => constants.%Empty.type.d682d6.1
@@ -261,6 +264,10 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %U.loc18_16.1 => constants.%Empty.facet.4f8
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9a587c.2
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%Self.31c17c.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

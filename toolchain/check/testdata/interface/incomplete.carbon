@@ -134,6 +134,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT:
@@ -182,6 +183,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc16_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:     %impl.elem0: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -204,6 +206,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT:
@@ -221,9 +224,15 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
@@ -288,6 +297,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT:
@@ -314,12 +324,15 @@ interface A(T:! type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%U.binding.as_type (%U.binding.as_type) = name_ref a, %a
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:     %impl.elem0.loc17_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc17_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
@@ -327,6 +340,10 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %U.loc9_6.1 => constants.%U
 // CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%U) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%U) {}
@@ -354,6 +371,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
@@ -394,6 +412,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
@@ -465,6 +484,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
+// CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
