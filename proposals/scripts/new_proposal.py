@@ -157,19 +157,19 @@ def main() -> None:
 
     # Verify tools are available.
     gh_bin = _find_tool("gh")
-    if Path('.jj').is_dir():
-      jj_bin = _find_tool("jj")
-      git_bin = None
+    if Path(".jj").is_dir():
+        jj_bin = _find_tool("jj")
+        git_bin = None
     else:
-      git_bin = _find_tool("git")
-      jj_bin = None
+        git_bin = _find_tool("git")
+        jj_bin = None
     precommit_bin = _find_tool("pre-commit")
 
     # Verify there are no uncommitted changes (jj has no equivalent).
     if git_bin:
-      p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
-      if p.returncode != 0:
-          exit("ERROR: There are uncommitted changes in your git repo.")
+        p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
+        if p.returncode != 0:
+            exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Prompt before proceeding.
     response = "?"
@@ -180,31 +180,42 @@ def main() -> None:
 
     # Create a proposal branch.
     if git_bin:
-      _run(
-          [git_bin, "switch", "--create", branch, parsed_args.branch_start_point]
-      )
-      _run([git_bin, "push", "-u", parsed_args.remote, branch])
+        _run(
+            [
+                git_bin,
+                "switch",
+                "--create",
+                branch,
+                parsed_args.branch_start_point,
+            ]
+        )
+        _run([git_bin, "push", "-u", parsed_args.remote, branch])
     else:
-      _run([jj_bin, "new", parsed_args.branch_start_point])
-      _run([jj_bin, "bookmark", "create", branch])
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "new", parsed_args.branch_start_point])
+        _run([jj_bin, "bookmark", "create", branch])
 
     # Copy template.md to a temp file.
     template_path = "proposals/scripts/template.md"
     temp_path = "proposals/new-proposal.tmp.md"
     shutil.copyfile(template_path, temp_path)
+    initial_desc = "Creating new proposal: %s" % title
     if git_bin:
-      _run([git_bin, "add", temp_path])
-      _run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])
+        _run([git_bin, "add", temp_path])
+        _run([git_bin, "commit", "-m", initial_desc])
     else:
-      _run([jj_bin, "describe", "-m", "Creating new proposal: %s" % title])
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "describe", "-m", initial_desc])
 
     # Create a PR with WIP+proposal labels.
     if git_bin:
-      _run([git_bin, "push"])
-      user = _run([git_bin, "config", "get", "user.name"], get_stdout=True)
+        _run([git_bin, "push"])
+        user = _run([git_bin, "config", "get", "user.name"], get_stdout=True)
     else:
-      _run([jj_bin, "git", "push"])
-      user = _run([jj_bin, "config", "get", "user.name"], get_stdout=True)
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "git", "push"])
+        user = _run([jj_bin, "config", "get", "user.name"], get_stdout=True)
+    assert user  # For mypy.
     user = user.strip()
     pr_num = _run_pr_create(
         [
@@ -234,23 +245,19 @@ def main() -> None:
     with open(final_path, "w") as final_file:
         final_file.write(content)
 
+    final_desc = "Filling out template with PR %d" % pr_num
     if git_bin:
         # Run pre-commit.
         _run([git_bin, "add", temp_path, final_path])
         _run([precommit_bin, "run"], check=False)  # Needs a ToC update.
-        _run(
-            [
-                git_bin,
-                "commit",
-                "--amend",
-                "-m",
-                "Filling out template with PR %d" % pr_num,
-            ]
-        )
+        _run([git_bin, "commit", "--amend", "-m", final_desc])
 
         # Push the PR update.
         _run([git_bin, "push", "--force-with-lease"])
     else:
+        assert jj_bin  # For mypy.
+        # TODO: Figure out an ideal way to run pre-commit, to mirror git.
+        _run([jj_bin, "describe", "-m", final_desc])
         # Push the PR update.
         _run([jj_bin, "git", "push"])
 
@@ -258,6 +265,7 @@ def main() -> None:
         "\nCreated PR %d for %s. Make changes to:\n  %s"
         % (pr_num, title, final_path)
     )
+
 
 if __name__ == "__main__":
     main()

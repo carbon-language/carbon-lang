@@ -35,7 +35,10 @@ class TestNewProposal(unittest.TestCase):
         self.assertEqual(new_proposal._calculate_branch(parsed_args), "wiz")
 
     def test_fill_template(self):
+        # Switch directories for the test.
         parsed_args = new_proposal._parse_args(["foo"])
+        os.chdir(parsed_args.repo_root)
+
         content = new_proposal._fill_template(
             "proposals/scripts/template.md",
             "TITLE",
