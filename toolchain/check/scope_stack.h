@@ -144,8 +144,8 @@ class ScopeStack {
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
   // list of non-lexical scopes in which lookup should also be performed,
-  // ordered from outermost to innermost.
-  // If `use_loc_id` is specified, the name is marked as used at that location.
+  // ordered from outermost to innermost. If `use_loc_id` is specified, the
+  // name is marked as used at that location.
   auto LookupInLexicalScopes(SemIR::NameId name_id, SemIR::LocId use_loc_id,
                              bool is_reachable)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;

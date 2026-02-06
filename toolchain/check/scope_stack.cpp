@@ -181,7 +181,8 @@ auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
   }
 
   // Determine if we should set use_loc_id.
-  if (result.inst_id.index >= 0) {
+  if (result.inst_id.has_value() &&
+      result.inst_id != SemIR::InstId::InitTombstone) {
     if (auto binding =
             context_->insts().TryGetAs<SemIR::AnyBinding>(result.inst_id)) {
       const auto& entity_name =
