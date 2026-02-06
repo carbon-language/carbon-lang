@@ -77,11 +77,11 @@ There are three primary expression categories in Carbon:
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
--   [_Initializing expressions_](#initializing-expressions) require storage to
-    be provided implicitly when evaluating the expression. The expression then
-    initializes an object in that storage. These are used to model function
-    returns, which can construct the returned value directly in the caller's
-    storage.
+-   [_Initializing expressions_](#initializing-expressions) require a result
+    location to be provided implicitly when evaluating the expression. The
+    expression then initializes an object in that location. These are used to
+    model function returns, which can construct the returned value directly in
+    the caller's storage.
 
 Expressions in one category can be implicitly converted to any other primary
 category when needed. The primitive conversion steps used are:
@@ -191,6 +191,14 @@ requires the matched expression to be materialized); the `var` pattern takes
 ownership of the newly-allocated temporary storage it refers to, which extends
 its lifetime to the end of the enclosing scope. The subpattern is then matched
 against a _durable_ entire reference expression to the object in that storage.
+
+> **Open question:** This implies that `var field: T = F().field;` doesn't
+> perform any copies or moves on `T`. This, in turn, implies that the storage
+> for `field` must be laid out as part of a complete `typeof(F())` object
+> layout, which is initialized by the call to `F()`. All other members of that
+> layout are immediately destroyed, and their storage is theoretically reusable
+> after that point, but it's unclear if this is the right default, or how to
+> enable user code to override that default when it's the wrong tradeoff.
 
 A _reference binding pattern_ is a binding pattern that is nested under a `var`
 pattern. It introduces a name called a _reference binding_ that is a
@@ -593,8 +601,9 @@ The specific tradeoff here is covered in a proposal
 ## Initializing expressions
 
 Storage in Carbon is initialized using _initializing expressions_. Their
-evaluation produces an initialized object in the storage, although that object
-may still be _unformed_.
+evaluation takes a _result location_ as an implicit input, and produces an
+initialized object at that location, although that object may still be
+_unformed_.
 
 **Future work:** More details on initialization and unformed objects should be
 added to the design from the proposal
@@ -843,25 +852,72 @@ terms of the expression's form:
 
 An expression and its result always have the same form.
 
+The code that accesses the result of an expression is said to _consume_ that
+result, and every result is consumed exactly once (except in certain narrow
+contexts where the result is known not to have any initializing sub-results). If
+the expression's result isn't explicitly accessed, such as when the expression
+is used as a statement, or is matched with an
+[unused binding pattern](pattern_matching.md#unused-bindings), it is said to be
+_discarded_. Discarding consumes a result by materializing any initializing
+sub-results, and then immediately destroying them.
+
 ### Initializing results
 
-> **TODO:** Find a clearer way to articulate this concept.
+As discussed earlier, evaluation of an initializing expression takes as an input
+the result location that it initializes, which is implicitly provided by the
+context in which the evaluation takes place. In some cases, the context may
+obtain the location from its own context, and so on. For example:
 
-An _initializing result_ is the notional result of evaluating an initializing
-expression, and represents an obligation to provide storage for an object of the
-expression's type. This obligation can be fulfilled directly by providing
-suitable storage (as with temporary materialization, for example), or it can be
-delegated by returning it to some enclosing context, where it acts as an
-initializing expression.
+```carbon
+class C {
+  private var i: i32;
 
-This delegation only happens in a few local contexts whose semantics are defined
-by the core language, such as forming a tuple or struct literal from its
-elements, or [converting between composite forms](#form-conversions), where the
-generated code can compute the storage location beforehand, and use it as a
-hidden output parameter when evaluating the initializing expression. The
-initializing result abstracts away that hidden output parameter and lets us use
-the conventional vocabulary of expression evaluation, where information flows
-into an operation from its operands and not the other way around.
+  fn Make() -> C {
+    return {.i = 0};
+  }
+}
+
+fn F() -> C {
+  return C.Make();
+}
+
+fn G() {
+  var c: C = F();
+}
+```
+
+By default, a function call is an initializing expression, and a `return`
+statement initializes the call's result location (which is passed as a hidden
+output parameter). So when the declaration of `c` is evaluated, its storage is
+implicitly passed into `F()` as an output parameter, which is initialized by the
+`return` statement inside `F`. When that `return` statement is evaluated to
+initialize the result location, it likewise implicitly passes the storage into
+`C.Make()` as an output parameter, which is initialized by the `return`
+statement inside `C.Make`. Finally, that `return` statement initializes the
+result location (which is still the location of `c`'s storage) by
+[direct initialization](#direct-initialization) from the value expression
+`{.i = 0}`.
+
+Notice that the implicit storage parameter propagates "backwards", into an
+expression from the code that uses its result. In order to simplify the
+description of the language, we usually won't explicitly discuss the result
+locations of initializing expressions, or how they're propagated. Instead, this
+propagation is encapsulated inside the _initializing result_, which is the
+notional result of an initializing expression.
+
+Whenever an initializing result is consumed, that implicitly means that the
+consumer passes a result location into the evaluation of the initializing
+expression. The source of that location depends on the consumer:
+
+-   If the consumer is a temporary materialization conversion, the result
+    location is newly-allocated temporary storage (which the consumer may
+    subsequently lifetime-extend to durable storage).
+-   If the consumer is a struct or tuple literal, the result location is
+    propagated from the literal's consumer.
+-   If the consumer is a `return` statement, and the initializing result
+    corresponds to an initializing sub-form of the function's return form, the
+    result location is the implicit output parameter corresponding to that
+    initializing sub-form.
 
 ### Form conversions
 
@@ -878,13 +934,6 @@ Any of these steps may be omitted, depending on whether the context imposes
 requirements on the corresponding component. Most commonly, an operand position
 requires its operand to have a primitive form with a particular category,
 usually with a particular type, and sometimes with a particular phase.
-
-In some cases an expression's result is _discarded_, such as when the expression
-is used as a statement, or is matched with an
-[unused binding pattern](pattern_matching.md#unused-bindings). Discarding an
-result is a form conversion that does nothing except materialize any
-initializing sub-results, in order to satisfy the obligation to provide storage
-to every initializing result.
 
 Phase conversions cannot change the form structure; they can only apply
 primitive phase conversions to primitive sub-forms. Type and category
@@ -1006,8 +1055,8 @@ exceptions:
     doesn't apply to ephemeral entire references, because in that case form
     decomposition implicitly ends the lifetime of the original aggregate,
     promoting its elements to complete objects with independent lifetimes.
--   If `C` is "initializing", `CC` will be "ephemeral entire reference", because
-    the initializing result must be materialized before it can be decomposed.
+-   If `C` is "initializing", the original expression is materialized before it
+    is decomposed, so `CC` will be "ephemeral entire reference".
 
 By convention, form decomposition is a no-op when applied to an expression with
 struct or tuple form.
@@ -1023,8 +1072,8 @@ recursively:
     corresponding target sub-category.
 -   If the target category component is a struct, the source form must have a
     struct type with the same set of field names in the same order. Convert the
-    source to a struct for by form decomposition, and then category-convert each
-    source sub-form to the corresponding target sub-category.
+    source to a struct form by form decomposition, and then category-convert
+    each source sub-form to the corresponding target sub-category.
 -   If the target category is a primitive category `C`:
     -   If the source form is primitive, convert to `C` by applying primitive
         category conversions.
