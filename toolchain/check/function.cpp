@@ -297,13 +297,20 @@ auto CheckFunctionTypeMatches(Context& context,
                               SemIR::SpecificId prev_specific_id,
                               bool check_syntax, bool check_self, bool diagnose)
     -> bool {
-  return CheckRedeclParamsMatch(context, DeclParams(new_function),
-                                DeclParams(prev_function), prev_specific_id,
-                                diagnose, check_syntax, check_self) &&
-         CheckFunctionReturnTypeMatches(context, new_function, prev_function,
-                                        prev_specific_id, diagnose) &&
-         CheckFunctionEvaluationModeMatches(context, new_function,
-                                            prev_function, diagnose);
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
+                              DeclParams(prev_function), prev_specific_id,
+                              diagnose, check_syntax, check_self)) {
+    return false;
+  }
+  if (!CheckFunctionReturnTypeMatches(context, new_function, prev_function,
+                                      prev_specific_id, diagnose)) {
+    return false;
+  }
+  if (!CheckFunctionEvaluationModeMatches(context, new_function, prev_function,
+                                          diagnose)) {
+    return false;
+  }
+  return true;
 }
 
 auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,

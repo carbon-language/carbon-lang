@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Extend the "int" min_prelude to support basic integer operations, so we
+// can use it here.
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
@@ -14,9 +16,6 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
-}
-
 eval fn F(n: i32) -> type {
   if (n == 0) {
     return i32;
@@ -24,6 +23,6 @@ eval fn F(n: i32) -> type {
   return F(n - 1);
 }
 
-var c: F(3) = 0;
+var i: F(3) = 0;
 
 // TODO: Diagnose infinite recursion.

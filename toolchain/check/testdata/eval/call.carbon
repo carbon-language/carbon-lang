@@ -32,6 +32,31 @@ eval fn F() -> i32 { return 3; }
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2, 3);
 
+// --- fail_call_fn_not_eval.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> i32 { return 3; }
+
+// CHECK:STDERR: fail_call_fn_not_eval.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var a: array(i32, F()) = (0, 1, 2);
+// CHECK:STDERR:                   ^~~
+// CHECK:STDERR:
+var a: array(i32, F()) = (0, 1, 2);
+
+// --- fail_call_eval_fn_not_defined.carbon
+
+library "[[@TEST_NAME]]";
+
+eval fn F() -> i32;
+
+// TODO: We should be able to diagnose this better.
+// CHECK:STDERR: fail_call_eval_fn_not_defined.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: var a: array(i32, F()) = (0, 1, 2);
+// CHECK:STDERR:                   ^~~
+// CHECK:STDERR:
+var a: array(i32, F()) = (0, 1, 2);
+
 // --- param_and_return.carbon
 
 library "[[@TEST_NAME]]";
@@ -74,7 +99,7 @@ fn UseFGenerically(X:! i32) {
   // CHECK:STDERR:   var v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst6800017A: {kind: Call, arg0: inst6800003F, arg1: inst_block68000081, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst7800017A: {kind: Call, arg0: inst7800003F, arg1: inst_block78000081, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   var v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
