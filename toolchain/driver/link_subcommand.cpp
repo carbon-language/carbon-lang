@@ -81,8 +81,11 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
           ? runner.RunWithPrebuiltRuntimes(clang_args,
                                            *driver_env.prebuilt_runtimes,
                                            driver_env.enable_leaking)
-          : runner.Run(clang_args, driver_env.runtimes_cache,
-                       *driver_env.thread_pool, driver_env.enable_leaking);
+      : driver_env.build_runtimes_on_demand
+          ? runner.Run(clang_args, driver_env.runtimes_cache,
+                       *driver_env.thread_pool, driver_env.enable_leaking)
+          : runner.RunWithNoRuntimes(clang_args, driver_env.enable_leaking);
+
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.

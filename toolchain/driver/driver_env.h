@@ -58,6 +58,10 @@ struct DriverEnv {
   // `false` for safe and correct library execution.
   bool enable_leaking = false;
 
+  // Whether to build runtimes on-demand. Only used when `prebuilt_runtimes` is
+  // empty.
+  bool build_runtimes_on_demand = false;
+
   // A diagnostic consumer, to be able to connect output.
   Diagnostics::StreamConsumer consumer;
 

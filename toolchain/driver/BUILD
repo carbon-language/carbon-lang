@@ -241,6 +241,7 @@ cc_test(
     name = "driver_test",
     size = "small",
     srcs = ["driver_test.cpp"],
+    data = ["//toolchain/install:install_data"],
     deps = [
         ":driver",
         "//common:all_llvm_targets",
