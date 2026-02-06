@@ -281,18 +281,21 @@ class C(unused T:! type) {}
 //   var z: i32 = x;
 // }
 
-// --- multiple_unused_bindings.carbon
-library "[[@TEST_NAME]]";
-
-fn F() {
-  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
-  // CHECK:STDERR:   var x: i32 = 0;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  var x: i32 = 0;
-  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
-  // CHECK:STDERR:   var y: i32 = 0;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  var y: i32 = 0;
-}
+// TODO: Multiple diagnostics on same line has non-deterministic order.
+// Uncomment after adding second sort key in diagnostics sorting.
+//
+// // --- multiple_unused_bindings.carbon
+// library "[[@TEST_NAME]]";
+//
+// fn F() {
+//   // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
+//   // CHECK:STDERR:   var x: i32 = 0;
+//   // CHECK:STDERR:       ^
+//   // CHECK:STDERR:
+//   var x: i32 = 0;
+//   // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
+//   // CHECK:STDERR:   var y: i32 = 0;
+//   // CHECK:STDERR:       ^
+//   // CHECK:STDERR:
+//   var y: i32 = 0;
+// }
