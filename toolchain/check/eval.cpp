@@ -244,6 +244,12 @@ class EvalContext {
         specific_id_(specific_id),
         local_eval_info_(local_eval_info) {}
 
+  // Returns the current locals map, which is assumed to exist.
+  auto locals() -> Map<SemIR::InstId, SemIR::ConstantId>& {
+    return *local_eval_info_->locals;
+  }
+
+ private:
   // The type-checking context in which we're performing evaluation.
   Context* context_;
   // The location to use for diagnostics when a better location isn't available.
@@ -2571,9 +2577,7 @@ class FunctionEvalContext : public EvalContext {
 
   auto args() const -> llvm::ArrayRef<SemIR::InstId> { return args_; }
 
-  auto locals() -> Map<SemIR::InstId, SemIR::ConstantId>& {
-    return *local_eval_info_->locals;
-  }
+  using EvalContext::locals;
 
  private:
   llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
