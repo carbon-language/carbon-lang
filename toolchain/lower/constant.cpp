@@ -117,7 +117,11 @@ static auto EmitAggregateConstant(ConstantContext& context,
   llvm::SmallVector<llvm::Constant*> elements;
   elements.reserve(refs.size());
   for (auto ref : refs) {
-    elements.push_back(context.GetConstant(ref));
+    if (auto* constant = context.GetConstant(ref)) {
+      elements.push_back(constant);
+    } else {
+      return nullptr;
+    }
   }
 
   return ConstantType::get(llvm_type, elements);
@@ -172,6 +176,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
   auto* aggr_addr = context.GetConstant(inst.aggregate_id);
+  if (!aggr_addr) {
+    return nullptr;
+  }
   auto* aggr_type = context.GetType(
       context.sem_ir().insts().Get(inst.aggregate_id).type_id());
 
@@ -297,6 +304,10 @@ static auto EmitAsConstant(ConstantContext& context,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
     -> llvm::Constant* {
+  if (!inst.pattern_id.has_value()) {
+    // This constant is a placeholder and should not be used by lowering.
+    return nullptr;
+  }
   // Create the corresponding global variable declaration.
   return context.BuildGlobalVariableDecl(inst);
 }
