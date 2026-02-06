@@ -51,6 +51,8 @@ struct SpecificEvalInfo {
 // Information about a local scope such as a function that we're currently
 // evaluating.
 struct LocalEvalInfo {
+  // A mapping from local instructions to the value that was produced when
+  // evaluating that instruction as part of the current function evaluation.
   Map<SemIR::InstId, SemIR::ConstantId>* locals;
 };
 
@@ -66,6 +68,9 @@ class EvalContext {
         fallback_loc_id_(fallback_loc_id),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
+
+  EvalContext(const EvalContext&) = delete;
+  auto operator=(const EvalContext&) -> EvalContext& = delete;
 
   // Gets the location to use for diagnostics if a better location is
   // unavailable.
@@ -239,7 +244,6 @@ class EvalContext {
         specific_id_(specific_id),
         local_eval_info_(local_eval_info) {}
 
- protected:
   // The type-checking context in which we're performing evaluation.
   Context* context_;
   // The location to use for diagnostics when a better location isn't available.
@@ -344,7 +348,8 @@ static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
 }
 
 // Forms a constant for an empty tuple value.
-static auto MakeEmptyTupleResult(EvalContext& eval_context) {
+static auto MakeEmptyTupleResult(EvalContext& eval_context)
+    -> SemIR::ConstantId {
   auto type_id = GetTupleType(eval_context.context(), {});
   return MakeConstantResult(
       eval_context.context(),
@@ -2575,14 +2580,14 @@ class FunctionEvalContext : public EvalContext {
   llvm::ArrayRef<SemIR::InstId> args_;
 };
 
-// Handles the result of evaluating an instruction in a function. Terminates the
-// overall evaluation if the result is not a constant, and otherwise updates the
-// locals map to track the result as an input to later evaluations in this
-// function.
+// Handles the result of evaluating an instruction in a function. Returns an
+// error the result is not a constant, and otherwise updates the locals map to
+// track the result as an input to later evaluations in this function and
+// returns None.
 static auto HandleEvalResultInFunction(FunctionEvalContext& eval_context,
                                        SemIR::InstId inst_id,
                                        SemIR::ConstantId const_id)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   if (!const_id.has_value() || !const_id.is_constant()) {
     DiagnoseNonConstantValue(eval_context, inst_id);
     return SemIR::ErrorInst::ConstantId;
@@ -2591,22 +2596,25 @@ static auto HandleEvalResultInFunction(FunctionEvalContext& eval_context,
     return const_id;
   }
   eval_context.locals().Update(inst_id, const_id);
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
 
 // Evaluates an instruction for TryEvalCall. By default, performs normal
 // evaluation of the instruction. This is specialized for instructions that have
 // special handling in function evaluation, such as those that access parameters
-// or perform flow control.
+// or perform flow control. If evaluation should continue, returns
+// `SemIR::ConstantId::None`, otherwise returns the result to produce for the
+// enclosing function call, which should be either the returned value or an
+// error.
 template <typename InstT>
 static auto TryEvalTypedInstInFunction(FunctionEvalContext& eval_context,
                                        SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   if constexpr (InstT::Kind.expr_category().TryAsFixedCategory() ==
                 SemIR::ExprCategory::NotExpr) {
     // Instructions in this category are assumed to not have a runtime effect.
     // This includes some kinds of declaration.
-    return std::nullopt;
+    return SemIR::ConstantId::None;
   }
   auto const_id = TryEvalTypedInst<InstT>(eval_context, inst_id, inst);
   return HandleEvalResultInFunction(eval_context, inst_id, const_id);
@@ -2615,17 +2623,17 @@ static auto TryEvalTypedInstInFunction(FunctionEvalContext& eval_context,
 template <>
 auto TryEvalTypedInstInFunction<SemIR::Branch>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
-    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
+    SemIR::Inst inst) -> SemIR::ConstantId {
   auto branch = inst.As<SemIR::Branch>();
   eval_context.blocks().back() =
       eval_context.context().inst_blocks().Get(branch.target_id);
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::BranchIf>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
-    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
+    SemIR::Inst inst) -> SemIR::ConstantId {
   auto branch_if = inst.As<SemIR::BranchIf>();
   auto cond_id = CheckConcreteValue(eval_context, branch_if.cond_id);
   if (cond_id == SemIR::ErrorInst::InstId) {
@@ -2636,75 +2644,80 @@ auto TryEvalTypedInstInFunction<SemIR::BranchIf>(
     eval_context.blocks().back() =
         eval_context.context().inst_blocks().Get(branch_if.target_id);
   }
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
+
+// TODO: BranchWithArg and BlockArg.
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::Return>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
-    SemIR::Inst /*inst*/) -> std::optional<SemIR::ConstantId> {
+    SemIR::Inst /*inst*/) -> SemIR::ConstantId {
   return MakeEmptyTupleResult(eval_context);
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::ReturnExpr>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
-    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
+    SemIR::Inst inst) -> SemIR::ConstantId {
   auto return_expr = inst.As<SemIR::ReturnExpr>();
-  auto phase = Phase::Concrete;
-  auto result_id =
-      RequireConstantValue(eval_context, return_expr.expr_id, &phase);
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-  return eval_context.constant_values().Get(result_id);
+  return eval_context.GetConstantValue(return_expr.expr_id);
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::ReturnSlot>(
     FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   auto return_slot = inst.As<SemIR::ReturnSlot>();
+  // In the case where the function's return type is not in-place, the return
+  // slot will refer to an out parameter that doesn't have an argument. In that
+  // case, we don't have a constant value for storage_id. To handle this, copy
+  // the value directly from the locals map rather than using GetConstantValue.
+  //
+  // TODO: Remove this and use a normal call to `GetConstantValue` if we stop
+  // adding out parameters with no corresponding argument.
   eval_context.locals().Insert(
       inst_id, eval_context.locals().Lookup(return_slot.storage_id).value());
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::SpliceBlock>(
     FunctionEvalContext& eval_context, SemIR::InstId /*inst_id*/,
-    SemIR::Inst inst) -> std::optional<SemIR::ConstantId> {
+    SemIR::Inst inst) -> SemIR::ConstantId {
   auto splice_block = inst.As<SemIR::SpliceBlock>();
   eval_context.blocks().push_back(
       eval_context.context().inst_blocks().Get(splice_block.block_id));
   // TODO: Copy the values from the result_id instruction to the result of
   // the splice_block instruction once the spliced block finishes.
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
 
 static auto TryEvalTypedParamInFunction(FunctionEvalContext& eval_context,
                                         SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   auto param = inst.As<SemIR::AnyParam>();
   CARBON_CHECK(static_cast<size_t>(param.index.index) <
                eval_context.args().size());
   eval_context.locals().Insert(inst_id,
                                eval_context.constant_values().Get(
                                    eval_context.args()[param.index.index]));
-  return std::nullopt;
+  return SemIR::ConstantId::None;
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::OutParam>(
     FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   auto param = inst.As<SemIR::OutParam>();
   if (static_cast<size_t>(param.index.index) >= eval_context.args().size()) {
-    // TODO: We generate an OutParam with an index that has no
-    // corresponding argument for return values that have a copy
-    // initializing representation.
+    // We generate an OutParam with an index that has no corresponding argument
+    // for return values that have a copy initializing representation.
+    //
+    // TODO: Remove this once we stop adding out parameters with no
+    // corresponding argument.
     eval_context.locals().Insert(inst_id, SemIR::ConstantId::None);
-    return std::nullopt;
+    return SemIR::ConstantId::None;
   }
 
   return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
@@ -2713,40 +2726,33 @@ auto TryEvalTypedInstInFunction<SemIR::OutParam>(
 template <>
 auto TryEvalTypedInstInFunction<SemIR::RefParam>(
     FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::ValueParam>(
     FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   return TryEvalTypedParamInFunction(eval_context, inst_id, inst);
 }
 
 template <>
 auto TryEvalTypedInstInFunction<SemIR::ValueBinding>(
     FunctionEvalContext& eval_context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   auto value_binding = inst.As<SemIR::ValueBinding>();
-  // Local bindings are constant, non-local bindings are not.
-  if (auto local_value = eval_context.locals().Lookup(value_binding.value_id)) {
-    eval_context.locals().Insert(inst_id, local_value.value());
-  } else {
-    // TODO: Diagnose this properly.
-    eval_context.context().TODO(SemIR::LocId(inst_id),
-                                "Referenced non-local binding");
-    return SemIR::ErrorInst::ConstantId;
-  }
-  return std::nullopt;
+  auto local_value_id = eval_context.GetConstantValue(value_binding.value_id);
+  eval_context.locals().Insert(inst_id, local_value_id);
+  return SemIR::ConstantId::None;
 }
 
 static auto TryEvalInstInFunction(FunctionEvalContext& eval_context,
                                   SemIR::InstId inst_id, SemIR::Inst inst)
-    -> std::optional<SemIR::ConstantId> {
+    -> SemIR::ConstantId {
   using EvalInstFn = auto(FunctionEvalContext & eval_context,
                           SemIR::InstId inst_id, SemIR::Inst inst)
-                         ->std::optional<SemIR::ConstantId>;
+                         ->SemIR::ConstantId;
   static constexpr EvalInstFn* EvalInstFns[] = {
 #define CARBON_SEM_IR_INST_KIND(Kind) &TryEvalTypedInstInFunction<SemIR::Kind>,
 #include "toolchain/sem_ir/inst_kind.def"
@@ -2803,7 +2809,7 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
     auto inst = eval_context.context().insts().Get(inst_id);
     if (auto result = TryEvalInstInFunction(eval_context, inst_id, inst);
         result.has_value()) {
-      return *result;
+      return result;
     }
   }
 }
