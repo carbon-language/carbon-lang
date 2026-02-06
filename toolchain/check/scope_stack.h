@@ -133,13 +133,6 @@ class ScopeStack {
     return return_scope_stack_.back().decl_id;
   }
 
-  // Returns the name ID for the current `returned var`, or `None` if there
-  // isn't one.
-  auto GetReturnedVarNameId() -> SemIR::NameId {
-    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
-    return return_scope_stack_.back().returned_var_name_id;
-  }
-
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
   // do not look past `scope_index`. Returns the existing lookup result, if any.
   // If `use_loc_id` is specified, the name is marked as used at that location.
