@@ -193,19 +193,17 @@ TEST_F(BusyboxInfoTest, LayerSymlinksInstallTree) {
 
   auto info = GetBusyboxInfo((prefix / "bin/carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(prefix / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
   info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
   info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang++"));
 }
 
@@ -229,11 +227,10 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
   // traversing the symlink further.
   auto info = GetBusyboxInfo((path_ / "bin/carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(path_ / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
   info = GetBusyboxInfo((path_ / "lib/carbon/llvm/bin/clang").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(path_ / "lib/carbon/llvm/bin/../../carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
 }
 
 TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
@@ -255,8 +252,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
   // walks the symlink to find the correct installation.
   auto info = GetBusyboxInfo((usr_local / "carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(usr_local / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 
   // Ensure this works even with intervening `.` directory components.
   usr_local_dir.Symlink("carbon2", "bin/././carbon").Check();
@@ -265,8 +261,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
   // walks the symlink to find the correct installation.
   info = GetBusyboxInfo((usr_local / "carbon2").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path,
-              Eq(usr_local / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 }
 
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {

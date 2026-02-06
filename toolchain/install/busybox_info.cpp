@@ -73,9 +73,14 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       parent_path = parent_path.parent_path();
     }
     if (parent_path.filename() == "bin") {
+      // Note that we walk up using `.parent_path` rather than by appending
+      // `../` components. While largely equivalent, this helps keep paths
+      // shorter and avoids redundant work. We also don't expect to need to
+      // respect _internally_ strange symlinking structures that would need to
+      // use appended `../` components.
       auto lib_path = info.bin_path.filename() == "carbon"
-                          ? parent_path / ".." / "lib" / "carbon"
-                          : parent_path / ".." / "..";
+                          ? parent_path.parent_path() / "lib" / "carbon"
+                          : parent_path.parent_path().parent_path();
       auto busybox_path = lib_path / "carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {
