@@ -1696,6 +1696,44 @@ struct RequirementRewrite {
   InstId rhs_id;
 };
 
+// A requirement that two expressions evaluate to the same constant, as
+// specified by an `expr == expr` clause in an `observe` declaration.
+struct ObserveEquivalent {
+  static constexpr auto Kind =
+      InstKind::ObserveEquivalent.Define<Parse::ObserveEqualEqualId>(
+          {.ir_name = "observe_equivalent",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+struct ObserveImpls {
+  static constexpr auto Kind =
+      InstKind::ObserveImpls.Define<Parse::ObserveImplsId>(
+          {.ir_name = "observe_impls",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// A `observe ...` declaration.
+struct ObserveDecl {
+  static constexpr auto Kind =
+      InstKind::ObserveEquivalent.Define<Parse::ObserveDeclId>(
+          {.ir_name = "observe_decl",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstBlockId operations_id;
+};
+
 struct Return {
   static constexpr auto Kind = InstKind::Return.Define<Parse::NodeId>(
       {.ir_name = "return",

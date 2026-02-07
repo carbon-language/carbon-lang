@@ -889,4 +889,12 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
   return MakeSpecific(context, loc_id, target_generic_id, args_id);
 }
 
+auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)
+    -> void {
+  CARBON_DIAGNOSTIC(
+      ImplsOnNonFacetType, Error,
+      "right argument of `impls` requirement must be a facet type");
+  context.emitter().Emit(loc_id, ImplsOnNonFacetType);
+}
+
 }  // namespace Carbon::Check

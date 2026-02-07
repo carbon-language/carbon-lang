@@ -398,6 +398,9 @@ CARBON_DIAGNOSTIC_KIND(RequireImplsUnidentifiedFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsNotImplemented)
 CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 
+// Observe checking.
+CARBON_DIAGNOSTIC_KIND(ObserveInWrongScope)
+
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 
