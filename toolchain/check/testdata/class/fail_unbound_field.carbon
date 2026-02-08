@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -18,6 +18,14 @@ class Class {
     // CHECK:STDERR:            ^~~~~
     // CHECK:STDERR:
     return field;
+  }
+
+  fn IsZero() -> bool {
+    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+4]]:12: error: cannot access member of interface `Core.EqWith(Core.IntLiteral)` in type `<unbound element of class Class>` that does not implement that interface [MissingImplInMemberAccess]
+    // CHECK:STDERR:     return field == 0;
+    // CHECK:STDERR:            ^~~~~~~~~~
+    // CHECK:STDERR:
+    return field == 0;
   }
 }
 
