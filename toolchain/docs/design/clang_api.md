@@ -114,13 +114,13 @@ struct S {
 int f() { return a[3].x; }
 ```
 
-* `HandleTagDeclRequiredDefinition` seems to be just for Microsoft debug info.
-* `HandleTranslationUnit` handles finishing things up after the translation
-  unit \- Carbon can call this & get the same behavior.
-* `AssignInheritanceModel` related to the Microsoft inheritance attribute for.
-* `CompleteTentativeDefinition` seems to be only relevant to C code, not C++.
-* `CompleteExternalDeclaration` seems to be only relevant to the BPF target.
-* `HandleVTable` emits vtables as needed, eg:
+-   `HandleTagDeclRequiredDefinition` seems to be just for Microsoft debug info.
+-   `HandleTranslationUnit` handles finishing things up after the translation
+    unit \- Carbon can call this & get the same behavior.
+-   `AssignInheritanceModel` related to the Microsoft inheritance attribute for.
+-   `CompleteTentativeDefinition` seems to be only relevant to C code, not C++.
+-   `CompleteExternalDeclaration` seems to be only relevant to the BPF target.
+-   `HandleVTable` emits vtables as needed, eg:
 
 ```cpp
 struct t1 {
