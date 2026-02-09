@@ -71,8 +71,8 @@ Any difference should be a bug in the Carbon compiler's interop support. Here
 are some (non-exhaustive) examples I found, based on different callbacks in the
 `ASTConsumer` API:
 
-* `HandleCXXStaticMemberVarInstantiation` handles instantiating C++ static
-  member variables in template contexts like this:
+-   `HandleCXXStaticMemberVarInstantiation` handles instantiating C++ static
+    member variables in template contexts like this:
 
 ```cpp
 template<typename T>struct t3 {
