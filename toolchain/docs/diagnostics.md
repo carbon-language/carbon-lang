@@ -21,10 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Diagnostic sort alternatives](#diagnostic-sort-alternatives)
-        -   [Don't sort diagnostics](#dont-sort-diagnostics)
-        -   [Sort by line and column](#sort-by-line-and-column)
-        -   [Sort by last processed token](#sort-by-last-processed-token)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -325,51 +322,11 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
 
 ## Alternatives considered
 
-### Diagnostic sort alternatives
+-   [Don't sort diagnostics](/proposals/p6699.md#dont-sort-diagnostics)
+-   [Sort by line and column](/proposals/p6699.md#sort-by-line-and-column)
+-   [Sort by last processed token](/proposals/p6699.md#sort-by-last-processed-token)
 
-#### Don't sort diagnostics
+## References
 
-We could just print diagnostics in the order they are produced. This would print
-all lex errors, then all parse errors, then all check errors. This would be
-simple, but might be confusing when a parse error at the end of a file comes
-before check errors, and fixing the check errors would fix the parse error.
-
-#### Sort by line and column
-
-We could sort diagnostics purely by their line and column. This runs into issues
-with cases such as:
-
-```carbon
-fn F(x: i32, y: i32);
-
-fn G() {
-  F(1 2);
-}
-```
-
-Here, the diagnostic for an invalid parse of `1 2` would appear after the
-diagnostic that `F` expects two arguments, not one. This is confusing because
-the missing comma is the root cause of the incorrect argument count.
-
-#### Sort by last processed token
-
-We could sort diagnostics purely by the last token that was processed when the
-diagnostic was emitted. This runs into issues with cases such as:
-
-```carbon
-fn F(x: i32, y: i32) {}
-```
-
-Here, both `x` and `y` would be diagnosed as unused at the `}`. The order would
-be non-deterministic, hindering golden tests.
-
-This could be partially addressed by sorting the diagnostics locally (for
-example, sorting each `unused` diagnostic together), but this is an incomplete solution
-because we may introduce further scope-related checks, particularly flow
-checking (for example, checking if there are provable out-of-bounds accesses).
-These would all have the same last processed tokens. It also would likely lead
-to sorting regardless of whether sorting was requested by the tool user, a
-performance overhead we want to avoid.
-
-We believe sorting by the last processed token is a partial solution, which
-we're building on.
+-   Proposal
+    [#6699: Sort diagnostics](https://github.com/carbon-language/carbon-lang/pull/6699)
