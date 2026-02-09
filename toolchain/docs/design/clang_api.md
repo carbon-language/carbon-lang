@@ -207,9 +207,9 @@ indivisible work that motivated PR5543's multithreading to be inlined into
 Carbon.
 
 With that code inlined, we're now able to address the underlying desire - have a
-`clang::CodeGenerator` attached to Clang's Sema throughout Carbon`s `check`
-phase - allowing Clang to lower as it does in the native `clang` compilation.
-This avoids the divergence without the multithreading complexity.
+`clang::CodeGenerator` attached to Clang's Sema throughout
+Carbon`s `check`phase - allowing Clang to lower as it does in the native`clang`
+compilation. This avoids the divergence without the multithreading complexity.
 
 The main cost is the inherent difference between Clang's continuous lowering and
 Carbon's phase based lowering, though that seems to be an acceptable cost to
