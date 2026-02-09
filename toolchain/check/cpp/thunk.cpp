@@ -685,7 +685,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
       arg_id = AddInst<SemIR::AddrOf>(
           context, loc_id,
           {.type_id = GetPointerType(
-               context, context.types().GetInstId(callee_param_type_id)),
+               context, context.types().GetTypeInstId(callee_param_type_id)),
            .lvalue_id = arg_id});
       arg_id =
           ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
@@ -705,7 +705,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
     auto arg_id = AddInst<SemIR::AddrOf>(
         context, loc_id,
         {.type_id = GetPointerType(
-             context, context.types().GetInstId(
+             context, context.types().GetTypeInstId(
                           context.insts().Get(return_slot_id).type_id())),
          .lvalue_id = return_slot_id});
     thunk_arg_ids.push_back(arg_id);

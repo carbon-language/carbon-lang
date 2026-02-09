@@ -566,7 +566,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // this, as the facet should have member names that directly name members of
   // the `impl`.
   auto base_type_as_facet = GetCanonicalFacetOrTypeValue(
-      context, context.types().GetInstId(base_type_id));
+      context, context.types().GetTypeInstId(base_type_id));
   auto base_type_facet_type_id =
       context.insts().Get(base_type_as_facet).type_id();
   if (context.types().Is<SemIR::FacetType>(base_type_facet_type_id)) {
@@ -595,7 +595,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // The base type is not a name scope. Try some fallback options.
   if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
-          context.types().GetInstId(base_type_id))) {
+          context.types().GetTypeInstId(base_type_id))) {
     // TODO: Do we need to optimize this with a lookup table for O(1)?
     for (auto [i, field] : llvm::enumerate(
              context.struct_type_fields().Get(struct_type->fields_id))) {

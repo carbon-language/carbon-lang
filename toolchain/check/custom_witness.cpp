@@ -27,7 +27,7 @@ static auto GetFacetAsType(Context& context,
 
   if (context.types().Is<SemIR::FacetType>(type_type_id)) {
     // It's a facet; access its type.
-    facet_or_type_id = context.types().GetInstId(
+    facet_or_type_id = context.types().GetTypeInstId(
         GetFacetAccessType(context, facet_or_type_id));
   }
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);

@@ -419,7 +419,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   }
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context, context.types().GetTypeInstId(class_info.self_type_id),
       cast_type_inst_id);
   auto field_id =
       AddInst<SemIR::FieldDecl>(context, node_id,

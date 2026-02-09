@@ -819,7 +819,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   if (type.isBooleanType()) {
     CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.BoolTy));
     return ExprAsType(context, Parse::NodeId::None,
-                      context.types().GetInstId(GetSingletonType(
+                      context.types().GetTypeInstId(GetSingletonType(
                           context, SemIR::BoolType::TypeInstId)));
   }
   if (type.isInteger()) {
@@ -989,7 +989,7 @@ static auto MapReferenceType(Context& context, clang::QualType type,
   SemIR::TypeId pointer_type_id =
       GetPointerType(context, referenced_type_expr.inst_id);
   pointer_type_id =
-      GetConstType(context, context.types().GetInstId(pointer_type_id));
+      GetConstType(context, context.types().GetTypeInstId(pointer_type_id));
   return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 

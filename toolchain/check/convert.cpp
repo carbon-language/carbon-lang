@@ -469,7 +469,7 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
   // TODO: Should we add this as an instruction? It will contain
   // references to local InstIds.
   auto tuple_type_id = GetTupleType(context, type_inst_ids);
-  return context.types().GetInstId(tuple_type_id);
+  return context.types().GetTypeInstId(tuple_type_id);
 }
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
@@ -1258,7 +1258,7 @@ static auto PerformBuiltinConversion(
     if (auto struct_type =
             sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       if (struct_type->fields_id == SemIR::StructTypeFieldsId::Empty) {
-        type_value_id = sem_ir.types().GetInstId(value_type_id);
+        type_value_id = sem_ir.types().GetTypeInstId(value_type_id);
       }
     }
 
@@ -1808,7 +1808,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       target.kind == ConversionTarget::Value &&
       (OperandIsDependent(context, expr_id) ||
        OperandIsDependent(context, target.type_id))) {
-    auto target_type_inst_id = context.types().GetInstId(target.type_id);
+    auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
         SemIR::ConvertToValueAction{
@@ -1821,7 +1821,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
     SemIR::InstId interface_args[] = {
-        context.types().GetInstId(target.type_id)};
+        context.types().GetTypeInstId(target.type_id)};
     Operator op = {
         .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
@@ -1993,7 +1993,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
     -> TypeExpr {
-  return {.inst_id = context.types().GetInstId(type_id), .type_id = type_id};
+  return {.inst_id = context.types().GetTypeInstId(type_id),
+          .type_id = type_id};
 }
 
 static auto DiagnoseTypeExprEvaluationFailure(Context& context,

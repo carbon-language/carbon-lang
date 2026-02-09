@@ -140,17 +140,17 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
 auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
                       SemIR::TypeQualifiers quals) -> SemIR::TypeId {
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
-    type_id = GetConstType(context, context.types().GetInstId(type_id));
+    type_id = GetConstType(context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::Const);
   }
   if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed)) {
     type_id = GetTypeImpl<SemIR::MaybeUnformedType>(
-        context, context.types().GetInstId(type_id));
+        context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::MaybeUnformed);
   }
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Partial)) {
     type_id = GetTypeImpl<SemIR::PartialType>(
-        context, context.types().GetInstId(type_id));
+        context, context.types().GetTypeInstId(type_id));
     quals.Remove(SemIR::TypeQualifiers::Partial);
   }
   CARBON_CHECK(quals == SemIR::TypeQualifiers::None);
@@ -258,7 +258,7 @@ auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
     return SemIR::ErrorInst::TypeId;
   }
   return GetTypeImpl<SemIR::PatternType>(
-      context, context.types().GetInstId(scrutinee_type_id));
+      context, context.types().GetTypeInstId(scrutinee_type_id));
 }
 
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,

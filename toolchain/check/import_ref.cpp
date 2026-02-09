@@ -1739,7 +1739,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BoolLiteral inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::BoolType::TypeInstId);
 
   CARBON_CHECK(!resolver.HasNewWork());
@@ -1752,7 +1752,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BoundMethod inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::BoundMethodType::TypeInstId);
   auto object_id = GetLocalConstantInstId(resolver, inst.object_id);
   auto function_decl_id =
@@ -1789,7 +1789,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CharLiteralValue inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::CharLiteralType::TypeInstId);
 
   CARBON_CHECK(!resolver.HasNewWork());
@@ -2020,7 +2020,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CompleteTypeWitness inst)
     -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
   auto object_repr_type_inst_id =
       GetLocalTypeInstId(resolver, inst.object_repr_type_inst_id);
@@ -2075,7 +2075,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CustomWitness inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
 
   auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
@@ -2126,7 +2126,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FloatLiteralValue inst)
     -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::FloatLiteralType::TypeInstId);
 
   CARBON_CHECK(!resolver.HasNewWork());
@@ -3167,7 +3167,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::LookupImplWitness inst)
     -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
 
   auto query_self_inst_id =
@@ -3196,7 +3196,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
@@ -3266,7 +3266,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       SemIR::InitForm{
           .type_id =
               resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-          .type_component_inst_id = resolver.local_types().GetInstId(
+          .type_component_inst_id = resolver.local_types().GetTypeInstId(
               resolver.local_types().GetTypeIdForTypeConstantId(
                   type_component_const_id)),
           .index = inst.index});
@@ -3373,7 +3373,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RequireCompleteType inst)
     -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
 
   auto complete_type_inst_id =
@@ -3391,7 +3391,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RequireSpecificDefinition inst)
     -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::RequireSpecificDefinitionType::TypeInstId);
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);

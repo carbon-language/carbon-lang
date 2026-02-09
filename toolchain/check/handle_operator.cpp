@@ -39,7 +39,7 @@ static auto HandleBinaryOperator(Context& context,
   // the type of the RHS operand. `as` has different rules and we don't call
   // this function for it.
   SemIR::InstId args[] = {
-      context.types().GetInstId(context.insts().Get(rhs_id).type_id())};
+      context.types().GetTypeInstId(context.insts().Get(rhs_id).type_id())};
   auto result_id = BuildBinaryOperator(context, expr_node_id,
                                        {.interface_name = interface_name,
                                         .interface_args_ref = args,
@@ -277,7 +277,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       break;
   }
   // TODO: Preserve spelling of type of operand where possible.
-  auto type_inst_id = context.types().GetInstId(type_id);
+  auto type_inst_id = context.types().GetTypeInstId(type_id);
   AddInstAndPush<SemIR::AddrOf>(
       context, node_id,
       SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),

@@ -75,7 +75,7 @@ auto FileContext::PrepareToLower() -> void {
   // Lower all types that were required to be complete.
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
-      types_.Set(type_id, BuildType(sem_ir_->types().GetInstId(type_id)));
+      types_.Set(type_id, BuildType(sem_ir_->types().GetTypeInstId(type_id)));
     }
   }
 

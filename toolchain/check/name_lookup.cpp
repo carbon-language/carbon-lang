@@ -492,7 +492,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
             // The self for member lookup is a type, we need a facet value to
             // replace `Self`.
             facet_value = GetConstantFacetValueForType(
-                context, context.types().GetInstId(self_type_id));
+                context, context.types().GetTypeInstId(self_type_id));
           } else {
             // The self for member lookup is a facet value, use it as is to
             // replace `Self`.

@@ -126,9 +126,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     // duplicating the handling of the `Self` expression.
     self_inst_id = AddTypeInst(
         context, node_id,
-        SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
-                       .name_id = SemIR::NameId::SelfType,
-                       .value_id = context.types().GetInstId(self_type_id)});
+        SemIR::NameRef{
+            .type_id = SemIR::TypeType::TypeId,
+            .name_id = SemIR::NameId::SelfType,
+            .value_id = context.types().GetTypeInstId(self_type_id)});
   } else {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");

@@ -130,7 +130,7 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     // If the type of the action argument is dependent, refine to an instruction
     // with a concrete type.
     if (OperandIsDependent(context, inst.type_id())) {
-      auto type_inst_id = context.types().GetInstId(inst.type_id());
+      auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
       inst_id = AddDependentActionSpliceImpl(
           context,
           SemIR::LocIdAndInst(

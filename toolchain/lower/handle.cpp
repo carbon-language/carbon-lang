@@ -26,7 +26,7 @@ static auto IsNamespace(FunctionContext& context, SemIR::InstId inst_id)
   // Note, we don't use context.GetTypeOfInst here. An instruction can't change
   // from being a non-namespace in a generic to being a namespace in a specific,
   // because namespace names are not first-class.
-  auto type_inst_id = context.sem_ir().types().GetInstId(
+  auto type_inst_id = context.sem_ir().types().GetTypeInstId(
       context.sem_ir().insts().Get(inst_id).type_id());
   return type_inst_id == SemIR::NamespaceType::TypeInstId;
 }
@@ -46,7 +46,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // create a ConstantInt from its SemIR value directly.
   llvm::Value* index;
   auto index_type = context.GetTypeIdOfInst(inst.index_id);
-  if (index_type.file->types().GetInstId(index_type.type_id) ==
+  if (index_type.file->types().GetTypeInstId(index_type.type_id) ==
       SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));

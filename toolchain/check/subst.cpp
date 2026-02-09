@@ -163,7 +163,7 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
                            SemIR::InstId inst_id) -> void {
   auto inst = context.insts().Get(inst_id);
   if (inst.type_id().has_value()) {
-    worklist.Push(context.types().GetInstId(inst.type_id()));
+    worklist.Push(context.types().GetTypeInstId(inst.type_id()));
   }
   PushOperand(context, worklist, inst.arg0_and_kind());
   PushOperand(context, worklist, inst.arg1_and_kind());

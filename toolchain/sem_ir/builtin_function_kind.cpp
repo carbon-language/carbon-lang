@@ -76,7 +76,7 @@ template <const TypeInstId& BuiltinId>
 struct BuiltinType {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
                         TypeId type_id) -> bool {
-    return sem_ir.types().GetInstId(type_id) == BuiltinId;
+    return sem_ir.types().GetTypeInstId(type_id) == BuiltinId;
   }
 };
 
@@ -199,7 +199,7 @@ struct AnyType {
 struct CoreStringType {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
                         TypeId type_id) -> bool {
-    auto type_inst_id = sem_ir.types().GetInstId(type_id);
+    auto type_inst_id = sem_ir.types().GetTypeInstId(type_id);
     auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
     if (!class_type) {
       return false;
@@ -214,7 +214,7 @@ struct CoreStringType {
 struct CoreCharType {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
                         TypeId type_id) -> bool {
-    auto type_inst_id = sem_ir.types().GetInstId(type_id);
+    auto type_inst_id = sem_ir.types().GetTypeInstId(type_id);
     auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
     if (!class_type) {
       return false;

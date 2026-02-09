@@ -152,7 +152,7 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    Add(sem_ir->types().GetInstId(type_id));
+    Add(sem_ir->types().GetTypeInstId(type_id));
   }
 
   template <typename T>

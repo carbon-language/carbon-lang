@@ -209,7 +209,7 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
   // block.
   auto rebuild_generic_constant_callbacks =
       RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
-  auto type_inst_id = SubstInst(context, context.types().GetInstId(type_id),
+  auto type_inst_id = SubstInst(context, context.types().GetTypeInstId(type_id),
                                 rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));

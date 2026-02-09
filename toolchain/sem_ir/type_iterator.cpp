@@ -58,7 +58,7 @@ auto TypeIterator::Next() -> Step {
 }
 
 auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
-  auto inst_id = sem_ir_->types().GetInstId(type_id);
+  auto inst_id = sem_ir_->types().GetTypeInstId(type_id);
   auto inst = sem_ir_->insts().Get(inst_id);
   CARBON_KIND_SWITCH(inst) {
       // ==== Symbolic types ====

@@ -103,7 +103,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
 
     BeginSubpattern(context);
     auto self_type_region_id = EndSubpatternAsExpr(
-        context, context.types().GetInstId(signature.self_type_id));
+        context, context.types().GetTypeInstId(signature.self_type_id));
 
     self_param_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
                                     self_type_region_id, signature.self_type_id,
@@ -124,7 +124,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
     for (auto param_type_id : signature.param_type_ids) {
       BeginSubpattern(context);
       auto param_type_region_id = EndSubpatternAsExpr(
-          context, context.types().GetInstId(param_type_id));
+          context, context.types().GetTypeInstId(param_type_id));
 
       context.inst_block_stack().AddInstId(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
@@ -140,7 +140,8 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
                                    .type_id = SemIR::TypeId::None};
   if (signature.return_type_id.has_value()) {
     return_form = ExprAsReturnForm(
-        context, loc_id, context.types().GetInstId(signature.return_type_id));
+        context, loc_id,
+        context.types().GetTypeInstId(signature.return_type_id));
     return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
   }
 

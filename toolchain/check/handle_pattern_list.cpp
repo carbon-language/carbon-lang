@@ -80,7 +80,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   for (auto inst : inst_block) {
     auto type_id = ExtractScrutineeType(context.sem_ir(),
                                         context.insts().Get(inst).type_id());
-    type_inst_ids.push_back(context.types().GetInstId(type_id));
+    type_inst_ids.push_back(context.types().GetTypeInstId(type_id));
   }
   auto type_id = GetPatternType(context, GetTupleType(context, type_inst_ids));
   context.node_stack().Push(
