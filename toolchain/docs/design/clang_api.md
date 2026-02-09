@@ -84,11 +84,11 @@ void f1() {
 }
 ```
 
-* `HandleTopLevelDecl` this is the main callback that handles each top level
-  (nested only within namespaces \- not within another class or function)
-  declarations for code generation
-* `EmitDeferredDecls`\+`HandleInlineFunctionDefinition` for emitting inline
-  function definitions in certain situations, like this:
+-   `HandleTopLevelDecl` this is the main callback that handles each top level
+    (nested only within namespaces \- not within another class or function)
+    declarations for code generation
+-   `EmitDeferredDecls`\+`HandleInlineFunctionDefinition` for emitting inline
+    function definitions in certain situations, like this:
 
 ```cpp
 struct t2 {
