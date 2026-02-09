@@ -853,13 +853,15 @@ terms of the expression's form:
 An expression and its result always have the same form.
 
 The code that accesses the result of an expression is said to _consume_ that
-result, and every result is consumed exactly once (except in certain narrow
-contexts where the result is known not to have any initializing sub-results). If
-the expression's result isn't explicitly accessed, such as when the expression
-is used as a statement, or is matched with an
+result, and every primitive-form result is consumed exactly once (except in
+certain narrow contexts where the result is known not to be initializing). If a
+result isn't explicitly accessed, such as when the expression is used as a
+statement, or is matched with an
 [unused binding pattern](pattern_matching.md#unused-bindings), it is said to be
-_discarded_. Discarding consumes a result by materializing any initializing
-sub-results, and then immediately destroying them.
+_discarded_, which consumes it in the absence of an explicit consumer.
+Discarding an initializing result materializes and then immediately destroys it.
+Discarding an entire ephemeral reference destroys the object it refers to.
+Discarding a value or any other kind of reference is a no-op.
 
 ### Initializing results
 
@@ -912,8 +914,6 @@ expression. The source of that location depends on the consumer:
 -   If the consumer is a temporary materialization conversion, the result
     location is newly-allocated temporary storage (which the consumer may
     subsequently lifetime-extend to durable storage).
--   If the consumer is a struct or tuple literal, the result location is
-    propagated from the literal's consumer.
 -   If the consumer is a `return` statement, and the initializing result
     corresponds to an initializing sub-form of the function's return form, the
     result location is the implicit output parameter corresponding to that
