@@ -364,7 +364,7 @@ Here, both `x` and `y` would be diagnosed as unused at the `}`. The order would
 be non-deterministic, hindering golden tests.
 
 This could be partially addressed by sorting the diagnostics locally (for
-example, sorting each `unused` diagnostic together) is an incomplete solution
+example, sorting each `unused` diagnostic together), but this is an incomplete solution
 because we may introduce further scope-related checks, particularly flow
 checking (for example, checking if there are provable out-of-bounds accesses).
 These would all have the same last processed tokens. It also would likely lead
