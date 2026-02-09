@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Different uses of Clang's APIs](#different-uses-of-clang's-apis)
+-   [Different uses of Clang's APIs](#different-uses-of-clangs-apis)
     -   [Clang](#clang)
     -   [Swift](#swift)
     -   [LLDB](#lldb)
