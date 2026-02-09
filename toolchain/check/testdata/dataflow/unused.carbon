@@ -299,3 +299,31 @@ class C(unused T:! type) {}
 //   // CHECK:STDERR:
 //   var y: i32 = 0;
 // }
+
+// TODO: Multiple diagnostics on same line has non-deterministic order.
+// Uncomment after adding second sort key in diagnostics sorting.
+//
+// // --- fail_unused_tuple.carbon
+// library "[[@TEST_NAME]]";
+//
+// fn F() -> i32 {
+//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+3]]:15: error: variable `a` marked `unused` but used [UnusedButUsed]
+//  // CHECK:STDERR:   let unused (a: i32,
+//  // CHECK:STDERR:               ^
+//  let unused (a: i32,
+//              b: i32) = (1, 2);
+//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+7]]:16: note: usage here [UnusedButUsedHere]
+//  // CHECK:STDERR:   let i: i32 = a;
+//  // CHECK:STDERR:                ^
+//  // CHECK:STDERR:
+//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE-5]]:15: error: variable `b` marked `unused` but used [UnusedButUsed]
+//  // CHECK:STDERR:               b: i32) = (1, 2);
+//  // CHECK:STDERR:               ^
+//  let i: i32 = a;
+//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+4]]:23: note: usage here [UnusedButUsedHere]
+//  // CHECK:STDERR:   let unused j: i32 = b;
+//  // CHECK:STDERR:                       ^
+//  // CHECK:STDERR:
+//  let unused j: i32 = b;
+//  return i;
+// }
