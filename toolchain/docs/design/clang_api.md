@@ -97,9 +97,9 @@ struct t2 {
 };
 ```
 
-* `HandleTagDeclDefinition` updates types in the IR when a definition is
-  provided later (not relevant to Carbon or Swift since they only generate the
-  IR once the AST is complete anyway), eg:
+-   `HandleTagDeclDefinition` updates types in the IR when a definition is
+    provided later (not relevant to Carbon or Swift since they only generate the
+    IR once the AST is complete anyway), eg:
 
 ```cpp
 struct S;
