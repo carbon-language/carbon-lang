@@ -38,6 +38,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -196,6 +197,8 @@ class File : public Printable<File> {
   auto require_impls_blocks() const -> const RequireImplsBlockStore& {
     return require_impls_blocks_;
   }
+  auto observes() -> ObserveStore& { return observes_; }
+  auto observes() const -> const ObserveStore& { return observes_; }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -374,6 +377,9 @@ class File : public Printable<File> {
 
   // Storage for blocks of RequireImpls.
   RequireImplsBlockStore require_impls_blocks_;
+
+  // Storage for observes.
+  ObserveStore observes_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;

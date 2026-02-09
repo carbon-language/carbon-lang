@@ -478,6 +478,13 @@ struct Worklist {
     Add(require.parent_scope_id);
   }
 
+  auto Add(ObserveId observe_id) -> void {
+    CARBON_CHECK(observe_id.has_value());
+    const auto& observe = sem_ir->observes().Get(observe_id);
+    Add(observe.parent_scope_id);
+    Add(sem_ir->constant_values().Get(observe.parent_scope_inst_id));
+  }
+
   auto Add(AssociatedConstantId assoc_const_id) -> void {
     AddEntity<AssociatedConstant>(
         sem_ir->associated_constants().Get(assoc_const_id));

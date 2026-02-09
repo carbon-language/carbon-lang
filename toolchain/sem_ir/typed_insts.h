@@ -1725,12 +1725,13 @@ struct ObserveImpls {
 // A `observe ...` declaration.
 struct ObserveDecl {
   static constexpr auto Kind =
-      InstKind::ObserveEquivalent.Define<Parse::ObserveDeclId>(
+      InstKind::ObserveDecl.Define<Parse::ObserveDeclId>(
           {.ir_name = "observe_decl",
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
   // No type since not an expression
+  ObserveId observe_id;
   InstBlockId operations_id;
 };
 

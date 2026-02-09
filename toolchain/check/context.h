@@ -356,6 +356,7 @@ class Context {
   auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
     return sem_ir().require_impls_blocks();
   }
+  auto observes() -> SemIR::ObserveStore& { return sem_ir().observes(); }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }

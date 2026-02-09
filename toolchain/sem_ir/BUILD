@@ -138,6 +138,7 @@ cc_library(
         "name.h",
         "name_scope.h",
         "named_constraint.h",
+        "observe.h",
         "pattern.h",
         "require_impls.h",
         "struct_type_field.h",

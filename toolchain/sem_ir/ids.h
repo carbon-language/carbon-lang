@@ -1010,6 +1010,13 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of an `Observe`.
+struct ObserveId : public IdBase<ObserveId> {
+  static constexpr llvm::StringLiteral Label = "observe";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a bundle of arguments with an unspecified type.
 struct RawBundleId : public IdBase<RawBundleId> {
   static constexpr llvm::StringLiteral Label = "bundle";

@@ -19,20 +19,19 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     -> bool {
-  auto scope_id = context.scope_stack().PeekNameScopeId();
-  if (!context.scope_stack().IsInFunctionScope() &&
-      (scope_id == SemIR::NameScopeId::None ||
-       !context.insts().Is<SemIR::InterfaceDecl>(
-           context.name_scopes().Get(scope_id).inst_id()))) {
+  auto scope_inst_id = context.scope_stack().PeekInstId();
+  if (!context.insts().IsOneOf<SemIR::InterfaceDecl, SemIR::FunctionDecl>(
+          scope_inst_id)) {
     CARBON_DIAGNOSTIC(
         ObserveInWrongScope, Error,
         "`observe` can only be used in an `interface` or `function`");
     context.emitter().Emit(node_id, ObserveInWrongScope);
+    scope_inst_id = SemIR::ErrorInst::InstId;
   }
 
   context.inst_block_stack().Push();
 
-  context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  context.node_stack().Push(node_id, scope_inst_id);
   return true;
 }
 
@@ -77,10 +76,24 @@ auto HandleParseNode(Context& context, Parse::ObserveImplsId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
   context.node_stack().PopAndIgnore();
-  context.node_stack().Pop<Parse::NodeKind::ObserveIntroducer>();
+  auto scope_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::ObserveIntroducer>();
   auto operations_id = context.inst_block_stack().Pop();
-  AddInst<SemIR::ObserveDecl>(context, node_id,
-                              {.operations_id = operations_id});
+
+  if (scope_inst_id == SemIR::ErrorInst::InstId) {
+    // Declared in wrong scope, we already diagnosed this.
+    return true;
+  }
+
+  auto observe_decl = SemIR::ObserveDecl{// To be filled in after.
+                                         .observe_id = SemIR::ObserveId::None,
+                                         .operations_id = operations_id};
+  auto decl_id = AddPlaceholderInst(context, node_id, observe_decl);
+  observe_decl.observe_id = context.observes().Add(
+      {.decl_id = decl_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .parent_scope_inst_id = scope_inst_id});
+  ReplaceInstBeforeConstantUse(context, decl_id, observe_decl);
   return true;
 }
 

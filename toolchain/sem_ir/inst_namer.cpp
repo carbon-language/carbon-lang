@@ -189,6 +189,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<NamedConstraintWithSelfId>:
 
+      offset += sem_ir_->observes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ObserveId>:
+
       offset += sem_ir_->require_impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<RequireImplsId>:
@@ -633,6 +637,20 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   }
   PushBlockId(scope_id, fn.pattern_block_id);
   PushBlockId(scope_id, fn.call_params_id);
+}
+
+auto InstNamer::PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope)
+    -> void {
+  const auto& observe = sem_ir_->observes().Get(observe_id);
+  LocId observe_loc(observe.decl_id);
+
+  auto scope_prefix = GetNameForParentNameScope(observe.parent_scope_id);
+
+  scope.name = globals_.AllocateName(
+      *this, observe_loc, llvm::formatv("{0}.observe", scope_prefix));
+
+  auto decl = sem_ir_->insts().GetAs<SemIR::ObserveDecl>(observe.decl_id);
+  AddBlockLabel(scope_id, decl.operations_id, "observe", observe_loc);
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
