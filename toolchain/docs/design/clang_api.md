@@ -200,7 +200,7 @@ pausing, doing some Carbon work, then finishing up in lowering:
 
 ### New Carbon approach
 
-Since PR5543, several changes (especially 
+Since PR5543, several changes (especially
 [PR6237](https://github.com/carbon-language/carbon-lang/pull/6237)) have been
 made to Clang for related but incremental reasons. This has resulted in what was
 indivisible work that motivated PR5543's multithreading to be inlined into
