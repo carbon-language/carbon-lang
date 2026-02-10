@@ -101,9 +101,8 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
 }
 
 auto GetTypeForSpecificAssociatedEntity(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId decl_id)
-    -> SemIR::TypeId {
+    Context& context, SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::InstId decl_id) -> SemIR::TypeId {
   auto decl_constant_inst_id =
       context.constant_values().GetConstantInstId(decl_id);
   if (decl_constant_inst_id == SemIR::ErrorInst::InstId) {
@@ -112,8 +111,6 @@ auto GetTypeForSpecificAssociatedEntity(
 
   auto decl = context.insts().Get(decl_constant_inst_id);
   if (auto assoc_const = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
-    // FIXME: Remove loc_id.
-    (void)loc_id;
     return SemIR::GetTypeOfInstInSpecific(
         context.sem_ir(), interface_with_self_specific_id, decl_id);
   }

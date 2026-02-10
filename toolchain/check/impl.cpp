@@ -465,8 +465,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       // Get the type of the associated constant in this interface with this
       // value for `Self`.
       assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-          context, SemIR::LocId(impl.constraint_id),
-          interface_with_self_specific_id, decl_id);
+          context, interface_with_self_specific_id, decl_id);
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
       // was symbolic.

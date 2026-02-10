@@ -200,7 +200,7 @@ static auto AccessMemberOfImplWitness(
   // associated entity to find the type of the member access.
   LoadImportRef(context, assoc_entity->decl_id);
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_with_self_specific_id, assoc_entity->decl_id);
+      context, interface_with_self_specific_id, assoc_entity->decl_id);
 
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
                                                 {.type_id = assoc_type_id,
@@ -705,7 +705,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   // the type of that element. It depends on the self type and the specific
   // interface.
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_with_self_specific_id, assoc_entity.decl_id);
+      context, interface_with_self_specific_id, assoc_entity.decl_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,

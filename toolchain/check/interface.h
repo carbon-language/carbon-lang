@@ -36,9 +36,8 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
 // Gets the type of the specified associated entity, given the specific for the
 // interface and the type of `Self`.
 auto GetTypeForSpecificAssociatedEntity(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId decl_id)
-    -> SemIR::TypeId;
+    Context& context, SemIR::SpecificId interface_with_self_specific_id,
+    SemIR::InstId decl_id) -> SemIR::TypeId;
 
 // Creates a symbolic binding for `Self` of type `type_id` in the scope of
 // `scope_id`.
