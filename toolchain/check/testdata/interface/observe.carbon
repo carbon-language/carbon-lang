@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/observe.carbon
 
-// --- base.carbon
+// --- fail_todo_equivalent.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -33,50 +33,75 @@ interface Transitive {
 fn F[T:! Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // CHECK:STDERR: base.carbon:[[@LINE+7]]:3: error: cannot convert type `T.(Transitive.A)` that implements `P` into type implementing `R where...` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+7]]:3: error: cannot convert type `T.(Transitive.A)` that implements `P` into type implementing `R where...` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   t.TakesC(a);
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: base.carbon:[[@LINE-11]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE-11]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:   fn TakesC[self: Self](c: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   t.TakesC(a);
 
-  // CHECK:STDERR: base.carbon:[[@LINE+11]]:4: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+11]]:4: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
   // CHECK:STDERR:   (a as T.C).InR();
   // CHECK:STDERR:    ^~~~~~~~
-  // CHECK:STDERR: base.carbon:[[@LINE+8]]:4: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+8]]:4: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (a as T.C).InR();
   // CHECK:STDERR:    ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: base.carbon:[[@LINE-18]]:3: error: cannot access member of interface `Core.Destroy` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE-18]]:3: error: cannot access member of interface `Core.Destroy` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   var a: T.A = t.GetA();
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   (a as T.C).InR();
 }
 
-// --- impls.carbon
+// --- fail_todo_impls.carbon
 
 library "[[@TEST_NAME]]";
 
-interface A { }
-interface B { require impls A; }
+interface A {}
+interface B {}
 
 fn RequiresA[T:! A](x: T) {}
 fn F[T:! B](x: T) {
   observe T impls A;
-  // CHECK:STDERR: impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   RequiresA(x);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: impls.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn RequiresA[T:! A](x: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   RequiresA(x);
 }
 
-// CHECK:STDOUT: --- base.carbon
+// --- fail_non_facet_type_in_impls.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {}
+interface A {}
+
+fn F[T:! A](x: T) {
+  // CHECK:STDERR: fail_non_facet_type_in_impls.carbon:[[@LINE+4]]:19: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
+  // CHECK:STDERR:   observe T impls C;
+  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
+  observe T impls C;
+}
+
+// --- fail_wrong_scope.carbon
+
+class C(T:! type, U:! type) {
+  // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+4]]:3: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+  // CHECK:STDERR:   observe T == U;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  observe T == U;
+}
+
+// CHECK:STDOUT: --- fail_todo_equivalent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %P.type: type = facet_type <@P> [concrete]
@@ -579,14 +604,13 @@ fn F[T:! B](x: T) {
 // CHECK:STDOUT:   %impl.elem1 => constants.%impl.elem1.32a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impls.carbon
+// CHECK:STDOUT: --- fail_todo_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self.c51: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self.d0b: %B.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.d0b [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T.5a3: %A.type = symbolic_binding T, 0 [symbolic]
@@ -673,27 +697,12 @@ fn F[T:! B](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d0b]
-// CHECK:STDOUT:   %B.Self.binding.as_type.impls.A.type.require.decl = require_decl @B.Self.binding.as_type.impls.A.type.require [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls %A.ref
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @B.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.Self.binding.as_type.impls.A.type.require {
-// CHECK:STDOUT:     require @B.Self.binding.as_type.impls.A.type.require.%Self.as_type impls @B.Self.binding.as_type.impls.A.type.require.%A.ref
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.Self.binding.as_type.impls.A.type.require(@B.%Self: %B.type) {
-// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d0b)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc7_14.2: %A.type) {
@@ -727,11 +736,6 @@ fn F[T:! B](x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.Self.binding.as_type.impls.A.type.require(constants.%Self.d0b) {
-// CHECK:STDOUT:   %Self => constants.%Self.d0b
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @RequiresA(constants.%T.5a3) {
 // CHECK:STDOUT:   %T.loc7_14.1 => constants.%T.5a3
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type.0b3
@@ -742,5 +746,161 @@ fn F[T:! B](x: T) {
 // CHECK:STDOUT:   %T.loc8_6.1 => constants.%T.5ee
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type.856
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fae
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_non_facet_type_in_impls.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T: %A.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.faf: type = pattern_type %A.type [concrete]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.057: type = pattern_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.faf = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.057) = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.057) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc7_10: type = splice_block %A.ref [concrete = constants.%A.type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc7_6.2: %A.type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @F.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc7_16.1: type = splice_block %.loc7_16.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
+// CHECK:STDOUT:       %T.ref: %A.type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc7_16.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: @F.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @A {
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T.loc7_6.2: %A.type) {
+// CHECK:STDOUT:   %T.loc7_6.1: %A.type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc7_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.057)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc8_11, <unexpected>.inst{{[0-9A-F]+}}.loc8_19, <unexpected>.inst{{[0-9A-F]+}}.loc8_11, <unexpected>.inst{{[0-9A-F]+}}.loc8_11, <unexpected>.inst{{[0-9A-F]+}}.loc8_13)
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.loc7_6.1 => constants.%T
+// CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.057
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_wrong_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T, %U) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type = symbolic_binding_pattern U, 1 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc2_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc2_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %U.loc2_19.2: type = symbolic_binding U, 1 [symbolic = %U.loc2_19.1 (constants.%U)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(%T.loc2_9.2: type, %U.loc2_19.2: type) {
+// CHECK:STDOUT:   %T.loc2_9.1: type = symbolic_binding T, 0 [symbolic = %T.loc2_9.1 (constants.%T)]
+// CHECK:STDOUT:   %U.loc2_19.1: type = symbolic_binding U, 1 [symbolic = %U.loc2_19.1 (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .U = <poisoned>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.loc2_9.1 => constants.%T
+// CHECK:STDOUT:   %U.loc2_19.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
