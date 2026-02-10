@@ -112,18 +112,10 @@ auto GetTypeForSpecificAssociatedEntity(
 
   auto decl = context.insts().Get(decl_constant_inst_id);
   if (auto assoc_const = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
-    // Form a specific for the associated constant, and grab the type from
-    // there.
-    //
-    // FIXME: THis generic goes away entirely.
-    auto generic_id = context.associated_constants()
-                          .Get(assoc_const->assoc_const_id)
-                          .generic_id;
-    auto args_id =
-        context.specifics().GetArgsOrEmpty(interface_with_self_specific_id);
-    auto const_specific_id = MakeSpecific(context, loc_id, generic_id, args_id);
-    return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
-                                          decl_id);
+    // FIXME: Remove loc_id.
+    (void)loc_id;
+    return SemIR::GetTypeOfInstInSpecific(
+        context.sem_ir(), interface_with_self_specific_id, decl_id);
   }
 
   if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(decl.type_id())) {

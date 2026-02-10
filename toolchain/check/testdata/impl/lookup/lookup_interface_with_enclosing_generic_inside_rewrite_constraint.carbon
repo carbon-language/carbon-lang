@@ -222,10 +222,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc49_13.2: type, @Y.%Self.loc50_15.1: @Y.%Y.type (%Y.type.6b3)) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Y.impl: %C.ref as %.loc58_23 {
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
@@ -341,16 +337,12 @@ fn F() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.049
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.8ed) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%OuterParam, constants.%.Self.cf7) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam.loc51 => constants.%OuterParam
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.978
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.049
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.cf7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
@@ -396,8 +388,6 @@ fn F() {
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.4bc
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.7fe
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%empty_tuple.type, constants.%.Self.f22) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%empty_tuple.type, constants.%Y.facet) {
 // CHECK:STDOUT: !definition:
@@ -586,10 +576,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc6_13.2: %Z1.type, @Y.%Self.loc7_15.1: @Y.%Y.type (%Y.type.6ae)) {
-// CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Y.impl(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
@@ -801,16 +787,12 @@ fn F() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.43a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.f29) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%OuterParam, constants.%.Self.997) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam.loc8 => constants.%OuterParam
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.aab
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.43a
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.997) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam

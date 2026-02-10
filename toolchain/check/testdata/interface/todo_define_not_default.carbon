@@ -153,18 +153,6 @@ interface I {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self.loc15: %I.type) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   assoc_const T:! type = %.loc22_28;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @N(@I.%Self.loc15: %I.type) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc23_19.2;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.F(@I.%Self.loc15: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -192,8 +180,4 @@ interface I {
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.G(constants.%Self.ab9) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @N(constants.%Self.ab9) {}
 // CHECK:STDOUT:

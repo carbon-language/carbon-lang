@@ -532,15 +532,16 @@ auto InstNamer::PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
 }
 
 auto InstNamer::PushEntity(AssociatedConstantId associated_constant_id,
-                           ScopeId scope_id, Scope& scope) -> void {
+                           [[maybe_unused]] ScopeId scope_id, Scope& scope)
+    -> void {
   const auto& assoc_const =
       sem_ir_->associated_constants().Get(associated_constant_id);
   scope.name = globals_.AllocateName(
       *this, LocId(assoc_const.decl_id),
       sem_ir_->names().GetIRBaseName(assoc_const.name_id).str());
 
-  // Push blocks in reverse order.
-  PushGeneric(scope_id, assoc_const.generic_id);
+  // The `decl_block_id` is associated with this `scope_id` from the
+  // AssociatedConstantDecl instruction handler.
 }
 
 auto InstNamer::PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope)

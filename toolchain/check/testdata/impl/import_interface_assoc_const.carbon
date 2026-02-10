@@ -293,41 +293,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T1(@I3.%Self: %I3.type) {
-// CHECK:STDOUT:   assoc_const T1:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T2(@I3.%Self: %I3.type) {
-// CHECK:STDOUT:   assoc_const T2:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T3(@I3.%Self: %I3.type) {
-// CHECK:STDOUT:   assoc_const T3:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Y(@NonType.%Self: %NonType.type) {
-// CHECK:STDOUT:   assoc_const Y:! %struct_type.a;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I3(constants.%Self.70b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(constants.%Self.70b) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T2(constants.%Self.70b) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T3(constants.%Self.70b) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonType(constants.%Self.13f) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self.13f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -358,7 +328,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -397,10 +366,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C1.as.I.impl: %C1.ref as %.loc5_14 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C1.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -425,10 +390,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -463,7 +424,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -518,10 +478,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C2.as.I.impl: %C2.ref.loc5 as %.loc5_14 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C2.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -546,10 +502,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -584,7 +536,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -627,10 +578,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C3.as.I.impl.4fb: %C3.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C3.as.I.impl.b9a: %C3.ref as %.loc10_14 {
@@ -657,10 +604,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -698,7 +641,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -753,10 +695,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C4.as.I.impl.2eb: %C4.ref as %.loc9_14;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C4.as.I.impl.95c: %C4.ref as %.loc10_14 {
@@ -783,10 +721,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -828,13 +762,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.6d9 = import_ref Main//interface, loc5_14, unloaded
 // CHECK:STDOUT:   %Main.import_ref.889: type = import_ref Main//interface, loc6_9, loaded [concrete = %T1]
 // CHECK:STDOUT:   %T1: type = assoc_const_decl @T1 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.e58186.2: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.fa1: type = import_ref Main//interface, loc7_9, loaded [concrete = %T2]
 // CHECK:STDOUT:   %T2: type = assoc_const_decl @T2 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.e58186.3: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.c77: type = import_ref Main//interface, loc8_9, loaded [concrete = %T3]
 // CHECK:STDOUT:   %T3: type = assoc_const_decl @T3 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.e58186.4: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -925,18 +856,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T1(imports.%Main.import_ref.e58186.2: %I3.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T1:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T2(imports.%Main.import_ref.e58186.3: %I3.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T2:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T3(imports.%Main.import_ref.e58186.4: %I3.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T3:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.1: %C5.ref as %.loc17_15;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C5.as.<error>.impl.bcbfb8.2: %C5.ref as %.loc27_15 {
@@ -959,18 +878,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I3(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(constants.%.Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T2(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T2(constants.%.Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T3(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T3(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_missing_on_definition.carbon
 // CHECK:STDOUT:
@@ -1001,7 +908,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1044,10 +950,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C6.as.I.impl.756: %C6.ref as %.loc5_14;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C6.as.I.impl.27c: %C6.ref as %I.ref {
@@ -1073,10 +975,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -1110,7 +1008,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1158,10 +1055,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C7.as.<error>.impl: %C7.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
@@ -1182,10 +1075,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_first_bad.carbon
 // CHECK:STDOUT:
@@ -1214,7 +1103,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1262,10 +1150,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C8.as.<error>.impl: %C8.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
@@ -1286,10 +1170,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_second_bad.carbon
 // CHECK:STDOUT:
@@ -1317,7 +1197,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1365,10 +1244,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C9.as.<error>.impl: %C9.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
@@ -1389,10 +1264,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_both_bad.carbon
 // CHECK:STDOUT:
@@ -1419,7 +1290,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1467,10 +1337,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @CA.as.<error>.impl: %CA.ref as %.loc14_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
@@ -1491,10 +1357,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeated.carbon
 // CHECK:STDOUT:
@@ -1525,7 +1387,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9c9: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1573,10 +1434,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.2362f8.2: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @CB.as.I.impl: %CB.ref as %.loc6_14 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @CB.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -1601,10 +1458,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -1641,7 +1494,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.import_ref.e7e = import_ref Main//interface, loc11_19, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e29: %struct_type.a.225 = import_ref Main//interface, loc12_8, loaded [concrete = %Y]
 // CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.a24217.2: %NonType.type = import_ref Main//interface, loc11_19, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1684,10 +1536,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Y(imports.%Main.import_ref.a24217.2: %NonType.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @CC.as.NonType.impl: %CC.ref as %.loc6_20 {
 // CHECK:STDOUT:   %NonType.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @CC.as.NonType.impl [concrete]
 // CHECK:STDOUT:   %NonType.impl_witness: <witness> = impl_witness %NonType.impl_witness_table [concrete = constants.%NonType.impl_witness]
@@ -1712,10 +1560,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @NonType(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonType(constants.%NonType.facet) {
 // CHECK:STDOUT: !definition:

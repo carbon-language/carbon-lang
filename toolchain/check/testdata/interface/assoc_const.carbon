@@ -77,23 +77,5 @@ interface I {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const N:! %i32;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Empty(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const Empty:! %empty_tuple.type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @N(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Self) {}
 // CHECK:STDOUT:

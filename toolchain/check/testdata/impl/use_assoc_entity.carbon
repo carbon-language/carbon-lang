@@ -558,10 +558,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.J.impl: %.loc8_7.2 as %.loc8_14 {
 // CHECK:STDOUT:   %empty_tuple.type.as.J.impl.F.decl: %empty_tuple.type.as.J.impl.F.type = fn_decl @empty_tuple.type.as.J.impl.F [concrete = constants.%empty_tuple.type.as.J.impl.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = value_binding_pattern self [concrete]
@@ -695,8 +691,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F => constants.%J.F.569
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.ed8
@@ -713,8 +707,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F.type => constants.%J.F.type.e19
 // CHECK:STDOUT:   %J.F => constants.%J.F.659
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%.Self.2fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet.a51) {
 // CHECK:STDOUT: !definition:
@@ -913,10 +905,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.J.impl: %D.ref as %.loc10_13 {
 // CHECK:STDOUT:   %D.as.J.impl.F.decl: %D.as.J.impl.F.type = fn_decl @D.as.J.impl.F [concrete = constants.%D.as.J.impl.F] {
 // CHECK:STDOUT:     %u.patt: %pattern_type.7ce = value_binding_pattern u [concrete]
@@ -1001,8 +989,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F => constants.%J.F.569
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.89e
@@ -1017,8 +1003,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F.type => constants.%J.F.type.e19
 // CHECK:STDOUT:   %J.F => constants.%J.F.659
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%.Self.2fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
@@ -1327,10 +1311,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.J.impl: %Self.ref as %.loc10_20 {
 // CHECK:STDOUT:   %E.as.J.impl.F.decl: %E.as.J.impl.F.type = fn_decl @E.as.J.impl.F [concrete = constants.%E.as.J.impl.F] {
 // CHECK:STDOUT:     %u.patt: %pattern_type.7ce = value_binding_pattern u [concrete]
@@ -1635,8 +1615,6 @@ fn F() {
 // CHECK:STDOUT:   %J.G => constants.%J.G.6e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.89e
@@ -1663,8 +1641,6 @@ fn F() {
 // CHECK:STDOUT:   %J.G.type => constants.%J.G.type.2cf
 // CHECK:STDOUT:   %J.G => constants.%J.G.4f5
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%.Self.2fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
@@ -1710,8 +1686,6 @@ fn F() {
 // CHECK:STDOUT:   %J.G.type => constants.%J.G.type.b2e
 // CHECK:STDOUT:   %J.G => constants.%J.G.310
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericCallF(constants.%T) {
 // CHECK:STDOUT:   %T.loc28_17.1 => constants.%T
@@ -1967,10 +1941,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc7: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! %facet_type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.Op(@I.%Self.loc3: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.ab9)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
@@ -2087,8 +2057,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F => constants.%J.F.569
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.89e
@@ -2104,8 +2072,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F.type => constants.%J.F.type.41f
 // CHECK:STDOUT:   %J.F => constants.%J.F.f01
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericResult(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_18.1 => constants.%T
@@ -2280,10 +2246,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @J.G(@J.%Self.loc3: %J.type) {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -2336,8 +2298,6 @@ fn F() {
 // CHECK:STDOUT:   %J.G => constants.%J.G.6e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
@@ -2354,8 +2314,6 @@ fn F() {
 // CHECK:STDOUT:   %J.G.type => constants.%J.G.type.b2e
 // CHECK:STDOUT:   %J.G => constants.%J.G.310
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericCallInterfaceQualified(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_34.1 => constants.%T
@@ -2538,10 +2496,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @J.F(@J.%Self.loc3: %J.type) {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8a1)]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @J [symbolic = %J.lookup_impl_witness (constants.%J.lookup_impl_witness.89e)]
@@ -2592,8 +2546,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F => constants.%J.F.569
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.89e
@@ -2608,8 +2560,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F.type => constants.%J.F.type.e19
 // CHECK:STDOUT:   %J.F => constants.%J.F.659
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%.Self.2fa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericCallFI32(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_20.1 => constants.%T
@@ -2740,10 +2690,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@J.%Self.loc3: %J.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.J.impl: %Self.ref as %.loc9_20 {
 // CHECK:STDOUT:   %E.as.J.impl.F.decl.loc27_21.1: %E.as.J.impl.F.type.4b5c2a.1 = fn_decl @E.as.J.impl.F.loc27_21.1 [concrete = constants.%E.as.J.impl.F.b4e6ab.1] {
 // CHECK:STDOUT:     %u.patt: <error> = value_binding_pattern u [concrete]
@@ -2840,8 +2786,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F => constants.%J.F.569
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%Self.8a1) {
 // CHECK:STDOUT:   %Self => constants.%Self.8a1
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.89e
@@ -2856,8 +2800,6 @@ fn F() {
 // CHECK:STDOUT:   %J.F.type => constants.%J.F.type.e19
 // CHECK:STDOUT:   %J.F => constants.%J.F.659
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
@@ -3237,10 +3179,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@J.%Self: %J.type) {
-// CHECK:STDOUT:   assoc_const X:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.J.impl: %Self.ref as %.loc8_20 {
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @E.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
@@ -3292,13 +3230,9 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.8a1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
@@ -3447,10 +3381,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U2, %J2.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U2(@J2.%Self.loc3: %J2.type) {
-// CHECK:STDOUT:   assoc_const U2:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.J2.impl: %.loc22_7.2 as %.loc22_15 {
@@ -3602,8 +3532,6 @@ fn F() {
 // CHECK:STDOUT:   %J2.F => constants.%J2.F.643
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @U2(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J2.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
@@ -3616,8 +3544,6 @@ fn F() {
 // CHECK:STDOUT:   %J2.F.type => constants.%J2.F.type.30c
 // CHECK:STDOUT:   %J2.F => constants.%J2.F.99a
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U2(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J2(constants.%J2.facet.6c9) {
 // CHECK:STDOUT: !definition:
@@ -3773,10 +3699,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @V(@K.%Self.loc3: %K.type) {
-// CHECK:STDOUT:   assoc_const V:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.K.impl: %.loc11_7.2 as %.loc11_14 {
 // CHECK:STDOUT:   %empty_tuple.type.as.K.impl.F.decl.loc26_45.1: %empty_tuple.type.as.K.impl.F.type.1710d5.1 = fn_decl @empty_tuple.type.as.K.impl.F.loc26_45.1 [concrete = constants.%empty_tuple.type.as.K.impl.F.907e52.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = value_binding_pattern self [concrete]
@@ -3876,8 +3798,6 @@ fn F() {
 // CHECK:STDOUT:   %K.F => constants.%K.F.f53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @V(constants.%Self.44d) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.F(constants.%Self.44d) {
 // CHECK:STDOUT:   %Self => constants.%Self.44d
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.87a
@@ -3894,8 +3814,6 @@ fn F() {
 // CHECK:STDOUT:   %K.F.type => constants.%K.F.type.262
 // CHECK:STDOUT:   %K.F => constants.%K.F.40c
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @V(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K(constants.%K.facet) {
 // CHECK:STDOUT: !definition:
@@ -4013,10 +3931,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Z(@M.%Self.loc3: %M.type) {
-// CHECK:STDOUT:   assoc_const Z:! %struct_type.b.347;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.M.impl: %.loc8_7.2 as %.loc8_14 {
 // CHECK:STDOUT:   %empty_tuple.type.as.M.impl.G.decl: %empty_tuple.type.as.M.impl.G.type = fn_decl @empty_tuple.type.as.M.impl.G [concrete = constants.%empty_tuple.type.as.M.impl.G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
@@ -4065,8 +3979,6 @@ fn F() {
 // CHECK:STDOUT:   %M.G => constants.%M.G.020
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @M.G(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @M(constants.%.Self) {
@@ -4076,8 +3988,6 @@ fn F() {
 // CHECK:STDOUT:   %M.G => constants.%M.G.6c7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%.Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @M(constants.%M.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc5 => constants.%M.facet
@@ -4086,8 +3996,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @M.G(constants.%M.facet) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%M.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- self_as_uses_correct_rewrite_constraint.carbon
 // CHECK:STDOUT:
@@ -4250,10 +4158,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Z(@M.%Self.loc5: %M.type) {
-// CHECK:STDOUT:   assoc_const Z:! %struct_type.b.86f;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.M.impl.20d: %C as %.loc10_17 {
 // CHECK:STDOUT:   %C.as.M.impl.G.decl: %C.as.M.impl.G.type.107 = fn_decl @C.as.M.impl.G.loc11 [concrete = constants.%C.as.M.impl.G.eb6] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
@@ -4355,8 +4259,6 @@ fn F() {
 // CHECK:STDOUT:   %M.G => constants.%M.G.020
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.0c7) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @M.G(constants.%Self.0c7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_struct_type) {
@@ -4370,8 +4272,6 @@ fn F() {
 // CHECK:STDOUT:   %M.G => constants.%M.G.6c7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%.Self.b4d) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @M(constants.%M.facet.9e0) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc7 => constants.%M.facet.9e0
@@ -4380,8 +4280,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @M.G(constants.%M.facet.9e0) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%M.facet.9e0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %T.loc3_9.1 => constants.%empty_tuple.type
@@ -4395,8 +4293,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @M.G(constants.%M.facet.586) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%M.facet.586) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_int_in_array.carbon
 // CHECK:STDOUT:
@@ -4593,10 +4489,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @N(@I.%Self.loc3: %I.type) {
-// CHECK:STDOUT:   assoc_const N:! %i32;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc8_7.2 as %.loc8_14 {
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.decl: %empty_tuple.type.as.I.impl.F.type = fn_decl @empty_tuple.type.as.I.impl.F [concrete = constants.%empty_tuple.type.as.I.impl.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = value_binding_pattern self [concrete]
@@ -4670,8 +4562,6 @@ fn F() {
 // CHECK:STDOUT:   %I.F => constants.%I.F.705
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N(constants.%Self.ab9) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.d31
@@ -4692,8 +4582,6 @@ fn F() {
 // CHECK:STDOUT:   %I.F.type => constants.%I.F.type.29d
 // CHECK:STDOUT:   %I.F => constants.%I.F.8ec
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @N(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
@@ -4824,10 +4712,6 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@Z.%Self: %Z.type) {
-// CHECK:STDOUT:   assoc_const X:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Z.impl(%T.loc9_14.1: type) {
 // CHECK:STDOUT:   %T.loc9_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:   %C.loc9_45.2: type = class_type @C, @C(%T.loc9_14.2) [symbolic = %C.loc9_45.2 (constants.%C.5a3)]
@@ -4903,8 +4787,6 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.c59) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_9.1 => constants.%T
 // CHECK:STDOUT: }
@@ -4912,8 +4794,6 @@ fn F() {
 // CHECK:STDOUT: specific @Z(constants.%.Self.aac) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%.Self.aac) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Z.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
@@ -4945,6 +4825,4 @@ fn F() {
 // CHECK:STDOUT: specific @Z(constants.%Z.facet.59e) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Z.facet.59e) {}
 // CHECK:STDOUT:

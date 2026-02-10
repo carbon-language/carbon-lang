@@ -498,10 +498,6 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @I1(@I.%T.loc4_13.2: type, @I.%Self.loc4_23.1: @I.%I.type (%I.type.1ab)) {
-// CHECK:STDOUT:   assoc_const I1:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_6.2: %I_where.type) {
 // CHECK:STDOUT:   %T.loc8_6.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T.706)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc8_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
@@ -540,8 +536,6 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.67d, constants.%Self.fdb) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%T.67d, constants.%Self.fdb) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:
@@ -564,8 +558,6 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db, constants.%T.706) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
@@ -579,8 +571,6 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%.Self.binding.as_type.8db, constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.706) {
 // CHECK:STDOUT:   %T.loc8_6.1 => constants.%T.706

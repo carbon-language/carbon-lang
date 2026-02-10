@@ -431,10 +431,6 @@ interface B {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@K.%Self: %K.type) {
-// CHECK:STDOUT:   assoc_const X:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -444,8 +440,6 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
@@ -618,10 +612,6 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@J.%Self: %J.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.J.impl: %C.ref.loc8 as %.loc8_13 {
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
@@ -643,13 +633,9 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
@@ -900,10 +886,6 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.806)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X1(@X.%Self: %X.type) {
-// CHECK:STDOUT:   assoc_const X1:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc16_6.2: %X_where.type) {
 // CHECK:STDOUT:   %T.loc16_6.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_6.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -928,8 +910,6 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X1(constants.%Self.e52) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%Self.e52) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -947,8 +927,6 @@ interface B {
 // CHECK:STDOUT: specific @X(constants.%.Self.637) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X1(constants.%.Self.637) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc16_6.1 => constants.%T

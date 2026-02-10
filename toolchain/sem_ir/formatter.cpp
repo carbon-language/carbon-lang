@@ -89,11 +89,6 @@ auto Formatter::Format() -> void {
     FormatRequireImpls(id, require);
   }
 
-  for (const auto& [id, assoc_const] :
-       sem_ir_->associated_constants().enumerate()) {
-    FormatAssociatedConstant(id, assoc_const);
-  }
-
   for (const auto& [id, impl] : sem_ir_->impls().enumerate()) {
     FormatImpl(id, impl);
   }
@@ -496,31 +491,6 @@ auto Formatter::FormatRequireImpls(RequireImplsId /*id*/,
   PrepareToFormatDecl(require.decl_id);
   FormatGenericStart("require", require.generic_id);
   FormatGenericEnd();
-}
-
-auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
-                                         const AssociatedConstant& assoc_const)
-    -> void {
-  if (!ShouldFormatEntity(assoc_const.decl_id)) {
-    return;
-  }
-
-  PrepareToFormatDecl(assoc_const.decl_id);
-  FormatEntityStart("assoc_const", assoc_const.generic_id, id);
-
-  llvm::SaveAndRestore assoc_const_scope(scope_, inst_namer_.GetScopeFor(id));
-
-  out_ << " ";
-  FormatName(assoc_const.name_id);
-  out_ << ":! ";
-  FormatTypeOfInst(assoc_const.decl_id);
-  if (assoc_const.default_value_id.has_value()) {
-    out_ << " = ";
-    FormatArg(assoc_const.default_value_id);
-  }
-  out_ << ";\n";
-
-  FormatEntityEnd(assoc_const.generic_id);
 }
 
 auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {

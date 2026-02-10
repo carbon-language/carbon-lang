@@ -268,10 +268,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed)) {
-// CHECK:STDOUT:   assoc_const X:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Z.impl.34a(%T.loc9_14.1: type, %S.loc9_24.1: type) {
 // CHECK:STDOUT:   %T.loc9_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_14.2 (constants.%T.67d)]
 // CHECK:STDOUT:   %S.loc9_24.2: type = symbolic_binding S, 1 [symbolic = %S.loc9_24.2 (constants.%S)]
@@ -360,8 +356,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%T.67d, constants.%Self.822) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%T.67d, constants.%Self.822) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%S) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%S
 // CHECK:STDOUT:
@@ -383,8 +377,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%S, constants.%.Self.90f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Z.impl.34a(constants.%T.67d, constants.%S) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T.67d
@@ -430,8 +422,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%C, constants.%.Self.bf2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Z.impl.cf0(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc11_20.2 => constants.%T.67d
 // CHECK:STDOUT:   %Z_where.type => constants.%Z_where.type.c3e
@@ -466,8 +456,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.267
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%C, constants.%T.fe5) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nonfinal_specialized_symbolic_rewrite.carbon
 // CHECK:STDOUT:
@@ -676,10 +664,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed)) {
-// CHECK:STDOUT:   assoc_const X:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Z.impl.34a(%T.loc10_14.1: type, %S.loc10_24.1: type) {
 // CHECK:STDOUT:   %T.loc10_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc10_14.2 (constants.%T.67d)]
 // CHECK:STDOUT:   %S.loc10_24.2: type = symbolic_binding S, 1 [symbolic = %S.loc10_24.2 (constants.%S)]
@@ -778,8 +762,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%T.67d, constants.%Self.822) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%T.67d, constants.%Self.822) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y(constants.%Self.162) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%S) {
@@ -803,8 +785,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%S, constants.%.Self.90f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Z.impl.34a(constants.%T.67d, constants.%S) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T.67d
@@ -850,8 +830,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%C, constants.%.Self.bf2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Z.impl.cf0(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.67d
 // CHECK:STDOUT:   %Z_where.type => constants.%Z_where.type.c3e
@@ -877,8 +855,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%C, constants.%T.fe5) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_impl_lookup.carbon
 // CHECK:STDOUT:
@@ -1003,10 +979,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
-// CHECK:STDOUT:   assoc_const Type:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_20.1: type) {
 // CHECK:STDOUT:   %U.loc7_20.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_20.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_20.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1064,13 +1036,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Ptr(constants.%.Self.47a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%.Self.47a) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U.as.Ptr.impl(constants.%U.67d) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%U.67d
@@ -1096,8 +1064,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: specific @Ptr(constants.%Ptr.facet.5445c3.2) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%Ptr.facet.5445c3.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc9_6.1 => constants.%T.67d
@@ -1240,10 +1206,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
-// CHECK:STDOUT:   assoc_const Type:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_20.1: type) {
 // CHECK:STDOUT:   %U.loc7_20.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_20.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_20.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1301,13 +1263,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Ptr(constants.%.Self.47a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%.Self.47a) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U.as.Ptr.impl(constants.%U.67d) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%U.67d
@@ -1333,8 +1291,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.2f9
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%T.ffa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.ffa) {
 // CHECK:STDOUT:   %T.loc9_6.1 => constants.%T.ffa
@@ -1476,10 +1432,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
-// CHECK:STDOUT:   assoc_const Type:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_20.1: type) {
 // CHECK:STDOUT:   %U.loc7_20.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_20.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_20.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1537,13 +1489,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%Self.0e0) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Ptr(constants.%.Self.47a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%.Self.47a) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U.as.Ptr.impl(constants.%U.67d) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%U.67d
@@ -1569,8 +1517,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: specific @Ptr(constants.%T.ffa) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Type(constants.%T.ffa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.ffa) {
 // CHECK:STDOUT:   %T.loc9_6.1 => constants.%T.ffa

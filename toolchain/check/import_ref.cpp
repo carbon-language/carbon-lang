@@ -1594,8 +1594,6 @@ static auto MakeAssociatedConstant(
       .name_id = GetLocalNameId(context, import_assoc_const.name_id),
       .parent_scope_id = SemIR::NameScopeId::None,
       .decl_id = assoc_const_decl_id,
-      .generic_id = MakeIncompleteGeneric(context, assoc_const_decl_id,
-                                          import_assoc_const.generic_id),
       .default_value_id =
           import_assoc_const.default_value_id.has_value()
               ? AddImportRef(context, import_assoc_const.default_value_id)
@@ -1641,8 +1639,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Load the values to populate the entity with.
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_assoc_const.parent_scope_id);
-  auto generic_data =
-      GetLocalGenericData(resolver, import_assoc_const.generic_id);
   auto& new_assoc_const =
       resolver.local_associated_constants().Get(assoc_const_id);
 
@@ -1652,9 +1648,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Populate the entity.
   new_assoc_const.parent_scope_id = parent_scope_id;
-  return ResolveResult::FinishGenericOrDone(
-      resolver, const_id, new_assoc_const.decl_id,
-      import_assoc_const.generic_id, new_assoc_const.generic_id, generic_data);
+  // FIXME: Does this still need to be multiple phases without a generic?
+  return ResolveResult::Done(const_id, new_assoc_const.decl_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

@@ -157,14 +157,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T.loc8(@Basic.%Self.loc7: %Basic.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T.loc16(@ForwardDeclared.%Self.loc15: %ForwardDeclared.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Basic.F(@Basic.%Self.loc7: %Basic.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -177,8 +169,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Basic(constants.%Self.3e6) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T.loc8(constants.%Self.3e6) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Basic.F(constants.%Self.3e6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.8e7) {
@@ -187,8 +177,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.F.type => constants.%ForwardDeclared.F.type
 // CHECK:STDOUT:   %ForwardDeclared.F => constants.%ForwardDeclared.F
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T.loc16(constants.%Self.8e7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.F(constants.%Self.8e7) {}
 // CHECK:STDOUT:

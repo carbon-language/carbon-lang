@@ -382,7 +382,6 @@ auto HandleParseNode(Context& context,
       {.name_id = name_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .decl_id = decl_id,
-       .generic_id = SemIR::GenericId::None,
        .default_value_id = SemIR::InstId::None});
   ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 

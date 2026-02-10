@@ -7,7 +7,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
-#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -34,22 +33,19 @@ namespace Carbon::Check {
 // called at the `=` or the `;` of the declaration, whichever comes first.
 static auto EndAssociatedConstantDeclRegion(Context& context,
                                             SemIR::InterfaceId interface_id)
-    -> SemIR::GenericId {
+    -> void {
   // Peek the pattern. For a valid associated constant, the corresponding
   // instruction will be an `AssociatedConstantDecl` instruction.
   auto decl_id = context.node_stack().PeekPattern();
   auto assoc_const_decl =
       context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
-
-  // Finish the declaration region of this generic.
   auto& assoc_const =
       context.associated_constants().Get(assoc_const_decl.assoc_const_id);
-  assoc_const.generic_id = BuildGenericDecl(context, decl_id);
 
-  // Build a corresponding associated entity and add it into scope. Note
-  // that we do this outside the generic region.
+  // Build a corresponding associated entity and add it into scope.
+  //
   // TODO: The instruction is added to the associated constant's decl block.
-  // It probably should be in the interface's body instead.
+  // It probably should be in the interface-with-self body instead.
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context = context.decl_name_stack().MakeUnqualifiedName(
       context.node_stack().PeekNodeId(), assoc_const.name_id);
@@ -58,7 +54,6 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
                          .modifier_set.GetAccessKind();
   context.decl_name_stack().AddNameOrDiagnose(name_context, assoc_id,
                                               access_kind);
-  return assoc_const.generic_id;
 }
 
 template <Lex::TokenKind::RawEnumType Kind>
@@ -79,8 +74,6 @@ auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantIntroducerId node_id) -> bool {
-  // An associated constant is always generic.
-  StartGenericDecl(context);
   // Collect the declarations nested in the associated constant in a decl
   // block. This is popped by FinishAssociatedConstantDecl.
   context.inst_block_stack().Push();
@@ -171,12 +164,7 @@ auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
   auto interface_decl =
       context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
-  auto generic_id =
-      EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
-
-  // Start building the definition region of the constant.
-  StartGenericDefinition(context, generic_id);
-
+  EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
   return HandleInitializer(context, node_id);
 }
 
@@ -292,17 +280,14 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
 
   auto interface_scope =
       context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
-  // The `AssociatedConstantDecl` instruction and the
-  // corresponding `AssociatedConstant` entity are built as part of handling the
-  // binding pattern, but we still need to finish building the `Generic` object
-  // and attach the default value, if any is specified.
+  // The `AssociatedConstantDecl` instruction and the corresponding
+  // `AssociatedConstant` entity are built as part of handling the binding
+  // pattern, but we still need to attach the default value, if any is
+  // specified.
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
     const auto& interface =
         context.interfaces().Get(interface_scope.interface_id);
     context.name_scopes().Get(interface.scope_with_self_id).set_has_error();
-    if (decl_info.init_id.has_value()) {
-      DiscardGenericDecl(context);
-    }
     context.inst_block_stack().Pop();
     return true;
   }
@@ -322,7 +307,6 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
         ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
     auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
     assoc_const.default_value_id = default_value_id;
-    FinishGenericDefinition(context, assoc_const.generic_id);
   } else {
     // TODO: Either allow redeclarations of associated constants or diagnose if
     // the `default` modifier was used.

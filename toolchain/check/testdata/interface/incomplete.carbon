@@ -141,15 +141,9 @@ interface A(T:! type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! %C;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_type_impl.carbon
 // CHECK:STDOUT:
@@ -212,10 +206,6 @@ interface A(T:! type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! %C;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc16_7.2 as %.loc16_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
@@ -227,13 +217,9 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_type_usage.carbon
 // CHECK:STDOUT:
@@ -303,10 +289,6 @@ interface A(T:! type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const T:! %C;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%U.loc9_6.2: %I.type) {
@@ -332,8 +314,6 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%U) {
 // CHECK:STDOUT:   %U.loc9_6.1 => constants.%U
 // CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type
@@ -343,8 +323,6 @@ interface A(T:! type) {
 // CHECK:STDOUT: specific @I(constants.%U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_extend_constraint.carbon
 // CHECK:STDOUT:

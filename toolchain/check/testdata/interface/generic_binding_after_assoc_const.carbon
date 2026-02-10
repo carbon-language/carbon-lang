@@ -79,10 +79,6 @@ interface I {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @U(@I.%Self.loc15: %I.type) {
-// CHECK:STDOUT:   assoc_const U:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.F(@I.%Self.loc15: %I.type, %T.loc16_8.2: type) {
 // CHECK:STDOUT:   %T.loc16_8.1: type = symbolic_binding T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -100,8 +96,6 @@ interface I {
 // CHECK:STDOUT: specific @I.F(constants.%Self, constants.%T) {
 // CHECK:STDOUT:   %T.loc16_8.1 => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @U(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.G(constants.%Self, constants.%T) {
 // CHECK:STDOUT:   %T.loc20_8.1 => constants.%T

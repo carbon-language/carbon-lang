@@ -141,10 +141,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Interface.%Self.loc3: %Interface.type) {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self.loc3: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -182,8 +178,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.887) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Different(constants.%Self.b4f) {
 // CHECK:STDOUT: !definition:
