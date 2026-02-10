@@ -467,7 +467,7 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
 // unnecessary.
 static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
   bool found_name = false;
-  llvm::SmallVector<SemIR::InstId, 16> worklist;
+  llvm::SmallVector<SemIR::InstId> worklist;
   worklist.push_back(inst_id);
   while (!worklist.empty()) {
     auto current_inst_id = worklist.pop_back_val();
