@@ -27,6 +27,9 @@ constraint J(N:! i32) {
   require impls K(array(i32, N));
 }
 
+// TODO: This should be be a "facet type cannot be identified" diagnostic, but
+// we need to plumb that diagnoser through the construction of the specific.
+//
 // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
@@ -38,14 +41,6 @@ library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
 // is invalid, so the impl as a whole is invalid.
-//
-// `extend require` is mostly identified in the same way as the non-extend case,
-// but the constraint requires the facet type to be complete. This makes the
-// require facet type part of the enclosing constraint in a way that it is not
-// for the non-extend case.
-//
-// TODO: Diagnostics should look the same as for non-extend though. We should be
-// able to point them at the `require`.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
@@ -55,7 +50,13 @@ constraint J(N:! i32) {
   extend require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: in `J(-1)` used here [ResolvingSpecificHere]
+// TODO: This should be be a "facet type cannot be identified" diagnostic, but
+// we need to plumb that diagnoser through the construction of the specific.
+//
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+7]]:12: note: in `J(-1)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: impl {} as J(-1) {}
+// CHECK:STDERR:            ^~~~~
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: checking for complete facet type `J(-1)` here [RequiringCompleteFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
 // CHECK:STDERR:

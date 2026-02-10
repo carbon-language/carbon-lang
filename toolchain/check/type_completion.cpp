@@ -117,6 +117,17 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
   const auto& facet_type_info =
       context.facet_types().Get(facet_type.facet_type_id);
 
+  // TODO: Constructing specifics can produce monomorphization errors, which
+  // we want to connect back to here. Instead, we should be plumbing the
+  // `diagnoser` through the construction of the specifics.
+  auto note_completing_facet_type = [&](auto& builder) {
+    CARBON_DIAGNOSTIC(RequiringCompleteFacetTypeHere, Note,
+                      "checking for complete facet type {0} here",
+                      SemIR::FacetTypeId);
+    builder.Note(loc_id, RequiringCompleteFacetTypeHere,
+                 facet_type.facet_type_id);
+  };
+
   for (auto extends : facet_type_info.extend_constraints) {
     auto interface_id = extends.interface_id;
     const auto& interface = context.interfaces().Get(interface_id);
@@ -129,6 +140,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       return false;
     }
     if (interface.generic_id.has_value()) {
+      Diagnostics::AnnotationScope annotate_diagnostics(
+          &context.emitter(), note_completing_facet_type);
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
       if (SpecificContainsError(context, extends.specific_id)) {
         return false;
@@ -139,6 +152,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         context.specifics().GetArgsOrEmpty(context.generics().GetSelfSpecific(
             interface.generic_with_self_id)));
     auto self_facet = interface_with_self_self_specific_args.back();
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), note_completing_facet_type);
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, interface.generic_id, interface.generic_with_self_id,
         extends.specific_id, context.constant_values().Get(self_facet));
@@ -160,6 +175,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       return false;
     }
     if (constraint.generic_id.has_value()) {
+      Diagnostics::AnnotationScope annotate_diagnostics(
+          &context.emitter(), note_completing_facet_type);
       ResolveSpecificDefinition(context, loc_id, extends.specific_id);
       if (SpecificContainsError(context, extends.specific_id)) {
         return false;
@@ -170,6 +187,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         context.specifics().GetArgsOrEmpty(context.generics().GetSelfSpecific(
             constraint.generic_with_self_id)));
     auto self_facet = constraint_with_self_self_specific_args.back();
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), note_completing_facet_type);
     auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, constraint.generic_id, constraint.generic_with_self_id,
         extends.specific_id, context.constant_values().Get(self_facet));
@@ -834,20 +853,12 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // Require all named constraints in the facet type are identified. For a named
 // constraint, this means the constraint definition is complete.
 static auto RequireCompleteNamedConstraint(
-    Context& context, SemIR::NamedConstraintId constraint_id,
-    const SemIR::NamedConstraint& constraint, MakeDiagnosticBuilderFn diagnoser)
-    -> bool {
-  // FIXME: We should do actual type completion here.
-  if (constraint.is_complete()) {
-    return true;
-  }
-
-  if (diagnoser) {
-    auto builder = diagnoser();
-    NoteIncompleteNamedConstraint(context, constraint_id, builder);
-    builder.Emit();
-  }
-  return false;
+    Context& context, SemIR::LocId loc_id,
+    SemIR::NamedConstraintId constraint_id, SemIR::SpecificId specific_id,
+    MakeDiagnosticBuilderFn diagnoser) -> bool {
+  auto facet_type =
+      FacetTypeFromNamedConstraint(context, constraint_id, specific_id);
+  return RequireCompleteFacetType(context, loc_id, facet_type, diagnoser);
 }
 
 static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
@@ -940,11 +951,27 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    auto diagnose_note_facet_type = [&](auto& builder) {
+    // TODO: Constructing specifics can produce monomorphization errors, which
+    // we want to connect back to here. Instead, we should be plumbing the
+    // `diagnoser` through the construction of the specifics.
+    auto note_identifying_facet_type = [&](auto& builder) {
       CARBON_DIAGNOSTIC(IdentifyingFacetTypeHere, Note,
                         "identifying facet type {0} here", SemIR::FacetTypeId);
       builder.Note(loc_id, IdentifyingFacetTypeHere, facet_type.facet_type_id);
     };
+
+    // References to a named constraint require the constraint to be complete so
+    // that we can enumerate all the required interfaces within.
+    for (auto specific_constraint :
+         llvm::concat<const SemIR::SpecificNamedConstraint>(
+             facet_type_info.extend_named_constraints,
+             facet_type_info.self_impls_named_constraints)) {
+      if (!RequireCompleteNamedConstraint(
+              context, loc_id, specific_constraint.named_constraint_id,
+              specific_constraint.specific_id, diagnoser)) {
+        return SemIR::IdentifiedFacetTypeId::None;
+      }
+    }
 
     // The self may have type TypeType. But the `Self` in a generic require decl
     // has type FacetType, so we need something similar to replace it in the
@@ -954,27 +981,9 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     for (auto extends : facet_type_info.extend_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(extends.named_constraint_id);
-      if (!RequireCompleteNamedConstraint(context, extends.named_constraint_id,
-                                          constraint, diagnoser)) {
-        return SemIR::IdentifiedFacetTypeId::None;
-      }
-
-      // TODO: Avoid diagnosing errors here, or returning None in the presence
-      // of errors and, if the `diagnoser` is present, only diasgnose them in
-      // the later calls to GetConstantValueInSpecific for the self and facet
-      // type. This will avoid attaching errors in the facet type to the
-      // constraint containing an `extend require impls` decl.
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, extends.specific_id, self_facet);
-      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
-        return SemIR::IdentifiedFacetTypeId::None;
-      }
-
-      // Constructing specifics for `require` decls can produce monomorphization
-      // errors, which we want to connect back to here.
-      Diagnostics::AnnotationScope annotate_diagnostics(
-          &context.emitter(), diagnose_note_facet_type);
 
       for (auto require_impls_id : context.require_impls_blocks().Get(
                constraint.require_impls_block_id)) {
@@ -983,6 +992,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         // Each require is in its own generic, with no additional bindings and
         // no definition, so that they can have their specifics independently
         // instantiated.
+        Diagnostics::AnnotationScope annotate_diagnostics(
+            &context.emitter(), note_identifying_facet_type);
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
             constraint_with_self_specific_id, require.generic_id);
@@ -1012,27 +1023,9 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     for (auto impls : facet_type_info.self_impls_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(impls.named_constraint_id);
-      if (!RequireCompleteNamedConstraint(context, impls.named_constraint_id,
-                                          constraint, diagnoser)) {
-        return SemIR::IdentifiedFacetTypeId::None;
-      }
-
-      // TODO: Avoid diagnosing errors here, or returning None in the presence
-      // of errors and, if the `diagnoser` is present, only diasgnose them in
-      // the later calls to GetConstantValueInSpecific for the self and facet
-      // type. This will avoid attaching errors in the facet type to the
-      // constraint containing an `extend require impls` decl.
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id, self_facet);
-      if (SpecificContainsError(context, constraint_with_self_specific_id)) {
-        return SemIR::IdentifiedFacetTypeId::None;
-      }
-
-      // Constructing specifics for `require` decls can produce monomorphization
-      // errors, which we want to connect back to here.
-      Diagnostics::AnnotationScope annotate_diagnostics(
-          &context.emitter(), diagnose_note_facet_type);
 
       for (auto require_impls_id : context.require_impls_blocks().Get(
                constraint.require_impls_block_id)) {
@@ -1041,6 +1034,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         // Each require is in its own generic, with no additional bindings and
         // no definition, so that they can have their specifics independently
         // instantiated.
+        Diagnostics::AnnotationScope annotate_diagnostics(
+            &context.emitter(), note_identifying_facet_type);
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
             constraint_with_self_specific_id, require.generic_id);

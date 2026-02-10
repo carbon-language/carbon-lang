@@ -53,6 +53,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %Self.31c17c.2: %Empty.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %empty_struct.type.facet: %type = facet_value %empty_struct_type, () [concrete]
 // CHECK:STDOUT:   %Empty.facet.76f: %Empty.type.d682d6.2 = facet_value %empty_struct_type, () [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.5f9: <specific function> = specific_function %F, @F(%T.binding.as_type, %Empty.facet.76f) [symbolic]
@@ -61,7 +62,6 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %F.specific_fn.ff8: <specific function> = specific_function %F, @F(%T.binding.as_type, %Empty.facet.2cb) [symbolic]
 // CHECK:STDOUT:   %Empty.facet.4f8: %Empty.type.d682d6.2 = facet_value %T.binding.as_type, () [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.55f: <specific function> = specific_function %F, @F(%T.binding.as_type, %Empty.facet.4f8) [symbolic]
-// CHECK:STDOUT:   %Self.31c17c.2: %Empty.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.5c5: <specific function> = specific_function %F, @F(%T.binding.as_type, %U.e1f642.2) [symbolic]
 // CHECK:STDOUT:   %facet_value.ed5: %type = facet_value %V, () [symbolic]
 // CHECK:STDOUT:   %Empty.facet.ed5: %Empty.type.d682d6.2 = facet_value %V, () [symbolic]
@@ -244,6 +244,10 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %V.loc20_27.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%Self.31c17c.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%empty_struct.type.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -280,10 +284,6 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %U.loc18_16.1 => constants.%Empty.facet.4f8
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9a587c.2
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%Self.31c17c.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

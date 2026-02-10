@@ -132,6 +132,11 @@ auto DiagnoseIfGenericMissingExplicitParameters(
 //
 // The generic-without-self is required to have its definition constructed,
 // which means the generic entity is complete.
+//
+// TODO: This should take a `diagnoser` parameter which is passed through to
+// MakeSpecific() and TryEvalBlockForSpecific(), so that monomorphization errors
+// get diagnosed to the correct semantic operation, instead of just to specific
+// instantiation.
 auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
@@ -141,6 +146,11 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
 
 // Copy the arguments of a specific into the context of another generic. The
 // target generic must have the exact same bindings as the specific's generic.
+//
+// TODO: This should take a `diagnoser` parameter which is passed through to
+// MakeSpecific() and TryEvalBlockForSpecific(), so that monomorphization errors
+// get diagnosed to the correct semantic operation, instead of just to specific
+// instantiation.
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
                            SemIR::GenericId target_generic_id)
