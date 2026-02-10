@@ -231,8 +231,6 @@ static auto GetWitnessFromSingleImplLookupResult(
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-//
-// FIXME: `type_const_id` can be a facet now instead of only a TypeId?
 static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
