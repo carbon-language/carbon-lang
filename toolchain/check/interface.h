@@ -38,8 +38,8 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
 // interface and the type of `Self`.
 auto GetTypeForSpecificAssociatedEntity(
     Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId decl_id,
-    SemIR::TypeId self_type_id, SemIR::InstId self_witness_id) -> SemIR::TypeId;
+    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId decl_id)
+    -> SemIR::TypeId;
 
 // Creates a symbolic binding for `Self` of type `type_id` in the scope of
 // `scope_id`, and add the name `Self` for the compile time binding.

@@ -178,9 +178,9 @@ static auto ScopeNeedsImplLookup(Context& context,
 }
 
 static auto AccessMemberOfImplWitness(
-    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_id, SemIR::SpecificId interface_with_self_specific_id,
-    SemIR::InstId member_id) -> SemIR::InstId {
+    Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
+    SemIR::SpecificId interface_with_self_specific_id, SemIR::InstId member_id)
+    -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.has_value()) {
     if (member_value_id != SemIR::ErrorInst::InstId) {
@@ -200,8 +200,7 @@ static auto AccessMemberOfImplWitness(
   // associated entity to find the type of the member access.
   LoadImportRef(context, assoc_entity->decl_id);
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_with_self_specific_id, assoc_entity->decl_id,
-      self_type_id, witness_id);
+      context, loc_id, interface_with_self_specific_id, assoc_entity->decl_id);
 
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
                                                 {.type_id = assoc_type_id,
@@ -232,6 +231,8 @@ static auto GetWitnessFromSingleImplLookupResult(
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
+//
+// FIXME: `type_const_id` can be a facet now instead of only a TypeId?
 static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
@@ -275,7 +276,7 @@ static auto PerformImplLookup(
   auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
       context, loc_id, interface.generic_id, interface.generic_with_self_id,
       assoc_type.interface_without_self_specific_id, self_facet);
-  return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
+  return AccessMemberOfImplWitness(context, loc_id, witness_id,
                                    interface_with_self_specific_id, member_id);
 }
 
@@ -678,14 +679,6 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // That facet value has both the self type we need below and the witness
-  // we are going to use to look up the value of the associated member.
-  auto self_type_const_id = TryEvalInst<SemIR::FacetAccessType>(
-      context, {.type_id = SemIR::TypeType::TypeId,
-                .facet_value_inst_id = self_facet_inst_id});
-  auto self_type_id =
-      context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-
   // TODO: If `ConvertToValueOfType` returned a `FacetValue`, we already got a
   // witness for this interface there. We don't need to do both a
   // ConvertToValueOfType and LookupImplWitness, that is redundant. Since we
@@ -712,8 +705,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   // the type of that element. It depends on the self type and the specific
   // interface.
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_with_self_specific_id, assoc_entity.decl_id,
-      self_type_id, witness_id);
+      context, loc_id, interface_with_self_specific_id, assoc_entity.decl_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
