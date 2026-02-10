@@ -54,7 +54,6 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
                                 EntityKind entity_kind_for_diagnostic,
                                 SemIR::SpecificId enclosing_specific_id,
-                                SemIR::InstId self_type_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
@@ -85,8 +84,6 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   // Perform argument deduction.
   auto specific_id = SemIR::SpecificId::None;
   if (entity.generic_id.has_value()) {
-    // FIXME: Remove self_type_id.
-    (void)self_type_id;
     specific_id = DeduceGenericCallArguments(
         context, loc_id, entity.generic_id, enclosing_specific_id,
         entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
@@ -109,7 +106,6 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, generic_class,
                           EntityKind::GenericClass, enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
@@ -149,7 +145,6 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, entity, entity_kind_for_diagnostic,
                           enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
@@ -223,7 +218,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id = ResolveCalleeInCall(
       context, loc_id, context.functions().Get(callee_function.function_id),
       EntityKind::Function, callee_function.enclosing_specific_id,
-      callee_function.self_type_id, callee_function.self_id, arg_ids);
+      callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
