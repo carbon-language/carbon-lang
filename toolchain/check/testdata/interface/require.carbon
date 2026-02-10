@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/require.carbon
 
-// --- fail_todo_extend.carbon
+// --- extend.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -24,29 +24,13 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z, t:! T) {
-  // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
-  // `T:! Z` since the identified facet type doesn't include `Y`. The
-  // identified facet type needs to include extends inside interfaces?
-
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `T` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   T.YY();
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR:
   T.YY();
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `T` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   t.YY();
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR:
   t.YY();
 }
 
-// --- fail_todo_extend_with_self.carbon
+// --- extend_with_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Y(T:! type) {
@@ -60,23 +44,11 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
-  // `T:! Z` since the identified facet type doesn't include `Y`. The
-  // identified facet type needs to include extends inside interfaces?
-  //
-  // CHECK:STDERR: fail_todo_extend_with_self.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y(T)` in type `T` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   T.YY();
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR:
   T.YY();
-  // CHECK:STDERR: fail_todo_extend_with_self.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y(T)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y(T).YY)();
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR:
   T.(Y(T).YY)();
 }
 
-// --- fail_todo_implicit_self_impls.carbon
+// --- implicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -90,14 +62,10 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 }
 
-// --- fail_todo_explicit_self_impls.carbon
+// --- explicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -111,10 +79,6 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 }
 
@@ -328,7 +292,7 @@ interface Z(T:! type) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_extend.carbon
+// CHECK:STDOUT: --- extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
@@ -377,7 +341,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_extend_with_self.carbon
+// CHECK:STDOUT: --- extend_with_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type.82b: type = generic_interface_type @Y [concrete]
@@ -434,7 +398,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.432
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon
+// CHECK:STDOUT: --- implicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
@@ -480,7 +444,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_explicit_self_impls.carbon
+// CHECK:STDOUT: --- explicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]

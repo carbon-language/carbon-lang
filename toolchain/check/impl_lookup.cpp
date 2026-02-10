@@ -24,10 +24,14 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/type_structure.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/interface.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -581,6 +585,104 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
+// Performs a lookup to locate the witnesses for a specific
+// interface by searching through the `require` declarations of a type's known
+// constraints.
+static auto LookupImplWitnessInRequireDecls(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    const llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl>&
+        required_impls,
+    llvm::SmallVector<SemIR::InstId>& result_witness_ids,
+    llvm::SmallVector<SemIR::SpecificInterface>& verified_specific_interfaces)
+    -> void {
+  if (required_impls.empty()) {
+    return;
+  }
+
+  for (const auto& require_impls : context.require_impls().values()) {
+    auto parent_id =
+        context.name_scopes().Get(require_impls.parent_scope_id).inst_id();
+    auto parent_const_id = context.constant_values().Get(parent_id);
+    if (!context.types().IsFacetType(
+            context.insts().Get(parent_id).type_id())) {
+      continue;
+    }
+    if (!require_impls.extend_self &&
+        context.constant_values().Get(require_impls.self_id) ==
+            parent_const_id) {
+      continue;
+    }
+
+    // Check if self-type implements the facet-type that the `require` is
+    // declared in.
+    auto parent_required_impls_from_constraint = GetRequiredImplsFromConstraint(
+        context, loc_id, query_self_const_id, parent_const_id);
+    if (!parent_required_impls_from_constraint.has_value()) {
+      continue;
+    }
+    auto [parent_required_impls, other_requirements] =
+        *parent_required_impls_from_constraint;
+    if (other_requirements || parent_required_impls.size() != 1 ||
+        FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
+                                       loc_id, query_self_const_id,
+                                       parent_const_id)) {
+      continue;
+    }
+
+    auto& stack = context.impl_lookup_stack();
+    stack.push_back({
+        .query_self_const_id = query_self_const_id,
+        .query_facet_type_const_id = parent_const_id,
+    });
+    auto parent_witness_id =
+        GetOrAddLookupImplWitness(context, loc_id, query_self_const_id,
+                                  parent_required_impls[0].specific_interface);
+    stack.pop_back();
+
+    if (parent_witness_id.has_value()) {
+      // self-type implements the facet type that the `require` is declared in.
+      // Now check the `require` if it implements any of the `required_impls`.
+      auto require_impls_facet_const_id =
+          context.constant_values().Get(require_impls.facet_type_inst_id);
+      auto require_facet_required_impls_from_constraint =
+          GetRequiredImplsFromConstraint(context, loc_id, parent_const_id,
+                                         require_impls_facet_const_id);
+      if (!require_facet_required_impls_from_constraint.has_value()) {
+        continue;
+      }
+      auto [require_facet_required_impls, other_requirements] =
+          *require_facet_required_impls_from_constraint;
+      if (other_requirements || require_facet_required_impls.empty() ||
+          FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
+                                         loc_id, parent_const_id,
+                                         require_impls_facet_const_id)) {
+        continue;
+      }
+
+      // Add parent witness for every new requirement it satisfies.
+      for (const auto& required_impl : required_impls) {
+        auto not_already_found = verified_specific_interfaces.empty() ||
+                                 std::find(verified_specific_interfaces.begin(),
+                                           verified_specific_interfaces.end(),
+                                           required_impl.specific_interface) ==
+                                     verified_specific_interfaces.end();
+        if (not_already_found) {
+          for (const auto& require_facet_required_impl :
+               require_facet_required_impls) {
+            if (required_impl.specific_interface.interface_id ==
+                require_facet_required_impl.specific_interface.interface_id) {
+              result_witness_ids.push_back(parent_witness_id);
+              verified_specific_interfaces.push_back(
+                  required_impl.specific_interface);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
@@ -623,6 +725,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockIdOrError::MakeError();
   }
 
+  llvm::SmallVector<SemIR::InstId> result_witness_ids;
+  llvm::SmallVector<SemIR::SpecificInterface> verified_specific_interfaces;
+  LookupImplWitnessInRequireDecls(context, loc_id, query_self_const_id,
+                                  req_impls, result_witness_ids,
+                                  verified_specific_interfaces);
+
   auto& stack = context.impl_lookup_stack();
   stack.push_back({
       .query_self_const_id = query_self_const_id,
@@ -633,21 +741,27 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // Every consumer of a facet type needs to agree on the order of interfaces
   // used for its witnesses, which is done by following the order in the
   // IdentifiedFacetType.
-  llvm::SmallVector<SemIR::InstId> result_witness_ids;
   for (const auto& req_impl : req_impls) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    auto result_witness_id =
-        GetOrAddLookupImplWitness(context, loc_id, req_impl.self_facet_value,
-                                  req_impl.specific_interface);
-    if (result_witness_id.has_value()) {
-      result_witness_ids.push_back(result_witness_id);
-    } else {
-      // At least one queried interface in the facet type has no witness for the
-      // given type, we can stop looking for more.
-      break;
+    if (verified_specific_interfaces.empty() ||
+        std::find(verified_specific_interfaces.begin(),
+                  verified_specific_interfaces.end(),
+                  req_impl.specific_interface) ==
+            verified_specific_interfaces.end()) {
+      auto result_witness_id =
+          GetOrAddLookupImplWitness(context, loc_id, req_impl.self_facet_value,
+                                    req_impl.specific_interface);
+      if (result_witness_id.has_value()) {
+        result_witness_ids.push_back(result_witness_id);
+      } else {
+        // At least one queried interface in the facet type has no witness for
+        // the given type, we can stop looking for more.
+        break;
+      }
     }
   }
+
   stack.pop_back();
 
   // All interfaces in the query facet type must have been found to be available

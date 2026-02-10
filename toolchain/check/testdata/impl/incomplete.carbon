@@ -753,6 +753,7 @@ interface B {
 // CHECK:STDOUT:   %.Self.637: %X.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.637 [symbolic_self]
 // CHECK:STDOUT:   %X.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.637, @X [symbolic_self]
+// CHECK:STDOUT:   %facet_value: %type = facet_value %X.type, () [concrete]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %X.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -881,6 +882,16 @@ interface B {
 // CHECK:STDOUT: specific @X.Self.binding.as_type.impls.Y.type.require(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%.Self.637) {
+// CHECK:STDOUT:   %Self => constants.%.Self.637
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%.Self.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%facet_value) {
+// CHECK:STDOUT:   %Self => constants.%facet_value
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%X.type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%.Self.637) {}

@@ -33,20 +33,12 @@ fn F(A:! X, B:! Y) {
   A.F();
 }
 
-// --- fail_todo_symbolic_facet_interface_requires_interface.carbon
+// --- symbolic_facet_interface_requires_interface.carbon
 library "[[@TEST_NAME]]";
 
 import library "a";
 
 fn F(B:! Y) {
-  // TODO: We find the name F, but then fail to do impl lookup for `F` in `B:!
-  // Y` since the identified facet type doesn't include Z. We need to be able to
-  // find a symbolic facet from the require decl in Y during impl lookup.
-  //
-  // CHECK:STDERR: fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z(B)` in type `B` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   B.F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
   B.F();
 }
 
