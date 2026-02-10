@@ -250,9 +250,6 @@ class ScopeStack {
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
 
-    // The name ID of the `returned var`.
-    SemIR::NameId returned_var_name_id = SemIR::NameId::None;
-
     // When a nested scope interrupts a return scope, this is the index of the
     // outermost interrupting scope (the one closest to the function scope).
     // This can then be used to determine whether we're actually inside the most

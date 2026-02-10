@@ -306,7 +306,6 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id,
   }
 
   return_scope.returned_var = inst_id;
-  return_scope.returned_var_name_id = name_id;
   CARBON_CHECK(!scope_stack_.back().has_returned_var,
                "Scope has returned var but none is set");
   if (inst_id.has_value()) {
