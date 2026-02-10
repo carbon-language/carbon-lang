@@ -1648,7 +1648,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Populate the entity.
   new_assoc_const.parent_scope_id = parent_scope_id;
-  // FIXME: Does this still need to be multiple phases without a generic?
   return ResolveResult::Done(const_id, new_assoc_const.decl_id);
 }
 
