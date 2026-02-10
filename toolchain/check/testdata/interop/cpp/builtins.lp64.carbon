@@ -11,6 +11,31 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/builtins.lp64.carbon
 
+// --- arithmetic_heterogeneous_long_left_side.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn AssertSameType[T:! type](a: T, b: T) {}
+
+fn ArithmeticHeterogeneousLongLeftSide() {
+  let b: i64 = 1;
+  let x: Cpp.long = 1;
+
+  AssertSameType(x + b, x);
+  AssertSameType(x - b, x);
+  AssertSameType(x * b, x);
+  AssertSameType(x / b, x);
+  AssertSameType(x % b, x);
+
+  AssertSameType(x + 1, x);
+  AssertSameType(x - 1, x);
+  AssertSameType(x * 1, x);
+  AssertSameType(x / 1, x);
+  AssertSameType(x % 1, x);
+}
+
 // --- long.carbon
 
 library "[[@TEST_NAME]]";

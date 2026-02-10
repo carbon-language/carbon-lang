@@ -253,12 +253,6 @@ fn ArithmeticHeterogeneousLongLeftSide() {
   AssertSameType(x * b, x);
   AssertSameType(x / b, x);
   AssertSameType(x % b, x);
-
-  AssertSameType(x + 1, x);
-  AssertSameType(x - 1, x);
-  AssertSameType(x * 1, x);
-  AssertSameType(x / 1, x);
-  AssertSameType(x % 1, x);
 }
 
 // --- arithmetic_heterogeneous_long_right_side.carbon
@@ -277,12 +271,6 @@ fn ArithmeticHeterogeneousLongRightSide() {
   AssertSameType(b * x, x);
   AssertSameType(b / x, x);
   AssertSameType(b % x, x);
-
-  AssertSameType(1 + x, x);
-  AssertSameType(1 - x, x);
-  AssertSameType(1 * x, x);
-  AssertSameType(1 / x, x);
-  AssertSameType(1 % x, x);
 }
 
 // --- arithmetic_heterogeneous_long_and_i64.carbon
