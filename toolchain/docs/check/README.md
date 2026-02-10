@@ -37,7 +37,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Value bindings](#value-bindings)
 -   [Handling Parse::Tree errors (not yet implemented)](#handling-parsetree-errors-not-yet-implemented)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Using a traditional AST representation](#using-a-traditional-ast-representation)
 
 <!-- tocstop -->
 
@@ -667,10 +666,4 @@ interfere with checking later valid lines in the same function.
 
 ## Alternatives considered
 
-### Using a traditional AST representation
-
-Clang creates an AST as part of compilation. In Carbon, it's something we could
-do as a step between parsing and checking, possibly replacing the SemIR. It's
-likely that doing so would be simpler, amongst other possible trade-offs.
-However, we think the SemIR approach is going to yield higher performance,
-enough so that it's the chosen approach.
+-   [Using a traditional AST representation](/proposals/p6716.md#using-a-traditional-ast-representation)
