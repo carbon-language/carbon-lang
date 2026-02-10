@@ -36,9 +36,9 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.c08: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic]
-// CHECK:STDOUT:   %.986: type = fn_type_with_self_type %Destroy.Op.type.c08, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.06f: %Destroy.type = facet_value %ptr, (%custom_witness.809) [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.c08: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.06f) [symbolic]
+// CHECK:STDOUT:   %.986: type = fn_type_with_self_type %Destroy.Op.type.c08, %Destroy.facet.06f [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,7 +73,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %pattern_type.loc16: type = pattern_type %ptr.loc16_11.2 [symbolic = %pattern_type.loc16 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %T.loc15_6.1 [symbolic = %require_complete.loc17 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %pattern_type.loc17: type = pattern_type %T.loc15_6.1 [symbolic = %pattern_type.loc17 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc16_11.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc16_11.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.06f)]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.c08)]
 // CHECK:STDOUT:   %.loc16_3: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc16_3 (constants.%.986)]
 // CHECK:STDOUT:

@@ -47,9 +47,9 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.f7d: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic]
-// CHECK:STDOUT:   %.491: type = fn_type_with_self_type %Destroy.Op.type.f7d, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.24f: %Destroy.type = facet_value %ptr, (%custom_witness.809) [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.f7d: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.24f) [symbolic]
+// CHECK:STDOUT:   %.491: type = fn_type_with_self_type %Destroy.Op.type.f7d, %Destroy.facet.24f [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -121,7 +121,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %ptr.loc22_11.2: type = ptr_type %T.binding.as_type [symbolic = %ptr.loc22_11.2 (constants.%ptr)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc22_11.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc22_11.2 [symbolic = %pattern_type (constants.%pattern_type.fd9)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc22_11.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc22_11.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.24f)]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.f7d)]
 // CHECK:STDOUT:   %.loc22_3: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc22_3 (constants.%.491)]
 // CHECK:STDOUT:

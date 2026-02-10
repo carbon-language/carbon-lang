@@ -45,7 +45,6 @@ static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
 auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id,
     bool defer_thunk_definition) -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
@@ -75,7 +74,7 @@ auto CheckAssociatedFunctionImplementation(
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
-          enclosing_specific_id, self_type_id, witness_inst_id);
+          enclosing_specific_id);
 
   return BuildThunk(context, interface_function_type.function_id,
                     interface_function_specific_id, impl_decl_id,
@@ -606,7 +605,6 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
-  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
@@ -645,7 +643,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type,
               context.generics().GetSelfSpecific(impl.generic_id),
-              lookup_result.target_inst_id(), self_type_id, impl.witness_id,
+              lookup_result.target_inst_id(),
               /*defer_thunk_definition=*/true);
         } else {
           CARBON_DIAGNOSTIC(

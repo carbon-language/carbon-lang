@@ -147,9 +147,9 @@ fn G() {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.c8540f.2, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.d83: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic]
-// CHECK:STDOUT:   %.345: type = fn_type_with_self_type %Destroy.Op.type.d83, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.17e: %Destroy.type = facet_value %C.c8540f.2, (%custom_witness.809) [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.d83: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.17e) [symbolic]
+// CHECK:STDOUT:   %.345: type = fn_type_with_self_type %Destroy.Op.type.d83, %Destroy.facet.17e [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -295,7 +295,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %C.val: @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = struct_value () [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [symbolic = %pattern_type (constants.%pattern_type.fb2)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.17e)]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.d83)]
 // CHECK:STDOUT:   %.6: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.6 (constants.%.345)]
 // CHECK:STDOUT:

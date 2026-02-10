@@ -623,9 +623,9 @@ fn G() {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_tuple.type, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.b8c: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [concrete]
-// CHECK:STDOUT:   %.fef: type = fn_type_with_self_type %Destroy.Op.type.b8c, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Destroy.facet.f34: %Destroy.type = facet_value %empty_tuple.type, (%custom_witness.809) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.b8c: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.f34) [concrete]
+// CHECK:STDOUT:   %.fef: type = fn_type_with_self_type %Destroy.Op.type.b8c, %Destroy.facet.f34 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

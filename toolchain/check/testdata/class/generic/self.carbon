@@ -53,9 +53,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.729: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic]
-// CHECK:STDOUT:   %.abb: type = fn_type_with_self_type %Destroy.Op.type.729, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.bb8: %Destroy.type = facet_value %Class, (%custom_witness.809) [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.729: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.bb8) [symbolic]
+// CHECK:STDOUT:   %.abb: type = fn_type_with_self_type %Destroy.Op.type.729, %Destroy.facet.bb8 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -178,7 +178,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.MakeClass.type: type = fn_type @Class.MakeClass, @Class(%T) [symbolic = %Class.MakeClass.type (constants.%Class.MakeClass.type)]
 // CHECK:STDOUT:   %Class.MakeClass: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = struct_value () [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
 // CHECK:STDOUT:   %Class.MakeClass.specific_fn.loc22_19.2: <specific function> = specific_function %Class.MakeClass, @Class.MakeClass(%T) [symbolic = %Class.MakeClass.specific_fn.loc22_19.2 (constants.%Class.MakeClass.specific_fn)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc21_19.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc21_19.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.bb8)]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.729)]
 // CHECK:STDOUT:   %.loc22_5.2: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc22_5.2 (constants.%.abb)]
 // CHECK:STDOUT:

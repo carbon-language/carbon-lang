@@ -30,8 +30,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIR::LocId loc_id,
     SemIR::SpecificId interface_with_self_specific_id,
-    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
+    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id)
     -> SemIR::SpecificId;
 
 // Gets the type of the specified associated entity, given the specific for the

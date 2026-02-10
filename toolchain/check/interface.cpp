@@ -56,8 +56,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
     Context& context, SemIR::LocId loc_id,
     SemIR::SpecificId interface_with_self_specific_id,
-    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
+    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id)
     -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto self_specific_args = context.inst_blocks().Get(
@@ -65,9 +64,6 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
 
   auto arg_ids = llvm::SmallVector<SemIR::InstId>(context.inst_blocks().Get(
       context.specifics().GetArgsOrEmpty(interface_with_self_specific_id)));
-  // FIXME: Remove these.
-  (void)self_type_id;
-  (void)witness_inst_id;
 
   // Determine the number of specific arguments that enclose the point where
   // this self specific will be used from. In an impl, this will be the number

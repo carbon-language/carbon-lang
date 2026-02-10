@@ -1809,9 +1809,9 @@ fn F() {
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.baf, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.086: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic]
-// CHECK:STDOUT:   %.d67: type = fn_type_with_self_type %Destroy.Op.type.086, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.0b6: %Destroy.type = facet_value %as_type.baf, (%custom_witness.809) [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.086: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.0b6) [symbolic]
+// CHECK:STDOUT:   %.d67: type = fn_type_with_self_type %Destroy.Op.type.086, %Destroy.facet.0b6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2014,7 +2014,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_16: type = fn_type_with_self_type %I.Op.type, %I.facet.loc13_16 [symbolic = %.loc13_16 (constants.%.73b)]
 // CHECK:STDOUT:   %impl.elem0.loc13_16.2: @GenericResult.%.loc13_16 (%.73b) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_16.2 (constants.%impl.elem0.d74)]
 // CHECK:STDOUT:   %specific_impl_fn.loc13_16.2: <specific function> = specific_impl_function %impl.elem0.loc13_16.2, @I.Op(%I.facet.loc13_16) [symbolic = %specific_impl_fn.loc13_16.2 (constants.%specific_impl_fn.b45)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.loc12_35.1, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.loc12_35.1, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.0b6)]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.086)]
 // CHECK:STDOUT:   %.loc13_29.6: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc13_29.6 (constants.%.d67)]
 // CHECK:STDOUT:
