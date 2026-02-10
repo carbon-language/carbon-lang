@@ -143,12 +143,9 @@ auto HandleParseNode(Context& context,
   SemIR::TypeId self_type_id = GetNamedConstraintType(
       context, named_constraint_id,
       context.generics().GetSelfSpecific(constraint_info.generic_id));
-  constraint_info.self_param_id = MakeSelfGenericParameter(
+  constraint_info.self_param_id = AddSelfSymbolicBindingToScope(
       context, node_id, self_type_id, constraint_info.scope_without_self_id,
       is_template);
-  context.name_scopes().AddRequiredName(constraint_info.scope_without_self_id,
-                                        SemIR::NameId::SelfType,
-                                        constraint_info.self_param_id);
 
   // Start the declaration of constraint-with-self.
   StartGenericDecl(context);

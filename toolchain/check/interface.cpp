@@ -147,10 +147,11 @@ auto GetTypeForSpecificAssociatedEntity(
   CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
 }
 
-auto MakeSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
-                              SemIR::TypeId type_id,
-                              SemIR::NameScopeId scope_id, bool is_template)
-    -> SemIR::InstId {
+auto AddSelfSymbolicBindingToScope(Context& context,
+                                   SemIR::LocId definition_loc_id,
+                                   SemIR::TypeId type_id,
+                                   SemIR::NameScopeId scope_id,
+                                   bool is_template) -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, scope_id,
       context.scope_stack().AddCompileTimeBinding(), is_template);
@@ -161,6 +162,8 @@ auto MakeSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
                                       {.type_id = type_id,
                                        .entity_name_id = entity_name_id,
                                        .value_id = SemIR::InstId::None});
+  context.name_scopes().AddRequiredName(scope_id, SemIR::NameId::SelfType,
+                                        self_param_inst_id);
   return self_param_inst_id;
 }
 
