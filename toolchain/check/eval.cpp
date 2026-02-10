@@ -48,11 +48,18 @@ struct SpecificEvalInfo {
   llvm::ArrayRef<SemIR::InstId> values;
 };
 
-// Information about a local scope such as a function that we're currently
-// evaluating.
+// Information about a local scope that we're currently evaluating, such as a
+// call to an `eval fn`. In this scope, instructions with runtime phase may
+// locally have constant values, for example values that are computed from the
+// arguments to the call. These values are specific to the current evaluation
+// and not global properties of the instruction.
 struct LocalEvalInfo {
-  // A mapping from local instructions to the value that was produced when
-  // evaluating that instruction as part of the current function evaluation.
+  // A mapping from instructions with runtime phase within the local scope to
+  // the values that they have in the current evaluation. This is populated as
+  // the local scope is evaluated, and due to control flow, the same instruction
+  // may have its value set multiple times. This map tracks the most recent
+  // value that the instruction had, which is the one that a reference to it in
+  // well-formed SemIR should refer to.
   Map<SemIR::InstId, SemIR::ConstantId>* locals;
 };
 
@@ -2571,10 +2578,15 @@ class FunctionEvalContext : public EvalContext {
                     LocalEvalInfo{.locals = locals}),
         args_(context->inst_blocks().Get(args_id)) {}
 
+  // Returns the instructions to execute to complete this function invocation.
+  // In order to support `splice_block`, this is a stack of blocks. When the
+  // innermost block is complete, it will be popped and the next outer block
+  // will execute.
   auto blocks() -> llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& {
     return blocks_;
   }
 
+  // Returns the argument values supplied in the call to the function.
   auto args() const -> llvm::ArrayRef<SemIR::InstId> { return args_; }
 
   using EvalContext::locals;
@@ -2697,6 +2709,8 @@ auto TryEvalTypedInstInFunction<SemIR::SpliceBlock>(
   return SemIR::ConstantId::None;
 }
 
+// Evaluates the introduction of a parameter into the local scope. Copies the
+// argument supplied by the caller for the parameter into the locals map.
 static auto TryEvalTypedParamInFunction(FunctionEvalContext& eval_context,
                                         SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
@@ -2715,8 +2729,10 @@ auto TryEvalTypedInstInFunction<SemIR::OutParam>(
     -> SemIR::ConstantId {
   auto param = inst.As<SemIR::OutParam>();
   if (static_cast<size_t>(param.index.index) >= eval_context.args().size()) {
-    // We generate an OutParam with an index that has no corresponding argument
-    // for return values that have a copy initializing representation.
+    // For return values that have a copy initializing representation, the SemIR
+    // has an OutParam with an index that has no corresponding argument. In that
+    // case, we do not have a constant value for the parameter, but this doesn't
+    // prevent the call from being constant.
     //
     // TODO: Remove this once we stop adding out parameters with no
     // corresponding argument.
@@ -2801,7 +2817,7 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                  .decl_block_id);
 
   // Evaluate the blocks. This is mostly expression evaluation, with special
-  // handling for control flow.
+  // handling for control flow and parameters.
   while (true) {
     if (eval_context.blocks().back().empty()) {
       eval_context.blocks().pop_back();
