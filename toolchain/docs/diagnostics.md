@@ -123,14 +123,14 @@ have their own location information. A diagnostic with a note looks like:
 
 ```cpp
 CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                  "{0} argument(s) passed to function expecting "
-                  "{1} argument(s).",
-                  int, int);
+                  "{0} argument{0:s} passed to `{1}` expecting "
+                  "{2} argument{2:s}",
+                  IntAsSelect, std::string, IntAsSelect);
 CARBON_DIAGNOSTIC(InCallToFunction, Note,
                   "calling function declared here");
 context.emitter()
-    .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
-           param_refs.size())
+    .Build(call_parse_node, CallArgCountMismatch,
+           arg_refs.size(), fn_name, aram_refs.size())
     .Note(param_parse_node, InCallToFunction)
     .Emit();
 ```
