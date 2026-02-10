@@ -451,33 +451,13 @@ auto GetConstantFacetValueForTypeAndInterface(
     Context& context, SemIR::TypeInstId type_inst_id,
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId {
-  // Get the type of the inner `Self`, which is the innermost binding in the
-  // generic-with-self.
-
-#if 0
-  // FIXME: Remove this?
-  const auto& interface =
-      context.interfaces().Get(specific_interface.interface_id);
-  auto args_with_self_id = context.specifics().GetArgsOrEmpty(
-      context.generics().GetSelfSpecific(interface.generic_with_self_id));
-  auto args_with_self = context.inst_blocks().Get(args_with_self_id);
-  auto self_facet_in_generic_without_self = args_with_self.back();
-  // The `Self` argument in the self-specific (the default specific) of the
-  // generic-with-self (the generic with an inner self parameter) is an
-  // instruction in the outer generic-without-self, for with the
-  // SpecificInterface has a specific.
-  auto self_facet_type_in_generic_without_self = SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), specific_interface.specific_id,
-      self_facet_in_generic_without_self);
-#else
-  // FIXME: Keep this!?
-  auto interface_facet_type = GetOrAddInst(
+  // Get the type of the inner `Self`, which is the facet type of the interface.
+  auto interface_facet_type = EvalOrAddInst(
       context, SemIR::LocId::None,
       FacetTypeFromInterface(context, specific_interface.interface_id,
                              specific_interface.specific_id));
   auto self_facet_type_in_generic_without_self =
-      context.types().GetTypeIdForTypeInstId(interface_facet_type);
-#endif
+      context.types().GetTypeIdForTypeConstantId(interface_facet_type);
 
   auto witnesses_block_id = context.inst_blocks().AddCanonical({witness_id});
   auto self_value_const_id = EvalOrAddInst<SemIR::FacetValue>(

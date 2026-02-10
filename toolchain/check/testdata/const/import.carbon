@@ -97,7 +97,6 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_ref.ref: ref %const.0e5 = name_ref a_ref, imports.%Main.a_ref [concrete = imports.%a_ref.var]
 // CHECK:STDOUT:   %addr: %ptr.c45 = addr_of %a_ref.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0.loc6: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
 // CHECK:STDOUT:   %bound_method.loc6_19.1: <bound method> = bound_method %addr, %impl.elem0.loc6 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -106,7 +105,6 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   assign file.%a.var, %ptr.as.Copy.impl.Op.call.loc6
 // CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr.c45 = name_ref a_ptr_ref, imports.%Main.a_ptr_ref [concrete = imports.%a_ptr_ref.var]
 // CHECK:STDOUT:   %.loc7: %ptr.c45 = acquire_value %a_ptr_ref.ref
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0.loc7: %.090 = impl_witness_access constants.%Copy.impl_witness.b9c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.09c]
 // CHECK:STDOUT:   %bound_method.loc7_23.1: <bound method> = bound_method %.loc7, %impl.elem0.loc7
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @ptr.as.Copy.impl.Op(constants.%const.0e5) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]

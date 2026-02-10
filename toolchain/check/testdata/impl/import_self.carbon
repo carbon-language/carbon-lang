@@ -235,7 +235,6 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (%C.as.Add.impl.Op.decl), @C.as.Add.impl [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness %Add.impl_witness_table [concrete = constants.%Add.impl_witness]
 // CHECK:STDOUT:
@@ -284,7 +283,6 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.a96 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %impl.elem0: %.c75 = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%C.as.Add.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %C = name_ref y, %y

@@ -145,7 +145,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:         %.loc11_24.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc11_24.2: @C.F.%A.assoc_type (%A.assoc_type.9f4820.2) = specific_constant @X.%assoc0, @A(constants.%CC, constants.%.Self.660472.1) [symbolic = %assoc0 (constants.%assoc0.9fa860.2)]
 // CHECK:STDOUT:         %X.ref: @C.F.%A.assoc_type (%A.assoc_type.9f4820.2) = name_ref X, %.loc11_24.2 [symbolic = %assoc0 (constants.%assoc0.9fa860.2)]
-// CHECK:STDOUT:         <elided>
 // CHECK:STDOUT:         %impl.elem0.loc11_24.2: type = impl_witness_access constants.%A.lookup_impl_witness.04abbb.1, element0 [symbolic = %impl.elem0.loc11_24.1 (constants.%impl.elem0.f51d29.1)]
 // CHECK:STDOUT:         %CC.ref.loc11_29: type = name_ref CC, @C.%CC.loc6_9.2 [symbolic = %CC (constants.%CC)]
 // CHECK:STDOUT:         %.loc11_18.2: type = where_expr %.Self.3 [symbolic = %A_where.type (constants.%A_where.type.4028e0.1)] {
@@ -379,7 +378,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:       %.loc9_42.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_42.2: @BB.binding.as_type.as.B.impl.%A.assoc_type (%A.assoc_type) = specific_constant @X.%assoc0, @A(constants.%AA, constants.%.Self.660472.1) [symbolic = %assoc0 (constants.%assoc0)]
 // CHECK:STDOUT:       %X.ref: @BB.binding.as_type.as.B.impl.%A.assoc_type (%A.assoc_type) = name_ref X, %.loc9_42.2 [symbolic = %assoc0 (constants.%assoc0)]
-// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %impl.elem0.loc9_42.1: type = impl_witness_access constants.%A.lookup_impl_witness.04abbb.1, element0 [symbolic = %impl.elem0.loc9_42.2 (constants.%impl.elem0.f51d29.1)]
 // CHECK:STDOUT:       %.loc9_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc9_48.2: type = converted %.loc9_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -414,7 +412,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %require_complete.loc9_62: <witness> = require_complete_type %B.type.loc9_62.2 [symbolic = %require_complete.loc9_62 (constants.%require_complete.fe18c9.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc9_51 as %B.type.loc9_62.1 {
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %B.impl_witness_table = impl_witness_table (), @BB.binding.as_type.as.B.impl [concrete]
 // CHECK:STDOUT:     %B.impl_witness.loc9_64.1: <witness> = impl_witness %B.impl_witness_table, @BB.binding.as_type.as.B.impl(constants.%AA, constants.%BB.0b1) [symbolic = %B.impl_witness.loc9_64.2 (constants.%B.impl_witness.bef)]
 // CHECK:STDOUT:

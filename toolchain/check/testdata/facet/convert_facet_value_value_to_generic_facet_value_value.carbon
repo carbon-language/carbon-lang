@@ -302,7 +302,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Grass.as.Edible.impl: %Grass.ref as %Edible.ref {
-// CHECK:STDOUT:   %Edible.type: type = facet_type <@Edible> [concrete = constants.%Edible.type]
 // CHECK:STDOUT:   %Edible.impl_witness_table = impl_witness_table (), @Grass.as.Edible.impl [concrete]
 // CHECK:STDOUT:   %Edible.impl_witness: <witness> = impl_witness %Edible.impl_witness_table [concrete = constants.%Edible.impl_witness]
 // CHECK:STDOUT:
@@ -322,7 +321,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Eats.type.loc26_49.2 [symbolic = %require_complete (constants.%require_complete.a2722e.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc26_38 as %Eats.type.loc26_49.1 {
-// CHECK:STDOUT:     %Eats.type.1: type = facet_type <@Eats, @Eats(constants.%U.binding.as_type)> [symbolic = %Eats.type.loc26_49.2 (constants.%Eats.type.bb4cf6.1)]
 // CHECK:STDOUT:     %Eats.impl_witness_table = impl_witness_table (), @T.binding.as_type.as.Eats.impl [concrete]
 // CHECK:STDOUT:     %Eats.impl_witness.loc26_51.1: <witness> = impl_witness %Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(constants.%T.998, constants.%U) [symbolic = %Eats.impl_witness.loc26_51.2 (constants.%Eats.impl_witness.0150b7.1)]
 // CHECK:STDOUT:
@@ -332,7 +330,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Goat.as.Animal.impl: %Goat.ref as %Animal.ref {
-// CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @Goat.as.Animal.impl [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:
@@ -435,10 +432,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = acquire_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = acquire_value %.loc35_31.1
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.2, %.loc35_31.2)
-// CHECK:STDOUT:   %Destroy.type.1: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc35_29: <bound method> = bound_method %.loc35_29.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc35_29: init %empty_tuple.type = call %DestroyOp.bound.loc35_29(%.loc35_29.4)
-// CHECK:STDOUT:   %Destroy.type.2: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc35_17: <bound method> = bound_method %.loc35_17.4, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc35_17: init %empty_tuple.type = call %DestroyOp.bound.loc35_17(%.loc35_17.4)
 // CHECK:STDOUT:   return

@@ -283,7 +283,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Action.ref: %Action.type.85c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %Action.type.loc12: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
+// CHECK:STDOUT:     %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.1ab = value_binding_pattern a [concrete]
@@ -331,7 +331,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @A.as.Action.impl: %A.ref as %Action.type.loc12 {
+// CHECK:STDOUT: impl @A.as.Action.impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %A.as.Action.impl.Op.decl: %A.as.Action.impl.Op.type = fn_decl @A.as.Action.impl.Op [concrete = constants.%A.as.Action.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1ab = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1ab = value_param_pattern %self.patt, call_param0 [concrete]
@@ -340,7 +340,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @A.as.Action.impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Action.type.1: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%A.as.Action.impl.Op.decl), @A.as.Action.impl [concrete]
 // CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete = constants.%Action.impl_witness]
 // CHECK:STDOUT:
@@ -393,10 +392,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type.85c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %Action.type.loc16: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
+// CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %.loc16: %Action.assoc_type.826 = specific_constant @Action.%assoc0.loc5_22.1, @Action(constants.%B, constants.%Self.e2a) [concrete = constants.%assoc0.d7e]
 // CHECK:STDOUT:   %Op.ref: %Action.assoc_type.826 = name_ref Op, %.loc16 [concrete = constants.%assoc0.d7e]
-// CHECK:STDOUT:   %Action.type.1: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %impl.elem0: %.674 = impl_witness_access constants.%Action.impl_witness, element0 [concrete = constants.%A.as.Action.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %A.as.Action.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.ref)
@@ -597,10 +595,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type.85c = name_ref Action, imports.%Main.Action [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:   %Action.type.loc4: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
+// CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %.loc4: %Action.assoc_type.826 = specific_constant imports.%Main.import_ref.a10, @Action(constants.%B, constants.%Self.6c1) [concrete = constants.%assoc0.3bd]
 // CHECK:STDOUT:   %Op.ref: %Action.assoc_type.826 = name_ref Op, %.loc4 [concrete = constants.%assoc0.3bd]
-// CHECK:STDOUT:   %Action.type.1: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.879]
 // CHECK:STDOUT:   %impl.elem0: %.fba = impl_witness_access constants.%Action.impl_witness, element0 [concrete = constants.%A.as.Action.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %A.as.Action.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.ref)
@@ -923,7 +920,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Factory.ref: %Factory.type.2e5 = name_ref Factory, file.%Factory.decl [concrete = constants.%Factory.generic]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %Factory.type.loc14: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
+// CHECK:STDOUT:     %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -982,7 +979,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @A.as.Factory.impl: %A.ref as %Factory.type.loc14 {
+// CHECK:STDOUT: impl @A.as.Factory.impl: %A.ref as %Factory.type {
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.decl: %A.as.Factory.impl.Make.type = fn_decl @A.as.Factory.impl.Make [concrete = constants.%A.as.Factory.impl.Make] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.1f4 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -1006,7 +1003,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Factory.type.1: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%A.as.Factory.impl.Make.decl, %A.as.Factory.impl.Method.decl), @A.as.Factory.impl [concrete]
 // CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness %Factory.impl_witness_table [concrete = constants.%Factory.impl_witness]
 // CHECK:STDOUT:
@@ -1341,10 +1337,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.2e5 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
 // CHECK:STDOUT:   %B.ref.loc8: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:   %Factory.type.loc8: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
+// CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   %.loc8: %Factory.assoc_type.3bd = specific_constant imports.%Main.import_ref.c7f, @Factory(constants.%B, constants.%Self.197) [concrete = constants.%assoc1.235]
 // CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.3bd = name_ref Method, %.loc8 [concrete = constants.%assoc1.235]
-// CHECK:STDOUT:   %Factory.type.1: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.5dd]
 // CHECK:STDOUT:   %impl.elem1: %.f92 = impl_witness_access constants.%Factory.impl_witness, element1 [concrete = constants.%A.as.Factory.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc7_23.1: ref %B = splice_block %return.param {}

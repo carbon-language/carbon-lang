@@ -179,7 +179,6 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:       %return.param: ref @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%A.as.I.impl.F.decl), @A.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc12_37.1: <witness> = impl_witness %I.impl_witness_table, @A.as.I.impl(constants.%V.67d) [symbolic = %I.impl_witness.loc12_37.2 (constants.%I.impl_witness.f3f3bd.1)]
 // CHECK:STDOUT:
@@ -216,7 +215,6 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.8a20fa.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
 // CHECK:STDOUT:     %.loc14_17: ref @A.as.I.impl.F.%V (%V.67d) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %addr: @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) = addr_of %.loc14_17
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc14_12.1: @A.as.I.impl.F.%.loc14_12.2 (%.299) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:     %bound_method.loc14_12.1: <bound method> = bound_method %addr, %impl.elem0.loc14_12.1
 // CHECK:STDOUT:     %specific_impl_fn.loc14_12.1: <specific function> = specific_impl_function %impl.elem0.loc14_12.1, @Copy.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.366)]
@@ -253,7 +251,6 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %.loc21_18: @TestGeneric.%I.assoc_type (%I.assoc_type.76c031.3) = specific_constant @I.%assoc0.loc8_31.1, @I(constants.%W, constants.%Self.fdb544.1) [symbolic = %assoc0 (constants.%assoc0.203667.3)]
 // CHECK:STDOUT:     %F.ref: @TestGeneric.%I.assoc_type (%I.assoc_type.76c031.3) = name_ref F, %.loc21_18 [symbolic = %assoc0 (constants.%assoc0.203667.3)]
 // CHECK:STDOUT:     %.loc21_11.1: ref @TestGeneric.%A.loc19_32.1 (%A.95c0c7.3) = deref %a.ref
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc21_11.1: @TestGeneric.%.loc21_11.3 (%.695) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.976)]
 // CHECK:STDOUT:     %bound_method.loc21_11: <bound method> = bound_method %.loc21_11.1, %impl.elem0.loc21_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @I.F(constants.%W, constants.%I.facet.558) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.3c2)]
@@ -269,11 +266,10 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %.loc27_17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc27_18: type = converted %.loc27_17, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %I.type.loc27: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   %.loc27_19: %I.assoc_type.294 = specific_constant @I.%assoc0.loc8_31.1, @I(constants.%empty_struct_type, constants.%Self.fdb544.1) [concrete = constants.%assoc0.c64]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type.294 = name_ref F, %.loc27_19 [concrete = constants.%assoc0.c64]
 // CHECK:STDOUT:   %.loc27_11: ref %A.ed7 = deref %a.ref
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.d59 = impl_witness_access constants.%I.impl_witness.708, element0 [concrete = constants.%A.as.I.impl.F.c38]
 // CHECK:STDOUT:   %bound_method.loc27_11: <bound method> = bound_method %.loc27_11, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @A.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%A.as.I.impl.F.specific_fn]

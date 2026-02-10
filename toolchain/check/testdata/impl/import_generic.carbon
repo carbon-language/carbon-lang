@@ -371,14 +371,14 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %.loc5_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %I.type.loc5: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: %J.type.885 = name_ref J, imports.%Main.J [concrete = constants.%J.generic]
 // CHECK:STDOUT:     %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %J.type.loc7: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
+// CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -426,8 +426,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.type.loc5 {
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
+// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.type {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -435,8 +434,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.type.loc7 {
-// CHECK:STDOUT:   %J.type.1: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d6f]
+// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.type {
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:
@@ -760,7 +758,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %J.type {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.ab5]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -1003,7 +1000,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc8_32.2 [symbolic = %require_complete (constants.%require_complete.e36)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref.loc8 as %I.type.loc8_32.1 {
-// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc8_32.2 (constants.%I.type.1ab)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.431 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc8_33.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.431(constants.%T) [symbolic = %I.impl_witness.loc8_33.2 (constants.%I.impl_witness.9f5)]
 // CHECK:STDOUT:
@@ -1022,7 +1018,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc12_33.2 [symbolic = %require_complete (constants.%require_complete.ffd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc12_33.1 {
-// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr)> [symbolic = %I.type.loc12_33.2 (constants.%I.type.e19)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.815 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc12_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc12_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
@@ -1625,7 +1620,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc7_32.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc7_32.1 {
-// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc7_32.2 (constants.%I.type.1ab)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc7_34.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%T) [symbolic = %I.impl_witness.loc7_34.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
@@ -1838,7 +1832,6 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc5_33.2 [symbolic = %require_complete (constants.%require_complete.ffd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc5_33.1 {
-// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr.e8f)> [symbolic = %I.type.loc5_33.2 (constants.%I.type.e19)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.815 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc5_35.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.815(constants.%T) [symbolic = %I.impl_witness.loc5_35.2 (constants.%I.impl_witness.18a)]
 // CHECK:STDOUT:
@@ -1856,10 +1849,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %N.type.loc6_34.2 [symbolic = %require_complete (constants.%require_complete.533)]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%ptr.loc6_33.2)> [symbolic = %I.type.2 (constants.%I.type.08a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %N.type.loc6_34.1 {
-// CHECK:STDOUT:     %I.type.1: type = facet_type <@I, @I(constants.%ptr.125)> [symbolic = %I.type.2 (constants.%I.type.08a)]
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.c93 [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc6_36.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl.c93(constants.%T) [symbolic = %I.impl_witness.loc6_36.2 (constants.%I.impl_witness.d57)]
 // CHECK:STDOUT:

@@ -87,10 +87,8 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_11.3: type = converted %.loc11_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc11: ref %empty_tuple.type = ref_binding x, %x.var.loc11
-// CHECK:STDOUT:   %Destroy.type.1: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc11: <bound method> = bound_method %x.var.loc11, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc11: init %empty_tuple.type = call %DestroyOp.bound.loc11(%x.var.loc11)
-// CHECK:STDOUT:   %Destroy.type.2: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc3: <bound method> = bound_method %x.var.loc3, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc3: init %empty_tuple.type = call %DestroyOp.bound.loc3(%x.var.loc3)
 // CHECK:STDOUT:   return

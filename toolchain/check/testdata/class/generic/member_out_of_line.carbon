@@ -302,7 +302,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn(%n.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type)) -> out %return.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Class.F.%T.binding.as_type (%T.binding.as_type) = name_ref n, %n.loc11
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc12_10.1: @Class.F.%.loc12 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc12_10.2 (constants.%impl.elem0.594)]
 // CHECK:STDOUT:     %bound_method.loc12_10.1: <bound method> = bound_method %n.ref, %impl.elem0.loc12_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc12_10.1: <specific function> = specific_impl_function %impl.elem0.loc12_10.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.bdc)]
@@ -337,7 +336,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc8_8 [concrete = @Class.%.loc8_8]
 // CHECK:STDOUT:     %.loc16_14.1: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc16_14.2: @Class.G.%T.binding.as_type (%T.binding.as_type) = acquire_value %.loc16_14.1
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc16_14.1: @Class.G.%.loc16_14.3 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc16_14.2 (constants.%impl.elem0.594)]
 // CHECK:STDOUT:     %bound_method.loc16_14.1: <bound method> = bound_method %.loc16_14.2, %impl.elem0.loc16_14.1
 // CHECK:STDOUT:     %specific_impl_fn.loc16_14.1: <specific function> = specific_impl_function %impl.elem0.loc16_14.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.bdc)]

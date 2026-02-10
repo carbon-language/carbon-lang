@@ -53,7 +53,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc18_6 as <unexpected>.inst{{[0-9A-F]+}}.loc18_14 {
-// CHECK:STDOUT:   <unexpected>.inst{{[0-9A-F]+}}: type = facet_type <@Animal> [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   impl_witness_table (), @<null name> [concrete]
 // CHECK:STDOUT:   <unexpected>.inst{{[0-9A-F]+}}.loc18_21: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:

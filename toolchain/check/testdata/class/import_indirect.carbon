@@ -223,7 +223,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_1
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val [concrete = file.%b_val.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %b_val.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc9_17.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -320,7 +319,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_1
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val [concrete = file.%c_val.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %c_val.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc9_17.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -420,7 +418,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%value.var, %.loc7_1
 // CHECK:STDOUT:   %value.ref: ref %C = name_ref value, file.%value [concrete = file.%value.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %value.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -520,7 +517,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%value.var, %.loc7_1
 // CHECK:STDOUT:   %value.ref: ref %C = name_ref value, file.%value [concrete = file.%value.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %value.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -624,7 +620,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%value.var, %.loc7_1
 // CHECK:STDOUT:   %value.ref: ref %C = name_ref value, file.%value [concrete = file.%value.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %value.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
@@ -728,7 +723,6 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   assign file.%value.var, %.loc7_1
 // CHECK:STDOUT:   %value.ref: ref %C = name_ref value, file.%value [concrete = file.%value.var]
 // CHECK:STDOUT:   %addr: %ptr.31e = addr_of %value.ref [concrete = constants.%addr]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.64b = impl_witness_access constants.%Copy.impl_witness.2c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.ed9]
 // CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]

@@ -129,7 +129,6 @@ final impl C(invalid) as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Simple.impl: %C.ref as %Simple.ref {
 // CHECK:STDOUT:   %C.as.Simple.impl.F.decl: %C.as.Simple.impl.F.type = fn_decl @C.as.Simple.impl.F [concrete = constants.%C.as.Simple.impl.F] {} {}
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%C.as.Simple.impl.F.decl), @C.as.Simple.impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:

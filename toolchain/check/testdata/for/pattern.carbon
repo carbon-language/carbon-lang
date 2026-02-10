@@ -210,7 +210,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_35.1: ref %EmptyRange.77b = temporary_storage
 // CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.77b to %.loc10_35.1 = call %EmptyRange.Make.specific_fn()
 // CHECK:STDOUT:   %.loc10_35.2: ref %EmptyRange.77b = temporary %.loc10_35.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem2: %.e1f = impl_witness_access constants.%Iterate.impl_witness.96d, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.da5]
 // CHECK:STDOUT:   %bound_method.loc10_36.1: <bound method> = bound_method %.loc10_35.2, %impl.elem2
 // CHECK:STDOUT:   %specific_fn.loc10_36.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
@@ -223,7 +222,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem3: %.527 = impl_witness_access constants.%Iterate.impl_witness.96d, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.d08]
 // CHECK:STDOUT:   %bound_method.loc10_36.3: <bound method> = bound_method %.loc10_35.2, %impl.elem3
 // CHECK:STDOUT:   %specific_fn.loc10_36.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
@@ -262,16 +260,12 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_36.1: <bound method> = bound_method %.loc10_36.10, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc10_36.1: init %empty_tuple.type = call %DestroyOp.bound.loc10_36.1(%.loc10_36.10)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_36.2: <bound method> = bound_method %.loc10_36.2, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc10_36.2: init %empty_tuple.type = call %DestroyOp.bound.loc10_36.2(%.loc10_36.2)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_36.3: <bound method> = bound_method %var, constants.%DestroyOp.b0ebf8.3
 // CHECK:STDOUT:   %DestroyOp.call.loc10_36.3: init %empty_tuple.type = call %DestroyOp.bound.loc10_36.3(%var)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_35: <bound method> = bound_method %.loc10_35.2, constants.%DestroyOp.b0ebf8.4
 // CHECK:STDOUT:   %DestroyOp.call.loc10_35: init %empty_tuple.type = call %DestroyOp.bound.loc10_35(%.loc10_35.2)
 // CHECK:STDOUT:   <elided>
@@ -380,7 +374,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_39.1: ref %EmptyRange.77b = temporary_storage
 // CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.77b to %.loc10_39.1 = call %EmptyRange.Make.specific_fn()
 // CHECK:STDOUT:   %.loc10_39.2: ref %EmptyRange.77b = temporary %.loc10_39.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem2: %.e1f = impl_witness_access constants.%Iterate.impl_witness.96d, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.da5]
 // CHECK:STDOUT:   %bound_method.loc10_40.1: <bound method> = bound_method %.loc10_39.2, %impl.elem2
 // CHECK:STDOUT:   %specific_fn.loc10_40.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
@@ -393,7 +386,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr.loc10: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem3: %.527 = impl_witness_access constants.%Iterate.impl_witness.96d, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.d08]
 // CHECK:STDOUT:   %bound_method.loc10_40.3: <bound method> = bound_method %.loc10_39.2, %impl.elem3
 // CHECK:STDOUT:   %specific_fn.loc10_40.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
@@ -433,16 +425,12 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_8: <bound method> = bound_method %c.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc10_8: init %empty_tuple.type = call %DestroyOp.bound.loc10_8(%c.var)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_40.1: <bound method> = bound_method %.loc10_40.2, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc10_40.1: init %empty_tuple.type = call %DestroyOp.bound.loc10_40.1(%.loc10_40.2)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_40.2: <bound method> = bound_method %var, constants.%DestroyOp.b0ebf8.3
 // CHECK:STDOUT:   %DestroyOp.call.loc10_40.2: init %empty_tuple.type = call %DestroyOp.bound.loc10_40.2(%var)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_39: <bound method> = bound_method %.loc10_39.2, constants.%DestroyOp.b0ebf8.4
 // CHECK:STDOUT:   %DestroyOp.call.loc10_39: init %empty_tuple.type = call %DestroyOp.bound.loc10_39(%.loc10_39.2)
 // CHECK:STDOUT:   <elided>
@@ -564,7 +552,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_60.1: ref %EmptyRange.717 = temporary_storage
 // CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.717 to %.loc10_60.1 = call %EmptyRange.Make.specific_fn()
 // CHECK:STDOUT:   %.loc10_60.2: ref %EmptyRange.717 = temporary %.loc10_60.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem2: %.a72 = impl_witness_access constants.%Iterate.impl_witness.04a, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.90c]
 // CHECK:STDOUT:   %bound_method.loc10_61.1: <bound method> = bound_method %.loc10_60.2, %impl.elem2
 // CHECK:STDOUT:   %specific_fn.loc10_61.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
@@ -577,7 +564,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem3: %.28c = impl_witness_access constants.%Iterate.impl_witness.04a, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.4a9]
 // CHECK:STDOUT:   %bound_method.loc10_61.3: <bound method> = bound_method %.loc10_60.2, %impl.elem3
 // CHECK:STDOUT:   %specific_fn.loc10_61.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.3ce) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
@@ -630,16 +616,12 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_61.1: <bound method> = bound_method %.loc10_61.10, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc10_61.1: init %empty_tuple.type = call %DestroyOp.bound.loc10_61.1(%.loc10_61.10)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_61.2: <bound method> = bound_method %.loc10_61.2, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc10_61.2: init %empty_tuple.type = call %DestroyOp.bound.loc10_61.2(%.loc10_61.2)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_61.3: <bound method> = bound_method %var, constants.%DestroyOp.b0ebf8.3
 // CHECK:STDOUT:   %DestroyOp.call.loc10_61.3: init %empty_tuple.type = call %DestroyOp.bound.loc10_61.3(%var)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_60: <bound method> = bound_method %.loc10_60.2, constants.%DestroyOp.b0ebf8.4
 // CHECK:STDOUT:   %DestroyOp.call.loc10_60: init %empty_tuple.type = call %DestroyOp.bound.loc10_60(%.loc10_60.2)
 // CHECK:STDOUT:   <elided>
@@ -761,7 +743,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_48.1: ref %EmptyRange.849 = temporary_storage
 // CHECK:STDOUT:   %EmptyRange.Make.call: init %EmptyRange.849 to %.loc10_48.1 = call %EmptyRange.Make.specific_fn()
 // CHECK:STDOUT:   %.loc10_48.2: ref %EmptyRange.849 = temporary %.loc10_48.1, %EmptyRange.Make.call
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem2: %.722 = impl_witness_access constants.%Iterate.impl_witness.a9d, element2 [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.94e]
 // CHECK:STDOUT:   %bound_method.loc10_49.1: <bound method> = bound_method %.loc10_48.2, %impl.elem2
 // CHECK:STDOUT:   %specific_fn.loc10_49.1: <specific function> = specific_function %impl.elem2, @EmptyRange.as.Iterate.impl.NewCursor(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.as.Iterate.impl.NewCursor.specific_fn]
@@ -774,7 +755,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem3: %.44b = impl_witness_access constants.%Iterate.impl_witness.a9d, element3 [concrete = constants.%EmptyRange.as.Iterate.impl.Next.77c]
 // CHECK:STDOUT:   %bound_method.loc10_49.3: <bound method> = bound_method %.loc10_48.2, %impl.elem3
 // CHECK:STDOUT:   %specific_fn.loc10_49.2: <specific function> = specific_function %impl.elem3, @EmptyRange.as.Iterate.impl.Next(constants.%Copy.facet.ad0) [concrete = constants.%EmptyRange.as.Iterate.impl.Next.specific_fn]
@@ -819,16 +799,12 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_49.1: <bound method> = bound_method %.loc10_49.10, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc10_49.1: init %empty_tuple.type = call %DestroyOp.bound.loc10_49.1(%.loc10_49.10)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_49.2: <bound method> = bound_method %.loc10_49.2, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc10_49.2: init %empty_tuple.type = call %DestroyOp.bound.loc10_49.2(%.loc10_49.2)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_49.3: <bound method> = bound_method %var, constants.%DestroyOp.b0ebf8.3
 // CHECK:STDOUT:   %DestroyOp.call.loc10_49.3: init %empty_tuple.type = call %DestroyOp.bound.loc10_49.3(%var)
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_48: <bound method> = bound_method %.loc10_48.2, constants.%DestroyOp.b0ebf8.4
 // CHECK:STDOUT:   %DestroyOp.call.loc10_48: init %empty_tuple.type = call %DestroyOp.bound.loc10_48(%.loc10_48.2)
 // CHECK:STDOUT:   <elided>

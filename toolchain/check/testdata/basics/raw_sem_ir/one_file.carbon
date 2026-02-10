@@ -76,13 +76,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst25: {ir_id: import_ir60000004, inst_id: inst48000076}
 // CHECK:STDOUT:     import_ir_inst26: {ir_id: import_ir60000004, inst_id: inst4800007A}
 // CHECK:STDOUT:     import_ir_inst27: {ir_id: import_ir60000004, inst_id: inst4800007F}
-// CHECK:STDOUT:     import_ir_inst28: {ir_id: import_ir60000004, inst_id: inst48000090}
-// CHECK:STDOUT:     import_ir_inst29: {ir_id: import_ir60000004, inst_id: inst48000097}
-// CHECK:STDOUT:     import_ir_inst2A: {ir_id: import_ir60000004, inst_id: inst4800009E}
-// CHECK:STDOUT:     import_ir_inst2B: {ir_id: import_ir60000004, inst_id: inst480000A5}
-// CHECK:STDOUT:     import_ir_inst2C: {ir_id: import_ir60000004, inst_id: inst480000A6}
-// CHECK:STDOUT:     import_ir_inst2D: {ir_id: import_ir60000004, inst_id: inst480000A7}
-// CHECK:STDOUT:     import_ir_inst2E: {ir_id: import_ir60000004, inst_id: inst480000AD}
+// CHECK:STDOUT:     import_ir_inst28: {ir_id: import_ir60000004, inst_id: inst4800008F}
+// CHECK:STDOUT:     import_ir_inst29: {ir_id: import_ir60000004, inst_id: inst48000096}
+// CHECK:STDOUT:     import_ir_inst2A: {ir_id: import_ir60000004, inst_id: inst4800009D}
+// CHECK:STDOUT:     import_ir_inst2B: {ir_id: import_ir60000004, inst_id: inst480000A3}
+// CHECK:STDOUT:     import_ir_inst2C: {ir_id: import_ir60000004, inst_id: inst480000A4}
+// CHECK:STDOUT:     import_ir_inst2D: {ir_id: import_ir60000004, inst_id: inst480000A5}
+// CHECK:STDOUT:     import_ir_inst2E: {ir_id: import_ir60000004, inst_id: inst480000AB}
 // CHECK:STDOUT:     import_ir_inst2F: {ir_id: import_ir60000004, inst_id: inst48000061}
 // CHECK:STDOUT:     import_ir_inst30: {ir_id: import_ir60000004, inst_id: inst48000067}
 // CHECK:STDOUT:     import_ir_inst31: {ir_id: import_ir60000004, inst_id: inst4800006A}
@@ -93,165 +93,165 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst36: {ir_id: import_ir60000004, inst_id: inst48000070}
 // CHECK:STDOUT:     import_ir_inst37: {ir_id: import_ir60000004, inst_id: inst48000088}
 // CHECK:STDOUT:     import_ir_inst38: {ir_id: import_ir60000004, inst_id: inst48000089}
-// CHECK:STDOUT:     import_ir_inst39: {ir_id: import_ir60000004, inst_id: inst480000C2}
-// CHECK:STDOUT:     import_ir_inst3A: {ir_id: import_ir60000004, inst_id: inst480000C0}
-// CHECK:STDOUT:     import_ir_inst3B: {ir_id: import_ir60000004, inst_id: inst480000BE}
-// CHECK:STDOUT:     import_ir_inst3C: {ir_id: import_ir60000004, inst_id: inst480000BF}
-// CHECK:STDOUT:     import_ir_inst3D: {ir_id: import_ir60000004, inst_id: inst480000DF}
-// CHECK:STDOUT:     import_ir_inst3E: {ir_id: import_ir60000004, inst_id: inst480000DD}
-// CHECK:STDOUT:     import_ir_inst3F: {ir_id: import_ir60000004, inst_id: inst480000DB}
-// CHECK:STDOUT:     import_ir_inst40: {ir_id: import_ir60000004, inst_id: inst480000DC}
-// CHECK:STDOUT:     import_ir_inst41: {ir_id: import_ir60000004, inst_id: inst480000FC}
-// CHECK:STDOUT:     import_ir_inst42: {ir_id: import_ir60000004, inst_id: inst480000FA}
-// CHECK:STDOUT:     import_ir_inst43: {ir_id: import_ir60000004, inst_id: inst480000F8}
-// CHECK:STDOUT:     import_ir_inst44: {ir_id: import_ir60000004, inst_id: inst480000F9}
-// CHECK:STDOUT:     import_ir_inst45: {ir_id: import_ir60000004, inst_id: inst48000119}
-// CHECK:STDOUT:     import_ir_inst46: {ir_id: import_ir60000004, inst_id: inst48000117}
-// CHECK:STDOUT:     import_ir_inst47: {ir_id: import_ir60000004, inst_id: inst48000115}
-// CHECK:STDOUT:     import_ir_inst48: {ir_id: import_ir60000004, inst_id: inst48000116}
-// CHECK:STDOUT:     import_ir_inst49: {ir_id: import_ir60000004, inst_id: inst4800013B}
-// CHECK:STDOUT:     import_ir_inst4A: {ir_id: import_ir60000004, inst_id: inst48000139}
-// CHECK:STDOUT:     import_ir_inst4B: {ir_id: import_ir60000004, inst_id: inst4800014F}
-// CHECK:STDOUT:     import_ir_inst4C: {ir_id: import_ir60000004, inst_id: inst4800013A}
-// CHECK:STDOUT:     import_ir_inst4D: {ir_id: import_ir60000004, inst_id: inst48000133}
-// CHECK:STDOUT:     import_ir_inst4E: {ir_id: import_ir60000004, inst_id: inst48000135}
-// CHECK:STDOUT:     import_ir_inst4F: {ir_id: import_ir60000004, inst_id: inst48000138}
-// CHECK:STDOUT:     import_ir_inst50: {ir_id: import_ir60000004, inst_id: inst48000130}
-// CHECK:STDOUT:     import_ir_inst51: {ir_id: import_ir60000004, inst_id: inst48000132}
-// CHECK:STDOUT:     import_ir_inst52: {ir_id: import_ir60000004, inst_id: inst48000137}
-// CHECK:STDOUT:     import_ir_inst53: {ir_id: import_ir60000004, inst_id: inst4800013D}
-// CHECK:STDOUT:     import_ir_inst54: {ir_id: import_ir60000004, inst_id: inst4800014F}
-// CHECK:STDOUT:     import_ir_inst55: {ir_id: import_ir60000004, inst_id: inst4800014A}
-// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir60000004, inst_id: inst4800014B}
-// CHECK:STDOUT:     import_ir_inst57: {ir_id: import_ir60000004, inst_id: inst48000143}
-// CHECK:STDOUT:     import_ir_inst58: {ir_id: import_ir60000004, inst_id: inst48000145}
-// CHECK:STDOUT:     import_ir_inst59: {ir_id: import_ir60000004, inst_id: inst48000146}
-// CHECK:STDOUT:     import_ir_inst5A: {ir_id: import_ir60000004, inst_id: inst48000147}
-// CHECK:STDOUT:     import_ir_inst5B: {ir_id: import_ir60000004, inst_id: inst48000130}
-// CHECK:STDOUT:     import_ir_inst5C: {ir_id: import_ir60000004, inst_id: inst4800013F}
-// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir60000004, inst_id: inst48000140}
-// CHECK:STDOUT:     import_ir_inst5E: {ir_id: import_ir60000004, inst_id: inst48000144}
-// CHECK:STDOUT:     import_ir_inst5F: {ir_id: import_ir60000004, inst_id: inst48000149}
-// CHECK:STDOUT:     import_ir_inst60: {ir_id: import_ir60000004, inst_id: inst48000152}
-// CHECK:STDOUT:     import_ir_inst61: {ir_id: import_ir60000004, inst_id: inst48000153}
-// CHECK:STDOUT:     import_ir_inst62: {ir_id: import_ir60000004, inst_id: inst48000156}
-// CHECK:STDOUT:     import_ir_inst63: {ir_id: import_ir60000004, inst_id: inst4800015E}
-// CHECK:STDOUT:     import_ir_inst64: {ir_id: import_ir60000004, inst_id: inst4800015C}
+// CHECK:STDOUT:     import_ir_inst39: {ir_id: import_ir60000004, inst_id: inst480000C0}
+// CHECK:STDOUT:     import_ir_inst3A: {ir_id: import_ir60000004, inst_id: inst480000BE}
+// CHECK:STDOUT:     import_ir_inst3B: {ir_id: import_ir60000004, inst_id: inst480000BC}
+// CHECK:STDOUT:     import_ir_inst3C: {ir_id: import_ir60000004, inst_id: inst480000BD}
+// CHECK:STDOUT:     import_ir_inst3D: {ir_id: import_ir60000004, inst_id: inst480000DC}
+// CHECK:STDOUT:     import_ir_inst3E: {ir_id: import_ir60000004, inst_id: inst480000DA}
+// CHECK:STDOUT:     import_ir_inst3F: {ir_id: import_ir60000004, inst_id: inst480000D8}
+// CHECK:STDOUT:     import_ir_inst40: {ir_id: import_ir60000004, inst_id: inst480000D9}
+// CHECK:STDOUT:     import_ir_inst41: {ir_id: import_ir60000004, inst_id: inst480000F8}
+// CHECK:STDOUT:     import_ir_inst42: {ir_id: import_ir60000004, inst_id: inst480000F6}
+// CHECK:STDOUT:     import_ir_inst43: {ir_id: import_ir60000004, inst_id: inst480000F4}
+// CHECK:STDOUT:     import_ir_inst44: {ir_id: import_ir60000004, inst_id: inst480000F5}
+// CHECK:STDOUT:     import_ir_inst45: {ir_id: import_ir60000004, inst_id: inst48000114}
+// CHECK:STDOUT:     import_ir_inst46: {ir_id: import_ir60000004, inst_id: inst48000112}
+// CHECK:STDOUT:     import_ir_inst47: {ir_id: import_ir60000004, inst_id: inst48000110}
+// CHECK:STDOUT:     import_ir_inst48: {ir_id: import_ir60000004, inst_id: inst48000111}
+// CHECK:STDOUT:     import_ir_inst49: {ir_id: import_ir60000004, inst_id: inst48000135}
+// CHECK:STDOUT:     import_ir_inst4A: {ir_id: import_ir60000004, inst_id: inst48000133}
+// CHECK:STDOUT:     import_ir_inst4B: {ir_id: import_ir60000004, inst_id: inst48000149}
+// CHECK:STDOUT:     import_ir_inst4C: {ir_id: import_ir60000004, inst_id: inst48000134}
+// CHECK:STDOUT:     import_ir_inst4D: {ir_id: import_ir60000004, inst_id: inst4800012D}
+// CHECK:STDOUT:     import_ir_inst4E: {ir_id: import_ir60000004, inst_id: inst4800012F}
+// CHECK:STDOUT:     import_ir_inst4F: {ir_id: import_ir60000004, inst_id: inst48000132}
+// CHECK:STDOUT:     import_ir_inst50: {ir_id: import_ir60000004, inst_id: inst4800012A}
+// CHECK:STDOUT:     import_ir_inst51: {ir_id: import_ir60000004, inst_id: inst4800012C}
+// CHECK:STDOUT:     import_ir_inst52: {ir_id: import_ir60000004, inst_id: inst48000131}
+// CHECK:STDOUT:     import_ir_inst53: {ir_id: import_ir60000004, inst_id: inst48000137}
+// CHECK:STDOUT:     import_ir_inst54: {ir_id: import_ir60000004, inst_id: inst48000149}
+// CHECK:STDOUT:     import_ir_inst55: {ir_id: import_ir60000004, inst_id: inst48000144}
+// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir60000004, inst_id: inst48000145}
+// CHECK:STDOUT:     import_ir_inst57: {ir_id: import_ir60000004, inst_id: inst4800013D}
+// CHECK:STDOUT:     import_ir_inst58: {ir_id: import_ir60000004, inst_id: inst4800013F}
+// CHECK:STDOUT:     import_ir_inst59: {ir_id: import_ir60000004, inst_id: inst48000140}
+// CHECK:STDOUT:     import_ir_inst5A: {ir_id: import_ir60000004, inst_id: inst48000141}
+// CHECK:STDOUT:     import_ir_inst5B: {ir_id: import_ir60000004, inst_id: inst4800012A}
+// CHECK:STDOUT:     import_ir_inst5C: {ir_id: import_ir60000004, inst_id: inst48000139}
+// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir60000004, inst_id: inst4800013A}
+// CHECK:STDOUT:     import_ir_inst5E: {ir_id: import_ir60000004, inst_id: inst4800013E}
+// CHECK:STDOUT:     import_ir_inst5F: {ir_id: import_ir60000004, inst_id: inst48000143}
+// CHECK:STDOUT:     import_ir_inst60: {ir_id: import_ir60000004, inst_id: inst4800014C}
+// CHECK:STDOUT:     import_ir_inst61: {ir_id: import_ir60000004, inst_id: inst4800014D}
+// CHECK:STDOUT:     import_ir_inst62: {ir_id: import_ir60000004, inst_id: inst48000150}
+// CHECK:STDOUT:     import_ir_inst63: {ir_id: import_ir60000004, inst_id: inst48000157}
+// CHECK:STDOUT:     import_ir_inst64: {ir_id: import_ir60000004, inst_id: inst48000155}
 // CHECK:STDOUT:     import_ir_inst65: {ir_id: import_ir60000004, inst_id: inst(TypeType)}
-// CHECK:STDOUT:     import_ir_inst66: {ir_id: import_ir60000004, inst_id: inst4800015B}
-// CHECK:STDOUT:     import_ir_inst67: {ir_id: import_ir60000004, inst_id: inst48000179}
-// CHECK:STDOUT:     import_ir_inst68: {ir_id: import_ir60000004, inst_id: inst48000177}
-// CHECK:STDOUT:     import_ir_inst69: {ir_id: import_ir60000004, inst_id: inst48000175}
-// CHECK:STDOUT:     import_ir_inst6A: {ir_id: import_ir60000004, inst_id: inst48000176}
-// CHECK:STDOUT:     import_ir_inst6B: {ir_id: import_ir60000004, inst_id: inst480001B0}
-// CHECK:STDOUT:     import_ir_inst6C: {ir_id: import_ir60000004, inst_id: inst480001AE}
-// CHECK:STDOUT:     import_ir_inst6D: {ir_id: import_ir60000004, inst_id: inst480001CB}
-// CHECK:STDOUT:     import_ir_inst6E: {ir_id: import_ir60000004, inst_id: inst480001AF}
-// CHECK:STDOUT:     import_ir_inst6F: {ir_id: import_ir60000004, inst_id: inst480001CB}
-// CHECK:STDOUT:     import_ir_inst70: {ir_id: import_ir60000004, inst_id: inst480001C6}
-// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir60000004, inst_id: inst480001C7}
-// CHECK:STDOUT:     import_ir_inst72: {ir_id: import_ir60000004, inst_id: inst480001BF}
-// CHECK:STDOUT:     import_ir_inst73: {ir_id: import_ir60000004, inst_id: inst480001C1}
-// CHECK:STDOUT:     import_ir_inst74: {ir_id: import_ir60000004, inst_id: inst480001C2}
-// CHECK:STDOUT:     import_ir_inst75: {ir_id: import_ir60000004, inst_id: inst480001C3}
-// CHECK:STDOUT:     import_ir_inst76: {ir_id: import_ir60000004, inst_id: inst48000191}
-// CHECK:STDOUT:     import_ir_inst77: {ir_id: import_ir60000004, inst_id: inst48000196}
-// CHECK:STDOUT:     import_ir_inst78: {ir_id: import_ir60000004, inst_id: inst480001B8}
-// CHECK:STDOUT:     import_ir_inst79: {ir_id: import_ir60000004, inst_id: inst480001B9}
-// CHECK:STDOUT:     import_ir_inst7A: {ir_id: import_ir60000004, inst_id: inst480001BA}
-// CHECK:STDOUT:     import_ir_inst7B: {ir_id: import_ir60000004, inst_id: inst480001BB}
-// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir60000004, inst_id: inst480001BC}
-// CHECK:STDOUT:     import_ir_inst7D: {ir_id: import_ir60000004, inst_id: inst480001C0}
-// CHECK:STDOUT:     import_ir_inst7E: {ir_id: import_ir60000004, inst_id: inst480001C5}
-// CHECK:STDOUT:     import_ir_inst7F: {ir_id: import_ir60000004, inst_id: inst480001D7}
-// CHECK:STDOUT:     import_ir_inst80: {ir_id: import_ir60000004, inst_id: inst480001DE}
-// CHECK:STDOUT:     import_ir_inst81: {ir_id: import_ir60000004, inst_id: inst480001E2}
-// CHECK:STDOUT:     import_ir_inst82: {ir_id: import_ir60000004, inst_id: inst480001E5}
-// CHECK:STDOUT:     import_ir_inst83: {ir_id: import_ir60000004, inst_id: inst480001E6}
-// CHECK:STDOUT:     import_ir_inst84: {ir_id: import_ir60000004, inst_id: inst480001E7}
-// CHECK:STDOUT:     import_ir_inst85: {ir_id: import_ir60000004, inst_id: inst480001EA}
-// CHECK:STDOUT:     import_ir_inst86: {ir_id: import_ir60000004, inst_id: inst480001F6}
-// CHECK:STDOUT:     import_ir_inst87: {ir_id: import_ir60000004, inst_id: inst480001FD}
-// CHECK:STDOUT:     import_ir_inst88: {ir_id: import_ir60000004, inst_id: inst48000202}
-// CHECK:STDOUT:     import_ir_inst89: {ir_id: import_ir60000004, inst_id: inst48000203}
-// CHECK:STDOUT:     import_ir_inst8A: {ir_id: import_ir60000004, inst_id: inst48000204}
-// CHECK:STDOUT:     import_ir_inst8B: {ir_id: import_ir60000004, inst_id: inst4800020A}
-// CHECK:STDOUT:     import_ir_inst8C: {ir_id: import_ir60000004, inst_id: inst48000199}
-// CHECK:STDOUT:     import_ir_inst8D: {ir_id: import_ir60000004, inst_id: inst48000193}
-// CHECK:STDOUT:     import_ir_inst8E: {ir_id: import_ir60000004, inst_id: inst480001A9}
-// CHECK:STDOUT:     import_ir_inst8F: {ir_id: import_ir60000004, inst_id: inst480001AB}
-// CHECK:STDOUT:     import_ir_inst90: {ir_id: import_ir60000004, inst_id: inst48000191}
-// CHECK:STDOUT:     import_ir_inst91: {ir_id: import_ir60000004, inst_id: inst48000196}
-// CHECK:STDOUT:     import_ir_inst92: {ir_id: import_ir60000004, inst_id: inst48000192}
-// CHECK:STDOUT:     import_ir_inst93: {ir_id: import_ir60000004, inst_id: inst48000198}
-// CHECK:STDOUT:     import_ir_inst94: {ir_id: import_ir60000004, inst_id: inst4800019F}
-// CHECK:STDOUT:     import_ir_inst95: {ir_id: import_ir60000004, inst_id: inst480001A2}
-// CHECK:STDOUT:     import_ir_inst96: {ir_id: import_ir60000004, inst_id: inst480001A6}
-// CHECK:STDOUT:     import_ir_inst97: {ir_id: import_ir60000004, inst_id: inst480001AA}
-// CHECK:STDOUT:     import_ir_inst98: {ir_id: import_ir60000004, inst_id: inst480001B2}
-// CHECK:STDOUT:     import_ir_inst99: {ir_id: import_ir60000004, inst_id: inst480001CE}
-// CHECK:STDOUT:     import_ir_inst9A: {ir_id: import_ir60000004, inst_id: inst480001CF}
-// CHECK:STDOUT:     import_ir_inst9B: {ir_id: import_ir60000004, inst_id: inst48000245}
-// CHECK:STDOUT:     import_ir_inst9C: {ir_id: import_ir60000004, inst_id: inst48000243}
-// CHECK:STDOUT:     import_ir_inst9D: {ir_id: import_ir60000004, inst_id: inst48000264}
-// CHECK:STDOUT:     import_ir_inst9E: {ir_id: import_ir60000004, inst_id: inst48000244}
-// CHECK:STDOUT:     import_ir_inst9F: {ir_id: import_ir60000004, inst_id: inst48000264}
-// CHECK:STDOUT:     import_ir_instA0: {ir_id: import_ir60000004, inst_id: inst4800025F}
-// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir60000004, inst_id: inst48000260}
-// CHECK:STDOUT:     import_ir_instA2: {ir_id: import_ir60000004, inst_id: inst48000258}
-// CHECK:STDOUT:     import_ir_instA3: {ir_id: import_ir60000004, inst_id: inst4800025A}
-// CHECK:STDOUT:     import_ir_instA4: {ir_id: import_ir60000004, inst_id: inst4800025B}
-// CHECK:STDOUT:     import_ir_instA5: {ir_id: import_ir60000004, inst_id: inst4800025C}
-// CHECK:STDOUT:     import_ir_instA6: {ir_id: import_ir60000004, inst_id: inst4800021C}
-// CHECK:STDOUT:     import_ir_instA7: {ir_id: import_ir60000004, inst_id: inst48000221}
-// CHECK:STDOUT:     import_ir_instA8: {ir_id: import_ir60000004, inst_id: inst48000226}
-// CHECK:STDOUT:     import_ir_instA9: {ir_id: import_ir60000004, inst_id: inst4800024F}
-// CHECK:STDOUT:     import_ir_instAA: {ir_id: import_ir60000004, inst_id: inst48000250}
-// CHECK:STDOUT:     import_ir_instAB: {ir_id: import_ir60000004, inst_id: inst48000251}
-// CHECK:STDOUT:     import_ir_instAC: {ir_id: import_ir60000004, inst_id: inst48000252}
-// CHECK:STDOUT:     import_ir_instAD: {ir_id: import_ir60000004, inst_id: inst48000253}
-// CHECK:STDOUT:     import_ir_instAE: {ir_id: import_ir60000004, inst_id: inst48000254}
-// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir60000004, inst_id: inst48000255}
-// CHECK:STDOUT:     import_ir_instB0: {ir_id: import_ir60000004, inst_id: inst48000259}
-// CHECK:STDOUT:     import_ir_instB1: {ir_id: import_ir60000004, inst_id: inst4800025E}
-// CHECK:STDOUT:     import_ir_instB2: {ir_id: import_ir60000004, inst_id: inst48000270}
-// CHECK:STDOUT:     import_ir_instB3: {ir_id: import_ir60000004, inst_id: inst48000276}
-// CHECK:STDOUT:     import_ir_instB4: {ir_id: import_ir60000004, inst_id: inst4800027A}
-// CHECK:STDOUT:     import_ir_instB5: {ir_id: import_ir60000004, inst_id: inst4800027D}
-// CHECK:STDOUT:     import_ir_instB6: {ir_id: import_ir60000004, inst_id: inst4800027E}
-// CHECK:STDOUT:     import_ir_instB7: {ir_id: import_ir60000004, inst_id: inst4800027F}
-// CHECK:STDOUT:     import_ir_instB8: {ir_id: import_ir60000004, inst_id: inst48000282}
-// CHECK:STDOUT:     import_ir_instB9: {ir_id: import_ir60000004, inst_id: inst4800028C}
-// CHECK:STDOUT:     import_ir_instBA: {ir_id: import_ir60000004, inst_id: inst48000290}
-// CHECK:STDOUT:     import_ir_instBB: {ir_id: import_ir60000004, inst_id: inst48000293}
-// CHECK:STDOUT:     import_ir_instBC: {ir_id: import_ir60000004, inst_id: inst48000294}
-// CHECK:STDOUT:     import_ir_instBD: {ir_id: import_ir60000004, inst_id: inst48000295}
-// CHECK:STDOUT:     import_ir_instBE: {ir_id: import_ir60000004, inst_id: inst48000298}
-// CHECK:STDOUT:     import_ir_instBF: {ir_id: import_ir60000004, inst_id: inst480002A4}
-// CHECK:STDOUT:     import_ir_instC0: {ir_id: import_ir60000004, inst_id: inst480002AB}
-// CHECK:STDOUT:     import_ir_instC1: {ir_id: import_ir60000004, inst_id: inst480002B0}
-// CHECK:STDOUT:     import_ir_instC2: {ir_id: import_ir60000004, inst_id: inst480002B1}
-// CHECK:STDOUT:     import_ir_instC3: {ir_id: import_ir60000004, inst_id: inst480002B2}
-// CHECK:STDOUT:     import_ir_instC4: {ir_id: import_ir60000004, inst_id: inst480002B8}
-// CHECK:STDOUT:     import_ir_instC5: {ir_id: import_ir60000004, inst_id: inst48000229}
-// CHECK:STDOUT:     import_ir_instC6: {ir_id: import_ir60000004, inst_id: inst48000223}
-// CHECK:STDOUT:     import_ir_instC7: {ir_id: import_ir60000004, inst_id: inst4800021E}
-// CHECK:STDOUT:     import_ir_instC8: {ir_id: import_ir60000004, inst_id: inst4800023D}
-// CHECK:STDOUT:     import_ir_instC9: {ir_id: import_ir60000004, inst_id: inst4800023F}
-// CHECK:STDOUT:     import_ir_instCA: {ir_id: import_ir60000004, inst_id: inst4800021C}
-// CHECK:STDOUT:     import_ir_instCB: {ir_id: import_ir60000004, inst_id: inst48000221}
-// CHECK:STDOUT:     import_ir_instCC: {ir_id: import_ir60000004, inst_id: inst48000226}
-// CHECK:STDOUT:     import_ir_instCD: {ir_id: import_ir60000004, inst_id: inst4800021D}
-// CHECK:STDOUT:     import_ir_instCE: {ir_id: import_ir60000004, inst_id: inst48000222}
-// CHECK:STDOUT:     import_ir_instCF: {ir_id: import_ir60000004, inst_id: inst48000228}
-// CHECK:STDOUT:     import_ir_instD0: {ir_id: import_ir60000004, inst_id: inst48000230}
-// CHECK:STDOUT:     import_ir_instD1: {ir_id: import_ir60000004, inst_id: inst48000233}
-// CHECK:STDOUT:     import_ir_instD2: {ir_id: import_ir60000004, inst_id: inst48000236}
-// CHECK:STDOUT:     import_ir_instD3: {ir_id: import_ir60000004, inst_id: inst4800023A}
-// CHECK:STDOUT:     import_ir_instD4: {ir_id: import_ir60000004, inst_id: inst4800023E}
-// CHECK:STDOUT:     import_ir_instD5: {ir_id: import_ir60000004, inst_id: inst48000247}
-// CHECK:STDOUT:     import_ir_instD6: {ir_id: import_ir60000004, inst_id: inst48000267}
-// CHECK:STDOUT:     import_ir_instD7: {ir_id: import_ir60000004, inst_id: inst48000268}
+// CHECK:STDOUT:     import_ir_inst66: {ir_id: import_ir60000004, inst_id: inst48000154}
+// CHECK:STDOUT:     import_ir_inst67: {ir_id: import_ir60000004, inst_id: inst48000171}
+// CHECK:STDOUT:     import_ir_inst68: {ir_id: import_ir60000004, inst_id: inst4800016F}
+// CHECK:STDOUT:     import_ir_inst69: {ir_id: import_ir60000004, inst_id: inst4800016D}
+// CHECK:STDOUT:     import_ir_inst6A: {ir_id: import_ir60000004, inst_id: inst4800016E}
+// CHECK:STDOUT:     import_ir_inst6B: {ir_id: import_ir60000004, inst_id: inst480001A7}
+// CHECK:STDOUT:     import_ir_inst6C: {ir_id: import_ir60000004, inst_id: inst480001A5}
+// CHECK:STDOUT:     import_ir_inst6D: {ir_id: import_ir60000004, inst_id: inst480001C2}
+// CHECK:STDOUT:     import_ir_inst6E: {ir_id: import_ir60000004, inst_id: inst480001A6}
+// CHECK:STDOUT:     import_ir_inst6F: {ir_id: import_ir60000004, inst_id: inst480001C2}
+// CHECK:STDOUT:     import_ir_inst70: {ir_id: import_ir60000004, inst_id: inst480001BD}
+// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir60000004, inst_id: inst480001BE}
+// CHECK:STDOUT:     import_ir_inst72: {ir_id: import_ir60000004, inst_id: inst480001B6}
+// CHECK:STDOUT:     import_ir_inst73: {ir_id: import_ir60000004, inst_id: inst480001B8}
+// CHECK:STDOUT:     import_ir_inst74: {ir_id: import_ir60000004, inst_id: inst480001B9}
+// CHECK:STDOUT:     import_ir_inst75: {ir_id: import_ir60000004, inst_id: inst480001BA}
+// CHECK:STDOUT:     import_ir_inst76: {ir_id: import_ir60000004, inst_id: inst48000188}
+// CHECK:STDOUT:     import_ir_inst77: {ir_id: import_ir60000004, inst_id: inst4800018D}
+// CHECK:STDOUT:     import_ir_inst78: {ir_id: import_ir60000004, inst_id: inst480001AF}
+// CHECK:STDOUT:     import_ir_inst79: {ir_id: import_ir60000004, inst_id: inst480001B0}
+// CHECK:STDOUT:     import_ir_inst7A: {ir_id: import_ir60000004, inst_id: inst480001B1}
+// CHECK:STDOUT:     import_ir_inst7B: {ir_id: import_ir60000004, inst_id: inst480001B2}
+// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir60000004, inst_id: inst480001B3}
+// CHECK:STDOUT:     import_ir_inst7D: {ir_id: import_ir60000004, inst_id: inst480001B7}
+// CHECK:STDOUT:     import_ir_inst7E: {ir_id: import_ir60000004, inst_id: inst480001BC}
+// CHECK:STDOUT:     import_ir_inst7F: {ir_id: import_ir60000004, inst_id: inst480001CD}
+// CHECK:STDOUT:     import_ir_inst80: {ir_id: import_ir60000004, inst_id: inst480001D4}
+// CHECK:STDOUT:     import_ir_inst81: {ir_id: import_ir60000004, inst_id: inst480001D8}
+// CHECK:STDOUT:     import_ir_inst82: {ir_id: import_ir60000004, inst_id: inst480001DA}
+// CHECK:STDOUT:     import_ir_inst83: {ir_id: import_ir60000004, inst_id: inst480001DB}
+// CHECK:STDOUT:     import_ir_inst84: {ir_id: import_ir60000004, inst_id: inst480001DC}
+// CHECK:STDOUT:     import_ir_inst85: {ir_id: import_ir60000004, inst_id: inst480001DF}
+// CHECK:STDOUT:     import_ir_inst86: {ir_id: import_ir60000004, inst_id: inst480001EB}
+// CHECK:STDOUT:     import_ir_inst87: {ir_id: import_ir60000004, inst_id: inst480001F2}
+// CHECK:STDOUT:     import_ir_inst88: {ir_id: import_ir60000004, inst_id: inst480001F6}
+// CHECK:STDOUT:     import_ir_inst89: {ir_id: import_ir60000004, inst_id: inst480001F7}
+// CHECK:STDOUT:     import_ir_inst8A: {ir_id: import_ir60000004, inst_id: inst480001F8}
+// CHECK:STDOUT:     import_ir_inst8B: {ir_id: import_ir60000004, inst_id: inst480001FE}
+// CHECK:STDOUT:     import_ir_inst8C: {ir_id: import_ir60000004, inst_id: inst48000190}
+// CHECK:STDOUT:     import_ir_inst8D: {ir_id: import_ir60000004, inst_id: inst4800018A}
+// CHECK:STDOUT:     import_ir_inst8E: {ir_id: import_ir60000004, inst_id: inst480001A0}
+// CHECK:STDOUT:     import_ir_inst8F: {ir_id: import_ir60000004, inst_id: inst480001A2}
+// CHECK:STDOUT:     import_ir_inst90: {ir_id: import_ir60000004, inst_id: inst48000188}
+// CHECK:STDOUT:     import_ir_inst91: {ir_id: import_ir60000004, inst_id: inst4800018D}
+// CHECK:STDOUT:     import_ir_inst92: {ir_id: import_ir60000004, inst_id: inst48000189}
+// CHECK:STDOUT:     import_ir_inst93: {ir_id: import_ir60000004, inst_id: inst4800018F}
+// CHECK:STDOUT:     import_ir_inst94: {ir_id: import_ir60000004, inst_id: inst48000196}
+// CHECK:STDOUT:     import_ir_inst95: {ir_id: import_ir60000004, inst_id: inst48000199}
+// CHECK:STDOUT:     import_ir_inst96: {ir_id: import_ir60000004, inst_id: inst4800019D}
+// CHECK:STDOUT:     import_ir_inst97: {ir_id: import_ir60000004, inst_id: inst480001A1}
+// CHECK:STDOUT:     import_ir_inst98: {ir_id: import_ir60000004, inst_id: inst480001A9}
+// CHECK:STDOUT:     import_ir_inst99: {ir_id: import_ir60000004, inst_id: inst480001C5}
+// CHECK:STDOUT:     import_ir_inst9A: {ir_id: import_ir60000004, inst_id: inst480001C6}
+// CHECK:STDOUT:     import_ir_inst9B: {ir_id: import_ir60000004, inst_id: inst48000239}
+// CHECK:STDOUT:     import_ir_inst9C: {ir_id: import_ir60000004, inst_id: inst48000237}
+// CHECK:STDOUT:     import_ir_inst9D: {ir_id: import_ir60000004, inst_id: inst48000258}
+// CHECK:STDOUT:     import_ir_inst9E: {ir_id: import_ir60000004, inst_id: inst48000238}
+// CHECK:STDOUT:     import_ir_inst9F: {ir_id: import_ir60000004, inst_id: inst48000258}
+// CHECK:STDOUT:     import_ir_instA0: {ir_id: import_ir60000004, inst_id: inst48000253}
+// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir60000004, inst_id: inst48000254}
+// CHECK:STDOUT:     import_ir_instA2: {ir_id: import_ir60000004, inst_id: inst4800024C}
+// CHECK:STDOUT:     import_ir_instA3: {ir_id: import_ir60000004, inst_id: inst4800024E}
+// CHECK:STDOUT:     import_ir_instA4: {ir_id: import_ir60000004, inst_id: inst4800024F}
+// CHECK:STDOUT:     import_ir_instA5: {ir_id: import_ir60000004, inst_id: inst48000250}
+// CHECK:STDOUT:     import_ir_instA6: {ir_id: import_ir60000004, inst_id: inst48000210}
+// CHECK:STDOUT:     import_ir_instA7: {ir_id: import_ir60000004, inst_id: inst48000215}
+// CHECK:STDOUT:     import_ir_instA8: {ir_id: import_ir60000004, inst_id: inst4800021A}
+// CHECK:STDOUT:     import_ir_instA9: {ir_id: import_ir60000004, inst_id: inst48000243}
+// CHECK:STDOUT:     import_ir_instAA: {ir_id: import_ir60000004, inst_id: inst48000244}
+// CHECK:STDOUT:     import_ir_instAB: {ir_id: import_ir60000004, inst_id: inst48000245}
+// CHECK:STDOUT:     import_ir_instAC: {ir_id: import_ir60000004, inst_id: inst48000246}
+// CHECK:STDOUT:     import_ir_instAD: {ir_id: import_ir60000004, inst_id: inst48000247}
+// CHECK:STDOUT:     import_ir_instAE: {ir_id: import_ir60000004, inst_id: inst48000248}
+// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir60000004, inst_id: inst48000249}
+// CHECK:STDOUT:     import_ir_instB0: {ir_id: import_ir60000004, inst_id: inst4800024D}
+// CHECK:STDOUT:     import_ir_instB1: {ir_id: import_ir60000004, inst_id: inst48000252}
+// CHECK:STDOUT:     import_ir_instB2: {ir_id: import_ir60000004, inst_id: inst48000263}
+// CHECK:STDOUT:     import_ir_instB3: {ir_id: import_ir60000004, inst_id: inst48000269}
+// CHECK:STDOUT:     import_ir_instB4: {ir_id: import_ir60000004, inst_id: inst4800026D}
+// CHECK:STDOUT:     import_ir_instB5: {ir_id: import_ir60000004, inst_id: inst4800026F}
+// CHECK:STDOUT:     import_ir_instB6: {ir_id: import_ir60000004, inst_id: inst48000270}
+// CHECK:STDOUT:     import_ir_instB7: {ir_id: import_ir60000004, inst_id: inst48000271}
+// CHECK:STDOUT:     import_ir_instB8: {ir_id: import_ir60000004, inst_id: inst48000274}
+// CHECK:STDOUT:     import_ir_instB9: {ir_id: import_ir60000004, inst_id: inst4800027E}
+// CHECK:STDOUT:     import_ir_instBA: {ir_id: import_ir60000004, inst_id: inst48000282}
+// CHECK:STDOUT:     import_ir_instBB: {ir_id: import_ir60000004, inst_id: inst48000284}
+// CHECK:STDOUT:     import_ir_instBC: {ir_id: import_ir60000004, inst_id: inst48000285}
+// CHECK:STDOUT:     import_ir_instBD: {ir_id: import_ir60000004, inst_id: inst48000286}
+// CHECK:STDOUT:     import_ir_instBE: {ir_id: import_ir60000004, inst_id: inst48000289}
+// CHECK:STDOUT:     import_ir_instBF: {ir_id: import_ir60000004, inst_id: inst48000295}
+// CHECK:STDOUT:     import_ir_instC0: {ir_id: import_ir60000004, inst_id: inst4800029C}
+// CHECK:STDOUT:     import_ir_instC1: {ir_id: import_ir60000004, inst_id: inst480002A0}
+// CHECK:STDOUT:     import_ir_instC2: {ir_id: import_ir60000004, inst_id: inst480002A1}
+// CHECK:STDOUT:     import_ir_instC3: {ir_id: import_ir60000004, inst_id: inst480002A2}
+// CHECK:STDOUT:     import_ir_instC4: {ir_id: import_ir60000004, inst_id: inst480002A8}
+// CHECK:STDOUT:     import_ir_instC5: {ir_id: import_ir60000004, inst_id: inst4800021D}
+// CHECK:STDOUT:     import_ir_instC6: {ir_id: import_ir60000004, inst_id: inst48000217}
+// CHECK:STDOUT:     import_ir_instC7: {ir_id: import_ir60000004, inst_id: inst48000212}
+// CHECK:STDOUT:     import_ir_instC8: {ir_id: import_ir60000004, inst_id: inst48000231}
+// CHECK:STDOUT:     import_ir_instC9: {ir_id: import_ir60000004, inst_id: inst48000233}
+// CHECK:STDOUT:     import_ir_instCA: {ir_id: import_ir60000004, inst_id: inst48000210}
+// CHECK:STDOUT:     import_ir_instCB: {ir_id: import_ir60000004, inst_id: inst48000215}
+// CHECK:STDOUT:     import_ir_instCC: {ir_id: import_ir60000004, inst_id: inst4800021A}
+// CHECK:STDOUT:     import_ir_instCD: {ir_id: import_ir60000004, inst_id: inst48000211}
+// CHECK:STDOUT:     import_ir_instCE: {ir_id: import_ir60000004, inst_id: inst48000216}
+// CHECK:STDOUT:     import_ir_instCF: {ir_id: import_ir60000004, inst_id: inst4800021C}
+// CHECK:STDOUT:     import_ir_instD0: {ir_id: import_ir60000004, inst_id: inst48000224}
+// CHECK:STDOUT:     import_ir_instD1: {ir_id: import_ir60000004, inst_id: inst48000227}
+// CHECK:STDOUT:     import_ir_instD2: {ir_id: import_ir60000004, inst_id: inst4800022A}
+// CHECK:STDOUT:     import_ir_instD3: {ir_id: import_ir60000004, inst_id: inst4800022E}
+// CHECK:STDOUT:     import_ir_instD4: {ir_id: import_ir60000004, inst_id: inst48000232}
+// CHECK:STDOUT:     import_ir_instD5: {ir_id: import_ir60000004, inst_id: inst4800023B}
+// CHECK:STDOUT:     import_ir_instD6: {ir_id: import_ir60000004, inst_id: inst4800025B}
+// CHECK:STDOUT:     import_ir_instD7: {ir_id: import_ir60000004, inst_id: inst4800025C}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst60000011, name0: inst6000003C}}
@@ -814,31 +814,30 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000016F:    {kind: RequireSpecificDefinition, arg0: specific60000022, type: type(inst(RequireSpecificDefinitionType))}
 // CHECK:STDOUT:     inst60000170:    {kind: LookupImplWitness, arg0: inst6000001C, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000171:    {kind: LookupImplWitness, arg0: inst6000001D, arg1: specific_interface60000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000172:    {kind: FacetType, arg0: facet_type60000001, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000173:    {kind: FacetValue, arg0: inst6000001C, arg1: inst_block60000087, type: type(inst6000004E)}
-// CHECK:STDOUT:     inst60000174:    {kind: FunctionType, arg0: function60000001, arg1: specific60000023, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000175:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant60000144)}
-// CHECK:STDOUT:     inst60000176:    {kind: FunctionTypeWithSelfType, arg0: inst60000174, arg1: inst60000173, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000177:    {kind: ImplWitnessAccess, arg0: inst60000170, arg1: element0, type: type(symbolic_constant6000014A)}
-// CHECK:STDOUT:     inst60000178:    {kind: ImplWitnessAccess, arg0: inst60000170, arg1: element0, type: type(symbolic_constant60000146)}
-// CHECK:STDOUT:     inst60000179:    {kind: FacetValue, arg0: inst6000001D, arg1: inst_block6000008A, type: type(inst6000004E)}
-// CHECK:STDOUT:     inst6000017A:    {kind: FunctionType, arg0: function60000001, arg1: specific60000024, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000017B:    {kind: FunctionTypeWithSelfType, arg0: inst6000017A, arg1: inst60000179, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000017C:    {kind: ImplWitnessAccess, arg0: inst60000171, arg1: element0, type: type(symbolic_constant6000014A)}
-// CHECK:STDOUT:     inst6000017D:    {kind: BoundMethod, arg0: inst60000046, arg1: inst60000177, type: type(inst(BoundMethodType))}
+// CHECK:STDOUT:     inst60000172:    {kind: FacetValue, arg0: inst6000001C, arg1: inst_block60000087, type: type(inst6000004E)}
+// CHECK:STDOUT:     inst60000173:    {kind: FunctionType, arg0: function60000001, arg1: specific60000023, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000174:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant60000144)}
+// CHECK:STDOUT:     inst60000175:    {kind: FunctionTypeWithSelfType, arg0: inst60000173, arg1: inst60000172, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000176:    {kind: ImplWitnessAccess, arg0: inst60000170, arg1: element0, type: type(symbolic_constant6000014A)}
+// CHECK:STDOUT:     inst60000177:    {kind: ImplWitnessAccess, arg0: inst60000170, arg1: element0, type: type(symbolic_constant60000146)}
+// CHECK:STDOUT:     inst60000178:    {kind: FacetValue, arg0: inst6000001D, arg1: inst_block6000008A, type: type(inst6000004E)}
+// CHECK:STDOUT:     inst60000179:    {kind: FunctionType, arg0: function60000001, arg1: specific60000024, type: type(TypeType)}
+// CHECK:STDOUT:     inst6000017A:    {kind: FunctionTypeWithSelfType, arg0: inst60000179, arg1: inst60000178, type: type(TypeType)}
+// CHECK:STDOUT:     inst6000017B:    {kind: ImplWitnessAccess, arg0: inst60000171, arg1: element0, type: type(symbolic_constant6000014A)}
+// CHECK:STDOUT:     inst6000017C:    {kind: BoundMethod, arg0: inst60000046, arg1: inst60000176, type: type(inst(BoundMethodType))}
+// CHECK:STDOUT:     inst6000017D:    {kind: SpecificImplFunction, arg0: inst60000176, arg1: specific60000025, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst6000017E:    {kind: SpecificImplFunction, arg0: inst60000177, arg1: specific60000025, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst6000017F:    {kind: SpecificImplFunction, arg0: inst60000178, arg1: specific60000025, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst60000180:    {kind: SpecificImplFunction, arg0: inst6000017C, arg1: specific60000026, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst60000181:    {kind: BoundMethod, arg0: inst60000046, arg1: inst6000017E, type: type(inst(BoundMethodType))}
-// CHECK:STDOUT:     inst60000182:    {kind: RequireCompleteType, arg0: inst6000001C, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000183:    {kind: Call, arg0: inst60000181, arg1: inst_block6000008E, type: type(symbolic_constant60000004)}
-// CHECK:STDOUT:     inst60000184:    {kind: InPlaceInit, arg0: inst60000183, arg1: inst6000004A, type: type(symbolic_constant60000004)}
-// CHECK:STDOUT:     inst60000185:    {kind: TupleAccess, arg0: inst6000003A, arg1: element1, type: type(inst60000025)}
-// CHECK:STDOUT:     inst60000186:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst<none>, type: type(inst60000025)}
-// CHECK:STDOUT:     inst60000187:    {kind: Converted, arg0: inst60000047, arg1: inst60000186, type: type(inst60000025)}
-// CHECK:STDOUT:     inst60000188:    {kind: TupleInit, arg0: inst_block6000008F, arg1: inst6000003A, type: type(symbolic_constant6000000A)}
-// CHECK:STDOUT:     inst60000189:    {kind: Converted, arg0: inst60000048, arg1: inst60000188, type: type(symbolic_constant6000000A)}
-// CHECK:STDOUT:     inst6000018A:    {kind: ReturnExpr, arg0: inst60000189, arg1: inst6000003A}
+// CHECK:STDOUT:     inst6000017F:    {kind: SpecificImplFunction, arg0: inst6000017B, arg1: specific60000026, type: type(inst(SpecificFunctionType))}
+// CHECK:STDOUT:     inst60000180:    {kind: BoundMethod, arg0: inst60000046, arg1: inst6000017D, type: type(inst(BoundMethodType))}
+// CHECK:STDOUT:     inst60000181:    {kind: RequireCompleteType, arg0: inst6000001C, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000182:    {kind: Call, arg0: inst60000180, arg1: inst_block6000008E, type: type(symbolic_constant60000004)}
+// CHECK:STDOUT:     inst60000183:    {kind: InPlaceInit, arg0: inst60000182, arg1: inst6000004A, type: type(symbolic_constant60000004)}
+// CHECK:STDOUT:     inst60000184:    {kind: TupleAccess, arg0: inst6000003A, arg1: element1, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000185:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst<none>, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000186:    {kind: Converted, arg0: inst60000047, arg1: inst60000185, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000187:    {kind: TupleInit, arg0: inst_block6000008F, arg1: inst6000003A, type: type(symbolic_constant6000000A)}
+// CHECK:STDOUT:     inst60000188:    {kind: Converted, arg0: inst60000048, arg1: inst60000187, type: type(symbolic_constant6000000A)}
+// CHECK:STDOUT:     inst60000189:    {kind: ReturnExpr, arg0: inst60000188, arg1: inst6000003A}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -1188,23 +1187,22 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst6000016F:    symbolic_constant60000140
 // CHECK:STDOUT:       inst60000170:    symbolic_constant60000141
 // CHECK:STDOUT:       inst60000171:    symbolic_constant60000142
-// CHECK:STDOUT:       inst60000172:    concrete_constant(inst6000004E)
-// CHECK:STDOUT:       inst60000173:    symbolic_constant60000143
-// CHECK:STDOUT:       inst60000174:    symbolic_constant60000144
-// CHECK:STDOUT:       inst60000175:    symbolic_constant60000145
-// CHECK:STDOUT:       inst60000176:    symbolic_constant60000146
-// CHECK:STDOUT:       inst60000177:    symbolic_constant6000014B
-// CHECK:STDOUT:       inst60000178:    symbolic_constant60000147
-// CHECK:STDOUT:       inst60000179:    symbolic_constant60000148
-// CHECK:STDOUT:       inst6000017A:    symbolic_constant60000149
-// CHECK:STDOUT:       inst6000017B:    symbolic_constant6000014A
-// CHECK:STDOUT:       inst6000017C:    symbolic_constant6000014B
-// CHECK:STDOUT:       inst6000017E:    symbolic_constant6000014D
-// CHECK:STDOUT:       inst6000017F:    symbolic_constant6000014C
-// CHECK:STDOUT:       inst60000180:    symbolic_constant6000014D
-// CHECK:STDOUT:       inst60000182:    symbolic_constant60000010
+// CHECK:STDOUT:       inst60000172:    symbolic_constant60000143
+// CHECK:STDOUT:       inst60000173:    symbolic_constant60000144
+// CHECK:STDOUT:       inst60000174:    symbolic_constant60000145
+// CHECK:STDOUT:       inst60000175:    symbolic_constant60000146
+// CHECK:STDOUT:       inst60000176:    symbolic_constant6000014B
+// CHECK:STDOUT:       inst60000177:    symbolic_constant60000147
+// CHECK:STDOUT:       inst60000178:    symbolic_constant60000148
+// CHECK:STDOUT:       inst60000179:    symbolic_constant60000149
+// CHECK:STDOUT:       inst6000017A:    symbolic_constant6000014A
+// CHECK:STDOUT:       inst6000017B:    symbolic_constant6000014B
+// CHECK:STDOUT:       inst6000017D:    symbolic_constant6000014D
+// CHECK:STDOUT:       inst6000017E:    symbolic_constant6000014C
+// CHECK:STDOUT:       inst6000017F:    symbolic_constant6000014D
+// CHECK:STDOUT:       inst60000181:    symbolic_constant60000010
+// CHECK:STDOUT:       inst60000185:    concrete_constant(inst60000027)
 // CHECK:STDOUT:       inst60000186:    concrete_constant(inst60000027)
-// CHECK:STDOUT:       inst60000187:    concrete_constant(inst60000027)
 // CHECK:STDOUT:     symbolic_constants:
 // CHECK:STDOUT:       symbolic_constant60000000: {inst: inst60000014, kind: self, attached: null}
 // CHECK:STDOUT:       symbolic_constant60000001: {inst: inst60000016, kind: checked, attached: null}
@@ -1529,17 +1527,17 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       symbolic_constant60000140: {inst: inst6000016E, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def2}}
 // CHECK:STDOUT:       symbolic_constant60000141: {inst: inst60000170, kind: checked, attached: null}
 // CHECK:STDOUT:       symbolic_constant60000142: {inst: inst60000170, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def3}}
-// CHECK:STDOUT:       symbolic_constant60000143: {inst: inst60000173, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant60000144: {inst: inst60000174, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant60000145: {inst: inst60000175, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant60000146: {inst: inst60000176, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant60000147: {inst: inst60000178, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant60000148: {inst: inst60000173, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def4}}
-// CHECK:STDOUT:       symbolic_constant60000149: {inst: inst60000174, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def5}}
-// CHECK:STDOUT:       symbolic_constant6000014A: {inst: inst60000176, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def6}}
-// CHECK:STDOUT:       symbolic_constant6000014B: {inst: inst60000178, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def7}}
-// CHECK:STDOUT:       symbolic_constant6000014C: {inst: inst6000017F, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant6000014D: {inst: inst6000017F, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def8}}
+// CHECK:STDOUT:       symbolic_constant60000143: {inst: inst60000172, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant60000144: {inst: inst60000173, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant60000145: {inst: inst60000174, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant60000146: {inst: inst60000175, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant60000147: {inst: inst60000177, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant60000148: {inst: inst60000172, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def4}}
+// CHECK:STDOUT:       symbolic_constant60000149: {inst: inst60000173, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def5}}
+// CHECK:STDOUT:       symbolic_constant6000014A: {inst: inst60000175, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def6}}
+// CHECK:STDOUT:       symbolic_constant6000014B: {inst: inst60000177, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def7}}
+// CHECK:STDOUT:       symbolic_constant6000014C: {inst: inst6000017E, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant6000014D: {inst: inst6000017E, kind: checked, attached: {generic: generic60000000, index: generic_inst_in_def8}}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
@@ -1743,20 +1741,19 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               inst60000046
 // CHECK:STDOUT:       1:               inst60000047
 // CHECK:STDOUT:       2:               inst60000048
-// CHECK:STDOUT:       3:               inst60000172
-// CHECK:STDOUT:       4:               inst60000177
+// CHECK:STDOUT:       3:               inst60000176
+// CHECK:STDOUT:       4:               inst6000017C
 // CHECK:STDOUT:       5:               inst6000017D
-// CHECK:STDOUT:       6:               inst6000017E
-// CHECK:STDOUT:       7:               inst60000181
-// CHECK:STDOUT:       8:               inst60000183
-// CHECK:STDOUT:       9:               inst6000004A
+// CHECK:STDOUT:       6:               inst60000180
+// CHECK:STDOUT:       7:               inst60000182
+// CHECK:STDOUT:       8:               inst6000004A
+// CHECK:STDOUT:       9:               inst60000183
 // CHECK:STDOUT:       10:              inst60000184
 // CHECK:STDOUT:       11:              inst60000185
 // CHECK:STDOUT:       12:              inst60000186
 // CHECK:STDOUT:       13:              inst60000187
 // CHECK:STDOUT:       14:              inst60000188
 // CHECK:STDOUT:       15:              inst60000189
-// CHECK:STDOUT:       16:              inst6000018A
 // CHECK:STDOUT:     inst_block60000019:
 // CHECK:STDOUT:       0:               inst60000046
 // CHECK:STDOUT:       1:               inst60000047
@@ -2170,37 +2167,37 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst_block60000087:
 // CHECK:STDOUT:       0:               inst60000170
 // CHECK:STDOUT:     inst_block60000088:
-// CHECK:STDOUT:       0:               inst60000173
+// CHECK:STDOUT:       0:               inst60000172
 // CHECK:STDOUT:     inst_block60000089:
-// CHECK:STDOUT:       0:               inst60000173
-// CHECK:STDOUT:       1:               inst60000174
-// CHECK:STDOUT:       2:               inst60000175
+// CHECK:STDOUT:       0:               inst60000172
+// CHECK:STDOUT:       1:               inst60000173
+// CHECK:STDOUT:       2:               inst60000174
 // CHECK:STDOUT:     inst_block6000008A:
 // CHECK:STDOUT:       0:               inst60000171
 // CHECK:STDOUT:     inst_block6000008B:
-// CHECK:STDOUT:       0:               inst60000179
+// CHECK:STDOUT:       0:               inst60000178
 // CHECK:STDOUT:     inst_block6000008C:
-// CHECK:STDOUT:       0:               inst60000173
+// CHECK:STDOUT:       0:               inst60000172
 // CHECK:STDOUT:       1:               inst6000001C
 // CHECK:STDOUT:       2:               inst6000001F
 // CHECK:STDOUT:       3:               inst600000C5
 // CHECK:STDOUT:     inst_block6000008D:
-// CHECK:STDOUT:       0:               inst60000179
+// CHECK:STDOUT:       0:               inst60000178
 // CHECK:STDOUT:     inst_block6000008E:
 // CHECK:STDOUT:       0:               inst60000046
 // CHECK:STDOUT:     inst_block6000008F:
-// CHECK:STDOUT:       0:               inst60000184
-// CHECK:STDOUT:       1:               inst60000187
+// CHECK:STDOUT:       0:               inst60000183
+// CHECK:STDOUT:       1:               inst60000186
 // CHECK:STDOUT:     inst_block60000090:
 // CHECK:STDOUT:       0:               inst60000041
 // CHECK:STDOUT:       1:               inst60000045
 // CHECK:STDOUT:       2:               inst6000016F
 // CHECK:STDOUT:       3:               inst60000171
-// CHECK:STDOUT:       4:               inst60000179
-// CHECK:STDOUT:       5:               inst6000017A
-// CHECK:STDOUT:       6:               inst6000017B
-// CHECK:STDOUT:       7:               inst6000017C
-// CHECK:STDOUT:       8:               inst60000180
+// CHECK:STDOUT:       4:               inst60000178
+// CHECK:STDOUT:       5:               inst60000179
+// CHECK:STDOUT:       6:               inst6000017A
+// CHECK:STDOUT:       7:               inst6000017B
+// CHECK:STDOUT:       8:               inst6000017F
 // CHECK:STDOUT:     inst_block60000091:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst60000010

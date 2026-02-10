@@ -82,7 +82,6 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %T.as.Simple.impl.F.decl: @T.as.Simple.impl.%T.as.Simple.impl.F.type (%T.as.Simple.impl.F.type) = fn_decl @T.as.Simple.impl.F [symbolic = @T.as.Simple.impl.%T.as.Simple.impl.F (constants.%T.as.Simple.impl.F)] {} {}
-// CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple> [concrete = constants.%Simple.type]
 // CHECK:STDOUT:     %Simple.impl_witness_table = impl_witness_table (%T.as.Simple.impl.F.decl), @T.as.Simple.impl [concrete]
 // CHECK:STDOUT:     %Simple.impl_witness.loc19_36.1: <witness> = impl_witness %Simple.impl_witness_table, @T.as.Simple.impl(constants.%T) [symbolic = %Simple.impl_witness.loc19_36.2 (constants.%Simple.impl_witness)]
 // CHECK:STDOUT:

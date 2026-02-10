@@ -179,7 +179,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.751 = impl_witness_access constants.%ImplicitAs.impl_witness.ffd, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.d8d]
 // CHECK:STDOUT:   %bound_method.loc10_22.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%S) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.ffe]
@@ -232,7 +231,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.9d0 = impl_witness_access constants.%ImplicitAs.impl_witness.39c, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.1f8]
 // CHECK:STDOUT:   %bound_method.loc10_22.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.1(constants.%C) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn.384]
@@ -295,7 +293,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.ref.loc10_31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %void.ref.loc10_34: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:   %ptr.loc10_39: type = ptr_type %void.ref.loc10_34 [concrete = constants.%ptr.874]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.bb8 = impl_witness_access constants.%As.impl_witness.9e9, element0 [concrete = constants.%T.binding.as_type.as.As.impl.Convert.e7d]
 // CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.binding.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.binding.as_type.as.As.impl.Convert.specific_fn]
@@ -361,7 +358,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.ref.loc10_31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %void.ref.loc10_34: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:   %ptr.loc10_39: type = ptr_type %void.ref.loc10_34 [concrete = constants.%ptr.874]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.99e = impl_witness_access constants.%As.impl_witness.fa1, element0 [concrete = constants.%T.binding.as_type.as.As.impl.Convert.483]
 // CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @T.binding.as_type.as.As.impl.Convert(constants.%ptr.874, constants.%ImplicitAs.facet) [concrete = constants.%T.binding.as_type.as.As.impl.Convert.specific_fn]
@@ -488,7 +484,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %Cpp.ref.loc10_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc10_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %ptr.loc10_40: type = ptr_type %S.ref.loc10_38 [concrete = constants.%ptr.5c7]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.fba = impl_witness_access constants.%UnsafeAs.impl_witness.080, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.fe3]
 // CHECK:STDOUT:   %bound_method.loc10_32.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%S) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]
@@ -540,7 +535,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
 // CHECK:STDOUT:   %C.ref.loc10_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr.loc10_32: type = ptr_type %C.ref.loc10_31 [concrete = constants.%ptr.31e]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.53b = impl_witness_access constants.%UnsafeAs.impl_witness.2f5, element0 [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.409]
 // CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %input.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.UnsafeAs.impl.Convert(constants.%Cpp.void, constants.%C) [concrete = constants.%ptr.as.UnsafeAs.impl.Convert.specific_fn]

@@ -176,7 +176,6 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   fn(%x.param: @Function.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @Function.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.binding.as_type (%T.binding.as_type) = name_ref x, %x
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @Function.%.loc6 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.594)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %x.ref, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.bdc)]
@@ -418,7 +417,6 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   fn(%x.param: @Function.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @Function.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.binding.as_type (%T.binding.as_type) = name_ref x, %x
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @Function.%.loc6 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.594)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %x.ref, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.bdc)]

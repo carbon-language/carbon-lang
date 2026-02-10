@@ -75,7 +75,6 @@ class X {
 // CHECK:STDOUT: impl @X.as.A.impl: %Self.ref as %A.ref {
 // CHECK:STDOUT:   %X.as.A.impl.B.decl: %X.as.A.impl.B.type = fn_decl @X.as.A.impl.B [concrete = constants.%X.as.A.impl.B] {} {}
 // CHECK:STDOUT:   %X.as.A.impl.F.decl: %X.as.A.impl.F.type = fn_decl @X.as.A.impl.F [concrete = constants.%X.as.A.impl.F] {} {}
-// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (%X.as.A.impl.B.decl), @X.as.A.impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:

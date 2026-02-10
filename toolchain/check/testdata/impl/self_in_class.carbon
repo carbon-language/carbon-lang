@@ -101,7 +101,6 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   %DefaultConstructible.impl_witness_table = impl_witness_table (%C.as.DefaultConstructible.impl.Make.decl), @C.as.DefaultConstructible.impl [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness %DefaultConstructible.impl_witness_table [concrete = constants.%DefaultConstructible.impl_witness]
 // CHECK:STDOUT:

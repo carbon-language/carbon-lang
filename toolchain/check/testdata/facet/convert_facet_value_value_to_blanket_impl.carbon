@@ -155,7 +155,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18_26 as %Eats.ref {
-// CHECK:STDOUT:     %Eats.type: type = facet_type <@Eats> [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     %Eats.impl_witness_table = impl_witness_table (), @A.binding.as_type.as.Eats.impl [concrete]
 // CHECK:STDOUT:     %Eats.impl_witness.loc18_36.1: <witness> = impl_witness %Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(constants.%A) [symbolic = %Eats.impl_witness.loc18_36.2 (constants.%Eats.impl_witness.760d13.1)]
 // CHECK:STDOUT:

@@ -109,7 +109,6 @@ class E {
 // CHECK:STDOUT: impl @D.as.I.impl: %D.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.I.impl: %Self.ref as %I.ref {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @E.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.1f6]
 // CHECK:STDOUT:

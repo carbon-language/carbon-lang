@@ -246,7 +246,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, file.%InInterfaceArgs.decl [concrete = constants.%InInterfaceArgs]
-// CHECK:STDOUT:     %I.type.loc7: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,7 +267,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.I.impl: %X.ref as %I.type.loc7 {
+// CHECK:STDOUT: impl @X.as.I.impl: %X.ref as %I.type {
 // CHECK:STDOUT:   %X.as.I.impl.F.decl: %X.as.I.impl.F.type = fn_decl @X.as.I.impl.F [concrete = constants.%X.as.I.impl.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.05f = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.05f = value_param_pattern %self.patt, call_param0 [concrete]
@@ -276,7 +276,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @X.as.I.impl.%X.ref [concrete = constants.%X]
 // CHECK:STDOUT:     %self: %X = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -488,10 +487,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, imports.%Main.InInterfaceArgs [concrete = constants.%InInterfaceArgs]
-// CHECK:STDOUT:   %I.type.loc6: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
 // CHECK:STDOUT:   %.loc6: %I.assoc_type.6ad = specific_constant imports.%Main.import_ref.480, @I(constants.%InInterfaceArgs, constants.%Self.c1b) [concrete = constants.%assoc0.8de]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type.6ad = name_ref F, %.loc6 [concrete = constants.%assoc0.8de]
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.39c]
 // CHECK:STDOUT:   %impl.elem0: %.9ab = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%X.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %X.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%x.ref)
@@ -621,7 +619,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [concrete = constants.%C.83f]
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
-// CHECK:STDOUT:     %I.type.loc7: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -642,7 +640,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl: %C as %I.type.loc7 {
+// CHECK:STDOUT: impl @C.as.I.impl: %C as %I.type {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.65d = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.65d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -651,7 +649,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C [concrete = constants.%C.83f]
 // CHECK:STDOUT:     %self: %C.83f = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
@@ -909,10 +906,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %c.ref: %C.83f = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: %I.type.609 = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
-// CHECK:STDOUT:   %I.type.loc6: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
 // CHECK:STDOUT:   %.loc6_34: %I.assoc_type.46b = specific_constant imports.%Main.import_ref.480, @I(constants.%X, constants.%Self.c1b) [concrete = constants.%assoc0.683]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type.46b = name_ref F, %.loc6_34 [concrete = constants.%assoc0.683]
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.03e]
 // CHECK:STDOUT:   %impl.elem0: %.ac4 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%c.ref)

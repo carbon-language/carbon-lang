@@ -124,13 +124,10 @@ fn Main() {
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %Destroy.type.1: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %x.var.loc10, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%x.var.loc10)
-// CHECK:STDOUT:   %Destroy.type.2: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc8: <bound method> = bound_method %x.var.loc8, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc8: init %empty_tuple.type = call %DestroyOp.bound.loc8(%x.var.loc8)
-// CHECK:STDOUT:   %Destroy.type.3: type = facet_type <@Destroy> [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %DestroyOp.bound.loc5: <bound method> = bound_method %NS.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc5: init %empty_tuple.type = call %DestroyOp.bound.loc5(%NS.var)
 // CHECK:STDOUT:   return

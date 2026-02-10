@@ -60,7 +60,6 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     %p.ref: @F.%ptr.loc4_21.1 (%ptr.125) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_10.1: ref @F.%ptr.loc4_20.1 (%ptr.e8f) = deref %p.ref
 // CHECK:STDOUT:     %.loc6_10.2: @F.%ptr.loc4_20.1 (%ptr.e8f) = acquire_value %.loc6_10.1
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @F.%.loc6_10.4 (%.299) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %.loc6_10.2, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.366)]

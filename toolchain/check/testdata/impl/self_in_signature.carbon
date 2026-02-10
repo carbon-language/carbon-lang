@@ -243,7 +243,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [concrete = constants.%UseSelf.type]
 // CHECK:STDOUT:   %UseSelf.impl_witness_table = impl_witness_table (%C.as.UseSelf.impl.F.decl), @C.as.UseSelf.impl [concrete]
 // CHECK:STDOUT:   %UseSelf.impl_witness: <witness> = impl_witness %UseSelf.impl_witness_table [concrete = constants.%UseSelf.impl_witness.3c4]
 // CHECK:STDOUT:
@@ -273,7 +272,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param2
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [concrete = constants.%UseSelf.type]
 // CHECK:STDOUT:   %UseSelf.impl_witness_table = impl_witness_table (%D.as.UseSelf.impl.F.decl), @D.as.UseSelf.impl [concrete]
 // CHECK:STDOUT:   %UseSelf.impl_witness: <witness> = impl_witness %UseSelf.impl_witness_table [concrete = constants.%UseSelf.impl_witness.22d]
 // CHECK:STDOUT:
@@ -300,7 +298,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.2f1 = value_binding x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (%C.as.SelfNested.impl.F.decl), @C.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.a03]
 // CHECK:STDOUT:
@@ -328,7 +325,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.e0d = value_binding x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (%D.as.SelfNested.impl.F.decl), @D.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.130]
 // CHECK:STDOUT:

@@ -337,7 +337,6 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fba) -> out %return.param: %ptr.fba {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.fba = name_ref p, %p
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0: %.86b = impl_witness_access constants.%Copy.impl_witness.146, element0 [concrete = constants.%ptr.as.Copy.impl.Op.96a]
 // CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.99f) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]

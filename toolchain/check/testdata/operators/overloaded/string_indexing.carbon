@@ -156,7 +156,6 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %int_4.loc5: %u64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val.loc5: %str.ee0 = struct_value (%str.loc5, %int_4.loc5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem1.loc5: %.b7b = impl_witness_access constants.%IndexWith.impl_witness.8d4, element1 [concrete = constants.%str.as.IndexWith.impl.At.a70]
 // CHECK:STDOUT:   %bound_method.loc5_25.1: <bound method> = bound_method %String.val.loc5, %impl.elem1.loc5 [concrete = constants.%str.as.IndexWith.impl.At.bound]
 // CHECK:STDOUT:   %ImplicitAs.facet.loc5_25.1: %ImplicitAs.type.2ad = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.4e6) [concrete = constants.%ImplicitAs.facet]
@@ -176,7 +175,6 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %int_4.loc6: %u64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val.loc6: %str.ee0 = struct_value (%str.loc6, %int_4.loc6) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem1.loc6: %.b7b = impl_witness_access constants.%IndexWith.impl_witness.8d4, element1 [concrete = constants.%str.as.IndexWith.impl.At.a70]
 // CHECK:STDOUT:   %bound_method.loc6_25.1: <bound method> = bound_method %String.val.loc6, %impl.elem1.loc6 [concrete = constants.%str.as.IndexWith.impl.At.bound]
 // CHECK:STDOUT:   %ImplicitAs.facet.loc6_25.1: %ImplicitAs.type.2ad = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.4e6) [concrete = constants.%ImplicitAs.facet]

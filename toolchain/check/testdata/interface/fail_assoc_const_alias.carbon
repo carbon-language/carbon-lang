@@ -354,7 +354,6 @@ interface C {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.7c1]
-// CHECK:STDOUT:     %I2.type.1: type = facet_type <@I2> [concrete = constants.%I2.type]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I2.lookup_impl_witness.c47, element0 [symbolic_self = constants.%impl.elem0.f1d]
 // CHECK:STDOUT:     %.loc11_43.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc11_43.2: type = converted %.loc11_43.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -434,7 +433,6 @@ interface C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc11_22 as %.loc11_30 {
-// CHECK:STDOUT:     %I2.type.2: type = facet_type <@I2> [concrete = constants.%I2.type]
 // CHECK:STDOUT:     %I2.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @V.binding.as_type.as.I2.impl [concrete]
 // CHECK:STDOUT:     %I2.impl_witness.loc11_45.1: <witness> = impl_witness %I2.impl_witness_table, @V.binding.as_type.as.I2.impl(constants.%V) [symbolic = %I2.impl_witness.loc11_45.2 (constants.%I2.impl_witness.364)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -740,7 +738,6 @@ interface C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref.loc9: @C.G.%Self.binding.as_type (%Self.binding.as_type) = name_ref self, %self
 // CHECK:STDOUT:     %F.ref.loc9: %C.assoc_type = name_ref F, @C.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %C.type: type = facet_type <@C> [concrete = constants.%C.type]
 // CHECK:STDOUT:     %impl.elem0.loc9_9.1: @C.G.%.loc9 (%.018) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc9_9: <bound method> = bound_method %self.ref.loc9, %impl.elem0.loc9_9.1
 // CHECK:STDOUT:     %specific_impl_fn.loc9_9.1: <specific function> = specific_impl_function %impl.elem0.loc9_9.1, @C.F(constants.%Self) [symbolic = %specific_impl_fn.loc9_9.2 (constants.%specific_impl_fn)]

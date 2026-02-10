@@ -168,7 +168,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_15: ref %struct_type.b = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref %ptr.e6c = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: %ptr.e6c = acquire_value %.loc7_17.1
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %impl.elem0: %.e5b = impl_witness_access constants.%Copy.impl_witness.b7e, element0 [concrete = constants.%ptr.as.Copy.impl.Op.7c8]
 // CHECK:STDOUT:   %bound_method.loc7_17.1: <bound method> = bound_method %.loc7_17.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Cycle) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
