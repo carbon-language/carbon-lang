@@ -89,8 +89,6 @@ The sorting approach balances several competing needs:
     sorting is not desired (such as tools and IDEs that provide their own
     ordering), it's easy to disable.
 
-We also have [considered alternatives](#diagnostic-sort-alternatives).
-
 ## Producing diagnostics
 
 Diagnostics are used to surface issues from compilation. A simple diagnostic
