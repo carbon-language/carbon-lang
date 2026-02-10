@@ -46,6 +46,7 @@ class FullPatternStack {
   auto PushFullPattern(Kind kind) -> void {
     kind_stack_.push_back(kind);
     bind_name_stack_.PushArray();
+    param_index_stack_.push_back(SemIR::CallParamIndex(0));
   }
 
   // Marks the end of an implicit parameter list, and the presumptive start
@@ -87,6 +88,7 @@ class FullPatternStack {
   auto PopFullPattern() -> void {
     kind_stack_.pop_back();
     bind_name_stack_.PopArray();
+    param_index_stack_.pop_back();
   }
 
   // Records that `name_id` was introduced by the current full-pattern.
@@ -102,6 +104,13 @@ class FullPatternStack {
                  kind_stack_.size());
   }
 
+  // Allocates the next unallocated CallParamIndex, starting from 0.
+  auto NextCallParamIndex() -> SemIR::CallParamIndex {
+    auto result = param_index_stack_.back();
+    ++param_index_stack_.back().index;
+    return result;
+  }
+
  private:
   LexicalLookup* lookup_;
 
@@ -112,6 +121,8 @@ class FullPatternStack {
     SemIR::InstId inst_id;
   };
   ArrayStack<LookupEntry> bind_name_stack_;
+
+  llvm::SmallVector<SemIR::CallParamIndex> param_index_stack_;
 };
 
 }  // namespace Carbon::Check

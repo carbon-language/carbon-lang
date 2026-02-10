@@ -38,26 +38,49 @@ class InstNamer {
 
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
-      TypeEnum<AssociatedConstantId, ClassId, VtableId, FunctionId, ImplId,
-               InterfaceId, SpecificInterfaceId>;
+      TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
+               ImplId, InterfaceId, NamedConstraintId, RequireImplsId,
+               SpecificInterfaceId, VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
-  explicit InstNamer(const File* sem_ir);
+  explicit InstNamer(const File* sem_ir, int total_ir_count);
 
-  // Returns the scope ID corresponding to an ID of a function, class, or
-  // interface.
+  // Returns the scope ID corresponding to an ID of a function, class,
+  // interface, or named constraint.
   template <typename IdT>
     requires ScopeIdTypeEnum::Contains<IdT>
   auto GetScopeFor(IdT id) const -> ScopeId {
+    auto index = id.index;
+    if constexpr (std::is_same_v<IdT, ClassId>) {
+      index = sem_ir_->classes().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, CppOverloadSetId>) {
+      index = sem_ir_->cpp_overload_sets().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, AssociatedConstantId>) {
+      index = sem_ir_->associated_constants().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, FunctionId>) {
+      index = sem_ir_->functions().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, ImplId>) {
+      index = sem_ir_->impls().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, InterfaceId>) {
+      index = sem_ir_->interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, NamedConstraintId>) {
+      index = sem_ir_->named_constraints().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, RequireImplsId>) {
+      index = sem_ir_->require_impls().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
+      index = sem_ir_->specific_interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, VtableId>) {
+      index = sem_ir_->vtables().GetRawIndex(id);
+    }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
-                                id.index);
+                                index);
   }
 
   // Returns the scope ID corresponding to a generic. A generic object shares
   // its scope with its generic entity.
   auto GetScopeFor(GenericId id) const -> ScopeId {
-    return generic_scopes_[id.index];
+    return generic_scopes_[sem_ir_->generics().GetRawIndex(id)];
   }
 
   // Returns the IR name for the specified scope.
@@ -93,9 +116,7 @@ class InstNamer {
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
   // Returns true if the instruction has a specific name assigned.
-  auto has_name(InstId inst_id) const -> bool {
-    return static_cast<bool>(insts_[inst_id.index].second);
-  }
+  auto has_name(InstId inst_id) const -> bool;
 
  private:
   // A space in which unique names can be allocated.
@@ -110,7 +131,7 @@ class InstNamer {
     class Name {
      public:
       explicit Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMapIterator<NameResult> it,
+      explicit Name(llvm::StringMap<NameResult>::iterator it,
                     size_t base_name_size)
           : value_(&*it), base_name_size_(base_name_size) {}
 
@@ -197,9 +218,15 @@ class InstNamer {
   auto PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(CppOverloadSetId cpp_overload_set_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(NamedConstraintId named_constraint_id, ScopeId scope_id,
+                  Scope& scope) -> void;
+  auto PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
 
   // Always returns the name of the entity. May push it if it has not yet been

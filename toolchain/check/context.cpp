@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -16,11 +17,11 @@ namespace Carbon::Check {
 Context::Context(DiagnosticEmitterBase* emitter,
                  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                  SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
-                 bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
+                 llvm::raw_ostream* vlog_stream)
     : emitter_(emitter),
       tree_and_subtrees_getter_(tree_and_subtrees_getter),
       sem_ir_(sem_ir),
-      gen_implicit_type_impls_(gen_implicit_type_impls),
+      total_ir_count_(total_ir_count),
       vlog_stream_(vlog_stream),
       node_stack_(sem_ir->parse_tree(), vlog_stream),
       inst_block_stack_("inst_block_stack_", *sem_ir, vlog_stream),
@@ -31,13 +32,13 @@ Context::Context(DiagnosticEmitterBase* emitter,
       scope_stack_(sem_ir_),
       deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      check_ir_map_(
-          FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::
-              MakeWithExplicitSize(total_ir_count, SemIR::ImportIRId::None)),
+      check_ir_map_(CheckIRToImpportIRStore::MakeWithExplicitSize(
+          total_ir_count_, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
-      }) {
+      }),
+      core_identifiers_(&identifiers()) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
@@ -71,6 +72,7 @@ auto Context::VerifyOnFinish() const -> void {
   vtable_stack_.VerifyOnFinish();
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
+  CARBON_CHECK(return_form_expr_ == std::nullopt);
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {

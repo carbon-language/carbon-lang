@@ -169,6 +169,9 @@ If you're already a C++ developer, Carbon should have a gentle learning curve.
 It is built out of a consistent set of language constructs that should feel
 familiar and be easy to read and understand.
 
+The Carbon code here is hypothetical and meant to show the look and feel of the
+language.
+
 C++ code like this:
 
 <a href="docs/images/snippets.md#c">
@@ -244,27 +247,28 @@ and with a smooth evolutionary path.
 
 Safety, and especially
 [memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
-challenge for C++ and something a successor language needs to address. Our
-initial priority and focus is on immediately addressing important, low-hanging
-fruit in the safety space:
+challenge for C++ and something a successor language needs to address.
+
+We plan to support a two step migration process:
+
+1. Highly automated, minimal supervision migration from C++ to a dialect of
+   Carbon designed for C++ interop and migration.
+2. Incremental refactoring of the Carbon code to adopt memory-safe designs,
+   patterns, and APIs.
+
+We also want to address important, low-hanging fruit in the safety space
+immediately when migrating into Carbon:
 
 -   Tracking uninitialized states better, increased enforcement of
-    initialization, and systematically providing hardening against
-    initialization bugs when desired.
--   Designing fundamental APIs and idioms to support dynamic bounds checks in
-    debug and hardened builds.
--   Having a default debug build mode that is both cheaper and more
-    comprehensive than existing C++ build modes even when combined with
+    initialization, and hardening against initialization bugs when needed.
+-   Designing fundamental APIs and idioms to support dynamic bounds checking.
+-   Switching from undefined behavior to erroneous behavior wherever possible,
+    and marking the remaining undefined behavior with visible `unsafe` syntax.
+-   Having a default debug build mode that has less runtime overhead while being
+    more comprehensive than existing C++ debug build modes combined with
     [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
 
-Once we can migrate code into Carbon, we will have a simplified language with
-room in the design space to add any necessary annotations or features, and
-infrastructure like [generics](#generics) to support safer design patterns.
-Longer term, we will build on this to introduce **a safe Carbon subset**. This
-will be a large and complex undertaking, and won't be in the 0.1 design.
-Meanwhile, we are closely watching and learning from efforts to add memory safe
-semantics onto C++ such as Rust-inspired
-[lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
+For more details, see our [safety design](/docs/design/safety).
 
 ## Getting started
 
@@ -360,6 +364,19 @@ Learn more about the Carbon project:
 ## Conference talks
 
 Carbon focused talks from the community:
+
+### 2026
+
+-   Benchmarking and optimizing the Carbon compiler, NDC {Toronto} (May 5-8)
+-   Carbon: graduating from the experiment, NDC {Toronto} (May 5-8)
+
+### 2025
+
+-   Carbon: from C++ to Memory Safety, REBASE - ICFP/SPLASH
+    ([slides](https://chandlerc.blog/slides/2025-rebase-carbon))
+-   Memory safety everywhere with both Carbon and Rust, RustConf
+    ([video](https://youtu.be/FYLuom6gg_s),
+    [slides](https://chandlerc.blog/slides/2025-rustconf-memory-safety-everywhere))
 
 ### 2024
 

@@ -132,17 +132,11 @@ using EmptyDecl =
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameBeforeParams =
-    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameNotBeforeParams =
-    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
@@ -184,15 +178,6 @@ struct IdentifierNameQualifierWithParams {
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithParams {
-  static constexpr auto Kind = NodeKind::KeywordNameQualifierWithParams.Define(
-      {.bracketed_by = KeywordNameBeforeParams::Kind});
-
-  KeywordNameBeforeParamsId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<ExplicitParamListId> params;
-  Lex::PeriodTokenIndex token;
-};
 
 // A name qualifier without parameters, such as `A.`.
 struct IdentifierNameQualifierWithoutParams {
@@ -203,21 +188,12 @@ struct IdentifierNameQualifierWithoutParams {
   IdentifierNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithoutParams {
-  static constexpr auto Kind =
-      NodeKind::KeywordNameQualifierWithoutParams.Define(
-          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
-
-  KeywordNameNotBeforeParamsId name;
-  Lex::PeriodTokenIndex token;
-};
 
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<NodeIdOneOf<
-      IdentifierNameQualifierWithParams, IdentifierNameQualifierWithoutParams,
-      KeywordNameQualifierWithParams, KeywordNameQualifierWithoutParams>>
+  llvm::SmallVector<NodeIdOneOf<IdentifierNameQualifierWithParams,
+                                IdentifierNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
@@ -227,13 +203,13 @@ struct DeclName {
 // Library, package, import, export
 // --------------------------------
 
-// The `package` keyword in an expression.
-using PackageExpr =
-    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
-
-// The `Core` keyword in an expression.
+// Various keywords in an expression.
 using CoreNameExpr =
     LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+using CppNameExpr =
+    LeafNode<NodeKind::CppNameExpr, Lex::CppTokenIndex, NodeCategory::Expr>;
+using PackageExpr =
+    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
 // The name of a package or library for `package`, `import`, and `library`.
 using IdentifierPackageName =
@@ -241,6 +217,8 @@ using IdentifierPackageName =
              NodeCategory::PackageName>;
 using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
                                  NodeCategory::PackageName>;
+using CppPackageName = LeafNode<NodeKind::CppPackageName, Lex::CppTokenIndex,
+                                NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
@@ -346,9 +324,40 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
+// An unused pattern: `unused pattern`.
+struct UnusedPattern {
+  static constexpr auto Kind = NodeKind::UnusedPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::UnusedTokenIndex token;
+  AnyPatternId inner;
+};
+
+// A ref binding name: `ref name`.
+struct RefBindingName {
+  static constexpr auto Kind =
+      NodeKind::RefBindingName.Define({.child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
+// A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              RefBindingName>
+      name;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+// A binding pattern, such as `name: Type`, that is inside a `var` pattern.
+struct VarBindingPattern {
+  static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
@@ -356,13 +365,13 @@ struct LetBindingPattern {
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
-struct VarBindingPattern {
-  static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
+// A form binding pattern, such as `name:? Form`.
+struct FormBindingPattern {
+  static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
-  Lex::ColonTokenIndex token;
+  Lex::ColonQuestionTokenIndex token;
   AnyExprId type;
 };
 
@@ -375,26 +384,26 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct CompileTimeBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              TemplateBindingName>
+      name;
+  // This is a virtual token. The `:!` token is owned by the
+  // CompileTimeBindingPattern node.
+  Lex::ColonExclaimTokenIndex token;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
-              TemplateBindingName>
-      name;
+  CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
-};
-
-// An address-of binding: `addr self: Self*`.
-struct Addr {
-  static constexpr auto Kind = NodeKind::Addr.Define(
-      {.category = NodeCategory::Pattern, .child_count = 1});
-
-  Lex::AddrTokenIndex token;
-  AnyPatternId inner;
 };
 
 using TuplePatternStart =
@@ -453,6 +462,14 @@ struct ReturnType {
   AnyExprId type;
 };
 
+// A return form: `->? form(var i32)`
+struct ReturnForm {
+  static constexpr auto Kind = NodeKind::ReturnForm.Define({.child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A function signature: `fn F() -> i32`.
 template <const NodeKind& KindT, typename TokenKind,
           NodeCategory::RawEnumType Category>
@@ -463,15 +480,15 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<NodeIdOneOf<ReturnTypeId, ReturnFormId>> return_type;
   TokenKind token;
 };
 
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
                                        Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart,
-                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart, Lex::TokenIndex,
+                      NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -482,6 +499,18 @@ struct FunctionDefinition {
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
   Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// A terse function definition: `fn F() -> i32 => expr;`.
+struct FunctionTerseDefinition {
+  static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = FunctionDefinitionStart::Kind});
+
+  FunctionDefinitionStartId signature;
+  TerseBodyArrowId arrow;
+  AnyExprId body;
+  Lex::SemiTokenIndex token;
 };
 
 using BuiltinFunctionDefinitionStart =
@@ -539,6 +568,39 @@ struct LetDecl {
 
   struct Initializer {
     LetInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
+  Lex::SemiTokenIndex token;
+};
+
+// Associated constant nodes
+using AssociatedConstantIntroducer =
+    LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
+using AssociatedConstantInitializer =
+    LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
+
+struct AssociatedConstantNameAndType {
+  static constexpr auto Kind = NodeKind::AssociatedConstantNameAndType.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonExclaimTokenIndex token;
+  AnyExprId type;
+};
+
+// An associated constant declaration: `let a:! i32;`.
+struct AssociatedConstantDecl {
+  static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = AssociatedConstantIntroducer::Kind});
+
+  AssociatedConstantIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AssociatedConstantNameAndTypeId pattern;
+
+  struct Initializer {
+    AssociatedConstantInitializerId equals;
     AnyExprId initializer;
   };
   std::optional<Initializer> initializer;
@@ -619,6 +681,9 @@ struct VariablePattern {
 using CodeBlockStart =
     LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
+using TerseBodyArrow =
+    LeafNode<NodeKind::TerseBodyArrow, Lex::EqualGreaterTokenIndex>;
+
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind =
@@ -627,6 +692,24 @@ struct CodeBlock {
   CodeBlockStartId left_brace;
   llvm::SmallVector<AnyStatementId> statements;
   Lex::CloseCurlyBraceTokenIndex token;
+};
+
+using LambdaIntroducer =
+    LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
+
+struct Lambda {
+  static constexpr auto Kind = NodeKind::Lambda.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = LambdaIntroducer::Kind});
+
+  LambdaIntroducerId introducer;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<ExplicitParamListId> explicit_params;
+  std::optional<ReturnTypeId> return_type;
+  std::optional<TerseBodyArrowId> arrow;
+  NodeId body;
+  // Use a generic token index because the token might be `}` or part of an
+  // expression.
+  Lex::TokenIndex token;
 };
 
 // An expression statement: `F(x);`.
@@ -899,6 +982,49 @@ struct ArrayExpr {
   Lex::CloseParenTokenIndex token;
 };
 
+struct RefPrimitiveForm {
+  static constexpr auto Kind = NodeKind::RefPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId type;
+};
+
+struct VarPrimitiveForm {
+  static constexpr auto Kind = NodeKind::VarPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyExprId type;
+};
+
+struct ValPrimitiveForm {
+  static constexpr auto Kind = NodeKind::ValPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::ValTokenIndex token;
+  AnyExprId type;
+};
+
+using FormLiteralKeyword =
+    LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
+
+using FormLiteralOpenParen =
+    LeafNode<NodeKind::FormLiteralOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `form` literal: `form(ref i32)`
+struct FormLiteral {
+  static constexpr auto Kind = NodeKind::FormLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = NodeKind::FormLiteralKeyword,
+       .child_count = 3});
+
+  FormLiteralKeywordId keyword;
+  FormLiteralOpenParenId start;
+  AnyPrimitiveFormIdId category;
+  Lex::CloseParenTokenIndex token;
+};
+
 // The opening portion of an indexing expression: `a[`.
 //
 // TODO: Consider flattening this into `IndexExpr`.
@@ -964,15 +1090,13 @@ struct CallExprStart {
   Lex::OpenParenTokenIndex token;
 };
 
-using CallExprComma = LeafNode<NodeKind::CallExprComma, Lex::CommaTokenIndex>;
-
 // A call expression: `F(a, b, c)`.
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr.Define(
       {.category = NodeCategory::Expr, .bracketed_by = CallExprStart::Kind});
 
   CallExprStartId start;
-  CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
+  CommaSeparatedList<AnyExprId, TupleLiteralCommaId> arguments;
   Lex::CloseParenTokenIndex token;
 };
 
@@ -1025,6 +1149,16 @@ struct PostfixOperator {
 
   AnyExprId operand;
   TokenKind token;
+};
+
+// An `unsafe` modifier: `a unsafe <operator> b`. This is modeled in the parse
+// tree as a postfix operator applied to `a`.
+struct UnsafeModifier {
+  static constexpr auto Kind = NodeKind::UnsafeModifier.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  AnyExprId operand;
+  Lex::UnsafeTokenIndex token;
 };
 
 // Literals, operators, and modifiers
@@ -1418,6 +1552,40 @@ struct InterfaceDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// `require`...`impls` statements
+// ------------------------------
+
+// `require`
+using RequireIntroducer =
+    LeafNode<NodeKind::RequireIntroducer, Lex::RequireTokenIndex>;
+
+// `impls` with no type before it
+using RequireDefaultSelfImpls =
+    LeafNode<NodeKind::RequireDefaultSelfImpls, Lex::ImplsTokenIndex,
+             NodeCategory::RequireImpls>;
+
+// `<type> impls`.
+struct RequireTypeImpls {
+  static constexpr auto Kind = NodeKind::RequireTypeImpls.Define(
+      {.category = NodeCategory::RequireImpls, .child_count = 1});
+
+  AnyExprId type_expr;
+  Lex::ImplsTokenIndex token;
+};
+
+// `require T impls I where...`
+struct RequireDecl {
+  static constexpr auto Kind =
+      NodeKind::RequireDecl.Define({.category = NodeCategory::Decl,
+                                    .bracketed_by = RequireIntroducer::Kind});
+
+  RequireIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyRequireImplsId impls;
+  AnyExprId facet_type;
+  Lex::SemiTokenIndex token;
+};
+
 // `impl`...`as` declarations and definitions
 // ------------------------------------------
 
@@ -1434,12 +1602,12 @@ struct ImplForall {
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs,
+using ImplDefaultSelfAs = LeafNode<NodeKind::ImplDefaultSelfAs,
                                    Lex::AsTokenIndex, NodeCategory::ImplAs>;
 
 // `<type> as`
-struct TypeImplAs {
-  static constexpr auto Kind = NodeKind::TypeImplAs.Define(
+struct ImplTypeAs {
+  static constexpr auto Kind = NodeKind::ImplTypeAs.Define(
       {.category = NodeCategory::ImplAs, .child_count = 1});
 
   AnyExprId type_expr;

@@ -4,17 +4,133 @@
 
 #include "toolchain/check/type_completion.h"
 
+#include "common/concepts.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
+#include "toolchain/check/require_impls.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
+                         DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
+  if (class_info.has_definition_started()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "class is incomplete within its definition");
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "class was forward declared here");
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+  }
+}
+
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = context.interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
+  if (interface_info.is_being_defined()) {
+    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
+                      "interface is currently being defined");
+    builder.Note(interface_info.definition_id,
+                 InterfaceIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "interface was forward declared here");
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
+  }
+}
+
+auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                       bool direct_use, DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(
+      ClassAbstractHere, Note,
+      "{0:=0:uses class that|=1:class} was declared abstract here",
+      Diagnostics::IntAsSelect);
+  builder.Note(class_info.definition_id, ClassAbstractHere,
+               static_cast<int>(direct_use));
+}
+
+static auto NoteIncompleteNamedConstraint(
+    Context& context, SemIR::NamedConstraintId named_constraint_id,
+    DiagnosticBuilder& builder) -> void {
+  const auto& constraint = context.named_constraints().Get(named_constraint_id);
+  CARBON_CHECK(!constraint.is_complete(), "Named constraint is not incomplete");
+  if (constraint.is_being_defined()) {
+    CARBON_DIAGNOSTIC(NamedConstraintIncompleteWithinDefinition, Note,
+                      "constraint is currently being defined");
+    builder.Note(constraint.definition_id,
+                 NamedConstraintIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Note,
+                      "constraint was forward declared here");
+    builder.Note(constraint.latest_decl_id(),
+                 NamedConstraintForwardDeclaredHere);
+  }
+}
+
+static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
+                                     const SemIR::FacetType& facet_type,
+                                     MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+
+  for (auto extends : facet_type_info.extend_constraints) {
+    auto interface_id = extends.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteInterface(context, interface_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+    if (interface.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
+  }
+
+  for (auto extends : facet_type_info.extend_named_constraints) {
+    auto named_constraint_id = extends.named_constraint_id;
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+    if (constraint.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
+  }
+
+  return true;
+}
 
 namespace {
 // Worklist-based type completion mechanism.
@@ -66,6 +182,9 @@ class TypeCompleter {
   // state, such as empty structs and tuples.
   auto MakeEmptyValueRepr() const -> SemIR::ValueRepr;
 
+  // Makes a dependent value representation, which is used for symbolic types.
+  auto MakeDependentValueRepr(SemIR::TypeId type_id) const -> SemIR::ValueRepr;
+
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
   auto MakeCopyValueRepr(SemIR::TypeId rep_id,
@@ -89,17 +208,15 @@ class TypeCompleter {
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
              SemIR::CharLiteralType, SemIR::ErrorInst, SemIR::FacetType,
-             SemIR::FloatType, SemIR::IntType, SemIR::IntLiteralType,
-             SemIR::LegacyFloatType, SemIR::NamespaceType, SemIR::PatternType,
-             SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::VtableType, SemIR::WitnessType>())
+             SemIR::FloatLiteralType, SemIR::FloatType, SemIR::FormType,
+             SemIR::IntType, SemIR::IntLiteralType, SemIR::NamespaceType,
+             SemIR::PatternType, SemIR::PointerType,
+             SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
+             SemIR::TypeType, SemIR::VtableType, SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};
   }
-
-  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::StringType /*inst*/) const
-      -> SemIR::CompleteTypeInfo;
 
   auto BuildStructOrTupleValueRepr(size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
@@ -122,10 +239,11 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FunctionType,
+             SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
+             SemIR::CppTemplateNameType, SemIR::FunctionType,
              SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-             SemIR::GenericInterfaceType, SemIR::InstType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+             SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types have no runtime operations, so we use an empty value
@@ -143,6 +261,10 @@ class TypeCompleter {
 
   auto BuildInfoForInst(SemIR::TypeId type_id,
                         SemIR::CustomLayoutType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::MaybeUnformedType inst) const
       -> SemIR::CompleteTypeInfo;
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
@@ -164,8 +286,7 @@ class TypeCompleter {
     requires(InstT::Kind.is_symbolic_when_type())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return {.value_repr = MakeCopyValueRepr(type_id)};
+    return {.value_repr = MakeDependentValueRepr(type_id)};
   }
 
   // Builds and returns the `CompleteTypeInfo` for the given type. All nested
@@ -207,7 +328,7 @@ auto TypeCompleter::ProcessStep() -> bool {
     return true;
   }
 
-  auto inst_id = context_->types().GetInstId(type_id);
+  auto inst_id = context_->types().GetTypeInstId(type_id);
   auto inst = context_->insts().Get(inst_id);
   auto old_work_list_size = work_list_.size();
 
@@ -279,8 +400,9 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       if (!class_info.is_complete() && class_info.scope_id.has_value()) {
         auto& scope = context_->name_scopes().Get(class_info.scope_id);
         if (scope.clang_decl_context_id().has_value()) {
-          if (!ImportCppClassDefinition(*context_, loc_id_, inst.class_id,
-                                        scope.clang_decl_context_id())) {
+          if (!ImportClassDefinitionForClangDecl(
+                  *context_, loc_id_, inst.class_id,
+                  scope.clang_decl_context_id())) {
             // Clang produced a diagnostic. Don't produce one of our own.
             return false;
           }
@@ -316,31 +438,17 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       }
       break;
     }
+    case CARBON_KIND(SemIR::MaybeUnformedType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
     case CARBON_KIND(SemIR::PartialType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      auto identified_id = RequireIdentifiedFacetType(*context_, inst);
-      const auto& identified =
-          context_->identified_facet_types().Get(identified_id);
-      // Every mentioned interface needs to be complete.
-      for (auto req_interface : identified.required_interfaces()) {
-        auto interface_id = req_interface.interface_id;
-        const auto& interface = context_->interfaces().Get(interface_id);
-        if (!interface.is_complete()) {
-          if (diagnoser_) {
-            auto builder = diagnoser_();
-            NoteIncompleteInterface(*context_, interface_id, builder);
-            builder.Emit();
-          }
-          return false;
-        }
-
-        if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_id_,
-                                    req_interface.specific_id);
-        }
+      if (!RequireCompleteFacetType(*context_, loc_id_, inst, diagnoser_)) {
+        return false;
       }
       break;
     }
@@ -357,6 +465,11 @@ auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
           .type_id = GetTupleType(*context_, {})};
 }
 
+auto TypeCompleter::MakeDependentValueRepr(SemIR::TypeId type_id) const
+    -> SemIR::ValueRepr {
+  return {.kind = SemIR::ValueRepr::Dependent, .type_id = type_id};
+}
+
 auto TypeCompleter::MakeCopyValueRepr(
     SemIR::TypeId rep_id, SemIR::ValueRepr::AggregateKind aggregate_kind) const
     -> SemIR::ValueRepr {
@@ -371,8 +484,8 @@ auto TypeCompleter::MakePointerValueRepr(
   // TODO: Should we add `const` qualification to `pointee_id`?
   return {.kind = SemIR::ValueRepr::Pointer,
           .aggregate_kind = aggregate_kind,
-          .type_id = GetPointerType(*context_,
-                                    context_->types().GetInstId(pointee_id))};
+          .type_id = GetPointerType(
+              *context_, context_->types().GetTypeInstId(pointee_id))};
 }
 
 auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
@@ -383,15 +496,6 @@ auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
   CARBON_CHECK(info.value_repr.kind != SemIR::ValueRepr::Unknown,
                "Complete type should have a value representation");
   return info;
-}
-
-auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::StringType /*inst*/) const
-    -> SemIR::CompleteTypeInfo {
-  // TODO: Decide on string value semantics. This should probably be a
-  // custom value representation carrying a pointer and size or
-  // similar.
-  return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
 auto TypeCompleter::BuildStructOrTupleValueRepr(size_t num_elements,
@@ -437,7 +541,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                                   field_type_id)) {
       same_as_object_rep = false;
       field.type_inst_id =
-          context_->types().GetInstId(field_info.value_repr.type_id);
+          context_->types().GetTypeInstId(field_info.value_repr.type_id);
     }
     value_rep_fields.push_back(field);
     // Take the first non-None abstract_class_id, if any.
@@ -480,7 +584,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
       same_as_object_rep = false;
     }
     value_rep_elements.push_back(
-        context_->types().GetInstId(element_info.value_repr.type_id));
+        context_->types().GetTypeInstId(element_info.value_repr.type_id));
     // Take the first non-None abstract_class_id, if any.
     if (element_info.abstract_class_id.has_value() &&
         !abstract_class_id.has_value()) {
@@ -550,6 +654,31 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::MaybeUnformedType inst) const
+    -> SemIR::CompleteTypeInfo {
+  // `MaybeUnformed(T)` has the same value representation as `T` if that value
+  // representation preserves all the bytes of the value, including any padding
+  // bits. Otherwise we need to use a different representation.
+  auto inner_type_id = context_->types().GetTypeIdForTypeInstId(inst.inner_id);
+  auto nested = GetNestedInfo(inner_type_id);
+  if (nested.value_repr.kind == SemIR::ValueRepr::Custom) {
+    nested.value_repr = MakePointerValueRepr(type_id);
+  } else if (nested.value_repr.kind == SemIR::ValueRepr::Copy) {
+    auto type_inst = context_->types().GetAsInst(nested.value_repr.type_id);
+    // TODO: Should ValueRepr::IsCopyOfObjectRepr return false for `bool`?
+    if (!nested.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
+                                              inner_type_id) ||
+        type_inst.Is<SemIR::BoolType>()) {
+      nested.value_repr = MakePointerValueRepr(type_id);
+    }
+    // TODO: Handle any other types that we treat as having discarded padding
+    // bits. For now there are no such types, as all class types and all structs
+    // and tuples with more than one element are passed indirectly.
+  }
+  return nested;
+}
+
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::PartialType inst) const
     -> SemIR::CompleteTypeInfo {
@@ -610,26 +739,10 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
         SemIR::RequireCompleteType{
             .type_id =
                 GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-            .complete_type_inst_id = context.types().GetInstId(type_id)});
+            .complete_type_inst_id = context.types().GetTypeInstId(type_id)});
   }
 
   return true;
-}
-
-// Adds a note to a diagnostic explaining that a class is abstract.
-static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
-                              bool direct_use, DiagnosticBuilder& builder)
-    -> void {
-  const auto& class_info = context.classes().Get(class_id);
-  CARBON_CHECK(
-      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
-      "Class is not abstract");
-  CARBON_DIAGNOSTIC(
-      ClassAbstractHere, Note,
-      "{0:=0:uses class that|=1:class} was declared abstract here",
-      Diagnostics::IntAsSelect);
-  builder.Note(class_info.definition_id, ClassAbstractHere,
-               static_cast<int>(direct_use));
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
@@ -669,22 +782,205 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto RequireIdentifiedFacetType(Context& context,
-                                const SemIR::FacetType& facet_type)
+// Require all named constraints in the facet type are identified. For a named
+// constraint, this means the constraint definition is complete.
+static auto RequireIdentifiedNamedConstraints(
+    Context& context, const SemIR::FacetTypeInfo& facet_type_info,
+    MakeDiagnosticBuilderFn diagnoser) -> bool {
+  auto named_constraint_ids = llvm::map_range(
+      llvm::concat<const SemIR::SpecificNamedConstraint>(
+          facet_type_info.extend_named_constraints,
+          facet_type_info.self_impls_named_constraints),
+      [](SemIR::SpecificNamedConstraint s) { return s.named_constraint_id; });
+  for (auto named_constraint_id : named_constraint_ids) {
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
+static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
+    -> SemIR::ConstantId {
+  if (self_const_id == SemIR::ErrorInst::ConstantId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // Avoid wrapping a FacetAccessType(FacetValue) in another layer of
+  // FacetValue. Just unwrap the FacetValue inside.
+  self_const_id = GetCanonicalFacetOrTypeValue(context, self_const_id);
+
+  auto self_inst_id = context.constant_values().GetInstId(self_const_id);
+  auto type_id = context.insts().Get(self_inst_id).type_id();
+  CARBON_CHECK(context.types().IsFacetType(type_id));
+
+  if (context.types().Is<SemIR::FacetType>(type_id)) {
+    return self_const_id;
+  }
+
+  return GetConstantFacetValueForType(
+      context, context.types().GetAsTypeInstId(self_inst_id));
+}
+
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::ConstantId self_const_id,
+                                const SemIR::FacetType& facet_type,
+                                MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::IdentifiedFacetTypeId {
-  if (auto identified_id =
-          context.identified_facet_types().TryGetId(facet_type.facet_type_id);
+  auto key =
+      SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
+                                    .self_const_id = self_const_id};
+  if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;
   }
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
 
-  // TODO: expand named constraints
+  struct SelfImplsFacetType {
+    SemIR::ConstantId self;
+    SemIR::FacetTypeId facet_type;
+  };
+
+  // Work queue.
+  llvm::SmallVector<SelfImplsFacetType> extend_facet_types = {
+      {self_const_id, facet_type.facet_type_id}};
+  llvm::SmallVector<SelfImplsFacetType> impls_facet_types;
+
+  // Outputs for the IdentifiedFacetType.
+  llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
+  llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
+
+  while (true) {
+    SelfImplsFacetType next_impls = {SemIR::ConstantId::None,
+                                     SemIR::FacetTypeId::None};
+    bool facet_type_extends = false;
+    if (!extend_facet_types.empty()) {
+      next_impls = extend_facet_types.pop_back_val();
+      facet_type_extends = true;
+    } else if (!impls_facet_types.empty()) {
+      next_impls = impls_facet_types.pop_back_val();
+      facet_type_extends = false;
+    } else {
+      break;
+    }
+
+    auto self_const_id = next_impls.self;
+    const auto& facet_type_info =
+        context.facet_types().Get(next_impls.facet_type);
+
+    if (!RequireIdentifiedNamedConstraints(context, facet_type_info,
+                                           diagnoser)) {
+      return SemIR::IdentifiedFacetTypeId::None;
+    }
+
+    auto self_and_interface = [&](SemIR::SpecificInterface interface)
+        -> SemIR::IdentifiedFacetType::RequiredImpl {
+      return {self_const_id, interface};
+    };
+
+    if (facet_type_extends) {
+      llvm::append_range(extends,
+                         llvm::map_range(facet_type_info.extend_constraints,
+                                         self_and_interface));
+    } else {
+      llvm::append_range(impls,
+                         llvm::map_range(facet_type_info.extend_constraints,
+                                         self_and_interface));
+    }
+    llvm::append_range(impls,
+                       llvm::map_range(facet_type_info.self_impls_constraints,
+                                       self_and_interface));
+
+    // Constructing specifics for `require` decls can produce monomorphization
+    // errors, which we want to connect back to here.
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IdentifyingFacetTypeHere, Note,
+                            "identifying facet type {0} here",
+                            SemIR::FacetTypeId);
+          builder.Note(loc_id, IdentifyingFacetTypeHere,
+                       facet_type.facet_type_id);
+        });
+
+    if (facet_type_info.extend_named_constraints.empty() &&
+        facet_type_info.self_impls_named_constraints.empty()) {
+      continue;
+    }
+
+    // The self may have type TypeType. But the `Self` in a generic require decl
+    // has type FacetType, so we need something similar to replace it in the
+    // specific.
+    auto self_facet_value = GetSelfFacetValue(context, self_const_id);
+
+    for (auto extends : facet_type_info.extend_named_constraints) {
+      const auto& constraint =
+          context.named_constraints().Get(extends.named_constraint_id);
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        auto require_specific =
+            GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
+                context, require, extends.specific_id, self_facet_value);
+        auto require_self = GetConstantValueInRequireImplsSpecific(
+            context, require_specific, require.self_id);
+        auto require_facet_type = GetConstantValueInRequireImplsSpecific(
+            context, require_specific, require.facet_type_inst_id);
+        if (require_self == SemIR::ErrorInst::ConstantId ||
+            require_facet_type == SemIR::ErrorInst::ConstantId) {
+          return SemIR::IdentifiedFacetTypeId::None;
+        }
+
+        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
+        auto facet_type_inst_id =
+            context.constant_values().GetInstId(require_facet_type);
+        auto facet_type_id = context.insts()
+                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                                 .facet_type_id;
+        if (facet_type_extends && require.extend_self) {
+          extend_facet_types.push_back({require_self, facet_type_id});
+        } else {
+          impls_facet_types.push_back({require_self, facet_type_id});
+        }
+      }
+    }
+
+    for (auto impls : facet_type_info.self_impls_named_constraints) {
+      const auto& constraint =
+          context.named_constraints().Get(impls.named_constraint_id);
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        auto require_specific =
+            GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
+                context, require, impls.specific_id, self_facet_value);
+        auto require_self = GetConstantValueInRequireImplsSpecific(
+            context, require_specific, require.self_id);
+        auto require_facet_type = GetConstantValueInRequireImplsSpecific(
+            context, require_specific, require.facet_type_inst_id);
+        if (require_self == SemIR::ErrorInst::ConstantId ||
+            require_facet_type == SemIR::ErrorInst::ConstantId) {
+          return SemIR::IdentifiedFacetTypeId::None;
+        }
+
+        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
+        auto facet_type_inst_id =
+            context.constant_values().GetInstId(require_facet_type);
+        auto facet_type_id = context.insts()
+                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                                 .facet_type_id;
+        impls_facet_types.push_back({require_self, facet_type_id});
+      }
+    }
+  }
+
   // TODO: Process other kinds of requirements.
-  return context.identified_facet_types().Add(
-      facet_type.facet_type_id, {facet_type_info.extend_constraints,
-                                 facet_type_info.self_impls_constraints});
+  return context.identified_facet_types().Add({key, extends, impls});
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,
@@ -706,37 +1002,6 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                              abstract_diagnoser)
              ? type_id
              : SemIR::ErrorInst::TypeId;
-}
-
-auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
-                         DiagnosticBuilder& builder) -> void {
-  const auto& class_info = context.classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
-  if (class_info.has_definition_started()) {
-    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                      "class is incomplete within its definition");
-    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
-  } else {
-    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                      "class was forward declared here");
-    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
-  }
-}
-
-auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
-                             DiagnosticBuilder& builder) -> void {
-  const auto& interface_info = context.interfaces().Get(interface_id);
-  CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
-  if (interface_info.is_being_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
-                      "interface is currently being defined");
-    builder.Note(interface_info.definition_id,
-                 InterfaceIncompleteWithinDefinition);
-  } else {
-    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
-                      "interface was forward declared here");
-    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
-  }
 }
 
 }  // namespace Carbon::Check

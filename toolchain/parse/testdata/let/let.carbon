@@ -11,8 +11,8 @@
 let v: i32 = 0;
 let _: i32 = 1;
 fn F() {
-  let s: String = "hello";
-  let _: i32 = "goodbye";
+  let s: str = "hello";
+  let _: str = "goodbye";
 }
 
 // CHECK:STDOUT: - filename: let.carbon
@@ -39,14 +39,14 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 's'},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StringLiteral', text: '"hello"'},
 // CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'UnderscoreName', text: '_'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StringLiteral', text: '"goodbye"'},

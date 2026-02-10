@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
-        -   [Value binding](#value-binding)
+        -   [Value acquisition](#value-acquisition)
         -   [Direct initialization](#direct-initialization)
         -   [Copy initialization](#copy-initialization)
         -   [Temporary materialization](#temporary-materialization)
@@ -86,8 +86,8 @@ There are three primary expression categories in Carbon:
 Expressions in one category can be implicitly converted to any other primary
 category when needed. The primitive conversion steps used are:
 
--   [_Value binding_](#value-binding) forms a value expression from the current
-    value of the object referenced by a reference expression.
+-   [_Value acquisition_](#value-acquisition) forms a value expression from the
+    current value of the object referenced by a reference expression.
 -   [_Direct initialization_](#direct-initialization) converts a value
     expression into an initializing expression.
 -   [_Copy initialization_](#copy-initialization) converts a reference
@@ -97,11 +97,11 @@ category when needed. The primitive conversion steps used are:
 
 These conversion steps combine to provide the transitive conversion table:
 
-|               From: | value                     | reference | initializing       |
-| ------------------: | ------------------------- | --------- | ------------------ |
-|        to **value** | ==                        | bind      | materialize + bind |
-|    to **reference** | direct init + materialize | ==        | materialize        |
-| to **initializing** | direct init               | copy init | ==                 |
+|               From: | value                     | reference | initializing          |
+| ------------------: | ------------------------- | --------- | --------------------- |
+|        to **value** | ==                        | acquire   | materialize + acquire |
+|    to **reference** | direct init + materialize | ==        | materialize           |
+| to **initializing** | direct init               | copy init | ==                    |
 
 Reference expressions are divided into 2x2 sub-categories: they can be either
 [_ephemeral_](#ephemeral-reference-expressions) or
@@ -134,13 +134,14 @@ cannot be implicitly converted to durable reference expressions at all.
 > properties like uniqueness, and make sure their names are aligned with
 > memory-safety terminology.
 
-#### Value binding
+#### Value acquisition
 
-We call forming a value expression from a reference expression _value binding_.
-This forms a value expression that will evaluate to the value of the object in
-the referenced storage of the reference expression. It may do this by eagerly
-reading that value into a machine register, lazily reading that value on-demand
-into a machine register, or in some other way modeling that abstract value.
+We call forming a value expression from a reference expression _value
+acquisition_. This forms a value expression that will evaluate to the value of
+the object in the referenced storage of the reference expression. It may do this
+by eagerly reading that value into a machine register, lazily reading that value
+on-demand into a machine register, or in some other way modeling that abstract
+value.
 
 See the [value expressions](#value-expressions) section for more details on the
 semantics of value expressions.
@@ -161,8 +162,8 @@ trivially and where this is implemented as a `memcpy` of their underlying bytes.
 #### Temporary materialization
 
 We use temporary materialization when we need to initialize an object by way of
-storage, but weren't provided dedicate storage and can simply bind the result to
-a value afterward.
+storage, but weren't provided dedicated storage and can simply acquire the
+result as a value afterward.
 
 > **Open question:** The lifetimes of temporaries is not yet specified.
 
@@ -279,7 +280,7 @@ occur, which will typically be marked by an open brace (`{`) and close brace
 
 ### Consuming function parameters
 
-Just as part of a `let` binding can use a `var` prefix to become a variable
+Just as part of a `let` declaration can use a `var` prefix to become a variable
 pattern and bind names that will form reference expressions to the variable's
 storage, so can function parameters:
 
@@ -453,11 +454,11 @@ enable generic code that needs a single type model that will have consistently
 good performance.
 
 When forming a value expression from a reference expression, Carbon
-[binds](#value-binding) the referenced object to that value expression. This
-allows immediately reading from the object's storage into a machine register or
-a copy if desired, but does not require that. The read of the underlying object
-can also be deferred until the value expression itself is used. Once an object
-is bound to a value expression in this way, any mutation to the object or its
+[acquires](#value-acquisition) the value of the referenced object. This allows
+immediately reading from the object's storage into a machine register or a copy
+if desired, but does not require that. The read of the underlying object can
+also be deferred until the value expression itself is used. Once an object is
+bound to a value expression in this way, any mutation to the object or its
 storage ends the lifetime of the value binding, and makes any use of the value
 expression an error.
 
@@ -856,12 +857,11 @@ The code that accesses the result of an expression is said to _consume_ that
 result, and every primitive-form result is consumed exactly once (except in
 certain narrow contexts where the result is known not to be initializing). If a
 result isn't explicitly accessed, such as when the expression is used as a
-statement, or is matched with an
-[unused binding pattern](pattern_matching.md#unused-bindings), it is said to be
-_discarded_, which consumes it in the absence of an explicit consumer.
-Discarding an initializing result materializes and then immediately destroys it.
-Discarding an entire ephemeral reference destroys the object it refers to.
-Discarding a value or any other kind of reference is a no-op.
+statement, it is said to be _discarded_, which consumes it in the absence of an
+explicit consumer. Discarding an initializing result materializes and then
+immediately destroys it. Discarding an entire ephemeral reference destroys the
+object it refers to. Discarding a value or any other kind of reference is a
+no-op.
 
 ### Initializing results
 

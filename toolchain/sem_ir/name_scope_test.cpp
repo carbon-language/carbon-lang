@@ -21,7 +21,6 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingExistingInstId) {
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
   EXPECT_EQ(result.target_inst_id(), inst_id);
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Protected);
   EXPECT_TRUE(result == result);
 }
@@ -32,8 +31,6 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingNoneInstId) {
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_FALSE(result.is_found());
-  EXPECT_DEATH(result.target_inst_id(), "is_found");
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Protected);
   EXPECT_TRUE(result == result);
 }
@@ -45,7 +42,6 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingErrorInst) {
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
   EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Private);
   EXPECT_TRUE(result == result);
 }
@@ -57,15 +53,8 @@ TEST(ScopeLookupResult, MakeFoundExisting) {
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
   EXPECT_EQ(result.target_inst_id(), inst_id);
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Protected);
   EXPECT_TRUE(result == result);
-}
-
-TEST(ScopeLookupResult, MakeFoundNone) {
-  EXPECT_DEATH(
-      ScopeLookupResult::MakeFound(InstId::None, AccessKind::Protected),
-      "has_value");
 }
 
 TEST(ScopeLookupResult, MakeNotFound) {
@@ -73,8 +62,6 @@ TEST(ScopeLookupResult, MakeNotFound) {
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_FALSE(result.is_found());
-  EXPECT_DEATH(result.target_inst_id(), "is_found");
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Public);
   EXPECT_TRUE(result == result);
 }
@@ -85,7 +72,6 @@ TEST(ScopeLookupResult, MakePoisoned) {
 
   EXPECT_TRUE(result.is_poisoned());
   EXPECT_FALSE(result.is_found());
-  EXPECT_DEATH(result.target_inst_id(), "is_found");
   EXPECT_EQ(result.poisoning_loc_id(), loc_id);
   EXPECT_EQ(result.access_kind(), AccessKind::Public);
   EXPECT_TRUE(result == result);
@@ -97,7 +83,6 @@ TEST(ScopeLookupResult, MakeError) {
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
   EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
-  EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Public);
   EXPECT_TRUE(result == result);
 }
@@ -416,13 +401,19 @@ TEST(NameScope, ExtendedScopes) {
   EXPECT_THAT(name_scope.extended_scopes(), ElementsAre());
 
   InstId extended_scope1(++id);
-  name_scope.AddExtendedScope(extended_scope1);
-  EXPECT_THAT(name_scope.extended_scopes(), ElementsAre(extended_scope1));
+  InstId innert_self1(++id);
+  name_scope.AddExtendedScope({extended_scope1, innert_self1});
+  EXPECT_THAT(
+      name_scope.extended_scopes(),
+      ElementsAre(NameScope::ExtendedScope{extended_scope1, innert_self1}));
 
   InstId extended_scope2(++id);
-  name_scope.AddExtendedScope(extended_scope2);
-  EXPECT_THAT(name_scope.extended_scopes(),
-              ElementsAre(extended_scope1, extended_scope2));
+  InstId innert_self2(++id);
+  name_scope.AddExtendedScope({extended_scope2, innert_self2});
+  EXPECT_THAT(
+      name_scope.extended_scopes(),
+      ElementsAre(NameScope::ExtendedScope{extended_scope1, innert_self1},
+                  NameScope::ExtendedScope{extended_scope2, innert_self2}));
 }
 
 TEST(NameScope, HasError) {

@@ -6,9 +6,11 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -34,12 +36,13 @@ class ConstantContext {
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
     CARBON_CHECK(const_id.is_concrete(), "Unexpected constant ID {0}",
                  const_id);
-    auto inst_id =
-        file_context_->sem_ir().constant_values().GetInstId(const_id);
-    if (inst_id.index > last_lowered_constant_index_) {
-      // This constant hasn't been lowered.
-      return nullptr;
-    }
+    auto inst_id = sem_ir().constant_values().GetInstId(const_id);
+    CARBON_CHECK(sem_ir().insts().GetRawIndex(inst_id) <
+                     sem_ir().insts().GetRawIndex(current_constant_inst_id_),
+                 "Accessed constants out of order: {0} {1} uses {2} {3}",
+                 current_constant_inst_id_,
+                 sem_ir().insts().Get(current_constant_inst_id_), inst_id,
+                 sem_ir().insts().Get(inst_id));
     return constants_->Get(inst_id);
   }
 
@@ -49,9 +52,9 @@ class ConstantContext {
     return nullptr;
   }
 
-  // Gets the value to use for an integer literal.
-  auto GetIntLiteralAsValue() const -> llvm::Constant* {
-    return file_context_->GetIntLiteralAsValue();
+  // Gets the value to use for a literal.
+  auto GetLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetLiteralAsValue();
   }
 
   // Gets a callable's function. Returns nullptr for a builtin.
@@ -79,10 +82,15 @@ class ConstantContext {
     return file_context_->BuildGlobalVariableDecl(inst);
   }
 
-  // Sets the index of the constant we most recently lowered. This is used to
+  // Sets the InstId of the constant we're currently lowering. This is used to
   // check we don't look at constants that we've not lowered yet.
-  auto SetLastLoweredConstantIndex(int32_t index) -> void {
-    last_lowered_constant_index_ = index;
+  auto SetCurrentConstantInstId(SemIR::InstId inst_id) -> void {
+    CARBON_CHECK(
+        !current_constant_inst_id_.has_value() ||
+            sem_ir().insts().GetRawIndex(inst_id) >
+                sem_ir().insts().GetRawIndex(current_constant_inst_id_),
+        "Visited constants out of order");
+    current_constant_inst_id_ = inst_id;
   }
 
   auto llvm_context() const -> llvm::LLVMContext& {
@@ -96,7 +104,7 @@ class ConstantContext {
  private:
   FileContext* file_context_;
   const FileContext::LoweredConstantStore* constants_;
-  int32_t last_lowered_constant_index_ = -1;
+  SemIR::InstId current_constant_inst_id_ = SemIR::InstId::None;
 };
 
 // Emits an aggregate constant of LLVM type `Type` whose elements are the
@@ -215,8 +223,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::CharLiteralValue /*inst*/)
     -> llvm::Constant* {
-  return llvm::ConstantStruct::get(
-      llvm::StructType::get(context.llvm_context()));
+  return context.GetLiteralAsValue();
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -224,9 +231,21 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CppOverloadSetValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
     -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
+}
+
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::FloatLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::FloatValue inst)
@@ -243,9 +262,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
   // represented as an LLVM integer type.
   auto* int_type = dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* int_literal_value = context.GetIntLiteralAsValue();
-    CARBON_CHECK(int_literal_value->getType() == type);
-    return int_literal_value;
+    auto* literal_value = context.GetLiteralAsValue();
+    CARBON_CHECK(literal_value->getType() == type);
+    return literal_value;
   }
 
   int bit_width = int_type->getBitWidth();
@@ -263,9 +282,17 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/,
-                           SemIR::StringLiteral inst) -> llvm::Constant* {
-  CARBON_FATAL("TODO: Add support: {0}", inst);
+static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
+    -> llvm::Constant* {
+  return llvm::IRBuilder<>(context.llvm_context())
+      .CreateGlobalString(
+          context.sem_ir().string_literal_values().Get(inst.string_literal_id),
+          /*name=*/"", /*address_space=*/0, &context.llvm_module());
+}
+
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::UninitializedValue inst) -> llvm::Constant* {
+  return llvm::PoisonValue::get(context.GetType(inst.type_id));
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
@@ -298,7 +325,6 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
   }
 }
 
-// NOLINTNEXTLINE(readability-function-size): Macro-generated.
 auto LowerConstants(FileContext& file_context,
                     FileContext::LoweredConstantStore& constants) -> void {
   ConstantContext context(file_context, &constants);
@@ -319,11 +345,15 @@ auto LowerConstants(FileContext& file_context,
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
     if (inst.type_id().has_value() &&
-        !file_context.sem_ir().types().IsComplete(inst.type_id())) {
-      // If a constant doesn't have a complete type, that means we imported it
-      // but didn't actually use it.
+        !file_context.sem_ir().types().IsComplete(inst.type_id()) &&
+        !IsRefCategory(SemIR::GetExprCategory(context.sem_ir(), inst_id))) {
+      // If a non-reference constant doesn't have a complete type, that means we
+      // imported it but didn't actually use it.
       continue;
     }
+
+    context.SetCurrentConstantInstId(inst_id);
+
     llvm::Constant* value = nullptr;
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                 \
@@ -335,7 +365,6 @@ auto LowerConstants(FileContext& file_context,
     }
 
     constants.Set(inst_id, value);
-    context.SetLastLoweredConstantIndex(inst_id.index);
   }
 }
 

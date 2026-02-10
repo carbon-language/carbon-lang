@@ -21,8 +21,9 @@ class Formatter {
  public:
   // sem_ir and include_ir_in_dumps must be non-null.
   explicit Formatter(
-      const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-      const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+      const File* sem_ir, int total_ir_count,
+      Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+      const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
       bool use_dump_sem_ir_ranges);
 
   // Prints the SemIR into an internal buffer. Must only be called once.
@@ -149,22 +150,31 @@ class Formatter {
                                  bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
-  auto FormatClass(ClassId id) -> void;
+  auto FormatClass(ClassId id, const Class& class_info) -> void;
 
   // Formats a full vtable.
-  auto FormatVtable(VtableId id) -> void;
+  auto FormatVtable(VtableId id, const Vtable& vtable_info) -> void;
 
   // Formats a full interface.
-  auto FormatInterface(InterfaceId id) -> void;
+  auto FormatInterface(InterfaceId id, const Interface& interface_info) -> void;
+
+  // Formats a full named constraint.
+  auto FormatNamedConstraint(NamedConstraintId id,
+                             const NamedConstraint& constraint_info) -> void;
+
+  // Formats a full require declaration.
+  auto FormatRequireImpls(RequireImplsId id, const RequireImpls& require)
+      -> void;
 
   // Formats an associated constant entity.
-  auto FormatAssociatedConstant(AssociatedConstantId id) -> void;
+  auto FormatAssociatedConstant(AssociatedConstantId id,
+                                const AssociatedConstant& assoc_const) -> void;
 
   // Formats a full impl.
-  auto FormatImpl(ImplId id) -> void;
+  auto FormatImpl(ImplId id, const Impl& impl) -> void;
 
   // Formats a full function.
-  auto FormatFunction(FunctionId id) -> void;
+  auto FormatFunction(FunctionId id, const Function& fn) -> void;
 
   // Helper for FormatSpecific to print regions.
   auto FormatSpecificRegion(const Generic& generic, const Specific& specific,
@@ -172,16 +182,19 @@ class Formatter {
                             llvm::StringRef region_name) -> void;
 
   // Formats a full specific.
-  auto FormatSpecific(SpecificId id) -> void;
+  auto FormatSpecific(SpecificId id, const Specific& specific) -> void;
 
   // Handles generic-specific setup for FormatEntityStart.
   auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)
       -> void;
 
+  // Before formatting a decl (typically an Entity), collect import information
+  // (if there is any) needed to format it.
+  auto PrepareToFormatDecl(InstId first_owning_decl_id) -> void;
+
   // Provides common formatting for entities, paired with FormatEntityEnd.
   template <typename IdT>
-  auto FormatEntityStart(llvm::StringRef entity_kind,
-                         InstId first_owning_decl_id, GenericId generic_id,
+  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
                          IdT entity_id) -> void;
 
   template <typename IdT>
@@ -192,9 +205,17 @@ class Formatter {
   // Provides common formatting for entities, paired with FormatEntityStart.
   auto FormatEntityEnd(GenericId generic_id) -> void;
 
+  // Provides common formatting for generics, paired with FormatGenericStart.
+  // Normally this is just called from FormatEntityEnd, as most generics are
+  // entities.
+  auto FormatGenericEnd() -> void;
+
   // Formats parameters, eliding them completely if they're empty. Wraps input
-  // parameters in parentheses. Formats output parameter as a return type.
-  auto FormatParamList(InstBlockId params_id, bool has_return_slot = false)
+  // parameters in parentheses. If `return_form_id` is not None, this also
+  // formats the return form, and parameters in the return form are omitted
+  // from the parenthesized parameter list.
+  auto FormatParamList(InstBlockId params_id,
+                       SemIR::InstId return_form_id = SemIR::InstId::None)
       -> void;
 
   // Prints instructions for a code block.
@@ -206,6 +227,9 @@ class Formatter {
 
   // Prints the contents of a name scope, with an optional label.
   auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void;
+
+  // Prints the contents of a require impls as a block.
+  auto FormatRequireImpls(RequireImplsId id) -> void;
 
   // Prints a single instruction. This typically formats as:
   //   `FormatInstLhs()` `<ir_name>` `FormatInstRhs()` `<constant>`
@@ -256,6 +280,10 @@ class Formatter {
   // name>, <loaded|unloaded>". However, if the entity name isn't present, this
   // may fall back to printing location information from the import source.
   auto FormatImportRefRhs(AnyImportRef inst) -> void;
+
+  // Format a block of `require` declarations from their `RequireImplsDecl`
+  // instructions. Starts with a `!requires:` label.
+  auto FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void;
 
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
@@ -335,7 +363,7 @@ class Formatter {
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 
   // For each CheckIRId, whether entities from it should be formatted.
-  const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps_;
+  const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps_;
 
   // Whether to use ranges when dumping, or to dump the full SemIR.
   bool use_dump_sem_ir_ranges_;
@@ -382,7 +410,7 @@ class Formatter {
 
   // Indexes of chunks of output that should be included when an instruction is
   // referenced, indexed by the instruction's index.
-  FixedSizeValueStore<InstId, size_t> tentative_inst_chunks_;
+  FixedSizeValueStore<InstId, size_t, Tag<CheckIRId>> tentative_inst_chunks_;
 
   // Maps nodes to their parents. Only set when dump ranges are in use, because
   // the parents aren't used otherwise.
@@ -392,23 +420,7 @@ class Formatter {
 
 template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
-                                  InstId first_owning_decl_id,
                                   GenericId generic_id, IdT entity_id) -> void {
-  // If this entity was imported from a different IR, annotate the name of
-  // that IR in the output before the `{` or `;`.
-  if (first_owning_decl_id.has_value()) {
-    auto import_ir_inst_id =
-        sem_ir_->insts().GetImportSource(first_owning_decl_id);
-    if (import_ir_inst_id.has_value()) {
-      auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
-      if (const auto* import_file =
-              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
-        pending_imported_from_ = import_file->filename();
-      }
-    }
-  }
-
   if (generic_id.has_value()) {
     FormatGenericStart(entity_kind, generic_id);
   }
@@ -430,8 +442,7 @@ template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
-  FormatEntityStart(entity_kind, entity.first_owning_decl_id, entity.generic_id,
-                    entity_id);
+  FormatEntityStart(entity_kind, entity.generic_id, entity_id);
 }
 
 template <typename... Types>

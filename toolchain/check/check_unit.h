@@ -127,22 +127,25 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+      llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-      bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream);
+      llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
 
  private:
+  using CheckIRIdToIntStore = FixedSizeValueStore<SemIR::CheckIRId, int>;
+
   // Add imports to the root block.
   auto InitPackageScopeAndImports() -> void;
 
   // Collects direct imports, for CollectTransitiveImports.
-  auto CollectDirectImports(
-      llvm::SmallVector<SemIR::ImportIR>& results,
-      FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
-      SemIR::InstId import_decl_id, const PackageImports& imports,
-      bool is_local) -> void;
+  auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
+                            CheckIRIdToIntStore& ir_to_result_index,
+                            SemIR::InstId import_decl_id,
+                            const PackageImports& imports, bool is_local)
+      -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.
@@ -182,14 +185,12 @@ class CheckUnit {
 
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
-  // NOLINTNEXTLINE(readability-function-size)
   auto ProcessNodeIds() -> bool;
 
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
-  // The number of IRs being checked in total.
-  int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  llvm::LLVMContext* llvm_context_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;

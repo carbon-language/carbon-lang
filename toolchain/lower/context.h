@@ -13,6 +13,8 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/ids.h"
@@ -47,7 +49,9 @@ class Context {
       llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
+      clang::CodeGenerator* code_generator, llvm::StringRef module_name,
+      int total_ir_count, Lower::OptimizationLevel opt_level,
+      llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -75,9 +79,9 @@ class Context {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
-  // Returns a lowered value to use for a value of int literal type.
-  auto GetIntLiteralAsValue() -> llvm::Constant* {
-    // TODO: Consider adding a named struct type for integer literals.
+  // Returns a lowered value to use for a value of literal type.
+  auto GetLiteralAsValue() -> llvm::Constant* {
+    // TODO: Consider adding a named struct type for literals.
     return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
   }
 
@@ -90,16 +94,36 @@ class Context {
     return type_type_;
   }
 
+  // Returns the empty LLVM struct type used to represent the type `type`.
+  auto GetFormType() -> llvm::StructType* {
+    if (!form_type_) {
+      // `Core.Form` is lowered to an empty LLVM StructType.
+      form_type_ = llvm::StructType::create(*llvm_context_, {}, "Core.Form");
+    }
+    return form_type_;
+  }
+
+  // Returns the opaque LLVM struct type used to represent an incomplete type.
+  auto GetOpaqueType() -> llvm::StructType* {
+    if (!opaque_type_) {
+      // `type` is lowered to an empty LLVM StructType.
+      opaque_type_ = llvm::StructType::create(*llvm_context_, "opaque");
+    }
+    return opaque_type_;
+  }
+
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
     return file_system_;
   }
+  auto opt_level() -> Lower::OptimizationLevel { return opt_level_; }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
   auto tree_and_subtrees_getters() -> const Parse::GetTreeAndSubtreesStore& {
     return *tree_and_subtrees_getters_;
   }
+  auto total_ir_count() -> int { return total_ir_count_; }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -122,10 +146,15 @@ class Context {
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
-  std::unique_ptr<llvm::Module> llvm_module_;
+  clang::CodeGenerator* clang_code_generator_;
+  std::unique_ptr<llvm::Module> llvm_module_owner_;
+  llvm::Module* llvm_module_;
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> file_system_;
+
+  // The optimization level to specify for lowered function definitions.
+  Lower::OptimizationLevel opt_level_;
 
   // State for building the LLVM IR debug info metadata.
   llvm::DIBuilder di_builder_;
@@ -139,11 +168,22 @@ class Context {
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
 
+  // The total number of files.
+  int total_ir_count_;
+
   // The `FileContext`s for each IR that is involved in this lowering action.
-  Map<SemIR::CheckIRId, std::unique_ptr<FileContext>> file_contexts_;
+  using FileContextStore =
+      FixedSizeValueStore<SemIR::CheckIRId, std::unique_ptr<FileContext>>;
+  FileContextStore file_contexts_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
+
+  // Lowered version of the builtin type `Core.Form`.
+  llvm::StructType* form_type_ = nullptr;
+
+  // An opaque type, used for external globals with incomplete types.
+  llvm::StructType* opaque_type_ = nullptr;
 
   // Global format string for `printf.int.format` used by the PrintInt builtin.
   llvm::Value* printf_int_format_string_ = nullptr;

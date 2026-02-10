@@ -38,9 +38,9 @@ class InstBlockStack {
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
 
   // Returns the ID of the top instruction block, allocating one if necessary.
-  // If `depth` is specified, returns the instruction at `depth` levels from the
-  // top of the stack instead of the top block, where the top block is at depth
-  // 0.
+  // If `depth` is specified, returns the instruction block at `depth` levels
+  // from the top of the stack instead of the top block, where the top block is
+  // at depth 0.
   auto PeekOrAdd(int depth = 0) -> SemIR::InstBlockId;
 
   // Pops the top instruction block. This will never return `None`; `Empty` is

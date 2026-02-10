@@ -54,8 +54,8 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
-  auto value_type_inst_id =
-      context.types().GetInstId(context.insts().Get(value_inst_id).type_id());
+  auto value_type_inst_id = context.types().GetTypeInstId(
+      context.insts().Get(value_inst_id).type_id());
   context.struct_type_fields_stack().AppendToTop(
       {.name_id = name_id, .type_inst_id = value_type_inst_id});
 
@@ -82,7 +82,8 @@ static auto DiagnoseDuplicateNames(
     llvm::ArrayRef<SemIR::StructTypeField> fields, bool is_struct_type_literal)
     -> bool {
   Map<SemIR::NameId, Parse::NodeId> names;
-  for (auto [field_name_node, field] : llvm::zip(field_name_nodes, fields)) {
+  for (auto [field_name_node, field] :
+       llvm::zip_equal(field_name_nodes, fields)) {
     auto result = names.Insert(field.name_id, field_name_node);
     if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,

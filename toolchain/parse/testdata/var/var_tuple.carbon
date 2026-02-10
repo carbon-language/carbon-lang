@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/var_tuple.carbon
 
 fn F() {
-  var (s: String, i: 32) = ("hello", 0);
+  var (s: str, i: 32) = ("hello", 0);
 }
 
 // CHECK:STDOUT: - filename: var_tuple.carbon
@@ -23,7 +23,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 's'},
-// CHECK:STDOUT:               {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:               {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'i'},

@@ -434,6 +434,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         break;
       }
 
+      // TODO: Also reject vertical whitespace other than \n, but ignore a \r
+      // before a \n.
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
@@ -476,6 +478,11 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
   }
 }
 
+// Returns whether the given character is a control character.
+static auto IsControlCharacter(llvm::UTF32 c) -> bool {
+  return (c >= 0 && c <= 0x1F) || (c >= 0x7F && c <= 0x9F);
+}
+
 auto StringLiteral::ComputeCharLiteralValue(
     Diagnostics::Emitter<const char*>& emitter) const
     -> std::optional<CharLiteralValue> {
@@ -516,7 +523,33 @@ auto StringLiteral::ComputeCharLiteralValue(
         emitter.Emit(text_.begin(), CharLiteralEmpty);
         return std::nullopt;
       }
-      return CharLiteralValue{.value = static_cast<int32_t>(target[0])};
+
+      auto result = target[0];
+
+      // Check for a control character that's not written as an escape sequence.
+      // Also don't diagnose horizontal whitespace, because that was already
+      // done by ExpandEscapeSequencesAndRemoveIndent.
+      if (IsControlCharacter(result) && content_.front() != '\\' &&
+          !IsHorizontalWhitespace(content_.front())) {
+        // TODO: Suggest \0 instead of \u{00} for a NUL character.
+        CARBON_DIAGNOSTIC(CharLiteralControlCharacter, Error,
+                          "control character in character literal; specify as "
+                          "escape sequence `\\u{{{0:X-2}}`",
+                          llvm::UTF32);
+        emitter.Emit(text_.begin(), CharLiteralControlCharacter, result);
+        return std::nullopt;
+      }
+
+      if (content_.starts_with("\\x")) {
+        CARBON_DIAGNOSTIC(CharLiteralHexEscape, Error,
+                          "escape sequence `\\x` in character literal; specify "
+                          "as escape sequence `\\u{{{0:X-2}}`",
+                          llvm::UTF32);
+        emitter.Emit(text_.begin(), CharLiteralHexEscape, result);
+        return std::nullopt;
+      }
+
+      return CharLiteralValue{.value = static_cast<int32_t>(result)};
     }
     case llvm::sourceExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralUnderflow, Error, "incomplete UTF-8");

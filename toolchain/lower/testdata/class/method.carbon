@@ -14,7 +14,7 @@ class C {
   var a: i32;
 
   fn Get[self: C]() -> i32;
-  fn Set[addr self: C*](n: i32);
+  fn Set[ref self: C](n: i32);
 }
 
 fn F(p: C*) {
@@ -29,23 +29,29 @@ fn F(p: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CSet.C.Main(ptr, i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main(ptr %p) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CF.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %C.Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !7
-// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %C.Get.call), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   %C.Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !10
+// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %C.Get.call), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "method.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 16, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 1, scope: !4)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 21, column: 16, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 1, scope: !4)

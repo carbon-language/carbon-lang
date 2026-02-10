@@ -9,13 +9,14 @@
 
 #include "common/check.h"
 #include "common/map.h"
+#include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/import_cpp.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -52,7 +53,6 @@ static auto GetImportKey(UnitAndImports& unit_info,
   return {package_name, library_name};
 }
 
-static constexpr llvm::StringLiteral CppPackageName = "Cpp";
 static constexpr llvm::StringLiteral MainPackageName = "Main";
 
 static auto RenderImportKey(ImportKey import_key) -> std::string {
@@ -74,23 +74,10 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         UnitAndImports& unit_info,
                         Parse::Tree::PackagingNames import, bool fuzzing)
     -> void {
-  const auto& packaging = unit_info.parse_tree().packaging_decl();
-
-  PackageNameId file_package_id =
-      packaging ? packaging->names.package_id : PackageNameId::None;
-  const auto import_key = GetImportKey(unit_info, file_package_id, import);
-  const auto& [import_package_name, import_library_name] = import_key;
-
-  if (import_package_name == CppPackageName) {
+  if (import.package_id == PackageNameId::Cpp) {
     if (!explicit_import_map) {
       // Don't diagnose the implicit import in `impl package Cpp`, because we'll
       // have diagnosed the use of `Cpp` in the declaration.
-      return;
-    }
-    if (!import.library_id.has_value() && !import.inline_body_id.has_value()) {
-      CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
-                        "`Cpp` import without `library` or `inline`");
-      unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
       return;
     }
     if (fuzzing) {
@@ -102,16 +89,22 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     }
     unit_info.cpp_imports.push_back(import);
     return;
-  } else if (import.inline_body_id.has_value()) {
+  }
+  if (import.inline_body_id.has_value()) {
     CARBON_DIAGNOSTIC(InlineImportNotCpp, Error,
                       "`inline` import not in package `Cpp`");
     unit_info.emitter.Emit(import.node_id, InlineImportNotCpp);
     return;
   }
 
+  const auto& packaging = unit_info.parse_tree().packaging_decl();
+  PackageNameId file_package_id =
+      packaging ? packaging->names.package_id : PackageNameId::None;
+  const auto import_key = GetImportKey(unit_info, file_package_id, import);
+
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_package_name == MainPackageName;
+  bool is_explicit_main = import_key.first == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
@@ -265,7 +258,8 @@ static auto BuildApiMapAndDiagnosePackaging(
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
       continue;
-    } else if (import_key.first == CppPackageName) {
+    }
+    if (packaging && packaging->names.package_id == PackageNameId::Cpp) {
       CARBON_DIAGNOSTIC(CppPackageDeclaration, Error,
                         "`Cpp` cannot be used by a `package` declaration");
       unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration);
@@ -332,7 +326,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 
 // Handles printing of formatted SemIR.
 static auto MaybeDumpFormattedSemIR(
-    const SemIR::File& sem_ir,
+    const SemIR::File& sem_ir, int total_ir_count,
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   bool dump = options.dump_stream && include_in_dumps;
@@ -340,18 +334,18 @@ static auto MaybeDumpFormattedSemIR(
     return;
   }
 
-  bool has_ranges = sem_ir.parse_tree().tokens().has_dump_sem_ir_ranges();
+  const auto& tokens = sem_ir.parse_tree().tokens();
   if (options.dump_sem_ir_ranges ==
           CheckParseTreesOptions::DumpSemIRRanges::Only &&
-      !has_ranges) {
+      !tokens.has_dump_sem_ir_ranges() && !tokens.has_include_in_dumps()) {
     return;
   }
 
   bool use_dump_sem_ir_ranges =
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
-      has_ranges;
-  SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
+      tokens.has_dump_sem_ir_ranges();
+  SemIR::Formatter formatter(&sem_ir, total_ir_count, tree_and_subtrees_getter,
                              options.include_in_dumps, use_dump_sem_ir_ranges);
   formatter.Format();
   if (options.vlog_stream) {
@@ -387,8 +381,26 @@ static auto MaybeDumpSemIR(
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
+        *unit.sem_ir, units.size(),
+        tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
         include_in_dumps, options);
+  }
+}
+
+// Handles options for dumping C++ AST.
+static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
+                            const CheckParseTreesOptions& options) -> void {
+  if (!options.dump_cpp_ast_stream) {
+    return;
+  }
+
+  for (const Unit& unit : units) {
+    if (options.include_in_dumps->Get(unit.sem_ir->check_ir_id())) {
+      if (auto* cpp_file = unit.sem_ir->cpp_file()) {
+        cpp_file->ast_context().getTranslationUnitDecl()->dump(
+            *options.dump_cpp_ast_stream);
+      }
+    }
   }
 }
 
@@ -405,6 +417,27 @@ auto CheckParseTrees(
         return UnitAndImports(
             &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
+
+  // Dump the raw SemIR in the event of a crash. We dump it to a separate file
+  // to keep the stack trace manageable.
+  PrettyStackTraceFunction sem_ir_dumper([&](llvm::raw_ostream& output) {
+    if (!options.sem_ir_crash_dump.empty()) {
+      output << "Dumping raw SemIR to " << options.sem_ir_crash_dump << "\n";
+      std::error_code error_code;
+      llvm::raw_fd_ostream sem_ir_dump(options.sem_ir_crash_dump, error_code);
+      if (error_code) {
+        output << "Raw SemIR dump failed: " << error_code.category().name()
+               << ":" << error_code.value() << ": " << error_code.message()
+               << "\n";
+      } else {
+        for (const auto& unit_info : unit_infos) {
+          if (unit_info.is_checked && unit_info.unit->sem_ir != nullptr) {
+            unit_info.unit->sem_ir->Print(sem_ir_dump);
+          }
+        }
+      }
+    }
+  });
 
   Map<ImportKey, UnitAndImports*> api_map =
       BuildApiMapAndDiagnosePackaging(unit_infos);
@@ -452,8 +485,9 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
-              options.gen_implicit_type_impls, options.vlog_stream)
+    CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
+              unit_info->unit->llvm_context, clang_invocation,
+              options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -501,14 +535,16 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
-                  options.gen_implicit_type_impls, options.vlog_stream)
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
+                  unit_info.unit->llvm_context, clang_invocation,
+                  options.vlog_stream)
             .Run();
       }
     }
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
+  MaybeDumpCppAST(units, options);
 }
 
 }  // namespace Carbon::Check

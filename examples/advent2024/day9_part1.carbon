@@ -12,5 +12,5 @@ import library "io_utils";
 fn Run() {
   var list: SectorList = SectorList.Read();
   list.DefragBlocks();
-  PrintInt64(list.Checksum());
+  PrintInt(list.Checksum());
 }

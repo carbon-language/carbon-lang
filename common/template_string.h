@@ -43,22 +43,21 @@ struct TemplateString {
   // `enable_if` attribute to require the array to be usable as a C string with
   // the expected length. This checks both for null-termination and no embedded
   // `0` bytes.
-  //
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr TemplateString(const char (&str)[N + 1]) __attribute__((
-      enable_if(__builtin_strlen(str) == N,
-                "character array is not null-terminated valid C string"))) {
+  explicit(false) constexpr TemplateString(const char (&str)[N + 1])
+      __attribute__((
+          enable_if(__builtin_strlen(str) == N,
+                    "character array is not null-terminated valid C string"))) {
     // Rely on Clang's constexpr `__builtin_memcpy` to minimize compile time
     // overhead copying the string contents around.
     __builtin_memcpy(storage_, str, N + 1);
   }
 
-  // This type is designed to act as a `StringRef` implicitly while having the
-  // storage necessary to be used as a template parameter.
+  // This type is designed to act as a `StringLiteral` implicitly while having
+  // the storage necessary to be used as a template parameter.
   //
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator llvm::StringRef() const {
-    return llvm::StringRef(storage_, N);
+  explicit(false) constexpr operator llvm::StringLiteral() const {
+    return llvm::StringLiteral::withInnerNUL(storage_);
   }
 
   // Accesses the string data directly as a compile-time C string.

@@ -80,14 +80,14 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert expression of type `String` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   while ("Hello") {}
-  // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `String` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   while ("Hello") {}
-  // CHECK:STDERR:         ^~~~~~~~~
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
+  // CHECK:STDERR:   while ({}) {}
+  // CHECK:STDERR:         ^~~~
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   while ({}) {}
+  // CHECK:STDERR:         ^~~~
   // CHECK:STDERR:
-  while ("Hello") {}
+  while ({}) {}
 }
 
 // --- fail_bad_break_continue.carbon

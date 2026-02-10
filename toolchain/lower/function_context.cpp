@@ -113,9 +113,8 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // TODO: Consider renaming Handle##Name, instead relying on typed_inst overload
 // resolution. That would allow putting the nonexistent handler implementations
 // in `requires`-style overloads.
-// NOLINTNEXTLINE(readability-function-size): The define confuses lint.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
-  // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
+  // Skip over constants. `FileContext::GetConstant` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
     return;
   }
@@ -225,9 +224,7 @@ auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
 
   // Create a lifetime start intrinsic here to indicate where its scope really
   // begins.
-  auto size = llvm_module().getDataLayout().getTypeAllocSize(type);
-  builder().CreateLifetimeStart(
-      alloca, llvm::ConstantInt::get(llvm_context(), llvm::APInt(64, size)));
+  builder().CreateLifetimeStart(alloca);
 
   // If we just created the first alloca, there is now definitely at least one
   // instruction after it -- there is a lifetime start instruction if nothing
@@ -269,8 +266,8 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
-                                 SemIR::InstId source_id) -> void {
+auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
+                                        SemIR::InstId source_id) -> void {
   switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
       break;
@@ -284,8 +281,14 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::ByCopy:
       CopyValue(type, source_id, dest_id);
       break;
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Lowering aggregate initialization of abstract type {0}",
+                   type.file->types().GetAsInst(type.type_id));
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
+                   type.file->types().GetAsInst(type.type_id));
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Lowering aggregate initialization of dependent type {0}",
                    type.file->types().GetAsInst(type.type_id));
   }
 }
@@ -311,13 +314,49 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   return result;
 }
 
-auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
-    -> ReturnTypeInfoInFile {
-  ReturnTypeInfoInFile result = {
-      .file = type.file,
-      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
-  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
-  return result;
+// Given a type used for an LLVM value, return the type that we use to store
+// that value in memory. This is the same type unless the type is a
+// non-multiple-of-8 integer type, which we explicitly widen to a multiple of 8
+// for Clang compatibility and to make our generated IR easier for LLVM to
+// handle.
+static auto GetWidenedMemoryType(llvm::Type* type) -> llvm::Type* {
+  if (auto* int_type = dyn_cast<llvm::IntegerType>(type)) {
+    auto width = llvm::alignToPowerOf2(int_type->getBitWidth(), 8);
+    if (width != int_type->getBitWidth()) {
+      return llvm::IntegerType::get(type->getContext(), width);
+    }
+  }
+  return type;
+}
+
+auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
+                                 llvm::Twine name) -> llvm::Value* {
+  auto* llvm_type = GetType(type);
+  auto* load_type = GetWidenedMemoryType(llvm_type);
+
+  // TODO: Include alias and alignment information.
+  llvm::Value* value = builder().CreateLoad(load_type, addr, name);
+
+  if (load_type != llvm_type) {
+    value = builder().CreateTrunc(value, llvm_type);
+  }
+  return value;
+}
+
+auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
+                                  llvm::Value* addr) -> void {
+  // TODO: Include alias and alignment information.
+  auto* llvm_type = GetType(type);
+  CARBON_CHECK(value->getType() == llvm_type);
+
+  // Don't emit a store of `iN` if N is not a multiple of 8. See `LoadObject`.
+  auto* store_type = GetWidenedMemoryType(llvm_type);
+  if (store_type != llvm_type) {
+    // TODO: Should we consider creating a sext if the value is signed?
+    value = builder().CreateZExt(value, store_type);
+  }
+
+  builder().CreateStore(value, addr);
 }
 
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
@@ -325,10 +364,12 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
   switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Attempt to copy dependent type");
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:
-      builder().CreateStore(GetValue(source_id), GetValue(dest_id));
+      StoreObject(type, GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
       CopyObject(type, source_id, dest_id);

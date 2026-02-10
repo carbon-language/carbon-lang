@@ -9,8 +9,8 @@
 
 #include "testing/base/global_exe_path.h"
 #include "testing/base/source_gen.h"
+#include "toolchain/base/install_paths_test_helpers.h"
 #include "toolchain/driver/driver.h"
-#include "toolchain/install/install_paths_test_helpers.h"
 #include "toolchain/testing/compile_helper.h"
 
 namespace Carbon::Testing {
@@ -33,11 +33,12 @@ class CompileBenchmark {
   // materialized into a virtual file and a list of the virtual filenames is
   // returned.
   auto SetUpFiles(llvm::ArrayRef<std::string> sources)
-      -> llvm::OwningArrayRef<std::string> {
-    llvm::OwningArrayRef<std::string> file_names(sources.size());
-    for (auto [i, source, file_name] : llvm::enumerate(sources, file_names)) {
-      file_name = llvm::formatv("file_{0}.carbon", i).str();
-      fs_->addFile(file_name, /*ModificationTime=*/0,
+      -> llvm::SmallVector<std::string> {
+    llvm::SmallVector<std::string> file_names;
+    file_names.reserve(sources.size());
+    for (auto [i, source] : llvm::enumerate(sources)) {
+      file_names.push_back(llvm::formatv("file_{0}.carbon", i).str());
+      fs_->addFile(file_names.back(), /*ModificationTime=*/0,
                    llvm::MemoryBuffer::getMemBuffer(source));
     }
     return file_names;
@@ -89,7 +90,7 @@ static auto ComputeFileCount(int target_lines) -> int {
   // Use a smaller number of files in debug builds where compiles are slower.
   return std::max(1, std::min(8, (1024 * 1024) / target_lines));
 #else
-  return std::max(8, std::min(1024, (1024 * 1024) / target_lines));
+  return std::max(8, std::min(128, (1024 * 1024) / target_lines));
 #endif
 }
 
@@ -98,7 +99,8 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   CompileBenchmark bench;
   int target_lines = state.range(0);
   int num_files = ComputeFileCount(target_lines);
-  llvm::OwningArrayRef<std::string> sources(num_files);
+  llvm::SmallVector<std::string> sources;
+  sources.reserve(num_files);
 
   // Create a collection of random source files. Compute average statistics for
   // counters for compilation speed.
@@ -106,9 +108,10 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   double total_bytes = 0.0;
   double total_tokens = 0.0;
   double total_lines = 0.0;
-  for (std::string& source : sources) {
-    source = bench.gen().GenApiFileDenseDecls(target_lines,
-                                              SourceGen::DenseDeclParams{});
+  for (auto _ : llvm::seq(num_files)) {
+    sources.push_back(bench.gen().GenApiFileDenseDecls(
+        target_lines, SourceGen::DenseDeclParams{}));
+    const auto& source = sources.back();
     total_bytes += source.size();
     total_tokens += compile_helper.GetTokenizedBuffer(source).size();
     total_lines += llvm::count(source, '\n');
@@ -124,7 +127,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
                          benchmark::Counter::kIsIterationInvariantRate);
 
   // Set up the sources as files for compilation.
-  llvm::OwningArrayRef<std::string> file_names = bench.SetUpFiles(sources);
+  llvm::SmallVector<std::string> file_names = bench.SetUpFiles(sources);
   CARBON_CHECK(static_cast<int>(file_names.size()) == num_files);
 
   // We benchmark in batches of files to avoid benchmarking any peculiarities of

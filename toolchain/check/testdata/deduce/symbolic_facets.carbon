@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,7 +12,7 @@
 
 // By placing each interface inside a generic class, a facet type refering to
 // the interface becomes symbolic. Normally they would be concrete. This can
-// affect decisions in deduce which unwraps symbolic values, but still needs to
+// affect decisions in deduce which unwraps symbolic constants, but still needs to
 // ensure they convert correctly.
 
 // --- fail_missing_interface.carbon

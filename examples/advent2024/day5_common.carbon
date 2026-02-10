@@ -24,7 +24,7 @@ class Rules {
 
     var a: i32;
     var b: i32;
-    while (ReadInt(&a) and ConsumeChar(0x7C) and ReadInt(&b)) {
+    while (ReadInt(ref a) and ConsumeChar('|') and ReadInt(ref b)) {
       rules.disallowed_before[a] |= PageMask(b);
       SkipNewline();
     }
@@ -49,21 +49,21 @@ class PageList {
     returned var me: PageList = Empty();
 
     var page: i32;
-    if (not ReadInt(&page)) {
+    if (not ReadInt(ref page)) {
       return var;
     }
     me.Add(page);
-    while (ConsumeChar(0x2C)) {
-      ReadInt(&page);
+    while (ConsumeChar(',')) {
+      ReadInt(ref page);
       me.Add(page);
     }
     SkipNewline();
     return var;
   }
 
-  fn Add[addr self: Self*](page: i32) {
-    self->pages[self->num_pages] = page;
-    ++self->num_pages;
+  fn Add[ref self: Self](page: i32) {
+    self.pages[self.num_pages] = page;
+    ++self.num_pages;
   }
 
   fn FollowsRules[self: Self](rules: Rules) -> bool {
@@ -87,12 +87,12 @@ class PageList {
     return true;
   }
 
-  fn ExtractPossibleFirstPage[addr self: Self*](rules: Rules) -> i32 {
-    for (i: i32 in Core.Range(self->num_pages)) {
-      var page: i32 = self->pages[i];
-      if (self->IsPossibleFirstPage(rules, page)) {
-        self->pages[i] = self->pages[self->num_pages - 1];
-        --self->num_pages;
+  fn ExtractPossibleFirstPage[ref self: Self](rules: Rules) -> i32 {
+    for (i: i32 in Core.Range(self.num_pages)) {
+      var page: i32 = self.pages[i];
+      if (self.IsPossibleFirstPage(rules, page)) {
+        self.pages[i] = self.pages[self.num_pages - 1];
+        --self.num_pages;
         return page;
       }
     }

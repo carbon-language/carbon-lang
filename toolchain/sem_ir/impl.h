@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
+#include <utility>
+
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -30,6 +32,9 @@ struct ImplFields {
   // reference. Note that the entries in the witness are updated at the end of
   // the impl definition.
   InstId witness_id = InstId::None;
+  // A block for instructions that make up the impl's witness so that they can
+  // be formatted as part of the impl.
+  InstBlockId witness_block_id = InstBlockId::None;
 
   // The following members are set at the `{` of the impl definition.
 
@@ -164,7 +169,7 @@ class ImplStore {
     ImplId single_id_storage_;
   };
 
-  explicit ImplStore(File& sem_ir) : sem_ir_(sem_ir) {}
+  explicit ImplStore(File& sem_ir);
 
   // Returns a reference to the lookup bucket containing the list of impls with
   // this self type and constraint, or adds a new bucket if this is the first
@@ -185,6 +190,10 @@ class ImplStore {
     return values_.OutputYaml();
   }
 
+  auto GetRawIndex(ImplId id) const -> int32_t {
+    return values_.GetRawIndex(id);
+  }
+
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
@@ -193,7 +202,7 @@ class ImplStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<ImplId, Impl>::Range {
+  -> ValueStore<ImplId, Impl, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -203,14 +212,13 @@ class ImplStore {
 
  private:
   File& sem_ir_;
-  ValueStore<ImplId, Impl> values_;
-  Map<std::tuple<InstId, InterfaceId, SpecificId>, ImplOrLookupBucketId>
-      lookup_;
+  ValueStore<ImplId, Impl, Tag<CheckIRId>> values_;
+  Map<std::pair<ConstantId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };
 
-constexpr inline ImplStore::ImplOrLookupBucketId
+inline constexpr ImplStore::ImplOrLookupBucketId
     ImplStore::ImplOrLookupBucketId::None(NoneIndex);
 
 }  // namespace Carbon::SemIR

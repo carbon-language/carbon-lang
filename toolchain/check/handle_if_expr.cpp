@@ -37,7 +37,8 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
 static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
                                       SemIR::InstId operand_id)
     -> SemIR::InstId {
-  if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
+  if (context.types().GetTypeInstId(
+          context.insts().Get(operand_id).type_id()) ==
       SemIR::IntLiteralType::TypeInstId) {
     operand_id = ConvertToValueOfType(
         context, node_id, operand_id,

@@ -34,7 +34,7 @@ r#3
 
 // Non ascii start to identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
-// CHECK:STDERR: r#á
+// CHECK:STDERR: r#<C3><A1>
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 r#á

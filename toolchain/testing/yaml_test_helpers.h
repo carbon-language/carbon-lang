@@ -55,6 +55,7 @@
 
 #include "absl/strings/str_replace.h"
 #include "common/error.h"
+#include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Testing::Yaml {
@@ -81,12 +82,13 @@ struct AliasValue : EmptyComparable {};
 // A thin wrapper around a variant of possible YAML value types. This type
 // intentionally provides no additional encapsulation or invariants beyond
 // those of the variant.
-struct Value : std::variant<NullValue, ScalarValue, MappingValue, SequenceValue,
+struct Value : Carbon::Printable<Value>,
+               std::variant<NullValue, ScalarValue, MappingValue, SequenceValue,
                             AliasValue> {
   using variant::variant;
 
   // Prints the Value in the form of code to recreate the value.
-  friend auto operator<<(std::ostream& os, const Value& v) -> std::ostream&;
+  auto Print(llvm::raw_ostream& os) const -> void;
 
   // Parses a sequence of YAML documents from the given YAML text.
   static auto FromText(llvm::StringRef text) -> ErrorOr<SequenceValue>;

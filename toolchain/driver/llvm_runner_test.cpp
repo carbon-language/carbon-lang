@@ -47,7 +47,6 @@ TEST(LLVMRunnerTest, Version) {
       case LLVMTool::InstallNameTool:
       case LLVMTool::Lipo:
       case LLVMTool::Objcopy:
-      case LLVMTool::Profdata:
       case LLVMTool::Sancov:
       case LLVMTool::Strip:
       case LLVMTool::Symbolizer:

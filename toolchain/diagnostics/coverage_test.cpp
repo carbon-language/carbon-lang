@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "absl/flags/flag.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/kind.h"
 #include "toolchain/testing/coverage_helper.h"
 
 ABSL_FLAG(std::string, testdata_manifest, "",
@@ -16,23 +16,29 @@ namespace {
 
 constexpr Kind Kinds[] = {
 #define CARBON_DIAGNOSTIC_KIND(Name) Kind::Name,
-#include "toolchain/diagnostics/diagnostic_kind.def"
+#include "toolchain/diagnostics/kind.def"
 };
 
 constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
     Kind::TestDiagnostic,
+    Kind::TestDiagnosticOnScope,
     Kind::TestDiagnosticNote,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
     Kind::CompilePreludeManifestError,
+    Kind::ConfigFailedToReadDigest,
+    Kind::ConfigFailedToSetupTarget,
     Kind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
     Kind::ErrorReadingFile,
     Kind::ErrorStattingFile,
     Kind::FileTooLarge,
+    Kind::FailureBuildingRuntimes,
+    Kind::FailureRunningClang,
+    Kind::FailureRunningClangToLink,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
@@ -59,13 +65,6 @@ constexpr Kind UntestedKinds[] = {
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
     Kind::LanguageServerDiagnosticInWrongFile,
-
-    // TODO: This can only fire if we attempt to convert a non-reference
-    // expression to a durable reference binding. At the moment, the only time
-    // we attempt reference binding is within a `var` pattern, where the
-    // conversion cannot fail. This should be covered once we support `ref`
-    // binding syntax.
-    Kind::ConversionFailureNonRefToRef,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

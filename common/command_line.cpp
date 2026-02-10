@@ -358,10 +358,11 @@ auto MetaPrinter::PrintVersion(const Command& command) const -> void {
 }
 
 auto MetaPrinter::PrintSubcommands(const Command& command) const -> void {
-  PrintListOfAlternatives(*out_, llvm::ArrayRef(command.subcommands),
-                          [](const std::unique_ptr<Command>& subcommand) {
-                            return subcommand->info.name;
-                          });
+  PrintListOfAlternatives<std::unique_ptr<Command>>(
+      *out_, command.subcommands,
+      [](const std::unique_ptr<Command>& subcommand) {
+        return subcommand->info.name;
+      });
 }
 
 auto MetaPrinter::PrintRawVersion(const Command& command,
@@ -929,8 +930,8 @@ auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     error << "` has an invalid value `";
     llvm::printEscapedString(value, error);
     error << "`; valid values are: ";
-    PrintListOfAlternatives(error, arg.value_strings,
-                            [](llvm::StringRef x) { return x; });
+    PrintListOfAlternatives<llvm::StringRef>(
+        error, arg.value_strings, [](llvm::StringRef x) { return x; });
     return Error(error.TakeStr());
   }
   return Success();
@@ -1218,8 +1219,7 @@ auto Parser::ParsePositionalSuffix(
   // arguments.
   bool empty_positional = false;
   while (!unparsed_args.empty()) {
-    llvm::StringRef unparsed_arg = unparsed_args.front();
-    unparsed_args = unparsed_args.drop_front();
+    llvm::StringRef unparsed_arg = unparsed_args.consume_front();
 
     if (unparsed_arg != "--") {
       CARBON_RETURN_IF_ERROR(ParsePositionalArg(unparsed_arg));
@@ -1260,11 +1260,9 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   PopulateMaps(*command_);
 
   while (!unparsed_args.empty()) {
-    llvm::StringRef unparsed_arg = unparsed_args.front();
-
     // Peak at the front for an exact `--` argument that switches to a
     // positional suffix parsing without dropping this argument.
-    if (unparsed_arg == "--") {
+    if (unparsed_args.front() == "--") {
       if (command_->positional_args.empty()) {
         return Error(
             "cannot meaningfully end option and subcommand arguments with a "
@@ -1284,7 +1282,7 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
 
     // Now that we're not switching parse modes, drop the current unparsed
     // argument and parse it.
-    unparsed_args = unparsed_args.drop_front();
+    llvm::StringRef unparsed_arg = unparsed_args.consume_front();
 
     if (unparsed_arg.starts_with("--")) {
       // Note that the exact argument "--" has been handled above already.

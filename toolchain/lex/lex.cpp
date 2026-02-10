@@ -66,8 +66,8 @@ class [[clang::internal_linkage]] Lexer {
    public:
     // Consumes (and discard) a valid token to construct a result
     // indicating a token has been produced. Relies on implicit conversions.
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    LexResult(TokenIndex /*discarded_token*/) : LexResult(true) {}
+    explicit(false) LexResult(TokenIndex /*discarded_token*/)
+        : LexResult(true) {}
 
     // Returns a result indicating no token was produced.
     static auto NoMatch() -> LexResult { return LexResult(false); }
@@ -974,6 +974,11 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
+    if (comment_text.starts_with("//@include-in-dumps\n")) {
+      buffer_.has_include_in_dumps_ = true;
+      AdvanceToLine(source_text, position, next_line());
+      return;
+    }
     if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
       BeginDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, next_line());
@@ -984,7 +989,6 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       AdvanceToLine(source_text, position, next_line());
       return;
     }
-
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
     emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);

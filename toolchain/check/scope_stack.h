@@ -183,7 +183,7 @@ class ScopeStack {
     return destroy_id_stack_;
   }
 
-  auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
+  auto compile_time_binding_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
 
@@ -295,8 +295,8 @@ class ScopeStack {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
-  // A stack of `destroy` functions to call. This only has entries inside of
-  // function bodies, where destruction on scope exit is required.
+  // A stack of instances to destroy. This only has entries inside of function
+  // bodies, where destruction on scope exit is required.
   ArrayStack<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and

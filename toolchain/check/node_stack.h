@@ -397,6 +397,8 @@ class NodeStack {
         Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
                           Id::KindFor<SemIR::TypeInstId>());
+    set_id_if_category_is(Parse::NodeCategory::RequireImpls,
+                          Id::KindFor<SemIR::TypeInstId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
@@ -412,7 +414,7 @@ class NodeStack {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
-      case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
@@ -424,6 +426,8 @@ class NodeStack {
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileConditionStart:
+      case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::ReturnForm:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
@@ -436,12 +440,16 @@ class NodeStack {
         return Id::KindFor<SemIR::InterfaceId>();
       case Parse::NodeKind::ImplDefinitionStart:
         return Id::KindFor<SemIR::ImplId>();
+      case Parse::NodeKind::NamedConstraintDefinitionStart:
+        return Id::KindFor<SemIR::NamedConstraintId>();
       case Parse::NodeKind::SelfTypeName:
       case Parse::NodeKind::SelfValueName:
         return Id::KindFor<SemIR::NameId>();
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
+      case Parse::NodeKind::AssociatedConstantInitializer:
+      case Parse::NodeKind::AssociatedConstantIntroducer:
       case Parse::NodeKind::BuiltinName:
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
@@ -455,8 +463,11 @@ class NodeStack {
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::ImplIntroducer:
       case Parse::NodeKind::InterfaceIntroducer:
+      case Parse::NodeKind::LambdaIntroducer:
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
+      case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
@@ -476,16 +487,19 @@ class NodeStack {
       case Parse::NodeKind::BaseColon:
       case Parse::NodeKind::BaseIntroducer:
       case Parse::NodeKind::BreakStatementStart:
-      case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
+      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
+      case Parse::NodeKind::CppPackageName:
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::Forall:
+      case Parse::NodeKind::FormLiteralKeyword:
+      case Parse::NodeKind::FormLiteralOpenParen:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
@@ -493,8 +507,6 @@ class NodeStack {
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
-      case Parse::NodeKind::KeywordNameQualifierWithParams:
-      case Parse::NodeKind::KeywordNameQualifierWithoutParams:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::InlineImportSpecifier:
@@ -514,8 +526,6 @@ class NodeStack {
       case Parse::NodeKind::MatchDefaultStart:
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
-      case Parse::NodeKind::NamedConstraintDefinitionStart:
-      case Parse::NodeKind::NamedConstraintIntroducer:
       case Parse::NodeKind::NamespaceStart:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:
@@ -528,6 +538,7 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
+      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
@@ -631,7 +642,7 @@ class NodeStack {
   llvm::SmallVector<Entry> stack_;
 };
 
-constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
+inline constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
     ComputeIdKindTable();
 
 inline auto NodeStack::PopExprWithNodeId()

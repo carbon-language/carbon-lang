@@ -28,8 +28,8 @@ The diagnostic code is used by the toolchain to produce output.
 
 ## DiagnosticEmitter
 
-[DiagnosticEmitters](/toolchain/diagnostics/diagnostic_emitter.h) handle the
-main formatting of a message. It's parameterized on a location type, for which a
+[Emitters](/toolchain/diagnostics/emitter.h) handle the main formatting of a
+message. It's parameterized on a location type, for which a
 DiagnosticLocationTranslator must be provided that can translate the location
 type into a standardized DiagnosticLocation of file, line, and column.
 
@@ -41,25 +41,25 @@ DiagnosticConsumer.
 DiagnosticConsumers handle output of diagnostic messages after they've been
 formatted by an Emitter. Important consumers are:
 
--   [ConsoleDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.cpp):
-    prints diagnostics to console.
+-   [ConsoleConsumer](/toolchain/diagnostics/consumer.cpp): prints diagnostics
+    to console.
 
--   [ErrorTrackingDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.h):
-    counts the number of errors produced, particularly so that it can be
-    determined whether any errors were encountered.
+-   [ErrorTrackingConsumer](/toolchain/diagnostics/consumer.h): counts the
+    number of errors produced, particularly so that it can be determined whether
+    any errors were encountered.
 
--   [SortingDiagnosticConsumer](/toolchain/diagnostics/sorting_diagnostic_consumer.h):
-    sorts diagnostics by line so that diagnostics are seen in terminal based on
-    their order in the file rather than the order they were produced.
+-   [SortingConsumer](/toolchain/diagnostics/sorting_consumer.h): sorts
+    diagnostics by line so that diagnostics are seen in terminal based on their
+    order in the file rather than the order they were produced.
 
--   [NullDiagnosticConsumer](/toolchain/diagnostics/null_diagnostics.h):
-    suppresses diagnostics, particularly for tests.
+-   [NullConsumer](/toolchain/diagnostics/null_diagnostics.h): suppresses
+    diagnostics, particularly for tests.
 
-Note that `SortingDiagnosticConsumer` is used by default by `carbon compile`. In
-cases where one error leads to another error at an earlier location, for example
-if an error in a function call argument leads to an error in the function call,
-this can result in confusing diagnostic output where a consequence of the error
-is reported before the cause. Usually this should be handled by tracking that an
+Note that `SortingConsumer` is used by default by `carbon compile`. In cases
+where one error leads to another error at an earlier location, for example if an
+error in a function call argument leads to an error in the function call, this
+can result in confusing diagnostic output where a consequence of the error is
+reported before the cause. Usually this should be handled by tracking that an
 error occurred and suppressing the follow-on diagnostic. During toolchain
 development, it can be useful to disable the sorting so that the diagnostic
 order matches the order in which the file was processed. This can be done using
@@ -96,8 +96,8 @@ message format to `llvm::formatv` to produce the final diagnostic message.
 
 ## Diagnostic registry
 
-There is a [registry](/toolchain/diagnostics/diagnostic_kind.def) which all
-diagnostics must be added to. Each diagnostic has a line like:
+There is a [registry](/toolchain/diagnostics/kind.def) which all diagnostics
+must be added to. Each diagnostic has a line like:
 
 ```cpp
 CARBON_DIAGNOSTIC_KIND(InvalidCode)

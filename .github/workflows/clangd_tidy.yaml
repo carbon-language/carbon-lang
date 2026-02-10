@@ -8,8 +8,7 @@ on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  # TODO: Don't run in merge_group until we're ready to replace clang-tidy.
-  # merge_group:
+  merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -66,6 +65,10 @@ jobs:
       - name: Create compile commands
         if: steps.filter.outputs.has_cpp == 'true'
         run: ./scripts/create_compdb.py
+
+      - name: Build deps for clangd-tidy
+        if: steps.filter.outputs.has_cpp == 'true'
+        run: ./scripts/run_bazel.py build //scripts:deps_for_clangd_tidy
 
       - name: Install clangd-tidy
         if: steps.filter.outputs.has_cpp == 'true'

@@ -373,7 +373,7 @@ kind of parameter is defined using a different syntax: a checked parameter is
 uses a symbolic binding pattern, a template parameter uses a template binding
 pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
 allowed to pass a symbolic or template constant value to a checked or regular
-parameter. _We have decided to support passing a symbolic value to a template
+parameter. _We have decided to support passing a symbolic constant to a template
 parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
 but incorporating it into the design is future work._
@@ -390,7 +390,7 @@ interface Equatable {
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   require Self impls Equatable;
-  fn Advance[addr self: Self*]();
+  fn Advance[ref self: Self]();
 }
 ```
 
@@ -442,9 +442,9 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr self: Self*](player: i32);
+  fn SetWinner[ref self: Self](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr self: Self*]();
+  fn Draw[ref self: Self]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -568,9 +568,9 @@ convenient to use. Imagine a `Stack` interface. Different types implementing
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 

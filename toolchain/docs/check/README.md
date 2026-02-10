@@ -299,6 +299,17 @@ after the `ir_name` -- in this example the `name_id` is `N`. From this we find
 that the instruction corresponds to an associated constant declaration in an
 interface like `let N:! i32;`.
 
+In fact, the notation after the `:` records not just the instruction's type, but
+also some information about its category, and the storage argument if it's an
+initializer:
+
+-   `%N: i32 = ...`: a value expression of type `i32`.
+-   `%N: init i32 = ...`: an initializing expression of type `i32` with no
+    storage argument.
+-   `%N: init i32 to %s = ...`: an initializing expression of type `i32` that
+    uses `%s` as its backing storage if needed.
+-   `%N: ref i32 = ...`: a reference of type `i32`.
+
 Instructions producing a constant value, like `assoc_const_decl` above, are
 followed by their phase, either `[symbolic]` or `[template]`, and then `=` the
 value if it is the value of a different instruction.
@@ -338,6 +349,14 @@ formatter will combine instructions together to make the IR more readable:
 -   A struct type, formed by a sequence of `StructTypeField` instructions
     followed by a `StructType` instruction, is collapsed into a single
     `struct_type{.field1: %value1, ..., .fieldN: %valueN}` line.
+
+As noted above, initializer storage arguments are formatted with `... to %arg`
+in the type position. To parallel that, the destination argument of a `return`
+instruction is also formatted with `to`. For example:
+
+```
+return %N to %return.param
+```
 
 These exceptions may be found in
 [toolchain/sem_ir/formatter.cpp](/toolchain/sem_ir/formatter.cpp).

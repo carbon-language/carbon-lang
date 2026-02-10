@@ -23,7 +23,7 @@ class PathsToTop {
     return var;
   }
 
-  fn AddLevel[addr self: Self*](terrain: Terrain, level: i32) -> i64 {
+  fn AddLevel[ref self: Self](terrain: Terrain, level: i32) -> i64 {
     var total: i64 = 0;
     let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     for (y: i32 in Core.Range(43)) {
@@ -37,10 +37,10 @@ class PathsToTop {
             if (adj_x >= 0 and adj_x < 43 and
                 adj_y >= 0 and adj_y < 43 and
                 terrain.height[adj_x][adj_y] == level + 1) {
-              paths += self->paths[adj_x][adj_y];
+              paths += self.paths[adj_x][adj_y];
             }
           }
-          self->paths[x][y] = paths;
+          self.paths[x][y] = paths;
           total += paths;
         }
       }
@@ -58,5 +58,5 @@ fn Run() {
   for (i: i32 in Core.InclusiveRange(0, 8)) {
     total = paths.AddLevel(terrain, 8 - i);
   }
-  PrintInt64(total);
+  PrintInt(total);
 }

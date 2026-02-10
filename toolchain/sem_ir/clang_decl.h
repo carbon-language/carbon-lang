@@ -5,81 +5,122 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLANG_DECL_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLANG_DECL_H_
 
+#include <concepts>
+
+#include "clang/AST/Decl.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-namespace clang {
-
-// Forward declare indexed types, for integration with ValueStore.
-class Decl;
-
-}  // namespace clang
-
 namespace Carbon::SemIR {
 
-// A Clang declaration mapped to a Carbon instruction.
+// A key describing a Clang declaration that can be looked up in the value
+// store. This is a `clang::Decl*` pointing to a canonical declaration, plus any
+// other information that affects the mapping into Carbon. Currently this
+// includes the number of imported parameters for a function with default
+// arguments.
 //
-// Note that Clang's AST uses address-identity for nodes, which means the
-// pointer is the canonical way to represent a specific AST node and is expected
-// to be sufficient for comparison, hashing, etc.
-//
-// This type is specifically designed for use in a `CanonicalValueStore` and
-// provide a single canonical access from SemIR to each `clang::Decl*` used.
-// This also ensures that a given `clang::Decl*` is associated with exactly one
-// instruction, and the `inst_id` here provides access to that instruction from
-// either the `ClangDeclId` or the `clang::Decl*`.
-struct ClangDecl : public Printable<ClangDecl> {
+// A canonical declaration pointer is used so that we can perform direct address
+// comparisons and hash this structure based on its contents.
+struct ClangDeclKey : public Printable<ClangDeclKey> {
+  // Information about how to form the Carbon function signature from the Clang
+  // function declaration.
+  struct Signature {
+    enum Kind : int8_t {
+      // A normal function signature: each C++ parameter maps into a Carbon
+      // parameter.
+      Normal,
+      // A function signature taking a tuple pattern that contains the C++
+      // parameters. This is used when importing a constructor that is used for
+      // list initialization from a Carbon tuple.
+      TuplePattern,
+    };
+    // The kind of function signature being imported.
+    Kind kind = Normal;
+    // The number of parameters to import. This can be less than the number of
+    // parameters in the Clang declaration if the Clang declaration has default
+    // arguments. Excludes the implicit object parameter, if there is one.
+    int32_t num_params = -1;
+
+    friend auto operator==(const Signature& lhs, const Signature& rhs)
+        -> bool = default;
+  };
+
+  // For declaration classes that are unrelated to FunctionDecl, no parameter
+  // count is expected.
+  template <typename DeclT>
+    requires(std::derived_from<DeclT, clang::Decl> &&
+             !std::derived_from<clang::FunctionDecl, DeclT> &&
+             !std::derived_from<DeclT, clang::FunctionDecl>)
+  explicit ClangDeclKey(DeclT* decl)
+      : ClangDeclKey(decl, Signature{}, UncheckedTag()) {}
+
+  // For declaration classes that are derived from FunctionDecl, a parameter
+  // count is required.
+  static auto ForFunctionDecl(clang::FunctionDecl* decl, Signature signature)
+      -> ClangDeclKey {
+    return ClangDeclKey(decl, signature, UncheckedTag());
+  }
+
+  // Factory function for clang declaration that is dynamically known to not be
+  // a function declaration.
+  static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
+    CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
+    return ClangDeclKey(decl, Signature{}, UncheckedTag());
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // Equality comparison uses the address-identity property of the Clang AST and
-  // just compares the `decl` pointers. The `inst_id` is always the same due to
-  // the canonicalization.
-  auto operator==(const ClangDecl& rhs) const -> bool {
-    return decl == rhs.decl;
-  }
-  // Support direct comparison with the Clang AST node pointer.
-  auto operator==(const clang::Decl* rhs_decl) const -> bool {
-    return decl == rhs_decl;
+  auto operator==(const ClangDeclKey& rhs) const -> bool {
+    return decl == rhs.decl && signature == rhs.signature;
   }
 
   // Hashing for ClangDecl. See common/hashing.h.
-  friend auto CarbonHashValue(const ClangDecl& value, uint64_t seed)
+  friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)
       -> HashCode {
-    return HashValue(value.decl, seed);
+    // Manual hashing support is required because `Signature` has padding.
+    return HashValue(std::tuple{value.decl, value.signature.num_params,
+                                value.signature.kind},
+                     seed);
   }
 
   // The Clang declaration pointing to the Clang AST.
   // TODO: Ensure we can easily serialize/deserialize this. Consider
   // `clang::LazyDeclPtr`.
-  clang::Decl* decl = nullptr;
+  clang::Decl* decl;
 
-  // The instruction the Clang declaration is mapped to.
-  //
-  // This is stored along side the `decl` pointer to avoid having to lookup both
-  // the pointer and the instruction ID in two separate areas of storage.
-  InstId inst_id;
+  // The parameters to import for a function declaration. Otherwise a
+  // default-constructed value.
+  Signature signature;
+
+ private:
+  struct UncheckedTag {
+    explicit UncheckedTag() = default;
+  };
+  ClangDeclKey(clang::Decl* decl, Signature signature, UncheckedTag /*_*/)
+      : decl(decl->getCanonicalDecl()), signature(signature) {}
 };
 
-// The ID of a `ClangDecl`.
+// A Clang declaration mapped to a Carbon instruction.
 //
-// These IDs are importantly distinct from the `inst_id` associated with each
-// declaration. These form a dense range of IDs that is used to reference the
-// AST node pointers without storing those pointers directly into SemIR and
-// needing space to hold a full pointer. We can't avoid having these IDs without
-// embedding pointers directly into the storage of SemIR as part of an
-// instruction.
-struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+// Instances of this type are managed by a `ClangDeclStore`, which ensures that
+// a single `ClangDecl` exists for each `ClangDeclKey` used.
+struct ClangDecl : public Printable<ClangDecl> {
+  auto Print(llvm::raw_ostream& out) const -> void;
 
-  using IdBase::IdBase;
+  // The key by which this declaration can be looked up.
+  ClangDeclKey key;
+
+  // The instruction the Clang declaration is mapped to.
+  InstId inst_id;
+
+  auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
 using ClangDeclStore =
-    CanonicalValueStore<ClangDeclId, clang::Decl*, ClangDecl>;
+    CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>;
 
 }  // namespace Carbon::SemIR
 

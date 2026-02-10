@@ -82,14 +82,12 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_25.1: bool = value_of_initializer %GreaterEq.call
-// CHECK:STDOUT:   %.loc20_25.2: bool = converted %GreaterEq.call, %.loc20_25.1
-// CHECK:STDOUT:   return %.loc20_25.2
+// CHECK:STDOUT:   return %GreaterEq.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

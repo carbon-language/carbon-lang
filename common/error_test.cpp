@@ -19,6 +19,7 @@ using ::Carbon::Testing::IsError;
 using ::Carbon::Testing::IsSuccess;
 using ::testing::_;
 using ::testing::Eq;
+using ::testing::VariantWith;
 
 TEST(ErrorTest, Error) {
   Error err("test");
@@ -156,6 +157,17 @@ TYPED_TEST(ErrorOrTest, UnprintableValue) {
 
   TestErrorOr error = this->MakeError();
   EXPECT_THAT(error, IsError(this->ErrorStr()));
+}
+
+// Note that this is more of a test of `IsSuccess` than `ErrorOr` itself.
+TYPED_TEST(ErrorOrTest, NestedMatching) {
+  using TestErrorOr = ErrorOr<std::variant<int, float>, TypeParam>;
+
+  TestErrorOr i(42);
+  EXPECT_THAT(i, IsSuccess(VariantWith<int>(Eq(42))));
+
+  TestErrorOr f(0.42F);
+  EXPECT_THAT(f, IsSuccess(VariantWith<float>(Eq(0.42F))));
 }
 
 TYPED_TEST(ErrorOrTest, ReturnIfErrorNoError) {

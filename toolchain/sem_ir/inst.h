@@ -18,6 +18,7 @@
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/id_kind.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -228,8 +229,7 @@ class Inst : public Printable<Inst> {
 
   template <typename TypedInst>
     requires Internal::InstLikeType<TypedInst>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  Inst(TypedInst typed_inst)
+  explicit(false) Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
       : kind_(),
         type_id_(TypeId::None),
@@ -257,6 +257,13 @@ class Inst : public Printable<Inst> {
     requires Internal::InstLikeType<TypedInst>
   auto Is() const -> bool {
     return Internal::InstLikeTypeInfo<TypedInst>::IsKind(kind());
+  }
+
+  // Returns whether this instruction has one of the specified types.
+  template <typename... TypedInsts>
+    requires(... && Internal::InstLikeType<TypedInsts>)
+  auto IsOneOf() const -> bool {
+    return (... || Internal::InstLikeTypeInfo<TypedInsts>::IsKind(kind()));
   }
 
   // Casts this instruction to the given typed instruction, which must match the
@@ -411,8 +418,12 @@ struct LocIdAndInst {
   }
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
-  // where we can't statically enforce the type matches.
-  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
+  // where we can't statically enforce the type matches. For `ImportIRInstId`,
+  // use `MakeImportedLocIdAndInst` in `import.h`.
+  template <typename LocT>
+    requires(std::convertible_to<LocT, LocId> &&
+             !std::same_as<LocT, ImportIRInstId>)
+  static auto UncheckedLoc(LocT loc_id, Inst inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
@@ -428,6 +439,10 @@ struct LocIdAndInst {
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
+  // For `ImportIRInstId`, use `MakeImportedLocIdAndInst` in `import.h`.
+  template <typename InstT>
+  LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
+
   LocId loc_id;
   Inst inst;
 
@@ -438,11 +453,15 @@ struct LocIdAndInst {
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
+//
+// InstIds in this store are tagged by an IdTag using the File's CheckIRId as
+// the tag value.
 class InstStore {
  public:
   using IdType = InstId;
+  using IdTagType = IdTag<IdType, Tag<CheckIRId>>;
 
-  explicit InstStore(File* file) : file_(file) {}
+  explicit InstStore(File* file, int32_t reserved_inst_ids);
 
   // Adds an instruction to the instruction list, returning an ID to reference
   // the instruction. Note that this doesn't add the instruction to any
@@ -463,6 +482,13 @@ class InstStore {
       result.SetType(GetUnattachedType(type_id));
     }
     return result;
+  }
+
+  // Returns the requested instruction, which is known to have the specified
+  // type.
+  template <typename InstT>
+  auto Get(KnownInstId<InstT> inst_id) const -> InstT {
+    return Get(static_cast<InstId>(inst_id)).As<InstT>();
   }
 
   // Returns the requested instruction, preserving its attached type.
@@ -486,6 +512,12 @@ class InstStore {
     return Get(inst_id).Is<InstT>();
   }
 
+  // Returns whether the requested instruction is one of the specified types.
+  template <typename... InstTs>
+  auto IsOneOf(InstId inst_id) const -> bool {
+    return Get(inst_id).Is<InstTs...>();
+  }
+
   // Returns the requested instruction, which is known to have the specified
   // type.
   template <typename InstT>
@@ -500,6 +532,10 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
+  // Use `Get()` when the instruction type is known.
+  template <typename InstT, typename KnownInstT>
+  auto TryGetAs(KnownInstId<KnownInstT> inst_id) const = delete;
+
   // Returns the requested instruction as the specified type, if it is valid and
   // of that type. Otherwise returns nullopt.
   template <typename InstT>
@@ -510,6 +546,35 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
+  // Returns the `KnownInstId` form of `inst_id`. Requires a matching
+  // instruction type.
+  template <typename InstT>
+  auto GetAsKnownInstId(InstId inst_id) const -> KnownInstId<InstT> {
+    CARBON_CHECK(Is<InstT>(inst_id), "Casting inst {0} to wrong kind {1}",
+                 Get(inst_id), Internal::InstLikeTypeInfo<InstT>::DebugName());
+    return KnownInstId<InstT>::UnsafeMake(inst_id);
+  }
+
+  template <typename InstT>
+  struct GetAsWithIdResult {
+    KnownInstId<InstT> inst_id;
+    InstT inst;
+  };
+
+  // Returns the requested instruction, if it is of that type, along with the
+  // original `InstId`, encoding the work of checking its type in a
+  // `KnownInstId`.
+  template <typename InstT>
+  auto TryGetAsWithId(InstId inst_id) const
+      -> std::optional<GetAsWithIdResult<InstT>> {
+    auto inst = TryGetAs<InstT>(inst_id);
+    if (!inst) {
+      return std::nullopt;
+    }
+    return {
+        {.inst_id = KnownInstId<InstT>::UnsafeMake(inst_id), .inst = *inst}};
+  }
+
   // Attempts to convert the given instruction to the type that contains
   // `member`. If it can be converted, the instruction ID and instruction are
   // replaced by the unwrapped value of that member, and the converted wrapper
@@ -517,14 +582,14 @@ class InstStore {
   template <typename InstT, typename InstIdT>
     requires std::derived_from<InstIdT, InstId>
   auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
-      -> std::pair<std::optional<InstT>, InstId> {
+      -> std::pair<std::optional<InstT>, KnownInstId<InstT>> {
     if (auto wrapped_inst = inst.TryAs<InstT>()) {
-      auto wrapped_inst_id = inst_id;
+      auto wrapped_inst_id = KnownInstId<InstT>::UnsafeMake(inst_id);
       inst_id = (*wrapped_inst).*member;
       inst = Get(inst_id);
       return {wrapped_inst, wrapped_inst_id};
     }
-    return {std::nullopt, InstId::None};
+    return {std::nullopt, KnownInstId<InstT>::None};
   }
 
   // Returns a resolved LocId, which will point to a parse node, an import, or
@@ -570,7 +635,8 @@ class InstStore {
 
   // Overwrites a given instruction's location with a new value.
   auto SetLocId(InstId inst_id, LocId loc_id) -> void {
-    loc_ids_[inst_id.index] = loc_id;
+    auto index = values_.GetRawIndex(inst_id);
+    loc_ids_[index] = loc_id;
   }
 
   // Overwrites a given instruction and location ID with a new value.
@@ -593,13 +659,19 @@ class InstStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<InstId, Inst>::Range {
+  -> ValueStore<InstId, Inst, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }
   auto enumerate() const [[clang::lifetimebound]] -> auto {
     return values_.enumerate();
   }
+
+  auto GetRawIndex(InstId id) const -> int32_t {
+    return values_.GetRawIndex(id);
+  }
+
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
@@ -608,23 +680,28 @@ class InstStore {
   // Gets the specified location for an instruction, without performing any
   // canonicalization.
   auto GetNonCanonicalLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
-                 "{0} {1}", inst_id.index, loc_ids_.size());
-    return loc_ids_[inst_id.index];
+    auto index = values_.GetRawIndex(inst_id);
+    CARBON_CHECK(static_cast<size_t>(index) < loc_ids_.size(), "{0} {1}", index,
+                 loc_ids_.size());
+    return loc_ids_[index];
   }
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId, Inst> values_;
+  ValueStore<InstId, Inst, Tag<CheckIRId>> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore
+    : public BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>>;
 
-  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
-      : BaseType(allocator) {
+  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
+                          CheckIRId check_ir_id = CheckIRId::None)
+      // 4 reserved ids for the
+      // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
+      : BaseType(allocator, check_ir_id, 4) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto imports_id = AddPlaceholder();

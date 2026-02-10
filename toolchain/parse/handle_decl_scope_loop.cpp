@@ -46,9 +46,10 @@ static auto ApplyIntroducer(Context& context, Context::State state,
 namespace {
 // The kind of context in which a declaration appears.
 enum DeclContextKind : int8_t {
-  NonClassContext = 0,
+  RegularContext = 0,
   ClassContext = 1,
-  MaxDeclContextKind = ClassContext,
+  InterfaceContext = 2,
+  MaxDeclContextKind = InterfaceContext,
 };
 
 // The kind of declaration introduced by an introducer keyword.
@@ -70,6 +71,9 @@ static constexpr auto DeclIntroducers = [] {
   std::array<DeclIntroducerInfo, MaxDeclContextKind + 1> introducers[] = {
 #define CARBON_TOKEN(Name)                                \
   {{{.introducer_kind = DeclIntroducerKind::Unrecognized, \
+     .node_kind = NodeKind::InvalidParse,                 \
+     .state_kind = StateKind::Invalid},                   \
+    {.introducer_kind = DeclIntroducerKind::Unrecognized, \
      .node_kind = NodeKind::InvalidParse,                 \
      .state_kind = StateKind::Invalid},                   \
     {.introducer_kind = DeclIntroducerKind::Unrecognized, \
@@ -126,8 +130,16 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
-  set(Lex::TokenKind::Let, NodeKind::LetIntroducer, StateKind::Let);
-  set_contextual(Lex::TokenKind::Var, NonClassContext,
+  set(Lex::TokenKind::Require, NodeKind::RequireIntroducer,
+      StateKind::RequireAfterIntroducer);
+  set_contextual(Lex::TokenKind::Let, RegularContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, InterfaceContext,
+                 NodeKind::AssociatedConstantIntroducer,
+                 StateKind::AssociatedConstant);
+  set_contextual(Lex::TokenKind::Var, RegularContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
   set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
                  StateKind::FieldDecl);
@@ -215,6 +227,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Let:
         case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
+        case Lex::TokenKind::Require:
         case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
@@ -294,8 +307,12 @@ auto HandleDeclAsClass(Context& context) -> void {
   HandleDecl(context, ClassContext);
 }
 
-auto HandleDeclAsNonClass(Context& context) -> void {
-  HandleDecl(context, NonClassContext);
+auto HandleDeclAsInterface(Context& context) -> void {
+  HandleDecl(context, InterfaceContext);
+}
+
+auto HandleDeclAsRegular(Context& context) -> void {
+  HandleDecl(context, RegularContext);
 }
 
 static auto HandleDeclScopeLoop(Context& context, StateKind decl_state_kind)
@@ -315,8 +332,12 @@ auto HandleDeclScopeLoopAsClass(Context& context) -> void {
   HandleDeclScopeLoop(context, StateKind::DeclAsClass);
 }
 
-auto HandleDeclScopeLoopAsNonClass(Context& context) -> void {
-  HandleDeclScopeLoop(context, StateKind::DeclAsNonClass);
+auto HandleDeclScopeLoopAsInterface(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsInterface);
+}
+
+auto HandleDeclScopeLoopAsRegular(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsRegular);
 }
 
 }  // namespace Carbon::Parse

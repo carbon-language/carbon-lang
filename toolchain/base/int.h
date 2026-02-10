@@ -168,8 +168,8 @@ class IntId : public Printable<IntId> {
   // comparison, and so all of this ends up carefully constructed to enable very
   // small code size when testing for an embedded value and when that test fails
   // computing and using the index.
-  static constexpr int32_t ZeroIndexId = std::numeric_limits<int32_t>::min() >>
-                                         (TokenIdBitsShift + 1);
+  static constexpr int32_t ZeroIndexId =
+      std::numeric_limits<int32_t>::min() >> (TokenIdBitsShift + 1);
 
   // The minimum embedded value in an ID.
   static constexpr int32_t MinValue = ZeroIndexId + 1;
@@ -206,12 +206,12 @@ class IntId : public Printable<IntId> {
   int32_t id_;
 };
 
-constexpr IntId IntId::None(IntId::NoneId);
+inline constexpr IntId IntId::None(IntId::NoneId);
 
 // Note that we initialize the `None` index in a constexpr context which
 // ensures there is no UB in forming it. This helps ensure all the ID -> index
 // conversions are correct because the `None` ID is at the limit of that range.
-constexpr int32_t IntId::NoneIndex = None.AsIndex();
+inline constexpr int32_t IntId::NoneIndex = None.AsIndex();
 
 // A canonicalizing value store with deep optimizations for integers.
 //
@@ -253,6 +253,11 @@ class IntStore {
 
     // Fallback for larger values.
     return AddLarge(value);
+  }
+
+  // Returns the ID corresponding to this integer value.
+  auto Add(llvm::APSInt value) -> IntId {
+    return value.isSigned() ? AddSigned(value) : AddUnsigned(value);
   }
 
   // Returns the ID corresponding to this signed integer value, storing an
@@ -423,7 +428,8 @@ class IntStore {
   CanonicalValueStore<APIntId, llvm::APInt> values_;
 };
 
-constexpr IntStore::APIntId IntStore::APIntId::None(IntId::None.AsIndex());
+inline constexpr IntStore::APIntId IntStore::APIntId::None(
+    IntId::None.AsIndex());
 
 }  // namespace Carbon
 

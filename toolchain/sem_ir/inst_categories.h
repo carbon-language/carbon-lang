@@ -65,7 +65,8 @@ struct AnyAggregateValue {
 // Common representation for various `*binding_pattern` nodes.
 struct AnyBindingPattern {
   // TODO: Also handle TemplateBindingPattern once it exists.
-  using CategoryInfo = CategoryOf<BindingPattern, SymbolicBindingPattern>;
+  using CategoryInfo = CategoryOf<RefBindingPattern, SymbolicBindingPattern,
+                                  ValueBindingPattern>;
 
   InstKind kind;
 
@@ -80,21 +81,25 @@ struct AnyBindingPattern {
 };
 
 // Common representation for various `bind*` nodes.
-struct AnyBindName {
+struct AnyBinding {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo = CategoryOf<BindAlias, BindName, BindSymbolicName>;
+  using CategoryInfo =
+      CategoryOf<AliasBinding, RefBinding, SymbolicBinding, ValueBinding>;
 
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
+
+  // The value is inline in the inst so that value access doesn't require an
+  // indirection.
   InstId value_id;
 };
 
 // Common representation for various `bind*` nodes, and `export name`.
-struct AnyBindNameOrExportDecl {
+struct AnyBindingOrExportDecl {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo =
-      CategoryOf<BindAlias, BindName, BindSymbolicName, ExportDecl>;
+  using CategoryInfo = CategoryOf<AliasBinding, RefBinding, SymbolicBinding,
+                                  ValueBinding, ExportDecl>;
 
   InstKind kind;
   TypeId type_id;
@@ -152,11 +157,10 @@ struct AnyParam {
 };
 
 // A pattern that represents a `Call` parameter. It delegates to subpattern_id
-// in pattern matching. The sub-kinds differ only in the expression category
-// of the corresponding parameter inst.
+// in pattern matching.
 struct AnyParamPattern {
-  using CategoryInfo =
-      CategoryOf<OutParamPattern, RefParamPattern, ValueParamPattern>;
+  using CategoryInfo = CategoryOf<OutParamPattern, RefParamPattern,
+                                  ValueParamPattern, VarParamPattern>;
 
   InstKind kind;
 
@@ -165,6 +169,18 @@ struct AnyParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// A type qualifier that wraps another type and has the same object
+// representation. Qualifiers are arranged so that adding a qualifier is
+// generally safe, and removing a qualifier is not necessarily safe or correct.
+struct AnyQualifiedType {
+  using CategoryInfo = CategoryOf<ConstType, PartialType, MaybeUnformedType>;
+
+  InstKind kind;
+
+  TypeId type_id;
+  TypeInstId inner_id;
 };
 
 // A struct-like type with a list of named fields.

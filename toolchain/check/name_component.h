@@ -35,15 +35,10 @@ struct NameComponent {
   SemIR::InstBlockId param_patterns_id;
 
   // The `Call` parameters of the entity, if it's a function (see the
-  // corresponding member of SemIR::EntityWithParamsBase).
-  // TODO: This is only used for function declarations. Should it go somewhere
-  // else?
+  // corresponding members of SemIR::FunctionFields and
+  // SemIR::EntityWithParamsBase).
+  SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
-
-  // The return slot.
-  // TODO: This is only used for function declarations. Should it go
-  // somewhere else?
-  SemIR::InstId return_slot_pattern_id;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
@@ -51,8 +46,8 @@ struct NameComponent {
 
 // Pops a name component from the node stack (and pattern block stack, if it has
 // parameters).
-auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id =
-                                            SemIR::InstId::None)
+auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id =
+                                            SemIR::InstBlockId::None)
     -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has

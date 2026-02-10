@@ -6,6 +6,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -19,19 +20,15 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
-  AddInstAndPush<SemIR::BoolLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
-       .value = SemIR::BoolValue::False});
+  context.node_stack().Push(
+      node_id, MakeBoolLiteral(context, node_id, SemIR::BoolValue::False));
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
-  AddInstAndPush<SemIR::BoolLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
-       .value = SemIR::BoolValue::True});
+  context.node_stack().Push(
+      node_id, MakeBoolLiteral(context, node_id, SemIR::BoolValue::True));
   return true;
 }
 
@@ -55,62 +52,36 @@ auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
-  // Convert the real literal to an llvm::APFloat and add it to the floats
-  // ValueStore. In the future this would use an arbitrary precision Rational
-  // type.
-  //
-  // TODO: Implement Carbon's actual implicit conversion rules for
-  // floating-point constants, as per the design
-  // docs/design/expressions/implicit_conversions.md
   auto real_id =
       context.tokens().GetRealLiteral(context.parse_tree().node_token(node_id));
-  auto real_value = context.sem_ir().reals().Get(real_id);
-
-  if (real_value.mantissa.getActiveBits() > 64) {
-    CARBON_DIAGNOSTIC(RealMantissaTooLargeForI64, Error,
-                      "real mantissa with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
-                           llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  if (real_value.exponent.getSignificantBits() > 64) {
-    CARBON_DIAGNOSTIC(RealExponentTooLargeForI64, Error,
-                      "real exponent with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealExponentTooLargeForI64,
-                           llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  double double_val = real_value.mantissa.getZExtValue() *
-                      std::pow((real_value.is_decimal ? 10 : 2),
-                               real_value.exponent.getSExtValue());
-
-  auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  AddInstAndPush<SemIR::FloatValue>(
+  AddInstAndPush<SemIR::FloatLiteralValue>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::LegacyFloatType::TypeInstId),
-       .float_id = float_id});
+      {.type_id =
+           GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
+       .real_id = real_id});
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
-  AddInstAndPush<SemIR::StringLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::StringType::TypeInstId),
-       .string_literal_id = context.tokens().GetStringLiteralValue(
-           context.parse_tree().node_token(node_id))});
+  auto str_literal_id =
+      MakeStringLiteral(context, node_id,
+                        context.tokens().GetStringLiteralValue(
+                            context.parse_tree().node_token(node_id)));
+  context.node_stack().Push(node_id, str_literal_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  auto fn_inst_id = LookupNameInCore(context, node_id, "Bool");
+  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Bool);
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+  context.node_stack().Push(node_id, type_inst_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::CharTypeLiteralId node_id)
+    -> bool {
+  auto type_inst_id = MakeCharTypeLiteral(context, node_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
@@ -152,22 +123,17 @@ auto HandleParseNode(Context& context, Parse::UnsignedIntTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
     -> bool {
-  auto text =
-      context.tokens().GetTokenText(context.parse_tree().node_token(node_id));
-  if (text != "f64") {
-    return context.TODO(node_id, "Currently only f64 is allowed");
-  }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto type_inst_id =
-      MakeFloatTypeLiteral(context, node_id, SemIR::FloatKind::None, size_id);
+  auto type_inst_id = MakeFloatTypeLiteral(context, node_id, size_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::StringType::TypeInstId);
+  auto type_inst_id = MakeStringTypeLiteral(context, node_id);
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 

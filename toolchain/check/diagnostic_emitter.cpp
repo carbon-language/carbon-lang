@@ -95,7 +95,7 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return "`" +
            StringifyConstantInst(
                *sem_ir_,
-               sem_ir_->types().GetInstId(
+               sem_ir_->types().GetTypeInstId(
                    sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
            "`";
   }
@@ -107,13 +107,16 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   }
   if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
     return StringifyConstantInst(*sem_ir_,
-                                 sem_ir_->types().GetInstId(type->type_id));
+                                 sem_ir_->types().GetTypeInstId(type->type_id));
   }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
     return "`" +
            StringifyConstantInst(*sem_ir_,
-                                 sem_ir_->types().GetInstId(*type_id)) +
+                                 sem_ir_->types().GetTypeInstId(*type_id)) +
            "`";
+  }
+  if (auto* facet_type_id = llvm::any_cast<SemIR::FacetTypeId>(&arg)) {
+    return "`" + StringifyFacetType(*sem_ir_, *facet_type_id) + "`";
   }
   if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {
     return "`" + StringifySpecific(*sem_ir_, *specific_id) + "`";
@@ -121,6 +124,15 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
+  }
+  if (auto* real_id = llvm::any_cast<RealId>(&arg)) {
+    RawStringOstream out;
+    sem_ir_->reals().Get(*real_id).Print(out);
+    return out.TakeStr();
+  }
+  if (auto* specific_interface =
+          llvm::any_cast<SemIR::SpecificInterface>(&arg)) {
+    return StringifySpecificInterface(*sem_ir_, *specific_interface);
   }
   if (auto* specific_interface_id =
           llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {

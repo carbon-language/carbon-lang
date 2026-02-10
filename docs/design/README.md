@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
-> [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
+> [#1382](https://github.com/carbon-language/carbon-lang/pull/1382).
 
 <!-- toc -->
 
@@ -372,14 +372,11 @@ required to be the only non-whitespace on the line.
 
 The behavior of the Carbon compiler depends on the _build mode_:
 
--   In a _development build_, the priority is diagnosing problems and fast build
-    time.
--   In a _performance build_, the priority is fastest execution time and lowest
+-   In a _debug build_, the priority is diagnosing problems and fast build time.
+-   In a _release build_, the priority is fastest execution time and lowest
     memory usage.
--   In a _hardened build_, the first priority is safety and second is
-    performance.
 
-> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
+> References: [Safety design](/docs/design/safety#build-modes)
 
 ## Types are values
 
@@ -705,7 +702,7 @@ similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   _Value binding_ converts a reference expression into a value expression.
+-   _Value acquisition_ converts a reference expression into a value expression.
 -   _Direct initialization_ converts a value expression into an initializing
     expression.
 -   _Copy initialization_ converts a reference expression into an initializing
@@ -864,6 +861,9 @@ or restrictions on casts between pointers and integers.
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ### Arrays and slices
+
+> **TODO:** The provisional array syntax documented here has been superseded by
+> [p4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p4682.md).
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to
@@ -1767,16 +1767,16 @@ class Point {
     return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
-  fn Offset[addr self: Self*](dx: i32, dy: i32);
+  fn Offset[ref self: Self](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
 // Out-of-line definition of method declared inline
-fn Point.Offset[addr self: Self*](dx: i32, dy: i32) {
-  self->x += dx;
-  self->y += dy;
+fn Point.Offset[ref self: Self](dx: i32, dy: i32) {
+  self.x += dx;
+  self.y += dy;
 }
 
 var origin: Point = {.x = 0, .y = 0};
@@ -1796,10 +1796,9 @@ two methods `Distance` and `Offset`:
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[self: Self]` in the method
     declaration.
--   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[addr self: Self*]` in the method declaration. Since calling this
-    method requires taking the [non-`const`](#const) address of `origin`, it may
-    only be called on [reference expressions](#expression-categories).
+-   `origin.Offset(`...`)` _does_ modify the value of `origin`. This is
+    signified using `[ref self: Self]` in the method declaration. It may only be
+    called on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1955,7 +1954,7 @@ names resolvable by the compiler, and don't act like forward declarations.
 
 A destructor for a class is custom code executed when the lifetime of a value of
 that type ends. They are defined with `fn destroy` followed by either
-`[self: Self]` or `[addr self: Self*]` (as is done with [methods](#methods)) and
+`[self: Self]` or `[ref self: Self]` (as is done with [methods](#methods)) and
 the block of code in the class definition, as in:
 
 ```carbon
@@ -1969,7 +1968,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[addr self: Self*]() { ... }
+  fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -2004,8 +2003,8 @@ For every type `MyClass`, there is the type `const MyClass` such that:
     has type `const T`.
 -   While all of the member names in `MyClass` are also member names in
     `const MyClass`, the effective API of a `const MyClass` reference expression
-    is a subset of `MyClass`, because only `addr` methods accepting a
-    `const Self*` will be valid.
+    is a subset of `MyClass`, because only `ref` methods accepting a
+    `const Self` will be valid.
 
 Note that `const` binds more tightly than postfix-`*` for forming a pointer
 type, so `const MyClass*` is equal to `(const MyClass)*`.
@@ -2996,8 +2995,8 @@ associated constant to represent the type of elements stored in the stack.
 ```
 interface StackInterface {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
   fn IsEmpty[self: Self]() -> bool;
 }
 ```
@@ -3008,14 +3007,14 @@ for the `ElementType` member of the interface using a `where` clause:
 ```carbon
 class IntStack {
   extend impl as StackInterface where .ElementType = i32 {
-    fn Push[addr self: Self*](value: i32);
+    fn Push[ref self: Self](value: i32);
     // ...
   }
 }
 
 class FruitStack {
   extend impl as StackInterface where .ElementType = Fruit {
-    fn Push[addr self: Self*](value: Fruit);
+    fn Push[ref self: Self](value: Fruit);
     // ...
   }
 }
@@ -3043,8 +3042,8 @@ values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
-  fn Push[addr self: Self*](value: T);
-  fn Pop[addr self: Self*]() -> T;
+  fn Push[ref self: Self](value: T);
+  fn Pop[ref self: Self]() -> T;
 
   var storage: Array(T);
 }
@@ -3746,7 +3745,7 @@ This leads to Carbon's incremental path to safety:
 -   Shift the Carbon code onto an incremental path towards memory safety over
     the next decade.
 
-> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
+> References: [Safety design](/docs/design/safety)
 
 ### Lifetime and move semantics
 

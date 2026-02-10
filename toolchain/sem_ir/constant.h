@@ -85,8 +85,7 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   ConstantDependence dependence;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << ", kind: ";
+    out << "{inst: " << inst_id << ", kind: ";
     switch (dependence) {
       case ConstantDependence::None:
         out << "<error: concrete>";
@@ -101,6 +100,12 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
         out << "template";
         break;
     }
+    out << ", attached: ";
+    if (generic_id.has_value()) {
+      out << "{generic: " << generic_id << ", index: " << index << "}";
+    } else {
+      out << "null";
+    }
     out << "}";
   }
 };
@@ -108,9 +113,24 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
 class ConstantValueStore {
+  struct UnusableType {};
+
  public:
-  explicit ConstantValueStore(ConstantId default_value)
-      : default_(default_value) {}
+  inline static const auto Unusable = UnusableType();
+
+  // Constructs an unusable ConstantValueStore, only good as a placeholder (eg:
+  // in C++ interop, where there's no foreign SemIR to reference)
+  explicit ConstantValueStore(UnusableType /* tag */)
+      : default_(ConstantId::None),
+        values_(CheckIRId::None),
+        symbolic_constants_(CheckIRId::None),
+        insts_(nullptr) {}
+
+  explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
+      : default_(default_value),
+        values_(insts->GetIdTag()),
+        symbolic_constants_(insts->GetIdTag().GetContainerTag()),
+        insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. Always returns an unattached constant.
@@ -122,18 +142,23 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. This may be an attached constant.
   auto GetAttached(InstId inst_id) const -> ConstantId {
-    CARBON_DCHECK(inst_id.index >= 0);
-    return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? default_
-               : values_.Get(inst_id);
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    return values_.GetWithDefault(inst_id, default_);
+  }
+
+  auto IsAttached(ConstantId const_id) const -> bool {
+    return const_id != GetUnattachedConstant(const_id);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    CARBON_DCHECK(inst_id.index >= 0);
-    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.Resize(inst_id.index + 1, default_);
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    auto index = insts_->GetRawIndex(inst_id);
+    if (static_cast<size_t>(index) >= values_.size()) {
+      values_.Resize(index + 1, default_);
     }
     values_.Get(inst_id) = const_id;
   }
@@ -162,11 +187,19 @@ class ConstantValueStore {
     return GetInstId(GetAttached(inst_id));
   }
 
+  // Given a type instruction, returns the unique constant instruction that is
+  // equivalent to it. Returns `None` for a non-constant instruction.
+  auto GetConstantTypeInstId(TypeInstId inst_id) const -> TypeInstId {
+    // If the source instruction has type `type`, its constant value will too,
+    // since the constant value of `type` is itself.
+    return TypeInstId::UnsafeMake(GetInstId(GetAttached(inst_id)));
+  }
+
   // Given a symbolic constant, returns the unattached form of that constant.
   // For any other constant ID, returns the ID unchanged.
   auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {
     if (const_id.is_symbolic()) {
-      return GetAttached(GetSymbolicConstant(const_id).inst_id);
+      return values_.Get(GetSymbolicConstant(const_id).inst_id);
     }
     return const_id;
   }
@@ -226,6 +259,26 @@ class ConstantValueStore {
     });
   }
 
+  // The tag used in ConstantIds for concrete constants.
+  using ConcreteIdTagType = IdTag<SemIR::ConstantId, Tag<SemIR::CheckIRId>>;
+  auto GetConcreteIdTag() const -> ConcreteIdTagType {
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::ConstantId>();
+  }
+  // The tag used for TypeId, which are concrete constants internally.
+  using TypeIdTagType = IdTag<SemIR::TypeId, Tag<SemIR::CheckIRId>>;
+  auto GetTypeIdTag() const -> TypeIdTagType {
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::TypeId>();
+  }
+  // The tag used in ConstantIds for symbolic constants.
+  using SymbolicIdTagType =
+      IdTag<ConstantId::SymbolicId, Tag<SemIR::CheckIRId>>;
+  auto GetSymbolicIdTag() const -> SymbolicIdTagType {
+    return symbolic_constants_.GetIdTag();
+  }
+
+  // The size of the value store for concrete constant values.
+  auto ConcreteStoreSize() const -> size_t { return values_.size(); }
+
  private:
   const ConstantId default_;
 
@@ -235,14 +288,17 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  ValueStore<InstId, ConstantId> values_;
+  ValueStore<InstId, ConstantId, Tag<CheckIRId>> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant, Tag<CheckIRId>>
+      symbolic_constants_;
+
+  const InstStore* insts_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.
@@ -251,8 +307,7 @@ class ConstantValueStore {
 // the eval block that computes the constant value in each specific.
 //
 // Returns InstId::None if the ConstantId is None or NotConstant.
-auto GetInstWithConstantValue(const SemIR::File& file,
-                              SemIR::ConstantId const_id) -> SemIR::InstId;
+auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId;
 
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {

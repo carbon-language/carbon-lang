@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -21,6 +21,10 @@ interface Z(T:! type) {}
 
 // --- interface_z_with_impl.carbon
 library "[[@TEST_NAME]]";
+
+// Add an extra unused interface to bump `Z`'s id up so that it doesn't
+// accidentally match the id assigned to the imported copy of `Z`.
+interface Other(T:! type) {}
 
 interface Z(T:! type) {}
 
@@ -47,9 +51,20 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
+class C {}
+
+final impl C as Z {}
+
+// --- final_impl_with_interface_concrete_self_same_file_defined_after.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
 class C;
 
 final impl C as Z {}
+
+class C {}
 
 // --- final_impl_with_interface_concrete_self_from_other_file.carbon
 library "[[@TEST_NAME]]";
@@ -92,7 +107,7 @@ final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR:
 final impl forall [T:! type] T as Z(()) {}
 
-class C;
+class C {}
 
 // The final impl here overlaps with the first final impl above, but is not in
 // a match_first.
@@ -111,7 +126,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-class C;
+class C {}
 
 final impl C as Z(()) {}
 
@@ -144,7 +159,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-class C;
+class C {}
 
 // Two final impls for C as Z, but they are not overlapping so they are allowed
 // outside of match_first.
@@ -156,7 +171,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-class C(T:! type);
+class C(T:! type) {}
 
 // Can provide a specialized final blanket impl for a type defined in the same
 // file.
@@ -167,7 +182,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z_with_impl";
 
-class C;
+class C {}
 
 // Can't write a final impl in both the interface's file and the root self
 // type's file (when they are different files).
@@ -176,7 +191,7 @@ class C;
 // CHECK:STDERR: final impl C as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:5:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -187,7 +202,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z_with_impl";
 
-class C;
+class C {}
 
 // This final impl is overlapped by a final impl in the interface file, and you
 // can't write a final impl in two different files.
@@ -196,7 +211,7 @@ class C;
 // CHECK:STDERR: final impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_overlaps_final_from_other_file.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:5:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -207,7 +222,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z_with_impl";
 
-class C;
+class C {}
 
 // This non-final impl is subsumed by a final impl in the interface file.
 //
@@ -215,11 +230,27 @@ class C;
 // CHECK:STDERR: impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE-9]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:5:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as Z(C) {}
+
+// --- fail_final_root_self_type_not_defined.carbon
+library "[[@TEST_NAME]]";
+
+import library "interface_z";
+import library "type_d";
+
+class C;
+
+// The root type must be defined in the same library, not just declared.
+//
+// CHECK:STDERR: fail_final_root_self_type_not_defined.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
+// CHECK:STDERR: final impl C as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl C as Z(()) {}
 
 // --- fail_final_different_file_from_self_and_interface.carbon
 library "[[@TEST_NAME]]";
@@ -227,7 +258,7 @@ library "[[@TEST_NAME]]";
 import library "interface_z";
 import library "type_d";
 
-class C;
+class C {}
 
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
@@ -243,7 +274,7 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-class C;
+class C {}
 
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
@@ -291,7 +322,7 @@ library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 
-class C;
+class C {}
 
 final impl C as Z(C) {}
 
@@ -309,7 +340,7 @@ library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 
-class C;
+class C {}
 
 final impl forall [T:! type] T as Z(T) {}
 
@@ -349,8 +380,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-class C;
-class D;
+class C {}
+class D {}
 
 impl C as Z {}
 impl D as Z {}
@@ -362,11 +393,11 @@ interface Z(T:! type) {}
 
 impl forall [T:! type] T as Z(T) {}
 
-class C;
+class C {}
 // Partially overlaps the blanket impl, which is fine.
 final impl C as Z(C) {}
 
-class D;
+class D {}
 // Partially overlaps the blanket impl, which is fine.
 impl D as Z(D) {}
 

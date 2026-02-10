@@ -17,7 +17,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"
@@ -56,7 +56,7 @@ struct LineIndex : public IndexBase<LineIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::None(NoneIndex);
+inline constexpr LineIndex LineIndex::None(NoneIndex);
 
 // A comment, which can be a block of lines. These are tracked separately from
 // tokens because they don't affect parse; if they were part of tokens, we'd
@@ -79,7 +79,7 @@ struct CommentIndex : public IndexBase<CommentIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr CommentIndex CommentIndex::None(NoneIndex);
+inline constexpr CommentIndex CommentIndex::None(NoneIndex);
 
 // Random-access iterator over comments within the buffer.
 using CommentIterator = IndexIterator<CommentIndex>;
@@ -232,6 +232,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto comments_size() const -> size_t { return comments_.size(); }
 
+  auto has_include_in_dumps() const -> bool { return has_include_in_dumps_; }
+
   // Returns true if any `DumpSemIRRange`s were provided.
   auto has_dump_sem_ir_ranges() const -> bool {
     return !dump_sem_ir_ranges_.empty();
@@ -333,7 +335,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Comments in the file.
   ValueStore<CommentIndex, CommentData> comments_;
 
-  // A range of tokens marked by `//@dump-semir-[begin|end]`.
+  // Whether SemIR dumping is explicitly enabled for this file. This is marked
+  // by `//@include-in-dumps`, and overrides other file-inclusion selection
+  // choices. It can be combined with ranges.
+  bool has_include_in_dumps_ = false;
+
+  // A range of tokens marked by `//@dump-sem-ir-[begin|end]`.
   //
   // The particular syntax was chosen because it can be lexed efficiently. It
   // only occurs in invalid comment strings, so shouldn't slow down lexing of

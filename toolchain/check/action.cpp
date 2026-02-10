@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst.h"
@@ -129,12 +130,13 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
     // If the type of the action argument is dependent, refine to an instruction
     // with a concrete type.
     if (OperandIsDependent(context, inst.type_id())) {
-      auto type_inst_id = context.types().GetInstId(inst.type_id());
+      auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
       inst_id = AddDependentActionSpliceImpl(
           context,
           SemIR::LocIdAndInst(
               loc_id,
-              SemIR::RefineTypeAction{.type_id = SemIR::InstType::TypeId,
+              SemIR::RefineTypeAction{.type_id = GetSingletonType(
+                                          context, SemIR::InstType::TypeInstId),
                                       .inst_id = *inst_id,
                                       .inst_type_inst_id = type_inst_id}),
           type_inst_id);

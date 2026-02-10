@@ -20,7 +20,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -45,12 +45,45 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
   CARBON_FATAL("Unexpected value {0} in class element name", element_inst);
 }
 
-// Returns whether `function_id` is an instance method, that is, whether it has
-// an implicit `self` parameter.
+// Returns whether `function_id` is an instance method: in other words, whether
+// it has an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   return function.self_param_id.has_value();
+}
+
+// For callee functions which are instance methods, returns the `self_id` (which
+// may be `None`). This may be an instance method either because it's a Carbon
+// instance method or because it's a C++ overload set that might contain an
+// instance method.
+static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
+                                    const SemIR::Callee& callee)
+    -> std::optional<SemIR::InstId> {
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      if (IsInstanceMethod(sem_ir, fn.function_id)) {
+        return fn.self_id;
+      }
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      // For now, treat all C++ overload sets as potentially containing instance
+      // methods. Overload resolution will handle the case where we actually
+      // found a static method.
+      // TODO: Consider returning `None` if there are no non-instance methods
+      // in the overload set. This would cause us to reject
+      // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
+      return overload.self_id;
+    }
+
+    case CARBON_KIND(SemIR::CalleeError _): {
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      return std::nullopt;
+    }
+  }
 }
 
 // Return whether `type_id`, the type of an associated entity, is for an
@@ -63,10 +96,8 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-// Returns the highest allowed access. For example, if this returns `Protected`
-// then only `Public` and `Protected` accesses are allowed--not `Private`.
-static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
-                                    SemIR::ConstantId name_scope_const_id)
+auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
       LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
@@ -300,50 +331,29 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
-      SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
-      if (auto facet_access_type =
-              context.types().TryGetAs<SemIR::FacetAccessType>(base_type_id)) {
-        // Move from the type of a symbolic facet value up in typish-ness to its
-        // FacetType to find the type to work with.
-        base_id = facet_access_type->facet_value_inst_id;
-        base_type_id = context.insts().Get(base_id).type_id();
-      }
-
-      if (auto facet_type =
-              context.types().TryGetAs<SemIR::FacetType>(base_type_id)) {
-        // Handles `T.F` when `T` is a non-type facet.
-        auto base_as_type = ExprAsType(context, loc_id, base_id);
-
-        auto assoc_interface = assoc_type->GetSpecificInterface();
-
-        // Witness that `T` implements the `assoc_interface`.
-        auto lookup_result = LookupImplWitness(
-            context, loc_id,
-            context.constant_values().Get(base_as_type.inst_id),
-            EvalOrAddInst(
-                context, loc_id,
-                FacetTypeFromInterface(context, assoc_interface.interface_id,
-                                       assoc_interface.specific_id)));
-        CARBON_CHECK(lookup_result.has_value());
-        auto witness_inst_id =
-            GetWitnessFromSingleImplLookupResult(context, lookup_result);
-
-        member_id = AccessMemberOfImplWitness(
-            context, loc_id, base_as_type.type_id, witness_inst_id,
-            assoc_interface.specific_id, member_id);
-      } else {
-        // Handles `x.F` if `x` is of type `class C` that extends an interface
-        // containing `F`.
-        SemIR::ConstantId constant_id =
-            context.types().GetConstantId(base_type_id);
-        member_id = PerformImplLookup(context, loc_id, constant_id, *assoc_type,
-                                      member_id);
-      }
+      auto base_type_id = context.insts().Get(base_id).type_id();
+      member_id = PerformImplLookup(context, loc_id,
+                                    context.types().GetConstantId(base_type_id),
+                                    *assoc_type, member_id);
     } else if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
       // Handles `T.F` where `T` is a type extending an interface containing
       // `F`.
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
                                     *assoc_type, member_id);
+    }
+  }
+
+  if (!context.rewrites_stack().empty()) {
+    if (auto access =
+            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(member_id)) {
+      if (auto result = context.rewrites_stack().back().Lookup(
+              context.constant_values().Get(member_id))) {
+        return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
+            context, loc_id,
+            {.type_id = access->type_id,
+             .impl_witness_access_id = member_id,
+             .value_id = result.value()});
+      }
     }
   }
 
@@ -357,11 +367,10 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   // If the member is a function, check whether it's an instance method.
-  if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
-      callee.function_id.has_value()) {
-    if (!IsInstanceMethod(context.sem_ir(), callee.function_id) ||
-        callee.self_id.has_value()) {
-      // Found a static member function or an already-bound method.
+  if (auto self_id = GetSelfIfInstanceMethod(
+          context.sem_ir(), SemIR::GetCallee(context.sem_ir(), member_id))) {
+    if (self_id->has_value()) {
+      // Found an already-bound method.
       return member_id;
     }
 
@@ -402,7 +411,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
             SemIR::ExprCategory::Value) {
       // Class element access on a value expression produces an ephemeral
       // reference if the class's value representation is a pointer to the
-      // object representation. Add a value binding in that case so that the
+      // object representation. Add a value acquisition in that case so that the
       // expression category of the result matches the expression category
       // of the base.
       access_id = ConvertToValueExpr(context, access_id);
@@ -443,13 +452,13 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   if (required) {
     return HandleAction<SemIR::AccessMemberAction>(
         context, loc_id,
-        {.type_id = SemIR::InstType::TypeId,
+        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
          .base_id = base_id,
          .name_id = name_id});
   } else {
     return HandleAction<SemIR::AccessOptionalMemberAction>(
         context, loc_id,
-        {.type_id = SemIR::InstType::TypeId,
+        {.type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
          .base_id = base_id,
          .name_id = name_id});
   }
@@ -459,21 +468,83 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId base_id, SemIR::NameId name_id,
                                 bool required) -> SemIR::InstId {
+  // Unwrap the facet value in `base_id` if possible.
+  if (auto facet_value = TryGetCanonicalFacetValue(context, base_id);
+      facet_value.has_value()) {
+    base_id = facet_value;
+  }
+
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
     if (AppendLookupScopesForConstant(context, loc_id, base_const_id,
-                                      &lookup_scopes)) {
+                                      base_const_id, &lookup_scopes)) {
       return LookupMemberNameInScope(
           context, loc_id, base_id, name_id, base_const_id, lookup_scopes,
-          /*lookup_in_type_of_base=*/false, /*required=*/required);
+          /*lookup_in_type_of_base=*/false, required);
+    }
+
+    // If the base is a facet (a symbolic name scope), perform lookup into its
+    // facet type.
+    //
+    // TODO: According to the design, this should just lookup directly in the
+    // `base_id` (as part the class case above), as the `base_id` facet should
+    // have member names that directly name members of the `impl`.
+    auto base_type_id = context.insts().Get(base_id).type_id();
+    if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+      // Name lookup into a facet requires the facet type to be complete, so
+      // that any names available through the facet type are known for the
+      // facet.
+      //
+      // TODO: This should be part of AppendLookupScopesForConstant when we do
+      // lookup on the facet directly instead of the facet type. For now it's
+      // here to provide a better diagnostic than what we get when looking for
+      // scopes directly on the facet type.
+      if (!RequireCompleteType(
+              context, base_type_id, SemIR::LocId(base_id), [&] {
+                CARBON_DIAGNOSTIC(
+                    IncompleteTypeInMemberAccessOfFacet, Error,
+                    "member access into facet of incomplete type {0}",
+                    SemIR::TypeId);
+                return context.emitter().Build(
+                    base_id, IncompleteTypeInMemberAccessOfFacet, base_type_id);
+              })) {
+        // If the scope is invalid in AppendLookupScopesForConstant we still
+        // return true and proceed with lookup, just ignoring that scope. Match
+        // behaviour here for when this moves into
+        // AppendLookupScopesForConstant.
+        base_type_id = SemIR::ErrorInst::TypeId;
+      }
+
+      auto base_type_const_id = context.types().GetConstantId(base_type_id);
+      llvm::SmallVector<LookupScope> lookup_scopes;
+      if (AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
+                                        base_const_id, &lookup_scopes)) {
+        // The name scope constant needs to be a type, but is currently a
+        // FacetType, so perform `as type` to get a FacetAccessType.
+        auto base_as_type = ExprAsType(context, loc_id, base_id);
+        base_type_const_id =
+            context.types().GetConstantId(base_as_type.type_id);
+        return LookupMemberNameInScope(context, loc_id, base_id, name_id,
+                                       base_type_const_id, lookup_scopes,
+                                       /*lookup_in_type_of_base=*/false,
+                                       required);
+      }
     }
   }
 
-  // If the base isn't a scope, it must have a complete type.
+  // Otherwise, handle `x.F` by performing lookup into the type of `x` (where
+  // `x` is `base_id`).
   auto base_type_id = context.insts().Get(base_id).type_id();
+
+  // Require a complete type explicitly. Materializing a temporary will too, but
+  // we can produce a better diagnostic here with context about what operation
+  // is being done (member access) that requires the complete type.
+  //
+  // TODO: ConvertToValueOrRefExpr could take context about the operation being
+  // done to give a better error than "invalid use of" an incomplete type?
   if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "member access into object of incomplete type {0}",
@@ -487,67 +558,77 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
-  auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
-  // Find the scope corresponding to the base type.
-  llvm::SmallVector<LookupScope> lookup_scopes;
-  if (!AppendLookupScopesForConstant(context, loc_id, base_type_const_id,
-                                     &lookup_scopes)) {
-    // The base type is not a name scope. Try some fallback options.
-    if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
-            context.constant_values().GetInstId(base_type_const_id))) {
-      // TODO: Do we need to optimize this with a lookup table for O(1)?
-      for (auto [i, field] : llvm::enumerate(
-               context.struct_type_fields().Get(struct_type->fields_id))) {
-        if (name_id == field.name_id) {
-          // TODO: Model this as producing a lookup result, and do instance
-          // binding separately. Perhaps a struct type should be a name scope.
-          return GetOrAddInst<SemIR::StructAccess>(
-              context, loc_id,
-              {.type_id =
-                   context.types().GetTypeIdForTypeInstId(field.type_inst_id),
-               .struct_id = base_id,
-               .index = SemIR::ElementIndex(i)});
-        }
-      }
-      if (required) {
-        CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                          "type {0} does not have a member `{1}`", TypeOfInstId,
-                          SemIR::NameId);
-        context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
-                               name_id);
-        return SemIR::ErrorInst::InstId;
-      } else {
-        return SemIR::InstId::None;
-      }
-    }
+  auto lookup_const_id = context.types().GetConstantId(base_type_id);
 
-    if (base_type_id != SemIR::ErrorInst::TypeId) {
-      CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
-                        "type {0} does not support qualified expressions",
-                        TypeOfInstId);
-      context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
-    }
-    return SemIR::ErrorInst::InstId;
+  // TODO: If the type is a facet, we look through it into the facet's type (a
+  // FacetType) for names. According to the design, we shouldn't need to do
+  // this, as the facet should have member names that directly name members of
+  // the `impl`.
+  auto base_type_as_facet = GetCanonicalFacetOrTypeValue(
+      context, context.types().GetTypeInstId(base_type_id));
+  auto base_type_facet_type_id =
+      context.insts().Get(base_type_as_facet).type_id();
+  if (context.types().Is<SemIR::FacetType>(base_type_facet_type_id)) {
+    lookup_const_id = context.types().GetConstantId(base_type_facet_type_id);
   }
 
   // Perform lookup into the base type.
-  auto member_id = LookupMemberNameInScope(
-      context, loc_id, base_id, name_id, base_type_const_id, lookup_scopes,
-      /*lookup_in_type_of_base=*/true, /*required=*/required);
+  llvm::SmallVector<LookupScope> lookup_scopes;
+  if (AppendLookupScopesForConstant(
+          context, loc_id, lookup_const_id,
+          // The `self_type_const_id` should be the type of `base_id` even if
+          // it's a facet.
+          //
+          // TODO: This can be replaced with `lookup_const_id` once we stop
+          // having to look through the facet at its type for the scope.
+          context.types().GetConstantId(base_type_id), &lookup_scopes)) {
+    auto member_id = LookupMemberNameInScope(
+        context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
+        /*lookup_in_type_of_base=*/true, required);
 
-  // For name lookup into a facet, never perform instance binding.
-  // TODO: According to the design, this should be a "lookup in base" lookup,
-  // not a "lookup in type of base" lookup, and the facet itself should have
-  // member names that directly name members of the `impl`.
-  if (context.types().IsFacetType(base_type_id)) {
+    // Perform instance binding if we found an instance member.
+    member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
+
     return member_id;
   }
 
-  // Perform instance binding if we found an instance member.
-  member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
+  // The base type is not a name scope. Try some fallback options.
+  if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
+          context.types().GetTypeInstId(base_type_id))) {
+    // TODO: Do we need to optimize this with a lookup table for O(1)?
+    for (auto [i, field] : llvm::enumerate(
+             context.struct_type_fields().Get(struct_type->fields_id))) {
+      if (name_id == field.name_id) {
+        // TODO: Model this as producing a lookup result, and do instance
+        // binding separately. Perhaps a struct type should be a name scope.
+        return GetOrAddInst<SemIR::StructAccess>(
+            context, loc_id,
+            {.type_id =
+                 context.types().GetTypeIdForTypeInstId(field.type_inst_id),
+             .struct_id = base_id,
+             .index = SemIR::ElementIndex(i)});
+      }
+    }
+    if (required) {
+      CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
+                        "type {0} does not have a member `{1}`", TypeOfInstId,
+                        SemIR::NameId);
+      context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
+                             name_id);
+      return SemIR::ErrorInst::InstId;
+    } else {
+      return SemIR::InstId::None;
+    }
+  }
 
-  return member_id;
+  if (base_type_id != SemIR::ErrorInst::TypeId) {
+    CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
+                      "type {0} does not support qualified expressions",
+                      TypeOfInstId);
+    context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
+  }
+  return SemIR::ErrorInst::InstId;
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
@@ -579,9 +660,9 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   }
   // That facet value has both the self type we need below and the witness
   // we are going to use to look up the value of the associated member.
-  auto self_type_const_id = TryEvalInst(
-      context, SemIR::FacetAccessType{.type_id = SemIR::TypeType::TypeId,
-                                      .facet_value_inst_id = facet_inst_id});
+  auto self_type_const_id = TryEvalInst<SemIR::FacetAccessType>(
+      context, {.type_id = SemIR::TypeType::TypeId,
+                .facet_value_inst_id = facet_inst_id});
   // TODO: We should be able to lookup constant associated values from runtime
   // facet values by using their FacetType only, but we assume constant values
   // for impl lookup at the moment.
@@ -592,6 +673,11 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(self_type_const_id);
 
+  // TODO: If `ConvertToValueOfType` returned a `FacetValue`, we already got a
+  // witness for this interface there. We don't need to do both a
+  // ConvertToValueOfType and LookupImplWitness, that is redundant. Since we
+  // want to do LookupImplWitness unconditionally (eg. if `base_id` has exactly
+  // the right FacetType already), can we drop the ConvertToValueOfType step?
   auto lookup_result = LookupImplWitness(
       context, loc_id, context.constant_values().Get(facet_inst_id),
       EvalOrAddInst(context, loc_id,
@@ -681,9 +767,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
                                     assoc_type->GetSpecificInterface());
     }
-  } else if (context.insts().Is<SemIR::TupleType>(
-                 context.constant_values().GetInstId(base_type_const_id))) {
-    return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
   }
 
   // Perform instance binding if we found an instance member.
@@ -693,6 +776,13 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   // because the base expression is not used for anything.
   if (member_id == member_expr_id &&
       member.type_id() != SemIR::ErrorInst::TypeId) {
+    // As a special case, an integer-valued expression can be used as a member
+    // name when indexing a tuple.
+    if (context.insts().Is<SemIR::TupleType>(
+            context.constant_values().GetInstId(base_type_const_id))) {
+      return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
+    }
+
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",

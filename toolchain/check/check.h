@@ -10,7 +10,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/diagnostic_emitter.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -27,10 +27,9 @@ struct Unit {
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
-
-  // Storage for the unit's Clang AST. The unique_ptr should start empty, and
-  // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* cpp_ast;
+  llvm::LLVMContext* llvm_context;
+  // The total number of files.
+  int total_ir_count;
 };
 
 struct CheckParseTreesOptions {
@@ -39,11 +38,6 @@ struct CheckParseTreesOptions {
 
   // Whether to import the prelude.
   bool prelude_import = false;
-
-  // Whether to generate standard `impl`s for types, such as `Core.Destroy`.
-  // This only controls generation of the `impl`; code which expects the `impl`
-  // is expected to fail.
-  bool gen_implicit_type_impls = true;
 
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
@@ -60,6 +54,9 @@ struct CheckParseTreesOptions {
   // If set, SemIR will be dumped to this.
   llvm::raw_ostream* dump_stream = nullptr;
 
+  // If set, C++ AST will be dumped to this.
+  llvm::raw_ostream* dump_cpp_ast_stream = nullptr;
+
   // When dumping textual SemIR (or printing it to for verbose output), whether
   // to use ranges.
   enum class DumpSemIRRanges : int8_t {
@@ -74,6 +71,10 @@ struct CheckParseTreesOptions {
 
   // When dumping raw SemIR, whether to include builtins.
   bool dump_raw_sem_ir_builtins = false;
+
+  // If not empty, a raw SemIR dump should be written to this path in the event
+  // of a crash.
+  llvm::StringRef sem_ir_crash_dump;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

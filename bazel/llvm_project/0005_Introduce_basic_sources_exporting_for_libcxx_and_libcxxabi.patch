@@ -1,0 +1,96 @@
+Commit ID: e4ff7299fe7e35e70ba79f5d8e2c58658cfba678
+Change ID: mstnwoqruyypnoouksnyqssllrsozpos
+Bookmarks: bz-libcxx bz-libcxx@git bz-libcxx@origin
+Author   : Chandler Carruth <chandlerc@gmail.com> (2025-09-25 22:55:26)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2025-11-22 09:23:52)
+
+    Introduce basic sources exporting for libcxx and libcxxabi
+
+    This exports the source files directly so that they can be used to build
+    a libcxx runtime library on demand.
+
+diff --git a/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel
+new file mode 100644
+index 0000000000..a81a64c649
+--- /dev/null
++++ b/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel
+@@ -0,0 +1,49 @@
++# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
++# See https://llvm.org/LICENSE.txt for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++licenses(["notice"])
++
++package(
++    default_visibility = ["//visibility:public"],
++)
++
++exports_files(["include/__config_site.in"])
++
++exports_files(["vendor/llvm/default_assertion_handler.in"])
++
++filegroup(
++    name = "libcxx_hdrs",
++    srcs = glob(
++        [
++            # Top level includes and those in `experimental` and `ext` sometimes
++            # have no extension.
++            "include/*",
++            "include/experimental/*",
++            "include/ext/*",
++
++            # Implementation detail headers all use `.h` extensions
++            "include/**/*.h",
++        ],
++        exclude = [
++            # Omit CMake and CMake-configured files that get caught by the
++            # extension-less patterns.
++            "**/*.in",
++            "**/CMakeLists.txt",
++
++            # Omit C++03 compatibility headers as current users don't need them.
++            "include/__cxx03/**",
++        ],
++    ),
++)
++
++filegroup(
++    name = "libcxx_srcs",
++    srcs = glob(
++        [
++            "src/**/*.cpp",
++            "src/**/*.h",
++            "src/**/*.ipp",
++        ],
++    ),
++)
+diff --git a/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
+new file mode 100644
+index 0000000000..cf491e4e46
+--- /dev/null
++++ b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
+@@ -0,0 +1,24 @@
++# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
++# See https://llvm.org/LICENSE.txt for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++licenses(["notice"])
++
++package(
++    default_visibility = ["//visibility:public"],
++)
++
++filegroup(
++    name = "libcxxabi_hdrs",
++    srcs = glob(["include/*.h"]),
++)
++
++filegroup(
++    name = "libcxxabi_srcs",
++    srcs = glob([
++        "src/**/*.cpp",
++        "src/**/*.def",
++        "src/**/*.inc",
++        "src/**/*.h",
++    ]),
++)

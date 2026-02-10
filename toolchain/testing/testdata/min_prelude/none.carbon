@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import --no-gen-implicit-type-impls --exclude-dump-file-prefix=min_prelude/
+// EXTRA-ARGS: --no-prelude-import --exclude-dump-file-prefix=min_prelude/
 
 // --- min_prelude/none.carbon
 

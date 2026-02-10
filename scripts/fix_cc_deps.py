@@ -70,7 +70,8 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
 IGNORE_SOURCE_FILE_REGEX = re.compile(
     r"^(third_party/clangd.*|common/version.*\.cpp"
     r"|.*_autogen_manifest\.cpp"
-    r"|toolchain/base/llvm_tools.def)$"
+    r"|toolchain/base/llvm_tools.def"
+    r"|toolchain/base/runtime_sources.h)$"
 )
 
 
@@ -159,7 +160,10 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> dict[str, Rule]:
             elif rule_class == "genrule":
                 if list_name == "outs":
                     outs = get_bazel_list(list_child, True)
-            elif rule_class == "tree_sitter_cc_library":
+            elif rule_class in ("tree_sitter_cc_library", "cc_library_wrapper"):
+                # Note that `cc_library_wrapper` isn't a general rule, it is a
+                # specialized rule from inside LLVM wrapping some of its
+                # dependencies and injecting configuration macro defines.
                 continue
             else:
                 exit(f"unexpected rule type: {rule_class}")

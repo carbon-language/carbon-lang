@@ -38,7 +38,7 @@ class Reachable {
     return var;
   }
 
-  fn AddLevel[addr self: Self*](terrain: Terrain, level: i32) {
+  fn AddLevel[ref self: Self](terrain: Terrain, level: i32) {
     let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     for (y: i32 in Core.Range(43)) {
       for (x: i32 in Core.Range(43)) {
@@ -51,11 +51,11 @@ class Reachable {
             if (adj_x >= 0 and adj_x < 43 and
                 adj_y >= 0 and adj_y < 43 and
                 terrain.height[adj_x][adj_y] == level - 1) {
-              reach = reach | self->trailheads[adj_x][adj_y];
+              reach = reach | self.trailheads[adj_x][adj_y];
             }
             ++i;
           }
-          self->trailheads[x][y] = reach;
+          self.trailheads[x][y] = reach;
         }
       }
     }

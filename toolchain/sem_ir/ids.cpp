@@ -15,6 +15,10 @@ namespace Carbon::SemIR {
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
+  } else if (*this == InitTombstone) {
+    out << Label << "(InitTombstone)";
+  } else if (*this == ImplWitnessTablePlaceholder) {
+    out << Label << "(ImplWitnessTablePlaceholder)";
   } else {
     IdBase::Print(out);
   }
@@ -42,12 +46,30 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
+auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
   if (has_value()) {
     out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
     out << "<none>";
+  }
+}
+
+auto ImportIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == ApiForImpl) {
+    out << Label << "(ApiForImpl)";
+  } else if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
   }
 }
 
@@ -78,6 +100,54 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+static auto FloatKindToStringLiteral(FloatKind kind) -> llvm::StringLiteral {
+  switch (kind.index) {
+    case FloatKind::None.index:
+      return "<none>";
+    case FloatKind::Binary16.index:
+      return "f16";
+    case FloatKind::Binary32.index:
+      return "f32";
+    case FloatKind::Binary64.index:
+      return "f64";
+    case FloatKind::Binary128.index:
+      return "f128";
+    case FloatKind::BFloat16.index:
+      return "f16_brain";
+    case FloatKind::X87Float80.index:
+      return "f80_x87";
+    case FloatKind::PPCFloat128.index:
+      return "f128_ppc";
+    default:
+      return "<invalid>";
+  }
+}
+
+auto FloatKind::Print(llvm::raw_ostream& out) const -> void {
+  out << FloatKindToStringLiteral(*this);
+}
+
+auto FloatKind::Semantics() const -> const llvm::fltSemantics& {
+  switch (this->index) {
+    case Binary16.index:
+      return llvm::APFloat::IEEEhalf();
+    case Binary32.index:
+      return llvm::APFloat::IEEEsingle();
+    case Binary64.index:
+      return llvm::APFloat::IEEEdouble();
+    case Binary128.index:
+      return llvm::APFloat::IEEEquad();
+    case BFloat16.index:
+      return llvm::APFloat::BFloat();
+    case X87Float80.index:
+      return llvm::APFloat::x87DoubleExtended();
+    case PPCFloat128.index:
+      return llvm::APFloat::PPCDoubleDouble();
+    default:
+      CARBON_FATAL("Unexpected float kind {0}", *this);
+  }
+}
+
 // Double-check the special value mapping and constexpr evaluation.
 static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
 
@@ -96,6 +166,8 @@ auto NameId::ForPackageName(PackageNameId id) -> NameId {
     return ForIdentifier(identifier_id);
   } else if (id == PackageNameId::Core) {
     return NameId::Core;
+  } else if (id == PackageNameId::Cpp) {
+    return NameId::Cpp;
   } else if (!id.has_value()) {
     return NameId::None;
   } else {
@@ -139,12 +211,26 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto StructTypeFieldsId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto CustomLayoutId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
   if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::TypeId) {
-    out << "AutoType";
   } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {
@@ -169,6 +255,14 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "Default";
   } else if (*this == Error) {
     out << Label << "<error>";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto RequireImplsBlockId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
   } else {
     IdBase::Print(out);
   }

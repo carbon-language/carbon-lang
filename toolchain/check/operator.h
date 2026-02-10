@@ -6,15 +6,16 @@
 #define CARBON_TOOLCHAIN_CHECK_OPERATOR_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
 struct Operator {
-  llvm::StringLiteral interface_name;
+  CoreIdentifier interface_name;
   llvm::ArrayRef<SemIR::InstId> interface_args_ref = {};
-  llvm::StringLiteral op_name = "Op";
+  CoreIdentifier op_name = CoreIdentifier::Op;
 };
 
 // Checks and builds SemIR for a unary operator expression. For example,

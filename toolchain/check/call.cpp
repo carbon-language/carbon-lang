@@ -10,7 +10,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/cpp_thunk.h"
+#include "toolchain/check/cpp/call.h"
+#include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -35,6 +36,7 @@ enum class EntityKind : uint8_t {
   Function = 0,
   GenericClass = 1,
   GenericInterface = 2,
+  GenericNamedConstraint = 3,
 };
 }  // namespace
 
@@ -61,15 +63,16 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
-                      "{1:=0:function|=1:generic class|=2:generic interface}"
+                      "{1:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
                       " expecting {2} argument{2:s}",
                       Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
                       Diagnostics::IntAsSelect);
-    CARBON_DIAGNOSTIC(
-        InCallToEntity, Note,
-        "calling {0:=0:function|=1:generic class|=2:generic interface}"
-        " declared here",
-        Diagnostics::IntAsSelect);
+    CARBON_DIAGNOSTIC(InCallToEntity, Note,
+                      "calling {0:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
+                      " declared here",
+                      Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), params.size())
@@ -115,24 +118,47 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                                          .specific_id = *callee_specific_id});
 }
 
-// Performs a call where the callee is the name of a generic interface, such as
-// `AddWith(i32)`.
-static auto PerformCallToGenericInterface(
-    Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::InterfaceId interface_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.interfaces().Get(interface_id);
+}
+
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::NamedConstraintId named_constraint_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.named_constraints().Get(named_constraint_id);
+}
+
+// Performs a call where the callee is the name of a generic interface or named
+// constraint, such as `AddWith(i32)`.
+template <typename IdT>
+  requires SameAsOneOf<IdT, SemIR::InterfaceId, SemIR::NamedConstraintId>
+static auto PerformCallToGenericInterfaceOrNamedConstaint(
+    Context& context, SemIR::LocId loc_id, IdT id,
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  const auto& interface = context.interfaces().Get(interface_id);
+  const auto& entity = EntityFromInterfaceOrNamedConstraint(context, id);
+
+  auto entity_kind_for_diagnostic = EntityKind::GenericInterface;
+  if constexpr (std::same_as<IdT, SemIR::NamedConstraintId>) {
+    entity_kind_for_diagnostic = EntityKind::GenericNamedConstraint;
+  }
   auto callee_specific_id =
-      ResolveCalleeInCall(context, loc_id, interface,
-                          EntityKind::GenericInterface, enclosing_specific_id,
+      ResolveCalleeInCall(context, loc_id, entity, entity_kind_for_diagnostic,
+                          enclosing_specific_id,
                           /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
-  return GetOrAddInst(
-      context, loc_id,
-      FacetTypeFromInterface(context, interface_id, *callee_specific_id));
+  std::optional<SemIR::FacetType> facet_type;
+  if constexpr (std::same_as<IdT, SemIR::InterfaceId>) {
+    facet_type = FacetTypeFromInterface(context, id, *callee_specific_id);
+  } else {
+    facet_type = FacetTypeFromNamedConstraint(context, id, *callee_specific_id);
+  }
+  return GetOrAddInst(context, loc_id, *facet_type);
 }
 
 // Builds an appropriate specific function for the callee, also handling
@@ -185,27 +211,11 @@ static auto BuildCalleeSpecificFunction(
   return callee_id;
 }
 
-// Returns the return type, with a scoped annotation for any diagnostics.
-static auto CheckCalleeFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                                          SemIR::FunctionId callee_function_id,
-                                          SemIR::SpecificId callee_specific_id)
-    -> SemIR::ReturnTypeInfo {
-  auto& function = context.functions().Get(callee_function_id);
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
-                          "return type declared here");
-        builder.Note(function.return_slot_pattern_id, IncompleteReturnTypeHere);
-      });
-  return CheckFunctionReturnType(context, loc_id, function, callee_specific_id);
-}
-
-// Performs a call where the callee is a function.
-static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId callee_id,
-                                  const SemIR::CalleeFunction& callee_function,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId {
+auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstId callee_id,
+                           const SemIR::CalleeFunction& callee_function,
+                           llvm::ArrayRef<SemIR::InstId> arg_ids,
+                           bool is_operator_syntax) -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
@@ -222,40 +232,47 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                                             *callee_specific_id);
   }
 
-  // If there is a return slot, build storage for the result.
-  SemIR::ReturnTypeInfo return_info = CheckCalleeFunctionReturnType(
-      context, loc_id, callee_function.function_id, *callee_specific_id);
-  SemIR::InstId return_slot_arg_id = SemIR::InstId::None;
-  switch (return_info.init_repr.kind) {
-    case SemIR::InitRepr::InPlace:
-      // Tentatively put storage for a temporary in the function's return slot.
-      // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-          context, loc_id, {.type_id = return_info.type_id});
-      break;
-    case SemIR::InitRepr::None:
-      // For functions with an implicit return type, the return type is the
-      // empty tuple type.
-      if (!return_info.type_id.has_value()) {
-        return_info.type_id = GetTupleType(context, {});
-      }
-      break;
-    case SemIR::InitRepr::ByCopy:
-      break;
-    case SemIR::InitRepr::Incomplete:
-      // Don't form an initializing expression with an incomplete type.
-      // CheckFunctionReturnType will have diagnosed this for us if needed.
-      return_info.type_id = SemIR::ErrorInst::TypeId;
-      break;
+  auto& callee = context.functions().Get(callee_function.function_id);
+  auto return_type_id =
+      callee.GetDeclaredReturnType(context.sem_ir(), *callee_specific_id);
+  if (!return_type_id.has_value()) {
+    return_type_id = GetTupleType(context, {});
   }
 
-  auto& callee = context.functions().Get(callee_function.function_id);
-
+  llvm::SmallVector<SemIR::InstId, 1> return_arg_ids;
+  for (auto return_pattern_id :
+       context.inst_blocks().GetOrEmpty(callee.return_patterns_id)) {
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
+                            "return type declared here");
+          builder.Note(return_pattern_id, IncompleteReturnTypeHere);
+        });
+    auto arg_type_id = CheckFunctionReturnPatternType(
+        context, loc_id, return_pattern_id, *callee_specific_id);
+    if (arg_type_id == SemIR::ErrorInst::TypeId) {
+      return_type_id = SemIR::ErrorInst::TypeId;
+    }
+    switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
+      case SemIR::InitRepr::InPlace:
+      case SemIR::InitRepr::Dependent:
+        // Tentatively use storage for a temporary as the return argument.
+        // This will be replaced if necessary when we perform initialization.
+        return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
+            context, loc_id, {.type_id = arg_type_id}));
+        break;
+      case SemIR::InitRepr::None:
+      case SemIR::InitRepr::ByCopy:
+      case SemIR::InitRepr::Incomplete:
+      case SemIR::InitRepr::Abstract:
+        return_arg_ids.push_back(SemIR::InstId::None);
+        break;
+    }
+  }
   // Convert the arguments to match the parameters.
-  auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_slot_arg_id, callee, *callee_specific_id);
-
+  auto converted_args_id = ConvertCallArgs(
+      context, loc_id, callee_function.self_id, arg_ids, return_arg_ids, callee,
+      *callee_specific_id, is_operator_syntax);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
@@ -274,8 +291,6 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
-      // This recurses back into `PerformCall`. However, we never form a C++
-      // thunk to a C++ thunk, so we only recurse once.
       return PerformCppThunkCall(context, loc_id, callee_function.function_id,
                                  context.inst_blocks().Get(converted_args_id),
                                  callee.cpp_thunk_decl_id());
@@ -284,44 +299,71 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::Function::SpecialFunctionKind::None:
     case SemIR::Function::SpecialFunctionKind::Builtin: {
       return GetOrAddInst<SemIR::Call>(context, loc_id,
-                                       {.type_id = return_info.type_id,
+                                       {.type_id = return_type_id,
                                         .callee_id = callee_id,
                                         .args_id = converted_args_id});
     }
   }
 }
 
-auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Try treating the callee as a function first.
-  auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-  if (callee_function.is_error) {
-    return SemIR::ErrorInst::InstId;
-  }
-  if (callee_function.function_id.has_value()) {
-    return PerformCallToFunction(context, loc_id, callee_id, callee_function,
-                                 arg_ids);
-  }
-
-  // Callee isn't a function, so try treating it as a generic type.
+// Performs a call where the callee is a generic type. If it's not a generic
+// type, produces a diagnostic.
+static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId callee_id,
+                                     llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
+    case CARBON_KIND(SemIR::CppTemplateNameType template_name): {
+      return PerformCallToCppTemplateName(context, loc_id,
+                                          template_name.decl_id, arg_ids);
+    }
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
       return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
                                        generic_class.enclosing_specific_id,
                                        arg_ids);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      return PerformCallToGenericInterface(
+      return PerformCallToGenericInterfaceOrNamedConstaint(
           context, loc_id, generic_interface.interface_id,
           generic_interface.enclosing_specific_id, arg_ids);
+    }
+    case CARBON_KIND(SemIR::GenericNamedConstraintType generic_constraint): {
+      return PerformCallToGenericInterfaceOrNamedConstaint(
+          context, loc_id, generic_constraint.named_constraint_id,
+          generic_constraint.enclosing_specific_id, arg_ids);
     }
     default: {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "value of type {0} is not callable", TypeOfInstId);
       context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
       return SemIR::ErrorInst::InstId;
+    }
+  }
+}
+
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_operator_syntax)
+    -> SemIR::InstId {
+  // Try treating the callee as a function first.
+  auto callee = GetCallee(context.sem_ir(), callee_id);
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeError _): {
+      return SemIR::ErrorInst::InstId;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
+                                   is_operator_syntax);
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
+    }
+
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      return PerformCallToCppFunction(
+          context, loc_id, overload.cpp_overload_set_id, overload.self_id,
+          arg_ids, is_operator_syntax);
     }
   }
 }

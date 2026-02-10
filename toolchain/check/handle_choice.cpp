@@ -122,7 +122,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetInstId(self_type_id));
+      context.types().GetTypeInstId(self_type_id));
 
   // Mark the beginning of the choice body.
   context.node_stack().Push(node_id, class_decl.class_id);
@@ -221,7 +221,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
   auto bind_name_id = AddInst(context, binding.node_id,
-                              SemIR::BindName{
+                              SemIR::ValueBinding{
                                   .type_id = choice_info.self_type_id,
                                   .entity_name_id = entity_name_id,
                                   .value_id = self_value_id,
@@ -273,7 +273,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   llvm::SmallVector<SemIR::StructTypeField, 1> struct_type_fields;
   struct_type_fields.push_back({
       .name_id = SemIR::NameId::ChoiceDiscriminant,
-      .type_inst_id = context.types().GetInstId(discriminant_type_id),
+      .type_inst_id = context.types().GetTypeInstId(discriminant_type_id),
   });
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
@@ -281,8 +281,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
       context, node_id,
       SemIR::CompleteTypeWitness{
           .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-          .object_repr_type_inst_id =
-              context.types().GetInstId(GetStructType(context, fields_id))});
+          .object_repr_type_inst_id = context.types().GetTypeInstId(
+              GetStructType(context, fields_id))});
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = choice_witness_id;
 
@@ -291,6 +291,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
+    // TODO: This requires the class to be complete, but we've not yet called
+    // `FinishGenericDefinition`, so we can't use it as a complete type yet. But
+    // this also potentially adds things to the generic definition, so we can't
+    // call `FinsihGenericDefinition` before this call, either.
     MakeLetBinding(context,
                    ChoiceInfo{.self_type_id = class_info.self_type_id,
                               .name_scope_id = class_info.scope_id,

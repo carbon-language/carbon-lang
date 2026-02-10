@@ -46,26 +46,34 @@ TEST(SemIRTest, Yaml) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto inst_block_id = Yaml::Scalar(MatchesRegex(R"(inst_block(\d+|_empty))"));
-  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\d+)"));
+  auto inst_block_id =
+      Yaml::Scalar(MatchesRegex(R"(inst_block([0-9A-F]+|_empty))"));
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst(\w+|\+\d+)\))"));
-  auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\(\w+\))"));
+      Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst[0-9A-F]+\))"));
   auto type_id =
-      Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst\d+)\))"));
+      Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst[0-9A-F]+)\))"));
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
+      Pair("names", Yaml::Mapping(SizeIs(2))),
       Pair("import_irs", Yaml::Mapping(SizeIs(2))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
+      Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
+      Pair("cpp_global_vars", Yaml::Mapping(SizeIs(0))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
+      Pair("interfaces", Yaml::Mapping(SizeIs(0))),
+      Pair("associated_constants", Yaml::Mapping(SizeIs(0))),
+      Pair("impls", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
       Pair("specifics", Yaml::Mapping(SizeIs(0))),
+      Pair("specific_interfaces", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
+      Pair("facet_types", Yaml::Mapping(SizeIs(0))),
       Pair("insts", Yaml::Mapping(AllOf(
                         Each(Key(inst_id)),
                         // kind is required, other parts are optional.
@@ -82,7 +90,7 @@ TEST(SemIRTest, Yaml) {
                         Contains(Pair(_, Yaml::Mapping(ElementsAre(
 
                                              Pair("kind", "FunctionDecl"),
-                                             Pair("arg0", "function0"),
+                                             Pair("arg0", "function60000000"),
                                              Pair("arg1", "inst_block_empty"),
                                              Pair("type", type_id)))))))),
       Pair("constant_values",
@@ -90,22 +98,36 @@ TEST(SemIRTest, Yaml) {
                Pair("values",
                     Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
                Pair("symbolic_constants", Yaml::Mapping(SizeIs(0)))))),
-      Pair("inst_blocks",
+      Pair(
+          "inst_blocks",
+          Yaml::Mapping(ElementsAre(
+              Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
+              Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("imports", Yaml::Mapping(IsEmpty())),
+              Pair("global_init", Yaml::Mapping(IsEmpty())),
+              Pair("inst_block60000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000008",
+                   Yaml::Mapping(Each(Pair(_, inst_id))))))),
+      Pair("value_stores",
            Yaml::Mapping(ElementsAre(
-               Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
-               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("imports", Yaml::Mapping(IsEmpty())),
-               Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("inst_block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block5", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block6", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block7", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block8", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+               Pair("shared_values",
+                    Yaml::Mapping(ElementsAre(
+                        Pair("ints", Yaml::Mapping(SizeIs(0))),
+                        Pair("reals", Yaml::Mapping(SizeIs(0))),
+                        Pair("floats", Yaml::Mapping(SizeIs(0))),
+                        Pair("identifiers", Yaml::Mapping(SizeIs(2))),
+                        Pair("strings", Yaml::Mapping(SizeIs(0)))))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), IsYaml(root));
+  std::string print_text = print_stream.TakeStr();
+  EXPECT_THAT(Yaml::Value::FromText(print_text), IsYaml(root))
+      << "Actual text:\n"
+      << print_text;
 }
 
 }  // namespace

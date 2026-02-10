@@ -40,7 +40,7 @@ struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
-  FunctionDefinitionId definition_id = NodeId::None;
+  AnyFunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.
   DeferredDefinitionIndex next_definition_index = DeferredDefinitionIndex::None;
 };
@@ -196,7 +196,7 @@ class Tree : public Printable<Tree> {
 
   // The in-memory representation of data used for a particular node in the
   // tree.
-  class NodeImpl {
+  class NodeImpl : public Printable<NodeImpl> {
    public:
     explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
         : kind_(kind), has_error_(has_error), token_index_(token.index) {
@@ -210,10 +210,14 @@ class Tree : public Printable<Tree> {
       return Lex::TokenIndex(token_index_);
     }
 
+    auto Print(llvm::raw_ostream& output) const -> void {
+      output << "{kind: " << kind_ << ", has_error: " << has_error_
+             << ", token_index: " << token_index_ << "}\n";
+    }
+
    private:
-    // The kind of this node. Note that this is only a single byte.
+    // The kind of this node.
     NodeKind kind_;
-    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
     // Whether this node is or contains a parse error.
     //
@@ -234,7 +238,7 @@ class Tree : public Printable<Tree> {
     unsigned token_index_ : Lex::TokenIndex::Bits;
   };
 
-  static_assert(sizeof(NodeImpl) == 4,
+  static_assert(sizeof(NodeImpl) == 8,
                 "Unexpected size of node implementation!");
 
   // Sets the kind of a node. This is intended to allow putting the tree into a

@@ -28,6 +28,7 @@ class FileTestBase {
  public:
   // Provided for child class convenience.
   using LineNumberReplacement = FileTestAutoupdater::LineNumberReplacement;
+  using CheckLineArray = FileTestAutoupdater::CheckLineArray;
 
   // The result of Run(), used to detect errors. Failing test files should be
   // named with a `fail_` prefix to indicate an expectation of failure.
@@ -84,8 +85,8 @@ class FileTestBase {
   }
 
   // Returns a regex to match the default file when a line may not be present.
-  // May return nullptr if unused. If GetLineNumberReplacements returns an entry
-  // with has_file=false, this is required.
+  // May return `std::nullopt` if unused. If `GetLineNumberReplacements` returns
+  // an entry with `has_file=false`, this is required.
   virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
       const -> std::optional<RE2> {
     return std::nullopt;
@@ -100,6 +101,11 @@ class FileTestBase {
   // Optionally allows children to provide extra replacements for autoupdate.
   virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) const
       -> void {}
+
+  // Optionally allows children to perform tweaks on check lines before
+  // they are merged into the output file.
+  virtual auto FinalizeCheckLines(CheckLineArray& /*check_lines*/,
+                                  bool /*is_stderr*/) const -> void {}
 
   // Whether to allow running the test in parallel, particularly for autoupdate.
   // This can be overridden to force some tests to be run serially. At any given

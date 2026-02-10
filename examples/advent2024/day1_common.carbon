@@ -6,18 +6,22 @@
 
 library "day1_common";
 
+import Core library "range";
+
 import library "io_utils";
 
 // Read a sequence of lines each containing a pair of numbers into two arrays.
 // Returns the number of lines read.
-fn ReadInputs(ap: array(i32, 1000)*, bp: array(i32, 1000)*) -> i32 {
-  var n: i32 = 0;
-  var a: i32;
-  var b: i32;
-  while (n < 1000 and ReadInt(&a) and SkipSpaces() and ReadInt(&b) and SkipNewline()) {
-    (*ap)[n] = a;
-    (*bp)[n] = b;
-    ++n;
+fn ReadInputs[N:! Core.IntLiteral()](ref a: array(i32, N), ref b: array(i32, N)) -> i32 {
+  for (i: i32 in Core.Range(N)) {
+    var av: i32;
+    var bv: i32;
+    if (ReadInt(ref av) and SkipSpaces() and ReadInt(ref bv) and SkipNewline()) {
+      a[i] = av;
+      b[i] = bv;
+    } else {
+      return i;
+    }
   }
-  return n;
+  return N;
 }

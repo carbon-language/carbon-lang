@@ -10,6 +10,10 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) {
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_NAME_STRING)
+};
+
 // Verify that the constant value's type is `TypeType` (or an error).
 static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
@@ -25,6 +29,20 @@ static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
 auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
     -> TypeId {
   CheckTypeOfConstantIsTypeType(*file_, constant_id);
+  return TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeId {
+  if (constant_id == SemIR::ErrorInst::ConstantId) {
+    return TypeId::None;
+  }
+  auto type_id = file_->insts()
+                     .Get(file_->constant_values().GetInstId(constant_id))
+                     .type_id();
+  if (type_id != SemIR::TypeType::TypeId) {
+    return TypeId::None;
+  }
   return TypeId::ForTypeConstant(constant_id);
 }
 
@@ -45,14 +63,14 @@ auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {
   return TypeInstId::UnsafeMake(inst_id);
 }
 
-auto TypeStore::GetInstId(TypeId type_id) const -> TypeInstId {
+auto TypeStore::GetTypeInstId(TypeId type_id) const -> TypeInstId {
   // The instruction for a TypeId has a value of that TypeId.
   return TypeInstId::UnsafeMake(
       file_->constant_values().GetInstId(GetConstantId(type_id)));
 }
 
 auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {
-  return file_->insts().Get(GetInstId(type_id));
+  return file_->insts().Get(GetTypeInstId(type_id));
 }
 
 auto TypeStore::GetUnattachedType(TypeId type_id) const -> TypeId {
@@ -73,12 +91,64 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
 }
 
-auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
-  if (auto const_type = TryGetAs<ConstType>(type_id)) {
-    return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);
+auto TypeStore::GetAdaptedType(TypeId type_id) const -> TypeId {
+  if (auto class_type = TryGetAs<ClassType>(type_id)) {
+    return file_->classes()
+        .Get(class_type->class_id)
+        .GetAdaptedType(*file_, class_type->specific_id);
   }
-  // TODO: Look through PartialType when this is reachable/testable
+  return TypeId::None;
+}
+
+auto TypeStore::GetTransitiveAdaptedType(TypeId type_id) const -> TypeId {
+  while (true) {
+    auto adapted_type_id = GetAdaptedType(type_id);
+    if (!adapted_type_id.has_value()) {
+      break;
+    }
+    type_id = adapted_type_id;
+  }
   return type_id;
+}
+
+auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    if (auto qualified_type = TryGetAs<AnyQualifiedType>(type_id)) {
+      type_id = file_->types().GetTypeIdForTypeInstId(qualified_type->inner_id);
+      switch (qualified_type->kind) {
+        case ConstType::Kind:
+          quals.Add(TypeQualifiers::Const);
+          break;
+        case MaybeUnformedType::Kind:
+          quals.Add(TypeQualifiers::MaybeUnformed);
+          break;
+        case PartialType::Kind:
+          quals.Add(TypeQualifiers::Partial);
+          break;
+        default:
+          CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
+      }
+    } else {
+      return {type_id, quals};
+    }
+  }
+}
+
+auto TypeStore::GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    type_id = GetTransitiveAdaptedType(type_id);
+    auto [unqual_type_id, inner_quals] =
+        GetUnqualifiedTypeAndQualifiers(type_id);
+    if (unqual_type_id == type_id) {
+      return {type_id, quals};
+    }
+    type_id = unqual_type_id;
+    quals.Add(inner_quals);
+  }
 }
 
 auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const
@@ -87,7 +157,7 @@ auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const
   if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
-  auto inst_id = file_->types().GetInstId(object_repr_id);
+  auto inst_id = file_->types().GetTypeInstId(object_repr_id);
   if (inst_id == IntLiteralType::TypeInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
     return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};
@@ -114,14 +184,12 @@ auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
   return *int_info;
 }
 
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  if (auto pattern_type =
-          sem_ir.types().TryGetAs<SemIR::PatternType>(type_id)) {
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId {
+  if (auto pattern_type = sem_ir.types().TryGetAs<PatternType>(type_id)) {
     return sem_ir.types().GetTypeIdForTypeInstId(
         pattern_type->scrutinee_type_inst_id);
   }
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId,
+  CARBON_CHECK(type_id == ErrorInst::TypeId,
                "Inst kind doesn't have scrutinee type: {0}",
                sem_ir.types().GetAsInst(type_id).kind());
   return type_id;

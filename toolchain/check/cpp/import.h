@@ -1,0 +1,86 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
+
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/ids.h"
+
+namespace Carbon::Check {
+
+// Generates a C++ header that includes the imported cpp files, parses it,
+// generates the AST from it and links `SemIR::File` to it. Reports C++ errors
+// and warnings. If successful, adds a `Cpp` namespace.
+auto ImportCpp(Context& context,
+               llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               llvm::LLVMContext* llvm_context,
+               std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
+
+// Imports a declaration from Clang to Carbon. If successful, returns the new
+// Carbon declaration `InstId`. If the declaration was already imported, returns
+// the mapped instruction. All unimported dependencies are imported first.
+auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
+                   SemIR::ClangDeclKey key) -> SemIR::InstId;
+
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
+inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
+                                  clang::FunctionDecl* clang_decl,
+                                  SemIR::ClangDeclKey::Signature signature)
+    -> SemIR::InstId {
+  return ImportCppDecl(
+      context, loc_id,
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature));
+}
+
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction. All unimported dependencies are
+// imported first.
+auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr;
+
+// Imports an overloaded function set from Clang to Carbon.
+auto ImportCppOverloadSet(
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
+    SemIR::NameId name_id, clang::CXXRecordDecl* naming_class,
+    clang::UnresolvedSet<4>&& overload_set,
+    clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
+    -> SemIR::InstId;
+
+// Looks up the given name in the Clang AST generated when importing C++ code
+// and returns a lookup result. If using the injected class name (`X.X()`),
+// imports the class constructor as a function named as the class.
+auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
+                       SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+    -> SemIR::ScopeLookupResult;
+
+// Given a Carbon class declaration that was imported from some kind of C++
+// declaration, such as a class or enum, attempt to import a corresponding class
+// definition. Returns true if nothing went wrong (whether or not a definition
+// could be imported), false if a diagnostic was produced.
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool;
+
+// Gets the identifier info for a name. Returns `nullptr` if the name is not an
+// identifier name.
+auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
+    -> clang::IdentifierInfo*;
+
+}  // namespace Carbon::Check
+
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_

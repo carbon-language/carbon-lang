@@ -36,10 +36,9 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
   return result.value();
 }
 
-auto GetInstWithConstantValue(const SemIR::File& file,
-                              SemIR::ConstantId const_id) -> SemIR::InstId {
+auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
   if (!const_id.has_value() || !const_id.is_constant()) {
-    return SemIR::InstId::None;
+    return InstId::None;
   }
 
   // For concrete constants, the corresponding instruction has the desired

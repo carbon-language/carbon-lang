@@ -78,7 +78,7 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   // If the comma is not immediately followed by a close paren, push handlers
   // for the next tuple element.
   if (list_token_kind != Context::ListTokenKind::CommaClose) {
-    context.PushState(state, StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::TupleLiteralElementFinish);
     context.PushState(StateKind::Expr);
   }
 }
@@ -86,17 +86,20 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
 auto HandleTupleLiteralElementFinish(Context& context) -> void {
   auto state = context.PopState();
 
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+
   if (context.ConsumeListToken(NodeKind::TupleLiteralComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushState(state);
+    context.PushState(StateKind::TupleLiteralElementFinish);
     context.PushState(StateKind::Expr);
   }
 }
 
 auto HandleParenExprFinish(Context& context) -> void {
   auto state = context.PopState();
-
   context.ReplacePlaceholderNode(state.subtree_start, NodeKind::ParenExprStart,
                                  state.token);
   FinishParenExpr(context, state);
@@ -108,6 +111,23 @@ auto HandleTupleLiteralFinish(Context& context) -> void {
   context.ReplacePlaceholderNode(state.subtree_start,
                                  NodeKind::TupleLiteralStart, state.token);
   context.AddNode(NodeKind::TupleLiteral, context.Consume(), state.has_error);
+}
+
+auto HandleCallExpr(Context& context) -> void {
+  auto state = context.PopState();
+  context.PushState(state, StateKind::CallExprFinish);
+
+  context.AddNode(NodeKind::CallExprStart, context.Consume(), state.has_error);
+  if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
+    context.PushState(StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::Expr);
+  }
+}
+
+auto HandleCallExprFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::CallExpr, context.Consume(), state.has_error);
 }
 
 }  // namespace Carbon::Parse

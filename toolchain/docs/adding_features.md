@@ -26,9 +26,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [SemIR dumps and ranges](#semir-dumps-and-ranges)
             -   [Example uses](#example-uses)
     -   [Debugging errors](#debugging-errors)
-        -   [Verbose output](#verbose-output)
-        -   [Stack traces](#stack-traces)
-        -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
 
 <!-- tocstop -->
 
@@ -303,11 +300,11 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `GetSingletonType(context,SemIR::WitnessType::InstId)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::TypeInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            GetSingletonType(context, SemIR::WitnessType::InstId);
+            GetSingletonType(context, SemIR::WitnessType::TypeInstId);
         SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
             context, node_id, {.type_id = witness_type_id, ...});
         ```
@@ -507,7 +504,7 @@ minimal `Core` package and `prelude` library to the file test with the
 `check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature
@@ -539,8 +536,10 @@ automatically included as well. A small amount of SemIR may include a number of
 related instructions, such as an in-range instruction referencing an import_ref
 referencing a constant referencing another constant.
 
-> NOTE: In a test, if full SemIR is desired for files, add
-> `// EXTRA-ARGS: --dump-sem-ir-ranges=if-present` with an explanation why.
+SemIR dumps for files that don't have explicit ranges can be enabled through
+either `//@include-in-dumps` (per-file) or
+`// EXTRA-ARGS: --dump-sem-ir-ranges=if-present`. These should be rare, and are
+worth comments when they're used.
 
 ##### Example uses
 
@@ -599,25 +598,4 @@ output can help check that an error is correctly propagated in SemIR.
 
 ### Debugging errors
 
-#### Verbose output
-
-The `-v` flag can be passed to trace state, and should be specified before the
-subcommand name: `carbon -v compile ...`. `CARBON_VLOG` is used to print output
-in this mode. There is currently no control over the degree of verbosity.
-
-#### Stack traces
-
-While the iterative processing pattern means function stack traces will have
-minimal context for how the current function is reached, we use LLVM's
-`PrettyStackTrace` to include details about the state stack. The state stack
-will be above the function stack in crash output.
-
-#### Dumping objects in interactive debuggers
-
-We provide namespace-scoped `Dump` functions in several components, such as
-[check/dump.cpp](/toolchain/check/dump.cpp). These `Dump` functions will print
-contextual information about an object to stderr. The files contain details
-regarding support.
-
-Objects which inherit from `Printable` also have `Dump` member functions, but
-these will lack contextual information.
+See [Debugging tools and techniques](debugging.md).

@@ -42,7 +42,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetInstId(class_info.self_type_id));
+      context.types().GetTypeInstId(class_info.self_type_id));
 }
 
 // Checks that the specified finished adapter definition is valid and builds and
@@ -102,7 +102,8 @@ static auto CheckCompleteAdapterClassType(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        // TODO: Use InstId from the adapt declaration.
-       .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(object_repr_id)});
 }
 
 static auto AddStructTypeFields(
@@ -145,15 +146,15 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   // Get some base class/type/specific info.
   if (base_class_type) {
     auto& base_class_info = context.classes().Get(base_class_type->class_id);
-    auto base_vtable_ptr_inst_id = base_class_info.vtable_ptr_id;
-    if (base_vtable_ptr_inst_id.has_value()) {
-      LoadImportRef(context, base_vtable_ptr_inst_id);
+    auto base_vtable_decl_inst_id = base_class_info.vtable_decl_id;
+    if (base_vtable_decl_inst_id.has_value()) {
+      LoadImportRef(context, base_vtable_decl_inst_id);
       auto canonical_base_vtable_inst_id =
-          context.constant_values().GetConstantInstId(base_vtable_ptr_inst_id);
-      const auto& base_vtable_ptr_inst =
-          context.insts().GetAs<SemIR::VtablePtr>(
+          context.constant_values().GetConstantInstId(base_vtable_decl_inst_id);
+      const auto& base_vtable_decl_inst =
+          context.insts().GetAs<SemIR::VtableDecl>(
               canonical_base_vtable_inst_id);
-      base_vtable_id = base_vtable_ptr_inst.vtable_id;
+      base_vtable_id = base_vtable_decl_inst.vtable_id;
       base_class_specific_id = base_class_type->specific_id;
     }
   }
@@ -187,7 +188,6 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
-      LoadImportRef(context, base_vtable_entry_id);
       auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
             specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
@@ -200,7 +200,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                     .GetAs<SemIR::FunctionDecl>(override_fn_decl_id)
                     .function_id);
             return override_fn.virtual_modifier ==
-                       SemIR::FunctionFields::VirtualModifier::Impl &&
+                       SemIR::FunctionFields::VirtualModifier::Override &&
                    override_fn.name_id == fn.name_id;
           });
       if (i != vtable_contents.end()) {
@@ -215,7 +215,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
       } else if (auto base_vtable_specific_function =
-                     context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
+                     context.insts().TryGetAs<SemIR::SpecificFunction>(
                          derived_vtable_entry_id)) {
         if (derived_vtable_entry_const_id.is_symbolic()) {
           // Create a new instruction here that is otherwise identical to
@@ -238,13 +238,15 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   for (auto inst_id : vtable_contents) {
     auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
     auto& fn = context.functions().Get(fn_decl.function_id);
-    if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
+    if (fn.virtual_modifier !=
+        SemIR::FunctionFields::VirtualModifier::Override) {
       fn.virtual_index = vtable.size();
       vtable.push_back(build_specific_function(inst_id));
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
-      CARBON_DIAGNOSTIC(ImplWithoutVirtualInBase, Error,
-                        "impl without compatible virtual in base class");
-      context.emitter().Emit(SemIR::LocId(inst_id), ImplWithoutVirtualInBase);
+      CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
+                        "override without compatible virtual in base class");
+      context.emitter().Emit(SemIR::LocId(inst_id),
+                             OverrideWithoutVirtualInBase);
     }
   }
 
@@ -270,7 +272,7 @@ static auto CheckCompleteClassType(
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
   // TODO: Use InstId from base declaration.
-  auto base_type_inst_id = context.types().GetInstId(base_type_id);
+  auto base_type_inst_id = context.types().GetTypeInstId(base_type_id);
   std::optional<SemIR::ClassType> base_class_type;
   if (base_type_id.has_value()) {
     // TODO: If the base class is template dependent, we will need to decide
@@ -288,7 +290,7 @@ static auto CheckCompleteClassType(
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_inst_id = context.types().GetInstId(
+         .type_inst_id = context.types().GetTypeInstId(
              GetPointerType(context, SemIR::VtableType::TypeInstId))});
   }
   if (base_type_id.has_value()) {
@@ -303,27 +305,19 @@ static auto CheckCompleteClassType(
   if (class_info.is_dynamic) {
     auto vtable_id = BuildVtable(context, node_id, class_id, base_class_type,
                                  vtable_contents);
-
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
-    auto generic_id = class_info.generic_id;
-    auto self_specific_id = context.generics().GetSelfSpecific(generic_id);
-    class_info.vtable_ptr_id =
-        AddInst<SemIR::VtablePtr>(context, node_id,
-                                  {.type_id = vptr_type_id,
-                                   .vtable_id = vtable_id,
-                                   .specific_id = self_specific_id});
+    class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
+        context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
   }
 
-  auto struct_type_inst_id = AddTypeInst<SemIR::StructType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .fields_id =
-           AddStructTypeFields(context, struct_type_fields, field_decls)});
+  auto struct_type_id = GetStructType(
+      context, AddStructTypeFields(context, struct_type_fields, field_decls));
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = struct_type_inst_id});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(struct_type_id)});
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,

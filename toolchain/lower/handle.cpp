@@ -13,6 +13,7 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -25,7 +26,7 @@ static auto IsNamespace(FunctionContext& context, SemIR::InstId inst_id)
   // Note, we don't use context.GetTypeOfInst here. An instruction can't change
   // from being a non-namespace in a generic to being a namespace in a specific,
   // because namespace names are not first-class.
-  auto type_inst_id = context.sem_ir().types().GetInstId(
+  auto type_inst_id = context.sem_ir().types().GetTypeInstId(
       context.sem_ir().insts().Get(inst_id).type_id());
   return type_inst_id == SemIR::NamespaceType::TypeInstId;
 }
@@ -45,7 +46,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // create a ConstantInt from its SemIR value directly.
   llvm::Value* index;
   auto index_type = context.GetTypeIdOfInst(inst.index_id);
-  if (index_type.file->types().GetInstId(index_type.type_id) ==
+  if (index_type.file->types().GetTypeInstId(index_type.type_id) ==
       SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
@@ -78,12 +79,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
-                     inst.rhs_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), inst.rhs_id) !=
+      SemIR::ExprCategory::InPlaceInitializing) {
+    context.InitializeStorage(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
+                              inst.rhs_id);
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::BindAlias inst) -> void {
+                SemIR::AliasBinding inst) -> void {
   if (IsNamespace(context, inst_id)) {
     return;
   }
@@ -101,12 +105,17 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::BindName inst) -> void {
+                SemIR::RefBinding inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::BindSymbolicName inst) -> void {
+                SemIR::ValueBinding inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SymbolicBinding inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
@@ -188,10 +197,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::FacetValue /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
-                SemIR::InitializeFrom inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
-                     inst.src_id);
+                SemIR::InPlaceInit inst) -> void {
+  context.InitializeStorage(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
+                            inst.src_id);
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -208,7 +222,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   auto inner_inst_id = inst.value_id;
 
   if (auto bind_name =
-          context.sem_ir().insts().TryGetAs<SemIR::BindName>(inner_inst_id)) {
+          context.sem_ir().insts().TryGetAs<SemIR::AnyBinding>(inner_inst_id)) {
     inner_inst_id = bind_name->value_id;
   }
 
@@ -231,11 +245,13 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::RefTagExpr inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.expr_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
-  if (context.GetInitRepr(context.GetTypeIdOfInst(inst_id)).kind ==
-      SemIR::InitRepr::InPlace) {
-    context.SetLocal(inst_id, context.GetValue(inst.storage_id));
-  }
+  context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -252,15 +268,44 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
-      context.FinishInit(result_type, inst.dest_id, inst.expr_id);
+      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
+                       SemIR::ValueRepr::Pointer,
+                   "TODO: Add support for ReturnExpr with custom value repr");
+      // TODO: find a way to avoid the redundant call to GetInitRepr inside
+      // InitializeStorage.
+      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitRepr::ByCopy:
-      // The expression produces the value representation for the type.
-      context.builder().CreateRet(context.GetValue(inst.expr_id));
+    case SemIR::InitRepr::ByCopy: {
+      auto* value = context.GetValue(inst.expr_id);
+      switch (SemIR::GetExprCategory(context.sem_ir(), inst.expr_id)) {
+        case SemIR::ExprCategory::Value:
+        case SemIR::ExprCategory::ReprInitializing:
+        case SemIR::ExprCategory::EphemeralRef:
+        case SemIR::ExprCategory::DurableRef:
+          break;
+        case SemIR::ExprCategory::InPlaceInitializing:
+          value =
+              context.builder().CreateLoad(context.GetType(result_type), value);
+          break;
+        case SemIR::ExprCategory::Mixed:
+        case SemIR::ExprCategory::RefTagged:
+        case SemIR::ExprCategory::NotExpr:
+        case SemIR::ExprCategory::Error:
+        case SemIR::ExprCategory::Pattern:
+          CARBON_FATAL("Unexpected category for `return` expression");
+      }
+      context.builder().CreateRet(value);
       return;
+    }
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Lowering return of abstract type {0}",
+                   result_type.file->types().GetAsInst(result_type.type_id));
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering return of incomplete type {0}",
+                   result_type.file->types().GetAsInst(result_type.type_id));
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Lowering return of dependent type {0}",
                    result_type.file->types().GetAsInst(result_type.type_id));
   }
 }

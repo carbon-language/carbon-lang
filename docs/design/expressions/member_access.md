@@ -33,6 +33,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
+> **TODO:** [p3720: Member binding operators](/proposals/p3720.md) introduces an
+> additional "member binding" step, redefines simple member access in terms of
+> compound member access, and defines compound member access in terms of calls
+> to user-implementable interface methods. This document must be updated to
+> reflect those changes.
+
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
 determined entity:
@@ -70,7 +76,7 @@ For example:
 namespace Widgets;
 
 interface Widgets.Widget {
-  fn Grow[addr self: Self*](factor: f64);
+  fn Grow[ref self: Self](factor: f64);
 }
 
 class Widgets.Cog {
@@ -344,7 +350,7 @@ generic parameter, or in fact any
 [compile-time binding](/docs/design/generics/terminology.md#bindings), the
 lookup is performed from a context where the value of that binding is unknown.
 Evaluation of an expression involving the binding may still succeed, but will
-result in a symbolic value involving that binding.
+result in a symbolic constant involving that binding.
 
 ```carbon
 class GenericWrapper(T:! type) {
@@ -774,19 +780,15 @@ on what instance member `M` was found:
 
 -   For a method, the result is a _bound method_, which is a value `F` such that
     a function call `F(args)` behaves the same as a call to `M(args)` with the
-    `self` parameter initialized by a corresponding recipient argument:
-
-    -   If the method declares its `self` parameter with `addr`, the recipient
-        argument is `&x`.
-    -   Otherwise, the recipient argument is `x`.
+    `self` parameter initialized by `x`.
 
     ```carbon
     class Blob {
-      fn Mutate[addr self: Self*](n: i32);
+      fn Mutate[ref self: Self](n: i32);
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.
-      // This calls `Blob.Mutate` with `self` initialized by `&(*p)`
+      // This calls `Blob.Mutate` with `self` initialized by `*p`
       // and `n` initialized by `5`.
       (*p).Mutate(5);
 

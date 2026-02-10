@@ -79,6 +79,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Fn: {
+      context.PushState(state);
+      context.PushState(StateKind::LambdaIntroducer);
+      break;
+    }
     case Lex::TokenKind::False: {
       context.AddLeafNode(NodeKind::BoolLiteralFalse, context.Consume());
       context.PushState(state);
@@ -114,6 +119,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Char: {
+      context.AddLeafNode(NodeKind::CharTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::IntTypeLiteral: {
       context.AddLeafNode(NodeKind::IntTypeLiteral, context.Consume());
       context.PushState(state);
@@ -129,7 +139,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::StringTypeLiteral: {
+    case Lex::TokenKind::Str: {
       context.AddLeafNode(NodeKind::StringTypeLiteral, context.Consume());
       context.PushState(state);
       break;
@@ -159,6 +169,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(StateKind::ArrayExpr);
       break;
     }
+    case Lex::TokenKind::Form: {
+      context.PushState(state);
+      context.PushState(StateKind::FormLiteral);
+      break;
+    }
     case Lex::TokenKind::Package: {
       context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
       if (context.PositionKind() != Lex::TokenKind::Period) {
@@ -172,6 +187,11 @@ auto HandleExprInPostfix(Context& context) -> void {
     }
     case Lex::TokenKind::Core: {
       context.AddLeafNode(NodeKind::CoreNameExpr, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::Cpp: {
+      context.AddLeafNode(NodeKind::CppNameExpr, context.Consume());
       context.PushState(state);
       break;
     }
@@ -278,12 +298,24 @@ auto HandleExprLoop(Context& context) -> void {
   auto operator_kind = context.PositionKind();
   auto trailing_operator = PrecedenceGroup::ForTrailing(
       operator_kind, context.IsTrailingOperatorInfix());
+
   if (!trailing_operator) {
-    if (state.has_error) {
-      context.ReturnErrorOnState();
+    // TODO: Generalize this to handle a sequence of operator modifiers once we
+    // have more than one.
+    if (context.PositionIs(Lex::TokenKind::Unsafe)) {
+      operator_kind = context.PositionKind(Lookahead::NextToken);
+      trailing_operator = PrecedenceGroup::ForTrailing(
+          operator_kind, context.IsTrailingOperatorInfix());
     }
-    return;
+
+    if (!trailing_operator) {
+      if (state.has_error) {
+        context.ReturnErrorOnState();
+      }
+      return;
+    }
   }
+
   auto [operator_precedence, is_binary] = *trailing_operator;
 
   // TODO: If this operator is ambiguous with either the ambient precedence
@@ -321,6 +353,23 @@ auto HandleExprLoop(Context& context) -> void {
     context.DiagnoseOperatorFixity(is_binary
                                        ? Context::OperatorFixity::Infix
                                        : Context::OperatorFixity::Postfix);
+  }
+
+  // For operator modifiers, wrap the first operand in the modifier.
+  if (context.PositionIs(Lex::TokenKind::Unsafe)) {
+    if (context.PositionIs(Lex::TokenKind::As, Lookahead::NextToken)) {
+      context.AddNode<NodeKind::UnsafeModifier>(context.Consume(),
+                                                state.has_error);
+    } else {
+      CARBON_DIAGNOSTIC(ModifierNotAllowedOnOperator, Error,
+                        "`{0}` not allowed on operator `{1}`", Lex::TokenKind,
+                        Lex::TokenKind);
+      context.emitter().Emit(*context.position(), ModifierNotAllowedOnOperator,
+                             context.PositionKind(),
+                             context.PositionKind(Lookahead::NextToken));
+      context.Consume();
+      state.has_error = true;
+    }
   }
 
   state.token = context.Consume();

@@ -6,10 +6,20 @@
 
 #include <tuple>
 
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
+
 namespace Carbon::SemIR {
 
-template <typename VecT, typename CompareT>
-static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
+template <typename T>
+using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
+
+template <typename VecT>
+static auto SortAndDeduplicate(VecT& vec,
+                               LessThanFn<typename VecT::value_type> compare)
+    -> void {
   llvm::sort(vec, compare);
   vec.erase(llvm::unique(vec), vec.end());
 }
@@ -29,30 +39,40 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
-                         const IdentifiedFacetType::RequiredInterface& rhs)
-    -> bool {
-  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
-         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
+                                 const SpecificNamedConstraint& rhs) -> bool {
+  return std::tie(lhs.named_constraint_id.index, lhs.specific_id.index) <
+         std::tie(rhs.named_constraint_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
+                         const IdentifiedFacetType::RequiredImpl& rhs) -> bool {
+  return std::tie(lhs.self_facet_value.index,
+                  lhs.specific_interface.interface_id.index,
+                  lhs.specific_interface.specific_id.index) <
+         std::tie(rhs.self_facet_value.index,
+                  rhs.specific_interface.interface_id.index,
+                  rhs.specific_interface.specific_id.index);
 }
 
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
 // b` as sets. Assumes there are few elements between them.
-static auto SubtractSorted(
-    llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& a,
-    const llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& b) -> void {
-  using Iter = llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::iterator;
+template <typename VecT>
+static auto SubtractSorted(VecT& a, const VecT& b,
+                           LessThanFn<typename VecT::value_type> compare)
+    -> void {
+  using Iter = VecT::iterator;
   Iter a_iter = a.begin();
   Iter a_end = a.end();
-  using ConstIter =
-      llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::const_iterator;
+  using ConstIter = VecT::const_iterator;
   ConstIter b_iter = b.begin();
   ConstIter b_end = b.end();
   // Advance the iterator pointing to the smaller element until we find a match.
   while (a_iter != a_end && b_iter != b_end) {
-    if (ImplsLess(*a_iter, *b_iter)) {
+    if (compare(*a_iter, *b_iter)) {
       ++a_iter;
-    } else if (ImplsLess(*b_iter, *a_iter)) {
+    } else if (compare(*b_iter, *a_iter)) {
       ++b_iter;
     } else {
       break;
@@ -70,11 +90,11 @@ static auto SubtractSorted(
   ++a_iter;
   ++b_iter;
   while (a_iter != a_end && b_iter != b_end) {
-    if (ImplsLess(*a_iter, *b_iter)) {
+    if (compare(*a_iter, *b_iter)) {
       *a_new_end = *a_iter;
       ++a_new_end;
       ++a_iter;
-    } else if (ImplsLess(*b_iter, *a_iter)) {
+    } else if (compare(*b_iter, *a_iter)) {
       ++b_iter;
     } else {
       CARBON_DCHECK(*a_iter == *b_iter);
@@ -92,30 +112,39 @@ static auto SubtractSorted(
   a.erase(a_new_end, a_end);
 }
 
+template <typename VecT>
+static auto CombineVectors(VecT& vec, const VecT& lhs, const VecT& rhs) {
+  vec.reserve(lhs.size() + rhs.size());
+  llvm::append_range(vec,
+                     llvm::concat<const typename VecT::value_type>(lhs, rhs));
+}
+
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
     -> FacetTypeInfo {
-  FacetTypeInfo info = {.other_requirements = false};
-  info.extend_constraints.reserve(lhs.extend_constraints.size() +
-                                  rhs.extend_constraints.size());
-  llvm::append_range(info.extend_constraints, lhs.extend_constraints);
-  llvm::append_range(info.extend_constraints, rhs.extend_constraints);
-  info.self_impls_constraints.reserve(lhs.self_impls_constraints.size() +
-                                      rhs.self_impls_constraints.size());
-  llvm::append_range(info.self_impls_constraints, lhs.self_impls_constraints);
-  llvm::append_range(info.self_impls_constraints, rhs.self_impls_constraints);
-  info.rewrite_constraints.reserve(lhs.rewrite_constraints.size() +
-                                   rhs.rewrite_constraints.size());
-  llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
-  llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-  info.other_requirements |= lhs.other_requirements;
-  info.other_requirements |= rhs.other_requirements;
+  FacetTypeInfo info;
+  CombineVectors(info.extend_constraints, lhs.extend_constraints,
+                 rhs.extend_constraints);
+  CombineVectors(info.self_impls_constraints, lhs.self_impls_constraints,
+                 rhs.self_impls_constraints);
+  CombineVectors(info.extend_named_constraints, lhs.extend_named_constraints,
+                 rhs.extend_named_constraints);
+  CombineVectors(info.self_impls_named_constraints,
+                 lhs.self_impls_named_constraints,
+                 rhs.self_impls_named_constraints);
+  CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
+                 rhs.rewrite_constraints);
+  info.other_requirements = lhs.other_requirements || rhs.other_requirements;
   return info;
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(extend_constraints, ImplsLess);
   SortAndDeduplicate(self_impls_constraints, ImplsLess);
-  SubtractSorted(self_impls_constraints, extend_constraints);
+  SubtractSorted(self_impls_constraints, extend_constraints, ImplsLess);
+  SortAndDeduplicate(extend_named_constraints, NamedConstraintsLess);
+  SortAndDeduplicate(self_impls_named_constraints, NamedConstraintsLess);
+  SubtractSorted(self_impls_named_constraints, extend_named_constraints,
+                 NamedConstraintsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
@@ -153,6 +182,28 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
+  if (!extend_named_constraints.empty()) {
+    out << outer_sep << "extends named constraint: ";
+    llvm::ListSeparator sep;
+    for (auto extend : extend_named_constraints) {
+      out << sep << extend.named_constraint_id;
+      if (extend.specific_id.has_value()) {
+        out << "(" << extend.specific_id << ")";
+      }
+    }
+  }
+
+  if (!self_impls_constraints.empty()) {
+    out << outer_sep << "self impls named constraint: ";
+    llvm::ListSeparator sep;
+    for (auto self_impls : self_impls_named_constraints) {
+      out << sep << self_impls.named_constraint_id;
+      if (self_impls.specific_id.has_value()) {
+        out << "(" << self_impls.specific_id << ")";
+      }
+    }
+  }
+
   if (other_requirements) {
     out << outer_sep << "+ TODO requirements";
   }
@@ -161,20 +212,77 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 }
 
 IdentifiedFacetType::IdentifiedFacetType(
-    llvm::ArrayRef<RequiredInterface> extends,
-    llvm::ArrayRef<RequiredInterface> self_impls) {
+    IdentifiedFacetTypeKey key, llvm::ArrayRef<RequiredImpl> extends,
+    llvm::ArrayRef<RequiredImpl> self_impls)
+    : key_(key) {
   if (extends.size() == 1) {
-    interface_id_ = extends.front().interface_id;
-    specific_id_ = extends.front().specific_id;
+    interface_id_ = extends.front().specific_interface.interface_id;
+    specific_id_ = extends.front().specific_interface.specific_id;
   } else {
     interface_id_ = InterfaceId::None;
     num_interface_to_impl_ = extends.size();
   }
 
-  required_interfaces_.reserve(extends.size() + self_impls.size());
-  llvm::append_range(required_interfaces_, extends);
-  llvm::append_range(required_interfaces_, self_impls);
-  SortAndDeduplicate(required_interfaces_, RequiredLess);
+  required_impls_.reserve(extends.size() + self_impls.size());
+  llvm::append_range(required_impls_, extends);
+  llvm::append_range(required_impls_, self_impls);
+  SortAndDeduplicate(required_impls_, RequiredLess);
+}
+
+auto AddCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId {
+  // Small blocks don't need to be sorted.
+  if (witnesses.size() <= 1) {
+    return sem_ir.inst_blocks().AddCanonical(witnesses);
+  }
+
+  llvm::SmallVector<std::pair<SpecificInterface, InstId>> sortable;
+  sortable.reserve(witnesses.size());
+
+  // Produce the sorted order based on the witness's SpecificInterface.
+  for (auto witness_id : witnesses) {
+    auto inst = sem_ir.insts().Get(witness_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(CustomWitness witness): {
+        sortable.push_back({sem_ir.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
+      case CARBON_KIND(ImplWitness witness): {
+        auto table =
+            sem_ir.insts().GetAs<ImplWitnessTable>(witness.witness_table_id);
+        sortable.push_back(
+            {sem_ir.impls().Get(table.impl_id).interface, witness_id});
+        break;
+      }
+      case CARBON_KIND(LookupImplWitness witness): {
+        sortable.push_back({sem_ir.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
+      default:
+        CARBON_FATAL("Unhandled inst: {0}", inst);
+    }
+  }
+  // This matches the sort order of IdentifiedFacetType::required_interfaces,
+  // which is the order of the witnesses returned from impl lookup, and is
+  // canonical order in which the witnesses must appear for a given facet type
+  // so that ImplWitnessAccess can find the appropriate witness.
+  llvm::sort(sortable, [](auto& lhs, auto& rhs) {
+    return ImplsLess(lhs.first, rhs.first);
+  });
+
+  // Update the original list with the new order (reusing to avoid an
+  // allocation).
+  for (auto [witness_id, sortable_entry] :
+       llvm::zip_equal(witnesses, sortable)) {
+    witness_id = sortable_entry.second;
+  }
+
+  return sem_ir.inst_blocks().AddCanonical(witnesses);
 }
 
 }  // namespace Carbon::SemIR

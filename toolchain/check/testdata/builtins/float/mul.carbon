@@ -66,9 +66,22 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
+// --- fail_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Literal() -> type = "float_literal.make_type";
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
+
 // CHECK:STDOUT: --- mul_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -76,15 +89,13 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %Mul.call: init f64 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Mul.call
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Mul.call, %.loc8_19.1
-// CHECK:STDOUT:   return %.loc8_19.2
+// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
+// CHECK:STDOUT:   %Mul.call: init %f64.d77 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   return %Mul.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

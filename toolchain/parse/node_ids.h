@@ -36,8 +36,7 @@ struct NodeId : public IdBase<NodeId> {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
   }
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeId(NoneNodeId /*none*/) : IdBase(NoneIndex) {}
+  explicit(false) constexpr NodeId(NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 };
 
 // For looking up the type associated with a given id type.
@@ -57,8 +56,8 @@ struct NodeIdForKind : public NodeId {
     return NodeIdForKind(node_id);
   }
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdForKind(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+  explicit(false) constexpr NodeIdForKind(NoneNodeId /*none*/)
+      : NodeId(NoneIndex) {}
 
  private:
   // Private to prevent accidental explicit construction from an untyped
@@ -84,13 +83,13 @@ struct NodeIdInCategory : public NodeId {
   // Support conversion from `NodeIdForKind<Kind>` if Kind's category
   // overlaps with `Category`.
   template <const NodeKind& Kind>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdInCategory(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
+  explicit(false) NodeIdInCategory(NodeIdForKind<Kind> node_id)
+      : NodeId(node_id) {
     CARBON_CHECK(Kind.category().HasAnyOf(Category));
   }
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdInCategory(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+  explicit(false) constexpr NodeIdInCategory(NoneNodeId /*none*/)
+      : NodeId(NoneIndex) {}
 
  private:
   // Private to prevent accidental explicit construction from an untyped
@@ -109,6 +108,7 @@ using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
+using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
@@ -142,16 +142,14 @@ struct NodeIdOneOf : public NodeId {
 
   template <const NodeKind& Kind>
     requires(Contains<NodeIdForKind<Kind>>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {}
+  explicit(false) NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {}
 
   template <typename OtherNodeIdOneOf>
     requires(IsSubset<OtherNodeIdOneOf>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdOneOf(OtherNodeIdOneOf node_id) : NodeId(node_id) {}
+  explicit(false) NodeIdOneOf(OtherNodeIdOneOf node_id) : NodeId(node_id) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdOneOf(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+  explicit(false) constexpr NodeIdOneOf(NoneNodeId /*none*/)
+      : NodeId(NoneIndex) {}
 };
 
 using AnyClassDeclId =
@@ -162,9 +160,14 @@ using AnyClassDeclId =
                 ChoiceDefinitionStartId>;
 using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
                                       BuiltinFunctionDefinitionStartId>;
+using AnyFunctionDefinitionId =
+    NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
+                BuiltinFunctionDefinitionId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamedConstraintDeclId =
+    NodeIdOneOf<NamedConstraintDeclId, NamedConstraintDefinitionStartId>;
 using AnyNamespaceId =
     NodeIdOneOf<NamespaceId, ImportDeclId, LibraryDeclId, PackageDeclId>;
 using AnyPackagingDeclId =
@@ -174,13 +177,15 @@ using AnyPointerDeferenceExprId =
 using AnyRuntimeBindingPatternName =
     NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
                 UnderscoreNameId>;
+using AnyPrimitiveFormIdId =
+    NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
 struct NodeIdNot : public NodeId {
   constexpr explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeIdNot(NoneNodeId /*none*/) : NodeId(NoneIndex) {}
+  explicit(false) constexpr NodeIdNot(NoneNodeId /*none*/)
+      : NodeId(NoneIndex) {}
 };
 
 // Note that the support for extracting these types using the `Tree::Extract*`

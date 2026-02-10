@@ -56,6 +56,8 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 
 // --- fail_bad_return_type.carbon
 
+library "[[@TEST_NAME]]";
+
 // CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,9 +68,22 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
+// --- fail_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Literal() -> type = "float_literal.make_type";
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
+
 // CHECK:STDOUT: --- float_div.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [concrete]
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -76,15 +91,13 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, file.%Div.decl [concrete = constants.%Div]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %Div.call: init f64 = call %Div.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Div.call
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Div.call, %.loc8_19.1
-// CHECK:STDOUT:   return %.loc8_19.2
+// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
+// CHECK:STDOUT:   %Div.call: init %f64.d77 = call %Div.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   return %Div.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

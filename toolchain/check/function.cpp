@@ -5,8 +5,17 @@
 #include "toolchain/check/function.h"
 
 #include "common/find.h"
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/check/convert.h"
+#include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
+#include "toolchain/check/pattern.h"
+#include "toolchain/check/pattern_match.h"
+#include "toolchain/check/scope_stack.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
 
@@ -20,6 +29,169 @@ auto FindSelfPattern(Context& context,
   return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
     return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
   });
+}
+
+auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
+                       Context::FormExpr form_expr) -> SemIR::InstBlockId {
+  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
+  auto form_inst = context.insts().Get(form_expr.form_inst_id);
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::RefForm::Kind: {
+      break;
+    }
+    case CARBON_KIND(SemIR::InitForm init_form): {
+      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
+      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
+          context, loc_id,
+          {.type_id = pattern_type_id,
+           .type_inst_id = form_expr.type_component_id});
+      return_patterns.push_back(AddPatternInst<SemIR::OutParamPattern>(
+          context, SemIR::LocId(form_expr.form_inst_id),
+          {.type_id = pattern_type_id,
+           .subpattern_id = return_slot_pattern_id,
+           .index = init_form.index}));
+      break;
+    }
+    case SemIR::ErrorInst::Kind: {
+      break;
+    }
+    default:
+      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
+  }
+  return context.inst_blocks().AddCanonical(return_patterns);
+}
+
+auto IsValidBuiltinDeclaration(Context& context,
+                               const SemIR::Function& function,
+                               SemIR::BuiltinFunctionKind builtin_kind)
+    -> bool {
+  if (!function.call_params_id.has_value()) {
+    // For now, we have no builtins that support positional parameters.
+    return false;
+  }
+
+  // Find the list of call parameters other than the implicit return slots.
+  auto call_params = context.inst_blocks()
+                         .Get(function.call_params_id)
+                         .drop_back(context.inst_blocks()
+                                        .GetOrEmpty(function.return_patterns_id)
+                                        .size());
+
+  // Get the return type. This is `()` if none was specified.
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
+  if (!return_type_id.has_value()) {
+    return_type_id = GetTupleType(context, {});
+  }
+
+  return builtin_kind.IsValidType(context.sem_ir(), call_params,
+                                  return_type_id);
+}
+
+auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
+                         SemIR::BuiltinFunctionKind builtin_kind,
+                         SemIR::NameScopeId name_scope_id,
+                         SemIR::NameId name_id,
+                         BuiltinFunctionSignature signature) -> SemIR::InstId {
+  StartFunctionSignature(context);
+
+  // Build and add a `[ref self: Self]` parameter if needed.
+  auto implicit_param_patterns_id = SemIR::InstBlockId::None;
+  auto self_param_id = SemIR::InstId::None;
+  if (signature.self_type_id.has_value()) {
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ImplicitParamList);
+
+    BeginSubpattern(context);
+    auto self_type_region_id = EndSubpatternAsExpr(
+        context, context.types().GetTypeInstId(signature.self_type_id));
+
+    self_param_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                                    self_type_region_id, signature.self_type_id,
+                                    signature.self_is_ref);
+    implicit_param_patterns_id = context.inst_blocks().Add({self_param_id});
+
+    context.full_pattern_stack().EndImplicitParamList();
+  } else {
+    context.full_pattern_stack().PushFullPattern(
+        FullPatternStack::Kind::ExplicitParamList);
+  }
+
+  // Build and add any explicit parameters. We always use value parameters for
+  // now.
+  auto param_patterns_id = SemIR::InstBlockId::Empty;
+  if (!signature.param_type_ids.empty()) {
+    context.inst_block_stack().Push();
+    for (auto param_type_id : signature.param_type_ids) {
+      BeginSubpattern(context);
+      auto param_type_region_id = EndSubpatternAsExpr(
+          context, context.types().GetTypeInstId(param_type_id));
+
+      context.inst_block_stack().AddInstId(AddParamPattern(
+          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
+          param_type_id, /*is_ref=*/false));
+    }
+    param_patterns_id = context.inst_block_stack().Pop();
+  }
+
+  // Build and add the return type. We always use an initializing form for now.
+  auto return_patterns_id = SemIR::InstBlockId::None;
+  Context::FormExpr return_form = {.form_inst_id = SemIR::InstId::None,
+                                   .type_component_id = SemIR::TypeInstId::None,
+                                   .type_id = SemIR::TypeId::None};
+  if (signature.return_type_id.has_value()) {
+    return_form = ExprAsReturnForm(
+        context, loc_id,
+        context.types().GetTypeInstId(signature.return_type_id));
+    return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
+  }
+
+  auto [call_param_patterns_id, call_params_id] =
+      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
+                         return_patterns_id);
+
+  context.full_pattern_stack().PopFullPattern();
+  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
+
+  // Add the function declaration.
+  // TODO: This should probably handle generics.
+  auto [decl_id, function_id] = MakeFunctionDecl(
+      context, loc_id, decl_block_id, /*build_generic=*/false,
+      /*is_definition=*/true,
+      SemIR::Function{
+          {
+              .name_id = name_id,
+              .parent_scope_id = name_scope_id,
+              .generic_id = SemIR::GenericId::None,
+              .first_param_node_id = Parse::NodeId::None,
+              .last_param_node_id = Parse::NodeId::None,
+              .pattern_block_id = pattern_block_id,
+              .implicit_param_patterns_id = implicit_param_patterns_id,
+              .param_patterns_id = param_patterns_id,
+              .is_extern = false,
+              .extern_library_id = SemIR::LibraryNameId::None,
+              .non_owning_decl_id = SemIR::InstId::None,
+              // Set by `MakeFunctionDecl`.
+              .first_owning_decl_id = SemIR::InstId::None,
+          },
+          {
+              .call_param_patterns_id = call_param_patterns_id,
+              .call_params_id = call_params_id,
+              .return_type_inst_id = return_form.type_component_id,
+              .return_form_inst_id = return_form.form_inst_id,
+              .return_patterns_id = return_patterns_id,
+              .self_param_id = self_param_id,
+          }});
+  // Add the builtin to the imports block so that it appears in the formatted
+  // IR.
+  // TODO: Find a better way to handle this. Ideally we should stop using this
+  // function entirely and declare builtins in the prelude.
+  context.imports().push_back(decl_id);
+
+  auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));
+  function.SetBuiltinFunction(builtin_kind);
+
+  return decl_id;
 }
 
 auto CheckFunctionReturnTypeMatches(Context& context,
@@ -91,40 +263,38 @@ auto CheckFunctionTypeMatches(Context& context,
                                         prev_specific_id, diagnose);
 }
 
-auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             const SemIR::Function& function,
-                             SemIR::SpecificId specific_id)
-    -> SemIR::ReturnTypeInfo {
-  auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
-                                                        function, specific_id);
-
-  // If we couldn't determine the return information due to the return type
-  // being incomplete, try to complete it now.
-  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
+auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
+                                    SemIR::InstId return_pattern_id,
+                                    SemIR::SpecificId specific_id)
+    -> SemIR::TypeId {
+  auto arg_type_id = SemIR::ExtractScrutineeType(
+      context.sem_ir(), SemIR::GetTypeOfInstInSpecific(
+                            context.sem_ir(), specific_id, return_pattern_id));
+  auto init_repr = SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id);
+  if (!init_repr.is_valid()) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "function returns incomplete type {0}", SemIR::TypeId);
       return context.emitter().Build(loc_id, IncompleteTypeInFunctionReturnType,
-                                     return_info.type_id);
+                                     arg_type_id);
     };
     auto diagnose_abstract_return_type = [&] {
       CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
                         "function returns abstract type {0}", SemIR::TypeId);
       return context.emitter().Build(loc_id, AbstractTypeInFunctionReturnType,
-                                     return_info.type_id);
+                                     arg_type_id);
     };
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    if (RequireConcreteType(context, return_info.type_id, loc_id,
-                            diagnose_incomplete_return_type,
-                            diagnose_abstract_return_type)) {
-      return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
-                                                       function, specific_id);
+    if (!RequireConcreteType(
+            context, arg_type_id, SemIR::LocId(return_pattern_id),
+            diagnose_incomplete_return_type, diagnose_abstract_return_type)) {
+      return SemIR::ErrorInst::TypeId;
     }
   }
 
-  return return_info;
+  return arg_type_id;
 }
 
 auto CheckFunctionDefinitionSignature(Context& context,
@@ -134,13 +304,11 @@ auto CheckFunctionDefinitionSignature(Context& context,
   auto params_to_complete =
       context.inst_blocks().GetOrEmpty(function.call_params_id);
 
-  // Check the return type is complete.
-  if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(context,
-                            SemIR::LocId(function.return_slot_pattern_id),
-                            function, SemIR::SpecificId::None);
-    // Don't re-check the return type below.
-    params_to_complete = params_to_complete.drop_back();
+  // The return parameter will be diagnosed after and differently from other
+  // parameters.
+  auto return_call_param = SemIR::InstId::None;
+  if (!params_to_complete.empty() && function.return_patterns_id.has_value()) {
+    return_call_param = params_to_complete.consume_back();
   }
 
   // Check the parameter types are complete.
@@ -161,6 +329,92 @@ auto CheckFunctionDefinitionSignature(Context& context,
               param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
         });
   }
+
+  // Check the return type is complete.
+  if (function.return_patterns_id.has_value()) {
+    for (auto return_pattern_id :
+         context.inst_blocks().Get(function.return_patterns_id)) {
+      CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
+                                     return_pattern_id,
+                                     SemIR::SpecificId::None);
+    }
+
+    // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
+    // so don't `RequireCompleteType` on the return type.
+    if (return_call_param.has_value()) {
+      TryToCompleteType(
+          context,
+          context.insts().GetAs<SemIR::AnyParam>(return_call_param).type_id,
+          SemIR::LocId(return_call_param));
+    }
+  }
+}
+
+auto StartFunctionSignature(Context& context) -> void {
+  context.scope_stack().PushForDeclName();
+  context.inst_block_stack().Push();
+  context.pattern_block_stack().Push();
+}
+
+auto FinishFunctionSignature(Context& context)
+    -> FinishFunctionSignatureResult {
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
+  return {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id};
+}
+
+auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
+                      SemIR::InstBlockId decl_block_id, bool build_generic,
+                      bool is_definition, SemIR::Function function)
+    -> std::pair<SemIR::InstId, SemIR::FunctionId> {
+  CARBON_CHECK(!function.first_owning_decl_id.has_value());
+
+  SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
+                                       SemIR::FunctionId::None, decl_block_id};
+  auto decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
+  function.first_owning_decl_id = decl_id;
+  if (is_definition) {
+    function.definition_id = decl_id;
+  }
+
+  if (build_generic) {
+    function.generic_id = BuildGenericDecl(context, decl_id);
+  }
+
+  // Create the `Function` object.
+  function_decl.function_id = context.functions().Add(std::move(function));
+  function_decl.type_id =
+      GetFunctionType(context, function_decl.function_id,
+                      build_generic ? context.scope_stack().PeekSpecificId()
+                                    : SemIR::SpecificId::None);
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  return {decl_id, function_decl.function_id};
+}
+
+auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
+                             SemIR::FunctionId function_id) -> void {
+  // Create the function scope and the entry block.
+  context.scope_stack().PushForFunctionBody(decl_id);
+  context.inst_block_stack().Push();
+  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
+  StartGenericDefinition(context,
+                         context.functions().Get(function_id).generic_id);
+
+  CheckFunctionDefinitionSignature(context, function_id);
+}
+
+auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
+    -> void {
+  context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
+
+  auto& function = context.functions().Get(function_id);
+  function.body_block_ids = context.region_stack().PopRegion();
+
+  // If this is a generic function, collect information about the definition.
+  FinishGenericDefinition(context, function.generic_id);
 }
 
 }  // namespace Carbon::Check

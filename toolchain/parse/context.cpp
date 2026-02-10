@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -438,7 +438,8 @@ static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
   auto& stack = context.state_stack();
   if (stack.size() < 2 ||
       (stack.back().kind != StateKind::DeclScopeLoopAsClass &&
-       stack.back().kind != StateKind::DeclScopeLoopAsNonClass)) {
+       stack.back().kind != StateKind::DeclScopeLoopAsInterface &&
+       stack.back().kind != StateKind::DeclScopeLoopAsRegular)) {
     return false;
   }
   auto kind = stack[stack.size() - 2].kind;
@@ -460,6 +461,19 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
     -> void {
   auto definition_id = AddNode<NodeKind::FunctionDefinition>(token, has_error);
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id = definition_id;
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
+  }
+}
+
+auto Context::AddFunctionTerseDefinition(Lex::TokenIndex token, bool has_error)
+    -> void {
+  auto definition_id =
+      AddNode<NodeKind::FunctionTerseDefinition>(token, has_error);
   if (ParsingInDeferredDefinitionScope(*this)) {
     auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);

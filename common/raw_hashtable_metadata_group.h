@@ -43,7 +43,7 @@ namespace Carbon::RawHashtable {
 // We define a constant max group size. The particular group size used in
 // practice may vary, but we want to have some upper bound used to ensure
 // memory allocation is done consistently across different architectures.
-constexpr ssize_t MaxGroupSize = 16;
+inline constexpr ssize_t MaxGroupSize = 16;
 
 // This takes a collection of bits representing the results of looking for a
 // particular tag in this metadata group and determines the first position with
@@ -124,7 +124,7 @@ class BitIndex
       return reinterpret_cast<T*>(
           &reinterpret_cast<std::byte*>(pointer)[index]);
     } else if constexpr (llvm::isPowerOf2_64(sizeof(T))) {
-      constexpr size_t ScaleShift = llvm::CTLog2<sizeof(T)>();
+      constexpr size_t ScaleShift = llvm::ConstantLog2<sizeof(T)>();
       static_assert(ScaleShift <= ByteEncodingShift,
                     "Scaling by >=8 should be handled above!");
       constexpr size_t FoldedShift = ByteEncodingShift - ScaleShift;
@@ -1001,6 +1001,7 @@ inline auto MetadataGroup::SimdLoad(const uint8_t* metadata, ssize_t index)
   return g;
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter): Mutation is in #if.
 inline auto MetadataGroup::SimdStore(uint8_t* metadata, ssize_t index) const
     -> void {
 #if CARBON_NEON_SIMD_SUPPORT

@@ -16,7 +16,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
@@ -234,6 +234,10 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
     }
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
+  }
+
+  if (has_include_in_dumps_) {
+    output_stream << "  has_include_in_dumps: true\n";
   }
 
   if (!dump_sem_ir_ranges_.empty()) {

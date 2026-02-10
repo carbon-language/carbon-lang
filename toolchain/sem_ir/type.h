@@ -14,6 +14,26 @@
 
 namespace Carbon::SemIR {
 
+#define CARBON_TYPE_QUALIFIERS(X) \
+  X(Const)                        \
+  X(MaybeUnformed)                \
+  X(Partial)
+
+CARBON_DEFINE_RAW_ENUM_MASK(TypeQualifiers, uint8_t) {
+  CARBON_TYPE_QUALIFIERS(CARBON_RAW_ENUM_MASK_ENUMERATOR)
+};
+
+// Represents a set of keyword modifiers, using a separate bit per modifier.
+class TypeQualifiers : public CARBON_ENUM_MASK_BASE(TypeQualifiers) {
+ public:
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_CONSTANT_DECL)
+};
+
+#define CARBON_TYPE_QUALIFIERS_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(TypeQualifiers, X)
+CARBON_TYPE_QUALIFIERS(CARBON_TYPE_QUALIFIERS_WITH_TYPE)
+#undef CARBON_TYPE_QUALIFIERS_WITH_TYPE
+
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {
  public:
@@ -42,6 +62,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
+  // Like GetTypeIdForTypeConstantId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
+
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
   //
@@ -59,7 +83,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetAsTypeInstId(InstId inst_id) const -> TypeInstId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> TypeInstId;
+  auto GetTypeInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
@@ -92,6 +116,13 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return GetAsInst(type_id).Is<InstT>();
   }
 
+  // Returns whether one of the specified kinds of instruction was used to
+  // define the type.
+  template <typename... InstTs>
+  auto IsOneOf(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).IsOneOf<InstTs...>();
+  }
+
   // Returns the instruction used to define the specified type, which is known
   // to be a particular kind of instruction.
   template <typename InstT>
@@ -110,7 +141,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // case where they might be in different generics and thus might have
   // different ConstantIds, but are still symbolically equal.
   auto AreEqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
-    return GetInstId(a) == GetInstId(b);
+    return GetTypeInstId(a) == GetTypeInstId(b);
   }
 
   // Gets the value representation to use for a type. This returns an
@@ -147,14 +178,33 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // cannot be determined because the type is not complete.
   auto GetObjectRepr(TypeId type_id) const -> TypeId;
 
+  // Get the type that the given type adapts, or `None` if the type is not known
+  // to be an adapter, including the case where the type is an incomplete class.
+  auto GetAdaptedType(TypeId type_id) const -> TypeId;
+
+  // Returns the non-adapter type that is compatible with the specified type.
+  auto GetTransitiveAdaptedType(TypeId type_id) const -> TypeId;
+
   // Determines whether the given type is known to be complete. This does not
   // determine whether the type could be completed, only whether it has been.
   auto IsComplete(TypeId type_id) const -> bool {
     return complete_type_info_.Contains(type_id);
   }
 
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(TypeId type_id) const -> TypeId;
+  // Removes any top-level qualifiers from a type.
+  auto GetUnqualifiedType(TypeId type_id) const -> TypeId {
+    return GetUnqualifiedTypeAndQualifiers(type_id).first;
+  }
+
+  // Removes any top-level qualifiers from a type and returns the unqualified
+  // type and qualifiers.
+  auto GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
+
+  // Returns the non-adapter unqualified type that is compatible with the
+  // specified type.
+  auto GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
 
   // Determines whether the given type is a signed integer type. This includes
   // the case where the type is `Core.IntLiteral` or a class type whose object
@@ -173,9 +223,16 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto TryGetIntTypeInfo(TypeId int_type_id) const
       -> std::optional<IntTypeInfo>;
 
-  // Returns whether `type_id` represents a facet type.
+  // Returns whether `type_id` represents a valid facet type.
   auto IsFacetType(TypeId type_id) const -> bool {
     return type_id == TypeType::TypeId || Is<FacetType>(type_id);
+  }
+
+  // Returns whether `type_id` represents any kind of facet type, including the
+  // error instruction, which can be used as a type and so should be treated as
+  // a facet type in some contexts.
+  auto IsFacetTypeOrError(TypeId type_id) const -> bool {
+    return IsFacetType(type_id) || type_id == ErrorInst::TypeId;
   }
 
   // Returns a list of types that were completed in this file, in the order in
@@ -216,8 +273,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 };
 
 // Returns the scrutinee type of `type_id`, which must be a `PatternType`.
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId;
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId;
 
 }  // namespace Carbon::SemIR
 

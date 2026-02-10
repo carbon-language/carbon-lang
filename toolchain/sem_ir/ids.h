@@ -9,9 +9,10 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::SemIR {
@@ -30,18 +31,25 @@ struct InstId : public IdBase<InstId> {
   // because the name is currently being initialized.
   static const InstId InitTombstone;
 
+  // A placeholder used in the `ImplWitness` table of instructions for members
+  // of the impl. These are replaced as values are seen for the witness table in
+  // the impl declaration or definition. This is distinct from `None` for
+  // debugging purposes.
+  static const InstId ImplWitnessTablePlaceholder;
+
   using IdBase::IdBase;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+inline constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+inline constexpr InstId InstId::ImplWitnessTablePlaceholder =
+    InstId(NoneIndex - 2);
 
-// An InstId whose value is a type. The fact it's a type is CHECKed on
-// construction, and this allows that check to be represented in the type
-// system.
+// An InstId whose value is a type. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
 struct TypeInstId : public InstId {
-  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -56,7 +64,35 @@ struct TypeInstId : public InstId {
       : InstId(id) {}
 };
 
-constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
+inline constexpr TypeInstId TypeInstId::None =
+    TypeInstId::UnsafeMake(InstId::None);
+
+// An InstId whose type is known to be T. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
+//
+// Unlike TypeInstId, this type can *not* be an operand in instructions, since
+// being a template prevents it from being used in non-generic contexts such as
+// switches.
+template <typename T>
+struct KnownInstId : public InstId {
+  static const KnownInstId None;
+
+  using InstId::InstId;
+
+  static constexpr auto UnsafeMake(InstId id) -> KnownInstId {
+    return KnownInstId(UnsafeCtor(), id);
+  }
+
+ private:
+  struct UnsafeCtor {};
+  explicit constexpr KnownInstId(UnsafeCtor /*unsafe*/, InstId id)
+      : InstId(id) {}
+};
+
+template <typename T>
+inline constexpr KnownInstId<T> KnownInstId<T>::None =
+    KnownInstId<T>::UnsafeMake(InstId::None);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
@@ -73,8 +109,7 @@ class AbsoluteInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and AbsoluteInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -97,8 +132,7 @@ class DestInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and DestInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -122,8 +156,7 @@ class MetaInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and MetaInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -140,6 +173,11 @@ class MetaInstId : public InstId {
 // constant instruction that defines the constant. Symbolic constants are an
 // index into a separate table of `SymbolicConstant`s maintained by the constant
 // value store.
+//
+// IdTags for ConstantIds are slightly complex, and you need to know if the
+// constant is concrete or symbolic to know its tag:
+// - Concrete ConstantIds use the tag of the store of InstIds.
+// - Symbolic ConstantIds use the tag of the store of internal SymbolicIds.
 struct ConstantId : public IdBase<ConstantId> {
   static constexpr llvm::StringLiteral Label = "constant";
 
@@ -218,11 +256,19 @@ struct ConstantId : public IdBase<ConstantId> {
   static constexpr int32_t FirstSymbolicId = NoneIndex - 2;
 };
 
-constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
+inline constexpr ConstantId ConstantId::NotConstant =
+    ConstantId(NotConstantIndex);
 
 // The ID of a `EntityName`.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a C++ global variable.
+struct CppGlobalVarId : public IdBase<CppGlobalVarId> {
+  static constexpr llvm::StringLiteral Label = "cpp_global_var";
 
   using IdBase::IdBase;
 };
@@ -247,7 +293,14 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
   using IndexBase::IndexBase;
 };
 
-// The ID of a `Function`.
+// The ID of a C++ overload set.
+struct CppOverloadSetId : public IdBase<CppOverloadSetId> {
+  static constexpr llvm::StringLiteral Label = "cpp_overload_set";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 
@@ -263,9 +316,10 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static const CheckIRId Cpp;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
+inline constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
@@ -288,6 +342,13 @@ struct InterfaceId : public IdBase<InterfaceId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `NamedConstraint`.
+struct NamedConstraintId : public IdBase<NamedConstraintId> {
+  static constexpr llvm::StringLiteral Label = "constraint";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an `AssociatedConstant`.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
@@ -298,6 +359,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
 // The ID of a `FacetTypeInfo`.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
 };
@@ -391,20 +453,13 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
   static constexpr int32_t FirstDefinitionIndex = NoneIndex - 1;
 };
 
-constexpr GenericInstIndex GenericInstIndex::None =
+inline constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
-
-// The ID of an `ImportCpp`.
-struct ImportCppId : public IdBase<ImportCppId> {
-  static constexpr llvm::StringLiteral Label = "import_cpp";
-
-  using IdBase::IdBase;
-};
 
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
 // indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
-  static constexpr llvm::StringLiteral Label = "ir";
+  static constexpr llvm::StringLiteral Label = "import_ir";
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
@@ -416,10 +471,25 @@ struct ImportIRId : public IdBase<ImportIRId> {
   static const ImportIRId Cpp;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
-constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
+inline constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
+inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
+
+// The ID of a `ClangDecl`.
+//
+// These IDs are importantly distinct from the `inst_id` associated with each
+// declaration. These form a dense range of IDs that is used to reference the
+// AST node pointers without storing those pointers directly into SemIR and
+// needing space to hold a full pointer. We can't avoid having these IDs without
+// embedding pointers directly into the storage of SemIR as part of an
+// instruction.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  using IdBase::IdBase;
+};
 
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
@@ -443,8 +513,8 @@ struct BoolValue : public IdBase<BoolValue> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr BoolValue BoolValue::False = BoolValue(0);
-constexpr BoolValue BoolValue::True = BoolValue(1);
+inline constexpr BoolValue BoolValue::False = BoolValue(0);
+inline constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // A character literal value as a unicode codepoint.
 struct CharId : public IdBase<CharId> {
@@ -474,18 +544,54 @@ struct IntKind : public IdBase<IntKind> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr IntKind IntKind::Unsigned = IntKind(0);
-constexpr IntKind IntKind::Signed = IntKind(1);
+inline constexpr IntKind IntKind::Unsigned = IntKind(0);
+inline constexpr IntKind IntKind::Signed = IntKind(1);
 
-// A float kind value.
+// A float kind value. This describes the semantics of the floating-point type.
+// This represents very similar information to the bit-width, but is more
+// precise. In particular, there is in general more than one floating-point type
+// with a given bit-width, and while only one such type can be named with the
+// `fN` notation, the others should still be modeled as `FloatType`s.
 struct FloatKind : public IdBase<FloatKind> {
   // Not used by `Print`, but for `IdKind`.
   static constexpr llvm::StringLiteral Label = "float_kind";
 
+  // An explicitly absent kind. Used when the kind has not been determined.
+  static const FloatKind None;
+
+  // Supported IEEE-754 interchange formats. These correspond to Carbon `fN`
+  // type literal syntax.
+  static const FloatKind Binary16;
+  static const FloatKind Binary32;
+  static const FloatKind Binary64;
+  static const FloatKind Binary128;
+  // Note, binary256 is not supported by LLVM and hence not by us.
+
+  // Other formats supported by LLVM. Support for these may be
+  // target-dependent.
+  // TODO: Add a mechanism to use these types from Carbon code.
+  static const FloatKind BFloat16;
+  static const FloatKind X87Float80;
+  static const FloatKind PPCFloat128;
+
   using IdBase::IdBase;
 
-  auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  // Query the LLVM semantics model associated with this kind of floating-point
+  // type. This kind must be concrete.
+  auto Semantics() const -> const llvm::fltSemantics&;
 };
+
+inline constexpr FloatKind FloatKind::None = FloatKind(NoneIndex);
+
+inline constexpr FloatKind FloatKind::Binary16 = FloatKind(0);
+inline constexpr FloatKind FloatKind::Binary32 = FloatKind(1);
+inline constexpr FloatKind FloatKind::Binary64 = FloatKind(2);
+inline constexpr FloatKind FloatKind::Binary128 = FloatKind(3);
+inline constexpr FloatKind FloatKind::BFloat16 = FloatKind(4);
+inline constexpr FloatKind FloatKind::X87Float80 = FloatKind(5);
+inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
 
 // An X-macro for special names. Uses should look like:
 //
@@ -499,10 +605,16 @@ struct FloatKind : public IdBase<FloatKind> {
   X(ChoiceDiscriminant)                                          \
   /* The name of the package `Core`. */                          \
   X(Core)                                                        \
-  /* The name of `destroy`. */                                   \
-  X(Destroy)                                                     \
+  /* The name of the package `Cpp`. */                           \
+  X(Cpp)                                                         \
+  /* The name of imported C++ destructors. */                    \
+  X(CppDestructor)                                               \
+  /* The name of imported C++ operator functions */              \
+  X(CppOperator)                                                 \
+  /* The name of the default package `Main`. */                  \
+  X(MainPackage)                                                 \
   /* The name of `package`. */                                   \
-  X(PackageNamespace)                                            \
+  X(PackageKeyword)                                              \
   /* The name of `.Self`. */                                     \
   X(PeriodSelf)                                                  \
   /* The name of the return slot in a function. */               \
@@ -569,14 +681,14 @@ struct NameId : public IdBase<NameId> {
 
 // Define the special `static const NameId` values.
 #define CARBON_SPECIAL_NAME_ID_FOR_DEF(Name) \
-  constexpr NameId NameId::Name =            \
+  inline constexpr NameId NameId::Name =     \
       NameId(NoneIndex - 1 - static_cast<int>(NameId::SpecialNameId::Name));
 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_DEF)
 #undef CARBON_SPECIAL_NAME_ID_FOR_DEF
 
 // Count non-index values, including `None` and special names.
 #define CARBON_SPECIAL_NAME_ID_FOR_COUNT(...) +1
-constexpr int NameId::NonIndexValueCount =
+inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
@@ -590,7 +702,7 @@ struct NameScopeId : public IdBase<NameScopeId> {
   using IdBase::IdBase;
 };
 
-constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
@@ -620,11 +732,12 @@ struct InstBlockId : public IdBase<InstBlockId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
-constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
-constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
-constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
+inline constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
+inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
+inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
+inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::Unreachable =
+    InstBlockId(NoneIndex - 1);
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.
@@ -633,8 +746,7 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 // `InstBlockId` (unlike for the singleton error `InstId`).
 class InstBlockIdOrError {
  public:
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstBlockIdOrError(InstBlockId inst_block_id)
+  explicit(false) InstBlockIdOrError(InstBlockId inst_block_id)
       : InstBlockIdOrError(inst_block_id, false) {}
 
   static auto MakeError() -> InstBlockIdOrError {
@@ -678,8 +790,7 @@ class AbsoluteInstBlockId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // AbsoluteInstBlockId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr AbsoluteInstBlockId(InstBlockId inst_block_id)
+  explicit(false) constexpr AbsoluteInstBlockId(InstBlockId inst_block_id)
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
@@ -694,8 +805,7 @@ class DeclInstBlockId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // DeclInstBlockId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr DeclInstBlockId(InstBlockId inst_block_id)
+  explicit(false) constexpr DeclInstBlockId(InstBlockId inst_block_id)
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
@@ -709,8 +819,8 @@ class LabelId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // LabelId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LabelId(InstBlockId inst_block_id) : InstBlockId(inst_block_id) {}
+  explicit(false) constexpr LabelId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
 };
@@ -733,9 +843,11 @@ struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static const StructTypeFieldsId Empty;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
+inline constexpr StructTypeFieldsId StructTypeFieldsId::Empty =
+    StructTypeFieldsId(0);
 
 // The ID of a `CustomLayout` block.
 struct CustomLayoutId : public IdBase<CustomLayoutId> {
@@ -753,9 +865,10 @@ struct CustomLayoutId : public IdBase<CustomLayoutId> {
   static constexpr int FirstFieldIndex = 2;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr CustomLayoutId CustomLayoutId::Empty = CustomLayoutId(0);
+inline constexpr CustomLayoutId CustomLayoutId::Empty = CustomLayoutId(0);
 
 // The ID of a type.
 struct TypeId : public IdBase<TypeId> {
@@ -824,8 +937,10 @@ struct LibraryNameId : public IdBase<LibraryNameId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr LibraryNameId LibraryNameId::Default = LibraryNameId(NoneIndex - 1);
-constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
+inline constexpr LibraryNameId LibraryNameId::Default =
+    LibraryNameId(NoneIndex - 1);
+inline constexpr LibraryNameId LibraryNameId::Error =
+    LibraryNameId(NoneIndex - 2);
 
 // The ID of an `ImportIRInst`.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
@@ -839,6 +954,28 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
   }
 };
+
+// The ID of a `RequireImpls`.
+struct RequireImplsId : public IdBase<RequireImplsId> {
+  static constexpr llvm::StringLiteral Label = "require";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `RequireImplsId` block.
+struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
+  static constexpr llvm::StringLiteral Label = "require_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const RequireImplsBlockId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
+    RequireImplsBlockId(0);
 
 // A SemIR location used as the location of instructions. This contains either a
 // InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
@@ -871,19 +1008,17 @@ struct LocId : public IdBase<LocId> {
 
   using IdBase::IdBase;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(ImportIRInstId import_ir_inst_id)
+  explicit(false) constexpr LocId(ImportIRInstId import_ir_inst_id)
       : IdBase(import_ir_inst_id.has_value()
                    ? FirstImportIRInstId - import_ir_inst_id.index
                    : NoneIndex) {}
 
   explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
+  explicit(false) constexpr LocId(Parse::NoneNodeId /*none*/)
+      : IdBase(NoneIndex) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::NodeId node_id)
+  explicit(false) constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location. Prefer calling

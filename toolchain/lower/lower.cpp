@@ -18,15 +18,18 @@ auto LowerToLLVM(
     llvm::LLVMContext& llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
-    const SemIR::File& sem_ir, const LowerToLLVMOptions& options)
-    -> std::unique_ptr<llvm::Module> {
-  Context context(&llvm_context, std::move(fs), options.want_debug_info,
-                  &tree_and_subtrees_getters, sem_ir.filename(),
-                  options.vlog_stream);
+    const SemIR::File& sem_ir, int total_ir_count,
+    const LowerToLLVMOptions& options) -> std::unique_ptr<llvm::Module> {
+  Context context(
+      &llvm_context, std::move(fs), options.want_debug_info,
+      &tree_and_subtrees_getters,
+      sem_ir.cpp_file() ? sem_ir.cpp_file()->GetCodeGenerator() : nullptr,
+      sem_ir.filename(), total_ir_count, options.opt_level,
+      options.vlog_stream);
 
   // TODO: Consider disabling instruction naming by default if we're not
   // producing textual LLVM IR.
-  SemIR::InstNamer inst_namer(&sem_ir);
+  SemIR::InstNamer inst_namer(&sem_ir, total_ir_count);
   context.GetFileContext(&sem_ir, &inst_namer).LowerDefinitions();
 
   std::unique_ptr<llvm::Module> module = std::move(context).Finalize();
@@ -36,10 +39,6 @@ auto LowerToLLVM(
     module->print(*options.vlog_stream, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
-  }
-  if (options.dump_stream) {
-    module->print(*options.dump_stream, /*AAW=*/nullptr,
-                  /*ShouldPreserveUseListOrder=*/true);
   }
 
   if (options.llvm_verifier_stream) {

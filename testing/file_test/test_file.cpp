@@ -25,57 +25,116 @@ using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
-// Processes conflict markers, including tracking of whether code is within a
-// conflict marker. Returns true if the line is consumed.
+// Represents the different kinds of version-control conflict markers that are
+// relevant for the autoupdater. One key concern here is the distinction between
+// "snapshot" and "diff" conflict regions. Snapshot regions are the more
+// traditional kind, where the entire region between two markers represents the
+// exact state of a region of the underlying file at some snapshot (e.g. the
+// base commit or one of the conflicting commits). Diff regions are
+// produced by jj. They show the diff between the base and one side of the
+// conflict, using a prefix character on each line: '+' indicates an added line,
+// '-' indicates a removed line, and ' ' indicates an unchanged line. Note that
+// a single conflict may contain both snapshot and diff regions.
+//
+// See https://docs.jj-vcs.dev/latest/conflicts/ for more information.
+enum class MarkerKind {
+  // Represents a line that is not a conflict marker.
+  None,
+  // Marks the start of a conflict, and potentially a snapshot region.
+  Start,
+  // Marks the end of a conflict.
+  End,
+  // Marks the start of a snapshot region.
+  Snapshot,
+  // Marks the start of a diff region.
+  Diff
+};
+
+// Processes conflict markers, including tracking the previous conflict marker.
+// Returns true if the line is consumed.
 static auto TryConsumeConflictMarker(bool running_autoupdate,
                                      llvm::StringRef line,
                                      llvm::StringRef line_trimmed,
-                                     bool& inside_conflict_marker)
+                                     MarkerKind& previous_marker)
     -> ErrorOr<bool> {
-  bool is_start = line.starts_with("<<<<<<<");
-  bool is_middle = line.starts_with("=======") || line.starts_with("|||||||");
-  bool is_end = line.starts_with(">>>>>>>");
+  MarkerKind new_marker;
+  if (line.starts_with("<<<<<<<")) {
+    new_marker = MarkerKind::Start;
+  } else if (line.starts_with(">>>>>>>")) {
+    new_marker = MarkerKind::End;
+  } else if (line.starts_with("=======") || line.starts_with("|||||||") ||
+             line.starts_with("+++++++") || line.starts_with("-------")) {
+    // git uses "=======" and "|||||||" to mark boundaries between conflict
+    // regions (which are always snapshots). jj uses "+++++++" and "-------" to
+    // mark the start of different kinds of snapshot regions.
+    new_marker = MarkerKind::Snapshot;
+  } else if (line.starts_with("%%%%%%%") || line.starts_with(R"(\\\\\\\)")) {
+    // jj uses "%%%%%%%" to mark the start of a diff region, and "\\\\\\\" to
+    // add a second line to a "%%%%%%%" marker for formatting purposes.
+    new_marker = MarkerKind::Diff;
+  } else {
+    new_marker = MarkerKind::None;
+  }
 
   // When running the test, any conflict marker is an error.
-  if (!running_autoupdate && (is_start || is_middle || is_end)) {
+  if (!running_autoupdate && (new_marker != MarkerKind::None)) {
     return ErrorBuilder() << "Conflict marker found:\n" << line;
   }
 
-  // Autoupdate tracks conflict markers for context, and will discard
-  // conflicting lines when it can autoupdate them.
-  if (inside_conflict_marker) {
-    if (is_start) {
-      return ErrorBuilder() << "Unexpected conflict marker inside conflict:\n"
-                            << line;
+  bool inside_conflict_marker = [&] {
+    switch (previous_marker) {
+      case MarkerKind::None:
+      case MarkerKind::End:
+        return false;
+      case MarkerKind::Start:
+      case MarkerKind::Snapshot:
+      case MarkerKind::Diff:
+        return true;
     }
-    if (is_middle) {
-      return true;
-    }
-    if (is_end) {
-      inside_conflict_marker = false;
-      return true;
-    }
+  }();
 
-    // Look for CHECK and TIP lines, which can be discarded.
-    if (line_trimmed.starts_with("// CHECK:STDOUT:") ||
-        line_trimmed.starts_with("// CHECK:STDERR:") ||
-        line_trimmed.starts_with("// TIP:")) {
+  switch (new_marker) {
+    case MarkerKind::End:
+    case MarkerKind::Snapshot:
+    case MarkerKind::Diff:
+      if (!inside_conflict_marker) {
+        return ErrorBuilder()
+               << "Unexpected conflict marker outside conflict:\n"
+               << line;
+      }
+      previous_marker = new_marker;
       return true;
-    }
+    case MarkerKind::Start:
+      if (inside_conflict_marker) {
+        return ErrorBuilder() << "Unexpected conflict marker inside conflict:\n"
+                              << line;
+      }
+      previous_marker = new_marker;
+      return true;
+    case MarkerKind::None:
+      if (!inside_conflict_marker) {
+        return false;
+      }
 
-    return ErrorBuilder()
-           << "Autoupdate can't discard non-CHECK lines inside conflicts:\n"
-           << line;
-  } else {
-    if (is_start) {
-      inside_conflict_marker = true;
-      return true;
-    }
-    if (is_middle || is_end) {
-      return ErrorBuilder() << "Unexpected conflict marker outside conflict:\n"
-                            << line;
-    }
-    return false;
+      if (previous_marker == MarkerKind::Diff) {
+        if (!line.consume_front(" ") && !line.consume_front("+") &&
+            !line.consume_front("-")) {
+          return ErrorBuilder() << "Line inside diff-style conflict doesn't "
+                                   "start with '+', '-', or ' ':\n"
+                                << line;
+        }
+        line_trimmed = line.ltrim();
+      }
+
+      // Look for CHECK and TIP lines, which can be discarded.
+      if (line_trimmed.starts_with("// CHECK:STDOUT:") ||
+          line_trimmed.starts_with("// CHECK:STDERR:") ||
+          line_trimmed.starts_with("// TIP:")) {
+        return true;
+      }
+
+      return ErrorBuilder() << "Autoupdate can't discard non-CHECK lines "
+                               "inside conflicts:\n";
   }
 }
 
@@ -145,7 +204,8 @@ static auto AutoFillDidOpenParams(llvm::json::Object& params,
   return Success();
 }
 
-// Reformats `[[@LSP:` and similar keyword as an LSP call with headers.
+// Reformats `[[@LSP:` and similar keyword as an LSP call with headers. Returns
+// the position to start a find for the next keyword.
 static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
                                 int& lsp_call_id,
                                 llvm::ArrayRef<TestFile::Split> splits)
@@ -154,7 +214,7 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
       llvm::StringRef(content).substr(keyword_pos);
 
   auto [keyword, body_start] = content_at_keyword.split(":");
-  if (body_start.empty()) {
+  if (keyword.size() == content_at_keyword.size()) {
     return ErrorBuilder() << "Missing `:` for `"
                           << content_at_keyword.take_front(10) << "`";
   }
@@ -179,12 +239,11 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
   }
 
   static constexpr llvm::StringLiteral LspEnd = "]]";
-  auto body_end = body_start.find(LspEnd);
-  if (body_end == std::string::npos) {
+  auto [body, rest] = body_start.split("]]");
+  if (body.size() == body_start.size()) {
     return ErrorBuilder() << "Missing `" << LspEnd << "` after `" << keyword
                           << "`";
   }
-  llvm::StringRef body = body_start.take_front(body_end);
   auto [method_or_id, extra_content] = body.split(":");
 
   llvm::json::Value parsed_extra_content = nullptr;
@@ -231,10 +290,31 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
   auto json_with_header = llvm::formatv("Content-Length: {0}\n\n{1}\n",
                                         content_length, buffer.TakeStr())
                               .str();
-  int keyword_len =
-      (body_start.data() + body_end + LspEnd.size()) - keyword.data();
+  size_t keyword_len = rest.data() - keyword.data();
   content.replace(keyword_pos, keyword_len, json_with_header);
   return keyword_pos + json_with_header.size();
+}
+
+// Replaces `[[@0xAB]]` with the raw byte with value 0xAB. Returns the position
+// to start a find for the next keyword.
+static auto ReplaceRawByteKeywordAt(std::string& content, size_t keyword_pos)
+    -> ErrorOr<size_t> {
+  llvm::StringRef content_at_keyword =
+      llvm::StringRef(content).substr(keyword_pos);
+  auto [keyword, rest] = content_at_keyword.split("]]");
+  if (keyword.size() == content_at_keyword.size()) {
+    return ErrorBuilder() << "Missing `]]` after " << keyword.take_front(10)
+                          << "`";
+  }
+
+  unsigned char byte_value;
+  if (keyword.substr(std::size("[[@0x") - 1).getAsInteger(16, byte_value)) {
+    return ErrorBuilder() << "Invalid raw byte specifier `"
+                          << keyword.take_front(10) << "`";
+  }
+
+  content.replace(keyword_pos, keyword.size() + 2, 1, byte_value);
+  return keyword_pos + 1;
 }
 
 // Replaces the keyword at the given position. Returns the position to start a
@@ -263,14 +343,18 @@ static auto ReplaceContentKeywordAt(std::string& content, size_t keyword_pos,
     return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id, splits);
   }
 
+  if (keyword.starts_with("[[@0x")) {
+    return ReplaceRawByteKeywordAt(content, keyword_pos);
+  }
+
   return ErrorBuilder() << "Unexpected use of `[[@` at `"
                         << keyword.substr(0, 5) << "`";
 }
 
 // Replaces the content keywords.
 //
-// TEST_NAME is the only content keyword at present, but we do validate that
-// other names are reserved.
+// This handles content keywords such as [[@TEST_NAME]] and [[@LSP*]]. Unknown
+// content keywords are diagnosed.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
                                    std::string& content,
                                    llvm::ArrayRef<TestFile::Split> splits)
@@ -675,7 +759,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
 
   // When autoupdating, we track whether we're inside conflict markers.
   // Otherwise conflict markers are errors.
-  bool inside_conflict_marker = false;
+  auto previous_conflict_marker = MarkerKind::None;
 
   SplitState split_state;
 
@@ -689,7 +773,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
         TryConsumeConflictMarker(running_autoupdate, line, line_trimmed,
-                                 inside_conflict_marker));
+                                 previous_conflict_marker));
     if (is_consumed) {
       continue;
     }
@@ -808,8 +892,7 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
       test_file.file_splits, include_files));
 
   if (!found_autoupdate) {
-    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting: "
-                          << test_name;
+    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
 
   constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";

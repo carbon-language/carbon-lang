@@ -25,6 +25,10 @@ auto HandleFunctionAfterParams(Context& context) -> void {
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
+  } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
+    context.PushState(StateKind::FunctionReturnFormFinish);
+    context.ConsumeAndDiscard();
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   }
 }
 
@@ -32,6 +36,12 @@ auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::ReturnType, state.token, state.has_error);
+}
+
+auto HandleFunctionReturnFormFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::ReturnForm, state.token, state.has_error);
 }
 
 auto HandleFunctionSignatureFinish(Context& context) -> void {
@@ -49,6 +59,13 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       state.has_error = false;
       context.PushState(state, StateKind::FunctionDefinitionFinish);
       context.PushState(StateKind::StatementScopeLoop);
+      break;
+    }
+    case Lex::TokenKind::EqualGreater: {
+      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
+      context.AddLeafNode(NodeKind::TerseBodyArrow, *(context.position() - 1));
+      context.PushState(state, StateKind::FunctionTerseBodyFinish);
+      context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
       break;
     }
     case Lex::TokenKind::Equal: {
@@ -93,6 +110,18 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddFunctionDefinition(context.Consume(), state.has_error);
+}
+
+auto HandleFunctionTerseBodyFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
+  if (!semi && !state.has_error) {
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Fn);
+    state.has_error = true;
+  }
+  context.AddFunctionTerseDefinition(semi ? *semi : *(context.position() - 1),
+                                     state.has_error);
 }
 
 }  // namespace Carbon::Parse

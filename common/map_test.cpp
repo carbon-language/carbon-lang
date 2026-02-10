@@ -17,7 +17,7 @@
 // Workaround for std::pair comparison deficiency in libc++ 16.
 #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 170000
 namespace std {
-template <class T, class U, class V, class W>
+template <typename T, typename U, typename V, typename W>
   requires(convertible_to<V, T> && convertible_to<W, U>)
 inline auto operator==(
     pair<std::reference_wrapper<T>, std::reference_wrapper<U>> lhs,
@@ -77,7 +77,7 @@ auto MakeKeyValues(ValueCB value_cb, RangeT&& range, RangeTs&&... ranges)
     }
   };
   add_range(std::forward<RangeT>(range));
-  (add_range(std::forward<RangeT>(ranges)), ...);
+  (add_range(std::forward<RangeTs>(ranges)), ...);
 
   return elements;
 }

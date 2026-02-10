@@ -9,6 +9,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
@@ -58,9 +59,9 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
                                 SemIR::AnyBindingPattern pattern,
                                 SemIR::TypeId new_pattern_type_id)
     -> SemIR::InstId {
-  bool is_generic = pattern.kind == SemIR::SymbolicBindingPattern::Kind;
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
-  CARBON_CHECK(is_generic == entity_name.bind_index().has_value());
+  CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
+               entity_name.bind_index().has_value());
 
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
@@ -76,7 +77,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   // Rebuild the binding pattern.
   return AddBindingPattern(context, SemIR::LocId(pattern_id),
                            entity_name.name_id, type_id, type_expr_region_id,
-                           is_generic, entity_name.is_template)
+                           pattern.kind, entity_name.is_template)
       .pattern_id;
 }
 
@@ -98,10 +99,6 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
 
   // Decompose the pattern. The forms we allow for patterns in a function
   // parameter list are currently fairly restrictive.
-
-  // Optional `addr`, only for `self`.
-  auto [addr, addr_id] = context.insts().TryUnwrap(
-      pattern, pattern_id, &SemIR::AddrPattern::inner_id);
 
   // Optional parameter pattern.
   auto [param, param_id] = context.insts().TryUnwrap(
@@ -130,14 +127,7 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
         {.kind = param->kind,
          .type_id = get_type(param_id),
          .subpattern_id = new_pattern_id,
-         .index = SemIR::CallParamIndex::None});
-  }
-
-  // Rebuild `addr`.
-  if (addr) {
-    new_pattern_id = RebuildPatternInst<SemIR::AddrPattern>(
-        context, addr_id,
-        {.type_id = get_type(addr_id), .inner_id = new_pattern_id});
+         .index = param->index});
   }
 
   return new_pattern_id;
@@ -155,6 +145,29 @@ static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
       });
 }
 
+static auto CloneInstId(Context& context, SemIR::SpecificId specific_id,
+                        SemIR::InstId inst_id) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
+  return GetOrAddInst<SemIR::SpecificConstant>(
+      context, SemIR::LocId(inst_id),
+      {.type_id = SemIR::TypeType::TypeId,
+       .inst_id = inst_id,
+       .specific_id = specific_id});
+}
+
+static auto CloneTypeInstId(Context& context, SemIR::SpecificId specific_id,
+                            SemIR::TypeInstId inst_id) -> SemIR::TypeInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::TypeInstId::None;
+  }
+
+  return context.types().GetAsTypeInstId(
+      CloneInstId(context, specific_id, inst_id));
+}
+
 static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId signature_id,
                               SemIR::SpecificId signature_specific_id,
@@ -170,119 +183,61 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, signature_specific_id, signature.implicit_param_patterns_id);
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
                                              signature.param_patterns_id);
-  auto return_slot_pattern_id = ClonePattern(context, signature_specific_id,
-                                             signature.return_slot_pattern_id);
+  auto return_patterns_id = ClonePatternBlock(context, signature_specific_id,
+                                              signature.return_patterns_id);
+  auto return_type_inst_id = CloneTypeInstId(context, signature_specific_id,
+                                             signature.return_type_inst_id);
+  auto return_form_inst_id = CloneInstId(context, signature_specific_id,
+                                         signature.return_form_inst_id);
   auto self_param_id = FindSelfPattern(context, implicit_param_patterns_id);
   auto pattern_block_id = context.pattern_block_stack().Pop();
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_slot_pattern_id);
+                         return_patterns_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Create the `FunctionDecl` instruction.
-  SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
-                                       SemIR::FunctionId::None, decl_block_id};
-  auto decl_id = AddPlaceholderInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(loc_id, function_decl));
-  auto generic_id = BuildGenericDecl(context, decl_id);
-
-  // Create the `Function` object.
   auto& callee = context.functions().Get(callee_id);
-  function_decl.function_id = context.functions().Add(
-      SemIR::Function{{.name_id = signature.name_id,
-                       .parent_scope_id = callee.parent_scope_id,
-                       .generic_id = generic_id,
-                       .first_param_node_id = signature.first_param_node_id,
-                       .last_param_node_id = signature.last_param_node_id,
-                       .pattern_block_id = pattern_block_id,
-                       .implicit_param_patterns_id = implicit_param_patterns_id,
-                       .param_patterns_id = param_patterns_id,
-                       .is_extern = false,
-                       .extern_library_id = SemIR::LibraryNameId::None,
-                       .non_owning_decl_id = SemIR::InstId::None,
-                       .first_owning_decl_id = decl_id,
-                       .definition_id = decl_id},
-                      {.call_params_id = call_params_id,
-                       .return_slot_pattern_id = return_slot_pattern_id,
-                       .virtual_modifier = callee.virtual_modifier,
-                       .virtual_index = callee.virtual_index,
-                       .self_param_id = self_param_id}});
-  function_decl.type_id =
-      GetFunctionType(context, function_decl.function_id,
-                      context.scope_stack().PeekSpecificId());
-  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
-  return {function_decl.function_id, decl_id};
+  auto [decl_id, function_id] = MakeFunctionDecl(
+      context, loc_id, decl_block_id, /*build_generic=*/true,
+      /*is_definition=*/true,
+      SemIR::Function{
+          {
+              .name_id = signature.name_id,
+              .parent_scope_id = callee.parent_scope_id,
+              // Set by `MakeFunctionDecl`.
+              .generic_id = SemIR::GenericId::None,
+              .first_param_node_id = signature.first_param_node_id,
+              .last_param_node_id = signature.last_param_node_id,
+              .pattern_block_id = pattern_block_id,
+              .implicit_param_patterns_id = implicit_param_patterns_id,
+              .param_patterns_id = param_patterns_id,
+              .is_extern = false,
+              .extern_library_id = SemIR::LibraryNameId::None,
+              .non_owning_decl_id = SemIR::InstId::None,
+              // Set by `MakeFunctionDecl`.
+              .first_owning_decl_id = SemIR::InstId::None,
+          },
+          {
+              .call_param_patterns_id = call_param_patterns_id,
+              .call_params_id = call_params_id,
+              .return_type_inst_id = return_type_inst_id,
+              .return_form_inst_id = return_form_inst_id,
+              .return_patterns_id = return_patterns_id,
+              .virtual_modifier = callee.virtual_modifier,
+              .virtual_index = callee.virtual_index,
+              .self_param_id = self_param_id,
+          }});
+  context.inst_block_stack().AddInstId(decl_id);
+  return {function_id, decl_id};
 }
 
 static auto HasDeclaredReturnType(Context& context,
                                   SemIR::FunctionId function_id) -> bool {
-  return context.functions()
-      .Get(function_id)
-      .return_slot_pattern_id.has_value();
-}
-
-auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
-                SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id) -> SemIR::InstId {
-  auto callee = SemIR::GetCalleeFunction(context.sem_ir(), callee_id);
-
-  // Check whether we can use the given function without a thunk.
-  // TODO: For virtual functions, we want different rules for checking `self`.
-  // TODO: This is too strict; for example, we should not compare parameter
-  // names here.
-  if (CheckFunctionTypeMatches(
-          context, context.functions().Get(callee.function_id),
-          context.functions().Get(signature_id), signature_specific_id,
-          /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
-    return callee_id;
-  }
-
-  // From P3763:
-  //   If the function in the interface does not have a return type, the
-  //   program is invalid if the function in the impl specifies a return type.
-  //
-  // Call into the redeclaration checking logic to produce a suitable error.
-  //
-  // TODO: Consider a different rule: always use an explicit return type for the
-  // thunk, and always convert the result of the wrapped call to the return type
-  // of the thunk.
-  if (!HasDeclaredReturnType(context, signature_id) &&
-      HasDeclaredReturnType(context, callee.function_id)) {
-    bool success = CheckFunctionReturnTypeMatches(
-        context, context.functions().Get(callee.function_id),
-        context.functions().Get(signature_id), signature_specific_id);
-    CARBON_CHECK(!success, "Return type unexpectedly matches");
-    return SemIR::ErrorInst::InstId;
-  }
-
-  // Create a scope for the function's parameters and generic parameters.
-  context.scope_stack().PushForDeclName();
-
-  // We can't use the function directly. Build a thunk.
-  // TODO: Check for and diagnose obvious reasons why this will fail, such as
-  // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] =
-      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
-                        signature_specific_id, callee.function_id);
-
-  // Track that this function is a thunk.
-  context.functions().Get(function_id).SetThunk(callee_id);
-
-  // Register the thunk to be defined when we reach the end of the enclosing
-  // deferred definition scope, for example an `impl` or `class` definition, as
-  // if the thunk's body were written inline in this location.
-  context.deferred_definition_worklist().SuspendThunkAndPush(
-      context, {
-                   .signature_id = signature_id,
-                   .function_id = function_id,
-                   .decl_id = thunk_id,
-                   .callee_id = callee_id,
-               });
-
-  return thunk_id;
+  return context.functions().Get(function_id).return_type_inst_id.has_value();
 }
 
 // Build an expression that names the value matched by a pattern.
@@ -291,12 +246,10 @@ static auto BuildPatternRef(Context& context,
                             SemIR::InstId pattern_id) -> SemIR::InstId {
   auto pattern = context.insts().Get(pattern_id);
 
-  auto addr = context.insts()
-                  .TryUnwrap(pattern, pattern_id, &SemIR::AddrPattern::inner_id)
-                  .first;
-
   auto pattern_ref_id = SemIR::InstId::None;
-  if (auto value_param = pattern.TryAs<SemIR::ValueParamPattern>()) {
+  if (auto value_param = pattern.TryAs<SemIR::AnyParamPattern>();
+      value_param.has_value() &&
+      value_param->kind != SemIR::OutParamPattern::Kind) {
     pattern_ref_id = arg_ids[value_param->index.index];
   } else {
     if (pattern_id != SemIR::ErrorInst::InstId) {
@@ -305,13 +258,6 @@ static auto BuildPatternRef(Context& context,
           "don't know how to build reference to this pattern in thunk");
     }
     return SemIR::ErrorInst::InstId;
-  }
-
-  if (addr) {
-    pattern_ref_id = PerformPointerDereference(
-        context, SemIR::LocId(pattern_id), pattern_ref_id, [](SemIR::TypeId) {
-          CARBON_FATAL("addr subpattern is not a pointer");
-        });
   }
 
   return pattern_ref_id;
@@ -323,16 +269,25 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
+  llvm::SmallVector<SemIR::InstId> args;
+
   // If we have a self parameter, form `self.<callee_id>`.
   if (function.self_param_id.has_value()) {
-    callee_id = PerformCompoundMemberAccess(
-        context, loc_id,
-        BuildPatternRef(context, call_arg_ids, function.self_param_id),
-        callee_id);
+    auto self_arg_id =
+        BuildPatternRef(context, call_arg_ids, function.self_param_id);
+    if (IsCppConstructorOrNonMethodOperator(context, callee_id)) {
+      // When calling a C++ constructor to implement `Copy`, or calling a C++
+      // non-method operator to implement a Carbon operator, the interface has a
+      // `self` parameter but C++ models that parameter as an explicit argument
+      // instead, so add the `self` to the argument list instead in that case.
+      args.push_back(self_arg_id);
+    } else {
+      callee_id =
+          PerformCompoundMemberAccess(context, loc_id, self_arg_id, callee_id);
+    }
   }
 
   // Form an argument list.
-  llvm::SmallVector<SemIR::InstId> args;
   for (auto pattern_id :
        context.inst_blocks().Get(function.param_patterns_id)) {
     args.push_back(BuildPatternRef(context, call_arg_ids, pattern_id));
@@ -394,16 +349,8 @@ static auto BuildThunkDefinition(Context& context,
           builder.Note(callee_id, ThunkCallee);
         });
 
-    CheckFunctionDefinitionSignature(context, function_id);
+    StartFunctionDefinition(context, thunk_id, function_id);
   }
-
-  // TODO: This duplicates much of the handling for FunctionDefinitionStart and
-  // FunctionDefinition parse nodes. Consider refactoring.
-  context.scope_stack().PushForFunctionBody(thunk_id);
-  context.inst_block_stack().Push();
-  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context,
-                         context.functions().Get(function_id).generic_id);
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
@@ -424,12 +371,7 @@ static auto BuildThunkDefinition(Context& context,
     BuildReturnWithNoExpr(context, SemIR::LocId(callee_id));
   }
 
-  context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-
-  auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.region_stack().PopRegion();
-  FinishGenericDefinition(context, function.generic_id);
+  FinishFunctionDefinition(context, function_id);
 }
 
 auto BuildThunkDefinition(Context& context,
@@ -441,6 +383,74 @@ auto BuildThunkDefinition(Context& context,
                        task.info.decl_id, task.info.callee_id);
 
   context.scope_stack().Pop();
+}
+
+auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
+                SemIR::SpecificId signature_specific_id,
+                SemIR::InstId callee_id, bool defer_definition)
+    -> SemIR::InstId {
+  auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
+
+  // Check whether we can use the given function without a thunk.
+  // TODO: For virtual functions, we want different rules for checking `self`.
+  // TODO: This is too strict; for example, we should not compare parameter
+  // names here.
+  if (CheckFunctionTypeMatches(
+          context, context.functions().Get(callee.function_id),
+          context.functions().Get(signature_id), signature_specific_id,
+          /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
+    return callee_id;
+  }
+
+  // From P3763:
+  //   If the function in the interface does not have a return type, the
+  //   program is invalid if the function in the impl specifies a return type.
+  //
+  // Call into the redeclaration checking logic to produce a suitable error.
+  //
+  // TODO: Consider a different rule: always use an explicit return type for the
+  // thunk, and always convert the result of the wrapped call to the return type
+  // of the thunk.
+  if (!HasDeclaredReturnType(context, signature_id) &&
+      HasDeclaredReturnType(context, callee.function_id)) {
+    bool success = CheckFunctionReturnTypeMatches(
+        context, context.functions().Get(callee.function_id),
+        context.functions().Get(signature_id), signature_specific_id);
+    CARBON_CHECK(!success, "Return type unexpectedly matches");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Create a scope for the function's parameters and generic parameters.
+  context.scope_stack().PushForDeclName();
+
+  // We can't use the function directly. Build a thunk.
+  // TODO: Check for and diagnose obvious reasons why this will fail, such as
+  // arity mismatch, before trying to build the thunk.
+  auto [function_id, thunk_id] =
+      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                        signature_specific_id, callee.function_id);
+
+  // Track that this function is a thunk.
+  context.functions().Get(function_id).SetThunk(callee_id);
+
+  if (defer_definition) {
+    // Register the thunk to be defined when we reach the end of the enclosing
+    // deferred definition scope, for example an `impl` or `class` definition,
+    // as if the thunk's body were written inline in this location.
+    context.deferred_definition_worklist().SuspendThunkAndPush(
+        context, {
+                     .signature_id = signature_id,
+                     .function_id = function_id,
+                     .decl_id = thunk_id,
+                     .callee_id = callee_id,
+                 });
+  } else {
+    BuildThunkDefinition(context, signature_id, function_id, thunk_id,
+                         callee_id);
+    context.scope_stack().Pop();
+  }
+
+  return thunk_id;
 }
 
 }  // namespace Carbon::Check

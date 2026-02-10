@@ -33,16 +33,16 @@ class Map;
 // structure.
 //
 // This should always be preferred to a `const`-ref parameter for the `MapBase`
-// or `Map` type as it provides more flexibility and a cleaner API.
-//
-// Note that while this type is a read-only view, that applies to the underlying
-// *map* data structure, not the individual entries stored within it. Those can
-// be mutated freely as long as both the hashes and equality of the keys are
-// preserved. If we applied a deep-`const` design here, it would prevent using
-// this type in many useful situations where the elements are mutated but the
-// associative container is not. A view of immutable data can always be obtained
-// by using `MapView<const T, const V>`, and we enable conversions to more-const
-// views. This mirrors the semantics of views like `std::span`.
+// or `Map` type as it provides more flexibility and a cleaner API. By default a
+// `MapView` provides no more immutability than a `const Map`: elements can't be
+// added or removed, but both keys and values can be mutated, and the user is
+// responsible for avoiding mutations that affect the key's hash value or
+// equality comparison. However, the key and value types can be
+// `const`-qualified to prevent those mutations. For example, a `MapView<K, V>`
+// can be converted to `MapView<const K, V>` to prevent mutating the keys. As
+// with any other view type, `const` on the `MapView` itself is "shallow": it
+// prevents rebinding the `MapView` to a different underlying map, but doesn't
+// affect mutability of the underlying map.
 //
 // A specific `KeyContextT` type can optionally be provided to configure how
 // keys will be hashed and compared. The default is `DefaultKeyContext` which is
@@ -89,8 +89,8 @@ class MapView
   // type. This is always safe to do with a view. We use a template to avoid
   // needing all 3 versions.
   template <typename OtherKeyT, typename OtherValueT>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
+  explicit(false)
+      MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
     requires(SameAsOneOf<KeyT, OtherKeyT, const OtherKeyT> &&
              SameAsOneOf<ValueT, OtherValueT, const OtherValueT>)
       : ImplT(other_view) {}
@@ -108,8 +108,8 @@ class MapView
   // Lookup a key in the map and try to return a pointer to its value. Returns
   // null on a missing key.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const
-      -> ValueT* requires(std::default_initializable<KeyContextT>);
+  auto operator[](LookupKeyT lookup_key) const -> ValueT*
+    requires(std::default_initializable<KeyContextT>);
 
   // Run the provided callback for every key and value in the map.
   template <typename CallbackT>
@@ -134,14 +134,21 @@ class MapView
   friend class MapView<const KeyT, const ValueT, KeyContextT>;
 
   MapView() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor): Implicit by design.
-  MapView(ImplT base) : ImplT(base) {}
+  explicit(false) MapView(ImplT base) : ImplT(base) {}
   MapView(ssize_t size, RawHashtable::Storage* storage)
       : ImplT(size, storage) {}
 };
 
 // A base class for a `Map` type that remains mutable while type-erasing the
 // `SmallSize` (SSO) template parameter.
+//
+// Note that `MapBase` has "shallow" const semantics: a `const MapBase<K, V>&`
+// can't be used to mutate the map data structure itself (e.g. by changing the
+// number of elements), but it can be used to mutate the keys and values it
+// contains. The user is responsible for avoiding mutations that would change
+// the hash value or equality of a key. A `MapView` with const-qualified key and
+// value types can be used to provide read-only access to the elements of a
+// `MapBase<T>`.
 //
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Map` type across API boundaries as it avoids encoding specific
@@ -185,13 +192,13 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   // Implicitly convertible to the relevant view type.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator ViewT() const { return this->view_impl(); }
+  explicit(false) operator ViewT() const { return this->view_impl(); }
 
   // We can't chain the above conversion with the conversions on `ViewT` to add
   // const, so explicitly support adding const to produce a view here.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
+  explicit(false) operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
     requires(SameAsOneOf<OtherKeyT, KeyT, const KeyT> &&
              SameAsOneOf<OtherValueT, ValueT, const ValueT>)
   {
@@ -214,10 +221,11 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const
-      -> ValueT* requires(std::default_initializable<KeyContextT>) {
-        return ViewT(*this)[lookup_key];
-      }
+  auto operator[](LookupKeyT lookup_key) const -> ValueT*
+    requires(std::default_initializable<KeyContextT>)
+  {
+    return ViewT(*this)[lookup_key];
+  }
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
@@ -366,8 +374,9 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 // allocations the performance of hashtable routines may be unacceptably bad and
 // another data structure or key design is likely preferable.
 //
-// Note that this type should typically not appear on API boundaries; either
-// `MapBase` or `MapView` should be used instead.
+// Note that like `MapBase`, `Map` has "shallow" const semantics. Note also that
+// this type should typically not appear on API boundaries; either `MapBase` or
+// `MapView` should be used instead.
 template <typename InputKeyT, typename InputValueT, ssize_t SmallSize = 0,
           typename InputKeyContextT = DefaultKeyContext>
 class Map : public RawHashtable::TableImpl<
@@ -407,11 +416,12 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Lookup(
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
-    LookupKeyT lookup_key) const
-    -> ValueT* requires(std::default_initializable<KeyContextT>) {
-      auto result = Lookup(lookup_key, KeyContextT());
-      return result ? &result.value() : nullptr;
-    }
+    LookupKeyT lookup_key) const -> ValueT*
+  requires(std::default_initializable<KeyContextT>)
+{
+  auto result = Lookup(lookup_key, KeyContextT());
+  return result ? &result.value() : nullptr;
+}
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename CallbackT>

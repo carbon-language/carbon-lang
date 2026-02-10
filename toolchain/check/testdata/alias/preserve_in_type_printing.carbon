@@ -22,32 +22,32 @@ alias A = C;
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+7]]:15: error: missing return value [ReturnStatementMissingExpr]
 // CHECK:STDERR: fn F() -> A { return; }
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:8: note: return type of function is `A` [ReturnTypeHereNote]
+// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:11: note: return type of function is `A` [ReturnTypeHereNote]
 // CHECK:STDERR: fn F() -> A { return; }
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
 fn F() -> A { return; }
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+7]]:16: error: missing return value [ReturnStatementMissingExpr]
 // CHECK:STDERR: fn G() -> A* { return; }
 // CHECK:STDERR:                ^~~~~~~
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:8: note: return type of function is `A*` [ReturnTypeHereNote]
+// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:11: note: return type of function is `A*` [ReturnTypeHereNote]
 // CHECK:STDERR: fn G() -> A* { return; }
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:           ^~
 // CHECK:STDERR:
 fn G() -> A* { return; }
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+7]]:22: error: missing return value [ReturnStatementMissingExpr]
 // CHECK:STDERR: fn H() -> const A* { return; }
 // CHECK:STDERR:                      ^~~~~~~
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:8: note: return type of function is `const A*` [ReturnTypeHereNote]
+// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:11: note: return type of function is `const A*` [ReturnTypeHereNote]
 // CHECK:STDERR: fn H() -> const A* { return; }
-// CHECK:STDERR:        ^~~~~~~~~~~
+// CHECK:STDERR:           ^~~~~~~~
 // CHECK:STDERR:
 fn H() -> const A* { return; }
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+7]]:26: error: missing return value [ReturnStatementMissingExpr]
 // CHECK:STDERR: fn I() -> array(A, 42) { return; }
 // CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:8: note: return type of function is `array(A, 42)` [ReturnTypeHereNote]
+// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+4]]:11: note: return type of function is `array(A, 42)` [ReturnTypeHereNote]
 // CHECK:STDERR: fn I() -> array(A, 42) { return; }
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~
+// CHECK:STDERR:           ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn I() -> array(A, 42) { return; }

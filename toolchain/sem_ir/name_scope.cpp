@@ -11,14 +11,23 @@
 
 namespace Carbon::SemIR {
 
+NameScopeStore::NameScopeStore(const File* file)
+    // 1 reserved untagged id because the Package NameScope is used across
+    // Files.
+    : file_(file), values_(file->check_ir_id(), 1) {}
+
 auto NameScope::Print(llvm::raw_ostream& out) const -> void {
   out << "{inst: " << inst_id_ << ", parent_scope: " << parent_scope_id_
       << ", has_error: " << (has_error_ ? "true" : "false");
 
   out << ", extended_scopes: [";
   llvm::ListSeparator scope_sep;
-  for (auto id : extended_scopes_) {
-    out << scope_sep << id;
+  for (auto [id, inner_self_id] : extended_scopes_) {
+    if (inner_self_id.has_value()) {
+      out << scope_sep << "(" << id << ", inner self: " << inner_self_id << ")";
+    } else {
+      out << scope_sep << id;
+    }
   }
   out << "]";
 
@@ -92,13 +101,6 @@ auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
     return {InstId::None, std::nullopt};
   }
   return {inst_id, file_->insts().Get(inst_id)};
-}
-
-auto NameScopeStore::IsCorePackage(NameScopeId scope_id) const -> bool {
-  if (!IsPackage(scope_id)) {
-    return false;
-  }
-  return Get(scope_id).name_id() == NameId::Core;
 }
 
 }  // namespace Carbon::SemIR

@@ -26,10 +26,9 @@ class LocIdForDiagnostics {
     return LocIdForDiagnostics(SemIR::LocId(node_id), true);
   }
 
-  template <class LocT>
+  template <typename LocT>
     requires std::constructible_from<SemIR::LocId, LocT>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  LocIdForDiagnostics(LocT loc_id)
+  explicit(false) LocIdForDiagnostics(LocT loc_id)
       : LocIdForDiagnostics(SemIR::LocId(loc_id), false) {}
 
   auto loc_id() const -> SemIR::LocId { return loc_id_; }
@@ -60,8 +59,7 @@ using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 struct InstIdAsConstant {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsConstant(SemIR::InstId inst_id) : inst_id(inst_id) {}
+  explicit(false) InstIdAsConstant(SemIR::InstId inst_id) : inst_id(inst_id) {}
 
   SemIR::InstId inst_id;
 };
@@ -80,8 +78,7 @@ struct InstIdAsConstant {
 struct TypeOfInstId {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  TypeOfInstId(SemIR::InstId inst_id) : inst_id(inst_id) {}
+  explicit(false) TypeOfInstId(SemIR::InstId inst_id) : inst_id(inst_id) {}
 
   SemIR::InstId inst_id;
 };
@@ -112,8 +109,7 @@ using InstIdAsType = InstIdAsConstant;
 struct InstIdAsRawType {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsRawType(SemIR::InstId inst_id) : inst_id(inst_id) {}
+  explicit(false) InstIdAsRawType(SemIR::InstId inst_id) : inst_id(inst_id) {}
 
   SemIR::InstId inst_id;
 };
@@ -127,8 +123,7 @@ struct InstIdAsRawType {
 struct TypeIdAsRawType {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  TypeIdAsRawType(SemIR::TypeId type_id) : type_id(type_id) {}
+  explicit(false) TypeIdAsRawType(SemIR::TypeId type_id) : type_id(type_id) {}
 
   SemIR::TypeId type_id;
 };
@@ -145,8 +140,8 @@ struct TypedInt {
 struct SpecificInterfaceIdAsRawType {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SpecificInterfaceIdAsRawType(SemIR::SpecificInterfaceId specific_interface_id)
+  explicit(false) SpecificInterfaceIdAsRawType(
+      SemIR::SpecificInterfaceId specific_interface_id)
       : specific_interface_id(specific_interface_id) {}
 
   SemIR::SpecificInterfaceId specific_interface_id;

@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/file_test/autoupdate.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -91,6 +92,11 @@ class ToolchainFileTest : public FileTestBase {
   // Sets different default flags based on the component being tested.
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
 
+  // Returns string replacements to implement `%{key}` -> `value` in arguments.
+  auto GetArgReplacements() const -> llvm::StringMap<std::string> override {
+    return {{"core", data_->installation.core_package().native()}};
+  }
+
   // Generally uses the parent implementation, with special handling for lex.
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const
       -> std::optional<RE2> override;
@@ -102,6 +108,10 @@ class ToolchainFileTest : public FileTestBase {
   // Generally uses the parent implementation, with special handling for lex and
   // driver.
   auto DoExtraCheckReplacements(std::string& check_line) const -> void override;
+
+  // Do some final tweaks to check line locations.
+  auto FinalizeCheckLines(CheckLineArray& check_lines, bool is_stderr) const
+      -> void override;
 
   // Most tests can be run in parallel, but clangd has a global for its logging
   // system so we need language-server tests to be run in serial.
@@ -219,7 +229,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
                               "--phase=" + component_.str(),
                               // Use the install path to exclude prelude files.
                               "--exclude-dump-file-prefix=" +
-                                  data_->installation.core_package(),
+                                  data_->installation.core_package().native(),
                           });
 
   if (component_ == "lex") {
@@ -263,8 +273,43 @@ auto ToolchainFileTest::GetLineNumberReplacements(
   return replacements;
 }
 
+// For Clang AST dump lines, we remove references to builtins because they're
+// inconsistent between systems and replace the ids since they're inconsistent
+// between runs.
+static auto DoClangASTCheckReplacements(std::string& check_line) -> void {
+  static constexpr llvm::StringRef ClangDeclIdRegex = "0x[a-f0-9]+";
+  static const RE2 is_clang_ast_line_re(
+      R"(^// CHECK:STDOUT: (TranslationUnitDecl|[ |]*`?\-))");
+  if (!RE2::PartialMatch(check_line, is_clang_ast_line_re)) {
+    return;
+  }
+
+  // Filter out references to builtins.
+  static const RE2 is_builtin_referring_re(
+      R"(`-BuiltinType |[ ']__[a-zA-Z]|\| `\-PointerType 0x[a-f0-9]+ 'char \*'$)");
+  if (RE2::PartialMatch(check_line, is_builtin_referring_re)) {
+    check_line.clear();
+    return;
+  }
+
+  // Replace the ids.
+  static const RE2 clang_decl_id_re(llvm::formatv(" {0} ", ClangDeclIdRegex));
+  static const std::string& clang_decl_id_replacement =
+      *new std::string(llvm::formatv(" {{{{{0}}} ", ClangDeclIdRegex));
+  RE2::GlobalReplace(&check_line, clang_decl_id_re, clang_decl_id_replacement);
+}
+
 auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     -> void {
+  // The path to the core package appears in various places, such as some check
+  // diagnostics and debug information produced by lowering, and will differ
+  // between testing environments, so don't test it.
+  // TODO: Consider adding a content keyword to name the core package, and
+  // replace with that instead. Alternatively, consider adding the core
+  // package to the VFS with a fixed name.
+  absl::StrReplaceAll({{data_->installation.core_package().native(), "{{.*}}"}},
+                      &check_line);
+
   if (component_ == "driver") {
     // TODO: Disable token output, it's not interesting for these tests.
     if (llvm::StringRef(check_line).starts_with("// CHECK:STDOUT: {")) {
@@ -277,17 +322,41 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The column happens to be right for FileStart, but the line is wrong.
     static RE2 file_token_re(R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
     RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
-  } else if (component_ == "check" || component_ == "lower") {
-    // The path to the core package appears in some check diagnostics and in
-    // debug information produced by lowering, and will differ between testing
-    // environments, so don't test it.
-    // TODO: Consider adding a content keyword to name the core package, and
-    // replace with that instead. Alternatively, consider adding the core
-    // package to the VFS with a fixed name.
-    absl::StrReplaceAll({{data_->installation.core_package(), "{{.*}}"}},
-                        &check_line);
+  } else if (component_ == "check") {
+    DoClangASTCheckReplacements(check_line);
+
+    // Reduce instruction numbering sensitivity; this is brittle for
+    // instruction edits including adding/removing singleton instructions.
+    static RE2 inst_re(
+        R"(((?:import_ref [^,]*, |<unexpected>\.)inst)[0-9A-F]+)");
+    RE2::GlobalReplace(&check_line, inst_re, R"(\1{{[0-9A-F]+}})");
+
+    // Reduce location sensitivity in imports referring to `Core`; this is
+    // brittle for small edits, including comment changes.
+    static RE2 core_loc_re(R"((import_ref Core//[^,]*, loc)\d+_\d+)");
+    RE2::Replace(&check_line, core_loc_re, R"(\1{{\\d+_\\d+}})");
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
+  }
+}
+
+auto ToolchainFileTest::FinalizeCheckLines(CheckLineArray& check_lines,
+                                           bool is_stderr) const -> void {
+  if (is_stderr) {
+    static const RE2 is_new_diagnostic_re(R"(.*:\d*:\d*: (error|warning): )");
+    // If a diagnostic isn't attached to a line, try to position it with its
+    // first note.
+    FileTestAutoupdater::CheckLine* diagnostic_without_loc = nullptr;
+    for (auto& check_line : check_lines) {
+      bool has_loc = check_line.line_number() != -1;
+      if (RE2::PartialMatch(check_line.line(), is_new_diagnostic_re)) {
+        diagnostic_without_loc = has_loc ? nullptr : &check_line;
+      } else if (has_loc && diagnostic_without_loc) {
+        diagnostic_without_loc->set_location(check_line.file_number(),
+                                             check_line.line_number());
+        diagnostic_without_loc = nullptr;
+      }
+    }
   }
 }
 

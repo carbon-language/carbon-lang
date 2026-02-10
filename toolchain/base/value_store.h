@@ -18,6 +18,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemAlloc.h"
+#include "toolchain/base/id_tag.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store_types.h"
 #include "toolchain/base/yaml.h"
@@ -34,13 +35,14 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT, typename ValueT>
+template <typename IdT, typename ValueT, typename TagIdT = Untagged>
 class ValueStore
     : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Yaml::Printable<ValueStore<IdT, ValueT>>,
+                              Yaml::Printable<ValueStore<IdT, ValueT, TagIdT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
   using IdType = IdT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
@@ -63,9 +65,10 @@ class ValueStore
     static auto MakeFlattenedRange(const ValueStore& store) -> auto {
       // Because indices into `ValueStore` are all sequential values from 0, we
       // can use llvm::seq to walk all indices in the store.
-      return llvm::map_range(
-          llvm::seq(store.size_),
-          [&](int32_t i) -> ConstRefType { return store.Get(IdType(i)); });
+      return llvm::map_range(llvm::seq(store.size_),
+                             [&](int32_t i) -> ConstRefType {
+                               return store.Get(IdType(store.tag_.Apply(i)));
+                             });
     }
 
     using FlattenedRangeType =
@@ -73,7 +76,21 @@ class ValueStore
     FlattenedRangeType flattened_range_;
   };
 
-  ValueStore() = default;
+  // Default constructor, only valid when the IdTag's tag type is Untagged.
+  ValueStore()
+    requires(IdTagIsUntagged<IdTagType>)
+  = default;
+
+  // Construct a ValueStore sharing the IdTag from another ValueStore. Useful
+  // for when two ValueStores are sharing the same ID types.
+  explicit ValueStore(IdTagType tag)
+    requires(!IdTagIsUntagged<IdTagType>)
+      : tag_(tag) {}
+
+  // Construct a ValueStore with a given tag and set of untagged (reserved) ids.
+  explicit ValueStore(IdTagType::TagIdType id, int32_t initial_reserved_ids = 0)
+    requires(!IdTagIsUntagged<IdTagType>)
+      : tag_(id, initial_reserved_ids) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -82,8 +99,8 @@ class ValueStore
     // tracking down issues easier.
     CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
-    IdType id(size_);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    IdType id = tag_.Apply(size_);
+    auto [chunk_index, pos] = RawIndexToChunkIndices(size_);
     ++size_;
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
@@ -100,7 +117,6 @@ class ValueStore
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
@@ -108,8 +124,21 @@ class ValueStore
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
+    return chunks_[chunk_index].Get(pos);
+  }
+
+  // Returns the value for an ID, or a specified default value if a value has
+  // not yet been added for this ID.
+  auto GetWithDefault(IdType id,  //
+                      ConstRefType default_value [[clang::lifetimebound]]) const
+      -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    auto index = tag_.Remove(id);
+    if (index >= size_) {
+      return default_value;
+    }
+    auto [chunk_index, pos] = RawIndexToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
 
@@ -118,7 +147,7 @@ class ValueStore
     if (size <= size_) {
       return;
     }
-    auto [final_chunk_index, _] = IdToChunkIndices(IdType(size - 1));
+    auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(final_chunk_index + 1);
   }
 
@@ -128,10 +157,10 @@ class ValueStore
       return;
     }
 
-    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(IdType(size_));
+    auto [begin_chunk_index, begin_pos] = RawIndexToChunkIndices(size_);
     // Use an inclusive range so that if `size` would be the next chunk, we
     // don't try doing something with it.
-    auto [end_chunk_index, end_pos] = IdToChunkIndices(IdType(size - 1));
+    auto [end_chunk_index, end_pos] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(end_chunk_index + 1);
 
     // If the begin and end chunks are the same, we only fill from begin to end.
@@ -173,8 +202,9 @@ class ValueStore
 
   // Makes an iterable range over references to all values in the ValueStore.
   auto values() [[clang::lifetimebound]] -> auto {
-    return llvm::map_range(
-        llvm::seq(size_), [&](int32_t i) -> RefType { return Get(IdType(i)); });
+    return llvm::map_range(llvm::seq(size_), [&](int32_t i) -> RefType {
+      return Get(tag_.Apply(i));
+    });
   }
   auto values() const [[clang::lifetimebound]] -> Range { return Range(*this); }
 
@@ -192,11 +222,36 @@ class ValueStore
     // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
     // NOLINTNEXTLINE(readability-const-return-type)
     auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
-      return std::pair<IdType, ConstRefType>(IdType(i), Get(IdType(i)));
+      IdType id = tag_.Apply(i);
+      return std::pair<IdType, ConstRefType>(id, Get(id));
     };
     // Because indices into `ValueStore` are all sequential values from 0, we
     // can use llvm::seq to walk all indices in the store.
     return llvm::map_range(llvm::seq(size_), index_to_id);
+  }
+
+  auto GetIdTag() const -> IdTagType { return tag_; }
+  auto GetRawIndex(IdT id) const -> int32_t {
+    CARBON_DCHECK(id.index >= 0, "{0}", index);
+    auto index = tag_.Remove(id);
+#ifndef NDEBUG
+    if (index >= size_) {
+      // Attempt to decompose id.index to include extra detail in the check
+      // here.
+      //
+      // TODO: Teach ValueStore the type of the tag id with a template, then we
+      // can print it with proper formatting instead of just as an integer.
+      auto [id_tag, id_untagged_index] = IdTagType::DecomposeWithBestEffort(id);
+      CARBON_DCHECK(
+          index < size_,
+          "Untagged index was outside of container range. Tagged index {0}. "
+          "Best-effort decomposition: Tag: {1}, Index: {2}. "
+          "Container size: {3}. "
+          "Expected Tag for this container: {4}.",
+          id.index, id_tag, id_untagged_index, size_, tag_.GetContainerTag());
+    }
+#endif
+    return index;
   }
 
  private:
@@ -312,9 +367,10 @@ class ValueStore
     int32_t num_ = 0;
   };
 
-  // Converts an id into an index into the set of chunks, and an offset into
-  // that specific chunk. Looks for index overflow in non-optimized builds.
-  static auto IdToChunkIndices(IdType id) -> std::pair<int32_t, int32_t> {
+  // Converts a raw index into an index into the set of chunks, and an offset
+  // into that specific chunk. Looks for index overflow in non-optimized builds.
+  static auto RawIndexToChunkIndices(int32_t index)
+      -> std::pair<int32_t, int32_t> {
     constexpr auto LowBits = Chunk::IndexBits();
 
     // Verify there are no unused bits when indexing up to the `Capacity`. This
@@ -328,15 +384,23 @@ class ValueStore
     static_assert(LowBits < 30);
 
     // The index of the chunk is the high bits.
-    auto chunk = id.index >> LowBits;
+    auto chunk = index >> LowBits;
     // The index into the chunk is the low bits.
-    auto pos = id.index & ((1 << LowBits) - 1);
+    auto pos = index & ((1 << LowBits) - 1);
     return {chunk, pos};
+  }
+
+  // Converts an id into an index into the set of chunks, and an offset into
+  // that specific chunk.
+  auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
+    return RawIndexToChunkIndices(GetRawIndex(id));
   }
 
   // Number of elements added to the store. The number should never exceed what
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
+
+  IdTagType tag_;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that

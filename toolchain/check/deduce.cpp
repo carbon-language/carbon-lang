@@ -10,6 +10,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -42,7 +43,8 @@ class DeductionWorklist {
 
   // Adds a single (param, arg) type deduction.
   auto Add(SemIR::TypeId param, SemIR::TypeId arg) -> void {
-    Add(context_->types().GetInstId(param), context_->types().GetInstId(arg));
+    Add(context_->types().GetTypeInstId(param),
+        context_->types().GetTypeInstId(arg));
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -113,11 +115,6 @@ class DeductionWorklist {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
-      // Decided on 2025-04-02 not to do deduction through facet types, because
-      // types can implement a generic interface multiple times with different
-      // arguments. See:
-      // https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?pli=1&resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0#heading=h.95phmuvxog9n
-      case SemIR::IdKind::For<SemIR::FacetTypeId>:
         break;
       case CARBON_KIND(SemIR::InstId inst_id): {
         Add(inst_id, SemIR::InstId(arg));
@@ -294,11 +291,19 @@ auto DeductionContext::Deduce() -> bool {
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
+    } else if (context().types().IsFacetType(param_type_id)) {
+      // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`. For
+      // deduction, we want to ignore the `as type`, and check that the argument
+      // can convert to the FacetType of the canonical facet value.
+      param_id = GetCanonicalFacetOrTypeValue(context(), param_id);
+      param_type_id = context().insts().Get(param_id).type_id();
     }
+
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
-      Add(context().types().GetInstId(param_type_id),
-          context().types().GetInstId(context().insts().Get(arg_id).type_id()));
+      Add(context().types().GetTypeInstId(param_type_id),
+          context().types().GetTypeInstId(
+              context().insts().Get(arg_id).type_id()));
     } else {
       // The argument (e.g. a TupleLiteral of types) may be convertible to a
       // compile-time value (e.g. TupleType) that we can decompose further.
@@ -372,7 +377,7 @@ auto DeductionContext::Deduce() -> bool {
       // Deducing a symbolic binding appearing within an expression against a
       // constant value deduces the binding as having that value. For example,
       // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
-      case CARBON_KIND(SemIR::BindSymbolicName bind): {
+      case CARBON_KIND(SemIR::SymbolicBinding bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index();
         if (!index.has_value() || index < first_deduced_index_ ||
@@ -415,20 +420,6 @@ auto DeductionContext::Deduce() -> bool {
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;
-
-      case CARBON_KIND(SemIR::FacetAccessType access): {
-        // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`.
-        // `G` is a symbolic binding, whose type is a facet type, but `G as
-        // type` converts into a `FacetAccessType`.
-        //
-        // When we see a `FacetAccessType` parameter here, we want to deduce the
-        // facet type of `G`, not `G as type`, for the argument (so that the
-        // argument would be a facet value, whose type is the same facet type of
-        // `G`. So here we "undo" the `as type` operation that's built into the
-        // `g` parameter's type.
-        Add(access.facet_value_inst_id, arg_id);
-        continue;
-      }
 
         // TODO: Handle more cases.
 
@@ -476,7 +467,7 @@ static auto GetEntityNameForGenericBinding(Context& context,
   binding_id = context.constant_values().GetConstantInstId(binding_id);
 
   if (auto bind_name =
-          context.insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+          context.insts().TryGetAs<SemIR::AnyBinding>(binding_id)) {
     return context.entity_names().Get(bind_name->entity_name_id).name_id;
   } else {
     CARBON_FATAL("Instruction without entity name in generic binding position");
@@ -617,14 +608,30 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                              /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);
 
-  // Prepare to perform deduction of the type and interface.
-  deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id));
+  // Prepare to perform deduction of the type and interface. Use the canonical
+  // `self_id` to save a trip through the deduce loop, which will then need to
+  // get the canonical instruction.
+  deduction.Add(context.constant_values().GetConstantInstId(impl.self_id),
+                context.constant_values().GetInstId(self_id));
   deduction.Add(impl.interface.specific_id, constraint_specific_id);
 
-  if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
+  // TODO: Deduce has side effects in the semir by generating `Converted`
+  // instructions, and may also introduce intermediate states like
+  // `FacetAccessType`. We should stop generating those when deducing for impl
+  // lookup, but for now we discard them by pushing an InstBlock on the stack
+  // and dropping it right after. We also need to avoid adding those dropped
+  // instructions to any enclosing generic, so we push a fresh generic region.
+  context.inst_block_stack().Push();
+  context.generic_region_stack().Push({.generic_id = SemIR::GenericId::None});
+
+  bool success = deduction.Deduce() && deduction.CheckDeductionIsComplete();
+
+  context.generic_region_stack().Pop();
+  context.inst_block_stack().PopAndDiscard();
+
+  if (!success) {
     return SemIR::SpecificId::None;
   }
-
   return deduction.MakeSpecific();
 }
 

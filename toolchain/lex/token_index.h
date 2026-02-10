@@ -40,8 +40,8 @@ struct TokenIndex : public IndexBase<TokenIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);
-constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
+inline constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);
+inline constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed token in a `TokenizedBuffer` whose kind is
 // known to be `Kind`.

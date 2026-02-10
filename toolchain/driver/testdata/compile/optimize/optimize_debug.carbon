@@ -1,0 +1,132 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// ARGS: compile --optimize=debug foo.carbon --target=x86_64-unknown-linux-gnu --phase=optimize --dump-llvm-ir --exclude-dump-file-prefix=%{core}
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/optimize/optimize_debug.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/optimize/optimize_debug.carbon
+
+// --- foo.carbon
+
+import Core library "range";
+
+fn Rand() -> i32;
+
+fn NoInlineWithOz() -> i32 {
+  return Rand() + Rand();
+}
+
+fn CallNoInlineWithOptSize() -> i32 {
+  // Should not be inlined with --optimize=size, because the body is larger than the call.
+  return NoInlineWithOz();
+}
+
+fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
+  // Should be vectorized with --optimize=speed, but not in other modes.
+  var n: i32 = 0;
+  while (n < 65536) {
+    (*a)[n] *= 2;
+    ++n;
+  }
+}
+
+// CHECK:STDOUT: ; ModuleID = 'foo.carbon'
+// CHECK:STDOUT: source_filename = "foo.carbon"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare i32 @_CRand.Main() local_unnamed_addr
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() local_unnamed_addr #0 !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Rand.call.loc7_15 = tail call i32 @_CRand.Main() #0, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc7_24 = tail call i32 @_CRand.Main() #0, !dbg !9
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc7_24, %Rand.call.loc7_15, !dbg !8
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !11 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Rand.call.loc7_15.i = tail call i32 @_CRand.Main() #0, !dbg !12
+// CHECK:STDOUT:   %Rand.call.loc7_24.i = tail call i32 @_CRand.Main() #0, !dbg !14
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc7_24.i, %Rand.call.loc7_15.i, !dbg !12
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: readwrite)
+// CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr captures(none) %a) local_unnamed_addr #1 !dbg !16 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %while.body, !dbg !22
+// CHECK:STDOUT:
+// CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
+// CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
+// CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !23
+// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !23
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !23
+// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !24
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !39
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !22
+// CHECK:STDOUT:
+// CHECK:STDOUT: while.done:                                       ; preds = %while.body
+// CHECK:STDOUT:   ret void, !dbg !40
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT:   uselistorder label %while.body, { 1, 0 }
+// CHECK:STDOUT:   uselistorder i32 %n.var.03, { 0, 2, 1 }
+// CHECK:STDOUT:   uselistorder ptr %.loc19_11.array.index, { 1, 0 }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "foo.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "NoInlineWithOz", linkageName: "_CNoInlineWithOz.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 19, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallNoInlineWithOptSize", linkageName: "_CCallNoInlineWithOptSize.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 7, column: 10, scope: !4, inlinedAt: !13)
+// CHECK:STDOUT: !13 = distinct !DILocation(line: 12, column: 10, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 19, scope: !4, inlinedAt: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !3, line: 15, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !18 = !{null, !19}
+// CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !20 = !{!21}
+// CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
+// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 9, scope: !16)
+// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 5, scope: !16)
+// CHECK:STDOUT: !24 = !DILocation(line: 277, column: 3, scope: !25, inlinedAt: !32)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !26, line: 277, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
+// CHECK:STDOUT: !26 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
+// CHECK:STDOUT: !28 = !{null, !7, !7}
+// CHECK:STDOUT: !29 = !{!30, !31}
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !7)
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !25, type: !7)
+// CHECK:STDOUT: !32 = distinct !DILocation(line: 343, column: 5, scope: !33, inlinedAt: !38)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !26, line: 341, type: !34, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !36)
+// CHECK:STDOUT: !34 = !DISubroutineType(types: !35)
+// CHECK:STDOUT: !35 = !{null, !7}
+// CHECK:STDOUT: !36 = !{!37}
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !33, type: !7)
+// CHECK:STDOUT: !38 = distinct !DILocation(line: 20, column: 5, scope: !16)
+// CHECK:STDOUT: !39 = !DILocation(line: 18, column: 10, scope: !16)
+// CHECK:STDOUT: !40 = !DILocation(line: 15, column: 1, scope: !16)
