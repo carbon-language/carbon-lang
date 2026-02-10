@@ -40,6 +40,12 @@ auto HandleParseNode(Context& context, Parse::ObserveEqualEqualId node_id)
   auto [rhs_node_id, rhs_inst_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node_id, lhs_inst_id] = context.node_stack().PopExprWithNodeId();
 
+  if (context.node_stack().Peek<Parse::NodeKind::ObserveIntroducer>() ==
+      SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(rhs_node_id, rhs_inst_id);
+    return true;
+  }
+
   auto rhs_as_type = ExprAsType(context, rhs_node_id, rhs_inst_id);
   auto lhs_as_type = ExprAsType(context, lhs_node_id, lhs_inst_id);
 
@@ -58,12 +64,21 @@ auto HandleParseNode(Context& context, Parse::ObserveImplsId node_id) -> bool {
   auto [rhs_node_id, rhs_inst_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node_id, lhs_inst_id] = context.node_stack().PopExprWithNodeId();
 
+  if (context.node_stack().Peek<Parse::NodeKind::ObserveIntroducer>() ==
+      SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(rhs_node_id, rhs_inst_id);
+    return true;
+  }
+
   auto rhs_as_type = ExprAsType(context, rhs_node_id, rhs_inst_id);
   auto lhs_as_type = ExprAsType(context, lhs_node_id, lhs_inst_id);
 
   if (!context.types().IsFacetTypeOrError(rhs_as_type.type_id)) {
     DiagnoseImplsOnNonFacetType(context, rhs_node_id);
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
+    auto [node_id, scope_inst_id] =
+        context.node_stack()
+            .PopWithNodeId<Parse::NodeKind::ObserveIntroducer>();
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   }
 
   // Dummy node for ObserveDeclId.
