@@ -585,9 +585,8 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
-// Performs a lookup to locate the witnesses for a specific
-// interface by searching through the `require` declarations of a type's known
-// constraints.
+// Performs a lookup to locate the witnesses by searching through the `require`
+// declarations of a type's known constraints.
 static auto LookupImplWitnessInRequireDecls(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -642,7 +641,8 @@ static auto LookupImplWitnessInRequireDecls(
 
     if (parent_witness_id.has_value()) {
       // self-type implements the facet type that the `require` is declared in.
-      // Now check the `require` if it implements any of the `required_impls`.
+      // Now check if any constraint in the `require` matches any of the
+      // `required_impls`.
       auto require_impls_facet_const_id =
           context.constant_values().Get(require_impls.facet_type_inst_id);
       auto require_facet_required_impls_from_constraint =
@@ -685,8 +685,8 @@ static auto LookupImplWitnessInRequireDecls(
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
-                       SemIR::ConstantId query_facet_type_const_id)
-    -> SemIR::InstBlockIdOrError {
+                       SemIR::ConstantId query_facet_type_const_id,
+                       bool lookup_require_decls) -> SemIR::InstBlockIdOrError {
   if (query_self_const_id == SemIR::ErrorInst::ConstantId ||
       query_facet_type_const_id == SemIR::ErrorInst::ConstantId) {
     return SemIR::InstBlockIdOrError::MakeError();
@@ -727,9 +727,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
   llvm::SmallVector<SemIR::SpecificInterface> verified_specific_interfaces;
-  LookupImplWitnessInRequireDecls(context, loc_id, query_self_const_id,
-                                  req_impls, result_witness_ids,
-                                  verified_specific_interfaces);
+  if (lookup_require_decls) {
+    LookupImplWitnessInRequireDecls(context, loc_id, query_self_const_id,
+                                    req_impls, result_witness_ids,
+                                    verified_specific_interfaces);
+  }
 
   auto& stack = context.impl_lookup_stack();
   stack.push_back({

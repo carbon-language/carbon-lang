@@ -36,7 +36,8 @@ namespace Carbon::Check {
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
-                       SemIR::ConstantId query_facet_type_const_id)
+                       SemIR::ConstantId query_facet_type_const_id,
+                       bool lookup_require_decls = true)
     -> SemIR::InstBlockIdOrError;
 
 // Returns whether the query matches against the given impl. This is like a

@@ -704,7 +704,8 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
         context, require_specific, require.facet_type_inst_id);
 
     auto result =
-        LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);
+        LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id,
+                          /*lookup_require_decls=*/false);
     // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
     // it would be nice to diagnose which one was not `impl`ed, but that
     // requires LookupImplWitness to return a partial result, or take a
