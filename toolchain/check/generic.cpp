@@ -739,32 +739,90 @@ auto DiagnoseIfGenericMissingExplicitParameters(
                          GenericMissingExplicitParameters);
 }
 
+static auto ValidateGenericWithoutAndWithSelfMatch(
+    Context& context, SemIR::GenericId generic_without_self_id,
+    SemIR::GenericId generic_with_self_id,
+    SemIR::SpecificId specific_without_self_id) {
+  CARBON_CHECK(
+      generic_without_self_id.has_value() ==
+          specific_without_self_id.has_value(),
+      "Have a generic-without-self {0} but no specific-without-self {1} or "
+      "vice-versa",
+      generic_without_self_id, specific_without_self_id);
+
+  CARBON_CHECK(
+      generic_with_self_id.has_value(),
+      "Missing a generic ID for generic-with-self that should always exist.");
+  const auto& generic_with_self = context.generics().Get(generic_with_self_id);
+
+  auto generic_with_self_decl = context.insts().Get(generic_with_self.decl_id);
+  CARBON_CHECK(
+      (generic_with_self_decl.IsOneOf<SemIR::InterfaceWithSelfDecl,
+                                      SemIR::NamedConstraintWithSelfDecl>()),
+      "generic-with-self {0} should be a generic for an "
+      "InterfaceWithSelfDecl or NamedConstraintWithSelfDecl, found {1}",
+      generic_with_self, generic_with_self_decl);
+
+  if (!generic_without_self_id.has_value()) {
+    return;
+  }
+
+  const auto& generic_without_self =
+      context.generics().Get(generic_without_self_id);
+  const auto& specific_without_self =
+      context.specifics().Get(specific_without_self_id);
+
+  CARBON_CHECK(specific_without_self.generic_id == generic_without_self_id,
+               "specific-without-self {0} is not a specific for the "
+               "generic-without-self {1}",
+               specific_without_self, generic_without_self);
+
+  auto generic_without_self_decl =
+      context.insts().Get(generic_without_self.decl_id);
+
+  CARBON_KIND_SWITCH(generic_without_self_decl) {
+    case CARBON_KIND(SemIR::InterfaceDecl without_self_decl): {
+      auto with_self_decl =
+          generic_with_self_decl.As<SemIR::InterfaceWithSelfDecl>();
+      CARBON_CHECK(
+          without_self_decl.interface_id == with_self_decl.interface_id,
+          "Found generic-without-self for interface {0}, and generic-with-self "
+          "for interface {1}; expected the same interface for both",
+          context.interfaces().Get(without_self_decl.interface_id),
+          context.interfaces().Get(with_self_decl.interface_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::NamedConstraintDecl without_self_decl): {
+      auto with_self_decl =
+          generic_with_self_decl.As<SemIR::NamedConstraintWithSelfDecl>();
+      CARBON_CHECK(
+          without_self_decl.named_constraint_id ==
+              with_self_decl.named_constraint_id,
+          "Found generic-without-self for constraint {0}, and "
+          "generic-with-self for named constraint {1}; expected the same named "
+          "constraint for both",
+          context.named_constraints().Get(
+              without_self_decl.named_constraint_id),
+          context.named_constraints().Get(with_self_decl.named_constraint_id));
+      break;
+    }
+    default:
+      CARBON_FATAL(
+          "generic-without-self {0} should be a generic for an InterfaceDecl "
+          "or NamedConstraintDecl, found {1}",
+          generic_without_self, generic_without_self_decl);
+  }
+}
+
 auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
                                SemIR::ConstantId self_facet)
     -> SemIR::SpecificId {
-  CARBON_CHECK(generic_without_self_id.has_value() ==
-               specific_without_self_id.has_value());
-  if (generic_without_self_id.has_value()) {
-    // If there's an outer generic, then the inner and outer generics are for
-    // the same interface/constraint, and the specific is for the correct
-    // generic.
-    CARBON_CHECK(generic_with_self_id.has_value());
-    // FIXME: Check the interface/constraint ids match?
-    CARBON_CHECK(
-        (context.insts()
-             .IsOneOf<SemIR::InterfaceDecl, SemIR::NamedConstraintDecl>(
-                 context.generics().Get(generic_without_self_id).decl_id)));
-    CARBON_CHECK(
-        (context.insts()
-             .IsOneOf<SemIR::InterfaceWithSelfDecl,
-                      SemIR::NamedConstraintWithSelfDecl>(
-                 context.generics().Get(generic_with_self_id).decl_id)));
-    CARBON_CHECK(context.specifics().Get(specific_without_self_id).generic_id ==
-                 generic_without_self_id);
-  }
+  ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
+                                         generic_with_self_id,
+                                         specific_without_self_id);
 
   auto outer_args_id =
       context.specifics().GetArgsOrEmpty(specific_without_self_id);
@@ -784,10 +842,7 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   }
 
   auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
-
-  // FIXME: What breaks if we remove this?
   ResolveSpecificDefinition(context, loc_id, specific_id);
-
   return specific_id;
 }
 
