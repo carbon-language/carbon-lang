@@ -172,7 +172,7 @@ auto HandleParseNode(Context& context,
   auto interface_decl =
       context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
   auto generic_id =
-      EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+      EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
 
   // Start building the definition region of the constant.
   StartGenericDefinition(context, generic_id);
@@ -227,7 +227,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
       auto interface_decl =
           context.scope_stack()
               .GetCurrentScopeAs<SemIR::InterfaceWithSelfDecl>();
-      EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+      EndAssociatedConstantDeclRegion(context, interface_decl.interface_id);
     }
 
     EndFullPattern(context);
@@ -298,7 +298,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   // and attach the default value, if any is specified.
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
     const auto& interface =
-        context.interfaces().Get(interface_scope->interface_id);
+        context.interfaces().Get(interface_scope.interface_id);
     context.name_scopes().Get(interface.scope_with_self_id).set_has_error();
     if (decl_info.init_id.has_value()) {
       DiscardGenericDecl(context);

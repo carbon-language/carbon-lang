@@ -398,7 +398,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   auto parent_class_decl =
-      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
+      context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
   CARBON_CHECK(parent_class_decl);
   cast_type_id = AsConcreteType(
       context, cast_type_id, type_node,
