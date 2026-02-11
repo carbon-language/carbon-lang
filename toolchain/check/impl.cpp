@@ -19,7 +19,6 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
-#include "toolchain/check/require_impls.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -46,7 +45,6 @@ static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
 auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id,
     bool defer_thunk_definition) -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
@@ -76,7 +74,7 @@ auto CheckAssociatedFunctionImplementation(
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
-          enclosing_specific_id, self_type_id, witness_inst_id);
+          enclosing_specific_id);
 
   return BuildThunk(context, interface_function_type.function_id,
                     interface_function_specific_id, impl_decl_id,
@@ -236,7 +234,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   }
 
   if (!impl.generic_id.has_value()) {
-    parent_scope.AddExtendedScope({impl.constraint_id});
+    parent_scope.AddExtendedScope(impl.constraint_id);
   } else {
     // The extended scope instruction must be part of the enclosing scope (and
     // generic). A specific for the enclosing scope will be applied to it when
@@ -248,7 +246,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
         {.type_id = SemIR::TypeType::TypeId,
          .inst_id = impl.constraint_id,
          .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
-    parent_scope.AddExtendedScope({constraint_id_in_self_specific});
+    parent_scope.AddExtendedScope(constraint_id_in_self_specific);
   }
   return true;
 }
@@ -459,12 +457,15 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     // value to that type now we know the value of `Self`.
     SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
     if (assoc_const_type_id.is_symbolic()) {
+      auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
+      auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+          context, loc_id, interface.generic_id, interface.generic_with_self_id,
+          impl.interface.specific_id, self_facet);
+
       // Get the type of the associated constant in this interface with this
       // value for `Self`.
       assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-          context, SemIR::LocId(impl.constraint_id), impl.interface.specific_id,
-          decl_id, context.types().GetTypeIdForTypeInstId(impl.self_id),
-          witness_inst_id);
+          context, interface_with_self_specific_id, decl_id);
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
       // was symbolic.
@@ -603,17 +604,22 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
-  auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
+  auto self_facet = GetConstantFacetValueForTypeAndInterface(
+      context, impl.self_id, impl.interface, impl.witness_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, SemIR::LocId(impl.definition_id), interface.generic_id,
+      interface.generic_with_self_id, impl.interface.specific_id, self_facet);
+
   for (auto [assoc_entity, witness_value] :
        llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), impl.interface.specific_id, assoc_entity));
+            context.sem_ir(), interface_with_self_specific_id, assoc_entity));
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
@@ -636,7 +642,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type,
               context.generics().GetSelfSpecific(impl.generic_id),
-              lookup_result.target_inst_id(), self_type_id, impl.witness_id,
+              lookup_result.target_inst_id(),
               /*defer_thunk_definition=*/true);
         } else {
           CARBON_DIAGNOSTIC(
@@ -690,18 +696,29 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   }
 
   // Make a facet value for the self type.
-  auto self_facet_value = GetConstantFacetValueForType(context, impl.self_id);
+  auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      impl.interface.specific_id, self_facet);
 
   for (auto require_id : require_ids) {
     const auto& require = context.require_impls().Get(require_id);
 
-    auto require_specific =
-        GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
-            context, require, impl.interface.specific_id, self_facet_value);
-    auto self_const_id = GetConstantValueInRequireImplsSpecific(
-        context, require_specific, require.self_id);
-    auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(
-        context, require_specific, require.facet_type_inst_id);
+    // Each require is in its own generic, with no additional bindings and no
+    // definition, so that they can have their specifics independently
+    // instantiated.
+    auto require_specific_id = CopySpecificToGeneric(
+        context, SemIR::LocId(require.decl_id), interface_with_self_specific_id,
+        require.generic_id);
+    auto self_const_id = GetConstantValueInSpecific(
+        context.sem_ir(), require_specific_id, require.self_id);
+    auto facet_type_const_id = GetConstantValueInSpecific(
+        context.sem_ir(), require_specific_id, require.facet_type_inst_id);
+    if (self_const_id == SemIR::ErrorInst::ConstantId ||
+        facet_type_const_id == SemIR::ErrorInst::ConstantId) {
+      FillImplWitnessWithErrors(context, impl);
+      break;
+    }
 
     auto result =
         LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);
@@ -762,11 +779,13 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
-  auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
-  if (facet_type_id == SemIR::ErrorInst::TypeId) {
+  auto facet_type_as_type_id =
+      context.types().GetTypeIdForTypeInstId(constraint_id);
+  if (facet_type_as_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::SpecificInterface::None;
   }
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  auto facet_type =
+      context.types().TryGetAs<SemIR::FacetType>(facet_type_as_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
                       InstIdAsType);

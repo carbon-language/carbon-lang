@@ -106,12 +106,22 @@ class ScopeStack {
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
-  auto GetCurrentScopeAs() -> std::optional<InstT> {
+  auto TryGetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();
     if (!inst_id.has_value()) {
       return std::nullopt;
     }
     return sem_ir_->insts().TryGetAs<InstT>(inst_id);
+  }
+
+  // Returns the current scope, assuming it is of the specified kind.
+  // Check-fails if there is no instruction for a current scope, or the scope is
+  // of a different kind.
+  template <typename InstT>
+  auto GetCurrentScopeAs() -> InstT {
+    auto inst_id = PeekInstId();
+    CARBON_CHECK(inst_id.has_value());
+    return sem_ir_->insts().GetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be

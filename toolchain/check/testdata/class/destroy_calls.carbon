@@ -346,16 +346,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.5a3 [template]
 // CHECK:STDOUT:   %pattern_type.3d5: type = pattern_type %C.5a3 [template]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.45b: %Destroy.type = facet_value %C.5a3, (%custom_witness.809) [template]
-// CHECK:STDOUT:   %.3c0: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.45b [template]
+// CHECK:STDOUT:   %Destroy.Op.type.aa0: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.45b) [template]
+// CHECK:STDOUT:   %.acf: type = fn_type_with_self_type %Destroy.Op.type.aa0, %Destroy.facet.45b [template]
 // CHECK:STDOUT:   %C.850: type = class_type @C, @C(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %pattern_type.526: type = pattern_type %C.850 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.bc0: %Destroy.type = facet_value %C.850, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %.cb1: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.bc0 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.379: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.bc0) [concrete]
+// CHECK:STDOUT:   %.ea5: type = fn_type_with_self_type %Destroy.Op.type.379, %Destroy.facet.bc0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -378,7 +379,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_13.2 [template = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc7_13.2 [template = %pattern_type (constants.%pattern_type.3d5)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.loc7_13.2, (constants.%custom_witness.809) [template = %Destroy.facet (constants.%Destroy.facet.45b)]
-// CHECK:STDOUT:   %.loc7_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [template = %.loc7_3 (constants.%.3c0)]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [template = %Destroy.Op.type (constants.%Destroy.Op.type.aa0)]
+// CHECK:STDOUT:   %.loc7_3: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [template = %.loc7_3 (constants.%.acf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -413,6 +415,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.526
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.bc0
-// CHECK:STDOUT:   %.loc7_3 => constants.%.cb1
+// CHECK:STDOUT:   %Destroy.Op.type => constants.%Destroy.Op.type.379
+// CHECK:STDOUT:   %.loc7_3 => constants.%.ea5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -35,22 +35,24 @@ class C {
 // CHECK:STDOUT:   %Self.849: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.5c6: type = symbolic_binding_type Self, 0, %Self.849 [symbolic]
 // CHECK:STDOUT:   %pattern_type.b59: type = pattern_type %Self.binding.as_type.5c6 [symbolic]
-// CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
+// CHECK:STDOUT:   %I.F.type.b26: type = fn_type @I.F, @I(%Self.849) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %I.F.983: %I.F.type.b26 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.ab7: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.1f8: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
+// CHECK:STDOUT:   %I.F.type.1f2: type = fn_type @I.F, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.F.860: %I.F.type.1f2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.binding.as_type.5c6 [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.24e: type = fn_type_with_self_type %I.F.type, %I.facet [concrete]
+// CHECK:STDOUT:   %.fae: type = fn_type_with_self_type %I.F.type.1f2, %I.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
@@ -75,23 +77,28 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.849]
-// CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
+// CHECK:STDOUT:   %Self.loc16: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.849]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %I.F.decl: @I.%I.F.type (%I.F.type.b26) = fn_decl @I.F [symbolic = @I.%I.F (constants.%I.F.983)] {
 // CHECK:STDOUT:     %self.patt: @I.F.%pattern_type (%pattern_type.b59) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.F.%pattern_type (%pattern_type.b59) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_param call_param0
 // CHECK:STDOUT:     %.loc18_16.1: type = splice_block %.loc18_16.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)] {
-// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.849)]
+// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self.loc16 [symbolic = %Self (constants.%Self.849)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
 // CHECK:STDOUT:       %.loc18_16.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.F.decl [concrete = constants.%assoc0.ab7]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.F.decl [concrete = constants.%assoc0.1f8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc16
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
@@ -132,7 +139,7 @@ class C {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @I.F(@I.%Self.loc16: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.849)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.b59)]
@@ -155,8 +162,8 @@ class C {
 // CHECK:STDOUT:     %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0.ab7]
-// CHECK:STDOUT:     %impl.elem0: %.24e = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0.1f8]
+// CHECK:STDOUT:     %impl.elem0: %.fae = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:     %.loc21: %C = acquire_value %c.ref
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc21)
@@ -173,10 +180,24 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.849) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc18 => constants.%Self.849
+// CHECK:STDOUT:   %I.F.type => constants.%I.F.type.b26
+// CHECK:STDOUT:   %I.F => constants.%I.F.983
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.849) {
 // CHECK:STDOUT:   %Self => constants.%Self.849
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5c6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b59
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc18 => constants.%I.facet
+// CHECK:STDOUT:   %I.F.type => constants.%I.F.type.1f2
+// CHECK:STDOUT:   %I.F => constants.%I.F.860
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%I.facet) {

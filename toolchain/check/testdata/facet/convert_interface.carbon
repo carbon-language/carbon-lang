@@ -30,13 +30,13 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.c49: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness @Animal.type.as.Eats.impl.%Eats.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,6 +74,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
+// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -84,6 +85,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
+// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -113,5 +115,15 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %.loc23: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc23)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Eats.facet) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

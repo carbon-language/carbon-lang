@@ -548,6 +548,7 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Facet type completeness.
 CARBON_DIAGNOSTIC_KIND(IdentifyingFacetTypeHere)
+CARBON_DIAGNOSTIC_KIND(RequiringCompleteFacetTypeHere)
 
 // Generics.
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)

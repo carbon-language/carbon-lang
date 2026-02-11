@@ -31,8 +31,8 @@ interface Interface {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
-// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F, @Interface(%Self) [symbolic]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface.F.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -41,8 +41,8 @@ interface Interface {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %.88a: form = init_form %i32, call_param2 [concrete]
-// CHECK:STDOUT:   %Interface.G.type: type = fn_type @Interface.G [concrete]
-// CHECK:STDOUT:   %Interface.G: %Interface.G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.G.type: type = fn_type @Interface.G, @Interface(%Self) [symbolic]
+// CHECK:STDOUT:   %Interface.G: %Interface.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%Interface.G.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,10 +65,13 @@ interface Interface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
+// CHECK:STDOUT:   %Self.loc15: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %Interface.F.decl: @Interface.%Interface.F.type (%Interface.F.type) = fn_decl @Interface.F [symbolic = @Interface.%Interface.F (constants.%Interface.F)] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type = fn_decl @Interface.G [concrete = constants.%Interface.G] {
+// CHECK:STDOUT:   %Interface.G.decl: @Interface.%Interface.G.type (%Interface.G.type) = fn_decl @Interface.G [symbolic = @Interface.%Interface.G (constants.%Interface.G)] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
@@ -97,7 +100,7 @@ interface Interface {
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, %Interface.G.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   .G = %assoc1
 // CHECK:STDOUT:   witness = (%Interface.F.decl, %Interface.G.decl)
@@ -105,7 +108,7 @@ interface Interface {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self.loc15: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -114,10 +117,19 @@ interface Interface {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.G(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface.G(@Interface.%Self.loc15: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 = "int.sadd";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc20 => constants.%Self
+// CHECK:STDOUT:   %Interface.F.type => constants.%Interface.F.type
+// CHECK:STDOUT:   %Interface.F => constants.%Interface.F
+// CHECK:STDOUT:   %Interface.G.type => constants.%Interface.G.type
+// CHECK:STDOUT:   %Interface.G => constants.%Interface.G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self) {}

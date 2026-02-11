@@ -34,6 +34,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %pattern_type.e10: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.760d13.1: <witness> = impl_witness @A.binding.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%A) [symbolic]
+// CHECK:STDOUT:   %Eats.facet.6e5: %Eats.type = facet_value %A.binding.as_type, (%Eats.impl_witness.760d13.1) [symbolic]
 // CHECK:STDOUT:   %T.f11: %Eats.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.0dc: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.265: type = symbolic_binding_type T, 0, %T.f11 [symbolic]
@@ -51,8 +52,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Eats.impl_witness.760d13.2: <witness> = impl_witness @A.binding.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%T.998) [symbolic]
 // CHECK:STDOUT:   %.860: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%T.998) [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.998, @Eats [symbolic]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.binding.as_type.e4f, (%Eats.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [symbolic]
+// CHECK:STDOUT:   %Eats.facet.a05: %Eats.type = facet_value %T.binding.as_type.e4f, (%Eats.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet.a05) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -126,6 +127,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
+// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -136,6 +138,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
+// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -183,27 +186,39 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.72f)]
 // CHECK:STDOUT:   %.loc22_43.3: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%T.loc22_17.1) [symbolic = %.loc22_43.3 (constants.%.860)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc22_17.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
-// CHECK:STDOUT:   %Eats.facet.loc22_43.3: %Eats.type = facet_value %T.binding.as_type, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:   %Eats.facet.loc22_43.3: %Eats.type = facet_value %T.binding.as_type, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet.a05)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc22_37.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc22_43.3) [symbolic = %Feed.specific_fn.loc22_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.e4f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.e4f) = name_ref a, %a
-// CHECK:STDOUT:     %Eats.facet.loc22_43.1: %Eats.type = facet_value constants.%T.binding.as_type.e4f, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %.loc22_43.1: %Eats.type = converted constants.%T.binding.as_type.e4f, %Eats.facet.loc22_43.1 [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %Eats.facet.loc22_43.2: %Eats.type = facet_value constants.%T.binding.as_type.e4f, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %.loc22_43.2: %Eats.type = converted constants.%T.binding.as_type.e4f, %Eats.facet.loc22_43.2 [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet)]
-// CHECK:STDOUT:     %Feed.specific_fn.loc22_37.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [symbolic = %Feed.specific_fn.loc22_37.2 (constants.%Feed.specific_fn)]
+// CHECK:STDOUT:     %Eats.facet.loc22_43.1: %Eats.type = facet_value constants.%T.binding.as_type.e4f, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet.a05)]
+// CHECK:STDOUT:     %.loc22_43.1: %Eats.type = converted constants.%T.binding.as_type.e4f, %Eats.facet.loc22_43.1 [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet.a05)]
+// CHECK:STDOUT:     %Eats.facet.loc22_43.2: %Eats.type = facet_value constants.%T.binding.as_type.e4f, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet.a05)]
+// CHECK:STDOUT:     %.loc22_43.2: %Eats.type = converted constants.%T.binding.as_type.e4f, %Eats.facet.loc22_43.2 [symbolic = %Eats.facet.loc22_43.3 (constants.%Eats.facet.a05)]
+// CHECK:STDOUT:     %Feed.specific_fn.loc22_37.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet.a05) [symbolic = %Feed.specific_fn.loc22_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc22_37.1(%a.ref)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.binding.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.loc18_14.2 => constants.%A
 // CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %Eats.impl_witness.loc18_36.2 => constants.%Eats.impl_witness.760d13.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Eats.facet.6e5) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.f11) {
@@ -226,8 +241,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(constants.%Eats.facet) {
-// CHECK:STDOUT:   %T.loc20_9.1 => constants.%Eats.facet
+// CHECK:STDOUT: specific @Feed(constants.%Eats.facet.a05) {
+// CHECK:STDOUT:   %T.loc20_9.1 => constants.%Eats.facet.a05
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type.e4f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.892
 // CHECK:STDOUT:

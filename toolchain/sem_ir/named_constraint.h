@@ -16,9 +16,17 @@ struct NamedConstraintFields {
   // The following members are set at the `{` of the constraint definition.
 
   // The constraint scope.
-  NameScopeId scope_id = NameScopeId::None;
-  // The first block of the constraint body.
-  InstBlockId body_block_id = InstBlockId::None;
+  NameScopeId scope_without_self_id = NameScopeId::None;
+  NameScopeId scope_with_self_id = NameScopeId::None;
+  // The block of instructions outside the constraint-with-self. This is where
+  // the `Self` instruction can be constructed.
+  InstBlockId body_block_without_self_id = InstBlockId::None;
+  // The constraint-with-self generic, where the `Self` is a parameter to the
+  // generic. This generic contains all the associated entities of the
+  // interface.
+  GenericId generic_with_self_id = GenericId::None;
+  // The first block of the constraint-with-self body.
+  InstBlockId body_block_with_self_id = InstBlockId::None;
   // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
 

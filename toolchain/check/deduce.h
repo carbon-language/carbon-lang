@@ -11,12 +11,14 @@
 namespace Carbon::Check {
 
 // Deduces the generic arguments to use in a call to a generic.
-auto DeduceGenericCallArguments(
-    Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::InstId self_type_id,
-    SemIR::InstBlockId implicit_param_patterns_id,
-    SemIR::InstBlockId param_patterns_id, SemIR::InstId self_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId;
+auto DeduceGenericCallArguments(Context& context, SemIR::LocId loc_id,
+                                SemIR::GenericId generic_id,
+                                SemIR::SpecificId enclosing_specific_id,
+                                SemIR::InstBlockId implicit_param_patterns_id,
+                                SemIR::InstBlockId param_patterns_id,
+                                SemIR::InstId self_id,
+                                llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::SpecificId;
 
 // Deduces the impl arguments to use in a use of a parameterized impl. Returns
 // `None` if deduction fails.

@@ -382,7 +382,6 @@ auto HandleParseNode(Context& context,
       {.name_id = name_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .decl_id = decl_id,
-       .generic_id = SemIR::GenericId::None,
        .default_value_id = SemIR::InstId::None});
   ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 
@@ -398,7 +397,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   auto parent_class_decl =
-      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
+      context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
   CARBON_CHECK(parent_class_decl);
   cast_type_id = AsConcreteType(
       context, cast_type_id, type_node,

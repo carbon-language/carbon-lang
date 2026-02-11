@@ -110,6 +110,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
             context, loc_id, name_id,
             LookupScope{.name_scope_id = lookup_scope_id,
                         .specific_id = specific_id,
+                        // A non-lexical lookup does not know what `Self` will
+                        // be; it remains symbolic if needed.
                         .self_const_id = SemIR::ConstantId::None},
             /*required=*/false);
         non_lexical_result.scope_result.is_found()) {
@@ -125,7 +127,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                         context.sem_ir(), non_lexical_result.specific_id,
                         target_inst_id))) {
           auto interface_decl =
-              context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
+              context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
+                  scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
           SemIR::InstId result_inst_id = GetAssociatedValue(
@@ -286,6 +289,56 @@ struct ProhibitedAccessInfo {
   bool is_parent_access;
 };
 
+static auto GetSelfFacetForInterfaceFromLookupSelfType(
+    Context& context, const SemIR::GenericId generic_with_self_id,
+    SemIR::ConstantId self_type_const_id) -> SemIR::ConstantId {
+  if (!self_type_const_id.has_value()) {
+    // In a lookup into a non-lexical scope, there is no self-type from the
+    // lookup for the interface-with-self specific. So the self-type we use is
+    // the abstract symbolic Self from the self specific of the
+    // interface-with-self.
+    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+        context.generics().GetSelfSpecific(generic_with_self_id));
+    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+    return context.constant_values().Get(self_specific_args.back());
+  }
+
+  if (context.insts().Is<SemIR::FacetType>(
+          context.constant_values().GetInstId(self_type_const_id))) {
+    // We are looking directly in a facet type, like `I.F` for an interface `I`,
+    // which means there is no self-type from the lookup for the
+    // interface-with-self specific. So the self-type we use is the abstract
+    // symbolic Self from the self specific of the interface-with-self.
+    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+        context.generics().GetSelfSpecific(generic_with_self_id));
+    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+    return context.constant_values().Get(self_specific_args.back());
+  }
+
+  // Extended name lookup into a type, like `x.F`, can find a facet
+  // type extended scope from the type of `x`. The type of `x` maybe a
+  // facet converted to a type, so drop the `as type` conversion if
+  // so.
+  auto canonical_facet_or_type =
+      GetCanonicalFacetOrTypeValue(context, self_type_const_id);
+
+  auto type_of_canonical_facet_or_type =
+      context.insts()
+          .Get(context.constant_values().GetInstId(canonical_facet_or_type))
+          .type_id();
+  if (type_of_canonical_facet_or_type == SemIR::TypeType::TypeId) {
+    // If we still have a type, turn it into a facet for use in the
+    // interface-with-self specific.
+    return GetConstantFacetValueForType(
+        context, context.types().GetAsTypeInstId(
+                     context.constant_values().GetInstId(self_type_const_id)));
+  }
+
+  // We have a facet for the self-type (or perhaps an ErrorInst), which we can
+  // use directly in the interface-with-self specific.
+  return canonical_facet_or_type;
+}
+
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
                                    SemIR::ConstantId self_type_const_id,
@@ -318,6 +371,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                   .self_const_id = self_type_const_id});
     return true;
   }
+  // Extended scopes may point to a FacetType.
   if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
     // TODO: Allow name lookup into facet types that are being defined even if
     // they are not complete.
@@ -337,15 +391,33 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       // Name lookup into "extend" constraints but not "self impls" constraints.
       for (const auto& extend : facet_type_info.extend_constraints) {
         auto& interface = context.interfaces().Get(extend.interface_id);
-        scopes->push_back({.name_scope_id = interface.scope_id,
-                           .specific_id = extend.specific_id,
+
+        // We need to build the inner interface-with-self specific. To do that
+        // we need to determine the self facet value to use.
+        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+            context, interface.generic_with_self_id, self_type_const_id);
+        auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+            context, loc_id, interface.generic_id,
+            interface.generic_with_self_id, extend.specific_id, self_facet);
+
+        scopes->push_back({.name_scope_id = interface.scope_with_self_id,
+                           .specific_id = interface_with_self_specific_id,
                            .self_const_id = self_type_const_id});
       }
       for (const auto& extend : facet_type_info.extend_named_constraints) {
         auto& constraint =
             context.named_constraints().Get(extend.named_constraint_id);
-        scopes->push_back({.name_scope_id = constraint.scope_id,
-                           .specific_id = extend.specific_id,
+
+        // We need to build the inner constraint-with-self specific. To do that
+        // we need to determine the self facet value to use.
+        auto self_facet = GetSelfFacetForInterfaceFromLookupSelfType(
+            context, constraint.generic_with_self_id, self_type_const_id);
+        auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
+            context, loc_id, constraint.generic_id,
+            constraint.generic_with_self_id, extend.specific_id, self_facet);
+
+        scopes->push_back({.name_scope_id = constraint.scope_with_self_id,
+                           .specific_id = constraint_with_self_specific_id,
                            .self_const_id = self_type_const_id});
       }
     } else {
@@ -458,51 +530,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
       scopes.reserve(scopes.size() + extended.size());
-      for (auto [extended_id, inner_self_id] : llvm::reverse(extended)) {
+      for (auto extended_id : llvm::reverse(extended)) {
         // Substitute into the constant describing the extended scope to
         // determine its corresponding specific.
         CARBON_CHECK(extended_id.has_value());
         LoadImportRef(context, extended_id);
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
-
-        // Apply self_const_id to the extended_id, replacing inner_self_id
-        // inside.
-        //
-        // TODO: We do this by substituting a `Self` value that the extended
-        // scope provides us with the self type/facet of the name lookup. But
-        // we'd like to avoid using substitution, and do this through the
-        // generic system with a specific and/or eval. Ideally it's somehow done
-        // as part of the `GetConstantValueInSpecific` call above, but with
-        // providing the additional information of the self type/facet of the
-        // name lookup. Further thoughts here:
-        // https://discord.com/channels/655572317891461132/941071822756143115/1463277684082737214
-        if (inner_self_id.has_value() && self_const_id.has_value()) {
-          LoadImportRef(context, inner_self_id);
-
-          auto inner_self_binding =
-              context.insts().GetAs<SemIR::SymbolicBinding>(
-                  context.constant_values().GetConstantInstId(inner_self_id));
-          auto entity_id = inner_self_binding.entity_name_id;
-          auto bind_index = context.entity_names().Get(entity_id).bind_index();
-          auto facet_value = SemIR::ConstantId::None;
-          if (auto self_type_id =
-                  context.types().TryGetTypeIdForTypeConstantId(self_const_id);
-              self_type_id.has_value()) {
-            // The self for member lookup is a type, we need a facet value to
-            // replace `Self`.
-            facet_value = GetConstantFacetValueForType(
-                context, context.types().GetTypeInstId(self_type_id));
-          } else {
-            // The self for member lookup is a facet value, use it as is to
-            // replace `Self`.
-            facet_value = self_const_id;
-          }
-          llvm::SmallVector<Substitution> substitutions = {
-              {.bind_id = bind_index, .replacement_id = facet_value}};
-          const_id = SubstConstant(context, loc_id, const_id, substitutions);
-        }
-
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            self_const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should

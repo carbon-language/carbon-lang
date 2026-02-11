@@ -515,7 +515,7 @@ class InstStore {
   // Returns whether the requested instruction is one of the specified types.
   template <typename... InstTs>
   auto IsOneOf(InstId inst_id) const -> bool {
-    return Get(inst_id).Is<InstTs...>();
+    return Get(inst_id).IsOneOf<InstTs...>();
   }
 
   // Returns the requested instruction, which is known to have the specified

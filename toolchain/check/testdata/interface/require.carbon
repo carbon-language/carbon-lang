@@ -132,7 +132,7 @@ interface Z {
 fn F(T:! Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.YY();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -153,7 +153,7 @@ interface Z {
 fn F(T:! Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.YY();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -335,6 +335,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
+// CHECK:STDOUT:   %T: %Z.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -346,6 +347,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
@@ -356,6 +360,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .YY = <poisoned>
 // CHECK:STDOUT:   extend %.loc9
@@ -372,9 +377,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extend_with_self.carbon
@@ -386,6 +399,11 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
 // CHECK:STDOUT:   %Y.type.432: type = facet_type <@Y, @Y(%Self.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %require_complete.88f: <witness> = require_complete_type %Y.type.432 [symbolic]
+// CHECK:STDOUT:   %T.ea3: %Z.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.ea3 [symbolic]
+// CHECK:STDOUT:   %Y.type.112: type = facet_type <@Y, @Y(%T.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %require_complete.dc8: <witness> = require_complete_type %Y.type.112 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -396,21 +414,25 @@ interface Z(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
-// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   %Self.loc8: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type.loc9_18 impls %Y.type.loc9_30.1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.as_type.loc9_18: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %Self.as_type.loc9_18: type = facet_access_type @Z.%Self.loc8 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: %Y.type.82b = name_ref Y, file.%Y.decl [concrete = constants.%Y.generic]
-// CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
+// CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self.loc8 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:     %Self.as_type.loc9_30: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %.loc9: type = converted %Self.ref, %Self.as_type.loc9_30 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.type.loc9_30.1: type = facet_type <@Y, @Y(constants.%Self.binding.as_type)> [symbolic = %Y.type.loc9_30.2 (constants.%Y.type.432)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.type.loc9_30.1, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [symbolic = constants.%Y.type.432]
+// CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.type.loc9_30.1, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [symbolic = %Y.type (constants.%Y.type.432)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc8
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .YY = <poisoned>
 // CHECK:STDOUT:   extend %.loc9
@@ -422,16 +444,32 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self.loc8: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Y.type.loc9_30.2: type = facet_type <@Y, @Y(%Self.binding.as_type)> [symbolic = %Y.type.loc9_30.2 (constants.%Y.type.432)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc9 => constants.%Self.c59
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.432
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.88f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.432
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T.ea3) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc9 => constants.%T.ea3
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%T.binding.as_type
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.112
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.dc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon
@@ -452,6 +490,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
@@ -461,6 +502,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
@@ -473,6 +515,10 @@ interface Z(T:! type) {
 // CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
@@ -498,6 +544,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %.loc9 impls %Y.ref
 // CHECK:STDOUT:   } {
@@ -510,6 +559,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -521,6 +571,10 @@ interface Z(T:! type) {
 // CHECK:STDOUT: generic require @Z.Self.binding.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) {
@@ -549,6 +603,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.C.impls.Y.type.require.decl = require_decl @Z.C.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %C.loc9_17.1 impls %Y.ref
 // CHECK:STDOUT:   } {
@@ -564,6 +621,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -577,6 +636,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %C.loc9_17.2: type = class_type @C, @C(%Self.binding.as_type) [symbolic = %C.loc9_17.2 (constants.%C.42e)]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.C.impls.Y.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
@@ -611,6 +672,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y_where.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y_where.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %.loc7_19
 // CHECK:STDOUT:   } {
@@ -633,6 +697,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -645,6 +710,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y_where.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
@@ -685,6 +752,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
+// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Z.T.impls.Z.type.require.decl = require_decl @Z.T.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:       require %T.ref impls %Z.type.loc5_25.1
 // CHECK:STDOUT:     } {
@@ -699,6 +769,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_23.1
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     witness = ()
@@ -721,6 +793,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: specific @Z(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.binding.as_type) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%Self.binding.as_type
@@ -759,6 +833,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Z.Self.binding.as_type.impls.Y_where.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Y_where.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type.loc10_11 impls %.loc10_19
 // CHECK:STDOUT:   } {
@@ -782,6 +859,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -795,6 +873,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Y_where.type.require(constants.%Self.c59) {
 // CHECK:STDOUT:   %Self => constants.%Self.c59
@@ -835,6 +915,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc8_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.822)]
+// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Z.Self.binding.as_type.impls.Z.type.require.decl = require_decl @Z.Self.binding.as_type.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %Z.type.loc11_20
 // CHECK:STDOUT:     } {
@@ -846,6 +929,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_23.1
+// CHECK:STDOUT:     .Z = <poisoned>
+// CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     witness = ()
@@ -867,6 +952,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: specific @Z(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_13.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%T, constants.%Self.822) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Self.binding.as_type.impls.Z.type.require(constants.%T, constants.%Self.822) {
 // CHECK:STDOUT:   %T => constants.%T

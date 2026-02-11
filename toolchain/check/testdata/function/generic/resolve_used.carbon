@@ -56,12 +56,12 @@ fn CallNegative() {
 // CHECK:STDOUT:   %require_complete.901: <witness> = require_complete_type %Int [symbolic]
 // CHECK:STDOUT:   %pattern_type.764: type = pattern_type %Int [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.3e3: %Destroy.type = facet_value %Int, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %.623: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.3e3 [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.e97: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.3e3) [symbolic]
+// CHECK:STDOUT:   %.c09: type = fn_type_with_self_type %Destroy.Op.type.e97, %Destroy.facet.3e3 [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [concrete]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -70,7 +70,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %complete_type.d94: <witness> = complete_type_witness <error> [concrete]
 // CHECK:STDOUT:   %pattern_type.47b: type = pattern_type %i0 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.7e1: %Destroy.type = facet_value %i0, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %.918: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.7e1 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.e5a: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.7e1) [concrete]
+// CHECK:STDOUT:   %.011: type = fn_type_with_self_type %Destroy.Op.type.e5a, %Destroy.facet.7e1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,7 +118,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc15_20.2 [symbolic = %require_complete (constants.%require_complete.901)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc15_20.2 [symbolic = %pattern_type (constants.%pattern_type.764)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc15_20.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.3e3)]
-// CHECK:STDOUT:   %.loc15_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc15_3 (constants.%.623)]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.e97)]
+// CHECK:STDOUT:   %.loc15_3: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc15_3 (constants.%.c09)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -162,6 +164,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.d94
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.47b
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.7e1
-// CHECK:STDOUT:   %.loc15_3 => constants.%.918
+// CHECK:STDOUT:   %Destroy.Op.type => constants.%Destroy.Op.type.e5a
+// CHECK:STDOUT:   %.loc15_3 => constants.%.011
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

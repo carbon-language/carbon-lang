@@ -31,6 +31,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness @C.as.Empty.impl.%Empty.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Empty.facet: %Empty.type = facet_value %C, (%Empty.impl_witness) [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: %Empty.type = symbolic_binding T, 0 [symbolic]
@@ -43,12 +44,12 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %pattern_type.fd9: type = pattern_type %ptr [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.24f: %Destroy.type = facet_value %ptr, (%custom_witness.809) [symbolic]
-// CHECK:STDOUT:   %.732: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.24f [symbolic]
+// CHECK:STDOUT:   %Destroy.Op.type.f7d: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.24f) [symbolic]
+// CHECK:STDOUT:   %.491: type = fn_type_with_self_type %Destroy.Op.type.f7d, %Destroy.facet.24f [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -87,6 +88,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
+// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -120,7 +122,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc22_11.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc22_11.2 [symbolic = %pattern_type (constants.%pattern_type.fd9)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc22_11.2, (constants.%custom_witness.809) [symbolic = %Destroy.facet (constants.%Destroy.facet.24f)]
-// CHECK:STDOUT:   %.loc22_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc22_3 (constants.%.732)]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.f7d)]
+// CHECK:STDOUT:   %.loc22_3: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc22_3 (constants.%.491)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -143,6 +146,14 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: @F.%ptr.loc22_11.2 (%ptr)) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Empty.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_6.1 => constants.%T

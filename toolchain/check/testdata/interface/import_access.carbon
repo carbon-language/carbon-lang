@@ -168,6 +168,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def {
 // CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Def [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -175,6 +176,8 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Def(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
@@ -193,6 +196,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef {
 // CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @ForwardWithDef [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -200,6 +204,8 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward.carbon
 // CHECK:STDOUT:
@@ -211,6 +217,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [concrete]
+// CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Def.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -218,7 +225,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, loc4_23, unloaded
+// CHECK:STDOUT:   %Test.import_ref.faa = import_ref Test//def, loc4_23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -240,7 +247,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Test.import_ref
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.faa
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -249,6 +256,10 @@ private interface Redecl {}
 // CHECK:STDOUT: fn @F(%i.param: %Def.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Def(constants.%Self) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -321,6 +332,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [concrete]
+// CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -328,7 +340,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, loc6_26, unloaded
+// CHECK:STDOUT:   %Test.import_ref.947 = import_ref Test//forward_with_def, loc6_26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -350,7 +362,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Test.import_ref
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.947
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -359,6 +371,10 @@ private interface Redecl {}
 // CHECK:STDOUT: fn @F(%i.param: %ForwardWithDef.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward_with_def.carbon
@@ -459,6 +475,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Forward {
 // CHECK:STDOUT:   %Self: %Forward.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Forward [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -471,6 +488,8 @@ private interface Redecl {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Forward(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward.carbon
 // CHECK:STDOUT:
@@ -558,6 +577,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Redecl {
 // CHECK:STDOUT:   %Self: %Redecl.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Redecl [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -565,4 +585,6 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Redecl(constants.%Self) {}
 // CHECK:STDOUT:
