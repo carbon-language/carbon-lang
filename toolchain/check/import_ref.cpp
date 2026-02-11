@@ -745,7 +745,7 @@ static auto GetLocalImportRefInstBlock(ImportContext& context,
 
 // Gets an incomplete local version of an imported generic. Most fields are
 // set in the third phase.
-static auto MakeIncompleteGeneric(ImportContext& context, SemIR::InstId decl_id,
+static auto ImportIncompleteGeneric(ImportContext& context, SemIR::InstId decl_id,
                                   SemIR::GenericId generic_id)
     -> SemIR::GenericId {
   if (!generic_id.has_value()) {
@@ -1289,7 +1289,7 @@ static auto GetIncompleteLocalEntityBase(
       .name_id = GetLocalNameId(context, import_base.name_id),
       .parent_scope_id = SemIR::NameScopeId::None,
       .generic_id =
-          MakeIncompleteGeneric(context, decl_id, import_base.generic_id),
+          ImportIncompleteGeneric(context, decl_id, import_base.generic_id),
       .first_param_node_id = Parse::NodeId::None,
       .last_param_node_id = Parse::NodeId::None,
       .pattern_block_id = SemIR::InstBlockId::None,
@@ -1552,7 +1552,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .element_type_inst_id = element_type_inst_id});
 }
 
-static auto MakeAssociatedConstant(
+static auto ImportAssociatedConstant(
     ImportContext& context, const SemIR::AssociatedConstant& import_assoc_const,
     SemIR::TypeId type_id)
     -> std::pair<SemIR::AssociatedConstantId, SemIR::ConstantId> {
@@ -1566,7 +1566,7 @@ static auto MakeAssociatedConstant(
       .name_id = GetLocalNameId(context, import_assoc_const.name_id),
       .parent_scope_id = SemIR::NameScopeId::None,
       .decl_id = assoc_const_decl_id,
-      .generic_id = MakeIncompleteGeneric(context, assoc_const_decl_id,
+      .generic_id = ImportIncompleteGeneric(context, assoc_const_decl_id,
                                           import_assoc_const.generic_id),
       .default_value_id =
           import_assoc_const.default_value_id.has_value()
@@ -1599,7 +1599,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto type_id =
         resolver.local_types().GetTypeIdForTypeConstantId(type_const_id);
     std::tie(assoc_const_id, const_id) =
-        MakeAssociatedConstant(resolver, import_assoc_const, type_id);
+        ImportAssociatedConstant(resolver, import_assoc_const, type_id);
   } else {
     // In the third phase, compute the associated constant ID from the constant
     // value of the declaration.
@@ -1810,7 +1810,7 @@ static auto AddPlaceholderNameScope(ImportContext& context)
 // Makes an incomplete class. This is necessary even with classes with a
 // complete declaration, because things such as `Self` may refer back to the
 // type.
-static auto MakeIncompleteClass(ImportContext& context,
+static auto ImportIncompleteClass(ImportContext& context,
                                 const SemIR::Class& import_class,
                                 SemIR::SpecificId enclosing_specific_id)
     -> std::pair<SemIR::ClassId, SemIR::ConstantId> {
@@ -1850,7 +1850,7 @@ static auto InitializeNameScopeAndImportRefs(
 }
 
 // Fills out the class definition for an incomplete class.
-static auto AddClassDefinition(ImportContext& context,
+static auto ImportClassDefinition(ImportContext& context,
                                const SemIR::Class& import_class,
                                SemIR::Class& new_class,
                                SemIR::InstId complete_type_witness_id,
@@ -1911,7 +1911,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto enclosing_specific_id =
         GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
     std::tie(class_id, class_const_id) =
-        MakeIncompleteClass(resolver, import_class, enclosing_specific_id);
+        ImportIncompleteClass(resolver, import_class, enclosing_specific_id);
   } else {
     // On the third phase, compute the class ID from the constant
     // value of the declaration.
@@ -1971,7 +1971,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         GetSingletonType(resolver.local_context(),
                          SemIR::WitnessType::TypeInstId),
         import_class.complete_type_witness_id, complete_type_witness_const_id);
-    AddClassDefinition(resolver, import_class, new_class,
+    ImportClassDefinition(resolver, import_class, new_class,
                        complete_type_witness_id, base_id, adapt_id,
                        vtable_decl_id);
   }
@@ -2173,7 +2173,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of a function. This is done as a separate step from
 // importing the function declaration in order to resolve cycles.
-static auto MakeFunctionDecl(ImportContext& context,
+static auto ImportFunctionDecl(ImportContext& context,
                              const SemIR::Function& import_function,
                              SemIR::SpecificId specific_id)
     -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
@@ -2236,7 +2236,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto specific_id =
         GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
     std::tie(function_id, function_const_id) =
-        MakeFunctionDecl(resolver, import_function, specific_id);
+        ImportFunctionDecl(resolver, import_function, specific_id);
   } else {
     // On the third phase, compute the function ID from the constant value of
     // the declaration.
@@ -2513,7 +2513,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of an impl. This is done as a separate step from
 // importing the impl definition in order to resolve cycles.
-static auto MakeImplDeclaration(ImportContext& context,
+static auto ImportImplDecl(ImportContext& context,
                                 const SemIR::Impl& import_impl,
                                 SemIR::InstId witness_id)
     -> std::pair<SemIR::ImplId, SemIR::ConstantId> {
@@ -2538,7 +2538,7 @@ static auto MakeImplDeclaration(ImportContext& context,
 }
 
 // Imports the definition of an impl.
-static auto AddImplDefinition(ImportContext& context,
+static auto ImportImplDefinition(ImportContext& context,
                               const SemIR::Impl& import_impl,
                               SemIR::Impl& new_impl) -> void {
   new_impl.definition_id = new_impl.first_owning_decl_id;
@@ -2588,7 +2588,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     // recursive references.
     auto witness_id = AddImportRef(resolver, import_impl.witness_id);
     std::tie(impl_id, impl_const_id) =
-        MakeImplDeclaration(resolver, import_impl, witness_id);
+        ImportImplDecl(resolver, import_impl, witness_id);
   } else {
     // On the third phase, compute the impl ID from the "constant value" of
     // the declaration, which is a reference to the created ImplDecl.
@@ -2637,7 +2637,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                unattached_self_const_id, *facet_type, nullptr);
   }
   if (import_impl.is_complete()) {
-    AddImplDefinition(resolver, import_impl, new_impl);
+    ImportImplDefinition(resolver, import_impl, new_impl);
   }
 
   // If the `impl` is declared in the API file corresponding to the current
@@ -2674,7 +2674,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
          .facet_type_inst_id = SemIR::TypeInstId::None,
          .decl_id = require_decl_id,
          .parent_scope_id = SemIR::NameScopeId::None,
-         .generic_id = MakeIncompleteGeneric(resolver, require_decl_id,
+         .generic_id = ImportIncompleteGeneric(resolver, require_decl_id,
                                              import_require.generic_id)});
 
     // Write the RequireImplsId into the RequireImplsDecl.
@@ -2736,7 +2736,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of an interface. This is done as a separate step from
 // importing the interface definition in order to resolve cycles.
-static auto MakeInterfaceDecl(ImportContext& context,
+static auto ImportInterfaceDecl(ImportContext& context,
                               const SemIR::Interface& import_interface,
                               SemIR::SpecificId enclosing_specific_id)
     -> std::pair<SemIR::InterfaceId, SemIR::ConstantId> {
@@ -2769,7 +2769,7 @@ static auto MakeInterfaceDecl(ImportContext& context,
 
 // Imports the definition for an interface that has been imported as a forward
 // declaration.
-static auto AddInterfaceDefinition(ImportContext& context,
+static auto ImportInterfaceDefinition(ImportContext& context,
                                    const SemIR::Interface& import_interface,
                                    SemIR::Interface& new_interface,
                                    SemIR::InstId self_param_id) -> void {
@@ -2816,7 +2816,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto enclosing_specific_id =
         GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
     std::tie(interface_id, interface_const_id) =
-        MakeInterfaceDecl(resolver, import_interface, enclosing_specific_id);
+        ImportInterfaceDecl(resolver, import_interface, enclosing_specific_id);
   } else {
     // On the third phase, compute the interface ID from the constant value of
     // the declaration.
@@ -2870,7 +2870,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   if (import_interface.is_complete()) {
     CARBON_CHECK(self_param_id);
-    AddInterfaceDefinition(resolver, import_interface, new_interface,
+    ImportInterfaceDefinition(resolver, import_interface, new_interface,
                            *self_param_id);
   }
   return ResolveResult::FinishGenericOrDone(
@@ -2880,7 +2880,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of a named constraint. This is done as a separate step
 // from importing the constraint definition in order to resolve cycles.
-static auto MakeNamedConstraintDecl(
+static auto ImportNamedConstraintDecl(
     ImportContext& context,
     const SemIR::NamedConstraint& import_named_constraint,
     SemIR::SpecificId enclosing_specific_id)
@@ -2916,7 +2916,7 @@ static auto MakeNamedConstraintDecl(
 
 // Imports the definition for a named constraint that has been imported as a
 // forward declaration.
-static auto AddNamedConstraintDefinition(
+static auto ImportNamedConstraintDefinition(
     ImportContext& context,
     const SemIR::NamedConstraint& import_named_constraint,
     SemIR::NamedConstraint& new_named_constraint, SemIR::InstId self_param_id)
@@ -2965,7 +2965,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto enclosing_specific_id =
         GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
     std::tie(named_constraint_id, named_constraint_const_id) =
-        MakeNamedConstraintDecl(resolver, import_named_constraint,
+        ImportNamedConstraintDecl(resolver, import_named_constraint,
                                 enclosing_specific_id);
   } else {
     // On the third phase, compute the interface ID from the constant value of
@@ -3026,7 +3026,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   if (import_named_constraint.is_complete()) {
     CARBON_CHECK(self_param_id);
-    AddNamedConstraintDefinition(resolver, import_named_constraint,
+    ImportNamedConstraintDefinition(resolver, import_named_constraint,
                                  new_named_constraint, *self_param_id);
   }
   return ResolveResult::FinishGenericOrDone(
