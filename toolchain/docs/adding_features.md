@@ -170,10 +170,9 @@ graph TD
     [parse/node_kind.h](/toolchain/parse/node_kind.h) and
     [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h).
 
-    -   Using the macro from [common/enum_base.h](/common/enum_base.h), the
-        enumerants of `NodeKind` are _defined_ using the list of parse node
-        kinds from [parse/node_kind.def](/toolchain/parse/node_kind.def) (using
-        [the .def file idiom](idioms.md#def-files)).
+    -   The enumerants of `NodeKind` that were declared in parse/node_kind.h are _defined_, 
+       again using the macro from [common/enum_base.h](/common/enum_base.h) and the
+       list of node kinds in [parse/node_kind.def](/toolchain/parse/node_kind.def).
 
     -   `NodeKind::definition()` is defined. It has a static table of
         `const NodeKind::Definition*` indexed by the enum value, populated by
