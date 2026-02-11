@@ -209,8 +209,8 @@ fn MyF() {
 // CHECK:STDOUT:   %ThunkOnBoth.cpp_overload_set.value: %ThunkOnBoth.cpp_overload_set.type = cpp_overload_set_value @ThunkOnBoth.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.type: type = fn_type @ThunkOnBoth__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk: %ThunkOnBoth__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -347,16 +347,16 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc16_41.3: ref %i16 = temporary %.loc16_41.1, %.loc16_41.2
 // CHECK:STDOUT:   %.loc16_41.4: %i16 = acquire_value %.loc16_41.3
 // CHECK:STDOUT:   %r4: %i16 = value_binding r4, %.loc16_41.4
-// CHECK:STDOUT:   %DestroyOp.bound.loc16_41: <bound method> = bound_method %.loc16_41.3, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc16_41: init %empty_tuple.type = call %DestroyOp.bound.loc16_41(%.loc16_41.3)
-// CHECK:STDOUT:   %DestroyOp.bound.loc16_40: <bound method> = bound_method %.loc16_40.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc16_40: init %empty_tuple.type = call %DestroyOp.bound.loc16_40(%.loc16_40.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc15: init %empty_tuple.type = call %DestroyOp.bound.loc15(%.loc15_43.3)
-// CHECK:STDOUT:   %DestroyOp.bound.loc14: <bound method> = bound_method %.loc14_39.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc14: init %empty_tuple.type = call %DestroyOp.bound.loc14(%.loc14_39.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc16_41: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc16_41: init %empty_tuple.type = call %Destroy.Op.bound.loc16_41(%.loc16_41.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc16_40: <bound method> = bound_method %.loc16_40.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc16_40: init %empty_tuple.type = call %Destroy.Op.bound.loc16_40(%.loc16_40.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%.loc15_43.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc14: <bound method> = bound_method %.loc14_39.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call %Destroy.Op.bound.loc14(%.loc14_39.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:

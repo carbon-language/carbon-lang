@@ -101,8 +101,8 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.217: <specific function> = specific_function %Source, @Source(%i32) [concrete]
 // CHECK:STDOUT:   %.eba: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.d7d, %ImplicitAs.facet.be6 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -325,14 +325,14 @@ fn Test() {
 // CHECK:STDOUT:   %.loc35_20.5: ref %X = temporary %.loc35_20.1, %.loc35_20.4
 // CHECK:STDOUT:   %.loc35_20.6: %X = acquire_value %.loc35_20.5
 // CHECK:STDOUT:   %Sink_X.call: init %empty_tuple.type = call %Sink_X.ref(%.loc35_20.6)
-// CHECK:STDOUT:   %DestroyOp.bound.loc35: <bound method> = bound_method %.loc35_20.5, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc35: init %empty_tuple.type = call %DestroyOp.bound.loc35(%.loc35_20.5)
-// CHECK:STDOUT:   %DestroyOp.bound.loc34: <bound method> = bound_method %.loc34_20.2, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%.loc34_20.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc35: <bound method> = bound_method %.loc35_20.5, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc35: init %empty_tuple.type = call %Destroy.Op.bound.loc35(%.loc35_20.5)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_20.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_20.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc31_11.1 => constants.%T.67d

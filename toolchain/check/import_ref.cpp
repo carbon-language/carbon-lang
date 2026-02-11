@@ -2335,6 +2335,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       new_function.SetBuiltinFunction(import_function.builtin_function_kind());
       break;
     }
+    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
+      new_function.SetCoreWitness();
+      break;
+    }
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       auto entity_name_id = resolver.local_entity_names().AddCanonical(
           {.name_id = new_function.name_id,

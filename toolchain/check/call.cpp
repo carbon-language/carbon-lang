@@ -294,7 +294,8 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     }
 
     case SemIR::Function::SpecialFunctionKind::None:
-    case SemIR::Function::SpecialFunctionKind::Builtin: {
+    case SemIR::Function::SpecialFunctionKind::Builtin:
+    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
       return GetOrAddInst<SemIR::Call>(context, loc_id,
                                        {.type_id = return_type_id,
                                         .callee_id = callee_id,

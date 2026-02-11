@@ -110,10 +110,10 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.df6: type = pattern_type %Grass [concrete]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet, %Edible.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc35_29 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc35_17 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc35_29 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc35_17 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Eats.type.8c2: type = facet_type <@Eats, @Eats(%Grass)> [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness.f54: <witness> = impl_witness @T.binding.as_type.as.Eats.impl.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%Animal.facet, %Edible.facet) [concrete]
 // CHECK:STDOUT:   %Self.ebd: %Eats.type.8c2 = symbolic_binding Self, 1 [symbolic]
@@ -435,16 +435,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = acquire_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = acquire_value %.loc35_31.1
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.2, %.loc35_31.2)
-// CHECK:STDOUT:   %DestroyOp.bound.loc35_29: <bound method> = bound_method %.loc35_29.4, constants.%DestroyOp.b0ebf8.1
-// CHECK:STDOUT:   %DestroyOp.call.loc35_29: init %empty_tuple.type = call %DestroyOp.bound.loc35_29(%.loc35_29.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc35_17: <bound method> = bound_method %.loc35_17.4, constants.%DestroyOp.b0ebf8.2
-// CHECK:STDOUT:   %DestroyOp.call.loc35_17: init %empty_tuple.type = call %DestroyOp.bound.loc35_17(%.loc35_17.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc35_29: <bound method> = bound_method %.loc35_29.4, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc35_29: init %empty_tuple.type = call %Destroy.Op.bound.loc35_29(%.loc35_29.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc35_17: <bound method> = bound_method %.loc35_17.4, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc35_17: init %empty_tuple.type = call %Destroy.Op.bound.loc35_17(%.loc35_17.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc35_29(%self.param: ref %Grass) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc35_29(%self.param: ref %Grass) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc35_17(%self.param: ref %Goat) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc35_17(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Edible.WithSelf(constants.%Self.461) {
 // CHECK:STDOUT: !definition:

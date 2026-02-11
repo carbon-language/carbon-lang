@@ -80,8 +80,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn.83b: <specific function> = specific_function %Class.GetNoDeduce.472, @Class.GetNoDeduce(%A, %B) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.f71: <witness> = complete_type_witness %tuple.type.e87 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,12 +319,12 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6)
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc28_25.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc28_25.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc28_25.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc28_25.4)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc18_13.1 => constants.%T

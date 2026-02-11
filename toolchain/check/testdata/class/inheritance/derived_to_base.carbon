@@ -201,8 +201,8 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %bound_method.fa7: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.822) [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -428,12 +428,12 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_66.4: ref %A = converted %.loc32_66.1, %.loc32_66.3
 // CHECK:STDOUT:   %.loc32_66.5: %A = acquire_value %.loc32_66.4
 // CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.5
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc32_64.10, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc32_64.10)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc32_64.10, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc32_64.10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- qualified.carbon
 // CHECK:STDOUT:

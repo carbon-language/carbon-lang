@@ -229,12 +229,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %ptr.27c: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %complete_type.04a: <witness> = complete_type_witness %ptr.27c [concrete]
 // CHECK:STDOUT:   %pattern_type.191: type = pattern_type %ptr.27c [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.4ad: %Destroy.type = facet_value %ptr.27c, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.936: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.4ad) [concrete]
-// CHECK:STDOUT:   %.86b: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.936, %Destroy.facet.4ad [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.8d7: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.d35: %Destroy.type = facet_value %ptr.27c, (%custom_witness.8d7) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.540: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.d35) [concrete]
+// CHECK:STDOUT:   %.b27: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.540, %Destroy.facet.d35 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -324,7 +324,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.27c) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.27c) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
@@ -338,12 +338,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %require_complete.loc7 => constants.%complete_type.04a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.191
 // CHECK:STDOUT:   %require_complete.loc8 => constants.%complete_type.357
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.809
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.4ad
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.936
-// CHECK:STDOUT:   %.loc7_3 => constants.%.86b
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%DestroyOp
-// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%DestroyOp
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.8d7
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.d35
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.540
+// CHECK:STDOUT:   %.loc7_3 => constants.%.b27
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
+// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_in_function_at_eof.carbon
@@ -374,12 +374,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %ptr.27c: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %ptr.27c [concrete]
 // CHECK:STDOUT:   %pattern_type.191: type = pattern_type %ptr.27c [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.4ad: %Destroy.type = facet_value %ptr.27c, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.936: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.4ad) [concrete]
-// CHECK:STDOUT:   %.86b: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.936, %Destroy.facet.4ad [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.8d7: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.d35: %Destroy.type = facet_value %ptr.27c, (%custom_witness.8d7) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.540: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.d35) [concrete]
+// CHECK:STDOUT:   %.b27: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.540, %Destroy.facet.d35 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -462,7 +462,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.27c) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.27c) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
@@ -476,11 +476,11 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %require_complete.loc7 => constants.%complete_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.191
 // CHECK:STDOUT:   %require_complete.loc8 => <error>
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.809
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.4ad
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.936
-// CHECK:STDOUT:   %.loc7_3 => constants.%.86b
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%DestroyOp
-// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%DestroyOp
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.8d7
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.d35
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.540
+// CHECK:STDOUT:   %.loc7_3 => constants.%.b27
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
+// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

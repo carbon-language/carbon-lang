@@ -805,8 +805,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.7a0: type = pattern_type %WithNontype.6bb [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_0.6a9) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.06d: <bound method> = bound_method %int_0.6a9, %Int.as.Copy.impl.Op.664 [concrete]
 // CHECK:STDOUT:   %bound_method.5f6: <bound method> = bound_method %int_0.6a9, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT: }
@@ -939,12 +939,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_0.6a9) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc9_15.2: %WithNontype.6bb = acquire_value %.loc9_15.1
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.2)
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc9_13.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc9_13.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_13.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_13.4)
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %WithNontype.6bb) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %WithNontype.6bb) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%N.5de) {
 // CHECK:STDOUT:   %N.loc4_19.1 => constants.%N.5de
