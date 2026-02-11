@@ -66,7 +66,7 @@ processing.
 The key file structure is:
 
 ```mermaid
-graph TD
+graph BT
     subgraph common
         EnumBase["enum_base.h"]
     end
@@ -82,18 +82,18 @@ graph TD
         Extract["extract.cpp"]
     end
 
-    EnumBase --> NodeKind
-    NodeKindDef --> NodeKind
-    NodeKindDef --> NodeIds
-    NodeKindDef --> TypedNodes
-    NodeKindDef --> NodeKindCpp
-    NodeKind --> TypedNodes
-    NodeIds --> Tree
-    TypedNodes --> NodeKindCpp
-    TypedNodes --> Tree
-    TypedNodes --> Extract
-    Tree --> TreeAndSubtrees
-    TreeAndSubtrees --> Extract
+    NodeKind --> EnumBase
+    NodeKind --> NodeKindDef
+    NodeIds --> NodeKindDef
+    TypedNodes --> NodeKindDef
+    NodeKindCpp --> NodeKindDef
+    TypedNodes --> NodeKind
+    Tree --> NodeIds
+    NodeKindCpp --> TypedNodes
+    Tree --> TypedNodes
+    Extract --> TypedNodes
+    TreeAndSubtrees --> Tree
+    Extract --> TreeAndSubtrees
 ```
 
 -   [common/enum_base.h](/common/enum_base.h) defines the `EnumBase`
@@ -170,9 +170,10 @@ graph TD
     [parse/node_kind.h](/toolchain/parse/node_kind.h) and
     [parse/typed_nodes.h](/toolchain/parse/typed_nodes.h).
 
-    -   The enumerants of `NodeKind` that were declared in parse/node_kind.h are _defined_, 
-       again using the macro from [common/enum_base.h](/common/enum_base.h) and the
-       list of node kinds in [parse/node_kind.def](/toolchain/parse/node_kind.def).
+    -   The enumerants of `NodeKind` that were declared in parse/node*kind.h are
+        \_defined*, again using the macro from
+        [common/enum_base.h](/common/enum_base.h) and the list of node kinds in
+        [parse/node_kind.def](/toolchain/parse/node_kind.def).
 
     -   `NodeKind::definition()` is defined. It has a static table of
         `const NodeKind::Definition*` indexed by the enum value, populated by
@@ -352,11 +353,11 @@ Instructions won't be given a name unless
 are a member of. To accomplish this, `InstNamer` starts at each of constants,
 imports, and the file scope blocks. It then recursively traverses instructions
 those contain, blocks referenced by those instructions, and so on. Instructions
-must be "owned" by exactly one of the recursively traversed blocks to be correctly
-named. That instruction kind will typically use `FormatTrailingBlock` in the
-`sem_ir/formatter.cpp` to list the instructions in curly braces (`{`...`}`).
-Other instructions that reference that `InstBlockId` will use the default
-rendering that has just the instruction names in parens (`(`...`)`).
+must be "owned" by exactly one of the recursively traversed blocks to be
+correctly named. That instruction kind will typically use `FormatTrailingBlock`
+in the `sem_ir/formatter.cpp` to list the instructions in curly braces
+(`{`...`}`). Other instructions that reference that `InstBlockId` will use the
+default rendering that has just the instruction names in parens (`(`...`)`).
 
 Adding an instruction will generally also require a handler in the Lower step.
 
@@ -371,7 +372,7 @@ implemented instead.
 The key file structure is:
 
 ```mermaid
-graph TD
+graph BT
     subgraph common
         EnumBase["enum_base.h"]
     end
@@ -384,12 +385,12 @@ graph TD
         InstH["inst.h"]
     end
 
-    EnumBase --> InstKindH
-    InstKindDef --> InstKindH
-    InstKindDef --> InstKindCpp
-    InstKindH --> TypedInstsH
-    TypedInstsH --> InstKindCpp
-    TypedInstsH --> InstH
+    InstKindH --> EnumBase
+    InstKindH --> InstKindDef
+    InstKindCpp --> InstKindDef
+    TypedInstsH --> InstKindH
+    InstKindCpp --> TypedInstsH
+    InstH --> TypedInstsH
 ```
 
 -   [common/enum_base.h](/common/enum_base.h) defines the `EnumBase`
