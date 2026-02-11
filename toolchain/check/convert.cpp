@@ -1897,6 +1897,8 @@ auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
     // TODO: is it safe to use storage_id when the init repr is dependent?
     storage_id = SemIR::InstId::None;
   }
+  // TODO: add CHECK that storage_id.index < value_id.index to enforce the
+  // precondition, once existing violations have been cleaned up.
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializing,
