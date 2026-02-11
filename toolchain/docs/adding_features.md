@@ -352,7 +352,7 @@ Instructions won't be given a name unless
 are a member of. To accomplish this, `InstNamer` starts at each of constants,
 imports, and the file scope blocks. It then recursively traverses instructions
 those contain, blocks referenced by those instructions, and so on. Instructions
-must be "owned" by exactly one of the traversely recursed blocks to be correctly
+must be "owned" by exactly one of the recursively traversed blocks to be correctly
 named. That instruction kind will typically use `FormatTrailingBlock` in the
 `sem_ir/formatter.cpp` to list the instructions in curly braces (`{`...`}`).
 Other instructions that reference that `InstBlockId` will use the default
