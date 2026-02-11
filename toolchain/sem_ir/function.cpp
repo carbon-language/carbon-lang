@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/function.h"
 
 #include <optional>
+#include <variant>
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
@@ -91,8 +92,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
 
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
                          SpecificId caller_specific_id) -> CalleeFunction {
-  return std::get<CalleeFunction>(
-      GetCallee(sem_ir, callee_id, caller_specific_id));
+  auto callee = GetCallee(sem_ir, callee_id, caller_specific_id);
+  CARBON_CHECK(std::holds_alternative<CalleeFunction>(callee));
+  return std::get<CalleeFunction>(callee);
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,

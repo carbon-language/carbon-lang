@@ -1317,18 +1317,22 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   // If there's a return argument, don't print it here, because it's printed on
   // the LHS.
-  auto callee_function = SemIR::GetCalleeAsFunction(*sem_ir_, inst.callee_id);
-  auto function = sem_ir_->functions().Get(callee_function.function_id);
-  auto return_form_id = function.GetDeclaredReturnForm(
-      *sem_ir_, callee_function.resolved_specific_id);
   int return_arg_index = -1;
-  if (return_form_id.has_value()) {
-    if (auto init_form =
-            sem_ir_->insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
-      auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
-          init_form->type_component_inst_id);
-      if (SemIR::InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
-        return_arg_index = init_form->index.index;
+  // TODO: Should GetCalleeAsFunction handle errors better?
+  if (sem_ir_->constant_values().Get(inst.callee_id) !=
+      SemIR::ErrorInst::ConstantId) {
+    auto callee_function = SemIR::GetCalleeAsFunction(*sem_ir_, inst.callee_id);
+    auto function = sem_ir_->functions().Get(callee_function.function_id);
+    auto return_form_id = function.GetDeclaredReturnForm(
+        *sem_ir_, callee_function.resolved_specific_id);
+    if (return_form_id.has_value()) {
+      if (auto init_form =
+              sem_ir_->insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
+        auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
+            init_form->type_component_inst_id);
+        if (SemIR::InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
+          return_arg_index = init_form->index.index;
+        }
       }
     }
   }
