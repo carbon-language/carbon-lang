@@ -44,7 +44,7 @@ fn H() {
 // CHECK:STDOUT: define void @_CH.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CG.Main.5b70bb1fa120a73d(), !dbg !7
-// CHECK:STDOUT:   call void @_CG.Main.5b70bb1fa120a73d(), !dbg !8
+// CHECK:STDOUT:   call void @_CG.Main.81fba156b0d338bf(), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,11 +56,19 @@ fn H() {
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.81fba156b0d338bf() #0 !dbg !13 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CG.Main.5b70bb1fa120a73d, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -81,3 +89,6 @@ fn H() {
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5b70bb1fa120a73d", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 1, scope: !10)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.81fba156b0d338bf", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 22, column: 1, scope: !13)

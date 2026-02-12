@@ -204,10 +204,10 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> SemIR::InstId {
+    -> std::optional<SemIR::InstId> {
   // TODO: Handle more interfaces, particularly copy, move, and conversion.
   if (core_interface != CoreInterface::Destroy) {
-    return SemIR::InstId::None;
+    return std::nullopt;
   }
 
   auto query_specific_interface =
@@ -215,6 +215,10 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
 
   if (!TypeCanDestroy(context, query_self_const_id,
                       query_specific_interface.interface_id)) {
+    return std::nullopt;
+  }
+
+  if (query_self_const_id.is_symbolic()) {
     return SemIR::InstId::None;
   }
 
