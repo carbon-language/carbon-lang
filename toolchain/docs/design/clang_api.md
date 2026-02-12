@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [LLDB](#lldb)
     -   [Carbon previously](#carbon-previously)
     -   [Carbon approach](#carbon-approach)
+-   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
 
