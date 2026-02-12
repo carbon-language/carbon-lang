@@ -200,6 +200,7 @@ avoid friction trying to otherwise wedge Clang into Carbon's phase based
 approach.
 
 ## Alternatives considered
+
 -   [PR5543 More closely mimic the Clang compilation](/proposals/p6641.md#pr5543-more-closely-mimic-the-clang-compilation)
 -   [Status Quo with Improvements](/proposals/p6641.md#status-quo-with-improvements)
 -   [Upstream Clang Changes to use Phase Based Lowering](/proposals/p6641.md#upstream-clang-changes-to-use-phase-based-lowering)
