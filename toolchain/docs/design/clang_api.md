@@ -215,3 +215,7 @@ The main cost is the inherent difference between Clang's continuous lowering and
 Carbon's phase based lowering, though that seems to be an acceptable cost to
 avoid friction trying to otherwise wedge Clang into Carbon's phase based
 approach.
+
+## Alternatives considered
+-   [Status Quo with Improvements](/proposals/p6641.md#status-quo-with-improvements)
+-   [Upstream Clang Changes to use Phase Based Lowering](/proposals/p6641.md#upstream-clang-changes-to-use-phase-based-lowering)
