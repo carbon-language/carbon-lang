@@ -33,12 +33,16 @@ fn F(A:! X, B:! Y) {
   A.F();
 }
 
-// --- symbolic_facet_interface_requires_interface.carbon
+// --- fail_todo_symbolic_facet_interface_requires_interface.carbon
 library "[[@TEST_NAME]]";
 
 import library "a";
 
 fn F(B:! Y) {
+  // CHECK:STDERR: fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z(B)` in type `B` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   B.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   B.F();
 }
 
@@ -118,6 +122,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %Main.import_ref.8c7: %Y.type = import_ref Main//a, loc7_13, loaded [symbolic = constants.%Self.d4d]
 // CHECK:STDOUT:   %Main.import_ref.3e2c97.1 = import_ref Main//a, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.80a = import_ref Main//a, loc8_31, unloaded
+// CHECK:STDOUT:   %Main. = import_ref Main//a, <none>, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5847cb.3 = import_ref Main//a, loc4_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +177,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.3e2c97.1
 // CHECK:STDOUT:   extend imports.%Main.import_ref.80a
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (imports.%Main.)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Y.Self.binding.as_type.impls.Z.type.require {

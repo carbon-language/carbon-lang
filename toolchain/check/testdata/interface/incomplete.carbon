@@ -353,6 +353,8 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%A.Self.binding.as_type.impls.A.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -370,11 +372,12 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @A.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %A.Self.binding.as_type.impls.A.type.require.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%A.Self.binding.as_type.impls.A.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -404,6 +407,8 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.type.69e: type = facet_type <@A, @A(%empty_struct_type)> [concrete]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A, @A(%T) [symbolic]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%A.Self.binding.as_type.impls.A.type.require.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -424,6 +429,8 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T.loc3_13.1)> [symbolic = %A.type (constants.%A.type.ade)]
 // CHECK:STDOUT:   %Self.loc3_23.2: @A.%A.type (%A.type.ade) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A, @A(%T.loc3_13.1) [symbolic = %A.assoc_type (constants.%A.assoc_type)]
+// CHECK:STDOUT:   %assoc0.loc11_29.2: @A.%A.assoc_type (%A.assoc_type) = assoc_entity element0, %A.Self.binding.as_type.impls.A.type.require.decl [symbolic = %assoc0.loc11_29.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @A.%A.type (%A.type.ade) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
@@ -436,11 +443,12 @@ interface A(T:! type) {
 // CHECK:STDOUT:       %.loc11_28: type = converted %.loc11_27, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %A.type.loc11_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.69e]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %assoc0.loc11_29.1: @A.%A.assoc_type (%A.assoc_type) = assoc_entity element0, %A.Self.binding.as_type.impls.A.type.require.decl [symbolic = %assoc0.loc11_29.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .A = <poisoned>
-// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:     witness = (%A.Self.binding.as_type.impls.A.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }

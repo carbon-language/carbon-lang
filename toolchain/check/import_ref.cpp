@@ -1366,6 +1366,8 @@ static auto AddAssociatedEntities(ImportContext& context,
                        inst_id)) {
       import_name_id =
           context.import_entity_names().Get(import_ref->entity_name_id).name_id;
+    } else if (context.import_insts().Is<SemIR::RequireImplsDecl>(inst_id)) {
+      // Require declarations do not have name id.
     } else {
       // We don't need `GetWithAttachedType` here because we don't access the
       // type.

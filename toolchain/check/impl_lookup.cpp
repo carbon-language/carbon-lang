@@ -29,6 +29,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -692,13 +693,32 @@ static auto LookupImplWitnessInRequireDecls(
               auto element_index = 0;
               auto element_found = false;
               for (auto assoc_entity : parent_assoc_entities) {
+                const auto& assoc_entity_inst =
+                    context.insts().Get(assoc_entity);
                 if (auto require_impls_decl =
-                        context.insts().TryGetAs<SemIR::RequireImplsDecl>(
-                            assoc_entity)) {
+                        assoc_entity_inst.TryAs<SemIR::RequireImplsDecl>()) {
                   if (require_impls_decl->require_impls_id ==
                       require_impls_id) {
                     element_found = true;
                     break;
+                  }
+                } else if (auto import_ref =
+                               assoc_entity_inst.TryAs<SemIR::AnyImportRef>()) {
+                  auto import_ir_inst = context.import_ir_insts().Get(
+                      import_ref->import_ir_inst_id);
+                  const auto* import_sem_ir =
+                      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+                  if (auto require_impls_decl =
+                          import_sem_ir->insts()
+                              .TryGetAs<SemIR::RequireImplsDecl>(
+                                  import_ir_inst.inst_id())) {
+                    // TODO: This check always fails, find a way to verify the
+                    // associated entity is the same `require` declaration.
+                    if (require_impls_decl->require_impls_id ==
+                        require_impls_id) {
+                      element_found = true;
+                      break;
+                    }
                   }
                 }
                 element_index++;

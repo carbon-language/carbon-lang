@@ -748,6 +748,7 @@ interface B {
 // CHECK:STDOUT:   %X.assoc_type: type = assoc_entity_type @X [concrete]
 // CHECK:STDOUT:   %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type.806: type = symbolic_binding_type Self, 0, %Self.e52 [symbolic]
+// CHECK:STDOUT:   %assoc1: %X.assoc_type = assoc_entity element1, @X.%X.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.637: %X.type = symbolic_binding .Self [symbolic_self]
@@ -810,12 +811,13 @@ interface B {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @X.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.806)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc1: %X.assoc_type = assoc_entity element1, %X.Self.binding.as_type.impls.Y.type.require.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .X1 = @X1.%assoc0
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = (%X1)
+// CHECK:STDOUT:   witness = (%X1, %X.Self.binding.as_type.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @X.Self.binding.as_type.impls.Y.type.require {
