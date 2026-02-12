@@ -367,7 +367,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%self.param: %Class) -> out %return.param: %i32;
+// CHECK:STDOUT: fn @Class.G(%self.param: ref %Class) -> out %return.param: %i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c.param: %Class) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
@@ -413,7 +413,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithRef() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:

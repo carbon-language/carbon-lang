@@ -170,5 +170,5 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Inner) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Inner) = "no_op";
 // CHECK:STDOUT:

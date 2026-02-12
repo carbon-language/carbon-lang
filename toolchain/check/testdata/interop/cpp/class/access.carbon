@@ -2032,9 +2032,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base.carbon
 // CHECK:STDOUT:
@@ -2229,9 +2229,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc17(%self.param: %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc17(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
 // CHECK:STDOUT:
@@ -2296,7 +2296,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
@@ -2410,9 +2410,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
@@ -2526,9 +2526,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- base_class_public_access_allowed.carbon
 // CHECK:STDOUT:
@@ -2617,7 +2617,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: %Public) {
+// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: ref %Public) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
@@ -2634,7 +2634,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%instance.param: %Public) {
+// CHECK:STDOUT: fn @Call(%instance.param: ref %Public) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Public.ref.loc33: type = name_ref Public, imports.%Public.decl [concrete = constants.%Public]
@@ -2682,7 +2682,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   extend %Public.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: %Public) {
+// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: ref %Public) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %instance.ref: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PrivateInstance.ref: <error> = name_ref PrivateInstance, <error> [concrete = <error>]
@@ -2776,7 +2776,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: %Protected) {
+// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: ref %Protected) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Protected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Protected.PublicInstance.cpp_overload_set.value [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
@@ -2881,7 +2881,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: %PublicProtected) {
+// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: ref %PublicProtected) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %instance.ref.loc24: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %PublicProtected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%PublicProtected.PublicInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]

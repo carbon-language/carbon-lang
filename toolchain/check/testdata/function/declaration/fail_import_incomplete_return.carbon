@@ -294,5 +294,5 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUsed [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %D) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %D) = "no_op";
 // CHECK:STDOUT:

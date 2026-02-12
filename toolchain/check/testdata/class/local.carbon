@@ -200,5 +200,5 @@ class A {
 // CHECK:STDOUT:   return %b to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:

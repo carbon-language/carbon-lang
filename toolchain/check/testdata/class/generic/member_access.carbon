@@ -204,7 +204,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %impl.elem0.loc15_12.2: @Class.GetAddr.%.loc15_12.2 (%.f11) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_12.2 (constants.%impl.elem0.a55)]
 // CHECK:STDOUT:   %specific_impl_fn.loc15_12.2: <specific function> = specific_impl_function %impl.elem0.loc15_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc15_12.2 (constants.%specific_impl_fn.0df)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.GetAddr.%Class (%Class.847)) -> out %return.param: @Class.GetAddr.%ptr.loc13_36.1 (%ptr.e7d) {
+// CHECK:STDOUT:   fn(%self.param: ref @Class.GetAddr.%Class (%Class.847)) -> out %return.param: @Class.GetAddr.%ptr.loc13_36.1 (%ptr.e7d) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @Class.GetAddr.%Class (%Class.847) = name_ref self, %self
 // CHECK:STDOUT:     %x.ref: @Class.GetAddr.%Class.elem (%Class.elem.05d) = name_ref x, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]

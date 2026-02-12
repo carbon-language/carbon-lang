@@ -522,9 +522,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Dest) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonConstConversion.loc12(%s.param: %NonConstConversion.480) {
+// CHECK:STDOUT: fn @NonConstConversion.loc12(%s.param: ref %NonConstConversion.480) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.69a = value_binding_pattern _ [concrete]
@@ -573,7 +573,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: %Dest2) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: ref %Dest2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_expr_category.carbon
 // CHECK:STDOUT:
@@ -640,7 +640,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Dest) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_access.carbon
 // CHECK:STDOUT:
@@ -726,7 +726,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %InaccessibleConstructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %InaccessibleConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConversionTest(%s.param: %InaccessibleConversion) {
 // CHECK:STDOUT: !entry:
@@ -752,7 +752,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc30(%self.param: %Dest) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc30(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deleted.carbon
 // CHECK:STDOUT:
@@ -915,7 +915,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %IntConstructor.f49) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntConstructor.f49) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon
 // CHECK:STDOUT:
@@ -970,7 +970,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %IntConstructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- default_constructor.carbon
 // CHECK:STDOUT:
@@ -1041,7 +1041,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %DefaultConstructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %DefaultConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- construct_multi_argument.carbon
 // CHECK:STDOUT:
@@ -1236,9 +1236,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %ThreeWithDefault) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ThreeWithDefault) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Two) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Two) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon
 // CHECK:STDOUT:
@@ -1513,7 +1513,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %NonAggregate) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_non_aggregate_from_empty_struct.carbon
 // CHECK:STDOUT:
@@ -1557,7 +1557,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %NonAggregate) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon
 // CHECK:STDOUT:
@@ -1640,5 +1640,5 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %NonAggregate) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
 // CHECK:STDOUT:

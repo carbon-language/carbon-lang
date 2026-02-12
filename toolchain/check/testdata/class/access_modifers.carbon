@@ -342,7 +342,7 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Circle) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Circle) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_field_access.carbon
 // CHECK:STDOUT:

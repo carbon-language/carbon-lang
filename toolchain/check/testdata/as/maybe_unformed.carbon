@@ -279,7 +279,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %MaybeUnformed.b49) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %MaybeUnformed.b49) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

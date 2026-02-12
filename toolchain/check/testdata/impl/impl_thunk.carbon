@@ -412,7 +412,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return %.loc10_48.12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.d.c.b36) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.d.c.b36) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_conversion.carbon
 // CHECK:STDOUT:
@@ -488,9 +488,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: ref %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
 // CHECK:STDOUT:   <elided>
@@ -640,9 +640,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: ref %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
 // CHECK:STDOUT:   <elided>
@@ -737,9 +737,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: ref %A, %other.param: %ptr.643) -> out %return.param: %ptr.31e;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: ref %B, %other.param: %ptr.27c) -> out %return.param: %ptr.27c [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.421a66.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.8ec460.1]
 // CHECK:STDOUT:   <elided>
@@ -820,7 +820,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_function.carbon
 // CHECK:STDOUT:
@@ -1230,5 +1230,5 @@ impl () as I({}) {
 // CHECK:STDOUT:   return %.loc10_29.12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.b.a.1b0) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.b.a.1b0) = "no_op";
 // CHECK:STDOUT:

@@ -278,9 +278,9 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %PublicDestructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicDestructor) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PublicDestructor.cpp_destructor(%self.param: %PublicDestructor);
+// CHECK:STDOUT: fn @PublicDestructor.cpp_destructor(%self.param: ref %PublicDestructor);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TrivialDestroy() {
 // CHECK:STDOUT: !entry:
@@ -303,9 +303,9 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: %TrivialDestructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: ref %TrivialDestructor) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TrivialDestructor.cpp_destructor(%self.param: %TrivialDestructor) = "no_op";
+// CHECK:STDOUT: fn @TrivialDestructor.cpp_destructor(%self.param: ref %TrivialDestructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- destroy_protected_base_destructor.carbon
 // CHECK:STDOUT:
@@ -349,7 +349,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Derived) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Derived) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_destroy_private_base_destructor.carbon
 // CHECK:STDOUT:
@@ -393,5 +393,5 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Derived) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Derived) = "no_op";
 // CHECK:STDOUT:

@@ -618,7 +618,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %CompleteClass.d85) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %CompleteClass.d85) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseField() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
@@ -803,7 +803,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %CompleteClass.582) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %CompleteClass.582) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

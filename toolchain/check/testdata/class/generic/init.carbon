@@ -231,7 +231,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStructSpecific(%x.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
@@ -273,7 +273,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: %Class.805) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: ref %Class.805) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromStructGeneric(constants.%T.035) {
 // CHECK:STDOUT:   %T.loc9_26.1 => constants.%T.035

@@ -924,7 +924,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %WithNontype.6bb) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %WithNontype.6bb) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%N.5de) {
 // CHECK:STDOUT:   %N.loc4_19.1 => constants.%N.5de

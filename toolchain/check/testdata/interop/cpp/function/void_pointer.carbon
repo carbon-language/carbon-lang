@@ -288,7 +288,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %Optional.367) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %Optional.367) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- null_param.carbon
 // CHECK:STDOUT:
@@ -394,7 +394,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %Optional.c02) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %Optional.c02) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nullable_return_value.carbon
 // CHECK:STDOUT:
@@ -491,7 +491,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %Optional.4eb) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %Optional.4eb) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non_nullable_pointer.carbon
 // CHECK:STDOUT:
@@ -562,7 +562,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr.e0b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.e0b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non_nullable_const.carbon
 // CHECK:STDOUT:
@@ -633,5 +633,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:

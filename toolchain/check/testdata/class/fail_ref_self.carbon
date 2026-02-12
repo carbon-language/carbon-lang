@@ -119,7 +119,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param: %Class);
+// CHECK:STDOUT: fn @Class.F(%self.param: ref %Class);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> out %return.param: %Class;
 // CHECK:STDOUT:
@@ -146,5 +146,5 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

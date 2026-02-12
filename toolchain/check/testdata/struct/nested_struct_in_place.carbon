@@ -123,5 +123,5 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.a.b.2f9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.a.b.2f9) = "no_op";
 // CHECK:STDOUT:

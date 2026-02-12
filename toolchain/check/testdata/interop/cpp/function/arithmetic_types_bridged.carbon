@@ -609,7 +609,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_bool_param_false.carbon
 // CHECK:STDOUT:
@@ -665,7 +665,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_char_param.carbon
 // CHECK:STDOUT:
@@ -770,7 +770,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i8) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i8) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unsigned_char_param.carbon
 // CHECK:STDOUT:
@@ -858,7 +858,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %u8) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %u8) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_char_param.carbon
 // CHECK:STDOUT:
@@ -931,7 +931,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %char) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %char) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_wchar_t_param.carbon
 // CHECK:STDOUT:
@@ -1152,7 +1152,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_param_max.carbon
 // CHECK:STDOUT:
@@ -1240,7 +1240,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_param_min.carbon
 // CHECK:STDOUT:
@@ -1345,7 +1345,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_int_param.carbon
 // CHECK:STDOUT:
@@ -1435,7 +1435,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_short_param.carbon
 // CHECK:STDOUT:
@@ -1525,7 +1525,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_short_int_param.carbon
 // CHECK:STDOUT:
@@ -1615,7 +1615,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int16_t_param.carbon
 // CHECK:STDOUT:
@@ -1705,7 +1705,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_float16_param.carbon
 // CHECK:STDOUT:
@@ -1794,7 +1794,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f16.a6a) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f16.a6a) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_float_param.carbon
 // CHECK:STDOUT:
@@ -1883,7 +1883,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f32.97e) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f32.97e) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_double_param.carbon
 // CHECK:STDOUT:
@@ -1972,7 +1972,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f64.d77) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_float128_param.carbon
 // CHECK:STDOUT:
@@ -2061,7 +2061,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f128.b8c) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f128.b8c) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_bool_return.carbon
 // CHECK:STDOUT:
@@ -2116,7 +2116,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_return.carbon
 // CHECK:STDOUT:
@@ -2170,7 +2170,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_bit_int_24_param.carbon
 // CHECK:STDOUT:
@@ -2248,5 +2248,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f64.d77) = "no_op";
 // CHECK:STDOUT:

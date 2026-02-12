@@ -367,9 +367,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @initializer_list.initializer_list.loc12(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12_44.1(%self.param: %InitListConstructor) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12_44.1(%self.param: ref %InitListConstructor) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12_44.2(%self.param: %initializer_list) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12_44.2(%self.param: ref %initializer_list) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12_44.3(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12_44.3(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:

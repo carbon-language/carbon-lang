@@ -251,5 +251,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %A) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:

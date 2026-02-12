@@ -114,7 +114,7 @@ fn H() {
 // CHECK:STDOUT:   return %F.call.loc9 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.d07) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type.d07) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
@@ -228,7 +228,7 @@ fn H() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: %tuple.type.99b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref %tuple.type.99b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
@@ -284,5 +284,5 @@ fn H() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %tuple.type.516) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %tuple.type.516) = "no_op";
 // CHECK:STDOUT:

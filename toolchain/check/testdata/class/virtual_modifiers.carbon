@@ -751,7 +751,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Derived) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Derived) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_later_base.carbon
 // CHECK:STDOUT:
@@ -938,7 +938,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Base) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Base) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_abstract.carbon
 // CHECK:STDOUT:
@@ -1262,11 +1262,11 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc21(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc21(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: %B2) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: ref %B2) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %B1) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: ref %B1) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
@@ -1549,9 +1549,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: %Base) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: ref %Base) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_without_base_declaration.carbon
 // CHECK:STDOUT:
@@ -2628,7 +2628,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @T1.F1(%self.param: %T1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @T2.F1(%self.param: %T2);
+// CHECK:STDOUT: override fn @T2.F1(%self.param: ref %T2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_virtual.carbon
 // CHECK:STDOUT:

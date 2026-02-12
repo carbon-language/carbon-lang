@@ -139,7 +139,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @ErrorIfNIsZero.%Int.loc15_20.2 (%Int)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @ErrorIfNIsZero.%Int.loc15_20.2 (%Int)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:

@@ -312,7 +312,7 @@ fn G() {
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.931) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
@@ -545,7 +545,7 @@ fn G() {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.931) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc6_6.1 => constants.%N
@@ -718,7 +718,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.931) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
@@ -910,7 +910,7 @@ fn G() {
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.931) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
@@ -1156,7 +1156,7 @@ fn G() {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.b6d) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.b6d) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc7_6.1 => constants.%N
@@ -1390,7 +1390,7 @@ fn G() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.931) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.5de) {
 // CHECK:STDOUT:   %N.loc6_6.1 => constants.%N.5de

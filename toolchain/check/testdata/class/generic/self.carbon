@@ -224,7 +224,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @Class.F.%Class.loc21_19.2 (%Class)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @Class.F.%Class.loc21_19.2 (%Class)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_13.1 => constants.%T

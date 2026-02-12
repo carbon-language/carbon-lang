@@ -249,9 +249,12 @@ class Formatter {
   // no such arguments.
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
-  // Formats `<name>[: <type>] = `. Skips unnamed instructions (according to
+  // Formats `<name>[: <form>] = `. Skips unnamed instructions (according to
   // `inst_namer_`). Typed instructions must be named.
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
+
+  // Formats `<name>[: <form>]`. The inst must have a name.
+  auto FormatNameAndForm(InstId inst_id, Inst inst) -> void;
 
   // Formats arguments to an instruction. This will typically look like "
   // <arg0>, <arg1>".

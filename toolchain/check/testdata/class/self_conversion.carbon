@@ -228,7 +228,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: %Base) {
+// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc30
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]

@@ -120,7 +120,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @G.%array_type.loc7_22.2 (%array_type.1b3)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @G.%array_type.loc7_22.2 (%array_type.1b3)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T

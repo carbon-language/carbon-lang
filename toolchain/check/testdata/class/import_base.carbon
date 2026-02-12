@@ -309,5 +309,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.F [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Child) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Child) = "no_op";
 // CHECK:STDOUT:

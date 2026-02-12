@@ -637,11 +637,11 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: @F.%array_type.loc8_20.2 (%array_type.742)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref @F.%array_type.loc8_20.2 (%array_type.742)) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: @F.%struct_type.a.loc7_16.2 (%struct_type.a)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a)) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc6(%self.param: @F.%tuple.type (%tuple.type.3c8)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc6(%self.param: ref @F.%tuple.type (%tuple.type.3c8)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%N.loc12_6.2: %i32) {
 // CHECK:STDOUT:   <elided>
@@ -683,7 +683,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: @G.%array_type.loc14_22.2 (%array_type.2ec)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: ref @G.%array_type.loc14_22.2 (%array_type.2ec)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T

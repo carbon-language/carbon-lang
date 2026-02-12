@@ -409,7 +409,7 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_with_default.carbon
 // CHECK:STDOUT:
@@ -793,9 +793,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GlobalNoReturn__carbon_thunk.2(%a.param: %i32, %b.param: %i32, %c.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.B(%self.param: %X, %a.param: %i32);
+// CHECK:STDOUT: fn @X.B(%self.param: ref %X, %a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B__carbon_thunk(%this.param: %X, %a.param: %i32);
+// CHECK:STDOUT: fn @B__carbon_thunk(%this.param: ref %X, %a.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.C(%a.param: %i32);
 // CHECK:STDOUT:
@@ -805,9 +805,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D__carbon_thunk(%_.param: %ptr.1f9, %a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.cpp_destructor(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @X.cpp_destructor(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
 // CHECK:STDOUT:
@@ -887,5 +887,5 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:

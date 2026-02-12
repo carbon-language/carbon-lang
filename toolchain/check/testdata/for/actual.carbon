@@ -525,7 +525,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: @IntRange.as.Iterate.impl.%Int.loc9_54.1 (%Int.fc6021.1)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref @IntRange.as.Iterate.impl.%Int.loc9_54.1 (%Int.fc6021.1)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @IntRange.as.Iterate.impl.NewCursor(@IntRange.%N.loc4_16.2: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N (constants.%N)]
@@ -1043,7 +1043,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Range [from "lib.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %IntRange.a89) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntRange.a89) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Read(constants.%y) {
 // CHECK:STDOUT:   %y.loc4_9.1 => constants.%y

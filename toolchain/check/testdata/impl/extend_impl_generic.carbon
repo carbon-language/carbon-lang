@@ -345,9 +345,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22_20(%self.param: %Param) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22_20(%self.param: ref %Param) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22_3(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22_3(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67d

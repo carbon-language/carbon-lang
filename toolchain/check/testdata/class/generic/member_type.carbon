@@ -345,7 +345,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Inner.74c) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Inner.74c) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T.035) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T.035
@@ -793,7 +793,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   return %C.as.Inner.impl.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C.d3f) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C.d3f) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T

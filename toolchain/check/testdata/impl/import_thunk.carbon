@@ -309,7 +309,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X.loc5_9.1 => constants.%X
@@ -547,7 +547,7 @@ fn G() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: %C.387) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref %C.387) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X

@@ -136,5 +136,5 @@ fn F() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.x.y.z) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.x.y.z) = "no_op";
 // CHECK:STDOUT:

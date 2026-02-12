@@ -607,5 +607,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %unsigned_int) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %unsigned_int) = "no_op";
 // CHECK:STDOUT:

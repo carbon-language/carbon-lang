@@ -82,5 +82,5 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Enum) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Enum) = "no_op";
 // CHECK:STDOUT:
