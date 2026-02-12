@@ -657,6 +657,39 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         // These are set to their final values already.
         break;
       }
+      case CARBON_KIND(SemIR::RequireImplsDecl require_impls_decl): {
+        // Adds witnness_id of the `require` constraint to the table.
+        auto require_impls =
+            context.require_impls().Get(require_impls_decl.require_impls_id);
+        auto self_facet_value =
+            GetConstantFacetValueForType(context, impl.self_id);
+        auto require_impls_specific =
+            GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
+                context, require_impls, impl.interface.specific_id,
+                self_facet_value);
+
+        // Get the witness id of the constraint.
+        auto self_const_id = GetConstantValueInRequireImplsSpecific(
+            context, require_impls_specific, require_impls.self_id);
+        auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(
+            context, require_impls_specific, require_impls.facet_type_inst_id);
+        auto result = LookupImplWitness(
+            context, SemIR::LocId(impl.definition_id), self_const_id,
+            facet_type_const_id, /*lookup_require_decls=*/false);
+
+        if (result.has_value()) {
+          auto witness_block =
+              context.inst_blocks().Get(result.inst_block_id());
+          if (witness_block.size() > 1) {
+            context.TODO(impl.definition_id,
+                         "Handle constraints with multiple witnesses.");
+          }
+          witness_value = witness_block.back();
+        } else {
+          witness_value = SemIR::ErrorInst::InstId;
+        }
+        break;
+      }
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
                      "Unexpected kind of associated entity {0}", decl);

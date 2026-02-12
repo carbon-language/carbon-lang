@@ -593,13 +593,15 @@ static auto LookupImplWitnessInRequireDecls(
     const llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl>&
         required_impls,
     llvm::SmallVector<SemIR::InstId>& result_witness_ids,
-    llvm::SmallVector<SemIR::SpecificInterface>& verified_specific_interfaces)
+    llvm::SmallVector<SemIR::SpecificInterface>& found_specific_interfaces)
     -> void {
   if (required_impls.empty()) {
     return;
   }
 
-  for (const auto& require_impls : context.require_impls().values()) {
+  // TODO: Implement this without iterating through every declaration.
+  for (const auto& [require_impls_id, require_impls] :
+       context.require_impls().enumerate()) {
     auto parent_id =
         context.name_scopes().Get(require_impls.parent_scope_id).inst_id();
     auto parent_const_id = context.constant_values().Get(parent_id);
@@ -643,6 +645,17 @@ static auto LookupImplWitnessInRequireDecls(
       // self-type implements the facet type that the `require` is declared in.
       // Now check if any constraint in the `require` matches any of the
       // `required_impls`.
+      auto parent_interface_decl =
+          context.insts().TryGetAs<SemIR::InterfaceDecl>(parent_id);
+      if (!parent_interface_decl.has_value() ||
+          !parent_interface_decl->interface_id.has_value()) {
+        continue;
+      }
+      const auto& parent_interface =
+          context.interfaces().Get(parent_interface_decl->interface_id);
+      auto parent_assoc_entities =
+          context.inst_blocks().Get(parent_interface.associated_entities_id);
+
       auto require_impls_facet_const_id =
           context.constant_values().Get(require_impls.facet_type_inst_id);
       auto require_facet_required_impls_from_constraint =
@@ -662,19 +675,49 @@ static auto LookupImplWitnessInRequireDecls(
 
       // Add parent witness for every new requirement it satisfies.
       for (const auto& required_impl : required_impls) {
-        auto not_already_found = verified_specific_interfaces.empty() ||
-                                 std::find(verified_specific_interfaces.begin(),
-                                           verified_specific_interfaces.end(),
+        auto not_already_found = found_specific_interfaces.empty() ||
+                                 std::find(found_specific_interfaces.begin(),
+                                           found_specific_interfaces.end(),
                                            required_impl.specific_interface) ==
-                                     verified_specific_interfaces.end();
+                                     found_specific_interfaces.end();
         if (not_already_found) {
           for (const auto& require_facet_required_impl :
                require_facet_required_impls) {
             if (required_impl.specific_interface.interface_id ==
                 require_facet_required_impl.specific_interface.interface_id) {
-              result_witness_ids.push_back(parent_witness_id);
-              verified_specific_interfaces.push_back(
-                  required_impl.specific_interface);
+              // Search the parent interface's associated entities to find the
+              // witness table index assigned to this specific 'require'
+              // declaration. This index is used to retrieve the required
+              // sub-witness at runtime.
+              auto element_index = 0;
+              auto element_found = false;
+              for (auto assoc_entity : parent_assoc_entities) {
+                if (auto require_impls_decl =
+                        context.insts().TryGetAs<SemIR::RequireImplsDecl>(
+                            assoc_entity)) {
+                  if (require_impls_decl->require_impls_id ==
+                      require_impls_id) {
+                    element_found = true;
+                    break;
+                  }
+                }
+                element_index++;
+              }
+              if (element_found) {
+                // Emit an ImplWitnessAccess instruction to extract the
+                // sub-witness for the required interface from the parent
+                // witness table. The resulting instruction has WitnessType,
+                // representing the resolved sub-requirement.
+                result_witness_ids.push_back(
+                    AddInst(context, loc_id,
+                            SemIR::ImplWitnessAccess{
+                                .type_id = GetSingletonType(
+                                    context, SemIR::WitnessType::TypeInstId),
+                                .witness_id = parent_witness_id,
+                                .index = SemIR::ElementIndex(element_index)}));
+                found_specific_interfaces.push_back(
+                    required_impl.specific_interface);
+              }
             }
           }
         }
@@ -726,11 +769,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
-  llvm::SmallVector<SemIR::SpecificInterface> verified_specific_interfaces;
+  llvm::SmallVector<SemIR::SpecificInterface> found_specific_interfaces;
   if (lookup_require_decls) {
     LookupImplWitnessInRequireDecls(context, loc_id, query_self_const_id,
                                     req_impls, result_witness_ids,
-                                    verified_specific_interfaces);
+                                    found_specific_interfaces);
   }
 
   auto& stack = context.impl_lookup_stack();
@@ -746,11 +789,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (const auto& req_impl : req_impls) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    if (verified_specific_interfaces.empty() ||
-        std::find(verified_specific_interfaces.begin(),
-                  verified_specific_interfaces.end(),
-                  req_impl.specific_interface) ==
-            verified_specific_interfaces.end()) {
+    if (found_specific_interfaces.empty() ||
+        std::find(
+            found_specific_interfaces.begin(), found_specific_interfaces.end(),
+            req_impl.specific_interface) == found_specific_interfaces.end()) {
       auto result_witness_id =
           GetOrAddLookupImplWitness(context, loc_id, req_impl.self_facet_value,
                                     req_impl.specific_interface);

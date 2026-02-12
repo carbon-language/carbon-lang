@@ -8,6 +8,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
@@ -16,6 +17,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/type_iterator.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -51,6 +53,18 @@ auto HandleParseNode(Context& context, Parse::RequireIntroducerId node_id)
   return true;
 }
 
+static auto GetSelfInstId(Context& context, SemIR::LocId loc_id)
+    -> SemIR::InstId {
+  auto scope_id = context.scope_stack().PeekNameScopeId();
+  auto lookup_result =
+      LookupNameInExactScope(context, loc_id, SemIR::NameId::SelfType, scope_id,
+                             context.name_scopes().Get(scope_id),
+                             /*is_being_declared=*/false);
+  CARBON_CHECK(lookup_result.is_found());
+
+  return lookup_result.target_inst_id();
+}
+
 auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
     -> bool {
   auto scope_inst_id =
@@ -60,14 +74,7 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
     return true;
   }
 
-  auto scope_id = context.scope_stack().PeekNameScopeId();
-  auto lookup_result =
-      LookupNameInExactScope(context, node_id, SemIR::NameId::SelfType,
-                             scope_id, context.name_scopes().Get(scope_id),
-                             /*is_being_declared=*/false);
-  CARBON_CHECK(lookup_result.is_found());
-
-  auto self_inst_id = lookup_result.target_inst_id();
+  auto self_inst_id = GetSelfInstId(context, node_id);
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
   if (self_type_id == SemIR::ErrorInst::TypeId) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
@@ -283,17 +290,31 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
                               .require_impls_id = SemIR::RequireImplsId::None,
                               .decl_block_id = decl_block_id};
   auto decl_id = AddPlaceholderInst(context, node_id, require_impls_decl);
+  auto parent_scope_id = context.scope_stack().PeekNameScopeId();
   auto require_impls_id = context.require_impls().Add(
       {.self_id = self_inst_id,
        .facet_type_inst_id =
            context.types().GetAsTypeInstId(constraint_inst_id),
        .extend_self = extend,
        .decl_id = decl_id,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .parent_scope_id = parent_scope_id,
        .generic_id = BuildGenericDecl(context, decl_id)});
 
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
+
+  // Add constraint's impl witness id to the self's witness table if self is an
+  // interface.
+  auto self_facet =
+      context.insts().TryGetAs<SemIR::FacetAccessType>(self_inst_id);
+  if (extend ||
+      (self_facet.has_value() &&
+       self_facet->facet_value_inst_id == GetSelfInstId(context, node_id))) {
+    if (auto parent_interface = context.insts().TryGetAs<SemIR::InterfaceDecl>(
+            context.name_scopes().Get(parent_scope_id).inst_id())) {
+      BuildAssociatedEntity(context, parent_interface->interface_id, decl_id);
+    }
+  }
 
   // We look for a complete type after BuildGenericDecl, so that the resulting
   // RequireCompleteType instruction is part of the enclosing interface or named
