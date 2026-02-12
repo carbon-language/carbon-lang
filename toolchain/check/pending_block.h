@@ -77,6 +77,9 @@ class PendingBlock {
   // block, but that would be costlier to enforce.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
       -> SemIR::InstId {
+    // TODO: consider adding an end-of-phase check that the SemIR::File is in
+    // SSA form, and dropping this check and the ordering preconditions here and
+    // on Initialize.
     CARBON_CHECK(value_id.index <= target_id.index ||
                      (!insts_.empty() && insts_.back() == value_id),
                  "Splice would break topological sorting of insts");
