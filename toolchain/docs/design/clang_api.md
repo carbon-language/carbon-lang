@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [LLDB](#lldb)
     -   [Carbon previously](#carbon-previously)
     -   [PR5543 More closely mimic the Clang compilation](#pr5543-more-closely-mimic-the-clang-compilation)
-    -   [New Carbon approach](#new-carbon-approach)
+    -   [Carbon approach](#carbon-approach)
 
 <!-- tocstop -->
 
