@@ -73,14 +73,31 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       parent_path = parent_path.parent_path();
     }
     if (parent_path.filename() == "bin") {
+      // Try to walk up the path using `.parent_path()` if we can to avoid extra
+      // components to resolve. However, if the path is relative to the current
+      // working directory and we run out of parent components, walk up by
+      // appending `../` components instead.
+      auto walk_up = [](std::filesystem::path p) {
+        // Remove `./` components.
+        while (p.filename() == ".") {
+          p = p.parent_path();
+        }
+        if (!p.is_absolute() && (p.empty() || p.filename() == "..")) {
+          p = p / "..";
+        } else {
+          p = p.parent_path();
+        }
+        return p;
+      };
+
       // Note that we walk up using `.parent_path` rather than by appending
       // `../` components. While largely equivalent, this helps keep paths
       // shorter and avoids redundant work. We also don't expect to need to
       // respect _internally_ strange symlinking structures that would need to
       // use appended `../` components.
       auto lib_path = info.bin_path.filename() == "carbon"
-                          ? parent_path.parent_path() / "lib" / "carbon"
-                          : parent_path.parent_path().parent_path();
+                          ? walk_up(std::move(parent_path)) / "lib" / "carbon"
+                          : walk_up(walk_up(std::move(parent_path)));
       auto busybox_path = lib_path / "carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {

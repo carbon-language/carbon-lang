@@ -207,6 +207,64 @@ TEST_F(BusyboxInfoTest, LayerSymlinksInstallTree) {
   EXPECT_THAT(info->mode, Eq("clang++"));
 }
 
+TEST_F(BusyboxInfoTest, RunWithinInstallTree) {
+  dir_.Symlink("actual-busybox", running_binary_).Check();
+
+  // Create a facsimile of the install prefix with even the busybox as a
+  // symlink. Also include potential relative sibling symlinks like `clang++` to
+  // `clang`.
+  auto prefix = MakeInstallTree("test_prefix", (path_ / "actual-busybox"));
+
+  std::error_code ec;
+  auto orig_cwd = std::filesystem::current_path(ec);
+  CARBON_CHECK(!ec, "Error getting working directory: {0}", ec.message());
+  auto restore_cwd = llvm::scope_exit([&] {
+    std::filesystem::current_path(orig_cwd, ec);
+    CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  });
+
+  // First test using a working-directory relative `./bin/carbon` path.
+  std::filesystem::current_path(prefix, ec);
+  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+
+  auto info = GetBusyboxInfo("./bin/carbon");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("./lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq(std::nullopt));
+
+  // Also test using a working-directory relative `./bin/clang` path.
+  std::filesystem::current_path(prefix / "lib/carbon/llvm", ec);
+  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+
+  info = GetBusyboxInfo("./bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("../carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Include redundant `./` components that should be stripped before we give up
+  // and use `../` components.
+  info = GetBusyboxInfo("./././bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("../carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Also test using a working-directory relative `./llvm/bin/clang` path.
+  std::filesystem::current_path(prefix / "lib/carbon", ec);
+  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+
+  info = GetBusyboxInfo("./llvm/bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("./carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+
+  // Include redundant `./` components at  multiple levels, only one of which we
+  // end up needing to strip off.
+  info = GetBusyboxInfo("././llvm/././bin/clang");
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq("././carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("clang"));
+}
+
 TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
   // Some install of Carbon under `opt`.
   std::filesystem::path opt_prefix = MakeInstallTree("opt");
