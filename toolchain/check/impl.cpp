@@ -660,6 +660,14 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
       }
       case CARBON_KIND(SemIR::RequireImplsDecl require_impls_decl): {
         // Adds witnness_id of the `require` constraint to the table.
+        if (context.types().IsFacetType(
+                context.insts().Get(impl.self_id).type_id())) {
+          // In some blanket impls cases, we end-up creating a cycle of
+          // LookupImplWitness. Ignore blanket impls to prevent those cases. We
+          // might need to lookup and add these witness_ids in a later stage.
+          witness_value = SemIR::ErrorInst::InstId;
+          break;
+        }
         if (!last_child_witnesses.empty()) {
           witness_value = last_child_witnesses.pop_back_val();
           break;

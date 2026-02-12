@@ -748,13 +748,13 @@ interface B {
 // CHECK:STDOUT:   %X.assoc_type: type = assoc_entity_type @X [concrete]
 // CHECK:STDOUT:   %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type.806: type = symbolic_binding_type Self, 0, %Self.e52 [symbolic]
-// CHECK:STDOUT:   %assoc1: %X.assoc_type = assoc_entity element1, @X.%X.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %facet_value: %type = facet_value %X.type, () [concrete]
+// CHECK:STDOUT:   %assoc1: %X.assoc_type = assoc_entity element1, @X.%X.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.637: %X.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.637 [symbolic_self]
 // CHECK:STDOUT:   %X.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.637, @X [symbolic_self]
-// CHECK:STDOUT:   %facet_value: %type = facet_value %X.type, () [concrete]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %X.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -886,14 +886,14 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%.Self.637) {
-// CHECK:STDOUT:   %Self => constants.%.Self.637
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%.Self.binding.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%facet_value) {
 // CHECK:STDOUT:   %Self => constants.%facet_value
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%X.type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%.Self.637) {
+// CHECK:STDOUT:   %Self => constants.%.Self.637
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%.Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%.Self.637) {}
