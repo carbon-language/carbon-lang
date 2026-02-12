@@ -204,17 +204,11 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
-struct RequiredImplsFromConstraint {
-  llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls;
-  bool other_requirements;
-};
-
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value), and any special requirements.
-static auto GetRequiredImplsFromConstraint(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::ConstantId query_facet_type_const_id)
+auto GetRequiredImplsFromConstraint(Context& context, SemIR::LocId loc_id,
+                                    SemIR::ConstantId query_self_const_id,
+                                    SemIR::ConstantId query_facet_type_const_id)
     -> std::optional<RequiredImplsFromConstraint> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);

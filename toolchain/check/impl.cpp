@@ -608,6 +608,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
+  llvm::SmallVector<SemIR::InstId> last_child_witnesses;
 
   for (auto [assoc_entity, witness_value] :
        llvm::zip_equal(assoc_entities, witness_block)) {
@@ -659,6 +660,11 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
       }
       case CARBON_KIND(SemIR::RequireImplsDecl require_impls_decl): {
         // Adds witnness_id of the `require` constraint to the table.
+        if (!last_child_witnesses.empty()) {
+          witness_value = last_child_witnesses.pop_back_val();
+          break;
+        }
+
         auto require_impls =
             context.require_impls().Get(require_impls_decl.require_impls_id);
         auto self_facet_value =
@@ -680,11 +686,10 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         if (result.has_value()) {
           auto witness_block =
               context.inst_blocks().Get(result.inst_block_id());
-          if (witness_block.size() > 1) {
-            context.TODO(impl.definition_id,
-                         "Handle constraints with multiple witnesses.");
-          }
-          witness_value = witness_block.back();
+          auto witness_array = witness_block.take_front(witness_block.size());
+          last_child_witnesses.append(witness_array.rbegin(),
+                                      witness_array.rend());
+          witness_value = last_child_witnesses.pop_back_val();
         } else {
           witness_value = SemIR::ErrorInst::InstId;
         }

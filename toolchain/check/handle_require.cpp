@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
@@ -301,14 +302,29 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
 
-  // Add constraint's impl witness id to the self's witness table if self is
-  // an interface.
+  // Add constraint's witnesses to the self's witness table if self is an
+  // interface.
   SemIR::TypeIterator type_iter(&context.sem_ir());
   type_iter.Add(context.constant_values().GetConstantTypeInstId(self_inst_id));
   if (extend || FindSelf(context, type_iter)) {
-    if (auto parent_interface = context.insts().TryGetAs<SemIR::InterfaceDecl>(
-            context.name_scopes().Get(parent_scope_id).inst_id())) {
-      BuildAssociatedEntity(context, parent_interface->interface_id, decl_id);
+    if (auto parent_interface_decl =
+            context.insts().TryGetAs<SemIR::InterfaceDecl>(
+                context.name_scopes().Get(parent_scope_id).inst_id())) {
+      auto required_impls_from_constraint = GetRequiredImplsFromConstraint(
+          context, node_id,
+          context.constant_values().Get(
+              context.name_scopes().Get(parent_scope_id).inst_id()),
+          context.constant_values().Get(constraint_inst_id));
+      if (required_impls_from_constraint.has_value()) {
+        auto [required_impls, other_requirements] =
+            *required_impls_from_constraint;
+        if (!other_requirements) {
+          for (auto _ : required_impls) {
+            BuildAssociatedEntity(context, parent_interface_decl->interface_id,
+                                  decl_id);
+          }
+        }
+      }
     }
   }
 
