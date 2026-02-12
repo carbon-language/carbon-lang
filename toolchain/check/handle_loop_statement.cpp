@@ -161,7 +161,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // TODO: Produce a custom diagnostic if the range operand can't be used as a
   // range.
   // TODO: We need to allocate the `VarStorage` before building the operator.
-  // The current order risks violates the preconditions on `Initialize` and
+  // The current order risks violating the preconditions on `Initialize` and
   // risks violating the topological ordering of insts.
   auto cursor_id =
       BuildUnaryOperator(context, node_id,
