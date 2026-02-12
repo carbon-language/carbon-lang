@@ -16,7 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Swift](#swift)
     -   [LLDB](#lldb)
     -   [Carbon previously](#carbon-previously)
-    -   [PR5543 More closely mimic the Clang compilation](#pr5543-more-closely-mimic-the-clang-compilation)
     -   [Carbon approach](#carbon-approach)
 
 <!-- tocstop -->
@@ -181,23 +180,6 @@ void t1::f1() { }
         code/risk of divergence. This ended up landing in
         [PR6569](https://github.com/carbon-language/carbon-lang/pull/6569)
 
-### [PR5543](https://github.com/carbon-language/carbon-lang/pull/5543) More closely mimic the Clang compilation
-
-This looks closer/identical to Clang's API usage. But the problem is that
-Clang’s `FrontendAction` API (down through… `CreateFrontendBaseAction`,
-`EmitObjAction`, `ASTFrontendAction`, `ParseAST`) is a closed system (does all
-the work from the start to the end) whereas Carbon wants to incrementally use
-Clang while parsing more Carbon, calling back into C++, etc, before finishing
-the C++ parsing. To address that atomicity, PR5543 uses a background thread
-(without actual concurrency) \- doing part of the `FrontendAction` work,
-pausing, doing some Carbon work, then finishing up in lowering:
-
--   `check` executes the `clang::FrontendAction` on a background thread
-    -   This runs up until `handleTranslationUnit` and blocks
--   `check` does things to the AST, trigger template instantiation, etc
--   `lower` triggers the background thread to continue to IR generation from the
-    AST
-
 ### Carbon approach
 
 Since PR5543, several changes (especially
@@ -217,5 +199,6 @@ avoid friction trying to otherwise wedge Clang into Carbon's phase based
 approach.
 
 ## Alternatives considered
+-   [PR5543 More closely mimic the Clang compilation](#pr5543-more-closely-mimic-the-clang-compilation)
 -   [Status Quo with Improvements](/proposals/p6641.md#status-quo-with-improvements)
 -   [Upstream Clang Changes to use Phase Based Lowering](/proposals/p6641.md#upstream-clang-changes-to-use-phase-based-lowering)
