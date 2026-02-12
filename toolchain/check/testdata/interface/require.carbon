@@ -299,6 +299,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.40d: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -316,6 +318,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y.type.require.decl [concrete = constants.%assoc0.40d]
 // CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.ref, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [concrete = constants.%Y.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -323,7 +326,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .YY = <poisoned>
 // CHECK:STDOUT:   extend %.loc9
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
@@ -350,6 +353,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
 // CHECK:STDOUT:   %Y.type.432: type = facet_type <@Y, @Y(%Self.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.84d: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -371,6 +376,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %.loc9: type = converted %Self.ref, %Self.as_type.loc9_30 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.type.loc9_30.1: type = facet_type <@Y, @Y(constants.%Self.binding.as_type)> [symbolic = %Y.type.loc9_30.2 (constants.%Y.type.432)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y.type.require.decl [concrete = constants.%assoc0.84d]
 // CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.type.loc9_30.1, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [symbolic = constants.%Y.type.432]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -378,7 +384,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .YY = <poisoned>
 // CHECK:STDOUT:   extend %.loc9
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
@@ -405,6 +411,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.a7f: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -422,11 +430,12 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y.type.require.decl [concrete = constants.%assoc0.a7f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
@@ -451,6 +460,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.a7f: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -470,11 +481,12 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %.loc9: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y.type.require.decl [concrete = constants.%assoc0.a7f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y.type.require {
@@ -502,6 +514,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
 // CHECK:STDOUT:   %C.42e: type = class_type @C, @C(%Self.binding.as_type) [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Z.C.impls.Y.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -523,12 +537,13 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %C.loc9_17.1: type = class_type @C, @C(constants.%Self.binding.as_type) [symbolic = %C.loc9_17.2 (constants.%C.42e)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.C.impls.Y.type.require.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.C.impls.Y.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.C.impls.Y.type.require {
@@ -553,7 +568,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
-// CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, @Y.%Y1 [concrete]
+// CHECK:STDOUT:   %assoc0.8e0: %Y.assoc_type = assoc_entity element0, @Y.%Y1 [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
@@ -564,6 +579,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.195: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y_where.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -584,7 +601,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %.Self.ref: %Y.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc7_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %Y1.ref: %Y.assoc_type = name_ref Y1, @Y1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %Y1.ref: %Y.assoc_type = name_ref Y1, @Y1.%assoc0 [concrete = constants.%assoc0.8e0]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc7_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_32.2: type = converted %.loc7_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -593,11 +610,12 @@ interface Z(T:! type) {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc7_32.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y_where.type.require.decl [concrete = constants.%assoc0.195]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y_where.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y_where.type.require {
@@ -703,7 +721,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y [concrete]
-// CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, @Y.%Y1 [concrete]
+// CHECK:STDOUT:   %assoc0.8e0: %Y.assoc_type = assoc_entity element0, @Y.%Y1 [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
@@ -712,6 +730,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @Y [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
+// CHECK:STDOUT:   %assoc0.89b: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Y_where.type.require.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -732,7 +752,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %.Self.ref: %Y.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %Y1.ref: %Y.assoc_type = name_ref Y1, @Y1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %Y1.ref: %Y.assoc_type = name_ref Y1, @Y1.%assoc0 [concrete = constants.%assoc0.8e0]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Y.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:     %Self.as_type.loc10_31: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -742,11 +762,12 @@ interface Z(T:! type) {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_31
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Self.binding.as_type.impls.Y_where.type.require.decl [concrete = constants.%assoc0.89b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%Z.Self.binding.as_type.impls.Y_where.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.Self.binding.as_type.impls.Y_where.type.require {
@@ -776,6 +797,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.822: %Z.type.0ed = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.b37: type = symbolic_binding_type Self, 1, %Self.822 [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%T) [symbolic]
+// CHECK:STDOUT:   %assoc0.801: %Z.assoc_type = assoc_entity element0, @Z.%Z.Self.binding.as_type.impls.Z.type.require.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -796,6 +819,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc8_13.1)> [symbolic = %Z.type (constants.%Z.type.0ed)]
 // CHECK:STDOUT:   %Self.loc8_23.2: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.822)]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%T.loc8_13.1) [symbolic = %Z.assoc_type (constants.%Z.assoc_type)]
+// CHECK:STDOUT:   %assoc0.loc11_21.2: @Z.%Z.assoc_type (%Z.assoc_type) = assoc_entity element0, %Z.Self.binding.as_type.impls.Z.type.require.decl [symbolic = %assoc0.loc11_21.2 (constants.%assoc0.801)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc8_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.822)]
@@ -807,12 +832,13 @@ interface Z(T:! type) {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Z.%T.loc8_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Z.type.loc11_20: type = facet_type <@Z, @Z(constants.%T)> [symbolic = %Z.type.loc11_11 (constants.%Z.type.0ed)]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %assoc0.loc11_21.1: @Z.%Z.assoc_type (%Z.assoc_type) = assoc_entity element0, %Z.Self.binding.as_type.impls.Z.type.require.decl [symbolic = %assoc0.loc11_21.2 (constants.%assoc0.801)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_23.1
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:     witness = (%Z.Self.binding.as_type.impls.Z.type.require.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:     @Z.Self.binding.as_type.impls.Z.type.require {

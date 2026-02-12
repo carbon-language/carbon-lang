@@ -113,40 +113,38 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
   return true;
 }
 
+static auto FindSelf(Context& context, SemIR::TypeIterator& type_iter) -> bool {
+  while (true) {
+    auto step = type_iter.Next();
+    if (step.Is<SemIR::TypeIterator::Step::Done>()) {
+      break;
+    }
+    CARBON_KIND_SWITCH(step.any) {
+      case CARBON_KIND(SemIR::TypeIterator::Step::Error _): {
+        // Don't generate more diagnostics.
+        return true;
+      }
+      case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
+        if (context.entity_names().Get(bind.entity_name_id).name_id ==
+            SemIR::NameId::SelfType) {
+          return true;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return false;
+}
+
 static auto TypeStructureReferencesSelf(
     Context& context, SemIR::LocId loc_id, SemIR::TypeInstId inst_id,
     const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
-  auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
-    while (true) {
-      auto step = type_iter.Next();
-      if (step.Is<SemIR::TypeIterator::Step::Done>()) {
-        break;
-      }
-      CARBON_KIND_SWITCH(step.any) {
-        case CARBON_KIND(SemIR::TypeIterator::Step::Error _): {
-          // Don't generate more diagnostics.
-          return true;
-        }
-        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
-          if (context.entity_names().Get(bind.entity_name_id).name_id ==
-              SemIR::NameId::SelfType) {
-            return true;
-          }
-          break;
-        }
-        default:
-          break;
-      }
-    }
-    return false;
-  };
-
-  {
-    SemIR::TypeIterator type_iter(&context.sem_ir());
-    type_iter.Add(context.constant_values().GetConstantTypeInstId(inst_id));
-    if (find_self(type_iter)) {
-      return true;
-    }
+  SemIR::TypeIterator type_iter(&context.sem_ir());
+  type_iter.Add(context.constant_values().GetConstantTypeInstId(inst_id));
+  if (FindSelf(context, type_iter)) {
+    return true;
   }
 
   if (identified_facet_type.required_impls().empty()) {
@@ -163,7 +161,7 @@ static auto TypeStructureReferencesSelf(
   for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
-    if (!find_self(type_iter)) {
+    if (!FindSelf(context, type_iter)) {
       // TODO: The IdentifiedFacetType loses the location (since it's
       // canonical), but it would be nice to somehow point this diagnostic at
       // the particular interface in the facet type that is missing `Self`.
@@ -303,13 +301,11 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
 
-  // Add constraint's impl witness id to the self's witness table if self is an
-  // interface.
-  auto self_facet =
-      context.insts().TryGetAs<SemIR::FacetAccessType>(self_inst_id);
-  if (extend ||
-      (self_facet.has_value() &&
-       self_facet->facet_value_inst_id == GetSelfInstId(context, node_id))) {
+  // Add constraint's impl witness id to the self's witness table if self is
+  // an interface.
+  SemIR::TypeIterator type_iter(&context.sem_ir());
+  type_iter.Add(context.constant_values().GetConstantTypeInstId(self_inst_id));
+  if (extend || FindSelf(context, type_iter)) {
     if (auto parent_interface = context.insts().TryGetAs<SemIR::InterfaceDecl>(
             context.name_scopes().Get(parent_scope_id).inst_id())) {
       BuildAssociatedEntity(context, parent_interface->interface_id, decl_id);

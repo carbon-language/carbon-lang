@@ -636,9 +636,9 @@ static auto LookupImplWitnessInRequireDecls(
         .query_self_const_id = query_self_const_id,
         .query_facet_type_const_id = parent_const_id,
     });
-    auto parent_witness_id =
-        GetOrAddLookupImplWitness(context, loc_id, query_self_const_id,
-                                  parent_required_impls[0].specific_interface);
+    auto parent_witness_id = GetOrAddLookupImplWitness(
+        context, loc_id, parent_required_impls[0].self_facet_value,
+        parent_required_impls[0].specific_interface);
     stack.pop_back();
 
     if (parent_witness_id.has_value()) {
@@ -770,7 +770,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
   llvm::SmallVector<SemIR::SpecificInterface> found_specific_interfaces;
-  if (lookup_require_decls) {
+  if (lookup_require_decls && query_self_const_id.is_symbolic()) {
     LookupImplWitnessInRequireDecls(context, loc_id, query_self_const_id,
                                     req_impls, result_witness_ids,
                                     found_specific_interfaces);
