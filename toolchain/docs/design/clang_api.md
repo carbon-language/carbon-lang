@@ -198,7 +198,7 @@ pausing, doing some Carbon work, then finishing up in lowering:
 -   `lower` triggers the background thread to continue to IR generation from the
     AST
 
-### New Carbon approach
+### Carbon approach
 
 Since PR5543, several changes (especially
 [PR6237](https://github.com/carbon-language/carbon-lang/pull/6237)) have been
