@@ -20,16 +20,12 @@ Simple<123> MakeSimple123() { return Simple<123>(); }
 template<int M, int N> struct TwoNonType {};
 template<typename T, T N> struct DependentNonType {};
 
-// --- fail_todo_valid_int_param.carbon
+// --- valid_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_todo_valid_int_param.carbon:[[@LINE+4]]:19: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var s: Cpp.Simple(123) = Cpp.MakeSimple123();
-// CHECK:STDERR:                   ^~~
-// CHECK:STDERR:
 var s: Cpp.Simple(123) = Cpp.MakeSimple123();
 
 // --- fail_int_param_mismatch.carbon
@@ -38,23 +34,22 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:19: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `Cpp.Simple` to `Cpp.Simple` [ConversionFailure]
 // CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
-// CHECK:STDERR:                   ^~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:1: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 
-// --- fail_todo_valid.carbon
+// --- valid.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_valid.carbon:[[@LINE+4]]:23: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, 2);
-// CHECK:STDERR:                       ^
-// CHECK:STDERR:
 var x: Cpp.TwoNonType(1, 2);
 //@dump-sem-ir-end
 
@@ -67,13 +62,13 @@ import Cpp library "templates.h";
 var n: i32;
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:34: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:34: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR: var x: Cpp.DependentNonType(i32, 1);
 // CHECK:STDERR:                                  ^
 // CHECK:STDERR:
 var x: Cpp.DependentNonType(i32, 1);
 
-// CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:35: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:35: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR: var y: Cpp.DependentNonType(i32*, &n);
 // CHECK:STDERR:                                   ^~
 // CHECK:STDERR:
@@ -86,9 +81,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:23: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
-// CHECK:STDERR:                       ^
+// CHECK:STDERR:                          ^~~~~
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, Cpp.A);
 
@@ -100,15 +95,17 @@ import Cpp library "templates.h";
 
 var n: i32;
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:23: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
-// CHECK:STDERR:                       ^
+// CHECK:STDERR:                          ^~
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, &n);
 
-// CHECK:STDOUT: --- fail_todo_valid.carbon
+// CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %TwoNonType [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,11 +113,11 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.var: ref %TwoNonType = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_dependent.carbon

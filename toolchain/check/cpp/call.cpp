@@ -115,9 +115,26 @@ static auto ConvertArgToTemplateArg(Context& context,
   }
 
   if (isa<clang::NonTypeTemplateParmDecl>(param_decl)) {
-    // TODO: Check the argument has a concrete constant value, and convert it to
-    // a Clang constant value.
-    context.TODO(arg_id, "argument for non-type template parameter");
+    auto non_type = cast<clang::NonTypeTemplateParmDecl>(param_decl);
+    auto param_type = non_type->getType();
+
+    // Handle integer parameters.
+    if (param_type.getTypePtr()->isIntegerType()) {
+      if (auto int_value = context.insts().TryGetAs<SemIR::IntValue>(arg_id)) {
+        const llvm::APInt ap_int = context.ints().Get(int_value->int_id);
+        auto aps_int = llvm::APSInt(ap_int).extOrTrunc(
+            context.ast_context().getIntWidth(param_type));
+        auto template_arg =
+            clang::TemplateArgument(context.ast_context(), aps_int, param_type);
+        // TODO: provide a better location.
+        auto loc = clang::TemplateArgumentLocInfo();
+        return clang::TemplateArgumentLoc(template_arg, loc);
+      }
+    }
+
+    // TODO: Support other types.
+    context.TODO(arg_id,
+                 "unsupported argument type for non-type template parameter");
     return std::nullopt;
   }
 
