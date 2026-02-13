@@ -106,7 +106,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass.152, %i32 [symbolic]
-// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F: %CompleteClass.F.type = struct_value () [symbolic]
@@ -130,7 +130,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %CompleteClass.d85: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
-// CHECK:STDOUT:   %.2af: form = init_form %CompleteClass.d85, call_param0 [concrete]
+// CHECK:STDOUT:   %.edb: Core.Form = init_form %CompleteClass.d85, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb5: type = pattern_type %CompleteClass.d85 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -177,7 +177,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.d85]
-// CHECK:STDOUT:     %.loc11: form = init_form %CompleteClass, call_param0 [concrete = constants.%.2af]
+// CHECK:STDOUT:     %.loc11: Core.Form = init_form %CompleteClass, call_param0 [concrete = constants.%.edb]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.d85 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.d85 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -208,7 +208,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc8_13: form = init_form %i32, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:       %.loc8_13: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
 // CHECK:STDOUT:       %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -292,7 +292,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.F.5ed: %CompleteClass.F.type.6b4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.2b9: type = unbound_element_type %CompleteClass.152, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.667: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
-// CHECK:STDOUT:   %.e15: form = init_form %CompleteClass.667, call_param0 [concrete]
+// CHECK:STDOUT:   %.991: Core.Form = init_form %CompleteClass.667, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.b91: type = pattern_type %CompleteClass.667 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -361,7 +361,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.667]
-// CHECK:STDOUT:     %.loc8: form = init_form %CompleteClass, call_param0 [concrete = constants.%.e15]
+// CHECK:STDOUT:     %.loc8: Core.Form = init_form %CompleteClass, call_param0 [concrete = constants.%.991]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.667 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.667 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -467,7 +467,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %UseMethod.type: type = fn_type @UseMethod [concrete]
 // CHECK:STDOUT:   %UseMethod: %UseMethod.type = struct_value () [concrete]
@@ -547,7 +547,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc5: form = init_form %i32.loc5, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:     %.loc5: Core.Form = init_form %i32.loc5, call_param0 [concrete = constants.%.437]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -557,7 +557,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc10: form = init_form %i32.loc10, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:     %.loc10: Core.Form = init_form %i32.loc10, call_param0 [concrete = constants.%.437]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
