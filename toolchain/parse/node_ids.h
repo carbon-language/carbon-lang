@@ -113,6 +113,7 @@ using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 
+namespace Internal {
 template <typename T>
 concept IsNodeKind = std::same_as<std::remove_cvref_t<T>, NodeKind> ||
                      std::same_as<std::remove_cvref_t<T>, NodeKind::Definition>;
@@ -121,10 +122,11 @@ template <typename T>
 concept IsTypedNode = requires {
   { T::Kind } -> IsNodeKind;
 };
+}  // namespace Internal
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>
-  requires(sizeof...(T) >= 2 && (IsTypedNode<T> && ...))
+  requires(sizeof...(T) >= 2 && (Internal::IsTypedNode<T> && ...))
 struct NodeIdOneOf : public NodeId {
  private:
   // True if `OtherT` is one of `T`.
