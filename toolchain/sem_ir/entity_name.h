@@ -57,12 +57,11 @@ struct EntityName : public Printable<EntityName> {
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
 
-  // If *this is the name of a `:?` form binding, form_id is its declared form.
-  // Otherwise, form_id is None.
+  // The declared form of the binding. This is only guaranteed to be set for
+  // `:?` bindings.
   //
-  // TODO: This field is currently only populated for a form binding. Consider
-  // making it a union with the previous two fields, and/or factoring it out
-  // along with them.
+  // TODO: Unify this with the previous two fields, which also represent form
+  // information.
   ConstantId form_id = ConstantId::None;
 };
 

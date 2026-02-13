@@ -210,6 +210,19 @@ struct AnyStructType {
   AnyRawId arg1;
 };
 
+// An inst that can act as a `var` pattern -- either `VarPattern` itself or
+// a `FormParamPattern`. A `FormParamPattern` should only be converted to
+// this type if it's known to have an initializing form.
+struct AnyVarPattern {
+  using CategoryInfo = CategoryOf<FormParamPattern, VarPattern>;
+
+  InstKind kind;
+  TypeId type_id;
+  InstId subpattern_id;
+
+  AnyRawId arg1;
+};
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_CATEGORIES_H_
