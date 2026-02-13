@@ -103,7 +103,7 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeAcquireValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
     if (!bind_index.has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
@@ -2337,7 +2337,7 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
@@ -2368,7 +2368,7 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
       inst.As<SemIR::SymbolicBindingType>().entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
         value.has_value()) {
       auto value_inst_id = eval_context.constant_values().GetInstId(value);
 
