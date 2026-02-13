@@ -22,7 +22,7 @@ struct C {
   static void F(E);
 };
 
-// --- pass_as_arg.carbon
+// --- fail_todo_pass_as_arg.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -35,38 +35,38 @@ fn Pass() {
   Cpp.C.F(Cpp.C.c);
   Cpp.C.F(Cpp.C.E.a);
   Cpp.C.F(Cpp.C.E.b);
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE+28]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+28]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.c);
   // CHECK:STDERR:           ^~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-5]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-5]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.b);
   // CHECK:STDERR:           ^~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-10]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-10]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.a);
   // CHECK:STDERR:           ^~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-15]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-15]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.c);
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-20]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-20]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.b);
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-25]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-25]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.a);
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: pass_as_arg.carbon:[[@LINE-30]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE-30]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.a);
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.c);
 }
 
-// --- convert.carbon
+// --- fail_todo_convert.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -83,7 +83,7 @@ fn ConvertEnumToI16(e: Cpp.C.E) {
 }
 
 fn ConvertI16ToEnum(n: i16) {
-  // CHECK:STDERR: convert.carbon:[[@LINE+4]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+4]]:11: error: cannot access member of interface `Core.Destroy` in type `Cpp.E` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   Cpp.C.F(n as Cpp.C.E);
   // CHECK:STDERR:           ^~~~~~~~~~~~
   // CHECK:STDERR:

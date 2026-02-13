@@ -14,7 +14,7 @@
 
 enum Enum : short { a, b, c };
 
-// --- copy_enum.carbon
+// --- fail_todo_copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -22,7 +22,7 @@ import Cpp library "enum.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  // CHECK:STDERR: copy_enum.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `Cpp.Enum` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_copy_enum.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `Cpp.Enum` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   var a: Cpp.Enum = Cpp.Enum.a;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- copy_enum.carbon
+// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
