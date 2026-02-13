@@ -43,16 +43,12 @@ import Cpp library "templates.h";
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 
-// --- fail_todo_nonliteral.carbon
+// --- nonliteral.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_todo_nonliteral.carbon:[[@LINE+4]]:19: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var s: Cpp.Simple(100 + 20 + 3) = Cpp.MakeSimple123();
-// CHECK:STDERR:                   ^~~~~~~~~~~~
-// CHECK:STDERR:
 var s: Cpp.Simple(100 + 20 + 3) = Cpp.MakeSimple123();
 
 // --- valid.carbon

@@ -120,15 +120,19 @@ static auto ConvertArgToTemplateArg(Context& context,
 
     // Handle integer parameters.
     if (param_type.getTypePtr()->isIntegerType()) {
-      if (auto int_value = context.insts().TryGetAs<SemIR::IntValue>(arg_id)) {
-        const llvm::APInt ap_int = context.ints().Get(int_value->int_id);
-        auto aps_int = llvm::APSInt(ap_int).extOrTrunc(
-            context.ast_context().getIntWidth(param_type));
-        auto template_arg =
-            clang::TemplateArgument(context.ast_context(), aps_int, param_type);
-        // TODO: provide a better location.
-        auto loc = clang::TemplateArgumentLocInfo();
-        return clang::TemplateArgumentLoc(template_arg, loc);
+      auto const_inst_id = context.constant_values().GetConstantInstId(arg_id);
+      if (const_inst_id.has_value()) {
+        if (auto int_value =
+                context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
+          const llvm::APInt ap_int = context.ints().Get(int_value->int_id);
+          auto aps_int = llvm::APSInt(ap_int).extOrTrunc(
+              context.ast_context().getIntWidth(param_type));
+          auto template_arg = clang::TemplateArgument(context.ast_context(),
+                                                      aps_int, param_type);
+          // TODO: provide a better location.
+          auto loc = clang::TemplateArgumentLocInfo();
+          return clang::TemplateArgumentLoc(template_arg, loc);
+        }
       }
     }
 
