@@ -173,6 +173,50 @@ interface Z {
 }
 //@dump-sem-ir-end
 
+// --- fail_non_self_doesnt_provide_witness_for_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  fn YY();
+}
+
+class C(T:! type);
+
+interface Z {
+  require C(Self) impls Y;
+}
+
+fn F(T:! Z) {
+  // This fails because `T impls Z` implies that `C(T) impls Y`, not that
+  // `T impls Y`.
+  // CHECK:STDERR: fail_non_self_doesnt_provide_witness_for_self.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   T.(Y.YY)();
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  T.(Y.YY)();
+}
+
+// --- fail_todo_non_self_provide_witness_for_non_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  fn YY();
+}
+
+class C(T:! type);
+
+interface Z {
+  require C(Self) impls Y;
+}
+
+fn F(T:! Z) {
+  // CHECK:STDERR: fail_todo_non_self_provide_witness_for_non_self.carbon:[[@LINE+4]]:3: error: cannot convert type `C(T)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(T).(Y.YY)();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  C(T).(Y.YY)();
+}
+
 // --- require_impls_where.carbon
 library "[[@TEST_NAME]]";
 

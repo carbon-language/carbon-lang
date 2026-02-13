@@ -72,12 +72,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete.67c: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Class.elem.05d: type = unbound_element_type %Class.847, %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.893: type = pattern_type %Class.847 [symbolic]
-// CHECK:STDOUT:   %.075d25.1: form = init_form %T.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.6c815b.1: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.1: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Class.Get.type.8ea: type = fn_type @Class.Get, @Class(%T.035) [symbolic]
 // CHECK:STDOUT:   %Class.Get.7d3: %Class.Get.type.8ea = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.e7d: type = ptr_type %T.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.c6d: form = init_form %ptr.e7d, call_param1 [symbolic]
+// CHECK:STDOUT:   %.f43: Core.Form = init_form %ptr.e7d, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.65a: type = pattern_type %ptr.e7d [symbolic]
 // CHECK:STDOUT:   %Class.GetAddr.type.437: type = fn_type @Class.GetAddr, @Class(%T.035) [symbolic]
 // CHECK:STDOUT:   %Class.GetAddr.7a1: %Class.GetAddr.type.437 = struct_value () [symbolic]
@@ -110,7 +110,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Copy.facet.de4: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
 // CHECK:STDOUT:   %Class.06a: type = class_type @Class, @Class(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %pattern_type.cea: type = pattern_type %Class.06a [concrete]
-// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Class.elem.da5: type = unbound_element_type %Class.06a, %i32 [concrete]
 // CHECK:STDOUT:   %Class.Get.type.bea: type = fn_type @Class.Get, @Class(%Copy.facet.de4) [concrete]
@@ -124,7 +124,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.Get.specific_fn: <specific function> = specific_function %Class.Get.275, @Class.Get(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %ptr.7d6: type = ptr_type %Class.06a [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %.4f9: form = init_form %ptr.235, call_param1 [concrete]
+// CHECK:STDOUT:   %.85d: Core.Form = init_form %ptr.235, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %Class.GetAddr.specific_fn: <specific function> = specific_function %Class.GetAddr.7d7, @Class.GetAddr(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %complete_type.3d0: <witness> = complete_type_witness %ptr.235 [concrete]
@@ -288,7 +288,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.847
 // CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %.loc7_27.2 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc7_27.2 => constants.%.6c815b.1
 // CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -298,7 +298,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.loc13_18 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %ptr.loc13_36.1 => constants.%ptr.e7d
-// CHECK:STDOUT:   %.loc13_36.1 => constants.%.c6d
+// CHECK:STDOUT:   %.loc13_36.1 => constants.%.f43
 // CHECK:STDOUT:   %pattern_type.loc13_32 => constants.%pattern_type.65a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.06a
 // CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.cea
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
-// CHECK:STDOUT:   %.loc7_27.2 => constants.%.4d5
+// CHECK:STDOUT:   %.loc7_27.2 => constants.%.e54
 // CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -342,7 +342,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.loc13_18 => constants.%pattern_type.cea
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
 // CHECK:STDOUT:   %ptr.loc13_36.1 => constants.%ptr.235
-// CHECK:STDOUT:   %.loc13_36.1 => constants.%.4f9
+// CHECK:STDOUT:   %.loc13_36.1 => constants.%.85d
 // CHECK:STDOUT:   %pattern_type.loc13_32 => constants.%pattern_type.fe8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -364,7 +364,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %.859: form = init_form %Class, call_param0 [symbolic]
+// CHECK:STDOUT:   %.c06: Core.Form = init_form %Class, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.466: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.Make.type: type = fn_type @Class.Make, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Class.Make: %Class.Make.type = struct_value () [symbolic]
@@ -401,7 +401,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @StaticMemberFunctionCall(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_29.1 => constants.%T
 // CHECK:STDOUT:   %Class.loc8_49.1 => constants.%Class
-// CHECK:STDOUT:   %.loc8_49.2 => constants.%.859
+// CHECK:STDOUT:   %.loc8_49.2 => constants.%.c06
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

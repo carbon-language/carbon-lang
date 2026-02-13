@@ -986,9 +986,12 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   bool used_custom_witness = false;
   if (auto witness_id = LookupCustomWitness(
           context, loc_id, core_interface, query_self_const_id,
-          eval_query.query_specific_interface_id);
-      witness_id.has_value()) {
-    lookup_result = {.result = EvalImplLookupResult::MakeFinal(witness_id)};
+          eval_query.query_specific_interface_id)) {
+    if (witness_id->has_value()) {
+      lookup_result = {.result = EvalImplLookupResult::MakeFinal(*witness_id)};
+    } else {
+      lookup_result = {.result = EvalImplLookupResult::MakeNonFinal()};
+    }
     used_custom_witness = true;
   }
 

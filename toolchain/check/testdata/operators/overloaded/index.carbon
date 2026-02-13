@@ -193,7 +193,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 2, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.5ae: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %SubscriptType [symbolic]
-// CHECK:STDOUT:   %.608: form = init_form %ElementType, call_param2 [symbolic]
+// CHECK:STDOUT:   %.615: Core.Form = init_form %ElementType, call_param2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %ElementType [symbolic]
 // CHECK:STDOUT:   %IndexWith.At.type: type = fn_type @IndexWith.At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %IndexWith.At: %IndexWith.At.type = struct_value () [symbolic]
@@ -239,7 +239,7 @@ fn F() {
 // CHECK:STDOUT:       %return.param_patt: @IndexWith.At.%pattern_type.loc5_47 (%pattern_type.946) = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %ElementType.ref: type = name_ref ElementType, @IndexWith.%ElementType.loc4_43.2 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:       %.loc5_50.2: form = init_form %ElementType.ref, call_param2 [symbolic = %.loc5_50.1 (constants.%.608)]
+// CHECK:STDOUT:       %.loc5_50.2: Core.Form = init_form %ElementType.ref, call_param2 [symbolic = %.loc5_50.1 (constants.%.615)]
 // CHECK:STDOUT:       %self.param: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_15.1: type = splice_block %.loc5_15.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:         %.loc5_15.2: @IndexWith.At.%IndexWith.type (%IndexWith.type.2c3) = specific_constant @IndexWith.%Self.loc4_63.1, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %Self (constants.%Self)]
@@ -275,7 +275,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 2, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc5_9: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc5_9 (constants.%pattern_type.5ae)]
 // CHECK:STDOUT:   %pattern_type.loc5_21: type = pattern_type %SubscriptType [symbolic = %pattern_type.loc5_21 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %.loc5_50.1: form = init_form %ElementType, call_param2 [symbolic = %.loc5_50.1 (constants.%.608)]
+// CHECK:STDOUT:   %.loc5_50.1: Core.Form = init_form %ElementType, call_param2 [symbolic = %.loc5_50.1 (constants.%.615)]
 // CHECK:STDOUT:   %pattern_type.loc5_47: type = pattern_type %ElementType [symbolic = %pattern_type.loc5_47 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type), %subscript.param: @IndexWith.At.%SubscriptType (%SubscriptType)) -> out %return.param: @IndexWith.At.%ElementType (%ElementType);
@@ -294,7 +294,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc5_9 => constants.%pattern_type.5ae
 // CHECK:STDOUT:   %pattern_type.loc5_21 => constants.%pattern_type.51d
-// CHECK:STDOUT:   %.loc5_50.1 => constants.%.608
+// CHECK:STDOUT:   %.loc5_50.1 => constants.%.615
 // CHECK:STDOUT:   %pattern_type.loc5_47 => constants.%pattern_type.946
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,7 +318,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %ElementType [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.79f: type = symbolic_binding_type Self, 2, %Self.b10 [symbolic]
 // CHECK:STDOUT:   %pattern_type.994: type = pattern_type %Self.binding.as_type.79f [symbolic]
-// CHECK:STDOUT:   %.608: form = init_form %ElementType, call_param2 [symbolic]
+// CHECK:STDOUT:   %.615: Core.Form = init_form %ElementType, call_param2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %SubscriptType [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.483: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
@@ -330,7 +330,7 @@ fn F() {
 // CHECK:STDOUT:   %assoc0.e4f: %IndexWith.assoc_type.d10 = assoc_entity element0, imports.%Core.import_ref.336 [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %.6b2: form = init_form %empty_tuple.type, call_param2 [concrete]
+// CHECK:STDOUT:   %.067: Core.Form = init_form %empty_tuple.type, call_param2 [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At: %C.as.IndexWith.impl.At.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.483 = facet_value %C, (%IndexWith.impl_witness) [concrete]
@@ -418,7 +418,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_40.2: type = converted %.loc9_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc9_40.3: form = init_form %.loc9_40.2, call_param2 [concrete = constants.%.6b2]
+// CHECK:STDOUT:     %.loc9_40.3: Core.Form = init_form %.loc9_40.2, call_param2 [concrete = constants.%.067]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -455,7 +455,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 2, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.79f)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.994)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %SubscriptType [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %.1: form = init_form %ElementType, call_param2 [symbolic = %.1 (constants.%.608)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %ElementType, call_param2 [symbolic = %.1 (constants.%.615)]
 // CHECK:STDOUT:   %pattern_type.3: type = pattern_type %ElementType [symbolic = %pattern_type.3 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -504,7 +504,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.79f
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.994
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
-// CHECK:STDOUT:   %.1 => constants.%.608
+// CHECK:STDOUT:   %.1 => constants.%.615
 // CHECK:STDOUT:   %pattern_type.3 => constants.%pattern_type.946
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,7 +529,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.7c7
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.cb1
-// CHECK:STDOUT:   %.1 => constants.%.6b2
+// CHECK:STDOUT:   %.1 => constants.%.067
 // CHECK:STDOUT:   %pattern_type.3 => constants.%pattern_type.cb1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

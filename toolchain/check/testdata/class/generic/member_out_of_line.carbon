@@ -123,7 +123,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.035) [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.035 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.1: type = pattern_type %T.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.075d25.1: form = init_form %T.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.6c815b.1: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.035) [symbolic]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.893: type = pattern_type %Class [symbolic]
@@ -176,7 +176,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc11_36: %Copy.type = name_ref T, %T.loc11 [symbolic = %T.loc6 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc11_36: type = facet_access_type %T.ref.loc11_36 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc11_36.2: type = converted %T.ref.loc11_36, %T.as_type.loc11_36 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc11_36.3: form = init_form %.loc11_36.2, call_param1 [symbolic = %.loc6_17.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:     %.loc11_36.3: Core.Form = init_form %.loc11_36.2, call_param1 [symbolic = %.loc6_17.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:     %n.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc11_30: %Copy.type = name_ref T, %T.loc11 [symbolic = %T.loc6 (constants.%T.035)]
@@ -202,7 +202,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc15: %Copy.type = name_ref T, %T.loc15 [symbolic = %T.loc7 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc15: type = facet_access_type %T.ref.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc15_44.2: type = converted %T.ref.loc15, %T.as_type.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc15_44.3: form = init_form %.loc15_44.2, call_param1 [symbolic = %.loc7_25.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:     %.loc15_44.3: Core.Form = init_form %.loc15_44.2, call_param1 [symbolic = %.loc7_25.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:     %self.param.loc15: @Class.G.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:     %.loc15_33.1: type = splice_block %Self.ref.loc15 [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:       %.loc15_33.2: type = specific_constant constants.%Class, @Class(constants.%T.035) [symbolic = %Class (constants.%Class)]
@@ -239,7 +239,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %T.ref.loc6_17: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T.loc6 (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type.loc6_17: type = facet_access_type %T.ref.loc6_17 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc6_17.2: type = converted %T.ref.loc6_17, %T.as_type.loc6_17 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc6_17.3: form = init_form %.loc6_17.2, call_param1 [symbolic = %.loc6_17.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:       %.loc6_17.3: Core.Form = init_form %.loc6_17.2, call_param1 [symbolic = %.loc6_17.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:       %n.param.loc6: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_11.1: type = splice_block %.loc6_11.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
 // CHECK:STDOUT:         %T.ref.loc6_11: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T.loc6 (constants.%T.035)]
@@ -259,7 +259,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %T.ref.loc7: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T.loc7 (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type.loc7: type = facet_access_type %T.ref.loc7 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc7_25.2: type = converted %T.ref.loc7, %T.as_type.loc7 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc7_25.3: form = init_form %.loc7_25.2, call_param1 [symbolic = %.loc7_25.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:       %.loc7_25.3: Core.Form = init_form %.loc7_25.2, call_param1 [symbolic = %.loc7_25.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:       %self.param.loc7: @Class.G.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc7_14.1: type = splice_block %Self.ref.loc7 [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:         %.loc7_14.2: type = specific_constant constants.%Class, @Class(constants.%T.035) [symbolic = %Class (constants.%Class)]
@@ -289,7 +289,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc6: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc6 (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc6 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.1)]
-// CHECK:STDOUT:   %.loc6_17.1: form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc6_17.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:   %.loc6_17.1: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc6_17.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.67c)]
@@ -316,7 +316,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc7) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %pattern_type.loc7_8: type = pattern_type %Class [symbolic = %pattern_type.loc7_8 (constants.%pattern_type.893)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc7 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %.loc7_25.1: form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc7_25.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:   %.loc7_25.1: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc7_25.1 (constants.%.6c815b.1)]
 // CHECK:STDOUT:   %pattern_type.loc7_22: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc7_22 (constants.%pattern_type.9b9f0c.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -364,7 +364,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc6 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.1
-// CHECK:STDOUT:   %.loc6_17.1 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc6_17.1 => constants.%.6c815b.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.G(constants.%T.035) {
@@ -372,7 +372,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %pattern_type.loc7_8 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %.loc7_25.1 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc7_25.1 => constants.%.6c815b.1
 // CHECK:STDOUT:   %pattern_type.loc7_22 => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

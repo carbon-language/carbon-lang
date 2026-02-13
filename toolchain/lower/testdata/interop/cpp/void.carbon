@@ -65,7 +65,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: define void @_CPassVoidPtr.Main(ptr %a) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_21.2.temp = alloca ptr, align 8, !dbg !18
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.5c62f2dbad753cd9"(ptr %a), !dbg !18
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb"(ptr %a), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_21.2.temp), !dbg !18
 // CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc7_21.2.temp, align 8, !dbg !18
 // CHECK:STDOUT:   %.loc7_21.4 = load ptr, ptr %.loc7_21.2.temp, align 8, !dbg !18
@@ -79,7 +79,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: define void @_CPassIntPtr.Main(ptr %a) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_21.2.temp = alloca ptr, align 8, !dbg !24
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.63e244d930b21b2a"(ptr %a), !dbg !24
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.fbbefa683f24bc88"(ptr %a), !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_21.2.temp), !dbg !24
 // CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc11_21.2.temp, align 8, !dbg !24
 // CHECK:STDOUT:   %.loc11_21.4 = load ptr, ptr %.loc11_21.2.temp, align 8, !dbg !24
@@ -91,7 +91,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: define void @_CPassIntPtrToConstVoidPtr.Main(ptr %a) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc15_27.2.temp = alloca ptr, align 8, !dbg !30
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.3fcbaa3d70c86d44"(ptr %a), !dbg !30
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6db8a71411741ab9"(ptr %a), !dbg !30
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_27.2.temp), !dbg !30
 // CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc15_27.2.temp, align 8, !dbg !30
 // CHECK:STDOUT:   %.loc15_27.4 = load ptr, ptr %.loc15_27.2.temp, align 8, !dbg !30
@@ -105,7 +105,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: define void @_CPassConstIntPtrToConstVoidPtr.Main(ptr %a) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc19_27.2.temp = alloca ptr, align 8, !dbg !36
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.3fcbaa3d70c86d44"(ptr %a), !dbg !36
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6db8a71411741ab9"(ptr %a), !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_27.2.temp), !dbg !36
 // CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc19_27.2.temp, align 8, !dbg !36
 // CHECK:STDOUT:   %.loc19_27.4 = load ptr, ptr %.loc19_27.2.temp, align 8, !dbg !36
@@ -114,8 +114,8 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.5c62f2dbad753cd9"(ptr %self) #0 !dbg !39 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.d2075df181ac34c1"(ptr %self), !dbg !45
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb"(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504"(ptr %self), !dbg !45
 // CHECK:STDOUT:   ret ptr %1, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,46 +123,46 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.63e244d930b21b2a"(ptr %self) #0 !dbg !47 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.599fcf6815ccd825"(ptr %self), !dbg !50
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.fbbefa683f24bc88"(ptr %self) #0 !dbg !47 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.32a97be85e3fa9ff"(ptr %self), !dbg !50
 // CHECK:STDOUT:   ret ptr %1, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.3fcbaa3d70c86d44"(ptr %self) #0 !dbg !52 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.40332936f52138f0"(ptr %self), !dbg !55
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6db8a71411741ab9"(ptr %self) #0 !dbg !52 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.77dc134870a234a5"(ptr %self), !dbg !55
 // CHECK:STDOUT:   ret ptr %1, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.d2075df181ac34c1"(ptr %self) #0 !dbg !57 {
-// CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.d2075df181ac34c1(ptr %self), !dbg !60
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504"(ptr %self) #0 !dbg !57 {
+// CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %self), !dbg !60
 // CHECK:STDOUT:   ret ptr %1, !dbg !61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.599fcf6815ccd825"(ptr %self) #0 !dbg !62 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.32a97be85e3fa9ff"(ptr %self) #0 !dbg !62 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !65
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !65
 // CHECK:STDOUT:   store ptr %self, ptr %temp, align 8, !dbg !65
 // CHECK:STDOUT:   %1 = load ptr, ptr %temp, align 8, !dbg !65
-// CHECK:STDOUT:   %2 = call ptr @_CSome.Optional.Core.d2075df181ac34c1(ptr %1), !dbg !66
+// CHECK:STDOUT:   %2 = call ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %1), !dbg !66
 // CHECK:STDOUT:   ret ptr %2, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.40332936f52138f0"(ptr %self) #0 !dbg !68 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.77dc134870a234a5"(ptr %self) #0 !dbg !68 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !71
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !71
 // CHECK:STDOUT:   %1 = call ptr @"_CConvert:thunk.e8f8f92d3d08d149:ImplicitAs.ffd58aeb29886b72.Core.b88d1103f417c6d4"(ptr %self), !dbg !71
 // CHECK:STDOUT:   store ptr %1, ptr %temp, align 8, !dbg !71
 // CHECK:STDOUT:   %2 = load ptr, ptr %temp, align 8, !dbg !71
-// CHECK:STDOUT:   %3 = call ptr @_CSome.Optional.Core.d2075df181ac34c1(ptr %2), !dbg !72
+// CHECK:STDOUT:   %3 = call ptr @_CSome.Optional.Core.9544e72a46e24ed6(ptr %2), !dbg !72
 // CHECK:STDOUT:   ret ptr %3, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.d2075df181ac34c1(ptr %value) #0 !dbg !74 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.7bed839a0b822504(ptr %value) #0 !dbg !74 {
 // CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %value), !dbg !77
 // CHECK:STDOUT:   ret ptr %1, !dbg !78
 // CHECK:STDOUT: }
@@ -173,18 +173,33 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %self) #0 !dbg !84 {
-// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !87
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !87
-// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !88
-// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !89
-// CHECK:STDOUT:   ret ptr %2, !dbg !90
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.9544e72a46e24ed6(ptr %value) #0 !dbg !84 {
+// CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f"(ptr %value), !dbg !87
+// CHECK:STDOUT:   ret ptr %1, !dbg !88
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299"(ptr %self) #0 !dbg !89 {
+// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !92
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !92
+// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !93
+// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !94
+// CHECK:STDOUT:   ret ptr %2, !dbg !95
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f"(ptr %self) #0 !dbg !96 {
+// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !99
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !99
+// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !100
+// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !101
+// CHECK:STDOUT:   ret ptr %2, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 6, 5, 4, 3 }
-// CHECK:STDOUT: uselistorder ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.3fcbaa3d70c86d44", { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSome.Optional.Core.d2075df181ac34c1, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 3, 7, 6, 5, 4 }
+// CHECK:STDOUT: uselistorder ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6db8a71411741ab9", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSome.Optional.Core.7bed839a0b822504, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -234,7 +249,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !36 = !DILocation(line: 19, column: 27, scope: !33)
 // CHECK:STDOUT: !37 = !DILocation(line: 19, column: 3, scope: !33)
 // CHECK:STDOUT: !38 = !DILocation(line: 18, column: 1, scope: !33)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.5c62f2dbad753cd9", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !43)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.66983884551336cb", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !43)
 // CHECK:STDOUT: !40 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !42 = !{!15, !15}
@@ -242,34 +257,34 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !39, type: !15)
 // CHECK:STDOUT: !45 = !DILocation(line: 94, column: 12, scope: !39)
 // CHECK:STDOUT: !46 = !DILocation(line: 94, column: 5, scope: !39)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.63e244d930b21b2a", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !48)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.fbbefa683f24bc88", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !48)
 // CHECK:STDOUT: !48 = !{!49}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !47, type: !15)
 // CHECK:STDOUT: !50 = !DILocation(line: 94, column: 12, scope: !47)
 // CHECK:STDOUT: !51 = !DILocation(line: 94, column: 5, scope: !47)
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.3fcbaa3d70c86d44", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !53)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6db8a71411741ab9", scope: null, file: !40, line: 93, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !53)
 // CHECK:STDOUT: !53 = !{!54}
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !52, type: !15)
 // CHECK:STDOUT: !55 = !DILocation(line: 94, column: 12, scope: !52)
 // CHECK:STDOUT: !56 = !DILocation(line: 94, column: 5, scope: !52)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.d2075df181ac34c1", scope: null, file: !40, line: 68, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !58)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.7bed839a0b822504", scope: null, file: !40, line: 68, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !58)
 // CHECK:STDOUT: !58 = !{!59}
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !57, type: !15)
 // CHECK:STDOUT: !60 = !DILocation(line: 69, column: 12, scope: !57)
 // CHECK:STDOUT: !61 = !DILocation(line: 69, column: 5, scope: !57)
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.599fcf6815ccd825", scope: null, file: !40, line: 75, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !63)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.32a97be85e3fa9ff", scope: null, file: !40, line: 75, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !63)
 // CHECK:STDOUT: !63 = !{!64}
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !62, type: !15)
 // CHECK:STDOUT: !65 = !DILocation(line: 76, column: 29, scope: !62)
 // CHECK:STDOUT: !66 = !DILocation(line: 76, column: 12, scope: !62)
 // CHECK:STDOUT: !67 = !DILocation(line: 76, column: 5, scope: !62)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.40332936f52138f0", scope: null, file: !40, line: 75, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !69)
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.3667eb502d1ddfa9:OptionalAs.c7a50af9bdd61b43.Core.77dc134870a234a5", scope: null, file: !40, line: 75, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !69)
 // CHECK:STDOUT: !69 = !{!70}
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !68, type: !15)
 // CHECK:STDOUT: !71 = !DILocation(line: 76, column: 29, scope: !68)
 // CHECK:STDOUT: !72 = !DILocation(line: 76, column: 12, scope: !68)
 // CHECK:STDOUT: !73 = !DILocation(line: 76, column: 5, scope: !68)
-// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.d2075df181ac34c1", scope: null, file: !40, line: 29, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !75)
+// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.7bed839a0b822504", scope: null, file: !40, line: 29, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !75)
 // CHECK:STDOUT: !75 = !{!76}
 // CHECK:STDOUT: !76 = !DILocalVariable(arg: 1, scope: !74, type: !15)
 // CHECK:STDOUT: !77 = !DILocation(line: 30, column: 12, scope: !74)
@@ -279,13 +294,25 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !81 = !{!82}
 // CHECK:STDOUT: !82 = !DILocalVariable(arg: 1, scope: !79, type: !15)
 // CHECK:STDOUT: !83 = !DILocation(line: 40, column: 3, scope: !79)
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299", scope: null, file: !40, line: 138, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !85)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.9544e72a46e24ed6", scope: null, file: !40, line: 29, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !85)
 // CHECK:STDOUT: !85 = !{!86}
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !84, type: !15)
-// CHECK:STDOUT: !87 = !DILocation(line: 139, column: 14, scope: !84)
-// CHECK:STDOUT: !88 = !DILocation(line: 140, column: 5, scope: !84)
-// CHECK:STDOUT: !89 = !DILocation(line: 139, column: 18, scope: !84)
-// CHECK:STDOUT: !90 = !DILocation(line: 141, column: 5, scope: !84)
+// CHECK:STDOUT: !87 = !DILocation(line: 30, column: 12, scope: !84)
+// CHECK:STDOUT: !88 = !DILocation(line: 30, column: 5, scope: !84)
+// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.a3238f3d1f6ba299", scope: null, file: !40, line: 138, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !90)
+// CHECK:STDOUT: !90 = !{!91}
+// CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !89, type: !15)
+// CHECK:STDOUT: !92 = !DILocation(line: 139, column: 14, scope: !89)
+// CHECK:STDOUT: !93 = !DILocation(line: 140, column: 5, scope: !89)
+// CHECK:STDOUT: !94 = !DILocation(line: 139, column: 18, scope: !89)
+// CHECK:STDOUT: !95 = !DILocation(line: 141, column: 5, scope: !89)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.2e8a3baa837dcd9f", scope: null, file: !40, line: 138, type: !41, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !97)
+// CHECK:STDOUT: !97 = !{!98}
+// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !96, type: !15)
+// CHECK:STDOUT: !99 = !DILocation(line: 139, column: 14, scope: !96)
+// CHECK:STDOUT: !100 = !DILocation(line: 140, column: 5, scope: !96)
+// CHECK:STDOUT: !101 = !DILocation(line: 139, column: 18, scope: !96)
+// CHECK:STDOUT: !102 = !DILocation(line: 141, column: 5, scope: !96)
 // CHECK:STDOUT: ; ModuleID = 'receive.carbon'
 // CHECK:STDOUT: source_filename = "receive.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

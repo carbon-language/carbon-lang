@@ -45,7 +45,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.7f1: form = init_form %Class, call_param0 [concrete]
+// CHECK:STDOUT:   %.ddd: Core.Form = init_form %Class, call_param0 [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8e5: type = ptr_type %Class [concrete]
@@ -80,7 +80,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.904 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %.loc19: form = init_form %Class.ref, call_param0 [concrete = constants.%.7f1]
+// CHECK:STDOUT:     %.loc19: Core.Form = init_form %Class.ref, call_param0 [concrete = constants.%.ddd]
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
