@@ -51,6 +51,22 @@ import Cpp library "templates.h";
 
 var s: Cpp.Simple(100 + 20 + 3) = Cpp.MakeSimple123();
 
+// --- fail_todo_conversion.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+class C { adapt {}; }
+impl C as Core.ImplicitAs(i32) {
+  eval fn Convert[self: Self]() -> i32 { return 123; }
+}
+// CHECK:STDERR: fail_todo_conversion.carbon:[[@LINE+4]]:19: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
+// CHECK:STDERR:                   ^~~~~~~
+// CHECK:STDERR:
+var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
+
 // --- valid.carbon
 
 library "[[@TEST_NAME]]";
