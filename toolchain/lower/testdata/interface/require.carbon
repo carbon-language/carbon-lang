@@ -40,15 +40,13 @@ impl C as A {
 
 impl C as B {}
 
-fn Main() -> i32 {
-    var c: C = {};
+fn Run() -> i32 {
+    var c: C;
     return TakesB(c);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'require.carbon'
 // CHECK:STDOUT: source_filename = "require.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc44_5 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CF1.C.Main:A.Main"(ptr %self) #0 !dbg !4 {
@@ -63,20 +61,16 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CMain.Main() #0 !dbg !16 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !19
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc44_5, i64 0, i1 false), !dbg !19
 // CHECK:STDOUT:   %TakesB.call = call i32 @_CTakesB.Main.28c67e05fd10f829(ptr %c.var), !dbg !20
 // CHECK:STDOUT:   ret i32 %TakesB.call, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CTakesB.Main.28c67e05fd10f829(ptr %x) #0 !dbg !22 {
@@ -94,7 +88,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -115,7 +108,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !12, type: !8)
 // CHECK:STDOUT: !15 = !DILocation(line: 37, column: 9, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 43, type: !17, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 43, type: !17, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{!7}
 // CHECK:STDOUT: !19 = !DILocation(line: 44, column: 5, scope: !16)
