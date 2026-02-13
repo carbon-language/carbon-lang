@@ -14,6 +14,11 @@ class
                     (A.(B(E, F(G)).C)
                                         .D))) ;
 
+class C5 {
+    impl as I;
+    extend impl as I;
+}
+
 alias a1 = C1;
 alias a2 = i32;
 
@@ -32,22 +37,5 @@ constraint Constraint {
     require T impls I;
     require Self impls I;
     require impls I;
-}
-
-a: A;
-a: A = (b as A);
-a: i32;
-a: array(A, 5);
-a:! type;
-a:! T = b;
-a: A in some_list;
-
-fn F() -> T;
-fn F() -> T.U { return val; }
-fn F() -> i32 => return val;
-
-choice SomeChoice(T:! type) {
-    Val1,
-    Val2(a: i32, b: array(T, 5), t: T),
-    Val3
+    extern require impls I;
 }

@@ -124,8 +124,7 @@
           },
           "end": "(?=[;{])",
           "patterns": [
-            { "include": "#reserved" },
-            { "include": "#variables" },
+            { "include": "#common" },
             { "include": "#parameter-bindings" },
             {
               "name": "support.type.carbon",
@@ -138,7 +137,7 @@
           "begin": ":!?",
           "end": "(?=([;{=]|->|in|where))",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             { "include": "#variables" },
             { "include": "#parameter-bindings" },
             {
@@ -152,7 +151,7 @@
           "begin": "->",
           "end": "(?=([;{]|=>))",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             {
               "name": "support.type.carbon",
               "match": "\\w+"
@@ -167,7 +166,7 @@
           },
           "end": "(?=[;{])",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             { "include": "#variables" },
             { "include": "#parameter-bindings" },
             {
@@ -184,7 +183,7 @@
           },
           "end": "(?=[;}])",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             { "include": "#variables" },
             { "include": "#parameter-bindings" },
             {
@@ -196,7 +195,7 @@
               "begin": "\\{",
               "end": "(?=})",
               "patterns": [
-                { "include": "#reserved" },
+                { "include": "#common" },
                 {
                   "name": "variable.other.enummember.carbon",
                   "match": "\\w+"
@@ -218,7 +217,7 @@
           },
           "end": "(?=[\\[\\(])",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             {
               "name": "support.function.carbon",
               "match": "\\w+"
@@ -238,7 +237,7 @@
           },
           "end": "(?=:)",
           "patterns": [
-            { "include": "#reserved" },
+            { "include": "#common" },
             {
               "name": "support.variable.carbon",
               "match": "\\w+"
@@ -419,7 +418,7 @@
         }
       ]
     },
-    "reserved": {
+    "common": {
       "comments": [
         "For including comments, operators, keywords, literals, and language constants ",
         "in other rules that use begin/end. This way we do not accidentally override their ",

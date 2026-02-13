@@ -2,11 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-var a: T;
-let b: T;
-binding: T;
-binding:! T;
-var
-    multiline: T;
-
-fn F(a: A, b:! B);
+choice SomeChoice(T:! type) {
+    Val1,
+    Val2(a: i32, b: array(T, 5), t: T),
+    Val3
+}

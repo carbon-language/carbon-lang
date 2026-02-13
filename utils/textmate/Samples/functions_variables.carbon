@@ -18,3 +18,22 @@ fn
       c: i32);
 fn Invalid#+?Name();
 x.(I.F)();
+
+a: A;
+a: A = (b as A);
+a: i32;
+a: array(A, 5);
+a:! type;
+a:! T = b;
+a: A in some_list;
+var a: T;
+let b: T;
+binding: T;
+binding:! T;
+var
+    multiline: T;
+
+fn F(ref a: A, const ref b:! B);
+fn F() -> T;
+fn F() -> T.U { return val; }
+fn F() -> i32 => return val;
