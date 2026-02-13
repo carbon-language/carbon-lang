@@ -54,6 +54,13 @@ class BusyboxInfoTest : public ::testing::Test {
     return path_ / prefix;
   }
 
+  // Helper function to change the working directory and check for an error.
+  auto ChangeWorkingDir(std::filesystem::path p) -> void {
+    std::error_code ec;
+    std::filesystem::current_path(p, ec);
+    CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  }
+
   // The path to the running binary, `busybox_info_test`. This is provided
   // because `GetExecutablePath` can fall back to it.
   std::string running_binary_;
@@ -224,8 +231,7 @@ TEST_F(BusyboxInfoTest, RunWithinInstallTree) {
   });
 
   // First test using a working-directory relative `./bin/carbon` path.
-  std::filesystem::current_path(prefix, ec);
-  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  ChangeWorkingDir(prefix);
 
   auto info = GetBusyboxInfo("./bin/carbon");
   ASSERT_TRUE(info.ok()) << info.error();
@@ -233,8 +239,7 @@ TEST_F(BusyboxInfoTest, RunWithinInstallTree) {
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
   // Also test using a working-directory relative `./bin/clang` path.
-  std::filesystem::current_path(prefix / "lib/carbon/llvm", ec);
-  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  ChangeWorkingDir(prefix / "lib/carbon/llvm");
 
   info = GetBusyboxInfo("./bin/clang");
   ASSERT_TRUE(info.ok()) << info.error();
@@ -249,8 +254,7 @@ TEST_F(BusyboxInfoTest, RunWithinInstallTree) {
   EXPECT_THAT(info->mode, Eq("clang"));
 
   // Also test using a working-directory relative `./llvm/bin/clang` path.
-  std::filesystem::current_path(prefix / "lib/carbon", ec);
-  CARBON_CHECK(!ec, "Error changing working directory: {0}", ec.message());
+  ChangeWorkingDir(prefix / "lib/carbon");
 
   info = GetBusyboxInfo("./llvm/bin/clang");
   ASSERT_TRUE(info.ok()) << info.error();
