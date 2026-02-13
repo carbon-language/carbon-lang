@@ -2094,6 +2094,18 @@ struct ValueBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// A primitive value form.
+struct ValueForm {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ValueForm.Define<Parse::NodeId>(
+      {.ir_name = "value_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
+};
+
 // Converts an initializing expression to a value expression, in the case
 // where the initializing representation is the same as the value
 // representation.

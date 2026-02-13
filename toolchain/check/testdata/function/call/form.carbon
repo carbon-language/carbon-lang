@@ -37,21 +37,10 @@ fn G() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_val_form_param.carbon
+// --- val_form_param.carbon
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_val_form_param.carbon:[[@LINE+11]]:15: error: semantics TODO: `Support `val` forms` [SemanticsTodo]
-// CHECK:STDERR: fn F(x:? form(val i32));
-// CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_val_form_param.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-// CHECK:STDERR: fn F(x:? form(val i32));
-// CHECK:STDERR:                   ^~~
-// CHECK:STDERR: fail_todo_val_form_param.carbon:[[@LINE+4]]:19: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: fn F(x:? form(val i32));
-// CHECK:STDERR:                   ^~~
-// CHECK:STDERR:
 fn F(x:? form(val i32));
 //@dump-sem-ir-end
 
@@ -147,10 +136,6 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_val_return_form.carbon:[[@LINE+8]]:17: error: semantics TODO: `Support `val` forms` [SemanticsTodo]
-// CHECK:STDERR: fn F() ->? form(val i32);
-// CHECK:STDERR:                 ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_val_return_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
 // CHECK:STDERR: fn F() ->? form(val i32);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
@@ -286,32 +271,67 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_val_form_param.carbon
+// CHECK:STDOUT: --- val_form_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.754: Core.Form = value_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.6bc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
+// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc15_6: <error> = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc15_7: <error> = form_param_pattern %.loc15_6, call_param0 [concrete]
-// CHECK:STDOUT:   } {}
+// CHECK:STDOUT:     %.loc4_6.1: %pattern_type.7ce = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %.loc4_6.1, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.754] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %.loc4_15.2: Core.Form = value_form %i32 [concrete = constants.%.754]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4_6.2: %i32 = form_binding x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F(%x.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc9_5.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_5.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_5.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc9_5.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc9_5.2: %i32 = converted %int_0, %.loc9_5.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

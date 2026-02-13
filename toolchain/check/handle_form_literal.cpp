@@ -23,7 +23,13 @@ auto HandleParseNode(Context& context, Parse::RefPrimitiveFormId node_id)
 
 auto HandleParseNode(Context& context, Parse::ValPrimitiveFormId node_id)
     -> bool {
-  context.TODO(node_id, "Support `val` forms");
+  auto type_component_inst_id =
+      context.types().GetAsTypeInstId(context.node_stack().PopExpr());
+  auto inst_id = AddInst<SemIR::ValueForm>(
+      context, node_id,
+      {.type_id = SemIR::FormType::TypeId,
+       .type_component_inst_id = type_component_inst_id});
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 

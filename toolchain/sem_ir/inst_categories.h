@@ -174,7 +174,7 @@ struct AnyParamPattern {
 
 // An inst that represents a primitive form.
 struct AnyPrimitiveForm {
-  using CategoryInfo = CategoryOf<InitForm, RefForm>;
+  using CategoryInfo = CategoryOf<InitForm, RefForm, ValueForm>;
 
   InstKind kind;
 

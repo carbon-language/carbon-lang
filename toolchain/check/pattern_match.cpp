@@ -516,6 +516,15 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       }
       break;
     }
+    case SemIR::ValueForm::Kind: {
+      if (auto new_entry = DoEmitPatternMatchOffStack(context, entry, SemIR::ValueParamPattern{
+        .type_id = param_pattern.type_id, .subpattern_id = param_pattern.subpattern_id,
+        .index = param_pattern.index})) {
+        CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
+        AddWork(*new_entry);
+      }
+      break;
+    }
     case SemIR::ErrorInst::Kind:
       break;
     default:
@@ -538,10 +547,12 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       SemIR::Inst(binding_pattern).As<SemIR::AnyBindingPattern>();
   CARBON_KIND_SWITCH(form_inst) {
     case SemIR::InitForm::Kind:
-    case SemIR::RefForm::Kind: {
+    case SemIR::RefForm::Kind:
       new_binding_pattern.kind = SemIR::RefBindingPattern::Kind;
       break;
-    }
+    case SemIR::ValueForm::Kind: 
+      new_binding_pattern.kind = SemIR::ValueBindingPattern::Kind;
+      break;
     default:
       CARBON_FATAL("Unexpected form {0}", form_inst);
   }

@@ -103,6 +103,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             // A `var` binding pattern produces a `ref` binding.
           case RefForm::Kind:
             return ExprCategory::DurableRef;
+          case ValueForm::Kind:
+            return ExprCategory::Value;
           case ErrorInst::Kind:
             return ExprCategory::Error;
           default:
