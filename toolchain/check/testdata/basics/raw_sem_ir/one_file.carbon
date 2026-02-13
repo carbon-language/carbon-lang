@@ -35,6 +35,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir60000003: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:     import_ir60000004: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:     import_ir60000005: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir60000006: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir60000004, inst_id: inst48000010}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir60000004, inst_id: inst48000010}

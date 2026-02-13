@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/form.carbon
 
 // --- min_prelude/parts/as.carbon
 
 package Core library "prelude/parts/as";
 
 export import library "prelude/parts/destroy";
+export import library "prelude/parts/form";
 
 interface UnsafeAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;

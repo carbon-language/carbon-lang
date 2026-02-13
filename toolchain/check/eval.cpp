@@ -1933,6 +1933,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
+    case SemIR::BuiltinFunctionKind::FormMakeType: {
+      return context.constant_values().Get(SemIR::FormType::TypeInstId);
+    }
+
     // Character conversions.
     case SemIR::BuiltinFunctionKind::CharConvertChecked: {
       if (phase != Phase::Concrete) {
