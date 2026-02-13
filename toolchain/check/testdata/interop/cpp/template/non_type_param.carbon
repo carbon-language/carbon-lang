@@ -14,8 +14,35 @@
 
 struct A {};
 
+template<int N> struct Simple {};
+Simple<123> MakeSimple123() { return Simple<123>(); }
+
 template<int M, int N> struct TwoNonType {};
 template<typename T, T N> struct DependentNonType {};
+
+// --- fail_todo_valid_int_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+// CHECK:STDERR: fail_todo_valid_int_param.carbon:[[@LINE+4]]:19: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: var s: Cpp.Simple(123) = Cpp.MakeSimple123();
+// CHECK:STDERR:                   ^~~
+// CHECK:STDERR:
+var s: Cpp.Simple(123) = Cpp.MakeSimple123();
+
+// --- fail_int_param_mismatch.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:19: error: semantics TODO: `argument for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
+// CHECK:STDERR:                   ^~~
+// CHECK:STDERR:
+var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 
 // --- fail_todo_valid.carbon
 
