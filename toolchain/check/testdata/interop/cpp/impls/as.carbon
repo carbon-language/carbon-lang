@@ -239,8 +239,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Dest) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source2 = name_ref s, %s
@@ -259,8 +257,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: ref %Dest2) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
@@ -278,8 +274,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConstructor.cpp_destructor.call: init %empty_tuple.type = call %ExplicitConstructor.cpp_destructor.bound(%.loc20_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: ref %ExplicitConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
@@ -404,8 +398,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %ConditionallyExplicit.c52b91.1) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
@@ -423,8 +415,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: ref %ConditionallyExplicit.c52b91.2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -461,8 +451,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call.loc21: init %empty_tuple.type = call %Dest.cpp_destructor.bound.loc21(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -567,6 +555,4 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Dest.5e7) = "no_op";
 // CHECK:STDOUT:

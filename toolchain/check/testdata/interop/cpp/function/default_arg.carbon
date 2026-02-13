@@ -409,8 +409,6 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- call_with_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -805,8 +803,6 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D__carbon_thunk(%_.param: %ptr.1f9, %a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.cpp_destructor(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
@@ -886,6 +882,4 @@ fn Call() {
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc56: init %empty_tuple.type = call %X.cpp_destructor.bound.loc56(%.loc56_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:

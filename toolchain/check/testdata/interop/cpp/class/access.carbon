@@ -2032,10 +2032,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %PublicCall) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %C) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2229,10 +2225,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc17(%self.param: ref %ProtectedCall) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2295,8 +2287,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc8_49.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
@@ -2410,10 +2400,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ProtectedCall) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2525,10 +2511,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ProtectedCall) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- base_class_public_access_allowed.carbon
 // CHECK:STDOUT:

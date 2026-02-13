@@ -522,8 +522,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Dest) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConversion.loc12(%s.param: ref %NonConstConversion.480) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -572,8 +570,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest2.cpp_destructor.call: init %empty_tuple.type = call %Dest2.cpp_destructor.bound(%.loc20_22.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: ref %Dest2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_expr_category.carbon
 // CHECK:STDOUT:
@@ -639,8 +635,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc15_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_access.carbon
 // CHECK:STDOUT:
@@ -726,8 +720,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %InaccessibleConstructor) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConversionTest(%s.param: %InaccessibleConversion) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -751,8 +743,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc30_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc30(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deleted.carbon
 // CHECK:STDOUT:
@@ -915,8 +905,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntConstructor.f49) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -969,8 +957,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %IntConstructor.cpp_destructor.call: init %empty_tuple.type = call %IntConstructor.cpp_destructor.bound(%.loc19_31.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- default_constructor.carbon
 // CHECK:STDOUT:
@@ -1040,8 +1026,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %DefaultConstructor.cpp_destructor.call.loc9: init %empty_tuple.type = call %DefaultConstructor.cpp_destructor.bound.loc9(%.loc9_36.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %DefaultConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- construct_multi_argument.carbon
 // CHECK:STDOUT:
@@ -1235,10 +1219,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Two.cpp_destructor.call: init %empty_tuple.type = call %Two.cpp_destructor.bound(%.loc8_25.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ThreeWithDefault) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Two) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon
 // CHECK:STDOUT:
@@ -1513,8 +1493,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_non_aggregate_from_empty_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1556,8 +1534,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %NonAggregate.cpp_destructor.call: init %empty_tuple.type = call %NonAggregate.cpp_destructor.bound(%.loc11_30.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon
 // CHECK:STDOUT:
@@ -1639,6 +1615,4 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %NonAggregate.cpp_destructor.call.loc8: init %empty_tuple.type = call %NonAggregate.cpp_destructor.bound.loc8(%.loc8_30.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %NonAggregate) = "no_op";
 // CHECK:STDOUT:

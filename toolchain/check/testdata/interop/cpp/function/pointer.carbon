@@ -486,8 +486,6 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_param_using_const_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -579,8 +577,8 @@ fn F() {
 // CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc9 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -642,16 +640,14 @@ fn F() {
 // CHECK:STDOUT:   %p.ref: ref %ptr.5c7 = name_ref p, %p
 // CHECK:STDOUT:   %addr.loc10: %ptr.dfe = addr_of %p.ref
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%addr.loc10)
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %p.var, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %p.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%p.var)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %ptr.5c7) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.5c7) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_const.carbon
 // CHECK:STDOUT:
@@ -776,8 +772,6 @@ fn F() {
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_const.carbon
 // CHECK:STDOUT:
@@ -1407,8 +1401,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Optional.065) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- null_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1631,8 +1623,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Optional.065) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_nullable_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1785,8 +1775,6 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_deduced_pointer_param_as_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1840,7 +1828,7 @@ fn F() {
 // CHECK:STDOUT:   %Indirect.cpp_overload_set.value: %Indirect.cpp_overload_set.type = cpp_overload_set_value @Indirect.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Indirect__carbon_thunk.type: type = fn_type @Indirect__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Indirect__carbon_thunk: %Indirect__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc13_58 [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc13 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
@@ -1971,7 +1959,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_58(%self.param: ref %Optional.065) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_48(%self.param: ref %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %Optional.065) = "no_op";
 // CHECK:STDOUT:

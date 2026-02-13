@@ -175,12 +175,19 @@ static auto TypeCanDestroy(Context& context,
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);
       // Incomplete and abstract classes can't be destroyed.
+      if (!class_info.is_complete() ||
+          class_info.inheritance_kind ==
+              SemIR::Class::InheritanceKind::Abstract) {
+        return false;
+      }
+
+      // `LookupCppImpl` handles C++ types.
+      if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+        return false;
+      }
+
       // TODO: Return false if the object repr doesn't impl `Destroy`.
-      // TODO: This should probably be skipped for all C++ types, but currently
-      // must handle those for trivial destruction.
-      return class_info.is_complete() &&
-             class_info.inheritance_kind !=
-                 SemIR::Class::InheritanceKind::Abstract;
+      return true;
     }
     case SemIR::ArrayType::Kind:
     case SemIR::ConstType::Kind:

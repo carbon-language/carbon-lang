@@ -2389,8 +2389,8 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %NoFields.cpp_destructor.type: type = fn_type @NoFields.cpp_destructor [concrete]
 // CHECK:STDOUT:   %NoFields.cpp_destructor: %NoFields.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc15_30.2 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2518,7 +2518,7 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc15)
 // CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_30.5, constants.%NoFields.cpp_destructor
 // CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc15: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc15(%.loc15_30.5)
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc15_30.2, constants.%DestroyOp.b0ebf8.2
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc15_30.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc15_30.2)
 // CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_20.3, constants.%NoFields.cpp_destructor
 // CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc13: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc13(%.loc13_20.3)
@@ -2533,11 +2533,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassNoFields__carbon_thunk(%s.param: %ptr.dd0);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15_30.1(%self.param: ref %NoFields) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoFields.cpp_destructor(%self.param: ref %NoFields) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15_30.2(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_struct_init_nonempty.carbon
 // CHECK:STDOUT:
