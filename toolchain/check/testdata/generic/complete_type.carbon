@@ -19,18 +19,18 @@ library "[[@TEST_NAME]]";
 class B;
 
 class A(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR:   var v: T;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class B;
-  // CHECK:STDERR: ^~~~~~~~
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:6: note: in `A(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+17]]:6: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
 // CHECK:STDERR: fn F(x: A(B)) {}
 // CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:   var v: T;
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class B;
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:6: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
 // CHECK:STDERR: fn F(x: A(B)) {}
@@ -161,18 +161,18 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.1) [symbolic = %A (constants.%A.95c)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_9.1 [symbolic = %A.elem (constants.%A.elem.8a2)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.1 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.a4d)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.136)]
+// CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_9.2 [symbolic = %T.loc6_9.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.8a2) = field_decl v, element0 [concrete]
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.136)]
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
+// CHECK:STDOUT:     %.loc7: @A.%A.elem (%A.elem.8a2) = field_decl v, element0 [concrete]
+// CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.95c
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .v = %.loc13
+// CHECK:STDOUT:     .v = %.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +193,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %A => constants.%A.764
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.46a
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.b74
-// CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type.aac
+// CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.aac
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_in_function.carbon

@@ -21,12 +21,12 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although
   // that's not how we currently model `Core.Int`.
-  // CHECK:STDERR: min_prelude/parts/int.carbon:11:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
-  // CHECK:STDERR:   adapt MakeInt(N);
-  // CHECK:STDERR:         ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: note: in `i0` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+6]]:10: error: `Core.Int(N)` evaluates to incomplete type `i0` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/int.carbon:11:9: note: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR:   adapt MakeInt(N);
+  // CHECK:STDERR:         ^~~~~~~~~~
   var v: Core.Int(N);
 }
 

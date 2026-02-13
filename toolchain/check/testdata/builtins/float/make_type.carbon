@@ -39,7 +39,10 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: unsupported floating-point bit width 931 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+7]]:20: error: invalid float type [FloatTypeInvalid]
+// CHECK:STDERR: var invalid_float: Float(931);
+// CHECK:STDERR:                    ^~~~~~~~~~
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: note: unsupported floating-point bit width 931 [CompileTimeFloatBitWidth]
 // CHECK:STDERR: var invalid_float: Float(931);
 // CHECK:STDERR:                    ^~~~~~~~~~
 // CHECK:STDERR:

@@ -21,7 +21,10 @@ base class B {}
 class A(N:! i32) {
   extend base: B;
 
-  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+6]]:10: error: invalid int type [IntTypeInvalid]
+  // CHECK:STDERR:   var n: Int(N);
+  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:10: note: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   var n: Int(N);
   // CHECK:STDERR:          ^~~~~~
   var n: Int(N);
@@ -169,18 +172,18 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.f32 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.0e2 = value_param call_param0
-// CHECK:STDOUT:     %.loc15_13: type = splice_block %ptr.loc15 [concrete = constants.%ptr.0e2] {
+// CHECK:STDOUT:     %.loc18_13: type = splice_block %ptr.loc18 [concrete = constants.%ptr.0e2] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:       %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:       %bound_method.loc15_12.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc18_12.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc15_12.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_12.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:       %.loc15_12.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:       %.loc15_12.2: %i32 = converted %int_0, %.loc15_12.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:       %bound_method.loc18_12.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc18_12.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:       %.loc18_12.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:       %.loc18_12.2: %i32 = converted %int_0, %.loc18_12.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.6a9) [concrete = constants.%A.dc6]
-// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A [concrete = constants.%ptr.0e2]
+// CHECK:STDOUT:       %ptr.loc18: type = ptr_type %A [concrete = constants.%ptr.0e2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.0e2 = value_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -203,13 +206,13 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%N.loc6_9.1) [symbolic = %A (constants.%A.54d)]
 // CHECK:STDOUT:   %A.elem.loc7: type = unbound_element_type %A, constants.%B [symbolic = %A.elem.loc7 (constants.%A.elem.ade)]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc6_9.1, constants.%Int.as.ImplicitAs.impl.Convert.dd4 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound.d32)]
-// CHECK:STDOUT:   %bound_method.loc12_14.3: <bound method> = bound_method %N.loc6_9.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc12_14.3 (constants.%bound_method.d76)]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2: init Core.IntLiteral = call %bound_method.loc12_14.3(%N.loc6_9.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:   %iN.builtin: type = int_type signed, %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
+// CHECK:STDOUT:   %bound_method.loc15_14.3: <bound method> = bound_method %N.loc6_9.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_14.3 (constants.%bound_method.d76)]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2: init Core.IntLiteral = call %bound_method.loc15_14.3(%N.loc6_9.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:   %iN.builtin: type = int_type signed, %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN.builtin [symbolic = %require_complete (constants.%require_complete.c9d)]
-// CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type %A, %iN.builtin [symbolic = %A.elem.loc12 (constants.%A.elem.a53)]
+// CHECK:STDOUT:   %A.elem.loc15: type = unbound_element_type %A, %iN.builtin [symbolic = %A.elem.loc15 (constants.%A.elem.a53)]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.f1b)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
-// CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.8c7)]
+// CHECK:STDOUT:   %complete_type.loc16_1.2: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc16_1.2 (constants.%complete_type.8c7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
@@ -217,18 +220,18 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %Int.ref: %Int.type.b3e = name_ref Int, file.%Int.decl [concrete = constants.%Int.d6d]
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc6_9.2 [symbolic = %N.loc6_9.1 (constants.%N.5de)]
 // CHECK:STDOUT:     %impl.elem0: %.71e = impl_witness_access constants.%ImplicitAs.impl_witness.640, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.dd4]
-// CHECK:STDOUT:     %bound_method.loc12_14.1: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound.d32)]
+// CHECK:STDOUT:     %bound_method.loc15_14.1: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound.d32)]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc12_14.2: <bound method> = bound_method %N.ref, %specific_fn [symbolic = %bound_method.loc12_14.3 (constants.%bound_method.d76)]
-// CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call.loc12_14.1: init Core.IntLiteral = call %bound_method.loc12_14.2(%N.ref) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:     %.loc12_14.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc12_14.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:     %.loc12_14.2: Core.IntLiteral = converted %N.ref, %.loc12_14.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:     %Int.call: init type = call %Int.ref(%.loc12_14.2) [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
-// CHECK:STDOUT:     %.loc12_15.1: type = value_of_initializer %Int.call [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
-// CHECK:STDOUT:     %.loc12_15.2: type = converted %Int.call, %.loc12_15.1 [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
-// CHECK:STDOUT:     %.loc12_8: @A.%A.elem.loc12 (%A.elem.a53) = field_decl n, element1 [concrete]
-// CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness constants.%struct_type.base.n [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.8c7)]
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
+// CHECK:STDOUT:     %bound_method.loc15_14.2: <bound method> = bound_method %N.ref, %specific_fn [symbolic = %bound_method.loc15_14.3 (constants.%bound_method.d76)]
+// CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call.loc15_14.1: init Core.IntLiteral = call %bound_method.loc15_14.2(%N.ref) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:     %.loc15_14.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc15_14.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:     %.loc15_14.2: Core.IntLiteral = converted %N.ref, %.loc15_14.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:     %Int.call: init type = call %Int.ref(%.loc15_14.2) [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
+// CHECK:STDOUT:     %.loc15_15.1: type = value_of_initializer %Int.call [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
+// CHECK:STDOUT:     %.loc15_15.2: type = converted %Int.call, %.loc15_15.1 [symbolic = %iN.builtin (constants.%iN.builtin.f1b)]
+// CHECK:STDOUT:     %.loc15_8: @A.%A.elem.loc15 (%A.elem.a53) = field_decl n, element1 [concrete]
+// CHECK:STDOUT:     %complete_type.loc16_1.1: <witness> = complete_type_witness constants.%struct_type.base.n [symbolic = %complete_type.loc16_1.2 (constants.%complete_type.8c7)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc16_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.54d
@@ -236,7 +239,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     .base = %.loc7
 // CHECK:STDOUT:     .Int = <poisoned>
 // CHECK:STDOUT:     .N = <poisoned>
-// CHECK:STDOUT:     .n = %.loc12_8
+// CHECK:STDOUT:     .n = %.loc15_8
 // CHECK:STDOUT:     extend %B.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -249,15 +252,15 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %b.patt: %pattern_type.191 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %ptr.0e2 = name_ref a, %a
-// CHECK:STDOUT:   %.loc20_11: type = splice_block %ptr.loc20 [concrete = constants.%ptr.27c] {
+// CHECK:STDOUT:   %.loc23_11: type = splice_block %ptr.loc23 [concrete = constants.%ptr.27c] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B.ref [concrete = constants.%ptr.27c]
+// CHECK:STDOUT:     %ptr.loc23: type = ptr_type %B.ref [concrete = constants.%ptr.27c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_15.1: ref %A.dc6 = deref %a.ref
-// CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0
-// CHECK:STDOUT:   %addr: %ptr.27c = addr_of %.loc20_15.2
-// CHECK:STDOUT:   %.loc20_15.3: %ptr.27c = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.27c = value_binding b, %.loc20_15.3
+// CHECK:STDOUT:   %.loc23_15.1: ref %A.dc6 = deref %a.ref
+// CHECK:STDOUT:   %.loc23_15.2: ref %B = class_element_access %.loc23_15.1, element0
+// CHECK:STDOUT:   %addr: %ptr.27c = addr_of %.loc23_15.2
+// CHECK:STDOUT:   %.loc23_15.3: %ptr.27c = converted %a.ref, %addr
+// CHECK:STDOUT:   %b: %ptr.27c = value_binding b, %.loc23_15.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -272,12 +275,12 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %A => constants.%A.dc6
 // CHECK:STDOUT:   %A.elem.loc7 => constants.%A.elem.665
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound => constants.%Int.as.ImplicitAs.impl.Convert.bound.564
-// CHECK:STDOUT:   %bound_method.loc12_14.3 => constants.%bound_method.77d
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc12_14.2 => constants.%int_0.5c6
+// CHECK:STDOUT:   %bound_method.loc15_14.3 => constants.%bound_method.77d
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_14.2 => constants.%int_0.5c6
 // CHECK:STDOUT:   %iN.builtin => <error>
 // CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %A.elem.loc12 => <error>
+// CHECK:STDOUT:   %A.elem.loc15 => <error>
 // CHECK:STDOUT:   %struct_type.base.n => <error>
-// CHECK:STDOUT:   %complete_type.loc13_1.2 => <error>
+// CHECK:STDOUT:   %complete_type.loc16_1.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

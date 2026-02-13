@@ -243,7 +243,7 @@ class EvalContext {
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
   // Diagnostics inside eval should all prefer to use the `diagnoser()` if it is
-  // present. This can be done bu constructing the diagnostic, and passing it to
+  // present. This can be done by constructing the diagnostic, and passing it to
   // Diagnostics::Emitter::BuildDiagnosticOrNote, which will either use the
   // diagnostics as-is, or convert it to a note of the diagnostic that comes
   // from the `diagnoser()`.
@@ -2630,12 +2630,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                            },
                            diagnoser);
 
-  // FIXME: If diagnoser is null, should we construct one here? How about in the
-  // other eval paths?
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         // TODO: Require callers to provide a diagnoser instead of the nullptr
-        // default, then remove this note entirely.
+        // default? Then remove this note entirely. Or make `diagonser` a
+        // tri-state of "none provided, do not diagnose", "none provided,
+        // produce diagnostics", "daignoser provided, attach notes".
         if (!diagnoser) {
           CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
                             SemIR::SpecificId);
