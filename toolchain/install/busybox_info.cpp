@@ -83,11 +83,10 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
           p = p.parent_path();
         }
         if (!p.is_absolute() && (p.empty() || p.filename() == "..")) {
-          p = p / "..";
+          return p / "..";
         } else {
-          p = p.parent_path();
+          return p.parent_path();
         }
-        return p;
       };
 
       // Note that we walk up using `.parent_path` rather than by appending
