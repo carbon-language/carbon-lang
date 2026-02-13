@@ -193,6 +193,25 @@ class Emitter {
     }
   }
 
+  // For functions that produce diagnostics, either makes a new diagnostic, or
+  // uses the diagnoser, if present to make one and adds the new diagnostic as a
+  // note.
+  template <typename... Args>
+  auto BuildDiagnosticOrNote(
+      llvm::function_ref<auto()->Builder> diagnoser, LocT loc,
+      const Diagnostics::DiagnosticBase<Args...>& diagnostic_base,
+      Internal::NoTypeDeduction<Args>... args) -> Builder {
+    if (diagnoser) {
+      auto note = diagnostic_base;
+      note.Level = Diagnostics::Level::Note;
+      auto builder = diagnoser();
+      builder.Note(loc, note, std::forward<Args>(args)...);
+      return builder;
+    } else {
+      return Build(loc, diagnostic_base, std::forward<Args>(args)...);
+    }
+  }
+
  protected:
   // Callback type used to report context messages from ConvertLoc.
   // Note that the first parameter type is Loc rather than

@@ -54,7 +54,8 @@ auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
 // block.
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
-                             SemIR::GenericInstIndex::Region region)
+                             SemIR::GenericInstIndex::Region region,
+                             MakeDiagnosticBuilderFn diagnoser = nullptr)
     -> SemIR::InstBlockId;
 
 }  // namespace Carbon::Check

@@ -573,7 +573,17 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
 auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
   // TODO: Convert the deduced values to the types of the bindings.
 
-  return Check::MakeSpecific(context(), loc_id_, generic_id_, result_arg_ids_);
+  return Check::MakeSpecific(
+      context(), loc_id_, generic_id_, result_arg_ids_, [&] {
+        if (diagnose_) {
+          CARBON_DIAGNOSTIC(MonomorphizationErrorInDeduce, Error,
+                            "cannot deduce with invalid specific");
+          return context().emitter().Build(loc_id_,
+                                           MonomorphizationErrorInDeduce);
+        } else {
+          return context().emitter().BuildSuppressed();
+        }
+      });
 }
 
 auto DeduceGenericCallArguments(

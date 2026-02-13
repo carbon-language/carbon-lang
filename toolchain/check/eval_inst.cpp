@@ -53,8 +53,9 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ArrayInit inst)
       SemIR::TupleValue{.type_id = inst.type_id, .elements_id = inst.inits_id});
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::ArrayType inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::ArrayType inst)
+    -> ConstantEvalResult {
   auto bound_inst = context.insts().Get(inst.bound_id);
   auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
   if (!int_bound) {
@@ -70,17 +71,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       bound_val.isNegative()) {
     CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                       "array bound of {0} is negative", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
         ArrayBoundNegative, {.type = int_bound->type_id, .value = bound_val});
+    builder.Emit();
     return ConstantEvalResult::Error;
   }
   if (bound_val.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                       "array bound of {0} is too large", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
         ArrayBoundTooLarge, {.type = int_bound->type_id, .value = bound_val});
+    builder.Emit();
     return ConstantEvalResult::Error;
   }
   return ConstantEvalResult::NewSamePhase(inst);
@@ -252,9 +255,17 @@ auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::FloatType inst) -> ConstantEvalResult {
-  return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), inst)
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::FloatType inst)
+    -> ConstantEvalResult {
+  if (!diagnoser) {
+    diagnoser = [&] {
+      CARBON_DIAGNOSTIC(FloatTypeInvalid, Error, "invalid float type");
+      return context.emitter().Build(SemIR::LocId(inst_id), FloatTypeInvalid);
+    };
+  }
+  return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), diagnoser,
+                                     inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -315,8 +326,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::ImplWitnessAccess inst)
+    -> ConstantEvalResult {
   CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
                     "accessing member from impl before it has a defined value");
   CARBON_KIND_SWITCH(context.insts().Get(inst.witness_id)) {
@@ -340,7 +352,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       // If we get here, this impl witness table entry has not been populated
       // yet, because the impl was referenced within its own definition.
       // TODO: Add note pointing to the impl declaration.
-      context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+      auto builder = context.emitter().BuildDiagnosticOrNote(
+          diagnoser, inst_id, ImplAccessMemberBeforeSet);
+      builder.Emit();
       return ConstantEvalResult::Error;
     }
     case CARBON_KIND(SemIR::CustomWitness custom_witness): {
@@ -355,7 +369,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       // If we get here, this synthesized witness table entry has not been
       // populated yet.
       // TODO: Is this reachable? We have no test coverage for this diagnostic.
-      context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+      auto builder = context.emitter().BuildDiagnosticOrNote(
+          diagnoser, inst_id, ImplAccessMemberBeforeSet);
+      builder.Emit();
       return ConstantEvalResult::Error;
     }
     case CARBON_KIND(SemIR::LookupImplWitness witness): {
@@ -450,9 +466,16 @@ auto EvalConstantInst(Context& context, SemIR::InPlaceInit inst)
       context.constant_values().Get(inst.src_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::IntType inst) -> ConstantEvalResult {
-  return ValidateIntType(context, SemIR::LocId(inst_id), inst)
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::IntType inst)
+    -> ConstantEvalResult {
+  if (!diagnoser) {
+    diagnoser = [&] {
+      CARBON_DIAGNOSTIC(IntTypeInvalid, Error, "invalid int type");
+      return context.emitter().Build(SemIR::LocId(inst_id), IntTypeInvalid);
+    };
+  }
+  return ValidateIntType(context, SemIR::LocId(inst_id), diagnoser, inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -502,8 +525,9 @@ auto EvalConstantInst(Context& context, SemIR::NameRef inst)
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::RequireCompleteType inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::RequireCompleteType inst)
+    -> ConstantEvalResult {
   auto witness_type_id =
       GetSingletonType(context, SemIR::WitnessType::TypeInstId);
 
@@ -516,8 +540,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
               CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
                                 "{0} evaluates to incomplete type {1}",
                                 InstIdAsType, InstIdAsType);
-              return context.emitter().Build(
-                  inst_id, IncompleteTypeInMonomorphization,
+              return context.emitter().BuildDiagnosticOrNote(
+                  diagnoser, inst_id, IncompleteTypeInMonomorphization,
                   context.insts()
                       .GetAs<SemIR::RequireCompleteType>(inst_id)
                       .complete_type_inst_id,
@@ -536,10 +560,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::RequireSpecificDefinition inst)
     -> ConstantEvalResult {
   // This can return false, we just need to try it.
-  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
+  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id,
+                            diagnoser);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -550,8 +576,9 @@ auto EvalConstantInst(Context& context, SemIR::SpecificConstant inst)
       context.sem_ir(), inst.specific_id, inst.inst_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::SpecificImplFunction inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                      SemIR::InstId inst_id, SemIR::SpecificImplFunction inst)
+    -> ConstantEvalResult {
   auto callee_inst = context.insts().Get(inst.callee_id);
   // If the callee is not a function value, we're not ready to evaluate this
   // yet. Build a symbolic `SpecificImplFunction` constant.
@@ -597,7 +624,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
   auto specific_id =
-      MakeSpecific(context, SemIR::LocId(inst_id), generic_id, args);
+      MakeSpecific(context, SemIR::LocId(inst_id), generic_id, args, diagnoser);
   context.definitions_required_by_use().push_back(
       {SemIR::LocId(inst_id), specific_id});
 

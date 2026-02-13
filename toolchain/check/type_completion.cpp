@@ -108,7 +108,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       return false;
     }
     if (interface.generic_id.has_value()) {
-      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id,
+                                diagnoser);
     }
   }
 
@@ -125,7 +126,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       return false;
     }
     if (constraint.generic_id.has_value()) {
-      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id,
+                                diagnoser);
     }
   }
 
@@ -417,7 +419,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         return false;
       }
       if (inst.specific_id.has_value()) {
-        ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id);
+        ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id,
+                                  diagnoser_);
       }
       if (auto adapted_type_id =
               class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
@@ -926,7 +929,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         const auto& require = context.require_impls().Get(require_impls_id);
         auto require_specific =
             GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
-                context, require, extends.specific_id, self_facet_value);
+                context, require, extends.specific_id, self_facet_value,
+                diagnoser);
         auto require_self = GetConstantValueInRequireImplsSpecific(
             context, require_specific, require.self_id);
         auto require_facet_type = GetConstantValueInRequireImplsSpecific(
@@ -958,7 +962,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         const auto& require = context.require_impls().Get(require_impls_id);
         auto require_specific =
             GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
-                context, require, impls.specific_id, self_facet_value);
+                context, require, impls.specific_id, self_facet_value,
+                diagnoser);
         auto require_self = GetConstantValueInRequireImplsSpecific(
             context, require_specific, require.self_id);
         auto require_facet_type = GetConstantValueInRequireImplsSpecific(

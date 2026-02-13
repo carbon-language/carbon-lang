@@ -284,6 +284,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
         constant_kind == InstConstantKind::AlwaysUnique
             ? InstConstantNeedsInstIdKind::Permanent
             : InstConstantNeedsInstIdKind::No;
+    bool constant_needs_diagnoser = false;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -423,6 +424,16 @@ class InstKind::Definition : public InstKind {
   // Returns whether constant evaluation of this instruction needs an InstId.
   constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return info_.constant_needs_inst_id;
+  }
+
+  // Whether evaluation of the instruction can produce an error. Any instruction
+  // whose evaluation can produce a diagnostic should use `true`.
+  //
+  // Errors during eval lead to monomorphization errors when evaluating a
+  // specific. Emitting an error needs a diagnoser to properly attribute that
+  // error back to the specific instantiation when possible.
+  constexpr auto constant_needs_diagnoser() const -> bool {
+    return info_.constant_needs_diagnoser;
   }
 
   // Returns whether this instruction kind is a code block terminator. See

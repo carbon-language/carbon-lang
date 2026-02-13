@@ -4,6 +4,7 @@
 
 #include "toolchain/check/type.h"
 
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/type_completion.h"
@@ -14,7 +15,8 @@
 namespace Carbon::Check {
 
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
-                     SemIR::IntType result) -> bool {
+                     MakeDiagnosticBuilderFn diagnoser, SemIR::IntType result)
+    -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
@@ -25,27 +27,35 @@ auto ValidateIntType(Context& context, SemIR::LocId loc_id,
   if (bit_width_val.isZero() ||
       (context.types().IsSignedInt(bit_width->type_id) &&
        bit_width_val.isNegative())) {
-    CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
-                      "integer type width of {0} is not positive", TypedInt);
-    context.emitter().Emit(
-        loc_id, IntWidthNotPositive,
-        {.type = bit_width->type_id, .value = bit_width_val});
+    if (diagnoser) {
+      auto builder = diagnoser();
+      CARBON_DIAGNOSTIC(IntWidthNotPositive, Note,
+                        "integer type width of {0} is not positive", TypedInt);
+      builder.Note(loc_id, IntWidthNotPositive,
+                   {.type = bit_width->type_id, .value = bit_width_val});
+      builder.Emit();
+    }
     return false;
   }
   if (bit_width_val.ugt(IntStore::MaxIntWidth)) {
-    CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
-                      "integer type width of {0} is greater than the "
-                      "maximum supported width of {1}",
-                      TypedInt, int);
-    context.emitter().Emit(loc_id, IntWidthTooLarge,
-                           {.type = bit_width->type_id, .value = bit_width_val},
-                           IntStore::MaxIntWidth);
+    if (diagnoser) {
+      auto builder = diagnoser();
+      CARBON_DIAGNOSTIC(IntWidthTooLarge, Note,
+                        "integer type width of {0} is greater than the "
+                        "maximum supported width of {1}",
+                        TypedInt, int);
+      builder.Note(loc_id, IntWidthTooLarge,
+                   {.type = bit_width->type_id, .value = bit_width_val},
+                   IntStore::MaxIntWidth);
+      builder.Emit();
+    }
     return false;
   }
   return true;
 }
 
 auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 MakeDiagnosticBuilderFn diagnoser,
                                  SemIR::FloatType& result) -> bool {
   // Get the bit width value.
   auto bit_width_inst =
@@ -72,10 +82,15 @@ auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
         result.float_kind = SemIR::FloatKind::Binary128;
         break;
       default:
-        CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error,
-                          "unsupported floating-point bit width {0}", TypedInt);
-        context.emitter().Emit(loc_id, CompileTimeFloatBitWidth,
-                               TypedInt(bit_width_inst->type_id, bit_width));
+        if (diagnoser) {
+          auto builder = diagnoser();
+          CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Note,
+                            "unsupported floating-point bit width {0}",
+                            TypedInt);
+          builder.Note(loc_id, CompileTimeFloatBitWidth,
+                       TypedInt(bit_width_inst->type_id, bit_width));
+          builder.Emit();
+        }
         return false;
     }
   }

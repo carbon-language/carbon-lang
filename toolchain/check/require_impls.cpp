@@ -4,6 +4,7 @@
 
 #include "toolchain/check/require_impls.h"
 
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -36,7 +37,8 @@ static auto GetSpecificArgsFromEnclosingSpecific(
 
 auto GetRequireImplsSpecificFromEnclosingSpecific(
     Context& context, const SemIR::RequireImpls& require,
-    SemIR::SpecificId enclosing_specific_id) -> RequireImplsSpecific {
+    SemIR::SpecificId enclosing_specific_id, MakeDiagnosticBuilderFn diagnoser)
+    -> RequireImplsSpecific {
   if (enclosing_specific_id.has_value()) {
     auto enclosing_generic_decl =
         GetEnclosingDeclFromEnclosingSpecificId(context, enclosing_specific_id);
@@ -65,7 +67,7 @@ auto GetRequireImplsSpecificFromEnclosingSpecific(
   arg_ids.push_back(self_inst_id);
 
   auto specific_id = MakeSpecific(context, SemIR::LocId(require.decl_id),
-                                  require.generic_id, arg_ids);
+                                  require.generic_id, arg_ids, diagnoser);
   // TODO: Cache the specific on Context.
   return {.specific_id = specific_id};
 }
@@ -73,7 +75,8 @@ auto GetRequireImplsSpecificFromEnclosingSpecific(
 auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
     Context& context, const SemIR::RequireImpls& require,
     SemIR::SpecificId enclosing_specific_id,
-    SemIR::ConstantId self_facet_value_id) -> RequireImplsSpecific {
+    SemIR::ConstantId self_facet_value_id, MakeDiagnosticBuilderFn diagnoser)
+    -> RequireImplsSpecific {
   auto self_facet_value_inst_id =
       context.constant_values().GetInstId(self_facet_value_id);
   auto self_facet_value = context.insts().Get(self_facet_value_inst_id);
@@ -85,7 +88,7 @@ auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
   arg_ids.push_back(self_facet_value_inst_id);
 
   auto specific_id = MakeSpecific(context, SemIR::LocId(require.decl_id),
-                                  require.generic_id, arg_ids);
+                                  require.generic_id, arg_ids, diagnoser);
   // TODO: Cache the specific on Context.
   return {.specific_id = specific_id};
 }

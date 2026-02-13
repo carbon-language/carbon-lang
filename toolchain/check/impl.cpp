@@ -697,7 +697,8 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
 
     auto require_specific =
         GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
-            context, require, impl.interface.specific_id, self_facet_value);
+            context, require, impl.interface.specific_id, self_facet_value,
+            nullptr);
     auto self_const_id = GetConstantValueInRequireImplsSpecific(
         context, require_specific, require.self_id);
     auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(

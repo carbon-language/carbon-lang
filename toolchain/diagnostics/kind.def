@@ -312,6 +312,7 @@ CARBON_DIAGNOSTIC_KIND(DeductionGenericHere)
 CARBON_DIAGNOSTIC_KIND(InitializingGenericParam)
 CARBON_DIAGNOSTIC_KIND(CompTimeArgumentNotConstant)
 CARBON_DIAGNOSTIC_KIND(RuntimeConversionDuringCompTimeDeduction)
+CARBON_DIAGNOSTIC_KIND(MonomorphizationErrorInDeduce)
 
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
@@ -368,6 +369,10 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
+
+// Int and Float types
+CARBON_DIAGNOSTIC_KIND(FloatTypeInvalid)
+CARBON_DIAGNOSTIC_KIND(IntTypeInvalid)
 
 // Require checking.
 CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_EVAL_INST_H_
 #define CARBON_TOOLCHAIN_CHECK_EVAL_INST_H_
 
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
@@ -121,29 +122,42 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
 
 // Given an instruction kind, determines the type that should be used to declare
 // `EvalConstantInst` for that instruction.
-template <typename InstT, bool HasFn, bool HasInstId>
+template <typename InstT, bool HasFn, bool HasInstId, bool HasDiagnoser>
 struct FunctionTypeForEvalConstantInstImpl {
   // By default, we want no `EvalConstantInst` function at all. But we can't
   // express that, so use the type `auto () -> voic` as a placaeholder.
   using Type = auto() -> void;
 };
 template <typename InstT>
-struct FunctionTypeForEvalConstantInstImpl<InstT, true, false> {
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, false, false> {
   // Can be evaluated, evaluation doesn't need InstId.
   using Type = auto(Context& context, InstT inst) -> ConstantEvalResult;
 };
 template <typename InstT>
-struct FunctionTypeForEvalConstantInstImpl<InstT, true, true> {
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, true, false> {
   // Can be evaluated, evaluation needs InstId.
   using Type = auto(Context& context, SemIR::InstId inst_id, InstT inst)
       -> ConstantEvalResult;
+};
+template <typename InstT>
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, false, true> {
+  // Can be evaluated, evaluation doesn't need InstId.
+  using Type = auto(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                    InstT inst) -> ConstantEvalResult;
+};
+template <typename InstT>
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, true, true> {
+  // Can be evaluated, evaluation needs InstId.
+  using Type = auto(Context& context, MakeDiagnosticBuilderFn diagnoser,
+                    SemIR::InstId inst_id, InstT inst) -> ConstantEvalResult;
 };
 template <typename InstT>
 using FunctionTypeForEvalConstantInst =
     typename FunctionTypeForEvalConstantInstImpl<
         InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
         InstT::Kind.constant_needs_inst_id() !=
-            SemIR::InstConstantNeedsInstIdKind::No>::Type;
+            SemIR::InstConstantNeedsInstIdKind::No,
+        InstT::Kind.constant_needs_diagnoser()>::Type;
 
 }  // namespace Internal
 

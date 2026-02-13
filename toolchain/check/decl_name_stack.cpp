@@ -123,7 +123,7 @@ auto DeclNameStack::Restore(SuspendedName&& sus) -> void {
     // have been defined after we suspended this scope.
     if (suspended_scope.entry.specific_id.has_value()) {
       ResolveSpecificDefinition(*context_, sus.name_context.loc_id,
-                                suspended_scope.entry.specific_id);
+                                suspended_scope.entry.specific_id, nullptr);
     }
 
     context_->scope_stack().Restore(std::move(suspended_scope));
@@ -221,7 +221,7 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   if (generic_id.has_value()) {
     self_specific_id = context.generics().GetSelfSpecific(generic_id);
     // When declaring a member of a generic, resolve the self specific.
-    ResolveSpecificDefinition(context, loc_id, self_specific_id);
+    ResolveSpecificDefinition(context, loc_id, self_specific_id, nullptr);
   }
 
   // Close the generic stack scope and open a new one for whatever comes after

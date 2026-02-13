@@ -70,11 +70,13 @@ class EvalContext {
   explicit EvalContext(
       Context* context, SemIR::LocId fallback_loc_id,
       SemIR::SpecificId specific_id = SemIR::SpecificId::None,
-      std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
+      std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt,
+      MakeDiagnosticBuilderFn specific_diagnoser = nullptr)
       : context_(context),
         fallback_loc_id_(fallback_loc_id),
         specific_id_(specific_id),
-        specific_eval_info_(specific_eval_info) {}
+        specific_eval_info_(specific_eval_info),
+        specific_diagnoser_(specific_diagnoser) {}
 
   EvalContext(const EvalContext&) = delete;
   auto operator=(const EvalContext&) -> EvalContext& = delete;
@@ -240,7 +242,13 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
+  // Diagnostics inside eval should all prefer to use the `diagnoser()` if it is
+  // present. This can be done bu constructing the diagnostic, and passing it to
+  // Diagnostics::Emitter::BuildDiagnosticOrNote, which will either use the
+  // diagnostics as-is, or convert it to a note of the diagnostic that comes
+  // from the `diagnoser()`.
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
+  auto diagnoser() -> MakeDiagnosticBuilderFn { return specific_diagnoser_; }
 
  protected:
   explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
@@ -266,6 +274,11 @@ class EvalContext {
   // If we are currently evaluating an eval block for `specific_id_`,
   // information about that evaluation.
   std::optional<SpecificEvalInfo> specific_eval_info_;
+  // When instantiating a specific this can contain a diagnoser to construct
+  // the error diagnostic to report when encountering a monomorphization error.
+  // In that case, the error in eval becomes a note on the returned builder
+  // instead of an error diagnostic of its own.
+  MakeDiagnosticBuilderFn specific_diagnoser_;
   // If we are currently evaluating within a local scope, values of local
   // instructions that have already been evaluated. This is here rather than in
   // `FunctionEvalContext` so we can reference it from `GetConstantValue`.
@@ -443,8 +456,10 @@ static auto DiagnoseNonConstantValue(EvalContext& eval_context,
   if (inst_id != SemIR::ErrorInst::InstId) {
     CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
                       "expression is runtime; expected constant");
-    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
-                                EvalRequiresConstantValue);
+    auto builder = eval_context.emitter().BuildDiagnosticOrNote(
+        eval_context.diagnoser(), eval_context.GetDiagnosticLoc({inst_id}),
+        EvalRequiresConstantValue);
+    builder.Emit();
   }
 }
 
@@ -928,7 +943,7 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
     return;
   }
   ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
-                      specific_id);
+                      specific_id, eval_context.diagnoser());
 }
 
 // Resolves the specific declarations for a specific id in any field of the
@@ -1043,9 +1058,11 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
                           "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
-        eval_context.emitter().Emit(
+        auto builder = eval_context.emitter().BuildDiagnosticOrNote(
+            eval_context.diagnoser(),
             eval_context.GetDiagnosticLoc(inst.index_id), ArrayIndexOutOfBounds,
             {.type = index->type_id, .value = index_val}, aggregate_type_id);
+        builder.Emit();
         return SemIR::ErrorInst::ConstantId;
       }
     }
@@ -1069,8 +1086,9 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
 
 // Performs a conversion between character types, diagnosing if the value
 // doesn't fit in the destination type.
-static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
-                                      SemIR::InstId arg_id,
+static auto PerformCheckedCharConvert(Context& context,
+                                      MakeDiagnosticBuilderFn diagnoser,
+                                      SemIR::LocId loc_id, SemIR::InstId arg_id,
                                       SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
   auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
@@ -1080,8 +1098,9 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
                       "character value {0} too large for type {1}",
                       SemIR::CharId, SemIR::TypeId);
-    context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
-                           dest_type_id);
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, CharTooLargeForType, arg.value, dest_type_id);
+    builder.Emit();
     return SemIR::ErrorInst::ConstantId;
   }
 
@@ -1091,13 +1110,21 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
-static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
-                              SemIR::IntKind int_kind, SemIR::InstId width_id,
-                              Phase phase) -> SemIR::ConstantId {
+static auto MakeIntTypeResult(Context& context,
+                              MakeDiagnosticBuilderFn diagnoser,
+                              SemIR::LocId loc_id, SemIR::IntKind int_kind,
+                              SemIR::InstId width_id, Phase phase)
+    -> SemIR::ConstantId {
+  if (!diagnoser) {
+    diagnoser = [&] {
+      CARBON_DIAGNOSTIC(IntTypeInvalid, Error, "invalid int type");
+      return context.emitter().Build(loc_id, IntTypeInvalid);
+    };
+  }
   auto result = SemIR::IntType{.type_id = SemIR::TypeType::TypeId,
                                .int_kind = int_kind,
                                .bit_width_id = width_id};
-  if (!ValidateIntType(context, loc_id, result)) {
+  if (!ValidateIntType(context, loc_id, diagnoser, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
@@ -1105,13 +1132,20 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
 
 // Forms a constant float type as an evaluation result. Requires that width_id
 // is constant.
-static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
-                                SemIR::InstId width_id, Phase phase)
-    -> SemIR::ConstantId {
+static auto MakeFloatTypeResult(Context& context,
+                                MakeDiagnosticBuilderFn diagnoser,
+                                SemIR::LocId loc_id, SemIR::InstId width_id,
+                                Phase phase) -> SemIR::ConstantId {
+  if (!diagnoser) {
+    diagnoser = [&] {
+      CARBON_DIAGNOSTIC(FloatTypeInvalid, Error, "invalid float type");
+      return context.emitter().Build(loc_id, FloatTypeInvalid);
+    };
+  }
   auto result = SemIR::FloatType{.type_id = SemIR::TypeType::TypeId,
                                  .bit_width_id = width_id,
                                  .float_kind = SemIR::FloatKind::None};
-  if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
+  if (!ValidateFloatTypeAndSetKind(context, loc_id, diagnoser, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
@@ -1139,8 +1173,9 @@ static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
 
 // Performs a conversion between integer types, diagnosing if the value doesn't
 // fit in the destination type.
-static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
-                                     SemIR::InstId arg_id,
+static auto PerformCheckedIntConvert(Context& context,
+                                     MakeDiagnosticBuilderFn diagnoser,
+                                     SemIR::LocId loc_id, SemIR::InstId arg_id,
                                      SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
   auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
@@ -1157,9 +1192,10 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
         NegativeIntInUnsignedType, Error,
         "negative integer value {0} converted to unsigned type {1}", TypedInt,
         SemIR::TypeId);
-    context.emitter().Emit(loc_id, NegativeIntInUnsignedType,
-                           {.type = arg.type_id, .value = arg_val},
-                           dest_type_id);
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, NegativeIntInUnsignedType,
+        {.type = arg.type_id, .value = arg_val}, dest_type_id);
+    builder.Emit();
   }
 
   unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
@@ -1167,9 +1203,10 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(IntTooLargeForType, Error,
                       "integer value {0} too large for type {1}", TypedInt,
                       SemIR::TypeId);
-    context.emitter().Emit(loc_id, IntTooLargeForType,
-                           {.type = arg.type_id, .value = arg_val},
-                           dest_type_id);
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, IntTooLargeForType,
+        {.type = arg.type_id, .value = arg_val}, dest_type_id);
+    builder.Emit();
   }
 
   return MakeConstantResult(
@@ -1179,10 +1216,9 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
 
 // Performs a conversion between floating-point types, diagnosing if the value
 // doesn't fit in the destination type.
-static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
-                                       SemIR::InstId arg_id,
-                                       SemIR::TypeId dest_type_id)
-    -> SemIR::ConstantId {
+static auto PerformCheckedFloatConvert(
+    Context& context, MakeDiagnosticBuilderFn diagnoser, SemIR::LocId loc_id,
+    SemIR::InstId arg_id, SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
   auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
   CARBON_CHECK(dest_type_object_rep_id.has_value(),
                "Conversion to incomplete type");
@@ -1234,8 +1270,10 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(FloatLiteralTooLargeForType, Error,
                         "value {0} too large for floating-point type {1}",
                         RealId, SemIR::TypeId);
-      context.emitter().Emit(loc_id, FloatLiteralTooLargeForType,
-                             literal->real_id, dest_type_id);
+      auto builder = context.emitter().BuildDiagnosticOrNote(
+          diagnoser, loc_id, FloatLiteralTooLargeForType, literal->real_id,
+          dest_type_id);
+      builder.Emit();
       return SemIR::ErrorInst::ConstantId;
     }
     return MakeFloatResult(context, dest_type_id, std::move(result));
@@ -1256,8 +1294,10 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
                       "value {0} too large for floating-point type {1}",
                       llvm::APFloat, SemIR::TypeId);
-    context.emitter().Emit(loc_id, FloatTooLargeForType,
-                           context.floats().Get(arg.float_id), dest_type_id);
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, FloatTooLargeForType,
+        context.floats().Get(arg.float_id), dest_type_id);
+    builder.Emit();
     return SemIR::ErrorInst::ConstantId;
   }
 
@@ -1265,10 +1305,13 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
 }
 
 // Issues a diagnostic for a compile-time division by zero.
-static auto DiagnoseDivisionByZero(Context& context, SemIR::LocId loc_id)
-    -> void {
+static auto DiagnoseDivisionByZero(Context& context,
+                                   MakeDiagnosticBuilderFn diagnoser,
+                                   SemIR::LocId loc_id) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");
-  context.emitter().Emit(loc_id, CompileTimeDivisionByZero);
+  auto builder = context.emitter().BuildDiagnosticOrNote(
+      diagnoser, loc_id, CompileTimeDivisionByZero);
+  builder.Emit();
 }
 
 // Get an integer at a suitable bit-width: either `bit_width_id` if it has a
@@ -1281,7 +1324,9 @@ static auto GetIntAtSuitableWidth(Context& context, IntId int_id,
 }
 
 // Performs a builtin unary integer -> integer operation.
-static auto PerformBuiltinUnaryIntOp(Context& context, SemIR::LocId loc_id,
+static auto PerformBuiltinUnaryIntOp(Context& context,
+                                     MakeDiagnosticBuilderFn diagnoser,
+                                     SemIR::LocId loc_id,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
@@ -1296,8 +1341,10 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIR::LocId loc_id,
         if (bit_width_id.has_value()) {
           CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                             "integer overflow in negation of {0}", TypedInt);
-          context.emitter().Emit(loc_id, CompileTimeIntegerNegateOverflow,
-                                 {.type = op.type_id, .value = op_val});
+          auto builder = context.emitter().BuildDiagnosticOrNote(
+              diagnoser, loc_id, CompileTimeIntegerNegateOverflow,
+              {.type = op.type_id, .value = op_val});
+          builder.Emit();
         } else {
           // Widen the integer so we don't overflow into the sign bit.
           op_val = op_val.sext(op_val.getBitWidth() +
@@ -1448,7 +1495,9 @@ static auto ComputeBinaryIntOpResult(SemIR::BuiltinFunctionKind builtin_kind,
 }
 
 // Performs a builtin integer bit shift operation.
-static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
+static auto PerformBuiltinIntShiftOp(Context& context,
+                                     MakeDiagnosticBuilderFn diagnoser,
+                                     SemIR::LocId loc_id,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId lhs_id, SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
@@ -1466,11 +1515,12 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
         CompileTimeShiftOutOfRange, Error,
         "shift distance >= type width of {0} in `{1} {2:<<|>>} {3}`", unsigned,
         TypedInt, Diagnostics::BoolAsSelect, TypedInt);
-    context.emitter().Emit(
-        loc_id, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
         {.type = lhs.type_id, .value = lhs_val},
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
         {.type = rhs.type_id, .value = rhs_orig_val});
+    builder.Emit();
     // TODO: Is it useful to recover by returning 0 or -1?
     return SemIR::ErrorInst::ConstantId;
   }
@@ -1480,11 +1530,12 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(CompileTimeShiftNegative, Error,
                       "shift distance negative in `{0} {1:<<|>>} {2}`",
                       TypedInt, Diagnostics::BoolAsSelect, TypedInt);
-    context.emitter().Emit(
-        loc_id, CompileTimeShiftNegative,
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, CompileTimeShiftNegative,
         {.type = lhs.type_id, .value = lhs_val},
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
         {.type = rhs.type_id, .value = rhs_orig_val});
+    builder.Emit();
     // TODO: Is it useful to recover by returning 0 or -1?
     return SemIR::ErrorInst::ConstantId;
   }
@@ -1502,9 +1553,11 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
                           "integer whose width is greater than the "
                           "maximum supported width of {1}",
                           TypedInt, int);
-        context.emitter().Emit(loc_id, CompileTimeUnsizedShiftOutOfRange,
-                               {.type = rhs.type_id, .value = rhs_orig_val},
-                               IntStore::MaxIntWidth);
+        auto builder = context.emitter().BuildDiagnosticOrNote(
+            diagnoser, loc_id, CompileTimeUnsizedShiftOutOfRange,
+            {.type = rhs.type_id, .value = rhs_orig_val},
+            IntStore::MaxIntWidth);
+        builder.Emit();
         return SemIR::ErrorInst::ConstantId;
       }
       lhs_val = lhs_val.sext(
@@ -1526,11 +1579,10 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
 }
 
 // Performs a homogeneous builtin binary integer -> integer operation.
-static auto PerformBuiltinBinaryIntOp(Context& context, SemIR::LocId loc_id,
-                                      SemIR::BuiltinFunctionKind builtin_kind,
-                                      SemIR::InstId lhs_id,
-                                      SemIR::InstId rhs_id)
-    -> SemIR::ConstantId {
+static auto PerformBuiltinBinaryIntOp(
+    Context& context, MakeDiagnosticBuilderFn diagnoser, SemIR::LocId loc_id,
+    SemIR::BuiltinFunctionKind builtin_kind, SemIR::InstId lhs_id,
+    SemIR::InstId rhs_id) -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntValue>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::IntValue>(rhs_id);
 
@@ -1548,7 +1600,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIR::LocId loc_id,
     case SemIR::BuiltinFunctionKind::IntUDiv:
     case SemIR::BuiltinFunctionKind::IntUMod:
       if (rhs_val.isZero()) {
-        DiagnoseDivisionByZero(context, loc_id);
+        DiagnoseDivisionByZero(context, diagnoser, loc_id);
         return SemIR::ErrorInst::ConstantId;
       }
       break;
@@ -1590,9 +1642,11 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
                       "integer overflow in calculation `{0} {1} {2}`", TypedInt,
                       Lex::TokenKind, TypedInt);
-    context.emitter().Emit(loc_id, CompileTimeIntegerOverflow,
-                           {.type = type_id, .value = lhs_val}, result.op_token,
-                           {.type = type_id, .value = rhs_val});
+    auto builder = context.emitter().BuildDiagnosticOrNote(
+        diagnoser, loc_id, CompileTimeIntegerOverflow,
+        {.type = type_id, .value = lhs_val}, result.op_token,
+        {.type = type_id, .value = rhs_val});
+    builder.Emit();
   }
 
   return MakeIntResult(context, type_id, is_signed,
@@ -1740,8 +1794,10 @@ static auto PerformBuiltinBoolComparison(
 }
 
 // Converts a call argument to a FacetTypeId.
-static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
-                             SemIR::InstId arg_id) -> SemIR::FacetTypeId {
+static auto ArgToFacetTypeId(Context& context,
+                             MakeDiagnosticBuilderFn diagnoser,
+                             SemIR::LocId loc_id, SemIR::InstId arg_id)
+    -> SemIR::FacetTypeId {
   auto type_arg_id = context.types().GetAsTypeInstId(arg_id);
   if (auto facet_type =
           context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
@@ -1754,8 +1810,10 @@ static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
   // the whole thing. If that's not possible we can change the text to
   // say if it's referring to the left or the right side for the error.
   // The `arg_id` instruction has no location in it for some reason.
-  context.emitter().Emit(loc_id, FacetTypeRequiredForTypeAndOperator,
-                         context.types().GetTypeIdForTypeInstId(type_arg_id));
+  auto builder = context.emitter().BuildDiagnosticOrNote(
+      diagnoser, loc_id, FacetTypeRequiredForTypeAndOperator,
+      context.types().GetTypeIdForTypeInstId(type_arg_id));
+  builder.Emit();
   return SemIR::FacetTypeId::None;
 }
 
@@ -1806,10 +1864,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (index_val.isNegative()) {
         CARBON_DIAGNOSTIC(StringAtIndexNegative, Error,
                           "index `{0}` is negative.", TypedInt);
-        context.emitter().Emit(
-            loc_id, StringAtIndexNegative,
+        auto builder = context.emitter().BuildDiagnosticOrNote(
+            eval_context.diagnoser(), loc_id, StringAtIndexNegative,
             {.type = eval_context.insts().Get(index_id).type_id(),
              .value = index_val});
+        builder.Emit();
         return SemIR::ConstantId::NotConstant;
       }
 
@@ -1818,11 +1877,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
             StringAtIndexOutOfBounds, Error,
             "string index `{0}` is out of bounds; string has length {1}.",
             TypedInt, size_t);
-        context.emitter().Emit(
-            loc_id, StringAtIndexOutOfBounds,
+        auto builder = context.emitter().BuildDiagnosticOrNote(
+            eval_context.diagnoser(), loc_id, StringAtIndexOutOfBounds,
             {.type = eval_context.insts().Get(index_id).type_id(),
              .value = index_val},
             string_value.size());
+        builder.Emit();
         return SemIR::ConstantId::NotConstant;
       }
 
@@ -1869,8 +1929,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       CARBON_CHECK(arg_ids.size() == 2);
-      auto lhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[0]);
-      auto rhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[1]);
+      auto lhs_facet_type_id = ArgToFacetTypeId(
+          context, eval_context.diagnoser(), loc_id, arg_ids[0]);
+      auto rhs_facet_type_id = ArgToFacetTypeId(
+          context, eval_context.diagnoser(), loc_id, arg_ids[1]);
 
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
@@ -1907,17 +1969,18 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
-      return MakeIntTypeResult(context, loc_id, SemIR::IntKind::Signed,
-                               arg_ids[0], phase);
+      return MakeIntTypeResult(context, eval_context.diagnoser(), loc_id,
+                               SemIR::IntKind::Signed, arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned: {
-      return MakeIntTypeResult(context, loc_id, SemIR::IntKind::Unsigned,
-                               arg_ids[0], phase);
+      return MakeIntTypeResult(context, eval_context.diagnoser(), loc_id,
+                               SemIR::IntKind::Unsigned, arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::FloatMakeType: {
-      return MakeFloatTypeResult(context, loc_id, arg_ids[0], phase);
+      return MakeFloatTypeResult(context, eval_context.diagnoser(), loc_id,
+                                 arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
@@ -1938,8 +2001,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedCharConvert(context, loc_id, arg_ids[0],
-                                       call.type_id);
+      return PerformCheckedCharConvert(context, eval_context.diagnoser(),
+                                       loc_id, arg_ids[0], call.type_id);
     }
 
     // Integer conversions.
@@ -1959,8 +2022,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedIntConvert(context, loc_id, arg_ids[0],
-                                      call.type_id);
+      return PerformCheckedIntConvert(context, eval_context.diagnoser(), loc_id,
+                                      arg_ids[0], call.type_id);
     }
 
     // Unary integer -> integer operations.
@@ -1970,8 +2033,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinUnaryIntOp(context, loc_id, builtin_kind,
-                                      arg_ids[0]);
+      return PerformBuiltinUnaryIntOp(context, eval_context.diagnoser(), loc_id,
+                                      builtin_kind, arg_ids[0]);
     }
 
     // Homogeneous binary integer -> integer operations.
@@ -1991,8 +2054,9 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinBinaryIntOp(context, loc_id, builtin_kind,
-                                       arg_ids[0], arg_ids[1]);
+      return PerformBuiltinBinaryIntOp(context, eval_context.diagnoser(),
+                                       loc_id, builtin_kind, arg_ids[0],
+                                       arg_ids[1]);
     }
 
     // Bit shift operations.
@@ -2001,8 +2065,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinIntShiftOp(context, loc_id, builtin_kind, arg_ids[0],
-                                      arg_ids[1]);
+      return PerformBuiltinIntShiftOp(context, eval_context.diagnoser(), loc_id,
+                                      builtin_kind, arg_ids[0], arg_ids[1]);
     }
 
     // Integer comparisons.
@@ -2024,8 +2088,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedFloatConvert(context, loc_id, arg_ids[0],
-                                        call.type_id);
+      return PerformCheckedFloatConvert(context, eval_context.diagnoser(),
+                                        loc_id, arg_ids[0], call.type_id);
     }
 
     // Unary float -> float operations.
@@ -2279,14 +2343,30 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     } else if constexpr (InstT::Kind.constant_needs_inst_id() !=
                          SemIR::InstConstantNeedsInstIdKind::No) {
       CARBON_CHECK(inst_id.has_value());
-      return ConvertEvalResultToConstantId(
-          eval_context.context(),
-          EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
-          phase);
+      if constexpr (InstT::Kind.constant_needs_diagnoser()) {
+        return ConvertEvalResultToConstantId(
+            eval_context.context(),
+            EvalConstantInst(eval_context.context(), eval_context.diagnoser(),
+                             inst_id, inst.As<InstT>()),
+            phase);
+      } else {
+        return ConvertEvalResultToConstantId(
+            eval_context.context(),
+            EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
+            phase);
+      }
     } else {
-      return ConvertEvalResultToConstantId(
-          eval_context.context(),
-          EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
+      if constexpr (InstT::Kind.constant_needs_diagnoser()) {
+        return ConvertEvalResultToConstantId(
+            eval_context.context(),
+            EvalConstantInst(eval_context.context(), eval_context.diagnoser(),
+                             inst.As<InstT>()),
+            phase);
+      } else {
+        return ConvertEvalResultToConstantId(
+            eval_context.context(),
+            EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
+      }
     }
   }
 }
@@ -2533,7 +2613,8 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
-                             SemIR::GenericInstIndex::Region region)
+                             SemIR::GenericInstIndex::Region region,
+                             MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::InstBlockId {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
@@ -2546,13 +2627,20 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                            SpecificEvalInfo{
                                .region = region,
                                .values = result,
-                           });
+                           },
+                           diagnoser);
 
+  // FIXME: If diagnoser is null, should we construct one here? How about in the
+  // other eval paths?
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
-                          SemIR::SpecificId);
-        builder.Note(loc_id, ResolvingSpecificHere, specific_id);
+        // TODO: Require callers to provide a diagnoser instead of the nullptr
+        // default, then remove this note entirely.
+        if (!diagnoser) {
+          CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
+                            SemIR::SpecificId);
+          builder.Note(loc_id, ResolvingSpecificHere, specific_id);
+        }
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {

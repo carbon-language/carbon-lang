@@ -505,7 +505,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
        GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
+    if (!ResolveSpecificDefinition(context_, loc, specific_id, nullptr)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,

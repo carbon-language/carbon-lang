@@ -186,7 +186,8 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
     arg_ids.push_back(new_arg_id);
   }
 
-  return MakeSpecific(context, loc_id, generic_id, arg_ids);
+  // TODO: Receive a diagnoser from the caller?
+  return MakeSpecific(context, loc_id, generic_id, arg_ids, nullptr);
 }
 
 auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
@@ -211,7 +212,9 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     auto arg_ids =
         GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
                                    self_type_id, self_witness_id);
-    auto const_specific_id = MakeSpecific(context, loc_id, generic_id, arg_ids);
+    // TODO: Receive a diagnoser from the caller?
+    auto const_specific_id =
+        MakeSpecific(context, loc_id, generic_id, arg_ids, nullptr);
     return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
                                           decl_id);
   }

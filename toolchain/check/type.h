@@ -13,11 +13,13 @@ namespace Carbon::Check {
 
 // Enforces that an integer type has a valid bit width.
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
-                     SemIR::IntType result) -> bool;
+                     MakeDiagnosticBuilderFn diagnoser, SemIR::IntType result)
+    -> bool;
 
 // Enforces that a float type has a valid bit width. If the `float_kind` field
 // is `None`, sets it to a suitable kind for the bit width.
 auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 MakeDiagnosticBuilderFn diagnoser,
                                  SemIR::FloatType& result) -> bool;
 
 // Gets the type to use for an unbound associated entity declared in this

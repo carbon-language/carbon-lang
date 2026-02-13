@@ -181,6 +181,7 @@ struct ArrayType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
+       .constant_needs_diagnoser = true,
        .deduce_through = true});
 
   TypeId type_id;
@@ -723,6 +724,7 @@ struct FloatType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
+       .constant_needs_diagnoser = true,
        .deduce_through = true});
 
   TypeId type_id;
@@ -887,6 +889,7 @@ struct ImplWitnessAccess {
            .constant_kind = InstConstantKind::SymbolicOnly,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
+           .constant_needs_diagnoser = true,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1109,6 +1112,7 @@ struct IntType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
+       .constant_needs_diagnoser = true,
        .deduce_through = true});
 
   TypeId type_id;
@@ -1440,6 +1444,7 @@ struct RequireCompleteType {
            .constant_kind = InstConstantKind::SymbolicOnly,
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
+           .constant_needs_diagnoser = true,
            .is_lowered = false});
   // Always the builtin `WitnessType` type.
   TypeId type_id;
@@ -1466,6 +1471,7 @@ struct RequireSpecificDefinition {
       InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
           {.ir_name = "require_specific_def",
            .constant_kind = InstConstantKind::Conditional,
+           .constant_needs_diagnoser = true,
            .is_lowered = false});
   // Always the builtin `RequireSpecificDefinitionType` type.
   TypeId type_id;
@@ -1668,7 +1674,8 @@ struct SpecificImplFunction {
           {.ir_name = "specific_impl_function",
            .constant_kind = InstConstantKind::SymbolicOnly,
            // InstId is added to definitions_required_by_use.
-           .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
+           .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,
+           .constant_needs_diagnoser = true});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;

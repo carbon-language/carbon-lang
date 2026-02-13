@@ -477,7 +477,7 @@ auto FinishGenericDecl(Context& context, SemIR::LocId loc_id,
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
   ResolveSpecificDecl(context, loc_id,
-                      context.generics().GetSelfSpecific(generic_id));
+                      context.generics().GetSelfSpecific(generic_id), nullptr);
 }
 
 auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
@@ -645,7 +645,8 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
 }
 
 auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
-                         SemIR::SpecificId specific_id) -> void {
+                         SemIR::SpecificId specific_id,
+                         MakeDiagnosticBuilderFn diagnoser) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   auto& specific = context.specifics().Get(specific_id);
@@ -654,25 +655,26 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
 
-    specific.decl_block_id =
-        TryEvalBlockForSpecific(context, loc_id, specific_id,
-                                SemIR::GenericInstIndex::Region::Declaration);
+    specific.decl_block_id = TryEvalBlockForSpecific(
+        context, loc_id, specific_id,
+        SemIR::GenericInstIndex::Region::Declaration, diagnoser);
   }
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId {
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
+                  MakeDiagnosticBuilderFn diagnoser) -> SemIR::SpecificId {
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
-  ResolveSpecificDecl(context, loc_id, specific_id);
+  ResolveSpecificDecl(context, loc_id, specific_id, diagnoser);
   return specific_id;
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
+                  llvm::ArrayRef<SemIR::InstId> args,
+                  MakeDiagnosticBuilderFn diagnoser) -> SemIR::SpecificId {
   auto args_id = context.inst_blocks().AddCanonical(args);
-  return MakeSpecific(context, loc_id, generic_id, args_id);
+  return MakeSpecific(context, loc_id, generic_id, args_id, diagnoser);
 }
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
@@ -701,12 +703,13 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
   // TODO: This could be made more efficient. We don't need to perform
   // substitution here; we know we want identity mappings for all constants and
   // types. We could also consider not storing the mapping at all in this case.
-  ResolveSpecificDecl(context, loc_id, specific_id);
+  ResolveSpecificDecl(context, loc_id, specific_id, nullptr);
   return specific_id;
 }
 
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool {
+                               SemIR::SpecificId specific_id,
+                               MakeDiagnosticBuilderFn diagnoser) -> bool {
   // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
@@ -720,8 +723,9 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    specific.definition_block_id = TryEvalBlockForSpecific(
-        context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
+    specific.definition_block_id =
+        TryEvalBlockForSpecific(context, loc_id, specific_id,
+                                SemIR::GenericInstIndex::Definition, diagnoser);
   }
   return true;
 }

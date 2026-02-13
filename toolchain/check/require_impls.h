@@ -23,14 +23,16 @@ struct RequireImplsSpecific {
 // constructed from the enclosing one.
 auto GetRequireImplsSpecificFromEnclosingSpecific(
     Context& context, const SemIR::RequireImpls& require,
-    SemIR::SpecificId enclosing_specific_id) -> RequireImplsSpecific;
+    SemIR::SpecificId enclosing_specific_id, MakeDiagnosticBuilderFn diagnoser)
+    -> RequireImplsSpecific;
 
 // Like GetRequireImplsSpecificFromEnclosingSpecific but the `Self` value in the
 // specific is replaced by a given facet value.
 auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
     Context& context, const SemIR::RequireImpls& require,
     SemIR::SpecificId enclosing_specific_id,
-    SemIR::ConstantId self_facet_value_id) -> RequireImplsSpecific;
+    SemIR::ConstantId self_facet_value_id, MakeDiagnosticBuilderFn diagnoser)
+    -> RequireImplsSpecific;
 
 // Returns the constant value of `inst_id` from inside a RequireImpls
 // declaration, mapped into `enclosing_specific_id`. If an error results, it
