@@ -62,6 +62,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // through an `as type` conversion, that is, to a value of type `TypeType`.
   auto GetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
+  // Like GetTypeIdForTypeConstantId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
+
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
   //
@@ -79,7 +83,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetAsTypeInstId(InstId inst_id) const -> TypeInstId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> TypeInstId;
+  auto GetTypeInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
@@ -112,6 +116,13 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return GetAsInst(type_id).Is<InstT>();
   }
 
+  // Returns whether one of the specified kinds of instruction was used to
+  // define the type.
+  template <typename... InstTs>
+  auto IsOneOf(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).IsOneOf<InstTs...>();
+  }
+
   // Returns the instruction used to define the specified type, which is known
   // to be a particular kind of instruction.
   template <typename InstT>
@@ -130,7 +141,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // case where they might be in different generics and thus might have
   // different ConstantIds, but are still symbolically equal.
   auto AreEqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
-    return GetInstId(a) == GetInstId(b);
+    return GetTypeInstId(a) == GetTypeInstId(b);
   }
 
   // Gets the value representation to use for a type. This returns an

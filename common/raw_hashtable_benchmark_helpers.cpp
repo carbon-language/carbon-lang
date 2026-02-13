@@ -31,24 +31,19 @@ static_assert(llvm::isPowerOf2_64(NumChars));
 // characters. Real-world strings aren't uniform across ASCII or Unicode, etc.
 // And for *micro*-benchmarking we want to focus on the map overhead with short,
 // fast keys.
-static auto MakeChars() -> llvm::OwningArrayRef<char> {
-  llvm::OwningArrayRef<char> characters(NumChars);
+static auto MakeChars() -> llvm::SmallVector<char> {
+  llvm::SmallVector<char> characters;
+  characters.reserve(NumChars);
 
   // Start with `-` and `_`, and then add `a` - `z`, `A` - `Z`, and `0` - `9`.
-  characters[0] = '-';
-  characters[1] = '_';
-  ssize_t i = 2;
-  for (auto range :
-       {llvm::seq_inclusive('a', 'z'), llvm::seq_inclusive('A', 'Z'),
-        llvm::seq_inclusive('0', '9')}) {
-    for (char c : range) {
-      characters[i] = c;
-      ++i;
-    }
-  }
-  CARBON_CHECK(i == NumChars,
+  characters.push_back('-');
+  characters.push_back('_');
+  llvm::append_range(characters, llvm::seq_inclusive('a', 'z'));
+  llvm::append_range(characters, llvm::seq_inclusive('A', 'Z'));
+  llvm::append_range(characters, llvm::seq_inclusive('0', '9'));
+  CARBON_CHECK(characters.size() == NumChars,
                "Expected exactly {0} characters, got {1} instead!", NumChars,
-               i);
+               characters.size());
   return characters;
 }
 
@@ -59,21 +54,23 @@ static_assert(llvm::isPowerOf2_64(NumFourCharStrs));
 // intense -- 64 MiB -- but ends up being much cheaper by letting us reliably
 // select a unique 4-character sequence to avoid collisions.
 static auto MakeFourCharStrs(llvm::ArrayRef<char> characters, absl::BitGen& gen)
-    -> llvm::OwningArrayRef<std::array<char, 4>> {
+    -> llvm::SmallVector<std::array<char, 4>> {
   constexpr ssize_t NumCharsMask = NumChars - 1;
   constexpr ssize_t NumCharsShift = llvm::ConstantLog2<NumChars>();
-  llvm::OwningArrayRef<std::array<char, 4>> four_char_strs(NumFourCharStrs);
-  for (auto [i, str] : llvm::enumerate(four_char_strs)) {
-    str[0] = characters[i & NumCharsMask];
-    i >>= NumCharsShift;
-    str[1] = characters[i & NumCharsMask];
-    i >>= NumCharsShift;
-    str[2] = characters[i & NumCharsMask];
-    i >>= NumCharsShift;
-    CARBON_CHECK((i & ~NumCharsMask) == 0);
-    str[3] = characters[i];
-  }
-  Shuffle(four_char_strs, gen);
+  llvm::SmallVector<std::array<char, 4>> four_char_strs(
+      llvm::map_range(llvm::seq(NumFourCharStrs), [&](auto i) {
+        std::array<char, 4> str;
+        str[0] = characters[i & NumCharsMask];
+        i >>= NumCharsShift;
+        str[1] = characters[i & NumCharsMask];
+        i >>= NumCharsShift;
+        str[2] = characters[i & NumCharsMask];
+        i >>= NumCharsShift;
+        CARBON_CHECK((i & ~NumCharsMask) == 0);
+        str[3] = characters[i];
+        return str;
+      }));
+  Shuffle<std::array<char, 4>>(four_char_strs, gen);
   return four_char_strs;
 }
 
@@ -84,12 +81,11 @@ constexpr ssize_t NumRandomChars = static_cast<ssize_t>(64) * 1024;
 // with the max length so we can pull the full length from the end to simplify
 // the logic when wrapping around the pool.
 static auto MakeRandomChars(llvm::ArrayRef<char> characters, int max_length,
-                            absl::BitGen& gen) -> llvm::OwningArrayRef<char> {
-  llvm::OwningArrayRef<char> random_chars(NumRandomChars + max_length);
-  for (char& c : random_chars) {
-    c = characters[absl::Uniform<ssize_t>(gen, 0, NumChars)];
-  }
-  return random_chars;
+                            absl::BitGen& gen) -> llvm::SmallVector<char> {
+  return llvm::SmallVector<char>(
+      llvm::map_range(llvm::seq(NumRandomChars + max_length), [&](auto /*i*/) {
+        return characters[absl::Uniform<ssize_t>(gen, 0, NumChars)];
+      }));
 }
 
 // Make a small vector of pointers into a single allocation of raw strings. The
@@ -145,91 +141,75 @@ static auto MakeRawStrKeys(ssize_t length, ssize_t key_count,
 // random string text. As a consequence, the initializer of this global is
 // somewhat performance tuned to ensure benchmarks don't take an excessive
 // amount of time to run or use an excessive amount of memory.
-static absl::NoDestructor<llvm::OwningArrayRef<llvm::StringRef>> raw_str_keys{
-    [] {
-      llvm::OwningArrayRef<llvm::StringRef> keys(MaxNumKeys);
-      absl::BitGen gen;
+static absl::NoDestructor<llvm::SmallVector<llvm::StringRef>> raw_str_keys{[] {
+  llvm::SmallVector<llvm::StringRef> keys(MaxNumKeys);
+  absl::BitGen gen;
 
-      std::array length_buckets = {
-          4, 4, 4, 4, 5, 5, 5, 5, 7, 7, 10, 10, 15, 25, 40, 80,
-      };
-      static_assert((MaxNumKeys % length_buckets.size()) == 0);
-      CARBON_CHECK(llvm::is_sorted(length_buckets));
+  std::array length_buckets = {
+      4, 4, 4, 4, 5, 5, 5, 5, 7, 7, 10, 10, 15, 25, 40, 80,
+  };
+  static_assert((MaxNumKeys % length_buckets.size()) == 0);
+  CARBON_CHECK(llvm::is_sorted(length_buckets));
 
-      // For each distinct length bucket, we build a vector of raw keys.
-      std::forward_list<llvm::SmallVector<const char*>> raw_keys_storage;
-      // And a parallel array to the length buckets with the raw keys of that
-      // length.
-      std::array<llvm::SmallVector<const char*>*, length_buckets.size()>
-          raw_keys_buckets;
+  // For each distinct length bucket, we build a vector of raw keys.
+  std::forward_list<llvm::SmallVector<const char*>> raw_keys_storage;
+  // And a parallel array to the length buckets with the raw keys of that
+  // length.
+  std::array<llvm::SmallVector<const char*>*, length_buckets.size()>
+      raw_keys_buckets;
 
-      llvm::OwningArrayRef<char> characters = MakeChars();
-      llvm::OwningArrayRef<std::array<char, 4>> four_char_strs =
-          MakeFourCharStrs(characters, gen);
-      llvm::OwningArrayRef<char> random_chars = MakeRandomChars(
-          characters, /*max_length=*/length_buckets.back(), gen);
+  llvm::SmallVector<char> characters = MakeChars();
+  llvm::SmallVector<std::array<char, 4>> four_char_strs =
+      MakeFourCharStrs(characters, gen);
+  llvm::SmallVector<char> random_chars =
+      MakeRandomChars(characters, /*max_length=*/length_buckets.back(), gen);
 
-      ssize_t prev_length = -1;
-      for (auto [length_index, length] : llvm::enumerate(length_buckets)) {
-        // We can detect repetitions in length as they are sorted.
-        if (length == prev_length) {
-          raw_keys_buckets[length_index] = raw_keys_buckets[length_index - 1];
-          continue;
-        }
-        prev_length = length;
+  ssize_t prev_length = -1;
+  for (auto [length_index, length] : llvm::enumerate(length_buckets)) {
+    // We can detect repetitions in length as they are sorted.
+    if (length == prev_length) {
+      raw_keys_buckets[length_index] = raw_keys_buckets[length_index - 1];
+      continue;
+    }
+    prev_length = length;
 
-        // We want to compute all the keys of this length that we'll need.
-        ssize_t key_count = (MaxNumKeys / length_buckets.size()) *
-                            llvm::count(length_buckets, length);
+    // We want to compute all the keys of this length that we'll need.
+    ssize_t key_count = (MaxNumKeys / length_buckets.size()) *
+                        llvm::count(length_buckets, length);
 
-        raw_keys_buckets[length_index] =
-            &raw_keys_storage.emplace_front(MakeRawStrKeys(
-                length, key_count, four_char_strs, random_chars, gen));
-      }
+    raw_keys_buckets[length_index] = &raw_keys_storage.emplace_front(
+        MakeRawStrKeys(length, key_count, four_char_strs, random_chars, gen));
+  }
 
-      // Now build the actual key array from our intermediate storage by
-      // round-robin extracting from the length buckets.
-      for (auto [index, key] : llvm::enumerate(keys)) {
-        ssize_t bucket = index % length_buckets.size();
-        ssize_t length = length_buckets[bucket];
-        // We pop a raw key from the list of them associated with this bucket.
-        const char* raw_key = raw_keys_buckets[bucket]->pop_back_val();
-        // And build our key from that.
-        key = llvm::StringRef(raw_key, length);
-      }
-      // Check that in fact we popped every raw key into our main keys.
-      for (const auto& raw_keys : raw_keys_storage) {
-        CARBON_CHECK(raw_keys.empty());
-      }
-      return keys;
-    }()};
-
-static absl::NoDestructor<llvm::OwningArrayRef<int*>> raw_ptr_keys{[] {
-  llvm::OwningArrayRef<int*> keys(MaxNumKeys);
+  // Now build the actual key array from our intermediate storage by
+  // round-robin extracting from the length buckets.
   for (auto [index, key] : llvm::enumerate(keys)) {
-    // We leak these pointers -- this is a static initializer executed once.
-    key = new int(static_cast<int>(index));
+    ssize_t bucket = index % length_buckets.size();
+    ssize_t length = length_buckets[bucket];
+    // We pop a raw key from the list of them associated with this bucket.
+    const char* raw_key = raw_keys_buckets[bucket]->pop_back_val();
+    // And build our key from that.
+    key = llvm::StringRef(raw_key, length);
+  }
+  // Check that in fact we popped every raw key into our main keys.
+  for (const auto& raw_keys : raw_keys_storage) {
+    CARBON_CHECK(raw_keys.empty());
   }
   return keys;
 }()};
 
-static absl::NoDestructor<llvm::OwningArrayRef<int>> raw_int_keys{[] {
-  llvm::OwningArrayRef<int> keys(MaxNumKeys);
-  for (auto [index, key] : llvm::enumerate(keys)) {
-    key = index + 1;
-  }
-  return keys;
-}()};
+static absl::NoDestructor<llvm::SmallVector<int*>> raw_ptr_keys(llvm::map_range(
+    llvm::seq(MaxNumKeys), [](int index) { return new int{index}; }));
+
+static absl::NoDestructor<llvm::SmallVector<int>> raw_int_keys(llvm::map_range(
+    llvm::seq(MaxNumKeys), [](int index) { return index + 1; }));
 
 template <int LowZeroBits>
-static absl::NoDestructor<llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>>>
-    raw_low_zero_bit_int_keys{[] {
-      llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>> keys(MaxNumKeys);
-      for (auto [index, key] : llvm::enumerate(keys)) {
-        key = LowZeroBitInt<LowZeroBits>(index + 1);
-      }
-      return keys;
-    }()};
+static absl::NoDestructor<llvm::SmallVector<LowZeroBitInt<LowZeroBits>>>
+    raw_low_zero_bit_int_keys(
+        llvm::map_range(llvm::seq(MaxNumKeys), [](int index) {
+          return LowZeroBitInt<LowZeroBits>(index + 1);
+        }));
 
 namespace {
 
@@ -254,7 +234,7 @@ auto GetRawKeys() -> llvm::ArrayRef<T> {
 
 template <typename T>
 static absl::NoDestructor<
-    std::map<std::pair<ssize_t, ssize_t>, llvm::OwningArrayRef<T>>>
+    std::map<std::pair<ssize_t, ssize_t>, llvm::SmallVector<T>>>
     lookup_keys_storage;
 
 // Given a particular table keys size and lookup keys size, provide an array ref
@@ -278,16 +258,17 @@ auto GetShuffledLookupKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
   // and then shuffle the keys in that sequence to end up with a random sequence
   // of keys. We store each of these shuffled sequences in a map to avoid
   // repeatedly computing them.
-  llvm::OwningArrayRef<T>& lookup_keys =
+  llvm::SmallVector<T>& lookup_keys =
       (*lookup_keys_storage<T>)[{table_keys_size, lookup_keys_size}];
   if (lookup_keys.empty()) {
-    lookup_keys = llvm::OwningArrayRef<T>(lookup_keys_size);
     auto raw_keys = GetRawKeys<T>();
-    for (auto [index, key] : llvm::enumerate(lookup_keys)) {
-      key = raw_keys[index % table_keys_size];
-    }
+    llvm::append_range(
+        lookup_keys,
+        llvm::map_range(llvm::seq(lookup_keys_size), [&](int index) {
+          return raw_keys[index % table_keys_size];
+        }));
     absl::BitGen gen;
-    Shuffle(lookup_keys, gen);
+    Shuffle<T>(lookup_keys, gen);
   }
   CARBON_CHECK(static_cast<ssize_t>(lookup_keys.size()) == lookup_keys_size);
 
@@ -303,12 +284,11 @@ auto GetKeysAndMissKeys(ssize_t table_keys_size)
   // The raw keys aren't shuffled and round-robin through the sizes. Take the
   // tail of this sequence and shuffle it to form a random set of miss keys with
   // a consistent total size.
-  static absl::NoDestructor<llvm::OwningArrayRef<T>> miss_keys{[] {
-    llvm::OwningArrayRef<T> keys;
-    keys = GetRawKeys<T>().take_back(NumOtherKeys);
+  static absl::NoDestructor<llvm::SmallVector<T>> miss_keys{[] {
+    llvm::SmallVector<T> keys(GetRawKeys<T>().take_back(NumOtherKeys));
     CARBON_CHECK(keys.size() == NumOtherKeys);
     absl::BitGen gen;
-    Shuffle(keys, gen);
+    Shuffle<T>(keys, gen);
     return keys;
   }()};
 

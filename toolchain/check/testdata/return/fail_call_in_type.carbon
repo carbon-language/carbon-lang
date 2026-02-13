@@ -24,6 +24,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: --- fail_call_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.d96: form = init_form type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [concrete]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [concrete]
@@ -33,9 +34,9 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.286: <witness> = impl_witness imports.%Copy.impl_witness_table.087 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.286) [concrete]
-// CHECK:STDOUT:   %.703: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness imports.%Copy.impl_witness_table.b1c [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
+// CHECK:STDOUT:   %.436: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %i32, %type.as.Copy.impl.Op [concrete]
@@ -53,8 +54,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.ae7: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.087 = impl_witness_table (%Core.import_ref.ae7), @type.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.1a7: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.b1c = impl_witness_table (%Core.import_ref.1a7), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -68,35 +69,31 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc17: form = init_form type, call_param0 [concrete = constants.%.d96]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc22_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc22_24.2: type = converted %ReturnType.call, %.loc22_24.1
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnType() -> type {
+// CHECK:STDOUT: fn @ReturnType() -> out %return.param: type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.703 = impl_witness_access constants.%Copy.impl_witness.286, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.436 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i32, %impl.elem0 [concrete = constants.%type.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%i32) [concrete = constants.%i32]
-// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

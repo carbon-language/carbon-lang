@@ -143,3 +143,12 @@ CheckOptions:
   # Don't require writing a return type on lambdas.
   - key: modernize-use-trailing-return-type.TransformLambdas
     value: none
+
+  # Use lines rather than statements to measure function size, because
+  # for readability purposes we care about the code as written, before
+  # preprocessing.
+  - key: readability-function-size.StatementThreshold
+    value: none
+  - key: readability-function-size.LineThreshold
+    # Chose 800 to match the default for StatementThreshold.
+    value: 800

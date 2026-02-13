@@ -28,25 +28,35 @@ struct FunctionFields {
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
+  // Kinds of evaluation modifiers that can apply to functions.
+  enum class EvaluationMode : uint8_t { None, Eval, MustEval };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
-  // This block consists of references to the `AnyParam` insts that represent
-  // the function's `Call` parameters. The "`Call` parameters" are the
-  // parameters corresponding to the arguments that are passed to a `Call`
-  // inst, so they do not include compile-time parameters, but they do include
-  // the return slot.
+  // This block consists of references to the `*ParamPattern` insts that
+  // represent the function's `Call` parameters. The "`Call` parameters" are the
+  // parameters corresponding to the arguments that are passed to a `Call` inst,
+  // so they do not include compile-time parameters, but they do include the
+  // return slot.
   //
   // The parameters appear in declaration order: `self` (if present), then the
   // explicit runtime parameters, then the return parameters (which are
-  // "declared" by the function's return type declaration). This is not
-  // populated on imported functions, because it is relevant only for a function
-  // definition.
+  // "declared" by the function's return type declaration).
+  InstBlockId call_param_patterns_id;
+
+  // This block consists of references to the `AnyParam` insts that correspond
+  // to call_param_patterns_id. This is not populated on imported functions,
+  // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // The type inst representing the function's explicitly declared return type,
-  // if any.
+  // The inst representing the type component of return_form_inst_id.
+  // TODO: remove this in favor of return_form_inst_id.
   TypeInstId return_type_inst_id;
+
+  // The inst representing the function's explicitly declared return form, if
+  // any.
+  InstId return_form_inst_id;
 
   // The call parameter pattern insts that are declared by the function's return
   // form declaration. They will all be OutParamPatterns, and there will be one
@@ -57,8 +67,6 @@ struct FunctionFields {
   // Note: As of this writing we don't support non-initializing return forms,
   // so this will always be have exactly 1 element if the function has an
   // explicitly declared return type.
-  //
-  // TODO: replace this with a block of all call parameter patterns.
   InstBlockId return_patterns_id;
 
   // Which kind of special function this is, if any. This is used in cases where
@@ -68,11 +76,15 @@ struct FunctionFields {
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
-  VirtualModifier virtual_modifier;
+  VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
   int32_t virtual_index = -1;
+
+  // Which, if any, evaluation modifier (eval or musteval) is applied to this
+  // function.
+  EvaluationMode evaluation_mode = EvaluationMode::None;
 
   // The implicit self parameter pattern, if any, in
   // implicit_param_patterns_id from EntityWithParamsBase.
@@ -110,11 +122,17 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    if (call_param_patterns_id.has_value()) {
+      out << ", call_param_patterns_id: " << call_param_patterns_id;
+    }
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
+    }
+    if (return_type_inst_id.has_value()) {
+      out << ", return_form_inst_id: " << return_form_inst_id;
     }
     if (return_patterns_id.has_value()) {
       out << ", return_patterns_id: " << return_patterns_id;
@@ -152,17 +170,6 @@ struct Function : public EntityWithParamsBase,
                : InstId::None;
   }
 
-  // Given the ID of an instruction from `param_patterns_id` or
-  // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
-  // the underlying binding pattern, or std::nullopt if there is no
-  // corresponding `Call` parameter.
-  // TODO: Remove this, by exposing `Call` parameter patterns instead of `Call`
-  // parameters in EntityWithParams.
-  static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
-                                               InstId param_pattern_id)
-      -> std::optional<ParamPatternInfo>;
-
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
@@ -170,6 +177,14 @@ struct Function : public EntityWithParamsBase,
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
+
+  // Gets the canonical declared return form for a specific version of this
+  // function, or for the original declaration if no specific is specified.
+  // Returns `None` if the function was declared without a return form, in which
+  // case the effective return form is an empty tuple initializing expression.
+  auto GetDeclaredReturnForm(const File& file,
+                             SpecificId specific_id = SpecificId::None) const
+      -> InstId;
 
   // Sets that this function is a builtin function.
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
@@ -194,7 +209,7 @@ struct Function : public EntityWithParamsBase,
   }
 };
 
-using FunctionStore = ValueStore<FunctionId, Function>;
+using FunctionStore = ValueStore<FunctionId, Function, Tag<CheckIRId>>;
 
 class File;
 
@@ -232,13 +247,14 @@ struct CalleeNonFunction {};
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
 
-// Returns information for the function corresponding to callee_id.
+// Returns information for the function corresponding to callee_id in
+// caller_specific_id.
 auto GetCallee(const File& sem_ir, InstId callee_id,
-               SpecificId specific_id = SpecificId::None) -> Callee;
+               SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id = SpecificId::None)
+                         SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {

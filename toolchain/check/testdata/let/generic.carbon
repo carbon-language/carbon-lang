@@ -52,5 +52,5 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @F(%a.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:

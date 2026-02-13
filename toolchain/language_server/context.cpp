@@ -14,9 +14,9 @@
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
@@ -166,10 +166,11 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
   auto getters =
-      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(IdTag(), 1, getter);
+      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(1, getter);
 
   auto clang_invocation =
-      BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
+      BuildClangInvocation(consumer, fs, context.installation(),
+                           llvm::sys::getDefaultTargetTriple());
 
   Check::CheckParseTrees(units, getters, fs, check_options,
                          std::move(clang_invocation));

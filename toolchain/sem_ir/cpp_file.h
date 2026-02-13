@@ -5,9 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CPP_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_FILE_H_
 
+#include "clang/Basic/CodeGenOptions.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 
 namespace Carbon::SemIR {
@@ -16,8 +20,9 @@ namespace Carbon::SemIR {
 // imported C++ headers and any inline C++ fragments.
 class CppFile {
  public:
-  explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang)
-      : clang_(std::move(clang)) {}
+  explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang,
+                   llvm::LLVMContext* llvm_context)
+      : clang_(std::move(clang)), llvm_context_(llvm_context) {}
 
   // Access to compilation options.
   auto diagnostic_options() const -> const clang::DiagnosticOptions& {
@@ -46,17 +51,20 @@ class CppFile {
     return clang_->getASTContext();
   }
 
-  // A list of all the top-level decl groups produced in this compilation.
-  auto decl_groups() -> llvm::SmallVector<clang::DeclGroupRef>& {
-    return decl_groups_;
+  auto llvm_context() const -> llvm::LLVMContext* { return llvm_context_; }
+  auto SetCodeGenerator(clang::CodeGenerator* code_generator) -> void {
+    code_generator_ = code_generator;
   }
-  auto decl_groups() const -> const llvm::SmallVector<clang::DeclGroupRef>& {
-    return decl_groups_;
+  auto GetCodeGenerator() const -> clang::CodeGenerator* {
+    // Clang code generation should not actually modify the AST, but isn't
+    // const-correct.
+    return code_generator_;
   }
 
  private:
   std::unique_ptr<clang::CompilerInstance> clang_;
-  llvm::SmallVector<clang::DeclGroupRef> decl_groups_;
+  llvm::LLVMContext* llvm_context_;
+  clang::CodeGenerator* code_generator_ = nullptr;
 };
 
 }  // namespace Carbon::SemIR

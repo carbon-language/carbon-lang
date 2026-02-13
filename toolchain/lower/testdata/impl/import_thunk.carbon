@@ -70,7 +70,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: source_filename = "thunk.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_49.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc9_49.2 = load i32, ptr %.loc9_49.1.a, align 4, !dbg !10
@@ -80,7 +80,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !13 {
+// CHECK:STDOUT: define void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_49.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !16
 // CHECK:STDOUT:   %.loc12_49.2 = load i32, ptr %.loc12_49.1.b, align 4, !dbg !16
@@ -106,9 +106,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !29
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "thunk.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.Main:ImplicitAs.Core", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
@@ -138,7 +138,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 45, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 9, column: 39, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 32, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.B.Main:ImplicitAs.Core", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 12, column: 45, scope: !13)
@@ -167,9 +167,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.1.temp), !dbg !11
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc7_19.1.temp, ptr %a), !dbg !11
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr %.loc7_19.1.temp, ptr %a), !dbg !11
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc7_20.2.temp, ptr %.loc7_19.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc7_20.2.temp), !dbg !12
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr %return, ptr %.loc7_20.2.temp), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,9 +177,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -226,15 +226,15 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.2.temp, ptr %a), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr %.2.temp, ptr %a), !dbg !17
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.2.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
@@ -279,9 +279,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_18.1.temp), !dbg !11
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !11
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !11
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !12
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -289,9 +289,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.X.Main:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.707dbe5ae2414d29.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.0c4ab795cec6cb27.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1

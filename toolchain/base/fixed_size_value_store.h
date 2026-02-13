@@ -19,18 +19,32 @@
 namespace Carbon {
 
 // A value store with a predetermined size.
-template <typename IdT, typename ValueT>
+template <typename IdT, typename ValueT, typename TagIdT = Untagged>
 class FixedSizeValueStore {
  public:
   using IdType = IdT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   // Makes a ValueStore of the specified size, but without initializing values.
   // Entries must be set before reading.
+  static auto MakeForOverwriteWithExplicitSize(size_t size,
+                                               IdTagType::TagIdType tag_id,
+                                               int32_t initial_reserved_ids = 0)
+      -> FixedSizeValueStore
+    requires(!IdTagIsUntagged<IdTagType>)
+  {
+    FixedSizeValueStore store(IdTagType(tag_id, initial_reserved_ids));
+    store.values_.resize_for_overwrite(size);
+    return store;
+  }
+
   static auto MakeForOverwriteWithExplicitSize(size_t size)
-      -> FixedSizeValueStore {
+      -> FixedSizeValueStore
+    requires(IdTagIsUntagged<IdTagType>)
+  {
     FixedSizeValueStore store;
     store.values_.resize_for_overwrite(size);
     return store;
@@ -39,7 +53,8 @@ class FixedSizeValueStore {
   // Makes a ValueStore of the same size as a source `ValueStoreT`, but without
   // initializing values. Entries must be set before reading.
   template <typename ValueStoreT>
-    requires std::same_as<IdT, typename ValueStoreT::IdType>
+    requires(std::same_as<IdT, typename ValueStoreT::IdType> &&
+             !IdTagIsUntagged<typename ValueStoreT::IdTagType>)
   static auto MakeForOverwrite(const ValueStoreT& size_source)
       -> FixedSizeValueStore {
     FixedSizeValueStore store(size_source.GetIdTag());
@@ -48,11 +63,21 @@ class FixedSizeValueStore {
   }
 
   // Makes a ValueStore of the specified size, initialized to a default.
-  static auto MakeWithExplicitSize(IdTag tag, size_t size,
+  static auto MakeWithExplicitSize(size_t size, IdTagType tag,
                                    ConstRefType default_value)
-      -> FixedSizeValueStore {
+      -> FixedSizeValueStore
+    requires(!IdTagIsUntagged<IdTagType>)
+  {
+    FixedSizeValueStore store(tag);
+    store.values_.resize(size, default_value);
+    return store;
+  }
+
+  static auto MakeWithExplicitSize(size_t size, ConstRefType default_value)
+      -> FixedSizeValueStore
+    requires(IdTagIsUntagged<IdTagType>)
+  {
     FixedSizeValueStore store;
-    store.tag_ = tag;
     store.values_.resize(size, default_value);
     return store;
   }
@@ -74,19 +99,29 @@ class FixedSizeValueStore {
   // the safest constructor to use, since it ensures everything's initialized to
   // a default, and verifies a matching `IdT` for the size.
   template <typename ValueStoreT>
-    requires std::same_as<IdT, typename ValueStoreT::IdType>
+    requires(std::same_as<IdT, typename ValueStoreT::IdType> &&
+             !IdTagIsUntagged<IdTagType> && !IdTagIsUntagged<ValueStoreT>)
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
                                ConstRefType default_value)
       : tag_(size_source.GetIdTag()) {
     values_.resize(size_source.size(), default_value);
   }
 
-  explicit FixedSizeValueStore(IdTag tag) : tag_(tag) {}
+  template <typename ValueStoreT>
+    requires(std::same_as<IdT, typename ValueStoreT::IdType> &&
+             IdTagIsUntagged<IdTagType> && IdTagIsUntagged<ValueStoreT>)
+  explicit FixedSizeValueStore(const ValueStoreT& size_source,
+                               ConstRefType default_value) {
+    values_.resize(size_source.size(), default_value);
+  }
+
+  explicit FixedSizeValueStore(IdTagType tag) : tag_(tag) {}
 
   // Makes a ValueStore using a mapped range of `source`. The `factory_fn`
   // receives each enumerated entry for construction of `ValueType`.
   template <typename ValueStoreT>
-    requires std::same_as<IdT, typename ValueStoreT::IdType>
+    requires(std::same_as<IdT, typename ValueStoreT::IdType> &&
+             !IdTagIsUntagged<IdTagType> && !IdTagIsUntagged<ValueStoreT>)
   explicit FixedSizeValueStore(
       const ValueStoreT& source,
       llvm::function_ref<
@@ -94,6 +129,16 @@ class FixedSizeValueStore {
           factory_fn)
       : values_(llvm::map_range(source.enumerate(), factory_fn)),
         tag_(GetIdTag(source)) {}
+
+  template <typename ValueStoreT>
+    requires(std::same_as<IdT, typename ValueStoreT::IdType> &&
+             IdTagIsUntagged<IdTagType> && IdTagIsUntagged<ValueStoreT>)
+  explicit FixedSizeValueStore(
+      const ValueStoreT& source,
+      llvm::function_ref<
+          auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
+          factory_fn)
+      : values_(llvm::map_range(source.enumerate(), factory_fn)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -103,21 +148,21 @@ class FixedSizeValueStore {
   // Sets the value for an ID.
   auto Set(IdT id, ValueType value) -> void {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto index = tag_.Remove(id.index);
+    auto index = tag_.Remove(id);
     values_[index] = value;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto index = tag_.Remove(id.index);
+    auto index = tag_.Remove(id);
     return values_[index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto index = tag_.Remove(id.index);
+    auto index = tag_.Remove(id);
     return values_[index];
   }
 
@@ -146,7 +191,7 @@ class FixedSizeValueStore {
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
 
-  IdTag tag_;
+  IdTagType tag_;
 };
 
 }  // namespace Carbon

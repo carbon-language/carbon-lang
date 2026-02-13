@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Local variables](#local-variables)
     -   [Consuming function parameters](#consuming-function-parameters)
 -   [Reference expressions](#reference-expressions)
+    -   [Entire reference expressions](#entire-reference-expressions)
     -   [Durable reference expressions](#durable-reference-expressions)
     -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
 -   [Value expressions](#value-expressions)
@@ -31,6 +32,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
+-   [Expression forms](#expression-forms)
+    -   [Initializing results](#initializing-results)
+    -   [Form conversions](#form-conversions)
+        -   [Type conversions](#type-conversions)
+        -   [Category conversions](#category-conversions)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
     -   [Pointer syntax](#pointer-syntax)
@@ -64,21 +70,21 @@ itself.
 
 ### Expression categories
 
-There are three expression categories in Carbon:
+There are three primary expression categories in Carbon:
 
 -   [_Value expressions_](#value-expressions) produce abstract, read-only
     _values_ that cannot be modified or have their address taken.
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
--   [_Initializing expressions_](#initializing-expressions) require storage to
-    be provided implicitly when evaluating the expression. The expression then
-    initializes an object in that storage. These are used to model function
-    returns, which can construct the returned value directly in the caller's
-    storage.
+-   [_Initializing expressions_](#initializing-expressions) require a result
+    location to be provided implicitly when evaluating the expression. The
+    expression then initializes an object in that location. These are used to
+    model function returns, which can construct the returned value directly in
+    the caller's storage.
 
-Expressions in one category can be converted to any other category when needed.
-The primitive conversion steps used are:
+Expressions in one category can be implicitly converted to any other primary
+category when needed. The primitive conversion steps used are:
 
 -   [_Value acquisition_](#value-acquisition) forms a value expression from the
     current value of the object referenced by a reference expression.
@@ -97,13 +103,36 @@ These conversion steps combine to provide the transitive conversion table:
 |    to **reference** | direct init + materialize | ==        | materialize           |
 | to **initializing** | direct init               | copy init | ==                    |
 
-Reference expressions formed through temporary materialization are called
-[_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
-restrictions on how they are used. In contrast, reference expressions that refer
-to declared storage are called
-[_durable reference expressions_](#durable-reference-expressions). Beyond the
-restrictions on what is valid, there is no distinction in their behavior or
-semantics.
+Reference expressions are divided into 2x2 sub-categories: they can be either
+[_ephemeral_](#ephemeral-reference-expressions) or
+[_durable_](#durable-reference-expressions), and either _entire_ or
+_non-entire_.
+
+Ephemeral reference expressions are formed through temporary materialization,
+and have restrictions on how they are used. In contrast, durable reference
+expressions refer to storage that outlives the expression, and typically has a
+declared name. Entire reference expressions can only refer to complete objects,
+whereas non-entire reference expressions can refer to both complete objects and
+sub-objects (such as class fields and base class sub-objects). As a consequence,
+only entire reference expressions can be destructively moved.
+
+> **Future work:** This means that pointer-dereference expressions are
+> non-entire, but we will presumably want to be able to destructively move from
+> them. We need to figure out how to support that without violating the
+> invariant that a live object has live fields.
+
+Value binding and copy initialization can be applied to any reference
+expression, but materialization only produces ephemeral entire reference
+expressions. An entire reference expression can be implicitly converted to
+non-entire; this has no run-time effect because it merely discards static
+object-completeness information. Non-entire reference expressions can only be
+converted to entire reference expressions by round-tripping through
+copy-initialization and materialization. Non-durable-reference expressions
+cannot be implicitly converted to durable reference expressions at all.
+
+> **TODO:** Determine how these reference sub-categories relate to memory-safety
+> properties like uniqueness, and make sure their names are aligned with
+> memory-safety terminology.
 
 #### Value acquisition
 
@@ -157,9 +186,20 @@ fn Sum(x: i32, y: i32) -> i32 {
 Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
-A _variable pattern_ is introduced with the `var` keyword. It declares storage
-for a new object, and initializes it from the matched expression, which must be
-an initializing expression.
+A _variable pattern_ is introduced with the `var` keyword. The matched
+expression must be an ephemeral entire reference expression (which typically
+requires the matched expression to be materialized); the `var` pattern takes
+ownership of the newly-allocated temporary storage it refers to, which extends
+its lifetime to the end of the enclosing scope. The subpattern is then matched
+against a _durable_ entire reference expression to the object in that storage.
+
+> **Open question:** This implies that `var field: T = F().field;` doesn't
+> perform any copies or moves on `T`. This, in turn, implies that the storage
+> for `field` must be laid out as part of a complete `typeof(F())` object
+> layout, which is initialized by the call to `F()`. All other members of that
+> layout are immediately destroyed, and their storage is theoretically reusable
+> after that point, but it's unclear if this is the right default, or how to
+> enable user code to override that default when it's the wrong tradeoff.
 
 A _reference binding pattern_ is a binding pattern that is nested under a `var`
 pattern. It introduces a name called a _reference binding_ that is a
@@ -174,8 +214,10 @@ fn Example() {
   let x: i64 = 1;
 
   // `2` also starts as a value expression, but the variable pattern requires it
-  // to be converted to an initializing expression by using the value `2` to
-  // initialize the provided variable storage that `y` will refer to.
+  // to be converted to an ephemeral entire reference expression by using the
+  // value `2` to initialize temporary storage, which the variable pattern
+  // takes ownership of. The reference binding pattern is then bound to a
+  // durable reference to the newly-initialized object.
   var y: i64 = 2;
 
   // Allowed to take the address and mutate `y` as it is a durable reference
@@ -214,8 +256,10 @@ inner `var` pattern here:
 fn DestructuringExample() {
   // Both `1` and `2` start as value expressions. The `x` binding directly
   // matches `1`. For `2`, the variable pattern requires it to be converted to
-  // an initializing expression by using the value `2` to initialize the
-  // provided variable storage that `y` will refer to.
+  // an ephemeral entire reference expression by using the value `2` to
+  // initialize temporary storage, which the variable pattern takes ownership
+  // of. The reference binding `y` is then bound to a durable reference to the
+  // newly-initialized object.
   let (x: i64, var y: i64) = (1, 2);
 
   // Just like above, we can take the address and mutate `y`:
@@ -250,9 +294,9 @@ This allows us to model an important special case of function inputs -- those
 that are _consumed_ by the function, either through local processing or being
 moved into some persistent storage. Marking these in the pattern and thus
 signature of the function changes the expression category required for arguments
-in the caller. These arguments are required to be _initializing expressions_,
-potentially being converted into such an expression if necessary, that directly
-initialize storage dedicated-to and owned-by the function parameter.
+in the caller. These arguments are required to be _ephemeral entire reference
+expressions_, potentially being converted into such an expression if necessary,
+whose storage will be dedicated-to and owned-by the function parameter.
 
 This pattern serves the same purpose as C++'s pass-by-value when used with types
 that have non-trivial resources attached to pass ownership into the function and
@@ -264,9 +308,60 @@ makes this a use case that requires a special marking on the declaration.
 _Reference expressions_ refer to _objects_ with _storage_ where a value may be
 read or written and the object's address can be taken.
 
-There are two sub-categories of reference expressions: _durable_ and
-_ephemeral_. These refine the _lifetime_ of the underlying storage and provide
-safety restrictions reflecting that lifetime.
+Reference expressions can be either _durable_ or _ephemeral_. These refine the
+_lifetime_ of the underlying storage and provide safety restrictions reflecting
+that lifetime. Reference expressions can also be either _entire_ or
+_non-entire_, depending on whether the referenced object is known to be complete
+(rather than a sub-object of another object).
+
+### Entire reference expressions
+
+An _entire reference expression_ is one that is statically known to refer to a
+complete object. Other references are _non-entire_. Durable and ephemeral
+reference expressions can both be either entire or non-entire (although
+non-entire ephemeral references are rare). Unless otherwise specified, an
+expression or operation that produces a reference produces a non-entire
+reference.
+
+Note that a non-entire reference expression still _might_ refer to a complete
+object; the language rules just don't _guarantee_ that is does. As a result, an
+entire reference can be implicitly converted to a non-entire reference (with the
+same durability), because this merely discards the knowledge that the object is
+complete. By the same token, there is no context that requires a non-entire
+reference; only contexts that accept both, that accept only entire references,
+or that don't accept references at all.
+
+Currently, the only context that requires an entire reference is the scrutinee
+of a `var` pattern, which is required to be an entire ephemeral reference (and
+is [converted](#category-conversions) to that category if necessary).
+
+> **Note:** This extends the lifetime of the reference, so it must be possible
+> to determine _which_ temporary an ephemeral entire reference refers to, so
+> that the implementation knows which lifetime to extend. Under the current
+> language rules, this can be done statically.
+
+> **Open question:** Should we extend the language in ways that would force that
+> determination to be dynamic? For example, should we allow
+> `if c then r1 else r2` to be an entire ephemeral reference expression if `r1`
+> and `r2` are? As a more extreme example, should we support functions that take
+> and return entire ephemeral references?
+
+There are several kinds of expressions that produce entire references. For
+example:
+
+-   The name of an object introduced with a
+    [variable binding pattern](pattern_matching.md#name-binding-patterns) (in
+    other words, a name that was declared with `var <name> : <type>`) is a
+    durable entire reference.
+-   a member access expression `x.member` or `x.(member)` is an entire reference
+    if `x` is an initializing or entire ephemeral reference expression with a
+    struct or tuple type.
+-   The result of materialization is an entire ephemeral reference.
+-   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
+    [struct pattern](pattern_matching.md#struct-patterns) is matched with an
+    ephemeral entire reference scrutinee, that scrutinee is destructured into
+    ephemeral entire references to its elements, which are then matched with the
+    corresponding subpatterns.
 
 ### Durable reference expressions
 
@@ -274,7 +369,8 @@ _Durable reference expressions_ are those where the object's storage outlives
 the full expression and the address could be meaningfully propagated out of it
 as well.
 
-There are two contexts that require a durable reference expression in Carbon:
+There are several contexts where durable reference expressions are required. For
+example:
 
 -   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
@@ -282,9 +378,14 @@ There are two contexts that require a durable reference expression in Carbon:
     the `Carbon.Assign.Op` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
+-   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
+    their scrutinee to be a durable reference.
+-   If a function's [return form](#function-calls-and-returns) contains `ref`
+    tags, `return` statements require the corresponding parts of the operand to
+    be durable reference expressions.
 
-There are several kinds of expressions that produce durable references in
-Carbon:
+There are also several kinds of expressions that produce durable references. For
+example:
 
 -   Names of objects introduced with a
     [reference binding](#binding-patterns-and-local-variables-with-let-and-var):
@@ -295,6 +396,8 @@ Carbon:
 -   [Indexing](/docs/design/expressions/indexing.md) into a type similar to
     C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
     type with a durable reference expression such as `local_array[i]`.
+-   Calls to functions whose [return forms](#function-calls-and-returns) contain
+    `ref`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -305,22 +408,34 @@ categories into a reference expression.
 We call the reference expressions formed through
 [temporary materialization](#temporary-materialization) _ephemeral reference
 expressions_. They still refer to an object with storage, but it may be storage
-that will not outlive the full expression. Because the storage is only
-temporary, we impose restrictions on where these reference expressions can be
-used: their address can only be taken implicitly as part of a method call whose
-`self` parameter is marked with the `ref` specifier.
+that will not outlive the full expression, and so it can't be used where a
+durable reference is expected.
 
-**Future work:** The current design allows directly requiring an ephemeral
-reference for `ref`-methods because this replicates the flexibility in C++ --
-very few C++ methods are L-value-ref-qualified which would have a similar effect
-to `ref`-methods requiring a durable reference expression. This is leveraged
-frequently in C++ for builder APIs and other patterns. However, Carbon provides
-more tools in this space than C++ already, and so it may be worth evaluating
-whether we can switch `ref`-methods to the same restrictions as assignment and
-`&`. Temporaries would never have their address escaped (in a safe way) in that
-world and there would be fewer different kinds of entities. But this is reserved
-for future work as we should be very careful about the expressivity hit being
-tolerable both for native-Carbon API design and for migrated C++ code.
+> **Future work:** The current design does not support mutating ephemeral
+> references (or initializing expressions): assigning to an ephemeral reference
+> is disallowed directly, and invoking mutating methods is disallowed because
+> the `ref self` parameter can only bind to a durable reference. In C++ it's
+> unusual but not rare to intentionally mutate a temporary, such as in a
+> builder-style method chain (for example `MakeFoo().SetBar().AddBaz()`), so
+> Carbon will need to provide some interop and migration target for that kind of
+> code.
+
+There is one context that requires an ephemeral reference expression in Carbon:
+the scrutinee of a
+[`var` pattern](#binding-patterns-and-local-variables-with-let-and-var) (which
+also requires the reference to be entire).
+
+There are only a few ways to produce an ephemeral reference expression. Most
+notably:
+
+-   The result of materialization is an entire ephemeral reference.
+-   A member access expression `x.member` or `x.(member)` is an ephemeral
+    reference if `x` is an initializing or ephemeral reference.
+-   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
+    [struct pattern](pattern_matching.md#struct-patterns) is matched with an
+    initializing or ephemeral reference scrutinee, that scrutinee is
+    destructured into ephemeral references to its elements, which are then
+    matched with the corresponding subpatterns.
 
 ## Value expressions
 
@@ -487,8 +602,9 @@ The specific tradeoff here is covered in a proposal
 ## Initializing expressions
 
 Storage in Carbon is initialized using _initializing expressions_. Their
-evaluation produces an initialized object in the storage, although that object
-may still be _unformed_.
+evaluation takes a _result location_ as an implicit input, and produces an
+initialized object at that location, although that object may still be
+_unformed_.
 
 **Future work:** More details on initialization and unformed objects should be
 added to the design from the proposal
@@ -506,29 +622,37 @@ the provided storage.
 **Future work:** The design should be expanded to fully cover how copying is
 managed and linked to from here.
 
-The first place where an initializing expression is _required_ is to satisfy
-[_variable patterns_](#binding-patterns-and-local-variables-with-let-and-var).
-These require the expression they match to be an initializing expression for the
-storage they create. The simplest example is the expression after the `=` in a
-local `var` declaration.
+There are no syntactic contexts in Carbon that always require an initializing
+expression, and no expression syntax that always produces an initializing
+expression. By default, function call expressions are initializing expressions,
+and correspondingly the operand of `return` is required to be an initializing
+expression, but this default can be overridden by the
+[function signature](#function-calls-and-returns).
 
-The next place where a Carbon expression requires an initializing expression is
-the expression operand to `return` statements. We expand more completely on how
-return statements interact with expressions, values, objects, and storage
-[below](#function-calls-and-returns).
-
-The last path that requires forming an initializing expression in Carbon is when
-attempting to convert a non-reference expression into an ephemeral reference
-expression: the expression is first converted to an initializing expression if
-necessary, and then temporary storage is materialized to act as its output, and
-as the referent of the resulting ephemeral reference expression.
+Initializing expressions can also be created implicitly, when attempting to
+convert an expression into an ephemeral entire reference expression
+(particularly to match a `var` pattern): the expression is first converted to an
+initializing expression if necessary, and then temporary storage is materialized
+to act as its output, and as the referent of the resulting ephemeral reference
+expression.
 
 ### Function calls and returns
 
-Function calls in Carbon are modeled directly as initializing expressions --
-they require storage as an input and when evaluated cause that storage to be
-initialized with an object. This means that when a function call is used to
-initialize some variable pattern as here:
+The [result](#expression-forms) of a function call can have an almost arbitrary
+form. The return clause of a function signature consists of `->` followed by a
+_return form_, an expression-like syntax that specifies not only the type but
+also the form of the function call's result. `return` expressions in the
+function body are expected to have that form, and are converted to it if
+necessary. When a function is declared without a return clause, it behaves from
+the caller's point of view as if the return clause were `-> ()`, but `return`
+statements in the function body don't take operands (and can be omitted at the
+end of the function).
+
+In the common case, the return form is a type expression, in which case calls
+are modeled directly as initializing expressions -- they require storage as an
+input and when evaluated cause that storage to be initialized with an object.
+This means that when a function call is used to initialize some variable pattern
+as here:
 
 ```carbon
 fn CreateMyObject() -> MyType {
@@ -541,18 +665,64 @@ var x: MyType = CreateMyObject();
 The `<return-expression>` in the `return` statement actually initializes the
 storage provided for `x`. There is no "copy" or other step.
 
-> **Future work:** Extend this to also apply when a variable pattern is
-> initialized from a tuple/struct literal, or a tuple/struct pattern with
-> variable subpatterns is initialized from a single function call.
+In the body of such a function, all `return` statement expressions are required
+to be initializing expressions and in fact initialize the storage provided to
+the function's call expression. This in turn causes the property to hold
+_transitively_ across an arbitrary number of function calls and returns. The
+storage is forwarded at each stage and initialized exactly once.
 
-All `return` statement expressions are required to be initializing expressions
-and in fact initialize the storage provided to the function's call expression.
-This in turn causes the property to hold _transitively_ across an arbitrary
-number of function calls and returns. The storage is forwarded at each stage and
-initialized exactly once.
+More generally, the syntax and semantics of a return form are as follows:
 
-Note that functions without a specified return type work exactly the same as
-functions with a `()` return type for the purpose of expression categories.
+-   _return-clause_ ::= `->` _return-form_
+-   _return-form_ ::= _nesting-return-form_ | _auto-return-form_
+-   _nesting-return-form_ ::= _expression-return-form_ | _proper-return-form_
+
+Return forms can usually be nested, but syntaxes involving `auto` can only occur
+at top level. We further divide nesting return forms into expressions and
+"proper" return forms, but this is just a technical means of avoiding formal
+ambiguity in the grammar; it has no greater significance.
+
+-   _category-tag_ ::= `val` | `ref` | `var`
+
+These tags are used to specify "value", "non-entire durable reference", or
+"initializing" expression category (respectively). Note that there is no way to
+express an entire or ephemeral reference category in a return form.
+
+-   _auto-return-form_ ::= _category-tag_? `auto`
+
+This denotes a primitive form with runtime phase and deduced type. The category
+is determined by _category-tag_ if present, or "initializing" otherwise.
+
+-   _proper-return-form_ ::= _category-tag_ _expression_
+
+This denotes a primitive form with runtime phase, category _category-tag_, and
+type "_expression_ `as type`".
+
+-   _expression-return-form_ ::= _expression_
+
+An expression with no _category-tag_ is equivalent to "`var` _expression_".
+
+-   _proper-return-form_ ::= `(` [_expression-return-form_ `,`]\* _proper-return-form_
+    [`,` _nesting-return-form_]\* `,`? `)`
+
+A tuple literal of return forms denotes a tuple form whose sub-forms are
+specified by the comma-separated elements. To avoid formal ambiguity, this
+grammar rule requires at least one of the sub-forms to be proper.
+
+-   _expression-field-form_ ::= _designator_ `:` _expression-return-form_
+-   _proper-field-form_ ::= _designator_ `:` _proper-return-form_
+-   _field-form_ ::= _field-decl_
+-   _field-form_ ::= _proper-field-form_
+-   _proper-return-form_ ::= `{` [_expression-field-form_ `,`]\* _proper-field-form_
+    [`,` _field-form_]\* `}`
+
+A struct literal of return forms denotes a struct form whose field names and
+their forms are specified by the comma-separated field forms. To avoid formal
+ambiguity, this grammar rule requires at least one of the field forms to be
+proper.
+
+> **Open question:** Should there be a way to specify symbolic or template phase
+> in return forms?
 
 #### Deferred initialization from values and references
 
@@ -624,6 +794,295 @@ where that initialization is not necessary.
 The model of initialization of returns also facilitates the use of
 [`returned var` declarations](control_flow/return.md#returned-var). These
 directly observe the storage provided for initialization of a function's return.
+
+## Expression forms
+
+We typically treat the category and type of an expression as independent
+properties. However, in some cases we need to deal with them as an integrated
+whole. The _form_ of an expression captures all of the information about it that
+is visible to the type system, while abstracting away all other information
+about it. Thus, forms are a generalization of types: what we conventionally call
+"types" are really the types of objects and values, whereas forms are the types
+of expressions and patterns.
+
+A _primitive form_ currently consists of a type, an expression category, an
+expression phase, and optionally a constant value (which is present if and only
+if the expression phase is not "runtime"). When dealing with primitive forms,
+which is the common case, we can treat each of those properties as independent.
+For convenience, in this section we will use the notation `<T, C, P, V>` to
+represent a primitive form with type `T`, category `C`, phase `P` and value `V`,
+but this is not Carbon syntax.
+
+Other forms are called _composite forms_, and there are two kinds:
+
+A _tuple form_ can be thought of as a tuple of forms, just as a tuple type can
+be thought of as a tuple of types. The form of a tuple literal is a tuple form,
+whose elements are the forms of the literal elements.
+
+> **TODO:** Extend this to support variadic forms.
+
+A _struct form_ can be thought of as a struct whose fields are forms, just as a
+struct type can be thought of as a struct whose fields are types. The form of a
+struct literal is a struct form with the same field names, whose values are the
+forms of the corresponding fields of the struct literal.
+
+The _type component_ of a form is defined as follows:
+
+-   The type component of a primitive form `<T, C, P, V>` is `T`.
+-   The type component of a tuple form is a tuple of the type components of its
+    elements.
+-   The type component of a struct form is a struct whose field names are the
+    field names of the struct form and whose field types are the type components
+    of the corresponding elements.
+
+The _category component_ and _phase component_ of a form are defined likewise.
+The category component of a struct form is called a _struct category_, and the
+category component of a tuple form is called a _tuple category_.
+
+The type of an expression is the type component of the expression's form.
+
+Evaluating an expression produces a _result_. It can be defined recursively in
+terms of the expression's form:
+
+-   The result of an initializing expression is an
+    [initializing result](#initializing-results).
+-   The result of a value expression is a value.
+-   The result of a reference expression is a reference of the same kind.
+-   The result of an expression with tuple form is a tuple of results.
+-   The result of an expression with struct form is a struct of results.
+
+An expression and its result always have the same form.
+
+The code that accesses the result of an expression is said to _consume_ that
+result, and every primitive-form result is consumed exactly once (except in
+certain narrow contexts where the result is known not to be initializing). If a
+result isn't explicitly accessed, such as when the expression is used as a
+statement, it is said to be _discarded_, which consumes it in the absence of an
+explicit consumer. Discarding an initializing result materializes and then
+immediately destroys it. Discarding an entire ephemeral reference destroys the
+object it refers to. Discarding a value or any other kind of reference is a
+no-op.
+
+### Initializing results
+
+As discussed earlier, evaluation of an initializing expression takes as an input
+the result location that it initializes, which is implicitly provided by the
+context in which the evaluation takes place. In some cases, the context may
+obtain the location from its own context, and so on. For example:
+
+```carbon
+class C {
+  private var i: i32;
+
+  fn Make() -> C {
+    return {.i = 0};
+  }
+}
+
+fn F() -> C {
+  return C.Make();
+}
+
+fn G() {
+  var c: C = F();
+}
+```
+
+By default, a function call is an initializing expression, and a `return`
+statement initializes the call's result location (which is passed as a hidden
+output parameter). So when the declaration of `c` is evaluated, its storage is
+implicitly passed into `F()` as an output parameter, which is initialized by the
+`return` statement inside `F`. When that `return` statement is evaluated to
+initialize the result location, it likewise implicitly passes the storage into
+`C.Make()` as an output parameter, which is initialized by the `return`
+statement inside `C.Make`. Finally, that `return` statement initializes the
+result location (which is still the location of `c`'s storage) by
+[direct initialization](#direct-initialization) from the value expression
+`{.i = 0}`.
+
+Notice that the implicit storage parameter propagates "backwards", into an
+expression from the code that uses its result. In order to simplify the
+description of the language, we usually won't explicitly discuss the result
+locations of initializing expressions, or how they're propagated. Instead, this
+propagation is encapsulated inside the _initializing result_, which is the
+notional result of an initializing expression.
+
+Whenever an initializing result is consumed, that implicitly means that the
+consumer passes a result location into the evaluation of the initializing
+expression. The source of that location depends on the consumer:
+
+-   If the consumer is a temporary materialization conversion, the result
+    location is newly-allocated temporary storage (which the consumer may
+    subsequently lifetime-extend to durable storage).
+-   If the consumer is a `return` statement, and the initializing result
+    corresponds to an initializing sub-form of the function's return form, the
+    result location is the implicit output parameter corresponding to that
+    initializing sub-form.
+
+### Form conversions
+
+A conversion between forms can be broken down into up to three steps: type
+conversion, category conversion, and phase conversion. These convert the form to
+a particular target type, category, and phase component (respectively). These
+steps aren't fully orthogonal: type conversions can change the category and
+phase components as a byproduct, and category conversions can change the phase
+component. However, category conversions can't change the type component, and
+phase conversions can't change either of the other two, so converting the type,
+then category, then phase, ensures that we converge on the desired result.
+
+Any of these steps may be omitted, depending on whether the context imposes
+requirements on the corresponding component. Most commonly, an operand position
+requires its operand to have a primitive form with a particular category,
+usually with a particular type, and sometimes with a particular phase.
+
+Phase conversions cannot change the form structure; they can only apply
+primitive phase conversions to primitive sub-forms. Type and category
+conversions are more complex, and are covered in the next two sections.
+
+Note that these rules will implicitly convert between primitive and composite
+forms in both directions (except that a composite containing references cannot
+be converted to a primitive form). As a result, although the difference between
+primitive and composite forms is observable by way of overloading, it can't
+reliably carry any higher-level meaning, and should be used only as an
+optimization tool.
+
+Note that this section describes the _logical structure_ of form conversions. As
+such, it primarily describes them "breadth-first", as a sequence of operations
+that each applies to the whole expression by recursively operating on its parts.
+However, the _physical execution_ of these conversions is actually depth-first,
+applying as many operations as possible to a minimal subexpression before moving
+on to the next one. The details of that process are described
+[here](pattern_matching.md#evaluation-order).
+
+#### Type conversions
+
+See [here](expressions/implicit_conversions.md) for overall information about
+type conversions. Conversions involving struct, tuple, and array types are
+described here because of their unique interactions with expression forms.
+
+> **TODO:** A forthcoming proposal is expected to update the type conversion
+> interfaces to permit user-defined conversions to depend on the form of the
+> input, and customize the form of the output. Once that is done, these "built
+> in" conversions should be presented as implementations of those interfaces,
+> possibly with some "magic" for things like introspecting on struct field
+> names.
+
+Each of the conversions described in this section is explicit if and only if it
+invokes another explicit type conversion. Otherwise, it is implicit.
+
+A type conversion of a primitive-form expression to a
+[compatible type](generics/terminology.md#compatible-types) just re-interprets
+the expression's result with a new type, so it requires no run-time work, and
+has the same category as the input expression.
+
+A result `source` that has a struct type can be converted to a struct type
+`Dest` if they have the same set of field names:
+
+-   If the type of `source` is `Dest`, return `source`.
+-   If `source` is a struct result, for each field name `F` in `Dest`,
+    type-convert `source.F` to `Dest.F`. Return a struct result where each field
+    `F` is set to the result of the corresponding conversion.
+-   If `source` is a primitive result, convert it to a struct result by
+    [form decomposition](#category-conversions), and then type-convert the
+    result to `Dest` and return the result.
+
+Note that the sub-conversions invoked here are not necessarily defined; if so,
+the conversion itself is not defined.
+
+There is a conversion to a class type `Dest` from a result `source` that has a
+struct type, if there is a conversion from `source` to a struct type that has
+the same field names as `Dest` (including a `.base` field if `Dest` is a derived
+class), with the same types, in the same order. The conversion type-converts
+`source` to that struct type, category-converts that to an initializing
+expression of the struct type, and then reinterprets it as an initializing
+expression of `Dest` (which is layout-compatible with the struct type by
+construction).
+
+Note that some fields of an object may be initialized directly by the evaluation
+of the source expression, while others may be initialized by the conversions
+described here. The conversions initialize fields in their declaration order,
+but the evaluation of the source expression always happens before any of the
+conversions, and happens in the source expression's lexical order, so the fields
+of an object are not necessarily initialized in declaration order.
+
+Conversions between tuple types are defined in the same way, treating tuples as
+structs that have fields named `.0`, `.1`, etc, in numerical order.
+
+There is a conversion to `array(T, N)` from any expression with a tuple form of
+exactly `N` elements, whose type components are convertible to `T`. The
+conversion is an initializing expression, which type-converts each source
+element to `T`, and initializes the corresponding array element from the result
+of that conversion.
+
+#### Category conversions
+
+_Form composition_ converts an expression of composite form with consistent
+category to a primitive form as follows (where `min` as applied to phases uses
+the ordering "runtime" < "symbolic" < "template"):
+
+-   An expression of tuple form
+    `(<T1, C, P1, V1>, <T2, C, P2, V2>, ... <TN, C, PN, VN>)` can be converted
+    to a primitive form
+    `<(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)>`.
+-   An expression of struct form
+    `{.a = <Ta, C, Pa, Va>, .b = <Tb, C, Pb, Vb>, ... .z = <Tz, C, Pz, Vz>}` can
+    be converted to a primitive form
+    `<{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}>`.
+
+When `C` is "value", composition forms a value representation of the aggregate
+from value representations of the elements. When `C` is "initializing", it
+transforms initializing expressions for each element into a single initializing
+expression that initializes the whole aggregate. `C` cannot be a reference
+category, because an aggregate of references to independent objects can't be
+replaced by a reference to a single aggregate object in a single step.
+
+_Form decomposition_ is the inverse of form composition. It converts a
+primitive-form expression to a composite form as follows:
+
+-   An expression with primitive form `<(T0, T1, ..., TN), C, P, V>` can be
+    converted to a tuple form
+    `(<T0, CC, P, V.0>, <T1, CC, P, V.1>, ... <TN, CC, P, V.N>)`.
+-   An expression with primitive form
+    `<{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V>` can be converted to a struct
+    form
+    `{.a = <Ta, CC, P, V.a>, .b = <Tb, CC, P, V.b>, ... .z = <Tz, CC, P, V.z>}`.
+
+The category `CC` of the resulting sub-forms is the same as `C`, with two
+exceptions:
+
+-   If `C` is "durable entire reference", `CC` will be "durable non-entire
+    reference", because the sub-forms don't refer to complete objects. This
+    doesn't apply to ephemeral entire references, because in that case form
+    decomposition implicitly ends the lifetime of the original aggregate,
+    promoting its elements to complete objects with independent lifetimes.
+-   If `C` is "initializing", the original expression is materialized before it
+    is decomposed, so `CC` will be "ephemeral entire reference".
+
+By convention, form decomposition is a no-op when applied to an expression with
+struct or tuple form.
+
+_Category conversion_ converts an expression to have a given category component
+without changing its type. The conversion works by combining form composition
+and decomposition with primitive category conversions, and is defined
+recursively:
+
+-   If the target category component is a tuple, the source form must have a
+    tuple type with the same arity. Convert the source to a tuple form by form
+    decomposition, and then category-convert each source sub-form to the
+    corresponding target sub-category.
+-   If the target category component is a struct, the source form must have a
+    struct type with the same set of field names in the same order. Convert the
+    source to a struct form by form decomposition, and then category-convert
+    each source sub-form to the corresponding target sub-category.
+-   If the target category is a primitive category `C`:
+    -   If the source form is primitive, convert to `C` by applying primitive
+        category conversions.
+    -   If the source form is composite and `C` is a reference category,
+        category-convert the source form to "initializing", and then convert the
+        result to `C` by applying primitive category conversions.
+    -   If the source form is composite and `C` is not a reference category,
+        category-convert each source sub-form to `C`, and then convert the
+        aggregate result of these conversions to `C` by form composition.
 
 ## Pointers
 
@@ -859,8 +1318,7 @@ functionality already proposed here or for [classes](/docs/design/classes.md):
     the most appealing as it _doesn't_ have the combinatorial explosion. But it
     is also very limited as it only applies to the implicit object parameter.
 -   Allow overloading between `var` and non-`var` parameters.
--   Expand the `ref` technique from object parameters to all parameters, and
-    allow overloading based on it.
+-   Allow overloading between `ref` and non-`ref` parameters in general.
 
 Perhaps more options will emerge as well. Again, the goal isn't to completely
 preclude pursuing this direction, but instead to try to ensure it is only
@@ -1040,6 +1498,8 @@ itself.
 -   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
 -   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
 -   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
+-   [Mixed expression categories](/proposals/p5545.md#mixed-expression-categories)
+-   [Don't implicitly convert to less-primitive forms](/proposals/p5545.md#dont-implicitly-convert-to-less-primitive-forms)
 
 ## References
 
@@ -1048,9 +1508,11 @@ itself.
 -   [Proposal #618: `var` ordering][p0618]
 -   [Proposal #851: auto keyword for vars][p0851]
 -   [Proposal #2006: Values, variables, and pointers][p2006]
+-   [Proposal #5545: Expression form basics][p5545]
 
 [p0257]: /proposals/p0257.md
 [p0339]: /proposals/p0339.md
 [p0618]: /proposals/p0618.md
 [p0851]: /proposals/p0851.md
 [p2006]: /proposals/p2006.md
+[p5545]: /proposals/p5545.md

@@ -83,7 +83,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_22.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_22.2: init %empty_tuple.type = tuple_init () to file.%v.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_22.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_9: init %empty_tuple.type = converted %.loc4_22.1, %.loc4_22.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%v.var, %.loc4_9
 // CHECK:STDOUT:   return
@@ -126,7 +126,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Test.v [concrete = imports.%v.var]
-// CHECK:STDOUT:   %.loc4_14: init %empty_tuple.type = tuple_init () to file.%v2.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_14: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %v.ref, %.loc4_14 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%v2.var, %.loc4_1
 // CHECK:STDOUT:   return

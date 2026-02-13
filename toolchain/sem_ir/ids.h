@@ -12,7 +12,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::SemIR {
@@ -173,6 +173,11 @@ class MetaInstId : public InstId {
 // constant instruction that defines the constant. Symbolic constants are an
 // index into a separate table of `SymbolicConstant`s maintained by the constant
 // value store.
+//
+// IdTags for ConstantIds are slightly complex, and you need to know if the
+// constant is concrete or symbolic to know its tag:
+// - Concrete ConstantIds use the tag of the store of InstIds.
+// - Symbolic ConstantIds use the tag of the store of internal SymbolicIds.
 struct ConstantId : public IdBase<ConstantId> {
   static constexpr llvm::StringLiteral Label = "constant";
 
@@ -952,14 +957,14 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 
 // The ID of a `RequireImpls`.
 struct RequireImplsId : public IdBase<RequireImplsId> {
-  static constexpr llvm::StringLiteral Label = "require_impls";
+  static constexpr llvm::StringLiteral Label = "require";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `RequireImplsId` block.
 struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
-  static constexpr llvm::StringLiteral Label = "require_impls_block";
+  static constexpr llvm::StringLiteral Label = "require_block";
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.

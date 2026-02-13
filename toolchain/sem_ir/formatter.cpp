@@ -120,7 +120,7 @@ auto Formatter::Format() -> void {
 auto Formatter::ComputeNodeParents() -> void {
   CARBON_CHECK(!node_parents_);
   node_parents_ = NodeParentStore::MakeWithExplicitSize(
-      IdTag(), sem_ir_->parse_tree().size(), Parse::NodeId::None);
+      sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
       node_parents_->Set(child, n);
@@ -571,9 +571,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  auto return_type_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
-  FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
-                                         return_type_info.has_return_slot());
+  FormatParamList(fn.call_params_id, fn.GetDeclaredReturnForm(*sem_ir_));
 
   if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
     out_ << " = \""
@@ -726,50 +724,68 @@ auto Formatter::FormatGenericEnd() -> void {
   out_ << '\n';
 }
 
-auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
-    -> void {
+auto Formatter::FormatParamList(InstBlockId params_id,
+                                SemIR::InstId return_form_id) -> void {
   if (!params_id.has_value()) {
     // TODO: This happens for imported functions, for which we don't currently
     // import the call parameters list.
     return;
   }
 
-  llvm::StringLiteral close = ")";
-  out_ << "(";
-
-  llvm::ListSeparator sep;
-  for (InstId param_id : sem_ir_->inst_blocks().Get(params_id)) {
-    auto is_out_param = sem_ir_->insts().Is<OutParam>(param_id);
-    if (is_out_param) {
-      // TODO: An input parameter following an output parameter is formatted a
-      // bit strangely. For example, alternating input and output parameters
-      // produces:
-      //
-      //   fn @F(%in1: %t) -> %out1: %t, %in2: %t -> %out2: %t
-      //
-      // This doesn't actually happen right now, though.
-      out_ << std::exchange(close, llvm::StringLiteral(""));
-      out_ << " -> ";
-    } else {
-      out_ << sep;
+  int return_param_index = -1;
+  if (return_form_id.has_value()) {
+    if (auto init_form = sem_ir_->insts().TryGetAs<InitForm>(return_form_id)) {
+      return_param_index = init_form->index.index;
     }
+  }
+
+  auto params = sem_ir_->inst_blocks().Get(params_id);
+
+  out_ << "(";
+  llvm::ListSeparator sep;
+  for (auto [i, param_id] : llvm::enumerate(params)) {
+    if (static_cast<int>(i) == return_param_index) {
+      continue;
+    }
+
+    out_ << sep;
     if (!param_id.has_value()) {
       out_ << "invalid";
       continue;
     }
-    // Don't include the name of the return slot parameter if the function
-    // doesn't have a return slot; the name won't be used for anything in that
-    // case.
-    // TODO: Should the call parameter even exist in that case? There isn't a
-    // corresponding argument in a `call` instruction.
-    if (!is_out_param || has_return_slot) {
-      FormatName(param_id);
-      out_ << ": ";
-    }
+    CARBON_CHECK(!sem_ir_->insts().Is<OutParam>(param_id));
+    FormatName(param_id);
+    out_ << ": ";
     FormatTypeOfInst(param_id);
   }
 
-  out_ << close;
+  out_ << ")";
+
+  if (return_form_id.has_value()) {
+    out_ << " -> ";
+    auto return_form = sem_ir_->insts().Get(return_form_id);
+    CARBON_KIND_SWITCH(return_form) {
+      case CARBON_KIND(InitForm init_form): {
+        auto param_id = params[init_form.index.index];
+        out_ << "out ";
+        FormatName(param_id);
+        out_ << ": ";
+        FormatTypeOfInst(param_id);
+        break;
+      }
+      case CARBON_KIND(RefForm ref_form): {
+        out_ << "ref ";
+        FormatInstAsType(ref_form.type_component_inst_id);
+        break;
+      }
+      case CARBON_KIND(ErrorInst _): {
+        FormatInstAsType(return_form_id);
+        break;
+      }
+      default:
+        CARBON_FATAL("Unexpected inst kind: {0}", return_form);
+    }
+  }
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
@@ -832,7 +848,7 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
     out_ << "\n";
   }
 
-  for (auto extended_scope_id : scope.extended_scopes()) {
+  for (auto [extended_scope_id, _] : scope.extended_scopes()) {
     Indent();
     out_ << "extend ";
     FormatName(extended_scope_id);
@@ -1005,16 +1021,24 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Value:
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
+      case ExprCategory::RefTagged:
+        FormatTypeOfInst(inst_id);
         break;
       case ExprCategory::DurableRef:
       case ExprCategory::EphemeralRef:
         out_ << "ref ";
+        FormatTypeOfInst(inst_id);
         break;
-      case ExprCategory::Initializing:
+      case ExprCategory::InPlaceInitializing:
+      case ExprCategory::ReprInitializing: {
         out_ << "init ";
+        FormatTypeOfInst(inst_id);
+        auto init_target_id = FindStorageArgForInitializer(
+            *sem_ir_, inst_id, /*allow_transitive=*/false);
+        FormatReturnSlotArg(init_target_id);
         break;
+      }
     }
-    FormatTypeOfInst(inst_id);
   }
 
   out_ << " = ";
@@ -1031,7 +1055,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case InstKind::TupleInit: {
       auto init = inst.As<AnyAggregateInit>();
       FormatArgs(init.elements_id);
-      FormatReturnSlotArg(init.dest_id);
       return;
     }
 
@@ -1137,9 +1160,8 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(InitializeFrom init): {
+    case CARBON_KIND(InPlaceInit init): {
       FormatArgs(init.src_id);
-      FormatReturnSlotArg(init.dest_id);
       return;
     }
 
@@ -1272,6 +1294,12 @@ auto Formatter::FormatInstRhsDefault(Inst inst) -> void {
       arg1_specific_id && !arg1_specific_id->has_value()) {
     return;
   }
+  // Similarly, instructions that have a `DestInstId` as the second operand
+  // typically use it for the output argument, so we omit it because it should
+  // already be part of the inst's formatted form expression.
+  if (arg1.kind() == IdKind::For<DestInstId>) {
+    return;
+  }
   out_ << ", ";
   FormatInstArgAndKind(arg1);
 }
@@ -1287,28 +1315,34 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
-  if (!return_info.is_valid()) {
-    out_ << "(<invalid return info>)";
-    return;
-  }
-  bool has_return_slot = return_info.has_return_slot();
-  InstId return_slot_arg_id = InstId::None;
-  if (has_return_slot) {
-    return_slot_arg_id = args.consume_back();
+  // If there's a return argument, don't print it here, because it's printed on
+  // the LHS.
+  auto callee_function = SemIR::GetCalleeAsFunction(*sem_ir_, inst.callee_id);
+  auto function = sem_ir_->functions().Get(callee_function.function_id);
+  auto return_form_id = function.GetDeclaredReturnForm(
+      *sem_ir_, callee_function.resolved_specific_id);
+  int return_arg_index = -1;
+  if (return_form_id.has_value()) {
+    if (auto init_form =
+            sem_ir_->insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
+      auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
+          init_form->type_component_inst_id);
+      if (SemIR::InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
+        return_arg_index = init_form->index.index;
+      }
+    }
   }
 
   llvm::ListSeparator sep;
   out_ << '(';
-  for (auto inst_id : args) {
+  for (auto [i, inst_id] : llvm::enumerate(args)) {
+    if (static_cast<int>(i) == return_arg_index) {
+      continue;
+    }
     out_ << sep;
     FormatArg(inst_id);
   }
   out_ << ')';
-
-  if (has_return_slot) {
-    FormatReturnSlotArg(return_slot_arg_id);
-  }
 }
 
 auto Formatter::FormatImportCppDeclRhs() -> void {
@@ -1448,8 +1482,7 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.builtin_constraint_mask.empty() ||
-      !info.self_impls_constraints.empty() ||
+  if (info.other_requirements || !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1479,10 +1512,6 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.lhs_id);
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
-    }
-    if (info.builtin_constraint_mask.HasAnyOf(
-            BuiltinConstraintMask::TypeCanDestroy)) {
-      out_ << and_sep << ".Self impls <CanDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";
@@ -1544,8 +1573,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
-  out_ << " to ";
-  FormatArg(dest_id);
+  if (dest_id.has_value()) {
+    out_ << " to ";
+    FormatArg(dest_id);
+  }
 }
 
 auto Formatter::FormatName(NameId id) -> void {

@@ -37,7 +37,7 @@ class FilesystemTest : public ::testing::Test {
     CARBON_CHECK(result.ok(), "{0}", result.error());
   }
 
-  auto path() const -> const std::filesystem::path& { return dir_.abs_path(); }
+  auto path() const -> const std::filesystem::path& { return dir_.path(); }
 
   // The test's temp directory, deleted on destruction.
   RemovingDir dir_;

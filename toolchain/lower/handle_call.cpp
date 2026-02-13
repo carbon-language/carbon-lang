@@ -8,8 +8,10 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "toolchain/lower/aggregate.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -257,6 +259,61 @@ static auto CreateBinaryOperatorForBuiltin(
   }
 }
 
+// Handles a call to `cpp.std.initializer_list.make`.
+static auto StoreArrayAsStdInitializerList(FunctionContext& context,
+                                           SemIR::InstId init_list_id,
+                                           SemIR::InstId array_inst_id)
+    -> void {
+  // Extract the bound from the array type.
+  auto [array_type_file, array_type_id] =
+      context.GetTypeIdOfInst(array_inst_id);
+  auto array_type = array_type_file->types().GetAs<SemIR::ArrayType>(
+      array_type_file->types().GetObjectRepr(array_type_id));
+  auto array_bound = array_type_file->GetArrayBoundValue(array_type.bound_id);
+  CARBON_CHECK(array_bound, "Array type with non-constant bound");
+
+  // Store the array pointer in the first element of the initializer list.
+  auto* array_ptr = context.GetValue(array_inst_id);
+  auto* begin_ptr =
+      GetAggregateElement(context, init_list_id, SemIR::ElementIndex(0),
+                          SemIR::InstId::None, "init_list.begin");
+  context.builder().CreateStore(array_ptr, begin_ptr);
+
+  // Store the end or size to the second element, depending on the layout.
+  auto init_list_type = context.GetTypeIdOfInst(init_list_id);
+  switch (auto layout = SemIR::GetStdInitializerListLayout(
+              *init_list_type.file, init_list_type.type_id);
+          layout.kind) {
+    case SemIR::StdInitializerListLayout::None: {
+      CARBON_FATAL("Unrecognized initializer list");
+      break;
+    }
+
+    case SemIR::StdInitializerListLayout::PointerPointer: {
+      auto* end_ptr =
+          GetAggregateElement(context, init_list_id, SemIR::ElementIndex(1),
+                              SemIR::InstId::None, "init_list.end");
+      auto* array_end_ptr = context.builder().CreateConstInBoundsGEP1_32(
+          context.GetTypeOfInst(array_inst_id), array_ptr, 1, "array.end");
+      context.builder().CreateStore(array_end_ptr, end_ptr);
+      break;
+    }
+
+    case SemIR::StdInitializerListLayout::PointerInt: {
+      auto* size_ptr =
+          GetAggregateElement(context, init_list_id, SemIR::ElementIndex(1),
+                              SemIR::InstId::None, "init_list.size");
+      context.builder().CreateStore(
+          llvm::ConstantInt::get(
+              context.GetType(FunctionContext::TypeInFile{
+                  .file = &context.sem_ir(), .type_id = layout.size_type_id}),
+              *array_bound),
+          size_ptr);
+      break;
+    }
+  }
+}
+
 // Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
@@ -359,6 +416,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
+    case SemIR::BuiltinFunctionKind::IntConvertChar:
     case SemIR::BuiltinFunctionKind::IntConvert: {
       context.SetLocal(inst_id,
                        CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
@@ -484,8 +542,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked:
-    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
+    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -507,9 +564,19 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
-    case SemIR::BuiltinFunctionKind::TypeDestroy:
-      // TODO: Destroy aggregate members.
+    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
+      context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
       return;
+    }
+
+    case SemIR::BuiltinFunctionKind::CppStdInitializerListMake: {
+      // TODO: We assume that the initializer list uses an in-place initializing
+      // representation, but we don't enforce that when type-checking the
+      // builtin.
+      StoreArrayAsStdInitializerList(context, arg_ids[1], arg_ids[0]);
+      context.SetLocal(inst_id, context.GetValue(arg_ids[1]));
+      return;
+    }
   }
 
   CARBON_FATAL("Unsupported builtin call.");
@@ -535,10 +602,10 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
-  auto function_type_info =
+  auto function_info =
       context.GetFileContext(callee_file)
-          .BuildFunctionTypeInfo(function,
-                                 callee_function.resolved_specific_id);
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
   llvm::Value* virtual_fn;
   if (function.clang_decl_id.has_value()) {
     // Use absolute vtables for clang interop - the itanium vtable contains
@@ -566,9 +633,9 @@ static auto HandleVirtualCall(FunctionContext& context,
          llvm::ConstantInt::get(
              i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
   }
-  return context.builder().CreateCall(function_type_info.type, virtual_fn,
-                                      args);
+  return context.builder().CreateCall(function_info->type, virtual_fn, args);
 }
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
   llvm::ArrayRef<SemIR::InstId> arg_ids =
@@ -579,29 +646,30 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // TODO: Should the `bound_method` be removed when forming the `call`
   // instruction? The `self` parameter is transferred into the call argument
   // list.
-  auto callee_id = inst.callee_id;
-  if (auto bound_method =
-          context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-    callee_id = bound_method->function_decl_id;
+  FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
+                                        .inst_id = inst.callee_id};
+  if (auto bound_method = context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(
+          callee.inst_id)) {
+    callee.inst_id = bound_method->function_decl_id;
   }
 
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
-  const auto* callee_file = &context.sem_ir();
   if (context.specific_id().has_value()) {
     auto [const_file, const_id] = GetConstantValueInSpecific(
         context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-        callee_id);
-    callee_file = const_file;
-    callee_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee_id.has_value());
+        callee.inst_id);
+    callee.file = const_file;
+    callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(callee.inst_id.has_value());
   }
 
-  auto callee_function = SemIR::GetCalleeAsFunction(*callee_file, callee_id);
+  auto callee_function =
+      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
 
   const SemIR::Function& function =
-      callee_file->functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
+      callee.file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee.file->check_ir_id(),
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
@@ -611,38 +679,28 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
+  auto& function_info =
+      context.GetFileContext(callee.file)
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
+
+  // Lower args in the LLVM parameter order, rather than the SemIR parameter
+  // order.
   std::vector<llvm::Value*> args;
-
-  auto inst_type = context.GetTypeIdOfInst(inst_id);
-  bool call_has_return_slot =
-      SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst.type_id)
-          .has_return_slot();
-  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
-    CARBON_CHECK(call_has_return_slot);
-    args.push_back(context.GetValue(arg_ids.consume_back()));
-  } else if (call_has_return_slot) {
-    // Call instruction has a return slot but this specific callee does not.
-    // Just ignore it.
-    arg_ids.consume_back();
-  }
-
-  for (auto arg_id : arg_ids) {
-    auto arg_type = context.GetTypeIdOfInst(arg_id);
-    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
-      args.push_back(context.GetValue(arg_id));
-    }
+  for (auto param_pattern_id : function_info->lowered_param_pattern_ids) {
+    auto sem_ir_index = callee.file->insts()
+                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
+                            .index.index;
+    args.push_back(context.GetValue(arg_ids[sem_ir_index]));
   }
 
   llvm::CallInst* call;
   if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
-    auto* callee =
-        context.GetFileContext(callee_file)
-            .GetOrCreateFunction(callee_function.function_id,
-                                 callee_function.resolved_specific_id);
+    auto* llvm_callee = function_info->llvm_function;
     auto describe_call = [&] {
       RawStringOstream out;
       out << "call ";
-      callee->printAsOperand(out);
+      llvm_callee->printAsOperand(out);
       out << "(";
       llvm::ListSeparator sep;
       for (auto* arg : args) {
@@ -650,14 +708,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         arg->printAsOperand(out);
       }
       out << ")\n";
-      callee->print(out);
+      llvm_callee->print(out);
       return out.TakeStr();
     };
-    CARBON_CHECK(callee->arg_size() == args.size(),
+    CARBON_CHECK(llvm_callee->arg_size() == args.size(),
                  "Argument count mismatch: {0}", describe_call());
-    call = context.builder().CreateCall(callee, args);
+    call = context.builder().CreateCall(llvm_callee, args);
   } else {
-    call = HandleVirtualCall(context, args, callee_file, function,
+    call = HandleVirtualCall(context, args, callee.file, function,
                              callee_function);
   }
 

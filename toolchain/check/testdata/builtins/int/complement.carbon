@@ -74,12 +74,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [concrete = constants.%Complement]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Complement.call: init %i32 = call %Complement.ref(%a.ref)
-// CHECK:STDOUT:   return %Complement.call to %return
+// CHECK:STDOUT:   return %Complement.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

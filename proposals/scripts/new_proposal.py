@@ -15,6 +15,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import List, Optional
 
 _PROMPT = """This will:
@@ -63,9 +64,10 @@ def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         "'origin'.",
     )
     parser.add_argument(
-        "--proposals-dir",
-        metavar="PROPOSALS_DIR",
-        help="The proposals directory, mainly for testing cross-repository. "
+        "--repo_root",
+        metavar="REPO_ROOT",
+        default=Path(__file__).parents[2],
+        help="The repository root, mainly for testing cross-repository. "
         "Automatically found by default.",
     )
     parser.add_argument(
@@ -109,16 +111,6 @@ def _fill_template(template_path: str, title: str, pr_num: int) -> str:
     return content
 
 
-def _get_proposals_dir(parsed_args: argparse.Namespace) -> str:
-    """Returns the path to the proposals directory."""
-    if parsed_args.proposals_dir:
-        assert isinstance(parsed_args.proposals_dir, str)
-        return parsed_args.proposals_dir
-    return os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "../../proposals")
-    )
-
-
 def _run(
     argv: List[str], check: bool = True, get_stdout: bool = False
 ) -> Optional[str]:
@@ -156,22 +148,28 @@ def _run_pr_create(argv: List[str]) -> int:
 
 def main() -> None:
     parsed_args = _parse_args()
+
+    # Switch to repo root early for consistent execution.
+    os.chdir(parsed_args.repo_root)
+
     title = parsed_args.title
     branch = _calculate_branch(parsed_args)
 
     # Verify tools are available.
     gh_bin = _find_tool("gh")
-    git_bin = _find_tool("git")
+    if Path(".jj").is_dir():
+        jj_bin = _find_tool("jj")
+        git_bin = None
+    else:
+        git_bin = _find_tool("git")
+        jj_bin = None
     precommit_bin = _find_tool("pre-commit")
 
-    # Ensure a good working directory.
-    proposals_dir = _get_proposals_dir(parsed_args)
-    os.chdir(proposals_dir)
-
-    # Verify there are no uncommitted changes.
-    p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
-    if p.returncode != 0:
-        exit("ERROR: There are uncommitted changes in your git repo.")
+    # Verify there are no uncommitted changes (jj has no equivalent).
+    if git_bin:
+        p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
+        if p.returncode != 0:
+            exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Prompt before proceeding.
     response = "?"
@@ -181,25 +179,51 @@ def main() -> None:
         exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run(
-        [git_bin, "switch", "--create", branch, parsed_args.branch_start_point]
-    )
-    _run([git_bin, "push", "-u", parsed_args.remote, branch])
+    if git_bin:
+        _run(
+            [
+                git_bin,
+                "switch",
+                "--create",
+                branch,
+                parsed_args.branch_start_point,
+            ]
+        )
+        _run([git_bin, "push", "-u", parsed_args.remote, branch])
+    else:
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "new", parsed_args.branch_start_point])
+        _run([jj_bin, "bookmark", "create", branch])
 
     # Copy template.md to a temp file.
-    template_path = os.path.join(proposals_dir, "scripts/template.md")
-    temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
+    template_path = "proposals/scripts/template.md"
+    temp_path = "proposals/new-proposal.tmp.md"
     shutil.copyfile(template_path, temp_path)
-    _run([git_bin, "add", temp_path])
-    _run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])
+    initial_desc = "Creating new proposal: %s" % title
+    if git_bin:
+        _run([git_bin, "add", temp_path])
+        _run([git_bin, "commit", "-m", initial_desc])
+    else:
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "describe", "-m", initial_desc])
 
     # Create a PR with WIP+proposal labels.
-    _run([git_bin, "push"])
+    if git_bin:
+        _run([git_bin, "push"])
+        user = _run([git_bin, "config", "get", "user.name"], get_stdout=True)
+    else:
+        assert jj_bin  # For mypy.
+        _run([jj_bin, "git", "push"])
+        user = _run([jj_bin, "config", "get", "user.name"], get_stdout=True)
+    assert user  # For mypy.
+    user = user.strip()
     pr_num = _run_pr_create(
         [
             gh_bin,
             "pr",
             "create",
+            "--head",
+            "%s:%s" % (user, branch),
             "--draft",
             "--label",
             "proposal",
@@ -216,25 +240,28 @@ def main() -> None:
 
     # Remove the temp file, create p####.md, and fill in PR information.
     os.remove(temp_path)
-    final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
+    final_path = "proposals/p%04d.md" % pr_num
     content = _fill_template(template_path, title, pr_num)
     with open(final_path, "w") as final_file:
         final_file.write(content)
-    _run([git_bin, "add", temp_path, final_path])
-    _run([precommit_bin, "run"], check=False)  # Needs a ToC update.
-    _run([git_bin, "add", final_path, os.path.join(proposals_dir, "README.md")])
-    _run(
-        [
-            git_bin,
-            "commit",
-            "--amend",
-            "-m",
-            "Filling out template with PR %d" % pr_num,
-        ]
-    )
 
-    # Push the PR update.
-    _run([git_bin, "push", "--force-with-lease"])
+    # Run pre-commit for a ToC update, then push the PR update.
+    final_desc = "Filling out template with PR %d" % pr_num
+    if git_bin:
+        _run([git_bin, "add", temp_path, final_path])
+        _run([precommit_bin, "run"], check=False)
+        _run([git_bin, "commit", "--amend", "-m", final_desc])
+
+        _run([git_bin, "push", "--force-with-lease"])
+    else:
+        assert jj_bin  # For mypy.
+
+        _run(
+            [precommit_bin, "run", "--files", "$(jj diff --name-only)"],
+            check=False,
+        )
+        _run([jj_bin, "describe", "-m", final_desc])
+        _run([jj_bin, "git", "push"])
 
     print(
         "\nCreated PR %d for %s. Make changes to:\n  %s"

@@ -168,6 +168,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %.e6e: form = init_form %empty_struct_type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
@@ -185,6 +186,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_36.2: type = converted %.loc4_36.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc4_36.3: form = init_form %.loc4_36.2, call_param0 [concrete = constants.%.e6e]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_29: type = splice_block %T.ref [symbolic = %T.loc4_8.1 (constants.%T)] {
@@ -204,12 +206,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_struct_type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_48.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_48.2: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_48.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_49: init %empty_struct_type = converted %.loc4_48.1, %.loc4_48.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc4_49 to %return
+// CHECK:STDOUT:     return %.loc4_49
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -307,6 +309,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
@@ -328,6 +331,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_36.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_36.2: type = converted %.loc8_36.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_36.3: form = init_form %.loc8_36.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_29: type = splice_block %T.ref [symbolic = %T.loc8_8.1 (constants.%T)] {
@@ -357,12 +361,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_48.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_48.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_49: init %empty_tuple.type = converted %.loc8_48.1, %.loc8_48.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc8_49 to %return
+// CHECK:STDOUT:     return %.loc8_49
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

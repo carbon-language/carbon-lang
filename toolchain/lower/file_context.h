@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
@@ -17,19 +16,39 @@
 
 namespace Carbon::Lower {
 
+// Information about how a given function declaration is lowered.
+struct FunctionInfo {
+  // The type of the lowered function.
+  llvm::FunctionType* type;
+
+  // The debug info type of the lowered function.
+  llvm::DISubroutineType* di_type;
+
+  // The `Call` parameter patterns that correspond to parameters of the LLVM IR
+  // function, in the order of the LLVM IR parameter list. Some `Call`
+  // parameters may be omitted (e.g. if they are stateless), and the order may
+  // differ from the SemIR `Call` parameter list (e.g. the return parameter, if
+  // any, always goes first).
+  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
+
+  // Any `Call` param patterns that aren't present in
+  // lowered_param_pattern_ids.
+  llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
+
+  // The lowered function declaration.
+  llvm::Function* llvm_function;
+};
+
 // Context and shared functionality for lowering within a SemIR file.
 class FileContext {
  public:
   using LoweredConstantStore =
-      FixedSizeValueStore<SemIR::InstId, llvm::Constant*>;
+      FixedSizeValueStore<SemIR::InstId, llvm::Constant*,
+                          Tag<SemIR::CheckIRId>>;
 
   explicit FileContext(Context& context, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
-
-  // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Returns null when not importing C++.
-  auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Prepares to lower code in this IR, by precomputing needed LLVM types,
   // constants, declarations, etc. Should only be called once, before we lower
@@ -47,12 +66,25 @@ class FileContext {
   auto GetFunction(SemIR::FunctionId function_id,
                    SemIR::SpecificId specific_id = SemIR::SpecificId::None)
       -> llvm::Function* {
-    return *GetFunctionAddr(function_id, specific_id);
+    const auto& function_info = GetFunctionInfo(function_id, specific_id);
+    return function_info ? function_info->llvm_function : nullptr;
   }
 
-  // Gets a or creates callable's function. Returns nullptr for a builtin.
-  auto GetOrCreateFunction(SemIR::FunctionId function_id,
-                           SemIR::SpecificId specific_id) -> llvm::Function*;
+  // Returns the FunctionInfo for the given function in the given specific, if
+  // it has already been computed.
+  auto GetFunctionInfo(SemIR::FunctionId function_id,
+                       SemIR::SpecificId specific_id)
+      -> std::optional<FunctionInfo>& {
+    return specific_id.has_value() ? specific_functions_.Get(specific_id)
+                                   : functions_.Get(function_id);
+  }
+
+  // Returns the FunctionInfo for the given function in the given specific. If
+  // it's not already available, this function will compute it, including
+  // creating the `llvm::Function` for it. Returns nullopt for a builtin.
+  auto GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
+                               SemIR::SpecificId specific_id)
+      -> std::optional<FunctionInfo>&;
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
@@ -71,8 +103,9 @@ class FileContext {
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
     auto result = types_.Get(type_id);
-    CARBON_CHECK(result.llvm_ir_type, "Missing type {0}: {1}", type_id,
-                 sem_ir().types().GetAsInst(type_id));
+    if (!result.llvm_ir_type) {
+      result.llvm_ir_type = context_->GetOpaqueType();
+    }
     return result;
   }
 
@@ -109,6 +142,7 @@ class FileContext {
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
+  auto GetFormType() -> llvm::StructType* { return context().GetFormType(); }
 
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
@@ -130,20 +164,6 @@ class FileContext {
     context().SetPrintfIntFormatString(printf_int_format_string);
   }
 
-  struct FunctionTypeInfo {
-    llvm::FunctionType* type;
-    llvm::SmallVector<SemIR::InstId> param_inst_ids;
-    llvm::Type* return_type = nullptr;
-    SemIR::InstId return_param_id = SemIR::InstId::None;
-  };
-
-  // Retrieve various features of the function's type useful for constructing
-  // the `llvm::Type` for the `llvm::Function`. If any part of the type can't be
-  // manifest (eg: incomplete return or parameter types), then the result is as
-  // if the type was `void()`.
-  auto BuildFunctionTypeInfo(const SemIR::Function& function,
-                             SemIR::SpecificId specific_id) -> FunctionTypeInfo;
-
   // Builds the global for the given instruction, which should then be cached by
   // the caller.
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
@@ -158,16 +178,10 @@ class FileContext {
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
  private:
-  // Gets the location in which a callable's function is stored.
-  auto GetFunctionAddr(SemIR::FunctionId function_id,
-                       SemIR::SpecificId specific_id) -> llvm::Function** {
-    return specific_id.has_value() ? &specific_functions_.Get(specific_id)
-                                   : &functions_.Get(function_id);
-  }
-
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
-  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl) -> void;
+  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+      -> llvm::Function*;
 
   // Notes that a specific function has been referenced for the first time.
   // Updates the fingerprint to include the function's type, and adds the
@@ -177,11 +191,25 @@ class FileContext {
                                         SemIR::SpecificId specific_id,
                                         llvm::Type* llvm_type) -> void;
 
+  struct FunctionTypeInfo {
+    llvm::FunctionType* type;
+    llvm::DISubroutineType* di_type;
+    llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
+    llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
+
+    // When return_param_id is not `None`, the corresponding lowered parameter
+    // should be given an `sret` attribute with this type.
+    llvm::Type* sret_type = nullptr;
+  };
+
+  class FunctionTypeInfoBuilder;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
-  auto BuildFunctionDecl(SemIR::FunctionId function_id,
-                         SemIR::SpecificId specific_id =
-                             SemIR::SpecificId::None) -> llvm::Function*;
+  auto BuildFunctionDecl(
+      SemIR::FunctionId function_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None)
+      -> std::optional<FunctionInfo>;
 
   // Builds a function's body. Common functionality for all functions.
   //
@@ -198,15 +226,8 @@ class FileContext {
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
-                         SemIR::SpecificId specific_id,
-                         const llvm::Function* llvm_function)
+                         const FunctionInfo& function_info)
       -> llvm::DISubprogram*;
-
-  // Build a `DISubroutineType` for the given function, including the return and
-  // parameter types.
-  auto BuildDISubroutineType(const SemIR::Function&,
-                             SemIR::SpecificId specific_id)
-      -> llvm::DISubroutineType*;
 
   // Builds the `llvm::Type` and `llvm::DIType` for the given instruction, which
   // should then be cached by the caller.
@@ -228,15 +249,9 @@ class FileContext {
   // The input SemIR.
   const SemIR::File* const sem_ir_;
 
-  // The options used to create the Clang Code Generator.
-  clang::HeaderSearchOptions cpp_header_search_options_;
-  clang::PreprocessorOptions cpp_preprocessor_options_;
-  clang::CodeGenOptions cpp_code_gen_options_;
-
   // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Should be initialized using `CreateCppCodeGenerator()`. Can be null
-  // if no C++ code is imported.
-  std::unique_ptr<clang::CodeGenerator> cpp_code_generator_;
+  // code. Can be null if no C++ code is imported.
+  clang::CodeGenerator* cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;
@@ -247,14 +262,20 @@ class FileContext {
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   using LoweredFunctionStore =
-      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*>;
+      FixedSizeValueStore<SemIR::FunctionId, std::optional<FunctionInfo>,
+                          Tag<SemIR::CheckIRId>>;
   LoweredFunctionStore functions_;
 
   // Maps specific callables to lowered functions.
-  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
+  FixedSizeValueStore<SemIR::SpecificId, std::optional<FunctionInfo>,
+                      Tag<SemIR::CheckIRId>>
+      specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.
-  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, LoweredTypes>;
+  //
+  // TypeIds internally are concrete ConstantIds.
+  using LoweredTypeStore =
+      FixedSizeValueStore<SemIR::TypeId, LoweredTypes, Tag<SemIR::CheckIRId>>;
   LoweredTypeStore types_;
 
   // Maps constants to their lowered values. Indexes are the `InstId` for
@@ -267,13 +288,17 @@ class FileContext {
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from
   // `specific_functions_`.
-  FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>>
+  FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>,
+                      Tag<SemIR::CheckIRId>>
       lowered_specifics_;
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*> vtables_;
-  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*>
+  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
+                      Tag<SemIR::CheckIRId>>
+      vtables_;
+  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
+                      Tag<SemIR::CheckIRId>>
       specific_vtables_;
 };
 

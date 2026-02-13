@@ -89,13 +89,13 @@ fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> %f64.d77 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Mul.call: init %f64.d77 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Mul.call to %return
+// CHECK:STDOUT:   return %Mul.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -15,7 +15,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -118,7 +118,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id,
            .subpattern_id = subpattern_id,
-           .index = SemIR::CallParamIndex::None});
+           .index = context.full_pattern_stack().NextCallParamIndex()});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;

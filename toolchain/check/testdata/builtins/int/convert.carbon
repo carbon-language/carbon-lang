@@ -37,6 +37,12 @@ fn Uint32ToUint64(a: u32) -> u64 = "int.convert";
 fn Int32ToIntLiteral(a: i32) -> Core.IntLiteral() = "int.convert";
 fn Uint32ToIntLiteral(a: u32) -> Core.IntLiteral() = "int.convert";
 
+// char conversion
+fn UInt8ToChar(a: u8)   -> u8 = "int.convert_char";
+fn UInt16ToChar(a: u16) -> u8 = "int.convert_char";
+fn UInt32ToChar(a: u32) -> u8 = "int.convert_char";
+fn UInt64ToChar(a: u64) -> u8 = "int.convert_char";
+
 class Expect[T:! type](N:! T) {}
 fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
 
@@ -249,6 +255,38 @@ let not_constant: Core.IntLiteral() = 0;
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 
+
+// --- char_conversion.carbon
+
+library "[[@TEST_NAME]]";
+import library "int_ops";
+
+fn F() {
+  // u8 \u2192 char
+  Test(UInt8ToChar(0x00)) as Expect(0x00 as u8);
+  Test(UInt8ToChar(0x80)) as Expect(0x80 as u8);
+  Test(UInt8ToChar(0xFF)) as Expect(0xFF as u8);
+
+  // u16 \u2192 i64
+  Test(UInt16ToChar(0x0000)) as Expect(0x00 as u8);
+  Test(UInt16ToChar(0xFF12)) as Expect(0x12 as u8);
+  Test(UInt16ToChar(0xFFFF)) as Expect(0xFF as u8);
+
+  // u32 \u2192 char
+  Test(UInt32ToChar(0x0000_0000)) as Expect(0x00 as u8);
+  Test(UInt32ToChar(0x8000_0012)) as Expect(0x12 as u8);
+  Test(UInt32ToChar(0xFFFF_FF12)) as Expect(0x12 as u8);
+  Test(UInt32ToChar(0xFFFF_FFFF)) as Expect(0xFF as u8);
+
+  // u64 \u2192 char
+  Test(UInt64ToChar(0x0)) as Expect(0x00 as u8);
+  Test(UInt64ToChar(0x8000_0000_0000_0012)) as Expect(0x12 as u8);
+  Test(UInt64ToChar(0xFFFF_FFFF_FFFF_FF12)) as Expect(0x12 as u8);
+
+  Test(UInt64ToChar(0xFFFF_FFFF_FFFF_FFFF)) as Expect(0xFF as u8);
+
+}
+
 // CHECK:STDOUT: --- runtime_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -273,27 +311,27 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT:   %Main.Int32ToInt64: %Int32ToInt64.type = import_ref Main//int_ops, Int32ToInt64, loaded [concrete = constants.%Int32ToInt64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SizePreserving(%a.param: %i32) -> %u32 {
+// CHECK:STDOUT: fn @SizePreserving(%a.param: %i32) -> out %return.param: %u32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToUint32.ref: %Int32ToUint32.type = name_ref Int32ToUint32, imports.%Main.Int32ToUint32 [concrete = constants.%Int32ToUint32]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToUint32.call: init %u32 = call %Int32ToUint32.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToUint32.call to %return
+// CHECK:STDOUT:   return %Int32ToUint32.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Narrowing(%a.param: %i32) -> %i16 {
+// CHECK:STDOUT: fn @Narrowing(%a.param: %i32) -> out %return.param: %i16 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToInt16.call: init %i16 = call %Int32ToInt16.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToInt16.call to %return
+// CHECK:STDOUT:   return %Int32ToInt16.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Widening(%a.param: %i32) -> %i64 {
+// CHECK:STDOUT: fn @Widening(%a.param: %i32) -> out %return.param: %i64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToInt64.call: init %i64 = call %Int32ToInt64.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToInt64.call to %return
+// CHECK:STDOUT:   return %Int32ToInt64.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

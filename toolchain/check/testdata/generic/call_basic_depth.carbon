@@ -58,7 +58,7 @@ fn M() {
 // CHECK:STDOUT:   %C.Cfn: %C.Cfn.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
@@ -95,7 +95,7 @@ fn M() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc19_6.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc19_6.1 [symbolic = %require_complete (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc19_6.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.loc19_6.1 (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -164,7 +164,7 @@ fn M() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T) {
@@ -172,7 +172,7 @@ fn M() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc25_3.2 => constants.%F.specific_fn.643
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

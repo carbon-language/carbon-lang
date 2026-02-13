@@ -12,6 +12,7 @@ cc_library(
     name = "block_value_store",
     hdrs = ["block_value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store",
         ":yaml",
@@ -53,9 +54,12 @@ cc_library(
     srcs = ["clang_invocation.cpp"],
     hdrs = ["clang_invocation.h"],
     deps = [
+        ":install_paths",
         "//common:check",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//common:string_helpers",
+        "//toolchain/diagnostics:emitter",
         "@llvm-project//clang:basic",
+        "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],
@@ -77,6 +81,16 @@ cc_library(
     name = "for_each_macro",
     hdrs = ["for_each_macro.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "id_tag",
+    hdrs = ["id_tag.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -217,6 +231,7 @@ cc_library(
     name = "value_store",
     hdrs = ["value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store_types",
         ":yaml",

@@ -242,13 +242,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               context, node_id,
               {.type_id = type_id,
                .subpattern_id = result_inst_id,
-               .index = SemIR::CallParamIndex::None});
+               .index = context.full_pattern_stack().NextCallParamIndex()});
         } else {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
               {.type_id = type_id,
                .subpattern_id = result_inst_id,
-               .index = SemIR::CallParamIndex::None});
+               .index = context.full_pattern_stack().NextCallParamIndex()});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);
@@ -306,8 +306,14 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
                                  Parse::NodeKind::VarBindingPattern);
 }
 
+auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "Implement :? support");
+}
+
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
+                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
+    -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
@@ -317,12 +323,7 @@ auto HandleParseNode(Context& context,
   // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
   // This allows substitution with other facet values without requiring an
   // additional `FacetAccessType` to be inserted.
-  SemIR::FacetTypeId facet_type_id =
-      context.facet_types().Add(SemIR::FacetTypeInfo{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
-  auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+  auto type_id = GetEmptyFacetType(context);
 
   MakePeriodSelfFacetValue(context, type_id);
   return true;
@@ -375,13 +376,6 @@ auto HandleParseNode(Context& context,
     // add a proper diagnostic.
     context.TODO(node_id, "_ used as associated constant name");
   }
-  cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
-                      "associated constant has incomplete type {0}",
-                      SemIR::TypeId);
-    return context.emitter().Build(
-        type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
-  });
 
   SemIR::AssociatedConstantDecl assoc_const_decl = {
       .type_id = cast_type_id,
@@ -430,7 +424,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   }
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context, context.types().GetTypeInstId(class_info.self_type_id),
       cast_type_inst_id);
   auto field_id =
       AddInst<SemIR::FieldDecl>(context, node_id,

@@ -56,6 +56,8 @@ auto ValueRepr::IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const
 auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
   auto type_info = file.types().GetCompleteTypeInfo(type_id);
   if (type_info.abstract_class_id.has_value()) {
+    CARBON_CHECK(type_info.value_repr.kind == ValueRepr::Pointer, "{0}",
+                 type_info.value_repr.kind);
     return {.kind = InitRepr::Abstract};
   }
   switch (type_info.value_repr.kind) {

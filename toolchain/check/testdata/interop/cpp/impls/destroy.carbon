@@ -141,19 +141,25 @@ fn DeletedDestroy() {
 }
 
 fn PrivateDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var _: Cpp.PrivateDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-26]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~PrivateDestructor();
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var _: Cpp.PrivateDestructor = {};
 }
 
 fn ProtectedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var _: Cpp.ProtectedDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-38]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   ~ProtectedDestructor();
+  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var _: Cpp.ProtectedDestructor = {};
 }
@@ -214,7 +220,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %PublicDestructor = var %_.var_patt
 // CHECK:STDOUT:   %.loc8_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_34.2: init %PublicDestructor = class_init (), %_.var [concrete = constants.%PublicDestructor.val]
+// CHECK:STDOUT:   %.loc8_34.2: init %PublicDestructor to %_.var = class_init () [concrete = constants.%PublicDestructor.val]
 // CHECK:STDOUT:   %.loc8_3: init %PublicDestructor = converted %.loc8_34.1, %.loc8_34.2 [concrete = constants.%PublicDestructor.val]
 // CHECK:STDOUT:   assign %_.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %PublicDestructor.ref [concrete = constants.%PublicDestructor] {
@@ -227,6 +233,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %PublicDestructor) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TrivialDestroy() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -235,7 +243,7 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %TrivialDestructor = var %_.var_patt
 // CHECK:STDOUT:   %.loc14_35.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_35.2: init %TrivialDestructor = class_init (), %_.var [concrete = constants.%TrivialDestructor.val]
+// CHECK:STDOUT:   %.loc14_35.2: init %TrivialDestructor to %_.var = class_init () [concrete = constants.%TrivialDestructor.val]
 // CHECK:STDOUT:   %.loc14_3: init %TrivialDestructor = converted %.loc14_35.1, %.loc14_35.2 [concrete = constants.%TrivialDestructor.val]
 // CHECK:STDOUT:   assign %_.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_13: type = splice_block %TrivialDestructor.ref [concrete = constants.%TrivialDestructor] {
@@ -247,6 +255,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.call: init %empty_tuple.type = call %TrivialDestructor.cpp_destructor.bound(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: %TrivialDestructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- destroy_protected_base_destructor.carbon
 // CHECK:STDOUT:
@@ -261,10 +271,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT:   %ProtectedDestructor.val: %ProtectedDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%ProtectedDestructor.val) [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %Derived, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.da2: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.fdc: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.da2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -280,19 +288,19 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %.loc12_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc12_31.1: %struct_type.base.f5e = struct_literal (%.loc12_30.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc12_31.2: ref %ProtectedDestructor = class_element_access %_.var, element0
-// CHECK:STDOUT:   %.loc12_30.2: init %ProtectedDestructor = class_init (), %.loc12_31.2 [concrete = constants.%ProtectedDestructor.val]
+// CHECK:STDOUT:   %.loc12_30.2: init %ProtectedDestructor to %.loc12_31.2 = class_init () [concrete = constants.%ProtectedDestructor.val]
 // CHECK:STDOUT:   %.loc12_31.3: init %ProtectedDestructor = converted %.loc12_30.1, %.loc12_30.2 [concrete = constants.%ProtectedDestructor.val]
-// CHECK:STDOUT:   %.loc12_31.4: init %Derived = class_init (%.loc12_31.3), %_.var [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc12_31.4: init %Derived to %_.var = class_init (%.loc12_31.3) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc12_3: init %Derived = converted %.loc12_31.1, %.loc12_31.4 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   assign %_.var, %.loc12_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %_: ref %Derived = ref_binding _, %_.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %_.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fdc
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %_.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%_.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %_.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Derived) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_destroy_private_base_destructor.carbon
 // CHECK:STDOUT:
@@ -307,10 +315,8 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT:   %PrivateDestructor.val: %PrivateDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%PrivateDestructor.val) [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %Derived, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.da2: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.fdc: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.da2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -326,17 +332,17 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %.loc13_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_31.1: %struct_type.base.f5e = struct_literal (%.loc13_30.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc13_31.2: ref %PrivateDestructor = class_element_access %_.var, element0
-// CHECK:STDOUT:   %.loc13_30.2: init %PrivateDestructor = class_init (), %.loc13_31.2 [concrete = constants.%PrivateDestructor.val]
+// CHECK:STDOUT:   %.loc13_30.2: init %PrivateDestructor to %.loc13_31.2 = class_init () [concrete = constants.%PrivateDestructor.val]
 // CHECK:STDOUT:   %.loc13_31.3: init %PrivateDestructor = converted %.loc13_30.1, %.loc13_30.2 [concrete = constants.%PrivateDestructor.val]
-// CHECK:STDOUT:   %.loc13_31.4: init %Derived = class_init (%.loc13_31.3), %_.var [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc13_31.4: init %Derived to %_.var = class_init (%.loc13_31.3) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc13_3: init %Derived = converted %.loc13_31.1, %.loc13_31.4 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   assign %_.var, %.loc13_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %_: ref %Derived = ref_binding _, %_.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %_.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fdc
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %_.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%_.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %_.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%_.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Derived) = "no_op";
 // CHECK:STDOUT:

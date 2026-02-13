@@ -31,19 +31,19 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CBar.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !13 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
-// CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.1.temp), !dbg !15
-// CHECK:STDOUT:   call void @_CBar.Main(), !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
+// CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.1.temp), !dbg !12
+// CHECK:STDOUT:   call void @_CBar.Main(), !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -66,13 +66,10 @@ fn Main() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Bar", linkageName: "_CBar.Main", scope: null, file: !3, line: 16, type: !9, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{!11}
-// CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 23, scope: !8)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !14 = !DILocation(line: 19, column: 3, scope: !13)
-// CHECK:STDOUT: !15 = !DILocation(line: 19, column: 19, scope: !13)
-// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 15, scope: !13)
-// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 1, scope: !13)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Bar", linkageName: "_CBar.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 23, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 3, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 19, column: 19, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 19, column: 15, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 1, scope: !10)

@@ -100,7 +100,7 @@ fn ReadAndCheckReport() -> bool {
   var increasing: ReportState = ReportState.Make(true);
   var decreasing: ReportState = ReportState.Make(false);
   var n: i32;
-  while (ReadInt(&n)) {
+  while (ReadInt(ref n)) {
     window.Add(n);
     increasing.OnAdd(window);
     decreasing.OnAdd(window);

@@ -65,8 +65,9 @@ fn MixedTypes(ref a: i32, b: i64) = "int.xor_assign";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc8: %i32 = ref_tag %a.ref
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%.loc8, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

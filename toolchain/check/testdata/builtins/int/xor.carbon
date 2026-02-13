@@ -35,13 +35,13 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Xor.ref: %Xor.type = name_ref Xor, file.%Xor.decl [concrete = constants.%Xor]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Xor.call: init %i32 = call %Xor.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Xor.call to %return
+// CHECK:STDOUT:   return %Xor.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

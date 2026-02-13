@@ -145,6 +145,10 @@ class Context {
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
     tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+    CARBON_VLOG("Add #node{0}: {1}",
+                llvm::format_hex_no_prefix(tree_->node_impls_.size() - 1, 0,
+                                           /*Upper=*/true),
+                tree_->node_impls_.back());
   }
 
   // Adds a node and returns its typed NodeId.
@@ -192,13 +196,12 @@ class Context {
                               NodeKind start_kind)
       -> std::optional<Lex::TokenIndex>;
 
-  // Parses a closing symbol corresponding to the opening symbol
-  // `expected_open`, possibly skipping forward and diagnosing if necessary.
-  // Creates a parse node of the specified close kind. If `expected_open` is not
-  // an opening symbol, the parse node will be associated with `state.token`,
-  // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open, State state,
-                                NodeKind close_kind) -> void;
+  // Parses a closing symbol corresponding to the opening symbol `state.token`,
+  // possibly skipping forward and diagnosing if necessary. Creates a parse node
+  // of the specified close kind. If `state.token` is not an opening symbol,
+  // no input will be consumed, and no diagnostic will be emitted, but the parse
+  // node will still be marked as having an error.
+  auto ConsumeAndAddCloseSymbol(State state, NodeKind close_kind) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -406,6 +409,10 @@ class Context {
   // Adds a function definition node, and ends tracking a deferred definition if
   // necessary.
   auto AddFunctionDefinition(Lex::TokenIndex token, bool has_error) -> void;
+  // Adds a function terse definition node, and ends tracking a deferred
+  // definition if necessary.
+  auto AddFunctionTerseDefinition(Lex::TokenIndex token, bool has_error)
+      -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

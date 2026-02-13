@@ -704,7 +704,7 @@ struct Arg {
 
     // One-of information.
     struct {
-      llvm::OwningArrayRef<llvm::StringRef> value_strings;
+      llvm::SmallVector<llvm::StringRef> value_strings;
       ValueActionT value_action;
     };
   };
@@ -800,13 +800,11 @@ auto OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
                                 MatchT match,
                                 std::index_sequence<Indices...> /*indices*/)
     -> void {
-  std::array<llvm::StringRef, N> value_strings = {input_values[Indices].str...};
   std::array<U, N> values = {input_values[Indices].value...};
 
-  // Directly copy the value strings into a heap-allocated array in the
-  // argument.
-  new (&arg()->value_strings)
-      llvm::OwningArrayRef<llvm::StringRef>(value_strings);
+  // Directly copy the value strings into a vector.
+  new (&arg()->value_strings) llvm::SmallVector<llvm::StringRef>(
+      std::initializer_list<llvm::StringRef>{input_values[Indices].str...});
 
   // And build a type-erased action that maps a specific value string to a value
   // by index.

@@ -79,6 +79,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Fn: {
+      context.PushState(state);
+      context.PushState(StateKind::LambdaIntroducer);
+      break;
+    }
     case Lex::TokenKind::False: {
       context.AddLeafNode(NodeKind::BoolLiteralFalse, context.Consume());
       context.PushState(state);
@@ -162,6 +167,11 @@ auto HandleExprInPostfix(Context& context) -> void {
     case Lex::TokenKind::Array: {
       context.PushState(state);
       context.PushState(StateKind::ArrayExpr);
+      break;
+    }
+    case Lex::TokenKind::Form: {
+      context.PushState(state);
+      context.PushState(StateKind::FormLiteral);
       break;
     }
     case Lex::TokenKind::Package: {

@@ -14,6 +14,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 // Declare the supported driver flavor entry points.
 //
@@ -33,9 +34,9 @@ auto LldRunner::LinkHelper(llvm::StringLiteral label,
     -> bool {
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
-  llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::BumpPtrAllocator alloc;
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(path, args, cstr_arg_storage);
+      BuildCStrArgs(path, args, alloc);
 
   CARBON_VLOG("Running LLD {0}-platform link with args:\n", label);
   for (const char* cstr_arg : cstr_args) {

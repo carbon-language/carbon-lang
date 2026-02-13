@@ -33,7 +33,9 @@ static auto DumpConstantSummary(const File& file, ConstantId const_id)
   if (const_id.is_symbolic()) {
     out << ": " << file.constant_values().GetSymbolicConstant(const_id);
   } else if (const_id.is_concrete()) {
-    out << ": " << file.insts().Get(file.constant_values().GetInstId(const_id));
+    out << ": "
+        << file.insts().GetWithAttachedType(
+               file.constant_values().GetInstId(const_id));
   }
   return out.TakeStr();
 }
@@ -55,7 +57,7 @@ static auto DumpInstSummary(const File& file, InstId inst_id) -> std::string {
   out << inst_id;
   if (inst_id.has_value() && inst_id != InstId::InitTombstone &&
       inst_id != InstId::ImplWitnessTablePlaceholder) {
-    out << ": " << file.insts().Get(inst_id);
+    out << ": " << file.insts().GetWithAttachedType(inst_id);
   }
   return out.TakeStr();
 }
@@ -137,11 +139,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
         << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
         << "  - " << DumpInstSummary(file, rewrite.rhs_id);
   }
-  if (auto identified_id =
-          file.identified_facet_types().TryGetId(facet_type_id);
-      identified_id.has_value()) {
-    out << "\nidentified: " << Dump(file, identified_id);
-  }
   return out.TakeStr();
 }
 
@@ -186,8 +183,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
 
   const auto& identified_facet_type =
       file.identified_facet_types().Get(identified_facet_type_id);
-  for (auto [i, req_interface] :
-       llvm::enumerate(identified_facet_type.required_interfaces())) {
+  for (auto [i, req_impl] :
+       llvm::enumerate(identified_facet_type.required_impls())) {
+    auto [self, req_interface] = req_impl;
+    // TODO: Dump the self too.
     out << "\n  - " << Dump(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
@@ -244,7 +243,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
     return out.TakeStr();
   }
 
-  Inst inst = file.insts().Get(inst_id);
+  Inst inst = file.insts().GetWithAttachedType(inst_id);
 
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
     auto entity_name_id = EntityNameId(inst.arg0());
@@ -256,7 +255,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
   if (inst.type_id().has_value()) {
     out << "\n  - type: " << Dump(file, inst.type_id());
   }
-  ConstantId const_id = file.constant_values().Get(inst_id);
+  ConstantId const_id = file.constant_values().GetAttached(inst_id);
   if (const_id.has_value()) {
     InstId const_inst_id = file.constant_values().GetInstId(const_id);
     out << "\n  - value: ";
@@ -298,8 +297,13 @@ LLVM_DUMP_METHOD auto Dump(const File& file, LocId loc_id) -> std::string {
       auto import_ir_id =
           file.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
       const auto* import_file = file.import_irs().Get(import_ir_id).sem_ir;
-      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
-          << "\")";
+      out << "LocId(import from ";
+      if (import_file == nullptr) {
+        out << "unknown file";
+      } else {
+        out << "\"" << FormatEscaped(import_file->filename()) << "\"";
+      }
+      out << ")";
       break;
     }
 
@@ -377,6 +381,30 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           RequireImplsBlockId require_impls_block_id)
+    -> std::string {
+  RawStringOstream out;
+  out << require_impls_block_id;
+  if (require_impls_block_id.has_value()) {
+    for (auto require_id :
+         file.require_impls_blocks().Get(require_impls_block_id)) {
+      out << "\n  - " << Dump(file, require_id);
+    }
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, RequireImplsId require_impls_id)
+    -> std::string {
+  RawStringOstream out;
+  out << require_impls_id;
+  if (require_impls_id.has_value()) {
+    out << ": " << file.require_impls().Get(require_impls_id);
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
     -> std::string {
   RawStringOstream out;
@@ -434,9 +462,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
     return out.TakeStr();
   }
 
-  InstId inst_id = file.types().GetInstId(type_id);
+  InstId inst_id = file.types().GetTypeInstId(type_id);
   out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
+  auto const_id = file.types().GetConstantId(type_id);
+  if (const_id.is_symbolic()) {
+    if (file.constant_values().IsAttached(const_id)) {
+      out << " (attached symbolic)";
+    } else {
+      out << " (unattached symbolic)";
+    }
+  } else {
+    out << " (concrete)";
+  }
   return out.TakeStr();
 }
 
@@ -482,6 +520,13 @@ LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
 LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
     -> NamedConstraintId {
   return NamedConstraintId(id);
+}
+LLVM_DUMP_METHOD static auto MakeRequireImplsBlockId(int id)
+    -> RequireImplsBlockId {
+  return RequireImplsBlockId(id);
+}
+LLVM_DUMP_METHOD static auto MakeRequireImplsId(int id) -> RequireImplsId {
+  return RequireImplsId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

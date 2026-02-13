@@ -122,7 +122,7 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc7: ref %tuple.type = temporary_storage
-// CHECK:STDOUT:   %F.call: init %tuple.type = call %F.ref() to %.loc7
+// CHECK:STDOUT:   %F.call: init %tuple.type to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

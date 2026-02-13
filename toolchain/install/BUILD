@@ -20,7 +20,7 @@ package(default_visibility = ["//visibility:public"])
 # Build rules supporting the install data tree for the Carbon toolchain.
 #
 # This populates a synthetic Carbon toolchain installation under the
-# `prefix_root` directory. For details on its layout, see `install_dirs` below.
+# `prefix` directory. For details on its layout, see `install_dirs` below.
 
 cc_library(
     name = "busybox_info",
@@ -294,15 +294,18 @@ filegroup(
     ],
 )
 
-# Given a root `prefix_root`, the hierarchy looks like:
+# Given a CMake-style install prefix[1], the hierarchy looks like:
 #
-# - prefix_root/bin: Binaries intended for direct use.
-# - prefix_root/lib/carbon: Private data and files.
-# - prefix_root/lib/carbon/core: The `Core` package files.
-# - prefix_root/lib/carbon/llvm/bin: LLVM binaries.
+# - prefix/bin: Binaries intended for direct use.
+# - prefix/lib/carbon: Private data and files.
+# - prefix/lib/carbon/core: The `Core` package files.
+# - prefix/lib/carbon/llvm/bin: LLVM binaries.
 #
 # This will be how installs are provided on Unix-y platforms, and is loosely
-# based on the FHS (Filesystem Hierarchy Standard).
+# based on the FHS (Filesystem Hierarchy Standard). See the CMake install prefix
+# documentation[1] for more details.
+#
+# [1]: https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
 install_dirs = {
     "bin": [
         install_symlink(
@@ -312,6 +315,8 @@ install_dirs = {
         ),
     ],
     "lib/carbon": [
+        install_target("MODULE.bazel", "bazel/install.MODULE.bazel"),
+        install_target("BUILD", "bazel/install.BUILD"),
         install_target("carbon_install.txt", "carbon_install.txt"),
         install_target(
             "install_digest.txt",
@@ -326,9 +331,16 @@ install_dirs = {
             executable = True,
             is_driver = True,
         ),
+        install_filegroup("bazel", "//bazel/cc_toolchains:installed_cc_toolchain_starlark"),
         # TODO: Consider if we want to keep `core` here or group it with
         # runtimes. It is a bit of both -- standard library, and runtimes.
         install_filegroup("core", "//core:prelude"),
+    ],
+    "lib/carbon/bazel": [
+        install_target("carbon_cc_toolchain_config.bzl", "bazel/carbon_cc_toolchain_config.bzl"),
+        install_target("carbon_detected_variables.tpl.bzl", "bazel/carbon_detected_variables.tpl.bzl"),
+        install_target("carbon_toolchain.bzl", "bazel/carbon_toolchain.bzl"),
+        install_target("BUILD", "bazel/empty.BUILD"),
     ],
     "lib/carbon/llvm/bin": [install_symlink(
         name,
@@ -363,6 +375,23 @@ install_dirs = {
             remove_prefix = "staging/include/",
         ),
     ],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/include": [
+        install_filegroup(
+            "fuzzer",
+            "@llvm-project//compiler-rt:fuzzer_installed_hdrs",
+            remove_prefix = "include/fuzzer/",
+        ),
+        install_filegroup(
+            "profile",
+            "@llvm-project//compiler-rt:profile_installed_hdrs",
+            remove_prefix = "include/profile/",
+        ),
+        install_filegroup(
+            "sanitizer",
+            "@llvm-project//compiler-rt:sanitizer_installed_hdrs",
+            remove_prefix = "include/sanitizer/",
+        ),
+    ],
 }
 
 make_install_filegroups(
@@ -371,14 +400,18 @@ make_install_filegroups(
     no_digest_name = "install_data.no_digest",
     no_driver_name = "install_data.no_driver",
     pkg_name = "pkg_data",
-    prefix = "prefix_root",
+    prefix = "prefix",
 )
 
 py_test(
     name = "llvm_symlinks_test",
     size = "small",
     srcs = ["llvm_symlinks_test.py"],
-    data = [":install_data"],
+    data = [
+        ":install_data",
+        "//toolchain/driver:prebuilt_runtimes",
+    ],
+    deps = ["@bazel_tools//tools/python/runfiles"],
 )
 
 manifest(
@@ -397,7 +430,6 @@ cc_binary(
         "//common:init_llvm",
         "//common:map",
         "//common:vlog",
-        "//toolchain/base:install_paths",
         "@llvm-project//llvm:Support",
     ],
 )

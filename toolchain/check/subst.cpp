@@ -163,7 +163,7 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
                            SemIR::InstId inst_id) -> void {
   auto inst = context.insts().Get(inst_id);
   if (inst.type_id().has_value()) {
-    worklist.Push(context.types().GetInstId(inst.type_id()));
+    worklist.Push(context.types().GetTypeInstId(inst.type_id()));
   }
   PushOperand(context, worklist, inst.arg0_and_kind());
   PushOperand(context, worklist, inst.arg1_and_kind());
@@ -236,8 +236,6 @@ static auto PopOperand(Context& context, Worklist& worklist,
       const auto& old_facet_type_info =
           context.facet_types().Get(facet_type_id);
       SemIR::FacetTypeInfo new_facet_type_info = {
-          .builtin_constraint_mask =
-              old_facet_type_info.builtin_constraint_mask,
           .other_requirements = old_facet_type_info.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(

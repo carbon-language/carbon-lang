@@ -421,4 +421,26 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
   return inst_id;
 }
 
+auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
+  SemIR::FacetTypeId facet_type_id =
+      context.facet_types().Add(SemIR::FacetTypeInfo{});
+  auto const_id = EvalOrAddInst<SemIR::FacetType>(
+      context, SemIR::LocId::None,
+      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
+  return context.types().GetTypeIdForTypeConstantId(const_id);
+}
+
+auto GetConstantFacetValueForType(Context& context,
+                                  SemIR::TypeInstId type_inst_id)
+    -> SemIR::ConstantId {
+  // We use an empty facet type because values of type `type` do not provide any
+  // witnesses of their own.
+  auto type_facet_type = GetEmptyFacetType(context);
+  return EvalOrAddInst<SemIR::FacetValue>(
+      context, SemIR::LocId::None,
+      {.type_id = type_facet_type,
+       .type_inst_id = type_inst_id,
+       .witnesses_block_id = SemIR::InstBlockId::Empty});
+}
+
 }  // namespace Carbon::Check

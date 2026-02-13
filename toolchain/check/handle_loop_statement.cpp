@@ -177,7 +177,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
   // Call `<range>.(Iterate.Next)(&cursor)`.
-  auto cursor_type_inst_id = context.types().GetInstId(cursor_type_id);
+  auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
   auto cursor_addr_id = AddInst<SemIR::AddrOf>(
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),

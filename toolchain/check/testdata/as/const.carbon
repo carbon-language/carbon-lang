@@ -106,10 +106,8 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.bf1: type = pattern_type %ptr.d4c [concrete]
 // CHECK:STDOUT:   %reference.var: ref %const = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.160: %ptr.d4c = addr_of %reference.var [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %const, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3e8: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.806: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3e8 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,7 +122,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %const = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc14_3: ref %const = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3
+// CHECK:STDOUT:   %Init.call: init %X to %.loc14_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc14_43: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %const.loc14_37: type = const_type %X.ref.loc14_43 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc14_34.1: init %const = as_compatible %Init.call
@@ -178,12 +176,12 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_24: type = ptr_type %const.loc17_17 [concrete = constants.%ptr.d4c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.d4c = value_binding b, %.loc17_32.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.806
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%i.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -199,10 +197,8 @@ fn Use() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %X, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e4a: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.cae: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e4a = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -217,7 +213,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc12_3: ref %X = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %const = call %Init.ref() to %.loc12_3
+// CHECK:STDOUT:   %Init.call: init %const to %.loc12_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc12_31: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc12_28.1: init %X = as_compatible %Init.call
 // CHECK:STDOUT:   %.loc12_28.2: init %X = converted %Init.call, %.loc12_28.1
@@ -233,12 +229,12 @@ fn Use() {
 // CHECK:STDOUT:   %.loc13_27.2: %X = converted %value.ref, %.loc13_27.1
 // CHECK:STDOUT:   %X.ref.loc13_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_27.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cae
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%i.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

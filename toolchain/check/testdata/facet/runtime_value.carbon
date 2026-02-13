@@ -72,7 +72,11 @@ interface Z {
   let X:! type;
 }
 
-// CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// TODO: Improve this diagnostic. The problem is that T is a runtime facet
+// _and_ its facet type doesn't specific a value for `.X`. Or make this work
+// by producing an ImplWitnessAccess that functions against a runtime facet.
+//
+// CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T: Z, v: T.X);
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -104,7 +108,7 @@ interface Z {
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
 // `T`.
 //
-// CHECK:STDERR: fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot access member of interface `Z` in type `Z where .(Z.X) = ()` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T: Z where .X = (), v: T.X);
 // CHECK:STDERR:                             ^~~
 // CHECK:STDERR:
@@ -118,7 +122,7 @@ interface Z {
 }
 
 fn F(T: Z) {
-  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -131,7 +135,7 @@ fn F(T: Z) {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %I.type [concrete]
-// CHECK:STDOUT:   %pattern_type.a15: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -140,7 +144,7 @@ fn F(T: Z) {
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.a15 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9d9 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
@@ -158,7 +162,7 @@ fn F(T: Z) {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %facet_type [concrete]
-// CHECK:STDOUT:   %pattern_type.a15: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -167,7 +171,7 @@ fn F(T: Z) {
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.a15 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9d9 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7_9 [concrete = @C.%.loc7_9]

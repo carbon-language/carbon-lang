@@ -471,76 +471,39 @@ interface N {
 
 fn F(unused T:! N where .Y1 = () and .Y2 = .Y1 and .Y2 = .Self.Y1) { }
 
-// --- fail_todo_cycle_through_self_reference.carbon
+// --- fail_cycle_through_self_reference.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let U:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let U:! Z;
 }
 
-// TODO: Should be diagnosed as a cycle.
+// CHECK:STDERR: fail_cycle_through_self_reference.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused A:! Z where .T = .U.T and .U = .Self) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(unused A:! Z where .T = .U.T and .U = .Self) {}
 
-// --- fail_todo_reference_same_constant_in_different_self.carbon
+// --- reference_same_constant_in_different_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let U:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let U:! Z;
 }
 
-// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
-// fixed.
 fn F(A:! Z where .T = (), unused B:! Z where .T = .U.T and .U = A) {}
 
-// --- fail_todo_non_cycle_with_self_reference.carbon
+// --- non_cycle_with_self_reference.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let T:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-6]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let T:! Z;
+  let T:! type;
   let U:! type;
-  // TODO: This should not be an error.
-  //
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
-  // CHECK:STDERR:   let V:! Z;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-17]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let V:! Z;
 }
 
-// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
-// fixed.
 fn F(A:! Z where .T = .V.U and .V = .Self and .U = ()) -> A.T {
   return ();
 }
@@ -684,10 +647,10 @@ fn F(unused T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.%X [concrete]
 // CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.%Y [concrete]
 // CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.%Z [concrete]
-// CHECK:STDOUT:   %.Self.35e: %M.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.b4d: %M.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.35e [symbolic_self]
-// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.35e, @M [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.b4d [symbolic_self]
+// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.b4d, @M [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %M.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]
@@ -707,31 +670,31 @@ fn F(unused T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref.loc13_25: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.35e]
-// CHECK:STDOUT:       %X.ref.loc13_25: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.ref.loc13_25: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_25: type = facet_access_type %.Self.ref.loc13_25 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_25: type = converted %.Self.ref.loc13_25, %.Self.as_type.loc13_25 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %X.ref.loc13_25: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0.loc13_25: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.Self.ref.loc13_30: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.35e]
-// CHECK:STDOUT:       %Y.ref.loc13_30: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
+// CHECK:STDOUT:       %.Self.ref.loc13_30: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_30: type = facet_access_type %.Self.ref.loc13_30 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_30: type = converted %.Self.ref.loc13_30, %.Self.as_type.loc13_30 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %Y.ref.loc13_30: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:       %impl.elem1.loc13_30: type = impl_witness_access constants.%M.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %.Self.ref.loc13_37: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.35e]
-// CHECK:STDOUT:       %Y.ref.loc13_37: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
+// CHECK:STDOUT:       %.Self.ref.loc13_37: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_37: type = facet_access_type %.Self.ref.loc13_37 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_37: type = converted %.Self.ref.loc13_37, %.Self.as_type.loc13_37 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %Y.ref.loc13_37: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:       %impl.elem1.loc13_37: type = impl_witness_access constants.%M.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %.Self.ref.loc13_42: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.35e]
-// CHECK:STDOUT:       %X.ref.loc13_42: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.ref.loc13_42: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_42: type = facet_access_type %.Self.ref.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_42: type = converted %.Self.ref.loc13_42, %.Self.as_type.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %X.ref.loc13_42: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0.loc13_42: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc13_42, %impl.elem1.loc13_30 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %.Self.ref.loc13_49: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.35e]
-// CHECK:STDOUT:       %Z.ref: %M.assoc_type = name_ref Z, @Z.%assoc2 [concrete = constants.%assoc2]
+// CHECK:STDOUT:       %.Self.ref.loc13_49: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_49: type = facet_access_type %.Self.ref.loc13_49 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_49: type = converted %.Self.ref.loc13_49, %.Self.as_type.loc13_49 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %Z.ref: %M.assoc_type = name_ref Z, @Z.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:       %impl.elem2: type = impl_witness_access constants.%M.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
 // CHECK:STDOUT:       %.loc13_55.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc13_55.2: type = converted %.loc13_55.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

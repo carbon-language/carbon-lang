@@ -110,7 +110,7 @@ auto main(int argc, char** argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
   Carbon::InitLLVM init_llvm(argc, argv);
 
-  Carbon::SetWorkingDirForBazel();
+  Carbon::SetWorkingDirForBazelRun();
 
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   bool success = Carbon::Testing::Run(args);

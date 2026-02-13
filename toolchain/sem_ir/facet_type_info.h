@@ -17,33 +17,6 @@ namespace Carbon::SemIR {
 
 class File;
 
-#define CARBON_BUILTIN_CONSTRAINT_MASK(X)                  \
-  /* Verifies types can use the builtin `type.destroy`. */ \
-  X(TypeCanDestroy)
-
-CARBON_DEFINE_RAW_ENUM_MASK(BuiltinConstraintMask, uint32_t) {
-  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_RAW_ENUM_MASK_ENUMERATOR)
-};
-
-// Constraints that are produced by builtin functions.
-//
-// These constraints are not treated as full interfaces, and behave somewhat
-// similarly to `type where .Self impls <builtin>` as an API. Similarly, `impl C
-// as <BuiltinConstraint>` will be invalid because `impl` requires at least one
-// extended interface.
-class BuiltinConstraintMask
-    : public CARBON_ENUM_MASK_BASE(BuiltinConstraintMask) {
- public:
-  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_CONSTANT_DECL)
-
-  using EnumMaskBase::AsInt;
-};
-
-#define CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE(X) \
-  CARBON_ENUM_MASK_CONSTANT_DEFINITION(BuiltinConstraintMask, X)
-CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE)
-#undef CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE
-
 // A representation of a facet type that extends a single interface or
 // named constraint.
 using SingleExtendFacetType =
@@ -93,8 +66,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   };
   llvm::SmallVector<RewriteConstraint> rewrite_constraints;
 
-  BuiltinConstraintMask builtin_constraint_mask = BuiltinConstraintMask::None;
-
   // TODO: Add same-type constraints.
   // TODO: Remove once all requirements are supported.
   bool other_requirements = false;
@@ -114,7 +85,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType> {
     if (!self_impls_constraints.empty() ||
         !self_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
-        !builtin_constraint_mask.empty() || other_requirements) {
+        other_requirements) {
       return std::nullopt;
     }
     if (extend_constraints.size() == 1 && extend_named_constraints.empty()) {
@@ -126,6 +97,15 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
+  // Returns whether the facet type has no constraints, making it the facet type
+  // version of `TypeType`.
+  auto HasNoConstraints() const -> bool {
+    return extend_constraints.empty() && extend_named_constraints.empty() &&
+           self_impls_constraints.empty() &&
+           self_impls_named_constraints.empty() &&
+           rewrite_constraints.empty() && !other_requirements;
+  }
+
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&
@@ -134,7 +114,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
            lhs.self_impls_named_constraints ==
                rhs.self_impls_named_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
-           lhs.builtin_constraint_mask == rhs.builtin_constraint_mask &&
            lhs.other_requirements == rhs.other_requirements;
   }
 };
@@ -143,19 +122,34 @@ constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
                                               .rhs_id = InstId::None};
 
-using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
+using FacetTypeInfoStore =
+    CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
 
-// TODO: This should probably include `BuiltinConstraintMask`, allowing APIs to
-// include builtin constraints where `RequireIdentifiedFacetType` is used.
+struct IdentifiedFacetTypeKey {
+  FacetTypeId facet_type_id;
+  ConstantId self_const_id;
+
+  friend auto operator==(const IdentifiedFacetTypeKey& lhs,
+                         const IdentifiedFacetTypeKey& rhs) -> bool = default;
+};
+
 struct IdentifiedFacetType {
-  using RequiredInterface = SpecificInterface;
+  // A requirement that `self_facet_value` implements the `specific_interface`.
+  struct RequiredImpl {
+    ConstantId self_facet_value;
+    SpecificInterface specific_interface;
 
-  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extends,
-                      llvm::ArrayRef<RequiredInterface> self_impls);
+    friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
+        -> bool = default;
+  };
+
+  IdentifiedFacetType(IdentifiedFacetTypeKey key,
+                      llvm::ArrayRef<RequiredImpl> extends,
+                      llvm::ArrayRef<RequiredImpl> self_impls);
 
   // The order here defines the order of impl witnesses for this facet type.
-  auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
-    return required_interfaces_;
+  auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {
+    return required_impls_;
   }
 
   // Can this be used to the right of an `as` in an `impl` declaration?
@@ -181,12 +175,17 @@ struct IdentifiedFacetType {
     }
   }
 
- private:
-  // Interfaces mentioned explicitly in the facet type expression, or
-  // transitively through a named constraint. Sorted and deduplicated.
-  llvm::SmallVector<RequiredInterface> required_interfaces_;
+  auto GetAsKey() const -> IdentifiedFacetTypeKey { return key_; }
 
-  // The single interface from `required_interfaces` to implement if this is
+ private:
+  IdentifiedFacetTypeKey key_;
+
+  // Requirements that a facet value implements an interface, mentioned
+  // explicitly in the facet type expression or transitively through a named
+  // constraint. Sorted and deduplicated.
+  llvm::SmallVector<RequiredImpl> required_impls_;
+
+  // The single interface from `required_impls` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
   InterfaceId interface_id_ = InterfaceId::None;
@@ -199,6 +198,10 @@ struct IdentifiedFacetType {
   };
 };
 
+using IdentifiedFacetTypeStore =
+    CanonicalValueStore<IdentifiedFacetTypeId, IdentifiedFacetTypeKey,
+                        Tag<CheckIRId>, IdentifiedFacetType>;
+
 // See common/hashing.h.
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
@@ -208,7 +211,6 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   hasher.HashArray(llvm::ArrayRef(value.extend_named_constraints));
   hasher.HashArray(llvm::ArrayRef(value.self_impls_named_constraints));
   hasher.HashArray(llvm::ArrayRef(value.rewrite_constraints));
-  hasher.HashRaw(value.builtin_constraint_mask);
   hasher.HashRaw(value.other_requirements);
   return static_cast<HashCode>(hasher);
 }

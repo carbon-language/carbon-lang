@@ -123,6 +123,8 @@ class PrecedenceGroup {
     LogicalOr,
     // Conditional.
     If,
+    // `ref`
+    Ref,
     // Assignment.
     Assignment,
     // Sentinel representing a context in which any operator can appear.

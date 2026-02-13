@@ -56,6 +56,7 @@ TEST(SemIRTest, Yaml) {
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
+      Pair("names", Yaml::Mapping(SizeIs(2))),
       Pair("import_irs", Yaml::Mapping(SizeIs(2))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
@@ -64,10 +65,15 @@ TEST(SemIRTest, Yaml) {
       Pair("cpp_global_vars", Yaml::Mapping(SizeIs(0))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
+      Pair("interfaces", Yaml::Mapping(SizeIs(0))),
+      Pair("associated_constants", Yaml::Mapping(SizeIs(0))),
+      Pair("impls", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
       Pair("specifics", Yaml::Mapping(SizeIs(0))),
+      Pair("specific_interfaces", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
+      Pair("facet_types", Yaml::Mapping(SizeIs(0))),
       Pair("insts", Yaml::Mapping(AllOf(
                         Each(Key(inst_id)),
                         // kind is required, other parts are optional.
@@ -104,7 +110,16 @@ TEST(SemIRTest, Yaml) {
               Pair("inst_block60000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
               Pair("inst_block60000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
               Pair("inst_block60000008",
-                   Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+                   Yaml::Mapping(Each(Pair(_, inst_id))))))),
+      Pair("value_stores",
+           Yaml::Mapping(ElementsAre(
+               Pair("shared_values",
+                    Yaml::Mapping(ElementsAre(
+                        Pair("ints", Yaml::Mapping(SizeIs(0))),
+                        Pair("reals", Yaml::Mapping(SizeIs(0))),
+                        Pair("floats", Yaml::Mapping(SizeIs(0))),
+                        Pair("identifiers", Yaml::Mapping(SizeIs(2))),
+                        Pair("strings", Yaml::Mapping(SizeIs(0)))))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

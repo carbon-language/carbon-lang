@@ -113,7 +113,6 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // TODO: Consider renaming Handle##Name, instead relying on typed_inst overload
 // resolution. That would allow putting the nonexistent handler implementations
 // in `requires`-style overloads.
-// NOLINTNEXTLINE(readability-function-size): The define confuses lint.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   // Skip over constants. `FileContext::GetConstant` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
@@ -267,8 +266,8 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
-                                 SemIR::InstId source_id) -> void {
+auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
+                                        SemIR::InstId source_id) -> void {
   switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
       break;
@@ -312,15 +311,6 @@ auto FunctionContext::GetValueRepr(TypeInFile type) -> ValueReprInFile {
 auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   auto result = SemIR::InitRepr::ForType(*type.file, type.type_id);
   AddEnumToCurrentFingerprint(result.kind);
-  return result;
-}
-
-auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
-    -> ReturnTypeInfoInFile {
-  ReturnTypeInfoInFile result = {
-      .file = type.file,
-      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
-  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
   return result;
 }
 

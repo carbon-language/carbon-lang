@@ -42,7 +42,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetInstId(class_info.self_type_id));
+      context.types().GetTypeInstId(class_info.self_type_id));
 }
 
 // Checks that the specified finished adapter definition is valid and builds and
@@ -102,7 +102,8 @@ static auto CheckCompleteAdapterClassType(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        // TODO: Use InstId from the adapt declaration.
-       .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(object_repr_id)});
 }
 
 static auto AddStructTypeFields(
@@ -271,7 +272,7 @@ static auto CheckCompleteClassType(
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
   // TODO: Use InstId from base declaration.
-  auto base_type_inst_id = context.types().GetInstId(base_type_id);
+  auto base_type_inst_id = context.types().GetTypeInstId(base_type_id);
   std::optional<SemIR::ClassType> base_class_type;
   if (base_type_id.has_value()) {
     // TODO: If the base class is template dependent, we will need to decide
@@ -289,7 +290,7 @@ static auto CheckCompleteClassType(
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_inst_id = context.types().GetInstId(
+         .type_inst_id = context.types().GetTypeInstId(
              GetPointerType(context, SemIR::VtableType::TypeInstId))});
   }
   if (base_type_id.has_value()) {
@@ -315,7 +316,8 @@ static auto CheckCompleteClassType(
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = context.types().GetInstId(struct_type_id)});
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(struct_type_id)});
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,

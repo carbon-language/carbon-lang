@@ -107,13 +107,8 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 }
 
 static auto TypeStructureReferencesSelf(
-    Context& context, SemIR::TypeInstId inst_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId inst_id,
     const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
-  if (inst_id == SemIR::ErrorInst::TypeInstId) {
-    // Don't generate more diagnostics.
-    return true;
-  }
-
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
       auto step = type_iter.Next();
@@ -147,19 +142,36 @@ static auto TypeStructureReferencesSelf(
     }
   }
 
-  if (identified_facet_type.required_interfaces().empty()) {
+  if (identified_facet_type.required_impls().empty()) {
+    CARBON_DIAGNOSTIC(
+        RequireImplsMissingSelfEmptyFacetType, Error,
+        "no `Self` reference found in `require` declaration; `Self` must "
+        "appear in the self-type or as a generic argument for each required "
+        "interface, but no interfaces were found");
+    context.emitter().Emit(loc_id, RequireImplsMissingSelfEmptyFacetType);
     return false;
   }
 
-  for (auto specific_interface : identified_facet_type.required_interfaces()) {
+  bool interfaces_all_reference_self = true;
+  for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
     if (!find_self(type_iter)) {
-      return false;
+      // TODO: The IdentifiedFacetType loses the location (since it's
+      // canonical), but it would be nice to somehow point this diagnostic at
+      // the particular interface in the facet type that is missing `Self`.
+      CARBON_DIAGNOSTIC(
+          RequireImplsMissingSelf, Error,
+          "no `Self` reference found in `require` declaration; `Self` must "
+          "appear in the self-type or as a generic argument for each required "
+          "interface, but found interface `{0}` without a `Self` argument",
+          SemIR::SpecificInterface);
+      context.emitter().Emit(loc_id, RequireImplsMissingSelf,
+                             specific_interface);
+      interfaces_all_reference_self = false;
     }
   }
-
-  return true;
+  return interfaces_all_reference_self;
 }
 
 struct ValidateRequireResult {
@@ -175,26 +187,35 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
+  auto self_constant_value_id = context.constant_values().Get(self_inst_id);
   auto constraint_constant_value_id =
       context.constant_values().Get(constraint_inst_id);
+
+  if (self_constant_value_id == SemIR::ErrorInst::ConstantId ||
+      constraint_constant_value_id == SemIR::ErrorInst::ConstantId ||
+      scope_inst_id == SemIR::ErrorInst::InstId) {
+    // An error was already diagnosed, don't diagnose another. We can't build a
+    // useful `require` with an error, it couldn't do anything.
+    return std::nullopt;
+  }
+
   auto constraint_type_id =
       SemIR::TypeId::ForTypeConstant(constraint_constant_value_id);
   auto constraint_facet_type =
       context.types().TryGetAs<SemIR::FacetType>(constraint_type_id);
   if (!constraint_facet_type) {
-    if (constraint_constant_value_id != SemIR::ErrorInst::ConstantId) {
-      CARBON_DIAGNOSTIC(
-          RequireImplsMissingFacetType, Error,
-          "`require` declaration constrained by a non-facet type; "
-          "expected an `interface` or `constraint` name after `impls`");
-      context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
-    }
+    CARBON_DIAGNOSTIC(
+        RequireImplsMissingFacetType, Error,
+        "`require` declaration constrained by a non-facet type; "
+        "expected an `interface` or `constraint` name after `impls`");
+    context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
     // Can't continue without a constraint to use.
     return std::nullopt;
   }
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_inst_id), *constraint_facet_type, [&] {
+      context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
+      *constraint_facet_type, [&] {
         CARBON_DIAGNOSTIC(
             RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",
@@ -211,22 +232,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
   const auto& identified =
       context.identified_facet_types().Get(identified_facet_type_id);
 
-  if (!TypeStructureReferencesSelf(context, self_inst_id, identified)) {
-    CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
-                      "no `Self` reference found in `require` declaration; "
-                      "`Self` must appear in the self-type or as a generic "
-                      "parameter for each `interface` or `constraint`");
-    context.emitter().Emit(loc_id, RequireImplsMissingSelf);
-    return std::nullopt;
-  }
-
-  if (scope_inst_id == SemIR::ErrorInst::InstId) {
-    // `require` is in the wrong scope.
-    return std::nullopt;
-  }
-  if (self_inst_id == SemIR::ErrorInst::InstId ||
-      constraint_inst_id == SemIR::ErrorInst::InstId) {
-    // Can't build a useful `require` with an error, it couldn't do anything.
+  if (!TypeStructureReferencesSelf(context, loc_id, self_inst_id, identified)) {
     return std::nullopt;
   }
 
@@ -265,7 +271,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   }
 
   auto [constraint_type_id, identified_facet_type] = *validated;
-  if (identified_facet_type->required_interfaces().empty()) {
+  if (identified_facet_type->required_impls().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
     // This is not an error though.
     DiscardGenericDecl(context);
@@ -307,6 +313,31 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             })) {
       return true;
     }
+
+    // The generic of a require declaration is always inside an interface or
+    // constraint, which makes its last generic binding the inner `Self` facet
+    // of the interface/constraint definition. Thus the last argument of its
+    // `self_specific` is that inner `Self`.
+    auto self_specific_id = context.generics().GetSelfSpecific(
+        context.require_impls().Get(require_impls_id).generic_id);
+    const auto& self_specific = context.specifics().Get(self_specific_id);
+    auto self_specific_args = context.inst_blocks().Get(self_specific.args_id);
+    auto inner_self_inst_id = self_specific_args.back();
+
+    // The extended scope instruction must be part of the enclosing scope (and
+    // generic). A specific for the enclosing scope will be applied to it when
+    // using the instruction later. To do so, we wrap the constraint facet type
+    // it in a SpecificConstant, which preserves the require declaration's
+    // specific along with the facet type.
+    auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
+        context, node_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .inst_id = constraint_inst_id,
+         .specific_id = self_specific_id});
+    auto enclosing_scope_id = context.scope_stack().PeekNameScopeId();
+    auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
+    enclosing_scope.AddExtendedScope(
+        {constraint_id_in_self_specific, inner_self_inst_id});
   }
 
   context.require_impls_stack().AppendToTop(require_impls_id);

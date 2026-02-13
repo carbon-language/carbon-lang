@@ -53,13 +53,13 @@ fn A[] -> ();
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fn A => 0;
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR:      ^~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
 fn A => 0;
 
@@ -121,6 +121,7 @@ fn A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
@@ -136,18 +137,20 @@ fn A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_10.2: type = converted %.loc7_10.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc7_10.3: form = init_form %.loc7_10.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_implicit_only.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
@@ -163,14 +166,20 @@ fn A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc7_12.3: form = init_form %.loc7_12.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_arrow_body.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_file_generic_regression_test.carbon
 // CHECK:STDOUT:

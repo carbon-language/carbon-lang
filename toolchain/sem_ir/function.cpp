@@ -14,8 +14,8 @@
 
 namespace Carbon::SemIR {
 
-auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
-    -> Callee {
+auto GetCallee(const File& sem_ir, InstId callee_id,
+               SpecificId caller_specific_id) -> Callee {
   CalleeFunction fn = {.function_id = FunctionId::None,
                        .enclosing_specific_id = SpecificId::None,
                        .resolved_specific_id = SpecificId::None,
@@ -26,9 +26,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
     callee_id = bound_method->function_decl_id;
   }
 
-  if (specific_id.has_value()) {
+  if (caller_specific_id.has_value()) {
     callee_id = sem_ir.constant_values().GetInstIdIfValid(
-        GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+        GetConstantValueInSpecific(sem_ir, caller_specific_id, callee_id));
     CARBON_CHECK(callee_id.has_value(),
                  "Invalid callee id in a specific context");
   }
@@ -80,8 +80,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
 }
 
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id) -> CalleeFunction {
-  return std::get<CalleeFunction>(GetCallee(sem_ir, callee_id, specific_id));
+                         SpecificId caller_specific_id) -> CalleeFunction {
+  return std::get<CalleeFunction>(
+      GetCallee(sem_ir, callee_id, caller_specific_id));
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
@@ -111,25 +112,6 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
           .specific_id = specific_id};
 }
 
-auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
-                                                InstId pattern_id)
-    -> std::optional<ParamPatternInfo> {
-  auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
-
-  sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
-  auto [param_pattern, param_pattern_id] =
-      sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
-  if (!param_pattern) {
-    return std::nullopt;
-  }
-
-  auto binding_pattern = inst.As<AnyBindingPattern>();
-  return {{.inst_id = param_pattern_id,
-           .inst = *param_pattern,
-           .entity_name_id = binding_pattern.entity_name_id}};
-}
-
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_type_inst_id.has_value()) {
@@ -137,6 +119,17 @@ auto Function::GetDeclaredReturnType(const File& file,
   }
   return file.types().GetTypeIdForTypeConstantId(
       GetConstantValueInSpecific(file, specific_id, return_type_inst_id));
+}
+
+auto Function::GetDeclaredReturnForm(const File& file,
+                                     SpecificId specific_id) const -> InstId {
+  if (!return_form_inst_id.has_value()) {
+    // Treat as equivalent to `-> ()`.
+    return InstId::None;
+  }
+  auto return_form_constant_id =
+      GetConstantValueInSpecific(file, specific_id, return_form_inst_id);
+  return file.constant_values().GetInstId(return_form_constant_id);
 }
 
 }  // namespace Carbon::SemIR

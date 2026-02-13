@@ -33,7 +33,7 @@ cc_library(
     srcs = ["compile_helper.cpp"],
     hdrs = ["compile_helper.h"],
     deps = [
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/lex",
         "//toolchain/parse",
         "//toolchain/parse:tree",
@@ -98,6 +98,7 @@ cc_test(
     srcs = ["yaml_test_helpers_test.cpp"],
     deps = [
         ":yaml_test_helpers",
+        "//common:error_test_helpers",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],

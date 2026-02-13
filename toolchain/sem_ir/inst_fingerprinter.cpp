@@ -25,7 +25,8 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
-  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t>;
+  using FingerprintStore =
+      FixedSizeValueStore<InstId, uint64_t, Tag<CheckIRId>>;
   using FilesFingerprintStores =
       FixedSizeValueStore<CheckIRId, FingerprintStore>;
 
@@ -66,8 +67,8 @@ struct Worklist {
   auto SetFingerprint(const File* file, InstId inst_id, uint64_t fingerprint) {
     auto& store = fingerprints->Get(file->check_ir_id());
     if (store.size() == 0) {
-      store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
-          file->insts().GetIdTag(), file->insts().size(), 0);
+      store = FingerprintStore::MakeWithExplicitSize(
+          file->insts().size(), file->insts().GetIdTag(), 0);
     }
     store.Set(inst_id, fingerprint ? fingerprint : 1);
   }
@@ -151,7 +152,7 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    Add(sem_ir->types().GetInstId(type_id));
+    Add(sem_ir->types().GetTypeInstId(type_id));
   }
 
   template <typename T>
@@ -303,7 +304,6 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    contents.push_back(facet_type.builtin_constraint_mask.AsInt());
     contents.push_back(facet_type.other_requirements);
   }
 

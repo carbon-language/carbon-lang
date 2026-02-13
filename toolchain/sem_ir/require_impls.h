@@ -37,16 +37,17 @@ struct RequireImpls : Printable<RequireImpls> {
     out << '{';
     out << "self_id: " << self_id
         << ", facet_type_inst_id: " << facet_type_inst_id
-        << ", extend_self: " << extend_self
+        << ", extend_self: " << (extend_self ? "true" : "false")
         << ", parent_scope: " << parent_scope_id;
     out << '}';
   }
 };
 
-using RequireImplsStore = ValueStore<RequireImplsId, RequireImpls>;
+using RequireImplsStore =
+    ValueStore<RequireImplsId, RequireImpls, Tag<CheckIRId>>;
 
 using RequireImplsBlockStore =
-    BlockValueStore<RequireImplsBlockId, RequireImplsId>;
+    BlockValueStore<RequireImplsBlockId, RequireImplsId, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

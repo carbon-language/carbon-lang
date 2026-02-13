@@ -110,7 +110,7 @@ class StepStack {
 
   // Pushes an instruction by its TypeId.
   auto PushTypeId(TypeId type_id) -> void {
-    PushInstId(sem_ir_->types().GetInstId(type_id));
+    PushInstId(sem_ir_->types().GetTypeInstId(type_id));
   }
 
   // Pushes a specific interface by the interface's entity name.
@@ -682,14 +682,6 @@ class Stringifier {
       step_stack_->PushString("...");
       some_where = true;
     }
-    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      if (some_where) {
-        step_stack_->PushString(" and");
-      }
-      step_stack_->PushString(" .Self impls Core.CanDestroy");
-      some_where = true;
-    }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
@@ -742,7 +734,6 @@ class Stringifier {
 
 }  // namespace
 
-// NOLINTNEXTLINE(readability-function-size)
 static auto Stringify(const File& sem_ir, StepStack& step_stack)
     -> std::string {
   RawStringOstream out;

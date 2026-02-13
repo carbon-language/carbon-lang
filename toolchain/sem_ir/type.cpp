@@ -32,6 +32,20 @@ auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
   return TypeId::ForTypeConstant(constant_id);
 }
 
+auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeId {
+  if (constant_id == SemIR::ErrorInst::ConstantId) {
+    return TypeId::None;
+  }
+  auto type_id = file_->insts()
+                     .Get(file_->constant_values().GetInstId(constant_id))
+                     .type_id();
+  if (type_id != SemIR::TypeType::TypeId) {
+    return TypeId::None;
+  }
+  return TypeId::ForTypeConstant(constant_id);
+}
+
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
   CheckTypeOfConstantIsTypeType(*file_, constant_id);
@@ -49,14 +63,14 @@ auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {
   return TypeInstId::UnsafeMake(inst_id);
 }
 
-auto TypeStore::GetInstId(TypeId type_id) const -> TypeInstId {
+auto TypeStore::GetTypeInstId(TypeId type_id) const -> TypeInstId {
   // The instruction for a TypeId has a value of that TypeId.
   return TypeInstId::UnsafeMake(
       file_->constant_values().GetInstId(GetConstantId(type_id)));
 }
 
 auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {
-  return file_->insts().Get(GetInstId(type_id));
+  return file_->insts().Get(GetTypeInstId(type_id));
 }
 
 auto TypeStore::GetUnattachedType(TypeId type_id) const -> TypeId {
@@ -143,7 +157,7 @@ auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const
   if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
-  auto inst_id = file_->types().GetInstId(object_repr_id);
+  auto inst_id = file_->types().GetTypeInstId(object_repr_id);
   if (inst_id == IntLiteralType::TypeInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
     return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};

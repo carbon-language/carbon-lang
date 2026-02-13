@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -68,10 +68,9 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   }
 }
 
-auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
-                                       State state, NodeKind close_kind)
+auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
     -> void {
-  Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
+  Lex::TokenKind open_token_kind = tokens().GetKind(state.token);
 
   if (!open_token_kind.is_opening_symbol()) {
     AddNode(close_kind, state.token, /*has_error=*/true);
@@ -85,7 +84,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     emitter_.Emit(*position_, ExpectedCloseSymbol,
                   open_token_kind.closing_symbol());
 
-    SkipTo(tokens().GetMatchedClosingToken(expected_open));
+    SkipTo(tokens().GetMatchedClosingToken(state.token));
     AddNode(close_kind, Consume(), /*has_error=*/true);
   }
 }
@@ -461,6 +460,19 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
     -> void {
   auto definition_id = AddNode<NodeKind::FunctionDefinition>(token, has_error);
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id = definition_id;
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
+  }
+}
+
+auto Context::AddFunctionTerseDefinition(Lex::TokenIndex token, bool has_error)
+    -> void {
+  auto definition_id =
+      AddNode<NodeKind::FunctionTerseDefinition>(token, has_error);
   if (ParsingInDeferredDefinitionScope(*this)) {
     auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);

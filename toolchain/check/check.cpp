@@ -9,13 +9,14 @@
 
 #include "common/check.h"
 #include "common/map.h"
+#include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -417,6 +418,27 @@ auto CheckParseTrees(
             &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
 
+  // Dump the raw SemIR in the event of a crash. We dump it to a separate file
+  // to keep the stack trace manageable.
+  PrettyStackTraceFunction sem_ir_dumper([&](llvm::raw_ostream& output) {
+    if (!options.sem_ir_crash_dump.empty()) {
+      output << "Dumping raw SemIR to " << options.sem_ir_crash_dump << "\n";
+      std::error_code error_code;
+      llvm::raw_fd_ostream sem_ir_dump(options.sem_ir_crash_dump, error_code);
+      if (error_code) {
+        output << "Raw SemIR dump failed: " << error_code.category().name()
+               << ":" << error_code.value() << ": " << error_code.message()
+               << "\n";
+      } else {
+        for (const auto& unit_info : unit_infos) {
+          if (unit_info.is_checked && unit_info.unit->sem_ir != nullptr) {
+            unit_info.unit->sem_ir->Print(sem_ir_dump);
+          }
+        }
+      }
+    }
+  });
+
   Map<ImportKey, UnitAndImports*> api_map =
       BuildApiMapAndDiagnosePackaging(unit_infos);
 
@@ -463,7 +485,8 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+    CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
+              unit_info->unit->llvm_context, clang_invocation,
               options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
@@ -512,7 +535,8 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
+                  unit_info.unit->llvm_context, clang_invocation,
                   options.vlog_stream)
             .Run();
       }

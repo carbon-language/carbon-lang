@@ -4,17 +4,23 @@
 
 #include "toolchain/check/cpp/operators.h"
 
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -29,6 +35,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::Destroy:
     case CoreIdentifier::As:
     case CoreIdentifier::ImplicitAs:
+    case CoreIdentifier::UnsafeAs:
     case CoreIdentifier::Copy: {
       // TODO: Support destructors and conversions.
       return std::nullopt;
@@ -48,6 +55,12 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::Negate: {
       CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Minus;
+    }
+
+    // Bitwise.
+    case CoreIdentifier::BitComplement: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
+      return clang::OO_Tilde;
     }
 
     // Binary operators.
@@ -94,6 +107,14 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::RightShiftWith: {
       CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_GreaterGreater;
+    }
+
+    // Assignment.
+    case CoreIdentifier::AssignWith: {
+      // TODO: This is not yet reached because we don't use the `AssignWith`
+      // interface for assignment yet.
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
+      return clang::OO_Equal;
     }
 
     // Compound assignment arithmetic operators.
@@ -163,11 +184,259 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
       }
     }
 
-    default:
+    // Array indexing.
+    case CoreIdentifier::IndexWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::At);
+      return clang::OO_Subscript;
+    }
+
+    default: {
       context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
                                          interface_name));
       return std::nullopt;
+    }
   }
+}
+
+// Creates and returns a function that can be used to construct a
+// std::initializer_list from an array.
+//
+// TODO: This should ideally be implemented in Carbon code rather than by
+// synthesizing a function.
+// TODO: We should cache and reuse the generated function.
+static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
+                                          clang::QualType init_list_type,
+                                          int32_t size) -> SemIR::InstId {
+  // Extract the element type `T` from the `std::initializer_list<T>` type.
+  clang::QualType element_type;
+  bool is_std_initializer_list =
+      context.clang_sema().isStdInitializerList(init_list_type, &element_type);
+  CARBON_CHECK(is_std_initializer_list);
+  auto element_type_inst_id =
+      ImportCppType(context, loc_id, element_type).inst_id;
+  if (element_type_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Import the `std::initializer_list<T>` type and check we recognize its
+  // layout.
+  auto [init_list_type_inst_id, init_list_type_id] =
+      ImportCppType(context, loc_id, init_list_type);
+  if (init_list_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::InstId;
+  }
+  auto layout =
+      SemIR::GetStdInitializerListLayout(context.sem_ir(), init_list_type_id);
+  if (layout.kind == SemIR::StdInitializerListLayout::None) {
+    context.TODO(loc_id, "Unsupported layout for std::initializer_list");
+    return SemIR::ErrorInst::InstId;
+  }
+  auto init_list_class_id = context.sem_ir()
+                                .types()
+                                .GetAs<SemIR::ClassType>(init_list_type_id)
+                                .class_id;
+  auto& init_list_class = context.classes().Get(init_list_class_id);
+
+  // Build the array type `T[size]` that we use as the parameter type.
+  // TODO: This will eventually be called from impl lookup, possibly while
+  // forming a specific, so we should not be adding instructions here.
+  auto bound_id = AddInst(
+      context, SemIR::LocIdAndInst(
+                   loc_id, SemIR::IntValue{
+                               .type_id = GetSingletonType(
+                                   context, SemIR::IntLiteralType::TypeInstId),
+                               .int_id = context.ints().Add(size)}));
+  auto array_type_inst_id = AddTypeInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   loc_id, SemIR::ArrayType{
+                               .type_id = SemIR::TypeType::TypeId,
+                               .bound_id = bound_id,
+                               .element_type_inst_id = element_type_inst_id}));
+  auto array_type_id =
+      context.types().GetTypeIdForTypeInstId(array_type_inst_id);
+
+  // Create a builtin function to perform the conversion from array type to
+  // initializer list type. We name the synthesized function as if it were a
+  // constructor of std::initializer_list.
+  return MakeBuiltinFunction(
+      context, loc_id, SemIR::BuiltinFunctionKind::CppStdInitializerListMake,
+      init_list_class.scope_id, init_list_class.name_id,
+      {.param_type_ids = {array_type_id}, .return_type_id = init_list_type_id});
+}
+
+// Returns information about the Carbon signature to import when importing a C++
+// constructor or conversion operator.
+static auto GetConversionSignatureToImport(
+    Context& context, SemIR::InstId source_id,
+    clang::InitializationSequence::StepKind step_kind,
+    clang::FunctionDecl* function_decl) -> SemIR::ClangDeclKey::Signature {
+  // If we're performing a constructor initialization from a list, form a
+  // function signature that takes a single tuple or struct pattern
+  // instead of a function signature with one parameter per C++ parameter.
+  if (step_kind ==
+      clang::InitializationSequence::SK_ConstructorInitializationFromList) {
+    // The source type should always be a tuple type, because we don't support
+    // C++ initialization from struct types.
+    auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(
+        context.insts().Get(source_id).type_id());
+    CARBON_CHECK(tuple_type, "List initialization from non-tuple type");
+
+    // Initialization from a tuple `(a, b, c)` results in a constructor
+    // function that takes a tuple pattern:
+    //
+    //   fn Class.Class((a: A, b: B, c: C)) -> Class;
+    return {
+        .kind = SemIR::ClangDeclKey::Signature::Kind::TuplePattern,
+        .num_params = static_cast<int32_t>(
+            context.inst_blocks().Get(tuple_type->type_elements_id).size())};
+  }
+
+  // Any other initialization using a constructor is calling a converting
+  // constructor:
+  //
+  //   fn Class.Class(a: A) -> Class;
+  if (isa<clang::CXXConstructorDecl>(function_decl)) {
+    return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
+            .num_params = 1};
+  }
+
+  // Otherwise, the initialization is calling a conversion function
+  // `Source::operator Dest`:
+  //
+  //   fn Source.<conversion function>[self: Source]() -> Dest;
+  CARBON_CHECK(isa<clang::CXXConversionDecl>(function_decl));
+  return {.kind = SemIR::ClangDeclKey::Signature::Kind::Normal,
+          .num_params = 0};
+}
+
+static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId source_id,
+                                SemIR::TypeId dest_type_id, bool allow_explicit)
+    -> SemIR::InstId {
+  if (context.types().Is<SemIR::StructType>(
+          context.insts().Get(source_id).type_id())) {
+    // Structs can only be used to initialize C++ aggregates. That case is
+    // handled by Convert, not here.
+    return SemIR::InstId::None;
+  }
+
+  auto dest_type = MapToCppType(context, dest_type_id);
+  if (dest_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+
+  auto* arg_expr = InventClangArg(context, source_id);
+  // If we can't map the argument, we can't perform the conversion.
+  if (!arg_expr) {
+    return SemIR::InstId::None;
+  }
+
+  auto loc = GetCppLocation(context, loc_id);
+
+  // Form a Clang initialization sequence.
+  auto& sema = context.clang_sema();
+  clang::InitializedEntity entity =
+      clang::InitializedEntity::InitializeTemporary(dest_type);
+  clang::InitializationKind kind =
+      allow_explicit ? clang::InitializationKind::CreateDirect(
+                           loc, /*LParenLoc=*/clang::SourceLocation(),
+                           /*RParenLoc=*/clang::SourceLocation())
+                     : clang::InitializationKind::CreateCopy(
+                           loc, /*EqualLoc=*/clang::SourceLocation());
+  clang::MultiExprArg args(arg_expr);
+  // `(a, b) as T` uses `T{a, b}`, not `T({a, b})`. The latter would introduce
+  // a redundant extra copy.
+  // TODO: We need to communicate this back to the caller so they know to call
+  // the constructor with an exploded argument list somehow.
+  if (allow_explicit && isa<clang::InitListExpr>(arg_expr)) {
+    kind = clang::InitializationKind::CreateDirectList(loc);
+  }
+  clang::InitializationSequence init(sema, entity, kind, args);
+
+  if (init.Failed()) {
+    // TODO: Are there initialization failures that we should translate into
+    // errors rather than a missing conversion?
+    return SemIR::InstId::None;
+  }
+
+  // Scan the steps looking for user-defined conversions. For now we just find
+  // and return the first such conversion function. We skip over standard
+  // conversions; we'll perform those using the Carbon rules as part of calling
+  // the C++ conversion function.
+  for (const auto& step : init.steps()) {
+    switch (step.Kind) {
+      case clang::InitializationSequence::SK_UserConversion:
+      case clang::InitializationSequence::SK_ConstructorInitialization:
+      case clang::InitializationSequence::SK_StdInitializerListConstructorCall:
+      case clang::InitializationSequence::
+          SK_ConstructorInitializationFromList: {
+        if (auto* ctor =
+                dyn_cast<clang::CXXConstructorDecl>(step.Function.Function);
+            ctor && ctor->isCopyOrMoveConstructor()) {
+          // Skip copy / move constructor calls. They shouldn't be performed
+          // this way because they're not considered conversions in Carbon, and
+          // will frequently lead to infinite recursion because we'll end up
+          // back here when attempting to convert the argument.
+          continue;
+        }
+
+        if (sema.DiagnoseUseOfOverloadedDecl(step.Function.Function, loc)) {
+          return SemIR::ErrorInst::InstId;
+        }
+
+        sema.MarkFunctionReferenced(loc, step.Function.Function);
+
+        auto signature = GetConversionSignatureToImport(
+            context, source_id, step.Kind, step.Function.Function);
+        auto result_id = ImportCppFunctionDecl(
+            context, loc_id, step.Function.Function, signature);
+        if (auto fn_decl = context.insts().TryGetAsWithId<SemIR::FunctionDecl>(
+                result_id)) {
+          CheckCppOverloadAccess(context, loc_id, step.Function.FoundDecl,
+                                 fn_decl->inst_id);
+        } else {
+          CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+        }
+
+        // TODO: There may be other conversions later in the sequence that we
+        // need to model; we've only applied the first one here.
+        return result_id;
+      }
+
+      case clang::InitializationSequence::SK_StdInitializerList: {
+        return MakeCppStdInitializerListMake(
+            context, loc_id, step.Type,
+            cast<clang::InitListExpr>(arg_expr)->getNumInits());
+      }
+
+      case clang::InitializationSequence::SK_ListInitialization: {
+        // Aggregate initialization is handled by the normal Carbon conversion
+        // logic, so we ignore it here.
+        // TODO: So far we only support aggregate initialization for arrays and
+        // empty classes.
+        continue;
+      }
+
+      case clang::InitializationSequence::SK_ConversionSequence:
+      case clang::InitializationSequence::SK_ConversionSequenceNoNarrowing: {
+        // Implicit conversions are handled by the normal Carbon conversion
+        // logic, so we ignore them here.
+        continue;
+      }
+
+      default: {
+        // TODO: Handle other kinds of initialization steps. For now we assume
+        // they will be handled by our function call logic and we can skip them.
+        RawStringOstream os;
+        os << "Unsupported initialization sequence:\n";
+        init.dump(os);
+        context.TODO(loc_id, os.TakeStr());
+        return SemIR::ErrorInst::InstId;
+      }
+    }
+  }
+
+  return SemIR::InstId::None;
 }
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -177,6 +446,26 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // with Carbon diagnostics.
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
+
+  // Handle `ImplicitAs` and `As`.
+  if (op.interface_name == CoreIdentifier::ImplicitAs ||
+      op.interface_name == CoreIdentifier::As) {
+    if (op.interface_args_ref.size() != 1 || arg_ids.size() != 1) {
+      return SemIR::InstId::None;
+    }
+    // The argument is the destination type for both interfaces.
+    auto dest_const_id =
+        context.constant_values().Get(op.interface_args_ref[0]);
+    auto dest_type_id =
+        context.types().TryGetTypeIdForTypeConstantId(dest_const_id);
+    if (!dest_type_id.has_value()) {
+      return SemIR::InstId::None;
+    }
+
+    return LookupCppConversion(
+        context, loc_id, arg_ids[0], dest_type_id,
+        /*allow_explicit=*/op.interface_name == CoreIdentifier::As);
+  }
 
   auto op_kind =
       GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
@@ -235,17 +524,20 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
         return SemIR::ErrorInst::InstId;
       }
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
-      auto result_id = ImportCppFunctionDecl(
-          context, loc_id, best_viable_fn->Function,
-          // If this is an operator method, the first arg will be used as self.
-          arg_ids.size() -
-              (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
-      if (auto fn_decl =
-              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
-        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                               fn_decl->inst_id);
-      } else {
-        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+
+      // If this is an operator method, the first arg will be used as self.
+      int32_t num_params = arg_ids.size();
+      if (isa<clang::CXXMethodDecl>(best_viable_fn->Function)) {
+        --num_params;
+      }
+
+      auto result_id =
+          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function,
+                                {.num_params = num_params});
+      if (result_id != SemIR::ErrorInst::InstId) {
+        CheckCppOverloadAccess(
+            context, loc_id, best_viable_fn->FoundDecl,
+            context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(result_id));
       }
       return result_id;
     }
@@ -284,11 +576,16 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {
   auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
-  return clang_method_decl && clang_method_decl->isOverloadedOperator();
+  return clang_method_decl &&
+         (clang_method_decl->isOverloadedOperator() ||
+          isa<clang::CXXConversionDecl>(clang_method_decl));
 }
 
 static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
     -> clang::FunctionDecl* {
+  if (inst_id == SemIR::InstId::None) {
+    return nullptr;
+  }
   auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
       context.insts().Get(inst_id).type_id());
   if (!function_type) {

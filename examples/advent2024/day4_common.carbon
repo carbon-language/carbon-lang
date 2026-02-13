@@ -17,7 +17,7 @@ class Wordsearch {
       var x: i32 = 0;
       while (x < 140) {
         // TODO: Assert on failure.
-        s.grid[x][y] = ReadChar();
+        s.grid[x][y] = ReadChar() as i32;
         ++x;
       }
       // TODO: Assert on failure.

@@ -10,7 +10,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/diagnostic_emitter.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -27,6 +27,7 @@ struct Unit {
 
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
+  llvm::LLVMContext* llvm_context;
   // The total number of files.
   int total_ir_count;
 };
@@ -70,6 +71,10 @@ struct CheckParseTreesOptions {
 
   // When dumping raw SemIR, whether to include builtins.
   bool dump_raw_sem_ir_builtins = false;
+
+  // If not empty, a raw SemIR dump should be written to this path in the event
+  // of a crash.
+  llvm::StringRef sem_ir_crash_dump;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

@@ -55,7 +55,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 42, ptr @_Cv.Main, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
@@ -113,7 +113,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.21c.loc4_1, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   store i32 4, ptr @_Cy.Main, align 4, !dbg !8
@@ -154,29 +154,29 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CV.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6 = load i32, ptr @_Cv.Main, align 4, !dbg !8
-// CHECK:STDOUT:   ret i32 %.loc6, !dbg !9
+// CHECK:STDOUT:   %.loc6_24 = load i32, ptr @_Cv.Main, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc6_24, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CW.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cv.Main, i32 0, i32 1), align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !12
+// CHECK:STDOUT:   %.loc7_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cv.Main, i32 0, i32 1), align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc7_24, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CY.Main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9 = load i32, ptr @_Cy.Main, align 4, !dbg !14
-// CHECK:STDOUT:   ret i32 %.loc9, !dbg !15
+// CHECK:STDOUT:   %.loc9_24 = load i32, ptr @_Cy.Main, align 4, !dbg !14
+// CHECK:STDOUT:   ret i32 %.loc9_24, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CZ.Main() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cz.Main, i32 0, i32 1), align 4, !dbg !17
-// CHECK:STDOUT:   ret i32 %.loc10, !dbg !18
+// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cz.Main, i32 0, i32 1), align 4, !dbg !17
+// CHECK:STDOUT:   ret i32 %.loc10_24, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

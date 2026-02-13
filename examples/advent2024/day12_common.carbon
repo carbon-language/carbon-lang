@@ -15,7 +15,7 @@ class Map {
     returned var me: Self;
     for (y: i32 in Core.Range(140)) {
       for (x: i32 in Core.Range(140)) {
-        me.kind[x][y] = ReadChar();
+        me.kind[x][y] = ReadChar() as i32;
       }
       SkipNewline();
     }

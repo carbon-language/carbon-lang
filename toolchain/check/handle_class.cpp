@@ -403,7 +403,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    class_scope.AddExtendedScope(adapted_type_inst_id);
+    class_scope.AddExtendedScope({adapted_type_inst_id});
   }
   return true;
 }
@@ -529,7 +529,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context, context.types().GetTypeInstId(class_info.self_type_id),
       base_info.inst_id);
   class_info.base_id =
       AddInst<SemIR::BaseDecl>(context, node_id,
@@ -553,7 +553,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.has_value()) {
-      class_scope.AddExtendedScope(base_info.inst_id);
+      class_scope.AddExtendedScope({base_info.inst_id});
     } else {
       class_scope.set_has_error();
     }

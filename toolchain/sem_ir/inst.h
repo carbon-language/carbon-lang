@@ -259,6 +259,13 @@ class Inst : public Printable<Inst> {
     return Internal::InstLikeTypeInfo<TypedInst>::IsKind(kind());
   }
 
+  // Returns whether this instruction has one of the specified types.
+  template <typename... TypedInsts>
+    requires(... && Internal::InstLikeType<TypedInsts>)
+  auto IsOneOf() const -> bool {
+    return (... || Internal::InstLikeTypeInfo<TypedInsts>::IsKind(kind()));
+  }
+
   // Casts this instruction to the given typed instruction, which must match the
   // instruction's kind, and returns the typed instruction.
   template <typename TypedInst>
@@ -452,6 +459,7 @@ struct LocIdAndInst {
 class InstStore {
  public:
   using IdType = InstId;
+  using IdTagType = IdTag<IdType, Tag<CheckIRId>>;
 
   explicit InstStore(File* file, int32_t reserved_inst_ids);
 
@@ -504,6 +512,12 @@ class InstStore {
     return Get(inst_id).Is<InstT>();
   }
 
+  // Returns whether the requested instruction is one of the specified types.
+  template <typename... InstTs>
+  auto IsOneOf(InstId inst_id) const -> bool {
+    return Get(inst_id).Is<InstTs...>();
+  }
+
   // Returns the requested instruction, which is known to have the specified
   // type.
   template <typename InstT>
@@ -532,20 +546,20 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
+  // Returns the `KnownInstId` form of `inst_id`. Requires a matching
+  // instruction type.
+  template <typename InstT>
+  auto GetAsKnownInstId(InstId inst_id) const -> KnownInstId<InstT> {
+    CARBON_CHECK(Is<InstT>(inst_id), "Casting inst {0} to wrong kind {1}",
+                 Get(inst_id), Internal::InstLikeTypeInfo<InstT>::DebugName());
+    return KnownInstId<InstT>::UnsafeMake(inst_id);
+  }
+
   template <typename InstT>
   struct GetAsWithIdResult {
     KnownInstId<InstT> inst_id;
     InstT inst;
   };
-
-  // Returns the requested instruction, which is known to have the specified
-  // type, along with the original `InstId`, encoding the work of checking its
-  // type in a `KnownInstId`.
-  template <typename InstT>
-  auto GetAsWithId(InstId inst_id) const -> GetAsWithIdResult<InstT> {
-    auto inst = GetAs<InstT>(inst_id);
-    return {.inst_id = KnownInstId<InstT>::UnsafeMake(inst_id), .inst = inst};
-  }
 
   // Returns the requested instruction, if it is of that type, along with the
   // original `InstId`, encoding the work of checking its type in a
@@ -645,7 +659,7 @@ class InstStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<InstId, Inst>::Range {
+  -> ValueStore<InstId, Inst, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }
@@ -657,7 +671,7 @@ class InstStore {
     return values_.GetRawIndex(id);
   }
 
-  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
@@ -674,19 +688,20 @@ class InstStore {
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId, Inst> values_;
+  ValueStore<InstId, Inst, Tag<CheckIRId>> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore
+    : public BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>>;
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
       // 4 reserved ids for the
       // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
-      : BaseType(allocator, IdTag(check_ir_id.index, 4)) {
+      : BaseType(allocator, check_ir_id, 4) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto imports_id = AddPlaceholder();

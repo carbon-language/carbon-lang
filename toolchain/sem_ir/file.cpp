@@ -41,18 +41,19 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       classes_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
+      require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
-      require_impls_blocks_(allocator_, IdTag(check_ir_id.index, 1)),
+      require_impls_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
       facet_types_(check_ir_id),
-      identified_facet_types_(&facet_types_),
+      identified_facet_types_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
       generics_(check_ir_id),
       specifics_(check_ir_id),
       // The `2` prevents adding a tag for the global ids
       // `ImportIRId::{ApiForImpl,Cpp}`.
-      import_irs_(IdTag(check_ir_id.index, 2)),
+      import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
@@ -63,15 +64,18 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       inst_blocks_(allocator_, check_ir_id),
       constants_(this),
       // 1 reserved id for `StructTypeFieldsId::Empty`.
-      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      struct_type_fields_(allocator_, check_ir_id, 1),
       // 1 reserved id for `CustomLayoutId::Empty`.
-      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
+      custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
-  // `type` and the error type are both complete & concrete types.
+  // `type`, `form`, and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+  types_.SetComplete(
+      FormType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = FormType::TypeId}});
   types_.SetComplete(
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
@@ -128,6 +132,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
                                  Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("names", names().OutputYaml());
               map.Add("import_irs", import_irs_.OutputYaml());
               map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
               map.Add("clang_decls", clang_decls_.OutputYaml());
@@ -136,10 +141,16 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
+              map.Add("interfaces", interfaces_.OutputYaml());
+              map.Add("associated_constants",
+                      associated_constants_.OutputYaml());
+              map.Add("impls", impls_.OutputYaml());
               map.Add("generics", generics_.OutputYaml());
               map.Add("specifics", specifics_.OutputYaml());
+              map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
               map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
               map.Add("types", types_.OutputYaml());
+              map.Add("facet_types", facet_types_.OutputYaml());
               map.Add("insts",
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         for (auto [id, inst] : insts_.enumerate()) {
@@ -152,45 +163,9 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("constant_values",
                       constant_values_.OutputYaml(include_singletons));
               map.Add("inst_blocks", inst_blocks_.OutputYaml());
+              map.Add("value_stores", value_stores_->OutputYaml());
             }));
   });
-}
-
-auto File::CollectRefTagsNeeded() const -> Set<SemIR::InstId> {
-  CARBON_CHECK(!has_errors_);
-  Set<SemIR::InstId> ref_tags_needed;
-  for (auto [id, inst] : insts_.enumerate()) {
-    if (inst.kind() != SemIR::InstKind::Call) {
-      continue;
-    }
-    auto call_inst = inst.As<SemIR::Call>();
-    auto callee = SemIR::GetCallee(*this, call_inst.callee_id);
-    CARBON_KIND_SWITCH(callee) {
-      case CARBON_KIND(SemIR::CalleeError _):
-        break;
-      case CARBON_KIND(SemIR::CalleeNonFunction _):
-        break;
-      case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
-        // TODO: Perform validation here once we model C++ ref parameters as
-        // Carbon ref parameters.
-        break;
-      }
-      case CARBON_KIND(SemIR::CalleeFunction fn): {
-        auto function = functions_.Get(fn.function_id);
-        auto args = inst_blocks_.GetOrEmpty(call_inst.args_id);
-        for (auto param_id : llvm::concat<const InstId>(
-                 inst_blocks_.GetOrEmpty(function.implicit_param_patterns_id),
-                 inst_blocks_.GetOrEmpty(function.param_patterns_id))) {
-          if (auto ref_param_pattern =
-                  insts_.TryGetAs<SemIR::RefParamPattern>(param_id)) {
-            ref_tags_needed.Insert(args[ref_param_pattern->index.index]);
-          }
-        }
-        break;
-      }
-    }
-  }
-  return ref_tags_needed;
 }
 
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

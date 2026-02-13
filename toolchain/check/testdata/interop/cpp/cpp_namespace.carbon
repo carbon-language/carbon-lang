@@ -4,6 +4,8 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 //
+// EXTRA-ARGS: --target=aarch64-unknown-linux
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/cpp_namespace.carbon

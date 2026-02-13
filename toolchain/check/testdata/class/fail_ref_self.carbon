@@ -45,6 +45,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.7f1: form = init_form %Class, call_param0 [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8e5: type = ptr_type %Class [concrete]
@@ -52,11 +53,8 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %Class, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.137: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.fe4: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.137 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.fe4, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,6 +80,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.904 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %.loc19: form = init_form %Class.ref, call_param0 [concrete = constants.%.7f1]
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -122,7 +121,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Class;
+// CHECK:STDOUT: fn @Make() -> out %return.param: %Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %Class, %p.param: %ptr.8e5) {
 // CHECK:STDOUT: !entry:
@@ -137,15 +136,15 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%.loc32)
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc35_8.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc35_8.1
+// CHECK:STDOUT:   %Make.call: init %Class to %.loc35_8.1 = call %Make.ref()
 // CHECK:STDOUT:   %.loc35_8.2: ref %Class = temporary %.loc35_8.1, %Make.call
 // CHECK:STDOUT:   %F.ref.loc35: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound.loc35: <bound method> = bound_method %.loc35_8.2, %F.ref.loc35
 // CHECK:STDOUT:   %Class.F.call.loc35: init %empty_tuple.type = call %Class.F.bound.loc35(%.loc35_8.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc35_8.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fe4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fe4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc35_8.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc35_8.2)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc35_8.2, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc35_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
 // CHECK:STDOUT:

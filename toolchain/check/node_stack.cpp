@@ -37,7 +37,6 @@ auto NodeStack::PrintForStackDump(int indent, llvm::raw_ostream& output) const
   }
 }
 
-// NOLINTNEXTLINE(readability-function-size)
 auto NodeStack::CheckIdKindTable() -> void {
 #define CARBON_PARSE_NODE_KIND(Name)                                     \
   {                                                                      \

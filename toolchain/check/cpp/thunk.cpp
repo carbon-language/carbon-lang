@@ -39,12 +39,21 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
-    const clang::FunctionDecl& callee_function_decl, int num_params)
+    const clang::FunctionDecl& callee_function_decl,
+    SemIR::ClangDeclKey::Signature::Kind signature_kind, int num_params)
     -> std::string {
   RawStringOstream mangled_name_stream;
   mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
-  mangled_name_stream << ".carbon_thunk";
+  switch (signature_kind) {
+    case SemIR::ClangDeclKey::Signature::Normal:
+      mangled_name_stream << ".carbon_thunk";
+      break;
+    case SemIR::ClangDeclKey::Signature::TuplePattern:
+      mangled_name_stream << ".carbon_thunk_tuple";
+      break;
+  }
+
   if (num_params !=
       static_cast<int>(callee_function_decl.getNumNonObjectParams())) {
     mangled_name_stream << num_params;
@@ -99,9 +108,12 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
 namespace {
 // Information about the callee of a thunk.
 struct CalleeFunctionInfo {
-  explicit CalleeFunctionInfo(clang::FunctionDecl* decl, int num_params)
+  explicit CalleeFunctionInfo(clang::FunctionDecl* decl,
+                              SemIR::ClangDeclKey::Signature signature)
       : decl(decl),
-        num_params(num_params + decl->hasCXXExplicitFunctionObjectParameter()) {
+        signature_kind(signature.kind),
+        num_params(signature.num_params +
+                   decl->hasCXXExplicitFunctionObjectParameter()) {
     auto& ast_context = decl->getASTContext();
     const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
     bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
@@ -149,6 +161,9 @@ struct CalleeFunctionInfo {
   // The callee function.
   clang::FunctionDecl* decl;
 
+  // The kind of function signature being imported.
+  SemIR::ClangDeclKey::Signature::Kind signature_kind;
+
   // The number of explicit parameters to import. This may be less than the
   // number of parameters that the function has if default arguments are being
   // used.
@@ -181,15 +196,16 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
   auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
-  if (decl_info.key.num_params !=
-      static_cast<int>(decl->getNumNonObjectParams())) {
+  if (decl_info.key.signature.kind != SemIR::ClangDeclKey::Signature::Normal ||
+      decl_info.key.signature.num_params !=
+          static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
     // calling a varargs function.
     return true;
   }
 
-  CalleeFunctionInfo callee_info(decl, decl_info.key.num_params);
+  CalleeFunctionInfo callee_info(decl, decl_info.key.signature);
   if (!callee_info.has_simple_return_type) {
     return true;
   }
@@ -313,6 +329,45 @@ static auto BuildThunkParameters(clang::ASTContext& ast_context,
   return thunk_params;
 }
 
+// Computes a name to use for a thunk, based on the name of the thunk's target.
+// The actual name used isn't critical, since it doesn't show up much except in
+// AST dumps and SemIR output, but we try to produce a valid C++ identifier.
+static auto GetDeclNameForThunk(clang::ASTContext& ast_context,
+                                clang::DeclarationName name)
+    -> clang::DeclarationName {
+  llvm::SmallString<64> thunk_name;
+  switch (name.getNameKind()) {
+    case clang::DeclarationName::NameKind::Identifier: {
+      thunk_name = name.getAsIdentifierInfo()->getName();
+      break;
+    }
+    case clang::DeclarationName::NameKind::CXXOperatorName: {
+      thunk_name = "operator_";
+      switch (name.getCXXOverloadedOperator()) {
+        case clang::OO_None:
+        case clang::NUM_OVERLOADED_OPERATORS:
+          break;
+#define OVERLOADED_OPERATOR(Name, Spelling, Token, Unary, Binary, MemberOnly) \
+  case clang::OO_##Name:                                                      \
+    thunk_name += #Name;                                                      \
+    break;
+#include "clang/Basic/OperatorKinds.def"
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  if (auto type = name.getCXXNameType(); !type.isNull()) {
+    if (auto* class_decl = type->getAsCXXRecordDecl()) {
+      thunk_name += class_decl->getName();
+    }
+  }
+  thunk_name += "__carbon_thunk";
+  return &ast_context.Idents.get(thunk_name);
+}
+
 // Returns the thunk function declaration given the callee function and the
 // thunk parameter types.
 static auto CreateThunkFunctionDecl(
@@ -320,9 +375,8 @@ static auto CreateThunkFunctionDecl(
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
   clang::SourceLocation clang_loc = callee_info.decl->getLocation();
-
-  clang::IdentifierInfo& identifier_info = ast_context.Idents.get(
-      callee_info.decl->getNameAsString() + "__carbon_thunk");
+  clang::DeclarationName name =
+      GetDeclNameForThunk(ast_context, callee_info.decl->getDeclName());
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
@@ -332,10 +386,10 @@ static auto CreateThunkFunctionDecl(
 
   clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
   // TODO: Thunks should not have external linkage, consider using `SC_Static`.
-  clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
-      ast_context, decl_context, clang_loc, clang_loc,
-      clang::DeclarationName(&identifier_info), thunk_function_type,
-      /*TInfo=*/nullptr, clang::SC_Extern);
+  clang::FunctionDecl* thunk_function_decl =
+      clang::FunctionDecl::Create(ast_context, decl_context, clang_loc,
+                                  clang_loc, name, thunk_function_type,
+                                  /*TInfo=*/nullptr, clang::SC_Extern);
   decl_context->addDecl(thunk_function_decl);
 
   thunk_function_decl->setParams(
@@ -350,6 +404,7 @@ static auto CreateThunkFunctionDecl(
       ast_context,
       GenerateThunkMangledName(
           context.cpp_context()->clang_mangle_context(), *callee_info.decl,
+          callee_info.signature_kind,
           callee_info.num_params - callee_info.has_explicit_object_parameter()),
       clang_loc));
 
@@ -520,15 +575,18 @@ static auto BuildThunkBody(clang::Sema& sema,
 
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
+  auto clang_decl_key =
+      context.clang_decls().Get(callee_function.clang_decl_id).key;
   clang::FunctionDecl* callee_function_decl =
-      context.clang_decls()
-          .Get(callee_function.clang_decl_id)
-          .key.decl->getAsFunction();
+      clang_decl_key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);
 
-  CalleeFunctionInfo callee_info(
-      callee_function_decl,
-      context.inst_blocks().Get(callee_function.param_patterns_id).size());
+  // TODO: The signature kind doesn't affect the thunk that we build, so we
+  // shouldn't consider it here. However, to do that, we would need to cache the
+  // thunks we build so that we don't build the same thunk multiple times if
+  // it's used with multiple different signature kinds.
+  CalleeFunctionInfo callee_info(callee_function_decl,
+                                 clang_decl_key.signature);
 
   // Build the thunk function declaration.
   auto thunk_param_types =
@@ -601,8 +659,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
       callee_function_params.drop_back(callee_return_patterns.size());
 
   // We assume that the call parameters exactly match the parameter patterns for
-  // both the thunk and the callee. This is currently guaranteed because we only
-  // create trivial *ParamPatterns when importing a C++ function.
+  // both the thunk and the callee. This is guaranteed even when we generate a
+  // tuple pattern wrapping the function parameters.
   CARBON_CHECK(num_callee_args == callee_function_params.size(), "{0} != {1}",
                num_callee_args, callee_function_params.size());
   CARBON_CHECK(num_callee_args == callee_arg_ids.size());
@@ -627,7 +685,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
       arg_id = AddInst<SemIR::AddrOf>(
           context, loc_id,
           {.type_id = GetPointerType(
-               context, context.types().GetInstId(callee_param_type_id)),
+               context, context.types().GetTypeInstId(callee_param_type_id)),
            .lvalue_id = arg_id});
       arg_id =
           ConvertToValueOfType(context, loc_id, arg_id, thunk_param_type_id);
@@ -647,7 +705,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
     auto arg_id = AddInst<SemIR::AddrOf>(
         context, loc_id,
         {.type_id = GetPointerType(
-             context, context.types().GetInstId(
+             context, context.types().GetTypeInstId(
                           context.insts().Get(return_slot_id).type_id())),
          .lvalue_id = return_slot_id});
     thunk_arg_ids.push_back(arg_id);
@@ -673,10 +731,10 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {
-    result_id = AddInst<SemIR::InPlaceInit>(context, loc_id,
-                                            {.type_id = return_type_id,
-                                             .src_id = result_id,
-                                             .dest_id = return_slot_id});
+    result_id = AddInst<SemIR::MarkInPlaceInit>(context, loc_id,
+                                                {.type_id = return_type_id,
+                                                 .src_id = result_id,
+                                                 .dest_id = return_slot_id});
   }
 
   return result_id;

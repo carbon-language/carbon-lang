@@ -50,10 +50,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto as_type = ExprAsType(context, type_node_id, type_inst_id);
-  context.PushReturnTypeInstId(as_type.inst_id);
 
   // If the previous node was `IdentifierNameBeforeParams`, then it would have
   // caused these entries to be pushed to the pattern stacks. But it's possible
@@ -68,17 +65,16 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
         FullPatternStack::Kind::ExplicitParamList);
   }
 
-  auto pattern_type_id = GetPatternType(context, as_type.type_id);
-  auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-      context, node_id,
-      {.type_id = pattern_type_id, .type_inst_id = as_type.inst_id});
-  auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
-      context, node_id,
-      {.type_id = pattern_type_id,
-       .subpattern_id = return_slot_pattern_id,
-       .index = SemIR::CallParamIndex::None});
-  context.node_stack().Push(node_id, param_pattern_id);
+  // Propagate the type expression.
+  auto form_expr = ExprAsReturnForm(context, type_node_id, type_inst_id);
+  context.PushReturnForm(form_expr);
+  auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
+  context.node_stack().Push(node_id, return_patterns_id);
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
+  return context.TODO(node_id, "Support ->?");
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -91,10 +87,11 @@ static auto DiagnoseModifiers(Context& context,
                               std::optional<SemIR::Inst> parent_scope_inst,
                               SemIR::InstId self_param_id) -> void {
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
-                           KeywordModifierSet::Method |
-                           KeywordModifierSet::Interface);
+  LimitModifiersOnDecl(
+      context, introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Extern |
+          KeywordModifierSet::Export | KeywordModifierSet::Method |
+          KeywordModifierSet::Interface | KeywordModifierSet::Evaluation);
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
@@ -127,6 +124,16 @@ static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
       .Case(KeywordModifierSet::Override,
             SemIR::Function::VirtualModifier::Override)
       .Default(SemIR::Function::VirtualModifier::None);
+}
+
+// Returns the evaluation modifier as an enum.
+static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::EvaluationMode {
+  return modifier_set.ToEnum<SemIR::Function::EvaluationMode>()
+      .Case(KeywordModifierSet::Eval, SemIR::Function::EvaluationMode::Eval)
+      .Case(KeywordModifierSet::MustEval,
+            SemIR::Function::EvaluationMode::MustEval)
+      .Default(SemIR::Function::EvaluationMode::None);
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -164,8 +171,10 @@ static auto MergeFunctionRedecl(Context& context,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
+    prev_function.call_param_patterns_id = new_function.call_param_patterns_id;
     prev_function.call_params_id = new_function.call_params_id;
     prev_function.return_type_inst_id = new_function.return_type_inst_id;
+    prev_function.return_form_inst_id = new_function.return_form_inst_id;
     prev_function.return_patterns_id = new_function.return_patterns_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
@@ -198,6 +207,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_type_id = SemIR::TypeId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
+      // This is a function in an interface definition scope (see
+      // NameScope::is_interface_definition()).
+      auto function_decl =
+          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
+      prev_function_id = function_decl.function_id;
+      prev_type_id = function_decl.type_id;
+      break;
+    }
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       prev_function_id = function_decl.function_id;
       prev_type_id = function_decl.type_id;
@@ -382,17 +400,18 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  llvm::SmallVector<SemIR::InstId> return_patterns;
+  auto return_patterns_id = SemIR::InstBlockId::None;
   auto return_type_inst_id = SemIR::TypeInstId::None;
-  if (auto [return_node, maybe_return_slot_pattern_id] =
+  auto return_form_inst_id = SemIR::InstId::None;
+  if (auto [return_node, maybe_return_patterns_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      maybe_return_slot_pattern_id) {
-    return_patterns.push_back(*maybe_return_slot_pattern_id);
-    return_type_inst_id = context.PopReturnTypeInstId();
-    CARBON_CHECK(return_type_inst_id.has_value());
+      maybe_return_patterns_id) {
+    return_patterns_id = *maybe_return_patterns_id;
+    auto return_form = context.PopReturnForm();
+    return_type_inst_id = return_form.type_component_id;
+    return_form_inst_id = return_form.form_inst_id;
   }
 
-  auto return_patterns_id = context.inst_blocks().Add(return_patterns);
   auto name = PopNameComponent(context, return_patterns_id);
   auto name_context = context.decl_name_stack().FinishName(name);
 
@@ -411,6 +430,7 @@ static auto BuildFunctionDecl(Context& context,
                     parent_scope_inst_id, parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
+  auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -423,10 +443,13 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library),
-                      {.call_params_id = name.call_params_id,
+                      {.call_param_patterns_id = name.call_param_patterns_id,
+                       .call_params_id = name.call_params_id,
                        .return_type_inst_id = return_type_inst_id,
+                       .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,
                        .virtual_modifier = virtual_modifier,
+                       .evaluation_mode = evaluation_mode,
                        .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
@@ -562,15 +585,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 static auto HandleFunctionDefinitionAfterSignature(
     Context& context, Parse::FunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  // Create the function scope and the entry block.
-  context.scope_stack().PushForFunctionBody(decl_id);
-  context.inst_block_stack().Push();
-  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context,
-                         context.functions().Get(function_id).generic_id);
-
-  CheckFunctionDefinitionSignature(context, function_id);
-
+  StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
@@ -611,7 +626,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_type_inst_id.has_value()) {
+    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
@@ -622,15 +637,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.inst_block_stack().Pop();
-  context.scope_stack().Pop(/*check_unused=*/true);
+  FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope(/*check_unused=*/true);
-
-  auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.region_stack().PopRegion();
-
-  // If this is a generic function, collect information about the definition.
-  FinishGenericDefinition(context, function.generic_id);
 
   return true;
 }
@@ -667,33 +675,6 @@ static auto LookupBuiltinFunctionKind(Context& context,
   return kind;
 }
 
-// Returns whether `function` is a valid declaration of `builtin_kind`.
-static auto IsValidBuiltinDeclaration(Context& context,
-                                      const SemIR::Function& function,
-                                      SemIR::BuiltinFunctionKind builtin_kind)
-    -> bool {
-  if (!function.call_params_id.has_value()) {
-    // For now, we have no builtins that support positional parameters.
-    return false;
-  }
-
-  // Find the list of call parameters other than the implicit return slots.
-  auto call_params = context.inst_blocks()
-                         .Get(function.call_params_id)
-                         .drop_back(context.inst_blocks()
-                                        .GetOrEmpty(function.return_patterns_id)
-                                        .size());
-
-  // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
-  if (!return_type_id.has_value()) {
-    return_type_id = GetTupleType(context, {});
-  }
-
-  return builtin_kind.IsValidType(context.sem_ir(), call_params,
-                                  return_type_id);
-}
-
 auto HandleParseNode(Context& context,
                      Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
   auto name_id =
@@ -722,6 +703,11 @@ auto HandleParseNode(Context& context,
   }
   context.decl_name_stack().PopScope();
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
 }  // namespace Carbon::Check

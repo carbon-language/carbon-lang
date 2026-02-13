@@ -166,7 +166,8 @@ struct ArrayIndex {
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "array_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -197,9 +198,9 @@ struct AsCompatible {
   InstId source_id;
 };
 
-// Performs a source-level initialization or assignment of `lhs_id` from
-// `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-// `InitializeFrom`.
+// Consumes the initializer `rhs_id`, and uses it to performs a source-level
+// initialization or assignment of `lhs_id`. If `rhs_id` has a storage argument,
+// it is required to already be `lhs_id`.
 struct Assign {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Assign.Define<Parse::NodeId>(
@@ -371,7 +372,9 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -435,7 +438,8 @@ struct ClassElementAccess {
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
-      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "class_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -583,6 +587,8 @@ struct CustomWitness {
   TypeId type_id;
   // The witness table of instructions.
   InstBlockId elements_id;
+  // The `SpecificInterface` of the lookup query.
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -735,6 +741,13 @@ struct FloatValue {
 
   TypeId type_id;
   FloatId float_id;
+};
+
+// The type `Core.Form`.
+struct FormType : public SingletonTypeInst<InstKind::FormType, "form"> {
+  // `FormType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 };
 
 // A function declaration.
@@ -1014,38 +1027,33 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
-// Tracks that an object has been initialized in-place to form the result of
-// this expression, even if its type's initializing representation is not
-// normally in-place. If the type does not use in-place initialization,
-// initialization from this expression will copy the value out of the
-// destination.
-//
-// This is used to model the initialization performed by C++ thunks, where
-// in-place initialization is used even for types that would normally have a
-// copy initializing representation.
-struct InPlaceInit {
-  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "in_place_init",
-       .expr_category = ExprCategory::Initializing,
-       .constant_kind = InstConstantKind::Never});
+// An initializing primitive form.
+struct InitForm {
+  static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
+      {.ir_name = "init_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
+  // Always FormType
   TypeId type_id;
-  // Used only to track the source of the initialization; this has no semantic
-  // meaning.
-  InstId src_id;
-  DestInstId dest_id;
+  // The type component of the form.
+  TypeInstId type_component_inst_id;
+  // If this is a function's return form, the index of the corresponding
+  // `OutParam` in the function's `Call` parameter list.
+  CallParamIndex index;
 };
 
-// Finalizes the initialization of `dest_id` from the initializer expression
-// `src_id`, by performing a final copy from source to destination, for types
-// whose initialization is not in-place.
-struct InitializeFrom {
-  // Note this Parse::NodeId is unused. InitializeFrom is only constructed by
+// Consumes the repr-initializing expression `src_id` and forms an in-place
+// initializing expression that initializes the storage at `dest_id`, by
+// performing a final copy from source to destination for types whose
+// initialization is not in-place.
+struct InPlaceInit {
+  // Note this Parse::NodeId is unused. InPlaceInit is only constructed by
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
-  static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
-      {.ir_name = "initialize_from",
-       .expr_category = ExprCategory::Initializing});
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   InstId src_id;
@@ -1146,6 +1154,28 @@ struct LookupImplWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// Records that evaluation of the expression `src_id` will initialize the
+// storage identified by `dest_id` (even if its type's initializing
+// representation is not normally in-place), and forms an in-place initializing
+// expression to represent it. Note that `src_id` must find its target storage
+// using the exact ID `dest_id`, not another ID that aliases it.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct MarkInPlaceInit {
+  static constexpr auto Kind = InstKind::MarkInPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "mark_in_place_init",
+       .expr_category = ExprCategory::InPlaceInitializing,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
+};
+
 // A type that holds an object representation of another type, that may or may
 // not be a valid representation. In particular, it may also hold an unformed
 // state.
@@ -1168,6 +1198,7 @@ struct NameBindingDecl {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::NameBindingDecl.Define<Parse::NodeId>(
       {.ir_name = "name_binding_decl",
+       .expr_category = ExprCategory::NotExpr,
        .constant_kind = InstConstantKind::Never});
 
   InstBlockId pattern_block_id;
@@ -1244,12 +1275,11 @@ struct OutParam {
 // A pattern that represents an output `Call` parameter. See `AnyParamPattern`
 // for member documentation.
 struct OutParamPattern {
-  static constexpr auto Kind =
-      InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
-          {.ir_name = "out_param_pattern",
-           .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "out_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
@@ -1337,6 +1367,17 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
+struct RefForm {
+  static constexpr auto Kind =
+      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_form",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
+};
+
 // A by-reference `Call` parameter. See AnyParam for member documentation. Note
 // that this may correspond to either a RefParamPattern or a VarParamPattern.
 struct RefParam {
@@ -1364,6 +1405,26 @@ struct RefParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// A `ref x` expression. The semantics of this instruction depend on the usage
+// context:
+// - As an argument to a `ref` parameter, it evaluates to `x`, but requires
+//   `x` to be a durable reference expression.
+// - In a return type expression or form literal, it evaluates to a `Core.Form`
+//   value representing a reference to `x`, which must be a type.
+// - In any other context, it's an error.
+//
+// See issue #6342 for background.
+struct RefTagExpr {
+  static constexpr auto Kind =
+      InstKind::RefTagExpr.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_tag",
+           .expr_category = ExprCategory::RefTagged,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId expr_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1491,6 +1552,9 @@ struct Return {
 };
 
 // A `return expr;` statement.
+//
+// If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
+// and `expr_id` has a storage argument, the storage argument must be `dest_id`.
 struct ReturnExpr {
   static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
       {.ir_name = "return",
@@ -1530,7 +1594,7 @@ struct ReturnSlot {
 // for input parameters.
 struct ReturnSlotPattern {
   static constexpr auto Kind =
-      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+      InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
@@ -1674,7 +1738,8 @@ struct StructAccess {
 // Initializes a dest struct with the provided elements.
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
-      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "struct_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1762,7 +1827,9 @@ struct SymbolicBindingType {
   InstId facet_value_inst_id;
 };
 
-// A temporary value.
+// Consumes the initializer `init_id`, uses it to initialize a temporary
+// object, and forms an ephemeral reference to it. If `init_id` has a
+// storage arg, it must be a `TemporaryStorage` inst.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
       {.ir_name = "temporary",
@@ -1770,7 +1837,7 @@ struct Temporary {
        .has_cleanup = true});
 
   TypeId type_id;
-  DestInstId storage_id;
+  InstId storage_id;
   InstId init_id;
 };
 
@@ -1803,7 +1870,8 @@ struct TupleAccess {
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
-      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "tuple_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;

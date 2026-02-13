@@ -30,7 +30,8 @@ struct PrecedenceGroup::OperatorPriorityTable {
         {Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
         {Relational, Where});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan({As, LogicalAnd, LogicalOr, Where}, {If});
+    MarkHigherThan({As, LogicalAnd, LogicalOr, Where}, {Ref});
+    MarkHigherThan({Ref}, {If});
     MarkHigherThan({If}, {Assignment});
     MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
@@ -166,6 +167,9 @@ auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     case Lex::TokenKind::If:
       return PrecedenceGroup(If);
 
+    case Lex::TokenKind::Ref:
+      return PrecedenceGroup(Ref);
+
     case Lex::TokenKind::Const:
     case Lex::TokenKind::Partial:
       return PrecedenceGroup(TypePrefix);
@@ -258,7 +262,6 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     case Lex::TokenKind::TildeEqual:
     case Lex::TokenKind::Exclaim:
     case Lex::TokenKind::LessGreater:
-    case Lex::TokenKind::Question:
     case Lex::TokenKind::Colon:
       break;
 

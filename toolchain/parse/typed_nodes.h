@@ -365,6 +365,16 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A form binding pattern, such as `name:? Form`.
+struct FormBindingPattern {
+  static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A template binding name: `template T`.
 struct TemplateBindingName {
   static constexpr auto Kind =
@@ -452,6 +462,14 @@ struct ReturnType {
   AnyExprId type;
 };
 
+// A return form: `->? form(var i32)`
+struct ReturnForm {
+  static constexpr auto Kind = NodeKind::ReturnForm.Define({.child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A function signature: `fn F() -> i32`.
 template <const NodeKind& KindT, typename TokenKind,
           NodeCategory::RawEnumType Category>
@@ -462,15 +480,15 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<NodeIdOneOf<ReturnTypeId, ReturnFormId>> return_type;
   TokenKind token;
 };
 
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
                                        Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart,
-                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart, Lex::TokenIndex,
+                      NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -481,6 +499,18 @@ struct FunctionDefinition {
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
   Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// A terse function definition: `fn F() -> i32 => expr;`.
+struct FunctionTerseDefinition {
+  static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = FunctionDefinitionStart::Kind});
+
+  FunctionDefinitionStartId signature;
+  TerseBodyArrowId arrow;
+  AnyExprId body;
+  Lex::SemiTokenIndex token;
 };
 
 using BuiltinFunctionDefinitionStart =
@@ -651,6 +681,9 @@ struct VariablePattern {
 using CodeBlockStart =
     LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
+using TerseBodyArrow =
+    LeafNode<NodeKind::TerseBodyArrow, Lex::EqualGreaterTokenIndex>;
+
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind =
@@ -659,6 +692,24 @@ struct CodeBlock {
   CodeBlockStartId left_brace;
   llvm::SmallVector<AnyStatementId> statements;
   Lex::CloseCurlyBraceTokenIndex token;
+};
+
+using LambdaIntroducer =
+    LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
+
+struct Lambda {
+  static constexpr auto Kind = NodeKind::Lambda.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = LambdaIntroducer::Kind});
+
+  LambdaIntroducerId introducer;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<ExplicitParamListId> explicit_params;
+  std::optional<ReturnTypeId> return_type;
+  std::optional<TerseBodyArrowId> arrow;
+  NodeId body;
+  // Use a generic token index because the token might be `}` or part of an
+  // expression.
+  Lex::TokenIndex token;
 };
 
 // An expression statement: `F(x);`.
@@ -931,6 +982,49 @@ struct ArrayExpr {
   Lex::CloseParenTokenIndex token;
 };
 
+struct RefPrimitiveForm {
+  static constexpr auto Kind = NodeKind::RefPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId type;
+};
+
+struct VarPrimitiveForm {
+  static constexpr auto Kind = NodeKind::VarPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyExprId type;
+};
+
+struct ValPrimitiveForm {
+  static constexpr auto Kind = NodeKind::ValPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::ValTokenIndex token;
+  AnyExprId type;
+};
+
+using FormLiteralKeyword =
+    LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
+
+using FormLiteralOpenParen =
+    LeafNode<NodeKind::FormLiteralOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `form` literal: `form(ref i32)`
+struct FormLiteral {
+  static constexpr auto Kind = NodeKind::FormLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = NodeKind::FormLiteralKeyword,
+       .child_count = 3});
+
+  FormLiteralKeywordId keyword;
+  FormLiteralOpenParenId start;
+  AnyPrimitiveFormIdId category;
+  Lex::CloseParenTokenIndex token;
+};
+
 // The opening portion of an indexing expression: `a[`.
 //
 // TODO: Consider flattening this into `IndexExpr`.
@@ -1004,15 +1098,6 @@ struct CallExpr {
   CallExprStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> arguments;
   Lex::CloseParenTokenIndex token;
-};
-
-// A callsite `ref` tag: `F(ref x)` or `F({.x = ref x})
-struct RefTag {
-  static constexpr auto Kind = NodeKind::RefTag.Define(
-      {.category = NodeCategory::Expr, .child_count = 1});
-
-  Lex::RefTokenIndex token;
-  AnyExprId tagged_expr;
 };
 
 // A member access expression: `a.b` or `a.(b)`.

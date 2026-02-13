@@ -88,13 +88,17 @@ auto Value::FromText(llvm::StringRef text) -> ErrorOr<SequenceValue> {
   return result;
 }
 
-auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
+auto Value::Print(llvm::raw_ostream& os) const -> void {
   // Variant visitor that prints the value in the form of code to recreate the
   // value.
   struct Printer {
     auto operator()(NullValue /*v*/) -> void { out << "Yaml::NullValue()"; }
     auto operator()(AliasValue /*v*/) -> void { out << "Yaml::AliasValue()"; }
-    auto operator()(const ScalarValue& v) -> void { out << std::quoted(v); }
+    auto operator()(const ScalarValue& v) -> void {
+      out << "\"";
+      out.write_escaped(v);
+      out << "\"";
+    }
     auto operator()(const MappingValue& v) -> void {
       out << "Yaml::MappingValue{";
       bool first = true;
@@ -122,10 +126,10 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
       out << "}";
     }
 
-    std::ostream& out;
+    llvm::raw_ostream& out;
   };
-  std::visit(Printer{.out = os}, v);
-  return os;
+
+  std::visit(Printer{.out = os}, *this);
 }
 
 }  // namespace Carbon::Testing::Yaml

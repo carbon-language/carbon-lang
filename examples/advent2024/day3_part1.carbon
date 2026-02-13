@@ -11,8 +11,8 @@ import library "io_utils";
 
 fn Run() {
   var total: i32 = 0;
-  while (PeekChar() != Core.EOF()) {
-    if (PeekChar() == 0x6D) {
+  while (PeekChar() != CharOrEOF.EOF()) {
+    if (PeekChar() == 'm') {
       // TODO: Use `if let` when available.
       let result: (bool, i32, i32) = ReadMul();
       if (result.0) {

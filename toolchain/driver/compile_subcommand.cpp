@@ -23,8 +23,8 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
@@ -369,6 +369,16 @@ Whether to run the LLVM verifier on modules.
         arg_b.Default(true);
         arg_b.Set(&run_llvm_verifier);
       });
+  b.AddStringOption(
+      {
+          .name = "sem-ir-crash-dump",
+          .value_name = "PATH",
+          .help = R"""(
+Where to write a dump of the raw SemIR emitted so far, in the event of a crash
+in the check phase. If empty, the dump is not written.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -570,8 +580,8 @@ class CompilationUnit {
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
-  std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
+  std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::Module> module_;
   std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
@@ -606,8 +616,8 @@ class MultiUnitCache {
 
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
-      include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithExplicitSize(
-          IdTag(), units_.size(), false));
+      include_in_dumps_.emplace(
+          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         // If this is first accessed after lexing is complete, we need to apply
         // per-file includes. Otherwise, this is based only on the exclude
@@ -627,8 +637,8 @@ class MultiUnitCache {
   auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
     if (!tree_and_subtrees_getters_) {
       tree_and_subtrees_getters_.emplace(
-          TreeAndSubtreesGettersStore::MakeWithExplicitSize(
-              IdTag(), units_.size(), nullptr));
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
+                                                            nullptr));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         if (unit->has_source()) {
           tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
@@ -759,10 +769,14 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
+  if (!llvm_context_) {
+    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+  }
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
+          .llvm_context = llvm_context_.get(),
           .total_ir_count = total_ir_count_};
 }
 
@@ -785,7 +799,9 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower() -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
-    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    if (!llvm_context_) {
+      llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
@@ -1082,31 +1098,25 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Share any arguments we specify here with the `carbon clang`
   // subcommand.
   {
-    llvm::SmallVector<std::string> clang_path_and_args = {
-        driver_env.installation->clang_path(),
-        // Propagate the target to Clang.
-        llvm::formatv("--target={0}", options_.codegen_options.target).str(),
-        // Enable PIE by default, but allow it to be overridden by Clang
-        // arguments. Clang's default is configurable, but we'd like our
-        // defaults to be more stable.
-        // TODO: Decide if we want this.
-        "-fPIE",
-        // Propagate our optimization level to Clang as a default. This can be
-        // overridden by Clang arguments, but doing so will only have an effect
-        // if those arguments affect Clang's IR, not its pass pipeline.
-        GetClangOptimizationFlag(options_.opt_level).str(),
-    };
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
       TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
-    for (auto str : options_.clang_args) {
-      clang_path_and_args.push_back(str.str());
-    }
-    clang_invocation = BuildClangInvocation(driver_env.consumer, driver_env.fs,
-                                            clang_path_and_args);
+
+    // TODO: Move this into `BuildClangInvocation` when it can accept an
+    // optimization level.
+    llvm::SmallVector<llvm::StringRef> clang_args = {
+        // Propagate our optimization level to Clang as a default. This can be
+        // overridden by Clang arguments, but doing so will only have an effect
+        // if those arguments affect Clang's IR, not its pass pipeline.
+        GetClangOptimizationFlag(options_.opt_level),
+    };
+    clang_args.append(options_.clang_args);
+    clang_invocation = BuildClangInvocation(
+        driver_env.consumer, driver_env.fs, *driver_env.installation,
+        options_.codegen_options.target, clang_args);
     if (!clang_invocation) {
       return {.success = false};
     }
@@ -1153,7 +1163,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->SetMultiUnitCache(&cache);
   }
 
-  auto on_exit = llvm::make_scope_exit([&]() {
+  auto on_exit = llvm::scope_exit([&]() {
     // Finish compilation units. This flushes their diagnostics in the order in
     // which they were specified on the command line.
     for (auto& unit : units) {
@@ -1246,6 +1256,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       options.raw_dump_stream = driver_env.output_stream;
       options.dump_raw_sem_ir_builtins = options_.builtin_sem_ir;
     }
+    options.sem_ir_crash_dump = options_.sem_ir_crash_dump;
   }
   Check::CheckParseTrees(check_units, cache.tree_and_subtrees_getters(),
                          driver_env.fs, options, clang_invocation);

@@ -96,12 +96,12 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param: %u64.builtin) -> %u64.builtin {
+// CHECK:STDOUT: fn @F(%n.param: %u64.builtin) -> out %return.param: %u64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param: %u13.builtin) -> %u13.builtin {
+// CHECK:STDOUT: fn @G(%n.param: %u13.builtin) -> out %return.param: %u13.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

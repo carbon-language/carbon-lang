@@ -50,6 +50,15 @@ class NameStoreWrapper {
   // `name_id` is `None`.
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+      for (auto [identifier_id, value] : identifiers_->enumerate()) {
+        map.Add(PrintToString(NameId{identifier_id.index}),
+                Yaml::OutputScalar(value));
+      }
+    });
+  }
+
  private:
   const SharedValueStores::IdentifierStore* identifiers_;
 };

@@ -63,17 +63,14 @@ struct ExprRegion {
   InstId result_id;
 };
 
-using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
+using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
-using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
+using CustomLayoutStore =
+    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
 
 // The semantic IR for a single file.
 class File : public Printable<File> {
  public:
-  using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeInfoStore, IdentifiedFacetTypeId,
-                           IdentifiedFacetType>;
-
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
@@ -93,12 +90,6 @@ class File : public Printable<File> {
     Yaml::Print(out, OutputYaml(include_singletons));
   }
   auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping;
-
-  // Returns the set of all insts corresponding to expressions that are used
-  // in positions where a `ref` tag is needed. Should only be called if
-  // has_errors is false. This is intended for validation purposes, and should
-  // only be called if !NDEBUG, because it walks the entire IR.
-  auto CollectRefTagsNeeded() const -> Set<SemIR::InstId>;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
@@ -270,7 +261,7 @@ class File : public Printable<File> {
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation>;
+      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
@@ -415,7 +406,7 @@ class File : public Printable<File> {
   StructTypeFieldsStore struct_type_fields_;
 
   // Storage for custom layouts.
-  CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);
+  CustomLayoutStore custom_layouts_;
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);

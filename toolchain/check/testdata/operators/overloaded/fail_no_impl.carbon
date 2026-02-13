@@ -53,10 +53,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.476: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.c0e: form = init_form %C, call_param1 [concrete]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
+// CHECK:STDOUT:   %.099: form = init_form %C, call_param2 [concrete]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [concrete]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.e05: type = generic_interface_type @AddWith [concrete]
@@ -69,11 +71,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %AddAssignWith.generic: %AddAssignWith.type.fc6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.142: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.cfa: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.142 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.cfa, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -110,6 +109,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc19: form = init_form %C.ref.loc19_23, call_param1 [concrete = constants.%.c0e]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc19_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
@@ -125,6 +125,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc27: form = init_form %C.ref.loc27_30, call_param2 [concrete = constants.%.099]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc27_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
@@ -152,17 +153,17 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestUnary(%a.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @TestUnary(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestBinary(%a.param: %C, %b.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @TestBinary(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b.param: %C) {
@@ -173,7 +174,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
 // CHECK:STDOUT:   %.loc36_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc36_15.2: init %C = class_init (), %a.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc36_15.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc36_3: init %C = converted %.loc36_15.1, %.loc36_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %a.var, %.loc36_3
 // CHECK:STDOUT:   %C.ref.loc36: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -181,10 +182,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc46: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cfa
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cfa, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
 // CHECK:STDOUT:

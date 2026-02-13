@@ -17,10 +17,10 @@ class SectorList {
     var sector: i32 = 0;
     var used: bool = true;
     // TODO: An assignment expression would be useful here.
-    var c: i32 = ReadChar();
-    while (c != Core.EOF() and c != 0xA) {
+    var c: CharOrEOF = ReadChar();
+    while (c != CharOrEOF.EOF() and c != '\n') {
       let v: i32 = if used then sector else -1;
-      for (_: i32 in Core.Range(c - 0x30)) {
+      for (_: i32 in Core.Range(c - '0')) {
         me.data[me.size] = v;
         ++me.size;
       }

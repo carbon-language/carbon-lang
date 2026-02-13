@@ -26,7 +26,7 @@
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_stack.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -158,10 +158,9 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map()
-      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
-    return check_ir_map_;
-  }
+  using CheckIRToImpportIRStore =
+      FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
+  auto check_ir_map() -> CheckIRToImpportIRStore& { return check_ir_map_; }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -198,13 +197,6 @@ class Context {
     return var_storage_map_;
   }
 
-  enum class RefTag { Present, NotRequired };
-
-  auto ref_tags() -> Map<SemIR::InstId, RefTag>& { return ref_tags_; }
-  auto ref_tags() const -> const Map<SemIR::InstId, RefTag>& {
-    return ref_tags_;
-  }
-
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
   // known. This represents each binding to be done at the end of checking the
@@ -233,9 +225,9 @@ class Context {
   }
 
   // A map from a (self, interface) pair to a final witness.
-  using ImplLookupCacheMap =
-      Map<std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>,
-          SemIR::InstId>;
+  using ImplLookupCacheKey =
+      std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
@@ -261,23 +253,35 @@ class Context {
     return rewrites_stack_;
   }
 
-  // Pushes inst_id onto the stack of return type declarations for in-progress
+  // Data about a form expression.
+  struct FormExpr {
+    // The inst ID of the form expression itself. This is always a form inst,
+    // such as InitForm or RefForm.
+    // TODO: Consider creating an AnyForm inst category to refer to those insts.
+    SemIR::InstId form_inst_id;
+    // The inst ID of the form expression's type component.
+    SemIR::TypeInstId type_component_id;
+    // The type ID corresponding to type_component_id.
+    SemIR::TypeId type_id;
+  };
+
+  // Pushes form_expr onto the stack of return form declarations for in-progress
   // function declarations.
   //
   // Note: the "stack" currently can only have one element, but that restriction
   // can be relaxed if it becomes possible to have multiple pending return type
   // declarations.
-  auto PushReturnTypeInstId(SemIR::TypeInstId inst_id) -> void {
-    CARBON_CHECK(return_type_inst_id_ == std::nullopt,
-                 "TODO: make return_type_inst_id_ a stack if necessary");
-    return_type_inst_id_ = inst_id;
+  auto PushReturnForm(FormExpr form_expr) -> void {
+    CARBON_CHECK(return_form_expr_ == std::nullopt,
+                 "TODO: make form_expr_ a stack if necessary");
+    return_form_expr_ = form_expr;
   }
 
-  // Pops a TypeInstId off the stack of return type declarations for in-progress
+  // Pops a FormExpr off the stack of return form declarations for in-progress
   // function declarations.
-  auto PopReturnTypeInstId() -> SemIR::TypeInstId {
-    CARBON_CHECK(return_type_inst_id_ != std::nullopt);
-    return *std::exchange(return_type_inst_id_, std::nullopt);
+  auto PopReturnForm() -> FormExpr {
+    CARBON_CHECK(return_form_expr_ != std::nullopt);
+    return *std::exchange(return_form_expr_, std::nullopt);
   }
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
@@ -323,7 +327,7 @@ class Context {
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
-  auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
+  auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
@@ -442,7 +446,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
+  CheckIRToImpportIRStore check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
@@ -481,13 +485,6 @@ class Context {
   // processing the enclosing full-pattern.
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
-  // Insts in this map are syntactically permitted to be bound to a reference
-  // parameter, either because they've been explicitly tagged with `ref` in the
-  // source code, or because they appear in a position where that tag is not
-  // required, such as an operator operand (the RefTag value indicates which
-  // of those is the case).
-  Map<SemIR::InstId, RefTag> ref_tags_;
-
   // Each alternative in a Choice gets an entry here, they are stored in
   // declaration order. The vector is consumed and emptied at the end of the
   // Choice definition.
@@ -518,8 +515,8 @@ class Context {
   // constraints to access values from earlier constraints.
   llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
 
-  // Declared return type for the in-progress function declaration, if any.
-  std::optional<SemIR::TypeInstId> return_type_inst_id_;
+  // Declared return form for the in-progress function declaration, if any.
+  std::optional<FormExpr> return_form_expr_;
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;

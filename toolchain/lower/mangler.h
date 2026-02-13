@@ -58,6 +58,11 @@ class Mangler {
                                        SemIR::NameScopeId name_scope_id)
       -> void;
 
+  // Mangle the unqualified name of the specified `Class`.
+  auto MangleUnqualifiedClass(llvm::raw_ostream& os,
+                              const SemIR::Class& class_info,
+                              SemIR::SpecificId specific_id) -> void;
+
   // Generates a mangled name using Clang mangling for imported C++ functions.
   auto MangleCppClang(const clang::NamedDecl* decl) -> std::string;
 

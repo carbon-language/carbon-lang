@@ -30,14 +30,15 @@ fn Constant() {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %.df2: form = init_form bool, call_param1 [concrete]
 // CHECK:STDOUT:   %Not.type: type = fn_type @Not [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Not: %Not.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.665: <witness> = impl_witness imports.%Copy.impl_witness_table.920 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value bool, (%Copy.impl_witness.665) [concrete]
-// CHECK:STDOUT:   %.521: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.348: <witness> = impl_witness imports.%Copy.impl_witness_table.3cc [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value bool, (%Copy.impl_witness.348) [concrete]
+// CHECK:STDOUT:   %.56b: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -48,15 +49,10 @@ fn Constant() {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound: <bound method> = bound_method %true, %bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value.3f5: %type_where = facet_value bool, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b70: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.3f5) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.653: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b70 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.25c: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.653, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.3f5) [concrete]
-// CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.fb5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.ff9) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.144: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.fb5 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.41b: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.144, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.ff9) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc24 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc23 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,8 +65,8 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.588: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.920 = impl_witness_table (%Core.import_ref.588), @bool.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.595: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.3cc = impl_witness_table (%Core.import_ref.595), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,6 +88,7 @@ fn Constant() {
 // CHECK:STDOUT:     %Bool.call.loc15_20: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.1: type = value_of_initializer %Bool.call.loc15_20 [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %Bool.call.loc15_20, %.loc15_20.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_20.3: form = init_form %.loc15_20.2, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_11.1: type = splice_block %.loc15_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc15_11: init type = call constants.%Bool() [concrete = bool]
@@ -123,14 +120,14 @@ fn Constant() {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%b.param: bool) -> bool {
+// CHECK:STDOUT: fn @Not(%b.param: bool) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc16: bool = not %b.ref
-// CHECK:STDOUT:   %impl.elem0: %.521 = impl_witness_access constants.%Copy.impl_witness.665, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc16)
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -141,7 +138,7 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc23_50.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23_50.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_50.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_50.1, %.loc23_50.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc23_3
 // CHECK:STDOUT:   br !.loc23_24
@@ -174,9 +171,9 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
 // CHECK:STDOUT:   %true.loc24: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %impl.elem0: %.521 = impl_witness_access constants.%Copy.impl_witness.665, element0 [concrete = constants.%bool.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc24_50: <bound method> = bound_method %true.loc24, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method.loc24_50(%true.loc24) [concrete = constants.%true]
+// CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true.loc24, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true.loc24) [concrete = constants.%true]
 // CHECK:STDOUT:   assign %b.var, %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT:   br !.loc24_24
 // CHECK:STDOUT:
@@ -202,16 +199,16 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_14:
 // CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.653
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.653, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.3f5) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.25c]
-// CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %b.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24: init %empty_tuple.type = call %bound_method.loc24_3(%b.var)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc23: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.ff9) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.41b]
-// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc23: init %empty_tuple.type = call %bound_method.loc23(%a.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc24: <bound method> = bound_method %b.var, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.call.loc24: init %empty_tuple.type = call %DestroyOp.bound.loc24(%b.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc23: <bound method> = bound_method %a.var, constants.%DestroyOp.b0ebf8.2
+// CHECK:STDOUT:   %DestroyOp.call.loc23: init %empty_tuple.type = call %DestroyOp.bound.loc23(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: bool) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

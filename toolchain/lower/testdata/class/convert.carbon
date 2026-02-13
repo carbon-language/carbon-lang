@@ -31,7 +31,7 @@ fn DoIt() {
 // CHECK:STDOUT: @IntWrapper.val.loc24_3 = internal constant { i32 } { i32 42 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.b88d1103f417c6d4.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc18_48.2 = load i32, ptr %.loc18_48.1.n, align 4, !dbg !11
@@ -51,7 +51,7 @@ fn DoIt() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !22
 // CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !23
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !22
-// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !24
+// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.b88d1103f417c6d4.Core"(ptr %w.var), !dbg !24
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
@@ -73,7 +73,7 @@ fn DoIt() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.b88d1103f417c6d4.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !8}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)

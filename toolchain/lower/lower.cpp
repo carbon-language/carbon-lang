@@ -20,9 +20,12 @@ auto LowerToLLVM(
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const SemIR::File& sem_ir, int total_ir_count,
     const LowerToLLVMOptions& options) -> std::unique_ptr<llvm::Module> {
-  Context context(&llvm_context, std::move(fs), options.want_debug_info,
-                  &tree_and_subtrees_getters, sem_ir.filename(), total_ir_count,
-                  options.opt_level, options.vlog_stream);
+  Context context(
+      &llvm_context, std::move(fs), options.want_debug_info,
+      &tree_and_subtrees_getters,
+      sem_ir.cpp_file() ? sem_ir.cpp_file()->GetCodeGenerator() : nullptr,
+      sem_ir.filename(), total_ir_count, options.opt_level,
+      options.vlog_stream);
 
   // TODO: Consider disabling instruction naming by default if we're not
   // producing textual LLVM IR.

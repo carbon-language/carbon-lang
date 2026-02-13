@@ -126,9 +126,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     // duplicating the handling of the `Self` expression.
     self_inst_id = AddTypeInst(
         context, node_id,
-        SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
-                       .name_id = SemIR::NameId::SelfType,
-                       .value_id = context.types().GetInstId(self_type_id)});
+        SemIR::NameRef{
+            .type_id = SemIR::TypeType::TypeId,
+            .name_id = SemIR::NameId::SelfType,
+            .value_id = context.types().GetTypeInstId(self_type_id)});
   } else {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
@@ -156,14 +157,11 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto call_params_id =
+    auto [call_param_patterns_id, call_params_id] =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::None, SemIR::InstBlockId::None);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
-                 llvm::all_of(context.inst_blocks().Get(call_params_id),
-                              [](SemIR::InstId inst_id) {
-                                return inst_id == SemIR::ErrorInst::InstId;
-                              }));
+    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(call_param_patterns_id == SemIR::InstBlockId::Empty);
   }
 
   Parse::NodeId first_param_node_id =
@@ -187,6 +185,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
               implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
           .params_loc_id = Parse::NodeId::None,
           .param_patterns_id = SemIR::InstBlockId::None,
+          .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
           .pattern_block_id = pattern_block_id};
 }
@@ -230,8 +229,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
 
   // This requires that the facet type is identified. It returns None if an
   // error was diagnosed.
-  auto specific_interface = CheckConstraintIsInterface(context, impl_decl_id,
-                                                       constraint_type_inst_id);
+  auto specific_interface = CheckConstraintIsInterface(
+      context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
 
   auto impl_id = SemIR::ImplId::None;
   {
@@ -336,6 +335,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
   auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
+
+  CheckRequireDeclsSatisfied(context, node_id, impl);
 
   CARBON_CHECK(!impl.has_definition_started());
   impl.definition_id = impl_decl_id;

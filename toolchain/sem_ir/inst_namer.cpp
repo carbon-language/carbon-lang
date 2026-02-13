@@ -48,6 +48,11 @@ class InstNamer::NamingContext {
   // Adds the instruction's name.
   auto AddInstName(std::string name) -> void;
 
+  // Adds the instruction's name for a StructType, which contains the names of
+  // its fields.
+  auto AddStructTypeInstName(StructType struct_ty, llvm::StringRef type_suffix,
+                             llvm::StringRef name_suffix) -> void;
+
   // Adds the instruction's name by `NameId`.
   auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
     AddInstName((sem_ir().names().GetIRBaseName(name_id) + suffix).str());
@@ -613,12 +618,36 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
 
   auto scope_prefix = GetNameForParentNameScope(require.parent_scope_id);
 
+  llvm::StringRef self_name;
+  auto self_const_id =
+      sem_ir_->constant_values().GetConstantInstId(require.self_id);
+  auto self_index = sem_ir_->insts().GetRawIndex(self_const_id);
+  if (IsSingletonInstId(self_const_id)) {
+    self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
+  } else if (const auto& inst_name = insts_[self_index].second) {
+    self_name = inst_name.GetBaseName();
+  } else {
+    self_name = "<unexpected self>";
+  }
+
+  llvm::StringRef facet_type_name;
+  auto facet_type_const_id =
+      sem_ir_->constant_values().GetConstantInstId(require.facet_type_inst_id);
+  auto facet_type_index = sem_ir_->insts().GetRawIndex(facet_type_const_id);
+  if (IsSingletonInstId(facet_type_const_id)) {
+    facet_type_name =
+        sem_ir_->insts().Get(facet_type_const_id).kind().ir_name();
+  } else if (const auto& inst_name = insts_[facet_type_index].second) {
+    facet_type_name = inst_name.GetBaseName();
+  } else {
+    facet_type_name = "<unexpected facet type>";
+  }
+
   scope.name = globals_.AllocateName(
       *this, require_loc,
-      // TODO: Include the Interface being required if there's only one, instead
-      // of the index.
-      llvm::formatv("{0}{1}require{2}", scope_prefix,
-                    scope_prefix.empty() ? "" : ".", require_impls_id.index));
+      llvm::formatv("{0}{1}{2}.impls.{3}.require", scope_prefix,
+                    scope_prefix.empty() ? "" : ".", self_name,
+                    facet_type_name));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
   AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
@@ -748,6 +777,26 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
     CARBON_CHECK(old_scope_id == scope_id_,
                  "Attempting to name inst in multiple scopes");
   }
+}
+
+auto InstNamer::NamingContext::AddStructTypeInstName(
+    StructType struct_ty, llvm::StringRef type_suffix,
+    llvm::StringRef name_suffix) -> void {
+  RawStringOstream out;
+  const auto& fields = sem_ir().struct_type_fields().Get(struct_ty.fields_id);
+  if (fields.empty()) {
+    out << "empty_struct" << type_suffix;
+  } else {
+    RawStringOstream name;
+    name << "struct" << type_suffix;
+    for (auto field : fields) {
+      name << ".";
+      name << sem_ir().names().GetIRBaseName(field.name_id);
+    }
+    out << name.TakeStr();
+  }
+  out << name_suffix;
+  AddInstName(out.TakeStr());
 }
 
 auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
@@ -947,7 +996,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
@@ -988,6 +1036,27 @@ auto InstNamer::NamingContext::NameInst() -> void {
             }
           }
           return;
+        }
+        if (facet_type_info.HasNoConstraints()) {
+          if (auto class_ty =
+                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
+            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
+            return;
+          }
+          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
+                  inst.type_inst_id)) {
+            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
+              AddInstName("empty_tuple.type.facet");
+            } else {
+              AddInstName("tuple.type.facet");
+            }
+            return;
+          }
+          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
+                  inst.type_inst_id)) {
+            AddStructTypeInstName(*struct_ty, "", ".type.facet");
+            return;
+          }
         }
       }
       AddInstName("facet_value");
@@ -1238,17 +1307,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(StructType inst): {
-      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
-      if (fields.empty()) {
-        AddInstName("empty_struct_type");
-        return;
-      }
-      std::string name = "struct_type";
-      for (auto field : fields) {
-        name += ".";
-        name += sem_ir().names().GetIRBaseName(field.name_id).str();
-      }
-      AddInstName(std::move(name));
+      AddStructTypeInstName(inst, "_type", "");
       return;
     }
     case CARBON_KIND(StructValue inst): {

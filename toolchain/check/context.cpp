@@ -32,9 +32,8 @@ Context::Context(DiagnosticEmitterBase* emitter,
       scope_stack_(*this),
       deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      check_ir_map_(FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::
-                        MakeWithExplicitSize(IdTag(), total_ir_count_,
-                                             SemIR::ImportIRId::None)),
+      check_ir_map_(CheckIRToImpportIRStore::MakeWithExplicitSize(
+          total_ir_count_, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
@@ -73,25 +72,12 @@ auto Context::VerifyOnFinish() const -> void {
   vtable_stack_.VerifyOnFinish();
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
-  CARBON_CHECK(return_type_inst_id_ == std::nullopt);
+  CARBON_CHECK(return_form_expr_ == std::nullopt);
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {
     CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
                  verify.error());
-  }
-
-  if (!sem_ir_->has_errors()) {
-    auto ref_tags_needed = sem_ir_->CollectRefTagsNeeded();
-
-    ref_tags_.ForEach([&ref_tags_needed](SemIR::InstId inst_id, RefTag kind) {
-      CARBON_CHECK(
-          ref_tags_needed.Erase(inst_id) || kind == RefTag::NotRequired,
-          "Inst has unnecessary `ref` tag: {0}", inst_id);
-    });
-    ref_tags_needed.ForEach([this](SemIR::InstId inst_id) {
-      CARBON_FATAL("Inst missing `ref` tag: {0}", insts().Get(inst_id));
-    });
   }
 #endif
 }

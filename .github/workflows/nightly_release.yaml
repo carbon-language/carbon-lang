@@ -79,7 +79,7 @@ jobs:
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
-            test -c opt --remote_download_toplevel \
+            test -c opt --stamp --remote_download_toplevel \
             --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
             //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz_rule \
