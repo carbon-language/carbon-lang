@@ -19,6 +19,7 @@ Future runtimes we plan to add support for but not yet included:
 - Profiling runtimes
 """
 
+load("@llvm-project//compiler-rt:compiler-rt.bzl", "crt_copts")
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
@@ -96,6 +97,7 @@ def _get_paths(files_attr, to_path_fn, prefix = ""):
 def _get_substitutions(ctx):
     key_attr = lambda k: getattr(ctx.attr, "_" + k)
     return {
+        "CRT_COPTS": _format_one_per_line(crt_copts),
         "LIBCXX_AND_ABI_COPTS": _format_one_per_line(libcxx_and_abi_copts),
         "LIBUNWIND_COPTS": _format_one_per_line(libunwind_copts),
     } | {

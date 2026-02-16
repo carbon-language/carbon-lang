@@ -17,6 +17,8 @@ namespace Carbon::RuntimesBuildInfo {
 constexpr inline llvm::StringLiteral CrtBegin = CRTBEGIN_SRC;
 constexpr inline llvm::StringLiteral CrtEnd = CRTEND_SRC;
 
+constexpr inline llvm::StringLiteral CrtCopts[] = {CRT_COPTS};
+
 // Prevent wrapping these lines -- the expansion of the variables will add line
 // breaks.
 //
