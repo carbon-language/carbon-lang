@@ -206,7 +206,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Goat) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_15.1 => constants.%T

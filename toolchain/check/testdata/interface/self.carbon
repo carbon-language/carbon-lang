@@ -23,7 +23,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.2b5: form = init_form %Self.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.52b: Core.Form = init_form %Self.binding.as_type, call_param1 [symbolic]
 // CHECK:STDOUT:   %UseSelf.F.type: type = fn_type @UseSelf.F [concrete]
 // CHECK:STDOUT:   %UseSelf.F: %UseSelf.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type @UseSelf [concrete]
@@ -48,7 +48,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %Self.ref.loc16_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc16_25: type = facet_access_type %Self.ref.loc16_25 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %.loc16_25.2: type = converted %Self.ref.loc16_25, %Self.as_type.loc16_25 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %.loc16_25.3: form = init_form %.loc16_25.2, call_param1 [symbolic = %.loc16_25.1 (constants.%.2b5)]
+// CHECK:STDOUT:     %.loc16_25.3: Core.Form = init_form %.loc16_25.2, call_param1 [symbolic = %.loc16_25.1 (constants.%.52b)]
 // CHECK:STDOUT:     %self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc16_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
@@ -73,7 +73,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
-// CHECK:STDOUT:   %.loc16_25.1: form = init_form %Self.binding.as_type, call_param1 [symbolic = %.loc16_25.1 (constants.%.2b5)]
+// CHECK:STDOUT:   %.loc16_25.1: Core.Form = init_form %Self.binding.as_type, call_param1 [symbolic = %.loc16_25.1 (constants.%.52b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
@@ -82,6 +82,6 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
-// CHECK:STDOUT:   %.loc16_25.1 => constants.%.2b5
+// CHECK:STDOUT:   %.loc16_25.1 => constants.%.52b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

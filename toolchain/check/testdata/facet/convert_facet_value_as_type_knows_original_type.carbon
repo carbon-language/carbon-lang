@@ -222,7 +222,7 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Goat) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- facet_access_type_converts_back_to_original_facet_value.carbon
 // CHECK:STDOUT:

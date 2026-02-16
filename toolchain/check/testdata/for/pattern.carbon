@@ -271,13 +271,13 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_36.1(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_36.1(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_36.2(%self.param: %Optional.0f3) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_36.2(%self.param: ref %Optional.0f3) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_36.3(%self.param: %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_36.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_35(%self.param: %EmptyRange.77b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_35(%self.param: ref %EmptyRange.77b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
@@ -436,13 +436,13 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_8(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_8(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_40.1(%self.param: %Optional.0f3) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_40.1(%self.param: ref %Optional.0f3) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_40.2(%self.param: %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_40.2(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_39(%self.param: %EmptyRange.77b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_39(%self.param: ref %EmptyRange.77b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple.carbon
 // CHECK:STDOUT:
@@ -627,13 +627,13 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_61.1(%self.param: %tuple.type.784) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_61.1(%self.param: ref %tuple.type.784) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_61.2(%self.param: %Optional.0cc) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_61.2(%self.param: ref %Optional.0cc) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_61.3(%self.param: %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_61.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_60(%self.param: %EmptyRange.717) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_60(%self.param: ref %EmptyRange.717) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_class.carbon
 // CHECK:STDOUT:
@@ -810,11 +810,11 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_49.1(%self.param: %tuple.type.d23) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_49.1(%self.param: ref %tuple.type.d23) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_49.2(%self.param: %Optional.fce) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_49.2(%self.param: ref %Optional.fce) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_49.3(%self.param: %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_49.3(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10_48(%self.param: %EmptyRange.849) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10_48(%self.param: ref %EmptyRange.849) = "no_op";
 // CHECK:STDOUT:

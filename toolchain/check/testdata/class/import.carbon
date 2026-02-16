@@ -151,7 +151,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.F(%self.param: %ForwardDeclared);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: %ForwardDeclared);
+// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: ref %ForwardDeclared);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -425,13 +425,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.G [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: %ptr.8c3) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: ref %ptr.8c3) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %ptr.006) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %ptr.006) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %ForwardDeclared.20f323.1) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ForwardDeclared.20f323.1) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %Field) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Field) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: %Empty) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref %Empty) = "no_op";
 // CHECK:STDOUT:

@@ -824,7 +824,7 @@ fn Works() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9c1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @L1.S1.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: ref @L1.S1.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Simple4(%T.loc9_12.2: %L1.type) {
@@ -1081,7 +1081,7 @@ fn Works() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.73b)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @L2.S2.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: ref @L2.S2.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Simple5(%T.loc10_12.2: %L2.type) {
@@ -1346,7 +1346,7 @@ fn Works() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.G(constants.%Self.c51) {}
 // CHECK:STDOUT:

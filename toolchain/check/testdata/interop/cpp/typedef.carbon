@@ -150,9 +150,9 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %ptr.235) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_class_typedef.carbon
 // CHECK:STDOUT:
@@ -187,7 +187,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%c.param: %C, %d.param: %C) {
+// CHECK:STDOUT: fn @H(%c.param: ref %C, %d.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pd.patt: %pattern_type.a31 = ref_binding_pattern pd [concrete]
@@ -234,5 +234,5 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr.d9e) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.d9e) = "no_op";
 // CHECK:STDOUT:

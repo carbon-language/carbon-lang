@@ -822,7 +822,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_long_long.carbon
 // CHECK:STDOUT:
@@ -988,7 +988,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- long.carbon
 // CHECK:STDOUT:
@@ -1078,8 +1078,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%float.e3b) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc26 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IntResult.cpp_destructor.type: type = fn_type @IntResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %IntResult.cpp_destructor: %IntResult.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
@@ -1283,7 +1283,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %array_type: type = array_type %.loc26_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_72.3, constants.%IntResult.cpp_destructor
 // CHECK:STDOUT:   %IntResult.cpp_destructor.call: init %empty_tuple.type = call %IntResult.cpp_destructor.bound(%.loc22_72.3)
@@ -1294,11 +1294,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc26(%self.param: %array_type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %IntResult) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %LongResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- copy_long.carbon
 // CHECK:STDOUT:
@@ -1379,7 +1375,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- comparisons_homogeneous_long.carbon
 // CHECK:STDOUT:
@@ -1608,7 +1604,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.528: type = fn_type_with_self_type %OrderedWith.Greater.type.402, %OrderedWith.facet.19d [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.760220.1: <specific function> = specific_function %Cpp.long.as.OrderedWith.impl.Greater.9898ff.2, @Cpp.long.as.OrderedWith.impl.Greater.1(%ImplicitAs.facet.174) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.760220.2: <specific function> = specific_function %Cpp.long.as.OrderedWith.impl.Greater.9898ff.1, @Cpp.long.as.OrderedWith.impl.Greater.2(%ImplicitAs.facet.174) [concrete]
-// CHECK:STDOUT:   %.3e22: type = fn_type_with_self_type %OrderedWith.Less.type.815, %OrderedWith.facet.19d [concrete]
+// CHECK:STDOUT:   %.3e2: type = fn_type_with_self_type %OrderedWith.Less.type.815, %OrderedWith.facet.19d [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.specific_fn.89e78a.1: <specific function> = specific_function %Cpp.long.as.OrderedWith.impl.Less.5299ce.2, @Cpp.long.as.OrderedWith.impl.Less.1(%ImplicitAs.facet.174) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.specific_fn.89e78a.2: <specific function> = specific_function %Cpp.long.as.OrderedWith.impl.Less.5299ce.1, @Cpp.long.as.OrderedWith.impl.Less.2(%ImplicitAs.facet.174) [concrete]
 // CHECK:STDOUT:   %.723: type = fn_type_with_self_type %OrderedWith.GreaterOrEquivalent.type.6fe, %OrderedWith.facet.19d [concrete]
@@ -1680,10 +1676,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.4fa: %i32.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.4fa), @i32.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.959: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Less.type.2 (%Cpp.long.as.OrderedWith.impl.Less.type.a59daa.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Less.2 (constants.%Cpp.long.as.OrderedWith.impl.Less.954f71.1)]
-// CHECK:STDOUT:   %Core.import_ref.c231: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.2 (%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.4aa4c3.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.2 (constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.7e103a.1)]
-// CHECK:STDOUT:   %Core.import_ref.df7b: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.type.2 (%Cpp.long.as.OrderedWith.impl.Greater.type.662b24.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.2 (constants.%Cpp.long.as.OrderedWith.impl.Greater.02ce94.1)]
+// CHECK:STDOUT:   %Core.import_ref.c23: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.2 (%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.4aa4c3.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.2 (constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.7e103a.1)]
+// CHECK:STDOUT:   %Core.import_ref.df7: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.type.2 (%Cpp.long.as.OrderedWith.impl.Greater.type.662b24.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.2 (constants.%Cpp.long.as.OrderedWith.impl.Greater.02ce94.1)]
 // CHECK:STDOUT:   %Core.import_ref.a61: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.2 (%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.74811b.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.2 (constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.dd28ba.1)]
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.9c6 = impl_witness_table (%Core.import_ref.959, %Core.import_ref.c231, %Core.import_ref.df7b, %Core.import_ref.a61), @Cpp.long.as.OrderedWith.impl.15a [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.9c6 = impl_witness_table (%Core.import_ref.959, %Core.import_ref.c23, %Core.import_ref.df7, %Core.import_ref.a61), @Cpp.long.as.OrderedWith.impl.15a [concrete]
 // CHECK:STDOUT:   %Core.GreaterOrEquivalent.76e: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.1 (%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.74811b.2) = import_ref Core//prelude/types/cpp/int, GreaterOrEquivalent, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.1 (constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.dd28ba.2)]
 // CHECK:STDOUT:   %Core.Greater.9da: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.type.1 (%Cpp.long.as.OrderedWith.impl.Greater.type.662b24.2) = import_ref Core//prelude/types/cpp/int, Greater, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.Greater.1 (constants.%Cpp.long.as.OrderedWith.impl.Greater.02ce94.2)]
 // CHECK:STDOUT:   %Core.LessOrEquivalent.4a6: @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.1 (%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.4aa4c3.2) = import_ref Core//prelude/types/cpp/int, LessOrEquivalent, loaded [symbolic = @Cpp.long.as.OrderedWith.impl.15a.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.1 (constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.7e103a.2)]
@@ -1787,7 +1783,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.call.loc12: init bool = call %bound_method.loc12_5.4(%a.ref.loc12, %.loc12_7.2)
 // CHECK:STDOUT:   %a.ref.loc13: %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc13: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0.loc13_5.1: %.3e22 = impl_witness_access constants.%OrderedWith.impl_witness.576, element0 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.5299ce.2]
+// CHECK:STDOUT:   %impl.elem0.loc13_5.1: %.3e2 = impl_witness_access constants.%OrderedWith.impl_witness.576, element0 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.5299ce.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.1: <bound method> = bound_method %a.ref.loc13, %impl.elem0.loc13_5.1
 // CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.1: %ImplicitAs.type.819 = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.0fc) [concrete = constants.%ImplicitAs.facet.174]
 // CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.819 = converted constants.%i32, %ImplicitAs.facet.loc13_5.1 [concrete = constants.%ImplicitAs.facet.174]
@@ -2824,7 +2820,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.type.095737.2: type = fn_type @Cpp.long.as.RightShiftAssignWith.impl.Op.1, @Cpp.long.as.RightShiftAssignWith.impl(%ImplicitAs.facet.3fe) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.860e6c.2: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.095737.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.222 = facet_value %Cpp.long, (%RightShiftAssignWith.impl_witness.df5) [concrete]
-// CHECK:STDOUT:   %.9187: type = fn_type_with_self_type %RightShiftAssignWith.Op.type.400, %RightShiftAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.918: type = fn_type_with_self_type %RightShiftAssignWith.Op.type.400, %RightShiftAssignWith.facet [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.1ec453.1: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.860e6c.2, @Cpp.long.as.RightShiftAssignWith.impl.Op.1(%ImplicitAs.facet.3fe) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.1ec453.2: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.860e6c.1, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(%ImplicitAs.facet.3fe) [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
@@ -3065,7 +3061,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc20_5.3(%a.ref.loc20, %.loc20_9)
 // CHECK:STDOUT:   %a.ref.loc21: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc21: ref %Cpp.long = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0.loc21: %.9187 = impl_witness_access constants.%RightShiftAssignWith.impl_witness.df5, element0 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.860e6c.2]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.918 = impl_witness_access constants.%RightShiftAssignWith.impl_witness.df5, element0 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.860e6c.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.1: <bound method> = bound_method %a.ref.loc21, %impl.elem0.loc21
 // CHECK:STDOUT:   %ImplicitAs.facet.loc21_5.1: %ImplicitAs.type.819 = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.bd4) [concrete = constants.%ImplicitAs.facet.3fe]
 // CHECK:STDOUT:   %.loc21_5.1: %ImplicitAs.type.819 = converted constants.%Cpp.long, %ImplicitAs.facet.loc21_5.1 [concrete = constants.%ImplicitAs.facet.3fe]
@@ -3087,7 +3083,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- compound_assignment_hereogeneous_long_and_i32.carbon
 // CHECK:STDOUT:
@@ -3592,7 +3588,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- compound_assignment_heterogeneous_long_and_int_literal.carbon
 // CHECK:STDOUT:
@@ -3691,7 +3687,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- compound_assignment_heterogeneous_long_and_runtime_i32.carbon
 // CHECK:STDOUT:
@@ -3832,7 +3828,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- increment_decrement_long.carbon
 // CHECK:STDOUT:
@@ -3912,7 +3908,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_long.carbon
 // CHECK:STDOUT:
@@ -3999,8 +3995,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%float.e3b) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc24 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.type: type = fn_type @UIntResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %UIntResult.cpp_destructor: %UIntResult.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.type: type = fn_type @ULongResult.cpp_destructor [concrete]
@@ -4191,7 +4187,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %array_type: type = array_type %.loc24_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp.b0ebf8.1
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_74.3, constants.%UIntResult.cpp_destructor
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.call: init %empty_tuple.type = call %UIntResult.cpp_destructor.bound(%.loc22_74.3)
@@ -4202,11 +4198,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: %array_type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %UIntResult) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %ULongResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- copy_unsigned_long.carbon
 // CHECK:STDOUT:
@@ -4287,5 +4279,5 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.unsigned_long) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Cpp.unsigned_long) = "no_op";
 // CHECK:STDOUT:

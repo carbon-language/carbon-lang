@@ -1661,7 +1661,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %AnyParam.33d) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %AnyParam.33d) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%U) {
 // CHECK:STDOUT:   %U.loc6_28.1 => constants.%U
@@ -1875,7 +1875,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_interface.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %AnyParam.861) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %AnyParam.861) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -2098,7 +2098,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %AnyParam.8e0) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %AnyParam.8e0) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericClass(constants.%U) {
 // CHECK:STDOUT:   %U.loc6_20.1 => constants.%U
@@ -2308,7 +2308,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K [from "has_generic_class.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %AnyParam.d71) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %AnyParam.d71) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T

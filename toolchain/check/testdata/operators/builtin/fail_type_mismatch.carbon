@@ -84,5 +84,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:

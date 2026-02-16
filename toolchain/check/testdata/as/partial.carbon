@@ -217,7 +217,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %.4b5) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %.4b5) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -289,7 +289,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_remove_partial.carbon
 // CHECK:STDOUT:

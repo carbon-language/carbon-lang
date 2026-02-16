@@ -259,9 +259,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %Inner) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: ref %Inner) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: %Outer) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: ref %Outer) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %ptr.56b) {
 // CHECK:STDOUT: !entry:

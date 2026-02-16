@@ -196,7 +196,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.251);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param.carbon
 // CHECK:STDOUT:
@@ -381,5 +381,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short__carbon_thunk(%return.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:

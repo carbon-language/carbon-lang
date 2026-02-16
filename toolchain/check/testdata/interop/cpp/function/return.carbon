@@ -173,7 +173,7 @@ fn Var() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_from_thunk_param.carbon
 // CHECK:STDOUT:
@@ -228,7 +228,7 @@ fn Var() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %Cpp.nullptr_t) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_from_thunk_param.carbon
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ fn Var() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %.98d: form = init_form %u8, call_param0 [concrete]
+// CHECK:STDOUT:   %.0c8: Core.Form = init_form %u8, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %u8 [concrete]
 // CHECK:STDOUT:   %GetU8.type: type = fn_type @GetU8 [concrete]
 // CHECK:STDOUT:   %GetU8: %GetU8.type = struct_value () [concrete]
@@ -291,7 +291,7 @@ fn Var() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
-// CHECK:STDOUT:     %.loc8_15: form = init_form %u8, call_param0 [concrete = constants.%.98d]
+// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8, call_param0 [concrete = constants.%.0c8]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -393,5 +393,5 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU32() -> out %return.param: %u32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %u32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %u32) = "no_op";
 // CHECK:STDOUT:

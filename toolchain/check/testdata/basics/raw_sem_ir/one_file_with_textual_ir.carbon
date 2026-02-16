@@ -231,7 +231,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
-// CHECK:STDOUT:   %.88c: form = init_form %tuple.type, call_param1 [concrete]
+// CHECK:STDOUT:   %.93a: Core.Form = init_form %tuple.type, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
@@ -253,7 +253,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc16_25.2: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc16_25.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc16_25.4: type = converted %.loc16_25.1, constants.%tuple.type [concrete = constants.%tuple.type]
-// CHECK:STDOUT:     %.loc16_25.5: form = init_form %.loc16_25.4, call_param1 [concrete = constants.%.88c]
+// CHECK:STDOUT:     %.loc16_25.5: Core.Form = init_form %.loc16_25.4, call_param1 [concrete = constants.%.93a]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc16_12.1: type = splice_block %.loc16_12.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc16_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

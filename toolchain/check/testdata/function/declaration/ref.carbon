@@ -28,7 +28,7 @@ fn G() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.cf3: form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %.1da: Core.Form = ref_form %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -56,7 +56,7 @@ fn G() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.2: form = ref_form %i32 [concrete = constants.%.cf3]
+// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.1da]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }

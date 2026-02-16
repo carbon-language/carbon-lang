@@ -261,7 +261,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%p.param: %.e97);
+// CHECK:STDOUT: fn @A(%p.param: ref %.e97);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_partial_nondynamic.carbon
 // CHECK:STDOUT:

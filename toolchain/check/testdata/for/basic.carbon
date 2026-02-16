@@ -188,9 +188,9 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_35.1(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_35.2(%self.param: %Optional.311) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_35.2(%self.param: ref %Optional.311) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_18(%self.param: %TrivialRange) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_18(%self.param: ref %TrivialRange) = "no_op";
 // CHECK:STDOUT:

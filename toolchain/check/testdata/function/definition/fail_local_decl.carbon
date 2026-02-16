@@ -155,5 +155,5 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:

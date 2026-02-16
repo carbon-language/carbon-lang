@@ -707,11 +707,7 @@ interface I {
   let X3:! type;
 }
 
-// CHECK:STDERR: value_through_self_value.carbon:[[@LINE+4]]:6: warning: binding `T` unused [UnusedBinding]
-// CHECK:STDERR: fn F(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
-// CHECK:STDERR:      ^
-// CHECK:STDERR:
-fn F(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
+fn F(unused T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
 
 fn G(T:! I where .X1 = .Self and .X2 = () and .X3 = ()) {
   F(T);

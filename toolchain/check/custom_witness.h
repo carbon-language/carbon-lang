@@ -33,13 +33,14 @@ enum class CoreInterface {
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     -> CoreInterface;
 
-// Returns a witness for a `CoreInterface` `CustomWitness`, or `None` if no
-// witness should be provided for `query_self_const_id`.
+// Returns a witness for a `CoreInterface` `CustomWitness`. A return value of
+// `None` indicates a non-final witness should be produced, while `std::nullopt`
+// indicates the query is final and no witness can be produced.
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> SemIR::InstId;
+    -> std::optional<SemIR::InstId>;
 
 }  // namespace Carbon::Check
 

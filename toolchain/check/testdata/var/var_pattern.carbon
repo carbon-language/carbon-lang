@@ -197,7 +197,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_in_tuple.carbon
 // CHECK:STDOUT:
@@ -265,7 +265,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_in_var.carbon
 // CHECK:STDOUT:
@@ -339,7 +339,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_in_let_var.carbon
 // CHECK:STDOUT:
@@ -413,7 +413,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
@@ -469,7 +469,7 @@ fn G() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type);
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -504,7 +504,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- public_function.carbon
 // CHECK:STDOUT:
@@ -551,7 +551,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type);
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- public_function.impl.carbon
 // CHECK:STDOUT:
@@ -600,7 +600,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type) [from "public_function.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type) [from "public_function.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -675,7 +675,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "public_function.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
@@ -772,9 +772,9 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9_22(%self.param: %tuple.type.bcd) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9_22(%self.param: ref %tuple.type.bcd) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9_41(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9_41(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compile_time.carbon
 // CHECK:STDOUT:
@@ -835,14 +835,14 @@ fn G() {
 // CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F(%self.param: %C);
+// CHECK:STDOUT: fn @C.F(%self.param: ref %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_match.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
+// CHECK:STDOUT:   %.842: Core.Form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -877,7 +877,7 @@ fn G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_12.2: type = converted %.loc4_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc4_12.3: form = init_form %.loc4_12.2, call_param0 [concrete = constants.%.62c]
+// CHECK:STDOUT:     %.loc4_12.3: Core.Form = init_form %.loc4_12.2, call_param0 [concrete = constants.%.842]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -936,5 +936,5 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

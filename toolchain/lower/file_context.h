@@ -167,6 +167,11 @@ class FileContext {
   // Builds the global for the given instruction, which should then be cached by
   // the caller.
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+      -> llvm::Constant*;
+
+  // Builds the global for the given instruction which is known to not be
+  // imported from C++.
+  auto BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
   // Builds the definition for the given function. If the function is only a
