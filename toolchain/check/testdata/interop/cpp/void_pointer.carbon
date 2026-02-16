@@ -256,13 +256,13 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %T.738: %ImplicitAs.type.031604.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.type.6c0: type = fn_type @T.binding.as_type.as.As.impl.Convert, @T.binding.as_type.as.As.impl(%U.67d, %T.738) [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.8f1: %T.binding.as_type.as.As.impl.Convert.type.6c0 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.02d: type = facet_type <@ImplicitAs, @ImplicitAs(%ptr.874)> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.02d: type = facet_type <@ImplicitAs, @ImplicitAs(%ptr.874)> [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.ccd: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.334(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.1ec: %ptr.as.ImplicitAs.impl.Convert.type.ccd = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.ffd: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.25e, @ptr.as.ImplicitAs.impl.334(%S) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.5c7, (%ImplicitAs.impl_witness.ffd) [concrete]
-// CHECK:STDOUT:   %As.impl_witness.9e9: <witness> = impl_witness imports.%As.impl_witness_table, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.9e9: <witness> = impl_witness imports.%As.impl_witness_table.986, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.type.b2a: type = fn_type @T.binding.as_type.as.As.impl.Convert, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.e7d: %T.binding.as_type.as.As.impl.Convert.type.b2a = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.d24 = facet_value %ptr.5c7, (%As.impl_witness.9e9) [concrete]
@@ -279,7 +279,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.986 = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
@@ -323,13 +323,13 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %T.738: %ImplicitAs.type.031604.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.type.6c0: type = fn_type @T.binding.as_type.as.As.impl.Convert, @T.binding.as_type.as.As.impl(%U.67d, %T.738) [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.8f1: %T.binding.as_type.as.As.impl.Convert.type.6c0 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.02d: type = facet_type <@ImplicitAs, @ImplicitAs(%ptr.874)> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.02d: type = facet_type <@ImplicitAs, @ImplicitAs(%ptr.874)> [concrete]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.ccd: type = fn_type @ptr.as.ImplicitAs.impl.Convert.1, @ptr.as.ImplicitAs.impl.334(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.1ec: %ptr.as.ImplicitAs.impl.Convert.type.ccd = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.39c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.25e, @ptr.as.ImplicitAs.impl.334(%C) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.02d = facet_value %ptr.31e, (%ImplicitAs.impl_witness.39c) [concrete]
-// CHECK:STDOUT:   %As.impl_witness.fa1: <witness> = impl_witness imports.%As.impl_witness_table, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.fa1: <witness> = impl_witness imports.%As.impl_witness_table.986, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.type.05b: type = fn_type @T.binding.as_type.as.As.impl.Convert, @T.binding.as_type.as.As.impl(%ptr.874, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.As.impl.Convert.483: %T.binding.as_type.as.As.impl.Convert.type.05b = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.d24 = facet_value %ptr.31e, (%As.impl_witness.fa1) [concrete]
@@ -344,7 +344,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.bde: @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert.type (%T.binding.as_type.as.As.impl.Convert.type.6c0) = import_ref Core//prelude/operators/as, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.As.impl.%T.binding.as_type.as.As.impl.Convert (constants.%T.binding.as_type.as.As.impl.Convert.8f1)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.986 = impl_witness_table (%Core.import_ref.bde), @T.binding.as_type.as.As.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.654: @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.ccd) = import_ref Core//prelude/types/cpp/void, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.334.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.1ec)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.25e = impl_witness_table (%Core.import_ref.654), @ptr.as.ImplicitAs.impl.334 [concrete]
 // CHECK:STDOUT: }
