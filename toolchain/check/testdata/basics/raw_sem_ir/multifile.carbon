@@ -42,7 +42,7 @@ fn B() {
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block60000005]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block60000006]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
@@ -85,12 +85,13 @@ fn B() {
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst60000010
+// CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block60000004: {}
-// CHECK:STDOUT:     inst_block60000005:
-// CHECK:STDOUT:       0:               inst60000014
+// CHECK:STDOUT:     inst_block60000005: {}
 // CHECK:STDOUT:     inst_block60000006:
+// CHECK:STDOUT:       0:               inst60000014
+// CHECK:STDOUT:     inst_block60000007:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst60000010
 // CHECK:STDOUT:   value_stores:
@@ -123,7 +124,7 @@ fn B() {
 // CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000005]}
+// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000006]}
 // CHECK:STDOUT:     function50000001: {name: name1, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
@@ -185,18 +186,19 @@ fn B() {
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst50000012
+// CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:
 // CHECK:STDOUT:       0:               inst50000011
 // CHECK:STDOUT:       1:               inst50000017
 // CHECK:STDOUT:       2:               inst50000018
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block50000004: {}
-// CHECK:STDOUT:     inst_block50000005:
+// CHECK:STDOUT:     inst_block50000005: {}
+// CHECK:STDOUT:     inst_block50000006:
 // CHECK:STDOUT:       0:               inst50000016
 // CHECK:STDOUT:       1:               inst5000001B
 // CHECK:STDOUT:       2:               inst5000001C
 // CHECK:STDOUT:       3:               inst5000001D
-// CHECK:STDOUT:     inst_block50000006:
+// CHECK:STDOUT:     inst_block50000007:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst50000010
 // CHECK:STDOUT:       2:               inst50000012

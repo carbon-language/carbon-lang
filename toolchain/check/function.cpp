@@ -185,11 +185,9 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
               .return_patterns_id = return_patterns_id,
               .self_param_id = self_param_id,
           }});
-  // Add the builtin to the imports block so that it appears in the formatted
-  // IR.
   // TODO: Find a better way to handle this. Ideally we should stop using this
   // function entirely and declare builtins in the prelude.
-  context.imports().push_back(decl_id);
+  context.generated().push_back(decl_id);
 
   auto& function = context.functions().Get(function_id);
   CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));

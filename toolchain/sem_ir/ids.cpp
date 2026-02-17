@@ -202,6 +202,8 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
+  } else if (*this == Generated) {
+    out << "generated";
   } else if (*this == Imports) {
     out << "imports";
   } else if (*this == GlobalInit) {

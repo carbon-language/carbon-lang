@@ -35,13 +35,19 @@
 
 namespace Carbon::SemIR {
 
+using TentativeScopeArray =
+    std::array<std::pair<InstNamer::ScopeId, llvm::ArrayRef<InstId>>,
+               static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope) - 1>;
+
 // Returns blocks for the tentative scopes.
 static auto GetTentativeScopes(const SemIR::File& sem_ir)
-    -> std::array<std::pair<InstNamer::ScopeId, llvm::ArrayRef<InstId>>, 2> {
-  return std::array<std::pair<InstNamer::ScopeId, llvm::ArrayRef<InstId>>, 2>({
+    -> TentativeScopeArray {
+  return TentativeScopeArray({
       {InstNamer::ScopeId::Constants, sem_ir.constants().array_ref()},
       {InstNamer::ScopeId::Imports,
        sem_ir.inst_blocks().Get(InstBlockId::Imports)},
+      {InstNamer::ScopeId::Generated,
+       sem_ir.inst_blocks().Get(InstBlockId::Generated)},
   });
 }
 

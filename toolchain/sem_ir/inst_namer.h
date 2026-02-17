@@ -27,12 +27,13 @@ class InstNamer {
   // int32_t matches the input value size.
   enum class ScopeId : int32_t {
     None = -1,
-    // The three top-level scopes.
+    // The top-level scopes.
     File = 0,
-    Imports = 1,
-    Constants = 2,
+    Generated = 1,
+    Imports = 2,
+    Constants = 3,
     // The first entity scope; see entities in `ScopeIdTypeEnum`.
-    FirstEntityScope = 3,
+    FirstEntityScope = 4,
   };
   static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 

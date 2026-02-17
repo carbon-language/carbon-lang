@@ -29,24 +29,28 @@ class Formatter {
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // We first print top-level scopes (constants, imports, and file) then
-  // entities (types and functions). The ordering is based on references:
+  // We first print top-level scopes (`constants`, `imports`, `generated`, and
+  // `file`) then entities (types and functions). The ordering is based on
+  // references:
   //
-  // - constants can have internal references.
-  // - imports can refer to constants.
-  // - file can refer to constants and imports, and also entities.
+  // - `constants` is self-contained.
+  // - `imports` can refer to `constants`.
+  // - `generated` can refer to both of the above.
+  // - `file` can refer to any of the above, and also entities.
   // - Entities are difficult to order (forward declarations may lead to
   //   circular references), and so are simply grouped by type.
   //
-  // When formatting constants and imports, we use `FormatterChunks` to only
-  // print entities which are referenced. For example, imports speculatively
+  // When formatting scopes other than `file`, we use `FormatterChunks` to only
+  // print entities which are referenced. For example, `imports` speculatively
   // create constants which may never be referenced, or for which the
-  // referencing instruction may be hidden and we normally hide those. See
-  // `FormatterChunks` for additional information.
+  // referencing instruction may be hidden and we normally hide those; those are
+  // excluded from the `constants` scope output. See `FormatterChunks` for
+  // additional information.
   //
-  // Beyond `FormatterChunks`, `ShouldFormatEntity` and `ShouldFormatInst` can
-  // also hide instructions. These interact because an hidden instruction means
-  // its references are unused for `FormatterChunks` visibility.
+  // Beyond the reference-based printing, `ShouldFormatEntity` and
+  // `ShouldFormatInst` can also hide instructions. These interact because an
+  // hidden instruction means its references are unused for `FormatterChunks`
+  // visibility.
   auto Format() -> void;
 
   // Write buffered output to the given stream. `Format` must be called first.
