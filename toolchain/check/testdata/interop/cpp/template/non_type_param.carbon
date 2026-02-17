@@ -101,14 +101,10 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+11]]:26: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
 // CHECK:STDERR:                          ^~~~~
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+8]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
-// CHECK:STDERR:                          ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
 // CHECK:STDERR:                          ^~~~~
 // CHECK:STDERR:
@@ -122,14 +118,10 @@ import Cpp library "templates.h";
 
 var n: i32;
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+11]]:26: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDERR:                          ^~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+8]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
-// CHECK:STDERR:                          ^~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDERR:                          ^~
 // CHECK:STDERR:
