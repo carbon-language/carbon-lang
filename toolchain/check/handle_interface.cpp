@@ -167,7 +167,7 @@ auto HandleParseNode(Context& context,
   interface_info.scope_with_self_id =
       context.name_scopes().Add(decl_with_self_inst_id, SemIR::NameId::None,
                                 interface_info.scope_without_self_id);
-  // Set on the name scope where `M` is replaced by `Self.M`.
+  // Set on the name scope that `M` is replaced by `Self.M`.
   context.name_scopes()
       .Get(interface_info.scope_with_self_id)
       .set_is_interface_definition();
