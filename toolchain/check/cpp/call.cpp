@@ -121,11 +121,11 @@ static auto ConvertArgToTemplateArg(Context& context,
     // Handle integer parameters.
     if (param_type->isIntegerType()) {
       // Get the Carbon type corresponding to the parameter's Clang type.
-      const TypeExpr type_expr =
+      const auto type_expr =
           ImportCppType(context, SemIR::LocId(arg_id), param_type);
 
       // Try to convert the argument to the parameter type.
-      const SemIR::InstId converted_inst_id =
+      const auto converted_inst_id =
           Convert(context, SemIR::LocId(arg_id), arg_id,
                   {
                       .kind = ConversionTarget::Value,
@@ -141,7 +141,7 @@ static auto ConvertArgToTemplateArg(Context& context,
       if (const_inst_id.has_value()) {
         if (auto int_value =
                 context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
-          const llvm::APInt& ap_int = context.ints().Get(int_value->int_id);
+          const auto& ap_int = context.ints().Get(int_value->int_id);
           const bool is_unsigned =
               !param_type->isSignedIntegerOrEnumerationType();
           auto aps_int =
