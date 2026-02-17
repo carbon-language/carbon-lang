@@ -12,13 +12,15 @@
 namespace Carbon::SemIR {
 
 // Interface-specific fields.
+//
+// TODO: Factor out the shared fields between InterfaceFields and
+// NamedConstraintFields.
 struct InterfaceFields {
   // The following members are set at the `{` of the interface definition.
 
   // The interface scopes.
   NameScopeId scope_without_self_id = NameScopeId::None;
   NameScopeId scope_with_self_id = NameScopeId::None;
-
   // The block of instructions outside the interface-with-self. This is where
   // the `Self` instruction can be constructed.
   InstBlockId body_block_without_self_id = InstBlockId::None;

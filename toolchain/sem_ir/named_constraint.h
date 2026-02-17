@@ -15,7 +15,7 @@ namespace Carbon::SemIR {
 struct NamedConstraintFields {
   // The following members are set at the `{` of the constraint definition.
 
-  // The constraint scope.
+  // The constraint scopes.
   NameScopeId scope_without_self_id = NameScopeId::None;
   NameScopeId scope_with_self_id = NameScopeId::None;
   // The block of instructions outside the constraint-with-self. This is where
