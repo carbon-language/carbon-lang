@@ -115,8 +115,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   // Build and add a `[ref self: Self]` parameter if needed.
   if (args.self_type_id.has_value()) {
-    context.full_pattern_stack().PushFullPattern(
-        FullPatternStack::Kind::ImplicitParamList);
+    context.full_pattern_stack().StartImplicitParamList();
 
     BeginSubpattern(context);
     auto self_type_region_id = EndSubpatternAsExpr(
@@ -129,13 +128,11 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
         context.inst_blocks().Add({insts.self_param_id});
 
     context.full_pattern_stack().EndImplicitParamList();
-  } else {
-    context.full_pattern_stack().PushFullPattern(
-        FullPatternStack::Kind::ExplicitParamList);
   }
 
   // Build and add any explicit parameters. We always use value parameters for
   // now.
+  context.full_pattern_stack().StartExplicitParamList();
   if (args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
@@ -151,6 +148,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }
+  context.full_pattern_stack().EndExplicitParamList();
 
   // Build and add the return type. We always use an initializing form for now.
   if (args.return_type_id.has_value()) {
@@ -168,7 +166,6 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   insts.call_params_id = match_results.call_params_id;
   insts.call_param_ranges = match_results.param_ranges;
 
-  context.full_pattern_stack().PopFullPattern();
   auto [pattern_block_id, decl_block_id] =
       FinishFunctionSignature(context, /*check_unused=*/false);
   insts.pattern_block_id = pattern_block_id;
@@ -428,10 +425,12 @@ auto StartFunctionSignature(Context& context) -> void {
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushParameterizedDecl();
 }
 
 auto FinishFunctionSignature(Context& context, bool check_unused)
     -> FinishFunctionSignatureResult {
+  context.full_pattern_stack().PopFullPattern();
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
   context.scope_stack().Pop(check_unused);

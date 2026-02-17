@@ -1364,27 +1364,25 @@ static auto CreateFunctionSignatureInsts(
     Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclKey::Signature signature)
     -> std::optional<FunctionSignatureInsts> {
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
-  std::optional pop = llvm::scope_exit(
-      [&context] { context.full_pattern_stack().PopFullPattern(); });
+  context.full_pattern_stack().StartImplicitParamList();
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndImplicitParamList();
+  context.full_pattern_stack().StartExplicitParamList();
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
+  context.full_pattern_stack().EndExplicitParamList();
   auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
-  pop.reset();
 
   auto match_results =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,

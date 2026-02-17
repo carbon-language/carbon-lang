@@ -29,31 +29,77 @@ class FullPatternStack {
  public:
   explicit FullPatternStack(LexicalLookup* lookup) : lookup_(lookup) {}
 
-  // The kind of a full-pattern. Note that an implicit parameter list and
-  // adjacent explicit parameter list together form a single full-pattern,
-  // but we separate them here in order to represent the state transition
-  // between them.
+  // The kind of a full-pattern. Note that a function declaration is a single
+  // full pattern, but we have several sub-kinds to track the different parts
+  // of the declaration.
   enum class Kind {
+    // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
+
+    // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
+
+    // The explicit parameter list of a function declaration.
     ExplicitParamList,
+
+    // This kind indicates that we're within the declaration of a parameterized
+    // entity (such as a function or impl), but not within an explicit or
+    // implicit parameter list. This is primarily useful for the return part of
+    // a function declaration, which doesn't contain pattern syntax, but can
+    // implicitly introduce output parameter patterns. However, the parse tree
+    // doesn't let us reliably distinguish the return part from the part before
+    // the parameter lists (or between them), particularly in the case where
+    // there is no explicit parameter list.
+    OutsideParamList
   };
 
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
-  // Marks the start of a new full-pattern of the specified kind.
-  auto PushFullPattern(Kind kind) -> void {
-    kind_stack_.push_back(kind);
+  // Marks the start of a new full-pattern for a parameterized entity
+  // declaration, such as a function or impl. The kind is initially
+  // OutsideParamList.
+  auto PushParameterizedDecl() -> void {
+    kind_stack_.push_back(Kind::OutsideParamList);
     bind_name_stack_.PushArray();
   }
 
-  // Marks the end of an implicit parameter list, and the presumptive start
-  // of the corresponding explicit parameter list.
+  // Marks the start of a new full-pattern for a name binding declaration.
+  auto PushNameBindingDecl() -> void {
+    kind_stack_.push_back(Kind::NameBindingDecl);
+    bind_name_stack_.PushArray();
+  }
+
+  // Marks the start of the current parameterized entity's implicit parameter
+  // list.
+  auto StartImplicitParamList() -> void {
+    CARBON_CHECK(kind_stack_.back() == Kind::OutsideParamList, "{0}",
+                 kind_stack_.back());
+    kind_stack_.back() = Kind::ImplicitParamList;
+  }
+
+  // Marks the end of the current parameterized entity's implicit parameter
+  // list.
   auto EndImplicitParamList() -> void {
     CARBON_CHECK(kind_stack_.back() == Kind::ImplicitParamList, "{0}",
                  kind_stack_.back());
+    kind_stack_.back() = Kind::OutsideParamList;
+  }
+
+  // Marks the start of the current parameterized entity's explicit parameter
+  // list.
+  auto StartExplicitParamList() -> void {
+    CARBON_CHECK(kind_stack_.back() == Kind::OutsideParamList, "{0}",
+                 kind_stack_.back());
     kind_stack_.back() = Kind::ExplicitParamList;
+  }
+
+  // Marks the end of the current parameterized entity's explicit parameter
+  // list.
+  auto EndExplicitParamList() -> void {
+    CARBON_CHECK(kind_stack_.back() == Kind::ExplicitParamList, "{0}",
+                 kind_stack_.back());
+    kind_stack_.back() = Kind::OutsideParamList;
   }
 
   // Marks the start of the initializer for the current name binding decl.
@@ -98,7 +144,7 @@ class FullPatternStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
     CARBON_CHECK(kind_stack_.empty(),
-                 "full_pattern_stack still has {1} entries",
+                 "full_pattern_stack still has {0} entries",
                  kind_stack_.size());
   }
 
