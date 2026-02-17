@@ -13,6 +13,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -63,13 +64,18 @@ static auto MakeCustomWitnessConstantInst(
   return context.constant_values().GetInstId(const_id);
 }
 
-// Build a new facet from the query self, using a CustomWitness for the query
-// interface with an entry for each associated entity so far.
-static auto MakeSelfFacetWithCustomWitness(
+struct TypesForSelfFacet {
+  // A FacetType that contains only the query interface.
+  SemIR::TypeId facet_type_for_query_specific_interface;
+  // The query self as a type, which involves a conversion if it was a facet.
+  SemIR::TypeId query_self_as_type_id;
+};
+
+static auto GetTypesForSelfFacet(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    SemIR::InstBlockId associated_entities_block_id) -> SemIR::ConstantId {
+    SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> TypesForSelfFacet {
   const auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
 
@@ -84,6 +90,15 @@ static auto MakeSelfFacetWithCustomWitness(
   // The Self facet needs to point to a type value. If it's not one already,
   // convert to type.
   auto query_self_as_type_id = GetFacetAsType(context, query_self_const_id);
+  return {facet_type_for_query_specific_interface, query_self_as_type_id};
+}
+
+// Build a new facet from the query self, using a CustomWitness for the query
+// interface with an entry for each associated entity so far.
+static auto MakeSelfFacetWithCustomWitness(
+    Context& context, SemIR::LocId loc_id, TypesForSelfFacet query_types,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    SemIR::InstBlockId associated_entities_block_id) -> SemIR::ConstantId {
   // We are building a facet value for a single interface, so the witness block
   // is a single witness for that interface.
   auto witnesses_block_id =
@@ -93,8 +108,9 @@ static auto MakeSelfFacetWithCustomWitness(
 
   return EvalOrAddInst<SemIR::FacetValue>(
       context, loc_id,
-      {.type_id = facet_type_for_query_specific_interface,
-       .type_inst_id = context.types().GetTypeInstId(query_self_as_type_id),
+      {.type_id = query_types.facet_type_for_query_specific_interface,
+       .type_inst_id =
+           context.types().GetTypeInstId(query_types.query_self_as_type_id),
        .witnesses_block_id = witnesses_block_id});
 }
 
@@ -115,6 +131,9 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  auto query_types_for_self_facet = GetTypesForSelfFacet(
+      context, loc_id, query_self_const_id, query_specific_interface_id);
+
   // The values that will go in the witness table.
   llvm::SmallVector<SemIR::InstId> entries;
 
@@ -131,8 +150,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     // associated entities in their signatures. In particular, an associated
     // result type may be used as the return type of an associated function.
     auto self_facet = MakeSelfFacetWithCustomWitness(
-        context, loc_id, query_self_const_id, query_specific_interface_id,
-        context.inst_blocks().Add(entries));
+        context, loc_id, query_types_for_self_facet,
+        query_specific_interface_id, context.inst_blocks().Add(entries));
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
         context, loc_id, interface.generic_id, interface.generic_with_self_id,
         query_specific_interface.specific_id, self_facet);
