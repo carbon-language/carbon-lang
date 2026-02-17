@@ -393,6 +393,7 @@ static auto ValidateForEntryPoint(Context& context,
   }
 
   // TODO: Update this once valid signatures for the entry point are decided.
+  // See https://github.com/carbon-language/carbon-lang/issues/6735
   if (function_info.implicit_param_patterns_id.has_value() ||
       !IsValidEntryPointParamList(context, node_id,
                                   function_info.param_patterns_id)) {
