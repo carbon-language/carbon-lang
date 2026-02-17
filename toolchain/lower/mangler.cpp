@@ -172,6 +172,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
+
+  // TODO: We should never need to do this: Clang should emit C++ function
+  // declarations for us.
   if (function.clang_decl_id.has_value()) {
     CARBON_CHECK(function.special_function_kind !=
                      SemIR::Function::SpecialFunctionKind::HasCppThunk,
@@ -179,6 +182,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     const auto& clang_decl = sem_ir().clang_decls().Get(function.clang_decl_id);
     return MangleCppClang(cast<clang::NamedDecl>(clang_decl.key.decl));
   }
+
   RawStringOstream os;
   os << "_C";
 
@@ -230,16 +234,11 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
-  SemIR::CppGlobalVarId cpp_global_var_id =
-      sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
-  if (cpp_global_var_id.has_value()) {
-    SemIR::ClangDeclId clang_decl_id =
-        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
-    CARBON_CHECK(clang_decl_id.has_value(),
-                 "CppGlobalVar should have a clang_decl_id");
-    return MangleCppClang(cast<clang::NamedDecl>(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl));
-  }
+  CARBON_CHECK(!sem_ir()
+                    .cpp_global_vars()
+                    .Lookup({.entity_name_id = var_name_id})
+                    .has_value(),
+               "Mangling a C++ variable");
 
   RawStringOstream os;
   os << "_C";

@@ -126,7 +126,8 @@ auto FileContext::LowerDefinitions() -> void {
           const_id.is_constant()) {
         llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
       } else {
-        llvm_var = BuildGlobalVariableDecl(*var);
+        // We should never be emitting a definition for a C++ global variable.
+        llvm_var = BuildNonCppGlobalVariableDecl(*var);
       }
 
       // Convert the declaration of this variable into a definition by adding an
@@ -1168,6 +1169,26 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> LoweredTypes {
 }
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+    -> llvm::Constant* {
+  auto var_name_id =
+      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
+  if (auto cpp_global_var_id =
+          sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
+      cpp_global_var_id.has_value()) {
+    SemIR::ClangDeclId clang_decl_id =
+        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
+    CARBON_CHECK(clang_decl_id.has_value(),
+                 "CppGlobalVar should have a clang_decl_id");
+    return cpp_code_generator_->GetAddrOfGlobal(
+        cast<clang::VarDecl>(
+            sem_ir().clang_decls().Get(clang_decl_id).key.decl),
+        /*isForDefinition=*/false);
+  }
+
+  return BuildNonCppGlobalVariableDecl(var_storage);
+}
+
+auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
   Mangler m(*this);
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);

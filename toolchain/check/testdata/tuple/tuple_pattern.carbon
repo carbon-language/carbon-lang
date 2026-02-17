@@ -197,7 +197,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.b6b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type.b6b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- variable.carbon
 // CHECK:STDOUT:
@@ -284,7 +284,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.b6b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type.b6b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:

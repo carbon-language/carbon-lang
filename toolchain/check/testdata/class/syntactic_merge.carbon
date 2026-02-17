@@ -1180,9 +1180,9 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.F.loc7(%self.param: %Base);
+// CHECK:STDOUT: fn @Base.F.loc7(%self.param: ref %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.F.loc17(%self.param: %Base) {
+// CHECK:STDOUT: fn @Base.F.loc17(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]

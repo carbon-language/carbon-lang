@@ -95,7 +95,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.generic: %WithAssocFn.type.daa = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.type.d36: type = facet_type <@WithAssocFn, @WithAssocFn(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.629: %WithAssocFn.type.d36 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %.599: form = init_form %X, call_param0 [concrete]
+// CHECK:STDOUT:   %.22a: Core.Form = init_form %X, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %WithAssocFn.F.type.b86: type = fn_type @WithAssocFn.F, @WithAssocFn(%T.67d) [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.F.c8d: %WithAssocFn.F.type.b86 = struct_value () [symbolic]
@@ -226,7 +226,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %.loc10: form = init_form %X.ref, call_param0 [concrete = constants.%.599]
+// CHECK:STDOUT:       %.loc10: Core.Form = init_form %X.ref, call_param0 [concrete = constants.%.22a]
 // CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -264,7 +264,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc16: form = init_form %X.ref, call_param0 [concrete = constants.%.599]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %X.ref, call_param0 [concrete = constants.%.22a]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }

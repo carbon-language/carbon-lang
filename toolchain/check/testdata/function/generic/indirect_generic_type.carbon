@@ -27,7 +27,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [symbolic]
-// CHECK:STDOUT:   %.ba4: form = init_form %ptr.e8f, call_param1 [symbolic]
+// CHECK:STDOUT:   %.4fe: Core.Form = init_form %ptr.e8f, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -73,7 +73,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %ptr.loc4_21.1 => constants.%ptr.125
 // CHECK:STDOUT:   %pattern_type.loc4_16 => constants.%pattern_type.8bb
-// CHECK:STDOUT:   %.loc4_28.1 => constants.%.ba4
+// CHECK:STDOUT:   %.loc4_28.1 => constants.%.4fe
 // CHECK:STDOUT:   %pattern_type.loc4_24 => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1673,6 +1673,8 @@ static auto AddDependentUnimportedDecls(Context& context,
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
     }
+  } else if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    AddDependentUnimportedTypeDecls(context, var_decl->getType(), worklist);
   }
   auto* parent = GetParentDecl(clang_decl);
   if (llvm::isa_and_nonnull<clang::TagDecl, clang::NamespaceDecl,
