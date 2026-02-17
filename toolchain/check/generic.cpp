@@ -654,6 +654,8 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
 
+    // TODO: Store in the specific whether the declaration contains any
+    // ErrorInst values.
     specific.decl_block_id =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
@@ -720,6 +722,8 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
+    // TODO: Store in the specific whether the definition contains any ErrorInst
+    // values.
     specific.definition_block_id = TryEvalBlockForSpecific(
         context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
   }

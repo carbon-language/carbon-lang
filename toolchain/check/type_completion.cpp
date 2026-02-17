@@ -88,6 +88,9 @@ static auto NoteIncompleteNamedConstraint(
   }
 }
 
+// TODO: Have the resolved specific know whether any instructions in the
+// declaration or definition contain an ErrorInst, instead of having to do a
+// linear scan here.
 static auto SpecificContainsError(Context& context,
                                   SemIR::SpecificId specific_id) -> bool {
   if (!specific_id.has_value()) {
