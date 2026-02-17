@@ -34,16 +34,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #1 !dbg !12 {
+// CHECK:STDOUT: define void @main() #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !15
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #1 !dbg !16 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !17
-// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -65,10 +59,8 @@ fn Run() {
 // CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
 // CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !7, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !7, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !6)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
-// CHECK:STDOUT: !15 = !DILocation(line: 8, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !7, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 10, column: 1, scope: !16)
+// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 8, column: 1, scope: !12)
