@@ -71,7 +71,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: var x:! () = ();
 // CHECK:STDERR:     ^~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:12: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:12: error: Found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
 // CHECK:STDERR: var x:! () = ();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
