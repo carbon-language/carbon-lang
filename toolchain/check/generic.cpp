@@ -746,7 +746,7 @@ auto DiagnoseIfGenericMissingExplicitParameters(
 static auto ValidateGenericWithoutAndWithSelfMatch(
     Context& context, SemIR::GenericId generic_without_self_id,
     SemIR::GenericId generic_with_self_id,
-    SemIR::SpecificId specific_without_self_id) {
+    SemIR::SpecificId specific_without_self_id) -> void {
   CARBON_CHECK(
       generic_without_self_id.has_value() ==
           specific_without_self_id.has_value(),
