@@ -20,7 +20,7 @@ class AdaptIncomplete {
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:3: error: adapted type `Incomplete` is an incomplete type [IncompleteTypeInAdaptDecl]
   // CHECK:STDERR:   adapt Incomplete;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class is not defined [ClassIncomplete]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

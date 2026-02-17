@@ -66,15 +66,15 @@ impl C as I where .V = () {}
 library "[[@TEST_NAME]]";
 
 interface I(N:! Core.IntLiteral()) {
-  // CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+3]]:17: error: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   let V:! array(Self, N);
-  // CHECK:STDERR:                 ^~~~
   let V:! array(Self, N);
 }
 
-// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+4]]:24: note: in `V` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+7]]:24: error: unable to monomorphize specific `V` [ResolvingSpecificHere]
 // CHECK:STDERR: impl {} as I(-1) where .V = () {}
 // CHECK:STDERR:                        ^~
+// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE-6]]:17: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:   let V:! array(Self, N);
+// CHECK:STDERR:                 ^~~~
 // CHECK:STDERR:
 impl {} as I(-1) where .V = () {}
 

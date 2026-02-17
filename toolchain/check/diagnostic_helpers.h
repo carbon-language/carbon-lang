@@ -54,6 +54,9 @@ using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 // can add contextual notes as appropriate.
 using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
+// A function that adds a Note to a diagnostic.
+using DiagnosticNoteFn = llvm::function_ref<auto(DiagnosticBuilder&)->void>;
+
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.
 struct InstIdAsConstant {

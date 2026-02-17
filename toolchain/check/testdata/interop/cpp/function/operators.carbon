@@ -898,7 +898,7 @@ fn F() {
   // CHECK:STDERR:   let result_unary: i32 = -*Cpp.CreateIncomplete();
   // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./incomplete.h:2:7: note: class is not defined [ClassIncomplete]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -917,7 +917,7 @@ fn F() {
   // CHECK:STDERR:   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
   // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./incomplete.h:2:7: note: class is not defined [ClassIncomplete]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -946,7 +946,7 @@ fn F() {
   // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+7]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class is not defined [ClassIncomplete]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

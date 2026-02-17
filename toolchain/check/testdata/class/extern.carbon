@@ -52,7 +52,7 @@ extern class C;
 // CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: error: cannot declare a member of incomplete class `C` [QualifiedDeclInIncompleteClassScope]
 // CHECK:STDERR: fn C.F();
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

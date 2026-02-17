@@ -213,17 +213,20 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  auto identified_facet_type_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
-      *constraint_facet_type, [&] {
-        CARBON_DIAGNOSTIC(
-            RequireImplsUnidentifiedFacetType, Error,
-            "facet type {0} cannot be identified in `require` declaration",
-            InstIdAsType);
-        return context.emitter().Build(constraint_inst_id,
-                                       RequireImplsUnidentifiedFacetType,
-                                       constraint_inst_id);
-      });
+  auto identified_facet_type_id = SemIR::IdentifiedFacetTypeId::None;
+  {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(
+              RequireImplsUnidentifiedFacetType, Note,
+              "facet type {0} cannot be identified in `require` declaration",
+              InstIdAsType);
+          builder.Note(constraint_inst_id, RequireImplsUnidentifiedFacetType,
+                       constraint_inst_id);
+        });
+    identified_facet_type_id = RequireIdentifiedFacetType(
+        context, self_constant_value_id, *constraint_facet_type);
+  }
   if (!identified_facet_type_id.has_value()) {
     // The constraint can't be used. A diagnostic was emitted by
     // RequireIdentifiedFacetType().
@@ -302,15 +305,16 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   // also construct a specific for the `constraint_inst_id`, finding any
   // monomorphization errors that result.
   if (extend) {
-    if (!RequireCompleteType(
-            context, constraint_type_id, SemIR::LocId(constraint_inst_id), [&] {
-              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Error,
-                                "`extend require` of incomplete facet type {0}",
-                                InstIdAsType);
-              return context.emitter().Build(constraint_inst_id,
-                                             RequireImplsIncompleteFacetType,
-                                             constraint_inst_id);
-            })) {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Note,
+                            "`extend require` of incomplete facet type {0}",
+                            InstIdAsType);
+          builder.Note(constraint_inst_id, RequireImplsIncompleteFacetType,
+                       constraint_inst_id);
+        });
+    if (!RequireCompleteType(context, constraint_type_id,
+                             SemIR::LocId(constraint_inst_id))) {
       return true;
     }
 

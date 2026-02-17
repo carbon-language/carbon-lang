@@ -221,18 +221,21 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
     return false;
   }
 
-  if (!RequireCompleteType(
-          context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-          SemIR::LocId(impl.constraint_id), [&] {
-            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
-                              "`extend impl as` incomplete facet type {0}",
-                              InstIdAsType);
-            return context.emitter().Build(impl.latest_decl_id(),
-                                           ExtendImplAsIncomplete,
-                                           impl.constraint_id);
-          })) {
-    parent_scope.set_has_error();
-    return false;
+  {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Note,
+                            "`extend impl as` incomplete facet type {0}",
+                            InstIdAsType);
+          builder.Note(impl.latest_decl_id(), ExtendImplAsIncomplete,
+                       impl.constraint_id);
+        });
+    if (!RequireCompleteType(
+            context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
+            SemIR::LocId(impl.constraint_id))) {
+      parent_scope.set_has_error();
+      return false;
+    }
   }
 
   if (!impl.generic_id.has_value()) {
@@ -512,18 +515,21 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
 
-  if (!RequireCompleteType(
-          context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-          SemIR::LocId(impl.constraint_id), [&] {
-            CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                              "definition of impl as incomplete facet type {0}",
-                              InstIdAsType);
-            return context.emitter().Build(SemIR::LocId(impl.latest_decl_id()),
-                                           ImplAsIncompleteFacetTypeDefinition,
-                                           impl.constraint_id);
-          })) {
-    FillImplWitnessWithErrors(context, impl);
-    return;
+  {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Note,
+                            "definition of impl as incomplete facet type {0}",
+                            InstIdAsType);
+          builder.Note(SemIR::LocId(impl.latest_decl_id()),
+                       ImplAsIncompleteFacetTypeDefinition, impl.constraint_id);
+        });
+    if (!RequireCompleteType(
+            context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
+            SemIR::LocId(impl.constraint_id))) {
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
   }
 
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
@@ -774,15 +780,19 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
 
-  auto identified_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_id),
-      context.constant_values().Get(self_id), *facet_type, [&] {
-        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
-                          "facet type {0} cannot be identified in `impl as`",
-                          InstIdAsType);
-        return context.emitter().Build(
-            impl_decl_id, ImplOfUnidentifiedFacetType, constraint_id);
-      });
+  auto identified_id = SemIR::IdentifiedFacetTypeId::None;
+  {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Note,
+                            "facet type {0} cannot be identified in `impl as`",
+                            InstIdAsType);
+          builder.Note(impl_decl_id, ImplOfUnidentifiedFacetType,
+                       constraint_id);
+        });
+    identified_id = RequireIdentifiedFacetType(
+        context, context.constant_values().Get(self_id), *facet_type);
+  }
   if (!identified_id.has_value()) {
     return SemIR::SpecificInterface::None;
   }

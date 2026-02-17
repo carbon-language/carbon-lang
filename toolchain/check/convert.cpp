@@ -25,6 +25,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -1737,47 +1738,76 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     context.emitter().Emit(expr_id, RefTagNoRefParam);
   }
 
+  auto diagnoser = [&](auto& builder) {
+    CARBON_CHECK(!target.is_initializer(),
+                 "Initialization of incomplete types is expected to be "
+                 "caught elsewhere.");
+    CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Note,
+                      "forming value of incomplete type {0}", SemIR::TypeId);
+    CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Note,
+                      "invalid use of incomplete type {0}", SemIR::TypeId);
+    builder.Note(loc_id,
+                 target.kind == ConversionTarget::Value
+                     ? IncompleteTypeInValueConversion
+                     : IncompleteTypeInConversion,
+                 target.type_id);
+  };
+  auto abstract_diagnoser = [&](auto& builder) {
+    CARBON_DIAGNOSTIC(AbstractTypeInInit, Note,
+                      "initialization of abstract type {0}", SemIR::TypeId);
+    builder.Note(loc_id, AbstractTypeInInit, target.type_id);
+  };
+
   // We can only perform initialization for complete, non-abstract types. Note
-  // that `RequireConcreteType` returns true for facet types, since their
+  // that we allow conversion to incomplete to facet types, since their
   // representation is fixed. This allows us to support using the `Self` of an
   // interface inside its definition.
-  //
-  // TODO: If `!target.is_initializer()` then we don't want to require the type
-  // to be concrete, only complete. But if we continue into Convert with an
-  // abstract type, we crash elsewhere.
-  if (!RequireConcreteType(
-          context, target.type_id, loc_id,
-          [&] {
-            CARBON_CHECK(!target.is_initializer(),
-                         "Initialization of incomplete types is expected to be "
-                         "caught elsewhere.");
-            if (!target.diagnose) {
-              return context.emitter().BuildSuppressed();
-            }
-            CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                              "forming value of incomplete type {0}",
-                              SemIR::TypeId);
-            CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                              "invalid use of incomplete type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(
-                loc_id,
-                target.kind == ConversionTarget::Value
-                    ? IncompleteTypeInValueConversion
-                    : IncompleteTypeInConversion,
-                target.type_id);
-          },
-          [&] {
-            if (!target.diagnose) {
-              return context.emitter().BuildSuppressed();
-            }
-            CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
-                              "initialization of abstract type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(loc_id, AbstractTypeInInit,
-                                           target.type_id);
-          })) {
-    return SemIR::ErrorInst::InstId;
+  if (!context.types().IsFacetType(target.type_id)) {
+    if (target.diagnose) {
+      {
+        Diagnostics::ContextScope diagnostic_scope(&context.emitter(),
+                                                   diagnoser);
+        if (!RequireCompleteType(context, target.type_id, loc_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      }
+
+      if (target.is_initializer()) {
+        Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                                     abstract_diagnoser);
+        if (!RequireConcreteType(context, target.type_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      } else {
+        // TODO: Switch from RequireConcreteType to RequireCompleteType (and
+        // ensure FacetTypes are treated as complete). We want to allow
+        // constructing a value of an abstract class type, but right now if we
+        // proceed into Convert with an abstract target type, we crash.
+        Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                                     abstract_diagnoser);
+        if (!RequireConcreteType(context, target.type_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      }
+    } else {
+      if (!TryToCompleteType(context, target.type_id, loc_id)) {
+        return SemIR::ErrorInst::InstId;
+      }
+
+      if (target.is_initializer()) {
+        if (!TryIsConcreteType(context, target.type_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      } else {
+        // TODO: Switch from TryIsConcreteType to TryToCompleteType (and
+        // ensure FacetTypes are treated as complete). We want to allow
+        // constructing a value of an abstract class type, but right now if we
+        // proceed into Convert with an abstract target type, we crash.
+        if (!TryIsConcreteType(context, target.type_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      }
+    }
   }
 
   // Clear storage_id in cases where it's clearly meaningless, to avoid misuse

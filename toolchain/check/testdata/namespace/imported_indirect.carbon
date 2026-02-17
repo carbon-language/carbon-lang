@@ -61,7 +61,7 @@ import library "b";
 // CHECK:STDERR:          ^~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: a.carbon:6:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
@@ -82,7 +82,7 @@ import Same library "b";
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: a.carbon:6:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]

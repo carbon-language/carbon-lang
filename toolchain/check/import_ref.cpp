@@ -2634,8 +2634,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     // GetLocalConstantId gave us an attached constant.
     auto unattached_self_const_id =
         resolver.local_constant_values().GetUnattachedConstant(self_const_id);
-    RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
-                               unattached_self_const_id, *facet_type, nullptr);
+    RequireIdentifiedFacetType(resolver.local_context(),
+                               unattached_self_const_id, *facet_type);
   }
   if (import_impl.is_complete()) {
     ImportImplDefinition(resolver, import_impl, new_impl);

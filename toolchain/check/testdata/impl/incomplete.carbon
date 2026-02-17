@@ -23,7 +23,7 @@ impl {} as I;
 // CHECK:STDERR: fail_empty_struct.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `I` [ImplAsIncompleteFacetTypeDefinition]
 // CHECK:STDERR: impl {} as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_empty_struct.carbon:[[@LINE-8]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_empty_struct.carbon:[[@LINE-8]]:1: note: interface is not defined [InterfaceIncomplete]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -45,7 +45,7 @@ impl C as I;
 // CHECK:STDERR: fail_class.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `J` [ImplAsIncompleteFacetTypeDefinition]
 // CHECK:STDERR: impl C as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_class.carbon:[[@LINE-13]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_class.carbon:[[@LINE-13]]:1: note: interface is not defined [InterfaceIncomplete]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -60,7 +60,7 @@ class C {}
 // CHECK:STDERR: fail_class_no_forward_decl.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `J` [ImplAsIncompleteFacetTypeDefinition]
 // CHECK:STDERR: impl C as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_class_no_forward_decl.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_class_no_forward_decl.carbon:[[@LINE-6]]:1: note: interface is not defined [InterfaceIncomplete]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -75,7 +75,7 @@ class C {}
 // CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE+7]]:19: error: member access into facet of incomplete type `J` [IncompleteTypeInMemberAccessOfFacet]
 // CHECK:STDERR: impl C as J where .X = ();
 // CHECK:STDERR:                   ^~
-// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-6]]:1: note: interface is not defined [InterfaceIncomplete]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -84,7 +84,7 @@ impl C as J where .X = ();
 // CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE+7]]:19: error: member access into facet of incomplete type `J` [IncompleteTypeInMemberAccessOfFacet]
 // CHECK:STDERR: impl C as J where .X = () {}
 // CHECK:STDERR:                   ^~
-// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-15]]:1: note: interface is not defined [InterfaceIncomplete]
 // CHECK:STDERR: interface J;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -153,7 +153,7 @@ impl C as I where .Self impls Incomplete {
   // CHECK:STDERR: fail_declaration_lookup_into_incomplete.carbon:[[@LINE+7]]:19: error: member access into incomplete facet type `Incomplete` [QualifiedExprInIncompleteFacetTypeScope]
   // CHECK:STDERR:   fn F() -> Self.(Incomplete.T);
   // CHECK:STDERR:                   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_declaration_lookup_into_incomplete.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: fail_declaration_lookup_into_incomplete.carbon:[[@LINE-6]]:1: note: interface is not defined [InterfaceIncomplete]
   // CHECK:STDERR: interface Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -170,7 +170,7 @@ class C {}
 // CHECK:STDERR: fail_unidentified_constraint.carbon:[[@LINE+7]]:1: error: facet type `X` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl C as X;
 // CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_unidentified_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR: fail_unidentified_constraint.carbon:[[@LINE-7]]:1: note: constraint is not defined [NamedConstraintIncomplete]
 // CHECK:STDERR: constraint X;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -203,7 +203,7 @@ interface B {
   // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:17: error: facet type `A` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
   // CHECK:STDERR:   require impls A;
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-6]]:1: note: constraint is not defined [NamedConstraintIncomplete]
   // CHECK:STDERR: constraint A;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:

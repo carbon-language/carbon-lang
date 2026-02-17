@@ -158,13 +158,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     return binding.pattern_id;
   };
 
-  auto abstract_diagnoser = [&] {
-    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Error,
+  auto abstract_diagnoser = [&](auto& builder) {
+    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Note,
                       "binding pattern has abstract type {0} in `var` "
                       "pattern",
                       SemIR::TypeId);
-    return context.emitter().Build(type_node, AbstractTypeInVarPattern,
-                                   cast_type_id);
+    builder.Note(type_node, AbstractTypeInVarPattern, cast_type_id);
   };
 
   // A `self` binding can only appear in an implicit parameter list.
@@ -214,11 +213,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           auto& class_info = context.classes().Get(class_type.class_id);
           if (class_info.inheritance_kind ==
               SemIR::Class::InheritanceKind::Abstract) {
-            auto builder = abstract_diagnoser();
-            auto direct_use = true;
-            NoteAbstractClass(context, class_type.class_id, direct_use,
-                              builder);
-            builder.Emit();
+            Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                                         abstract_diagnoser);
+            DiagnoseAbstractClass(context, class_type.class_id,
+                                  /*direct_use=*/true);
             cast_type_id = SemIR::ErrorInst::TypeId;
           }
         }
@@ -251,20 +249,27 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     case FullPatternStack::Kind::NameBindingDecl: {
-      auto incomplete_diagnoser = [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
-                          "binding pattern has incomplete type {0} in name "
-                          "binding declaration",
-                          InstIdAsType);
-        return context.emitter().Build(type_node, IncompleteTypeInBindingDecl,
-                                       cast_type_inst_id);
-      };
+      {
+        Diagnostics::ContextScope diagnostic_scope(
+            &context.emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(
+                  IncompleteTypeInBindingDecl, Note,
+                  "binding pattern has incomplete type {0} in name "
+                  "binding declaration",
+                  InstIdAsType);
+              builder.Note(type_node, IncompleteTypeInBindingDecl,
+                           cast_type_inst_id);
+            });
+        if (!RequireCompleteType(context, cast_type_id, type_node)) {
+          cast_type_id = SemIR::ErrorInst::TypeId;
+        }
+      }
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
-        cast_type_id = AsConcreteType(context, cast_type_id, type_node,
-                                      incomplete_diagnoser, abstract_diagnoser);
-      } else {
-        cast_type_id = AsCompleteType(context, cast_type_id, type_node,
-                                      incomplete_diagnoser);
+        Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                                     abstract_diagnoser);
+        if (!RequireConcreteType(context, cast_type_id)) {
+          cast_type_id = SemIR::ErrorInst::TypeId;
+        }
       }
       auto binding_pattern_id = make_binding_pattern();
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
@@ -400,20 +405,28 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   auto parent_class_decl =
       context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   CARBON_CHECK(parent_class_decl);
-  cast_type_id = AsConcreteType(
-      context, cast_type_id, type_node,
-      [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
-                          "field has incomplete type {0}", SemIR::TypeId);
-        return context.emitter().Build(type_node, IncompleteTypeInFieldDecl,
-                                       cast_type_id);
-      },
-      [&] {
-        CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Error,
-                          "field has abstract type {0}", SemIR::TypeId);
-        return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
-                                       cast_type_id);
-      });
+  {
+    Diagnostics::ContextScope diagnostic_scope(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Note,
+                            "field has incomplete type {0}", SemIR::TypeId);
+          builder.Note(type_node, IncompleteTypeInFieldDecl, cast_type_id);
+        });
+    if (!RequireCompleteType(context, cast_type_id, type_node)) {
+      cast_type_id = SemIR::ErrorInst::TypeId;
+    }
+  }
+  {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Note,
+                            "field has abstract type {0}", SemIR::TypeId);
+          builder.Note(type_node, AbstractTypeInFieldDecl, cast_type_id);
+        });
+    if (!RequireConcreteType(context, cast_type_id)) {
+      cast_type_id = SemIR::ErrorInst::TypeId;
+    }
+  }
   if (cast_type_id == SemIR::ErrorInst::TypeId) {
     cast_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }

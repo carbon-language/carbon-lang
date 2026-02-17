@@ -17,7 +17,7 @@ class Incomplete;
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `{.a: Incomplete}` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var s: {.a: Incomplete};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

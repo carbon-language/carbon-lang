@@ -325,25 +325,33 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
                             context.sem_ir(), specific_id, return_pattern_id));
   auto init_repr = SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id);
   if (!init_repr.is_valid()) {
-    auto diagnose_incomplete_return_type = [&] {
-      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "function returns incomplete type {0}", SemIR::TypeId);
-      return context.emitter().Build(loc_id, IncompleteTypeInFunctionReturnType,
-                                     arg_type_id);
-    };
-    auto diagnose_abstract_return_type = [&] {
-      CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
-                        "function returns abstract type {0}", SemIR::TypeId);
-      return context.emitter().Build(loc_id, AbstractTypeInFunctionReturnType,
-                                     arg_type_id);
-    };
-
-    // TODO: Consider suppressing the diagnostic if we've already diagnosed a
+    // TODO: Consider suppressing the diagnostics if we've already diagnosed a
     // definition or call to this function.
-    if (!RequireConcreteType(
-            context, arg_type_id, SemIR::LocId(return_pattern_id),
-            diagnose_incomplete_return_type, diagnose_abstract_return_type)) {
-      return SemIR::ErrorInst::TypeId;
+    {
+      Diagnostics::ContextScope diagnostic_scope(
+          &context.emitter(), [&](auto& builder) {
+            CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Note,
+                              "function returns incomplete type {0}",
+                              SemIR::TypeId);
+            builder.Note(loc_id, IncompleteTypeInFunctionReturnType,
+                         arg_type_id);
+          });
+      if (!RequireCompleteType(context, arg_type_id,
+                               SemIR::LocId(return_pattern_id))) {
+        return SemIR::ErrorInst::TypeId;
+      }
+    }
+    {
+      Diagnostics::ContextScope diagnostic_context(
+          &context.emitter(), [&](auto& builder) {
+            CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Note,
+                              "function returns abstract type {0}",
+                              SemIR::TypeId);
+            builder.Note(loc_id, AbstractTypeInFunctionReturnType, arg_type_id);
+          });
+      if (!RequireConcreteType(context, arg_type_id)) {
+        return SemIR::ErrorInst::TypeId;
+      }
     }
   }
 
@@ -371,16 +379,18 @@ auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    RequireCompleteType(
-        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        SemIR::LocId(param_ref_id), [&] {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Error,
+              IncompleteTypeInFunctionParam, Note,
               "parameter has incomplete type {0} in function definition",
               TypeOfInstId);
-          return context.emitter().Build(
-              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
+          builder.Note(param_ref_id, IncompleteTypeInFunctionParam,
+                       param_ref_id);
         });
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        SemIR::LocId(param_ref_id));
   }
 
   // Check the return type is complete.
@@ -395,6 +405,8 @@ auto CheckFunctionDefinitionSignature(Context& context,
     // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
     // so don't `RequireCompleteType` on the return type.
     if (return_call_param.has_value()) {
+      // TODO: If the types are already checked for completeness then this does
+      // nothing?
       TryToCompleteType(
           context,
           context.insts().GetAs<SemIR::AnyParam>(return_call_param).type_id,

@@ -18,18 +18,15 @@ library "[[@TEST_NAME]]";
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
-  // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+6]]:30: error: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   require impls K(array(i32, N));
-  // CHECK:STDERR:                              ^
-  // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+3]]:3: note: in `require` used here [ResolvingSpecificHere]
-  // CHECK:STDERR:   require impls K(array(i32, N));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
-// CHECK:STDERR:            ^~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE-6]]:30: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:   require impls K(array(i32, N));
+// CHECK:STDERR:                              ^
 // CHECK:STDERR:
 impl {} as J(-1) {}
 
@@ -43,17 +40,14 @@ library "[[@TEST_NAME]]";
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+6]]:37: error: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:                                     ^
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:3: note: in `require` used here [ResolvingSpecificHere]
-  // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   extend require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
-// CHECK:STDERR:            ^~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE-6]]:37: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:   extend require impls K(array(i32, N));
+// CHECK:STDERR:                                     ^
 // CHECK:STDERR:
 impl {} as J(-1) {}

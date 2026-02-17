@@ -216,12 +216,22 @@ class Emitter {
   template <typename Arg>
   auto MakeAny(Arg arg) -> llvm::Any;
 
+  template <typename OtherLocT, typename ContextFn>
+  friend class ContextScope;
+  template <typename OtherLocT, typename ContextFn>
+  friend class SoftContextScope;
   template <typename OtherLocT, typename AnnotateFn>
   friend class AnnotationScope;
   friend class NoLocEmitter;
 
+  struct ContextFn {
+    llvm::function_ref<auto(Builder& builder)->void> fn;
+    bool soft;
+  };
+
   Consumer* consumer_;
   llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
+  llvm::SmallVector<ContextFn> context_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
@@ -255,6 +265,52 @@ class NoLocEmitter : public Emitter<void*> {
     return {.loc = {.filename = ""}, .last_byte_offset = -1};
   }
 };
+
+template <typename LocT, typename ContextFn>
+class ContextScope {
+ public:
+  ContextScope(Emitter<LocT>* emitter, ContextFn context)
+      : emitter_(emitter), context_(std::move(context)) {
+    emitter_->Flush();
+    emitter_->context_fns_.push_back({context_, false});
+  }
+  ~ContextScope() {
+    emitter_->Flush();
+    emitter_->context_fns_.pop_back();
+  }
+
+ private:
+  Emitter<LocT>* emitter_;
+  // Make a copy of the context function to ensure that it lives long enough.
+  ContextFn context_;
+};
+
+template <typename LocT, typename ContextFn>
+ContextScope(Emitter<LocT>* emitter, ContextFn context)
+    -> ContextScope<LocT, ContextFn>;
+
+template <typename LocT, typename ContextFn>
+class SoftContextScope {
+ public:
+  SoftContextScope(Emitter<LocT>* emitter, ContextFn context)
+      : emitter_(emitter), context_(std::move(context)) {
+    emitter_->Flush();
+    emitter_->context_fns_.push_back({context_, true});
+  }
+  ~SoftContextScope() {
+    emitter_->Flush();
+    emitter_->context_fns_.pop_back();
+  }
+
+ private:
+  Emitter<LocT>* emitter_;
+  // Make a copy of the context function to ensure that it lives long enough.
+  ContextFn context_;
+};
+
+template <typename LocT, typename ContextFn>
+SoftContextScope(Emitter<LocT>* emitter, ContextFn context)
+    -> SoftContextScope<LocT, ContextFn>;
 
 // An RAII object that denotes a scope in which any diagnostic produced should
 // be annotated in some way.
@@ -345,17 +401,10 @@ auto Emitter<LocT>::Builder::Emit() & -> void {
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
 }
 
-namespace Internal {
-template <typename LocT>
-concept AlwaysFalse = false;
-}  // namespace Internal
-
 template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Emit() && -> void {
-  // TODO: This is required by clang-16, but `false` may work in newer clang
-  // versions. Replace when possible.
-  static_assert(Internal::AlwaysFalse<LocT>,
+  static_assert(false,
                 "Use `emitter.Emit(...)` or "
                 "`emitter.Build(...).Note(...).Emit(...)` "
                 "instead of `emitter.Build(...).Emit(...)`");
@@ -369,6 +418,15 @@ Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
     : emitter_(emitter),
       diagnostic_({.level = diagnostic_base.Level,
                    .is_on_scope = diagnostic_base.IsOnScope}) {
+  CARBON_CHECK(diagnostic_.level >= Level::Warning,
+               "building diagnostic with level {0}; expected Warning or Error",
+               diagnostic_.level);
+  bool first = true;
+  for (auto [context_fn, soft_context] : emitter_->context_fns_) {
+    if (std::exchange(first, false) || !soft_context) {
+      context_fn(*this);
+    }
+  }
   AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }
@@ -401,7 +459,11 @@ auto Emitter<LocT>::Builder::AddMessageWithLoc(
   if (!emitter_) {
     return;
   }
-  diagnostic_.messages.emplace_back(
+  CARBON_CHECK(
+      diagnostic_base.Level <= diagnostic_.level,
+      "message with level {0} is higher than the diagnostic's level {1}",
+      diagnostic_base.Level, diagnostic_.level);
+  diagnostic_.messages.push_back(
       Message{.kind = diagnostic_base.Kind,
               .level = diagnostic_base.Level,
               .loc = loc,

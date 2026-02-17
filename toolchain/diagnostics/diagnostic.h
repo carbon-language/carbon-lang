@@ -99,7 +99,8 @@ struct Message {
   // The diagnostic's kind.
   Kind kind;
 
-  // The diagnostic's level.
+  // The message's level. This may be different from, but should not be more
+  // severe than, the diagnostic's level.
   Level level;
 
   // The calculated location of the diagnostic.

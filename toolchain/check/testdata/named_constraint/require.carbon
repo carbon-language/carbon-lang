@@ -164,7 +164,7 @@ constraint Z {
   // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE+7]]:17: error: facet type `Y` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint is not defined [NamedConstraintIncomplete]
   // CHECK:STDERR: constraint Y;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
