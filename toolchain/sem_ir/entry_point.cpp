@@ -13,6 +13,11 @@ static constexpr llvm::StringLiteral EntryPointFunction = "Run";
 auto IsEntryPoint(const File& file, FunctionId function_id) -> bool {
   // TODO: Check if `file` is in the `Main` package.
   const auto& function = file.functions().Get(function_id);
+
+  if (function.clang_decl_id.has_value()) {
+    return false;
+  }
+
   // TODO: Check if `function` is in a namespace.
   return function.name_id.has_value() &&
          file.names().GetAsStringIfIdentifier(function.name_id) ==
