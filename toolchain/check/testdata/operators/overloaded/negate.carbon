@@ -39,8 +39,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C.as.Negate.impl.Op.type: type = fn_type @C.as.Negate.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Negate.impl.Op: %C.as.Negate.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %C, (%Negate.impl_witness) [concrete]
-// CHECK:STDOUT:   %Negate.Op.type.900: type = fn_type @Negate.Op, @Negate(%Negate.facet) [concrete]
-// CHECK:STDOUT:   %.483: type = fn_type_with_self_type %Negate.Op.type.900, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Negate+Self.Op.type.900: type = fn_type @Negate+Self.Op, @Negate(%Negate.facet) [concrete]
+// CHECK:STDOUT:   %.483: type = fn_type_with_self_type %Negate+Self.Op.type.900, %Negate.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

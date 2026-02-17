@@ -552,18 +552,18 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %HoldsType.47b504.2, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.278: %Destroy.type = facet_value %HoldsType.47b504.2, (%Destroy.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.055: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet.278) [symbolic]
-// CHECK:STDOUT:   %.b9b: type = fn_type_with_self_type %Destroy.Op.type.055, %Destroy.facet.278 [symbolic]
+// CHECK:STDOUT:   %Destroy+Self.Op.type.055: type = fn_type @Destroy+Self.Op, @Destroy(%Destroy.facet.278) [symbolic]
+// CHECK:STDOUT:   %.b9b: type = fn_type_with_self_type %Destroy+Self.Op.type.055, %Destroy.facet.278 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.909: %.b9b = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.2d3: <specific function> = specific_impl_function %impl.elem0.909, @Destroy.Op(%Destroy.facet.278) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.2d3: <specific function> = specific_impl_function %impl.elem0.909, @Destroy+Self.Op(%Destroy.facet.278) [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.t = struct_value (%C) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness imports.%Copy.impl_witness_table.b1c [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.a4f: type = fn_type @Copy.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy.Op.type.a4f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.a4f: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy+Self.Op.type.a4f, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %C, %type.as.Copy.impl.Op [concrete]
@@ -703,10 +703,10 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.val: @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2) = struct_value () [symbolic = %HoldsType.val (constants.%HoldsType.val)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %HoldsType.loc26_22.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %HoldsType.loc26_22.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.278)]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.Op.type (constants.%Destroy.Op.type.055)]
-// CHECK:STDOUT:   %.loc26_6.5: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic = %.loc26_6.5 (constants.%.b9b)]
+// CHECK:STDOUT:   %Destroy+Self.Op.type: type = fn_type @Destroy+Self.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy+Self.Op.type (constants.%Destroy+Self.Op.type.055)]
+// CHECK:STDOUT:   %.loc26_6.5: type = fn_type_with_self_type %Destroy+Self.Op.type, %Destroy.facet [symbolic = %.loc26_6.5 (constants.%.b9b)]
 // CHECK:STDOUT:   %impl.elem0.loc26_6.2: @G.%.loc26_6.5 (%.b9b) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_6.2 (constants.%impl.elem0.909)]
-// CHECK:STDOUT:   %specific_impl_fn.loc26_6.2: <specific function> = specific_impl_function %impl.elem0.loc26_6.2, @Destroy.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc26_6.2 (constants.%specific_impl_fn.2d3)]
+// CHECK:STDOUT:   %specific_impl_fn.loc26_6.2: <specific function> = specific_impl_function %impl.elem0.loc26_6.2, @Destroy+Self.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc26_6.2 (constants.%specific_impl_fn.2d3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -722,9 +722,9 @@ fn G() {
 // CHECK:STDOUT:     %.loc26_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %impl.elem0.loc26_6.1: @G.%.loc26_6.5 (%.b9b) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_6.2 (constants.%impl.elem0.909)]
 // CHECK:STDOUT:     %bound_method.loc26_6.1: <bound method> = bound_method %.loc26_6.4, %impl.elem0.loc26_6.1
-// CHECK:STDOUT:     %specific_impl_fn.loc26_6.1: <specific function> = specific_impl_function %impl.elem0.loc26_6.1, @Destroy.Op(constants.%Destroy.facet.278) [symbolic = %specific_impl_fn.loc26_6.2 (constants.%specific_impl_fn.2d3)]
+// CHECK:STDOUT:     %specific_impl_fn.loc26_6.1: <specific function> = specific_impl_function %impl.elem0.loc26_6.1, @Destroy+Self.Op(constants.%Destroy.facet.278) [symbolic = %specific_impl_fn.loc26_6.2 (constants.%specific_impl_fn.2d3)]
 // CHECK:STDOUT:     %bound_method.loc26_6.2: <bound method> = bound_method %.loc26_6.4, %specific_impl_fn.loc26_6.1
-// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %bound_method.loc26_6.2(%.loc26_6.4)
+// CHECK:STDOUT:     %Destroy+Self.Op.call: init %empty_tuple.type = call %bound_method.loc26_6.2(%.loc26_6.4)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -805,8 +805,8 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.b37: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs.Convert.type.b37, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.type.b37: type = fn_type @ImplicitAs+Self.Convert, @ImplicitAs(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs+Self.Convert.type.b37, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -823,8 +823,8 @@ fn G() {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness imports.%Copy.impl_witness_table.b1c [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.a4f: type = fn_type @Copy.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy.Op.type.a4f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.a4f: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy+Self.Op.type.a4f, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %C, %type.as.Copy.impl.Op [concrete]

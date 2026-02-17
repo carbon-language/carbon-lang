@@ -41,16 +41,16 @@ interface Outer {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.887: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F, @Interface(%Self.887) [symbolic]
-// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Interface+Self.F.type: type = fn_type @Interface+Self.F, @Interface(%Self.887) [symbolic]
+// CHECK:STDOUT:   %Interface+Self.F: %Interface+Self.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [concrete]
 // CHECK:STDOUT:   %Self.672: %Outer.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.672)> [symbolic]
 // CHECK:STDOUT:   %Self.920: %Inner.type = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Inner.F.type.fc250e.1: type = fn_type @Inner.F.loc30, @Inner(%Self.672, %Self.920) [symbolic]
-// CHECK:STDOUT:   %Inner.F.cf79c3.1: %Inner.F.type.fc250e.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Inner.F.type.fc250e.2: type = fn_type @Inner.F.loc36, @Inner(%Self.672, %Self.920) [symbolic]
-// CHECK:STDOUT:   %Inner.F.cf79c3.2: %Inner.F.type.fc250e.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner+Self.F.type.fc250e.1: type = fn_type @Inner+Self.F.loc30, @Inner(%Self.672, %Self.920) [symbolic]
+// CHECK:STDOUT:   %Inner+Self.F.cf79c3.1: %Inner+Self.F.type.fc250e.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner+Self.F.type.fc250e.2: type = fn_type @Inner+Self.F.loc36, @Inner(%Self.672, %Self.920) [symbolic]
+// CHECK:STDOUT:   %Inner+Self.F.cf79c3.2: %Inner+Self.F.type.fc250e.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,7 +59,7 @@ interface Outer {
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [symbolic = constants.%Interface.F] {} {}
+// CHECK:STDOUT:   %Interface+Self.F.decl: %Interface+Self.F.type = fn_decl @Interface+Self.F [symbolic = constants.%Interface+Self.F] {} {}
 // CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [concrete = constants.%Outer.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +69,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = file.%Interface.F.decl
+// CHECK:STDOUT:   .F = file.%Interface+Self.F.decl
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -81,7 +81,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [symbolic = @Outer.%Inner.type (constants.%Inner.type)] {} {}
-// CHECK:STDOUT:   %Inner.F.decl: @Outer.%Inner.F.type (%Inner.F.type.fc250e.2) = fn_decl @Inner.F.loc36 [symbolic = @Outer.%Inner.F (constants.%Inner.F.cf79c3.2)] {} {}
+// CHECK:STDOUT:   %Inner+Self.F.decl: @Outer.%Inner+Self.F.type (%Inner+Self.F.type.fc250e.2) = fn_decl @Inner+Self.F.loc36 [symbolic = @Outer.%Inner+Self.F (constants.%Inner+Self.F.cf79c3.2)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc24
@@ -102,18 +102,18 @@ interface Outer {
 // CHECK:STDOUT:     interface_with_self_decl @Inner [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.fc250e.1) = fn_decl @Inner.F.loc30 [symbolic = @Inner.%Inner.F (constants.%Inner.F.cf79c3.1)] {} {}
+// CHECK:STDOUT:     %Inner+Self.F.decl: @Inner.%Inner+Self.F.type (%Inner+Self.F.type.fc250e.1) = fn_decl @Inner+Self.F.loc30 [symbolic = @Inner.%Inner+Self.F (constants.%Inner+Self.F.cf79c3.1)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc25_19.1
-// CHECK:STDOUT:     .F = @Outer.%Inner.F.decl
+// CHECK:STDOUT:     .F = @Outer.%Inner+Self.F.decl
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface+Self.F(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -122,17 +122,17 @@ interface Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.F.loc30(@Outer.%Self.loc24: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type.loc25 (%Inner.type)) {
+// CHECK:STDOUT: generic fn @Inner+Self.F.loc30(@Outer.%Self.loc24: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type.loc25 (%Inner.type)) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.F.loc36(@Outer.%Self.loc24: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type.loc25 (%Inner.type)) {
+// CHECK:STDOUT: generic fn @Inner+Self.F.loc36(@Outer.%Self.loc24: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type.loc25 (%Inner.type)) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%Self.887) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface+Self.F(constants.%Self.887) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%Self.672) {}
 // CHECK:STDOUT:
@@ -145,7 +145,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner.F.loc30(constants.%Self.672, constants.%Self.920) {}
+// CHECK:STDOUT: specific @Inner+Self.F.loc30(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner.F.loc36(constants.%Self.672, constants.%Self.920) {}
+// CHECK:STDOUT: specific @Inner+Self.F.loc36(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:

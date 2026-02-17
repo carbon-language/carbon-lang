@@ -1570,10 +1570,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %IF.F.type: type = fn_type @IF.F, @IF(%Self) [symbolic]
-// CHECK:STDOUT:   %IF.F: %IF.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %IF+Self.F.type: type = fn_type @IF+Self.F, @IF(%Self) [symbolic]
+// CHECK:STDOUT:   %IF+Self.F: %IF+Self.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
-// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%IF.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%IF+Self.F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1588,24 +1588,24 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   interface_with_self_decl @IF [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %IF.F.decl: @IF.%IF.F.type (%IF.F.type) = fn_decl @IF.F [symbolic = @IF.%IF.F (constants.%IF.F)] {} {}
-// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %IF.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %IF+Self.F.decl: @IF.%IF+Self.F.type (%IF+Self.F.type) = fn_decl @IF+Self.F [symbolic = @IF.%IF+Self.F (constants.%IF+Self.F)] {} {}
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %IF+Self.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc3_14
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%IF.F.decl)
+// CHECK:STDOUT:   witness = (%IF+Self.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IF.F(@IF.%Self.loc3_14: %IF.type) {
+// CHECK:STDOUT: generic fn @IF+Self.F(@IF.%Self.loc3_14: %IF.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF.F(constants.%Self) {}
+// CHECK:STDOUT: specific @IF+Self.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_where_rewrite_function.carbon
 // CHECK:STDOUT:
@@ -1615,16 +1615,16 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %IF.F.type.1d1: type = fn_type @IF.F, @IF(%Self) [symbolic]
-// CHECK:STDOUT:   %IF.F.d78: %IF.F.type.1d1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %IF+Self.F.type.1d1: type = fn_type @IF+Self.F, @IF(%Self) [symbolic]
+// CHECK:STDOUT:   %IF+Self.F.d78: %IF+Self.F.type.1d1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.Self: %IF.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %IF.F.type.923: type = fn_type @IF.F, @IF(%.Self) [symbolic_self]
-// CHECK:STDOUT:   %IF.F.7ce: %IF.F.type.923 = struct_value () [symbolic_self]
+// CHECK:STDOUT:   %IF+Self.F.type.923: type = fn_type @IF+Self.F, @IF(%.Self) [symbolic_self]
+// CHECK:STDOUT:   %IF+Self.F.7ce: %IF+Self.F.type.923 = struct_value () [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
 // CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, imports.%Main.import_ref.ae5 [concrete]
 // CHECK:STDOUT:   %IF.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @IF [symbolic_self]
-// CHECK:STDOUT:   %.8a4: type = fn_type_with_self_type %IF.F.type.923, %.Self [symbolic_self]
+// CHECK:STDOUT:   %.8a4: type = fn_type_with_self_type %IF+Self.F.type.923, %.Self [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: %.8a4 = impl_witness_access %IF.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [concrete]
@@ -1632,17 +1632,17 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %CD.as.IF.impl.F.type: type = fn_type @CD.as.IF.impl.F [concrete]
 // CHECK:STDOUT:   %CD.as.IF.impl.F: %CD.as.IF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IF.facet: %IF.type = facet_value %CD, (%IF.impl_witness) [concrete]
-// CHECK:STDOUT:   %IF.F.type.1b7: type = fn_type @IF.F, @IF(%IF.facet) [concrete]
-// CHECK:STDOUT:   %IF.F.0bc: %IF.F.type.1b7 = struct_value () [concrete]
+// CHECK:STDOUT:   %IF+Self.F.type.1b7: type = fn_type @IF+Self.F, @IF(%IF.facet) [concrete]
+// CHECK:STDOUT:   %IF+Self.F.0bc: %IF+Self.F.type.1b7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.IF: type = import_ref Main//interface_with_function, IF, loaded [concrete = constants.%IF.type]
 // CHECK:STDOUT:   %Main.import_ref.82a: %IF.assoc_type = import_ref Main//interface_with_function, loc3_22, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: @IF.%IF.F.type (%IF.F.type.1d1) = import_ref Main//interface_with_function, F, loaded [symbolic = @IF.%IF.F (constants.%IF.F.d78)]
+// CHECK:STDOUT:   %Main.F: @IF.%IF+Self.F.type (%IF+Self.F.type.1d1) = import_ref Main//interface_with_function, F, loaded [symbolic = @IF.%IF+Self.F (constants.%IF+Self.F.d78)]
 // CHECK:STDOUT:   %Main.import_ref.e88a3c.2: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.b9e = import_ref Main//interface_with_function, loc3_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ae5: @IF.%IF.F.type (%IF.F.type.1d1) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = @IF.%IF.F (constants.%IF.F.d78)]
+// CHECK:STDOUT:   %Main.import_ref.ae5: @IF.%IF+Self.F.type (%IF+Self.F.type.1d1) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = @IF.%IF+Self.F (constants.%IF+Self.F.d78)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1696,7 +1696,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%CD
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IF.F(imports.%Main.import_ref.e88a3c.2: %IF.type) [from "interface_with_function.carbon"] {
+// CHECK:STDOUT: generic fn @IF+Self.F(imports.%Main.import_ref.e88a3c.2: %IF.type) [from "interface_with_function.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1708,25 +1708,25 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @IF(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %IF.F.type => constants.%IF.F.type.1d1
-// CHECK:STDOUT:   %IF.F => constants.%IF.F.d78
+// CHECK:STDOUT:   %IF+Self.F.type => constants.%IF+Self.F.type.1d1
+// CHECK:STDOUT:   %IF+Self.F => constants.%IF+Self.F.d78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF.F(constants.%Self) {}
+// CHECK:STDOUT: specific @IF+Self.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%.Self
-// CHECK:STDOUT:   %IF.F.type => constants.%IF.F.type.923
-// CHECK:STDOUT:   %IF.F => constants.%IF.F.7ce
+// CHECK:STDOUT:   %IF+Self.F.type => constants.%IF+Self.F.type.923
+// CHECK:STDOUT:   %IF+Self.F => constants.%IF+Self.F.7ce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF(constants.%IF.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%IF.facet
-// CHECK:STDOUT:   %IF.F.type => constants.%IF.F.type.1b7
-// CHECK:STDOUT:   %IF.F => constants.%IF.F.0bc
+// CHECK:STDOUT:   %IF+Self.F.type => constants.%IF+Self.F.type.1b7
+// CHECK:STDOUT:   %IF+Self.F => constants.%IF+Self.F.0bc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF.F(constants.%IF.facet) {}
+// CHECK:STDOUT: specific @IF+Self.F(constants.%IF.facet) {}
 // CHECK:STDOUT:

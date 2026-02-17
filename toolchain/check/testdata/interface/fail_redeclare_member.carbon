@@ -29,10 +29,10 @@ interface Interface {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F, @Interface(%Self) [symbolic]
-// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Interface+Self.F.type: type = fn_type @Interface+Self.F, @Interface(%Self) [symbolic]
+// CHECK:STDOUT:   %Interface+Self.F: %Interface+Self.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface.F.decl.loc16 [concrete]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%Interface+Self.F.decl.loc16 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,23 +47,23 @@ interface Interface {
 // CHECK:STDOUT:   interface_with_self_decl @Interface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %Interface.F.decl.loc16: @Interface.%Interface.F.type (%Interface.F.type) = fn_decl @Interface.F [symbolic = @Interface.%Interface.F (constants.%Interface.F)] {} {}
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl.loc16 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.F.decl.loc24: @Interface.%Interface.F.type (%Interface.F.type) = fn_decl @Interface.F [symbolic = @Interface.%Interface.F (constants.%Interface.F)] {} {}
+// CHECK:STDOUT:   %Interface+Self.F.decl.loc16: @Interface.%Interface+Self.F.type (%Interface+Self.F.type) = fn_decl @Interface+Self.F [symbolic = @Interface.%Interface+Self.F (constants.%Interface+Self.F)] {} {}
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface+Self.F.decl.loc16 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Interface+Self.F.decl.loc24: @Interface.%Interface+Self.F.type (%Interface+Self.F.type) = fn_decl @Interface+Self.F [symbolic = @Interface.%Interface+Self.F (constants.%Interface+Self.F)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%Interface.F.decl.loc16)
+// CHECK:STDOUT:   witness = (%Interface+Self.F.decl.loc16)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Interface.F(@Interface.%Self.loc15: %Interface.type) {
+// CHECK:STDOUT: generic fn @Interface+Self.F(@Interface.%Self.loc15: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F(constants.%Self) {}
+// CHECK:STDOUT: specific @Interface+Self.F(constants.%Self) {}
 // CHECK:STDOUT:

@@ -49,16 +49,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op.type: type = fn_type @C.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op: %C.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.802 = facet_value %C, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.Op.type.4a1: type = fn_type @BitAndWith.Op, @BitAndWith(%C, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndWith+Self.Op.type.4a1: type = fn_type @BitAndWith+Self.Op, @BitAndWith(%C, %BitAndWith.facet) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.type.50e: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness @C.as.BitAndAssignWith.impl.%BitAndAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op.type: type = fn_type @C.as.BitAndAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op: %C.as.BitAndAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.50e = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndAssignWith.Op.type.f01: type = fn_type @BitAndAssignWith.Op, @BitAndAssignWith(%C, %BitAndAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.414: type = fn_type_with_self_type %BitAndWith.Op.type.4a1, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith+Self.Op.type.f01: type = fn_type @BitAndAssignWith+Self.Op, @BitAndAssignWith(%C, %BitAndAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.414: type = fn_type_with_self_type %BitAndWith+Self.Op.type.4a1, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %ptr.872: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.927: type = fn_type_with_self_type %BitAndAssignWith.Op.type.f01, %BitAndAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.927: type = fn_type_with_self_type %BitAndAssignWith+Self.Op.type.f01, %BitAndAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

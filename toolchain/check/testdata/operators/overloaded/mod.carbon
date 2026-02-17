@@ -49,16 +49,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op.type: type = fn_type @C.as.ModWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op: %C.as.ModWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ModWith.facet: %ModWith.type.8f8 = facet_value %C, (%ModWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %ModWith.Op.type.9b1: type = fn_type @ModWith.Op, @ModWith(%C, %ModWith.facet) [concrete]
+// CHECK:STDOUT:   %ModWith+Self.Op.type.9b1: type = fn_type @ModWith+Self.Op, @ModWith(%C, %ModWith.facet) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.type.0a7: type = facet_type <@ModAssignWith, @ModAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %ModAssignWith.impl_witness: <witness> = impl_witness @C.as.ModAssignWith.impl.%ModAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type: type = fn_type @C.as.ModAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op: %C.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.0a7 = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %ModAssignWith.Op.type.12e: type = fn_type @ModAssignWith.Op, @ModAssignWith(%C, %ModAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.e8e: type = fn_type_with_self_type %ModWith.Op.type.9b1, %ModWith.facet [concrete]
+// CHECK:STDOUT:   %ModAssignWith+Self.Op.type.12e: type = fn_type @ModAssignWith+Self.Op, @ModAssignWith(%C, %ModAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.e8e: type = fn_type_with_self_type %ModWith+Self.Op.type.9b1, %ModWith.facet [concrete]
 // CHECK:STDOUT:   %ptr.872: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.5a7: type = fn_type_with_self_type %ModAssignWith.Op.type.12e, %ModAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.5a7: type = fn_type_with_self_type %ModAssignWith+Self.Op.type.12e, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

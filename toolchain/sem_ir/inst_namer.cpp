@@ -578,13 +578,14 @@ auto InstNamer::GetNameForParentNameScope(NameScopeId name_scope_id)
       return MaybePushEntity(interface.interface_id);
     }
     case CARBON_KIND(InterfaceWithSelfDecl interface): {
-      return MaybePushEntity(interface.interface_id);
+      return MaybePushEntity(interface.interface_id, /*with_self=*/true);
     }
     case CARBON_KIND(NamedConstraintDecl named_constraint): {
       return MaybePushEntity(named_constraint.named_constraint_id);
     }
     case CARBON_KIND(NamedConstraintWithSelfDecl named_constraint): {
-      return MaybePushEntity(named_constraint.named_constraint_id);
+      return MaybePushEntity(named_constraint.named_constraint_id,
+                             /*with_self=*/true);
     }
     case SemIR::Namespace::Kind: {
       // Only prefix type scopes.
@@ -720,13 +721,14 @@ auto InstNamer::PushEntity(InterfaceId interface_id, ScopeId scope_id,
                            Scope& scope) -> void {
   const auto& interface = sem_ir_->interfaces().Get(interface_id);
   LocId interface_loc(interface.latest_decl_id());
-  scope.name = globals_.AllocateName(
-      *this, interface_loc,
-      sem_ir_->names().GetIRBaseName(interface.name_id).str());
-  AddBlockLabel(scope_id, interface.body_block_without_self_id,
-                "interface_without_self", interface_loc);
-  AddBlockLabel(scope_id, interface.body_block_with_self_id, "interface",
+  auto name = sem_ir_->names().GetIRBaseName(interface.name_id).str();
+  scope.name = globals_.AllocateName(*this, interface_loc, name);
+  name += "+Self";
+  scope.name_with_self = globals_.AllocateName(*this, interface_loc, name);
+  AddBlockLabel(scope_id, interface.body_block_without_self_id, "interface",
                 interface_loc);
+  AddBlockLabel(scope_id, interface.body_block_with_self_id,
+                "interface_with_self", interface_loc);
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, interface.generic_with_self_id);
@@ -741,13 +743,14 @@ auto InstNamer::PushEntity(NamedConstraintId named_constraint_id,
   const auto& constraint =
       sem_ir_->named_constraints().Get(named_constraint_id);
   LocId constraint_loc(constraint.latest_decl_id());
-  scope.name = globals_.AllocateName(
-      *this, constraint_loc,
-      sem_ir_->names().GetIRBaseName(constraint.name_id).str());
-  AddBlockLabel(scope_id, constraint.body_block_without_self_id,
-                "constraint_without_self", constraint_loc);
-  AddBlockLabel(scope_id, constraint.body_block_with_self_id, "constraint",
+  auto name = sem_ir_->names().GetIRBaseName(constraint.name_id).str();
+  scope.name = globals_.AllocateName(*this, constraint_loc, name);
+  name += "+Self";
+  scope.name_with_self = globals_.AllocateName(*this, constraint_loc, name);
+  AddBlockLabel(scope_id, constraint.body_block_without_self_id, "constraint",
                 constraint_loc);
+  AddBlockLabel(scope_id, constraint.body_block_with_self_id,
+                "constraint_with_self", constraint_loc);
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, constraint.generic_with_self_id);

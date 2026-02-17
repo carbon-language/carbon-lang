@@ -32,19 +32,19 @@ fn F() {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.2ec: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %I.G.type.488: type = fn_type @I.G, @I(%Self) [symbolic]
-// CHECK:STDOUT:   %I.G.6c4: %I.G.type.488 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I+Self.G.type.488: type = fn_type @I+Self.G, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I+Self.G.6c4: %I+Self.G.type.488 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.G.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I+Self.G.decl [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @empty_tuple.type.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.type: type = fn_type @empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G: %empty_tuple.type.as.I.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.G.type.4f5: type = fn_type @I.G, @I(%I.facet) [concrete]
-// CHECK:STDOUT:   %I.G.5a3: %I.G.type.4f5 = struct_value () [concrete]
-// CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %I.G.type.4f5, %I.facet [concrete]
+// CHECK:STDOUT:   %I+Self.G.type.4f5: type = fn_type @I+Self.G, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I+Self.G.5a3: %I+Self.G.type.4f5 = struct_value () [concrete]
+// CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %I+Self.G.type.4f5, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,24 +60,24 @@ fn F() {
 // CHECK:STDOUT:   interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %I.G.decl: @I.%I.G.type (%I.G.type.488) = fn_decl @I.G [symbolic = @I.%I.G (constants.%I.G.6c4)] {
-// CHECK:STDOUT:     %self.patt: @I.G.%pattern_type (%pattern_type.2ec) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @I.G.%pattern_type (%pattern_type.2ec) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   %I+Self.G.decl: @I.%I+Self.G.type (%I+Self.G.type.488) = fn_decl @I+Self.G [symbolic = @I.%I+Self.G (constants.%I+Self.G.6c4)] {
+// CHECK:STDOUT:     %self.patt: @I+Self.G.%pattern_type (%pattern_type.2ec) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @I+Self.G.%pattern_type (%pattern_type.2ec) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.G.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
+// CHECK:STDOUT:     %self.param: @I+Self.G.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_16.1: type = splice_block %.loc17_16.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self.loc16 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc17_16.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.G.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I+Self.G.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.G.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I+Self.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc16
 // CHECK:STDOUT:   .G = %assoc0
-// CHECK:STDOUT:   witness = (%I.G.decl)
+// CHECK:STDOUT:   witness = (%I+Self.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -118,12 +118,12 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.G(@I.%Self.loc16: %I.type) {
+// CHECK:STDOUT: generic fn @I+Self.G(@I.%Self.loc16: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.2ec)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.G.%Self.binding.as_type (%Self.binding.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I+Self.G.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.G(%self.param: %empty_tuple.type) {
@@ -134,11 +134,11 @@ fn F() {
 // CHECK:STDOUT: specific @I(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc17 => constants.%Self
-// CHECK:STDOUT:   %I.G.type => constants.%I.G.type.488
-// CHECK:STDOUT:   %I.G => constants.%I.G.6c4
+// CHECK:STDOUT:   %I+Self.G.type => constants.%I+Self.G.type.488
+// CHECK:STDOUT:   %I+Self.G => constants.%I+Self.G.6c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.G(constants.%Self) {
+// CHECK:STDOUT: specific @I+Self.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2ec
@@ -147,11 +147,11 @@ fn F() {
 // CHECK:STDOUT: specific @I(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc17 => constants.%I.facet
-// CHECK:STDOUT:   %I.G.type => constants.%I.G.type.4f5
-// CHECK:STDOUT:   %I.G => constants.%I.G.5a3
+// CHECK:STDOUT:   %I+Self.G.type => constants.%I+Self.G.type.4f5
+// CHECK:STDOUT:   %I+Self.G => constants.%I+Self.G.5a3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.G(constants.%I.facet) {
+// CHECK:STDOUT: specific @I+Self.G(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%empty_tuple.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1

@@ -34,11 +34,11 @@ fn G(c: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %HasF.F.type.adc: type = fn_type @HasF.F, @HasF(%Self) [symbolic]
+// CHECK:STDOUT:   %HasF+Self.F.type.adc: type = fn_type @HasF+Self.F, @HasF(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %HasF.F.faa: %HasF.F.type.adc = struct_value () [symbolic]
+// CHECK:STDOUT:   %HasF+Self.F.faa: %HasF+Self.F.type.adc = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
-// CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, @HasF.%HasF.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, @HasF.%HasF+Self.F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -46,12 +46,12 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C.as.HasF.impl.F.type: type = fn_type @C.as.HasF.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F: %C.as.HasF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, (%HasF.impl_witness) [concrete]
-// CHECK:STDOUT:   %HasF.F.type.5be: type = fn_type @HasF.F, @HasF(%HasF.facet) [concrete]
-// CHECK:STDOUT:   %HasF.F.cc5: %HasF.F.type.5be = struct_value () [concrete]
+// CHECK:STDOUT:   %HasF+Self.F.type.5be: type = fn_type @HasF+Self.F, @HasF(%HasF.facet) [concrete]
+// CHECK:STDOUT:   %HasF+Self.F.cc5: %HasF+Self.F.type.5be = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ff7: type = fn_type_with_self_type %HasF.F.type.5be, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.ff7: type = fn_type_with_self_type %HasF+Self.F.type.5be, %HasF.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,13 +81,13 @@ fn G(c: C) {
 // CHECK:STDOUT:   interface_with_self_decl @HasF [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %HasF.F.decl: @HasF.%HasF.F.type (%HasF.F.type.adc) = fn_decl @HasF.F [symbolic = @HasF.%HasF.F (constants.%HasF.F.faa)] {} {}
-// CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %HasF.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %HasF+Self.F.decl: @HasF.%HasF+Self.F.type (%HasF+Self.F.type.adc) = fn_decl @HasF+Self.F [symbolic = @HasF.%HasF+Self.F (constants.%HasF+Self.F.faa)] {} {}
+// CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %HasF+Self.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%HasF.F.decl)
+// CHECK:STDOUT:   witness = (%HasF+Self.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -115,7 +115,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @HasF.F(@HasF.%Self.loc15: %HasF.type) {
+// CHECK:STDOUT: generic fn @HasF+Self.F(@HasF.%Self.loc15: %HasF.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -140,18 +140,18 @@ fn G(c: C) {
 // CHECK:STDOUT: specific @HasF(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self
-// CHECK:STDOUT:   %HasF.F.type => constants.%HasF.F.type.adc
-// CHECK:STDOUT:   %HasF.F => constants.%HasF.F.faa
+// CHECK:STDOUT:   %HasF+Self.F.type => constants.%HasF+Self.F.type.adc
+// CHECK:STDOUT:   %HasF+Self.F => constants.%HasF+Self.F.faa
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF.F(constants.%Self) {}
+// CHECK:STDOUT: specific @HasF+Self.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%HasF.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%HasF.facet
-// CHECK:STDOUT:   %HasF.F.type => constants.%HasF.F.type.5be
-// CHECK:STDOUT:   %HasF.F => constants.%HasF.F.cc5
+// CHECK:STDOUT:   %HasF+Self.F.type => constants.%HasF+Self.F.type.5be
+// CHECK:STDOUT:   %HasF+Self.F => constants.%HasF+Self.F.cc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF.F(constants.%HasF.facet) {}
+// CHECK:STDOUT: specific @HasF+Self.F(constants.%HasF.facet) {}
 // CHECK:STDOUT:

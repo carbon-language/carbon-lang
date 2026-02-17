@@ -83,11 +83,11 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet.c25: %Copy.type = facet_value %ptr.e8f, (%Copy.lookup_impl_witness.2e6) [symbolic]
-// CHECK:STDOUT:   %Copy.Op.type.d82: type = fn_type @Copy.Op, @Copy(%Copy.facet.c25) [symbolic]
-// CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy.Op.type.d82, %Copy.facet.c25 [symbolic]
+// CHECK:STDOUT:   %Copy+Self.Op.type.d82: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet.c25) [symbolic]
+// CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy+Self.Op.type.d82, %Copy.facet.c25 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.1c7: %.299 = impl_witness_access %Copy.lookup_impl_witness.2e6, element0 [symbolic]
 // CHECK:STDOUT:   %bound_method.28a: <bound method> = bound_method %impl.elem0.117, %impl.elem0.1c7 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy.Op(%Copy.facet.c25) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy+Self.Op(%Copy.facet.c25) [symbolic]
 // CHECK:STDOUT:   %bound_method.40f: <bound method> = bound_method %impl.elem0.117, %specific_impl_fn.366 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -111,8 +111,8 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.c3c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.011: %ptr.as.Copy.impl.Op.type.c3c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.a7b: %Copy.type = facet_value %ptr.235, (%Copy.impl_witness.843) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.e01: type = fn_type @Copy.Op, @Copy(%Copy.facet.a7b) [concrete]
-// CHECK:STDOUT:   %.a62: type = fn_type_with_self_type %Copy.Op.type.e01, %Copy.facet.a7b [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.e01: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet.a7b) [concrete]
+// CHECK:STDOUT:   %.a62: type = fn_type_with_self_type %Copy+Self.Op.type.e01, %Copy.facet.a7b [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %impl.elem0.322, %ptr.as.Copy.impl.Op.011 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.011, @ptr.as.Copy.impl.Op(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method.06d: <bound method> = bound_method %impl.elem0.322, %ptr.as.Copy.impl.Op.specific_fn [symbolic]
@@ -235,11 +235,11 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %.loc9_11.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc8_18.1) [symbolic = %.loc9_11.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc8_50.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc8_50.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.c25)]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op, @Copy(%Copy.facet) [symbolic = %Copy.Op.type (constants.%Copy.Op.type.d82)]
-// CHECK:STDOUT:   %.loc9_11.4: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [symbolic = %.loc9_11.4 (constants.%.299)]
+// CHECK:STDOUT:   %Copy+Self.Op.type: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [symbolic = %Copy+Self.Op.type (constants.%Copy+Self.Op.type.d82)]
+// CHECK:STDOUT:   %.loc9_11.4: type = fn_type_with_self_type %Copy+Self.Op.type, %Copy.facet [symbolic = %.loc9_11.4 (constants.%.299)]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.4: @AccessGeneric.%.loc9_11.4 (%.299) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_11.4 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:   %bound_method.loc9_11.3: <bound method> = bound_method %impl.elem0.loc9_11.3, %impl.elem0.loc9_11.4 [symbolic = %bound_method.loc9_11.3 (constants.%bound_method.28a)]
-// CHECK:STDOUT:   %specific_impl_fn.loc9_11.2: <specific function> = specific_impl_function %impl.elem0.loc9_11.4, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc9_11.2 (constants.%specific_impl_fn.366)]
+// CHECK:STDOUT:   %specific_impl_fn.loc9_11.2: <specific function> = specific_impl_function %impl.elem0.loc9_11.4, @Copy+Self.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc9_11.2 (constants.%specific_impl_fn.366)]
 // CHECK:STDOUT:   %bound_method.loc9_11.4: <bound method> = bound_method %impl.elem0.loc9_11.3, %specific_impl_fn.loc9_11.2 [symbolic = %bound_method.loc9_11.4 (constants.%bound_method.40f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) {
@@ -252,10 +252,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %impl.elem0.loc9_11.1: @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = impl_witness_access constants.%Interface.lookup_impl_witness.9f1, element0 [symbolic = %impl.elem0.loc9_11.3 (constants.%impl.elem0.117)]
 // CHECK:STDOUT:     %impl.elem0.loc9_11.2: @AccessGeneric.%.loc9_11.4 (%.299) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [symbolic = %impl.elem0.loc9_11.4 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:     %bound_method.loc9_11.1: <bound method> = bound_method %impl.elem0.loc9_11.1, %impl.elem0.loc9_11.2 [symbolic = %bound_method.loc9_11.3 (constants.%bound_method.28a)]
-// CHECK:STDOUT:     %specific_impl_fn.loc9_11.1: <specific function> = specific_impl_function %impl.elem0.loc9_11.2, @Copy.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc9_11.2 (constants.%specific_impl_fn.366)]
+// CHECK:STDOUT:     %specific_impl_fn.loc9_11.1: <specific function> = specific_impl_function %impl.elem0.loc9_11.2, @Copy+Self.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc9_11.2 (constants.%specific_impl_fn.366)]
 // CHECK:STDOUT:     %bound_method.loc9_11.2: <bound method> = bound_method %impl.elem0.loc9_11.1, %specific_impl_fn.loc9_11.1 [symbolic = %bound_method.loc9_11.4 (constants.%bound_method.40f)]
-// CHECK:STDOUT:     %Copy.Op.call: init @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = call %bound_method.loc9_11.2(%impl.elem0.loc9_11.1)
-// CHECK:STDOUT:     return %Copy.Op.call
+// CHECK:STDOUT:     %Copy+Self.Op.call: init @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = call %bound_method.loc9_11.2(%impl.elem0.loc9_11.1)
+// CHECK:STDOUT:     return %Copy+Self.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

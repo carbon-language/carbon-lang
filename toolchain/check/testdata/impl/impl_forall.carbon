@@ -25,10 +25,10 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [concrete]
 // CHECK:STDOUT:   %Self: %Simple.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Simple.F.type.75b: type = fn_type @Simple.F, @Simple(%Self) [symbolic]
-// CHECK:STDOUT:   %Simple.F.58c: %Simple.F.type.75b = struct_value () [symbolic]
+// CHECK:STDOUT:   %Simple+Self.F.type.75b: type = fn_type @Simple+Self.F, @Simple(%Self) [symbolic]
+// CHECK:STDOUT:   %Simple+Self.F.58c: %Simple+Self.F.type.75b = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
-// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%Simple.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%Simple+Self.F.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -37,8 +37,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type: type = fn_type @T.as.Simple.impl.F, @T.as.Simple.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.Simple.impl.F: %T.as.Simple.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, (%Simple.impl_witness) [symbolic]
-// CHECK:STDOUT:   %Simple.F.type.b56: type = fn_type @Simple.F, @Simple(%Simple.facet) [symbolic]
-// CHECK:STDOUT:   %Simple.F.2ed: %Simple.F.type.b56 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Simple+Self.F.type.b56: type = fn_type @Simple+Self.F, @Simple(%Simple.facet) [symbolic]
+// CHECK:STDOUT:   %Simple+Self.F.2ed: %Simple+Self.F.type.b56 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,13 +61,13 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   interface_with_self_decl @Simple [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %Simple.F.decl: @Simple.%Simple.F.type (%Simple.F.type.75b) = fn_decl @Simple.F [symbolic = @Simple.%Simple.F (constants.%Simple.F.58c)] {} {}
-// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %Simple.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Simple+Self.F.decl: @Simple.%Simple+Self.F.type (%Simple+Self.F.type.75b) = fn_decl @Simple+Self.F [symbolic = @Simple.%Simple+Self.F (constants.%Simple+Self.F.58c)] {} {}
+// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %Simple+Self.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%Simple.F.decl)
+// CHECK:STDOUT:   witness = (%Simple+Self.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -91,7 +91,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Simple.F(@Simple.%Self.loc15: %Simple.type) {
+// CHECK:STDOUT: generic fn @Simple+Self.F(@Simple.%Self.loc15: %Simple.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,11 +107,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: specific @Simple(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self
-// CHECK:STDOUT:   %Simple.F.type => constants.%Simple.F.type.75b
-// CHECK:STDOUT:   %Simple.F => constants.%Simple.F.58c
+// CHECK:STDOUT:   %Simple+Self.F.type => constants.%Simple+Self.F.type.75b
+// CHECK:STDOUT:   %Simple+Self.F => constants.%Simple+Self.F.58c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple.F(constants.%Self) {}
+// CHECK:STDOUT: specific @Simple+Self.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Simple.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_14.1 => constants.%T
@@ -127,9 +127,9 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: specific @Simple(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Simple.facet
-// CHECK:STDOUT:   %Simple.F.type => constants.%Simple.F.type.b56
-// CHECK:STDOUT:   %Simple.F => constants.%Simple.F.2ed
+// CHECK:STDOUT:   %Simple+Self.F.type => constants.%Simple+Self.F.type.b56
+// CHECK:STDOUT:   %Simple+Self.F => constants.%Simple+Self.F.2ed
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple.F(constants.%Simple.facet) {}
+// CHECK:STDOUT: specific @Simple+Self.F(constants.%Simple.facet) {}
 // CHECK:STDOUT:

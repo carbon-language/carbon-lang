@@ -178,8 +178,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f8c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f64: %ptr.as.Copy.impl.Op.type.f8c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.d1d: %Copy.type = facet_value %ptr.728, (%Copy.impl_witness.795) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.b3a: type = fn_type @Copy.Op, @Copy(%Copy.facet.d1d) [concrete]
-// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy.Op.type.b3a, %Copy.facet.d1d [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.b3a: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet.d1d) [concrete]
+// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy+Self.Op.type.b3a, %Copy.facet.d1d [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.6a7: <specific function> = specific_function %ptr.as.Copy.impl.Op.f64, @ptr.as.Copy.impl.Op(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %const.8ce: type = const_type %ptr.31e [concrete]
@@ -193,8 +193,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.type.368: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.a7f) [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.c19: %const.as.Copy.impl.Op.type.368 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.5cc: %Copy.type = facet_value %const.8ce, (%Copy.impl_witness.e93) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.b95: type = fn_type @Copy.Op, @Copy(%Copy.facet.5cc) [concrete]
-// CHECK:STDOUT:   %.21b: type = fn_type_with_self_type %Copy.Op.type.b95, %Copy.facet.5cc [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.b95: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet.5cc) [concrete]
+// CHECK:STDOUT:   %.21b: type = fn_type_with_self_type %Copy+Self.Op.type.b95, %Copy.facet.5cc [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.c19, @const.as.Copy.impl.Op(%Copy.facet.a7f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -291,8 +291,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f8c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f64: %ptr.as.Copy.impl.Op.type.f8c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.728, (%Copy.impl_witness.795) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.b3a: type = fn_type @Copy.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy.Op.type.b3a, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.b3a: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy+Self.Op.type.b3a, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.f64, @ptr.as.Copy.impl.Op(%ptr.c45) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

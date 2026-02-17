@@ -88,8 +88,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.546: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.664: %Int.as.Copy.impl.Op.type.546 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.081: type = fn_type @Copy.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.Op.type.081, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.081: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy+Self.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Test1.type: type = fn_type @Test1 [concrete]
 // CHECK:STDOUT:   %Test1: %Test1.type = struct_value () [concrete]
@@ -104,7 +104,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type: type = fn_type @C.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert: %C.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value %C, (%ImplicitAs.impl_witness.892) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.ee5: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.type.ee5: type = fn_type @ImplicitAs+Self.Convert, @ImplicitAs(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %Test2.type: type = fn_type @Test2 [concrete]
@@ -119,7 +119,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %inst.as_compatible.97f: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.b3d: %C = as_compatible @F.%x.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.e4e: type = fn_type_with_self_type %ImplicitAs.Convert.type.ee5, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.e4e: type = fn_type_with_self_type %ImplicitAs+Self.Convert.type.ee5, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %inst.splice_block.f09: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.774: %i32 = splice_block %.9e4 {
 // CHECK:STDOUT:       %impl.elem0.65e: %.e4e = impl_witness_access %ImplicitAs.impl_witness.892, element0 [concrete = %C.as.ImplicitAs.impl.Convert]
@@ -367,8 +367,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.546: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.664: %Int.as.Copy.impl.Op.type.546 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
-// CHECK:STDOUT:   %Copy.Op.type.081: type = fn_type @Copy.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.Op.type.081, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy+Self.Op.type.081: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy+Self.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

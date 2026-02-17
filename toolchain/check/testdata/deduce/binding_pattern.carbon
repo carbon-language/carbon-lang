@@ -92,8 +92,8 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.type.031: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.738: %ImplicitAs.type.031 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ff3: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.b3a: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.1de: %ImplicitAs.Convert.type.b3a = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.type.b3a: type = fn_type @ImplicitAs+Self.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.1de: %ImplicitAs+Self.Convert.type.b3a = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.1e5: type = facet_type <@ImplicitAs, @ImplicitAs(%V)> [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.d88: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V) [symbolic]
 // CHECK:STDOUT:   %assoc0.3d8: %ImplicitAs.assoc_type.d88 = assoc_entity element0, imports.%Core.import_ref.201 [symbolic]
@@ -109,7 +109,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.178: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ff3) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.843)]
-// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.1de)]
+// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.%ImplicitAs+Self.Convert.type (%ImplicitAs+Self.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs+Self.Convert (constants.%ImplicitAs+Self.Convert.1de)]
 // CHECK:STDOUT:   %Core.import_ref.cc1 = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -270,8 +270,8 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.type.031: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.738: %ImplicitAs.type.031 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ff3: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.b3a: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.1de: %ImplicitAs.Convert.type.b3a = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.type.b3a: type = fn_type @ImplicitAs+Self.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs+Self.Convert.1de: %ImplicitAs+Self.Convert.type.b3a = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.f60: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.16f)> [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
 // CHECK:STDOUT:   %V: %type_where = symbolic_binding V, 1 [symbolic]
@@ -301,7 +301,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.178: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ff3) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.843)]
-// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.1de)]
+// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.%ImplicitAs+Self.Convert.type (%ImplicitAs+Self.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs+Self.Convert (constants.%ImplicitAs+Self.Convert.1de)]
 // CHECK:STDOUT:   %Core.import_ref.cc1 = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

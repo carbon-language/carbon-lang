@@ -49,16 +49,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.BitOrWith.impl.Op.type: type = fn_type @C.as.BitOrWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitOrWith.impl.Op: %C.as.BitOrWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitOrWith.facet: %BitOrWith.type.955 = facet_value %C, (%BitOrWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitOrWith.Op.type.59b: type = fn_type @BitOrWith.Op, @BitOrWith(%C, %BitOrWith.facet) [concrete]
+// CHECK:STDOUT:   %BitOrWith+Self.Op.type.59b: type = fn_type @BitOrWith+Self.Op, @BitOrWith(%C, %BitOrWith.facet) [concrete]
 // CHECK:STDOUT:   %BitOrAssignWith.type.dcc: type = facet_type <@BitOrAssignWith, @BitOrAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitOrAssignWith.impl_witness: <witness> = impl_witness @C.as.BitOrAssignWith.impl.%BitOrAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitOrAssignWith.impl.Op.type: type = fn_type @C.as.BitOrAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitOrAssignWith.impl.Op: %C.as.BitOrAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitOrAssignWith.facet: %BitOrAssignWith.type.dcc = facet_value %C, (%BitOrAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitOrAssignWith.Op.type.723: type = fn_type @BitOrAssignWith.Op, @BitOrAssignWith(%C, %BitOrAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.6ce: type = fn_type_with_self_type %BitOrWith.Op.type.59b, %BitOrWith.facet [concrete]
+// CHECK:STDOUT:   %BitOrAssignWith+Self.Op.type.723: type = fn_type @BitOrAssignWith+Self.Op, @BitOrAssignWith(%C, %BitOrAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.6ce: type = fn_type_with_self_type %BitOrWith+Self.Op.type.59b, %BitOrWith.facet [concrete]
 // CHECK:STDOUT:   %ptr.872: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.e2c: type = fn_type_with_self_type %BitOrAssignWith.Op.type.723, %BitOrAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.e2c: type = fn_type_with_self_type %BitOrAssignWith+Self.Op.type.723, %BitOrAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
