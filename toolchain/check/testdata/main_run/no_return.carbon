@@ -88,16 +88,16 @@ fn Run(argc: i32, argv: i32*) {}
 // CHECK:STDOUT:     %argv.param_patt: %pattern_type.fe8 = value_param_pattern %argv.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc4_14: type = splice_block %i32.loc4_14 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc4_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc4_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc5_14: type = splice_block %i32.loc5_14 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %argc: %i32 = value_binding argc, %argc.param
 // CHECK:STDOUT:     %argv.param: %ptr = value_param call_param1
-// CHECK:STDOUT:     %.loc4_28: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:       %int_32.loc4_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc4_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc4_25 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %.loc5_28: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %int_32.loc5_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc5_25 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %argv: %ptr = value_binding argv, %argv.param
 // CHECK:STDOUT:   }

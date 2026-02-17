@@ -1026,6 +1026,7 @@ auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
       case ExprCategory::RefTagged:
+      case ExprCategory::Dependent:
         FormatTypeOfInst(inst_id);
         break;
       case ExprCategory::DurableRef:
