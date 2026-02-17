@@ -142,8 +142,11 @@ static auto ConvertArgToTemplateArg(Context& context,
         if (auto int_value =
                 context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
           const llvm::APInt& ap_int = context.ints().Get(int_value->int_id);
-          auto aps_int = llvm::APSInt(ap_int).extOrTrunc(
-              context.ast_context().getIntWidth(param_type));
+          const bool is_unsigned =
+              !param_type->isSignedIntegerOrEnumerationType();
+          auto aps_int =
+              llvm::APSInt(ap_int, is_unsigned)
+                  .extOrTrunc(context.ast_context().getIntWidth(param_type));
           auto template_arg = clang::TemplateArgument(context.ast_context(),
                                                       aps_int, param_type);
           // TODO: provide a better location.
