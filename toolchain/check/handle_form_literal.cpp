@@ -38,6 +38,7 @@ auto HandleParseNode(Context& context, Parse::VarPrimitiveFormId node_id)
     -> bool {
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_expr = ExprAsType(context, type_node_id, type_inst_id);
+
   auto inst_id =
       AddInst<SemIR::InitForm>(context, node_id,
                                {.type_id = SemIR::FormType::TypeId,

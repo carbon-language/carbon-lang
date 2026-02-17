@@ -459,7 +459,8 @@ using FunctionIntroducer =
 
 // A return type: `-> i32`.
 struct ReturnType {
-  static constexpr auto Kind = NodeKind::ReturnType.Define({.child_count = 1});
+  static constexpr auto Kind = NodeKind::ReturnType.Define(
+      {.category = NodeCategory::ReturnDecl, .child_count = 1});
 
   Lex::MinusGreaterTokenIndex token;
   AnyExprId type;
@@ -467,7 +468,8 @@ struct ReturnType {
 
 // A return form: `->? form(var i32)`
 struct ReturnForm {
-  static constexpr auto Kind = NodeKind::ReturnForm.Define({.child_count = 1});
+  static constexpr auto Kind = NodeKind::ReturnForm.Define(
+      {.category = NodeCategory::ReturnDecl, .child_count = 1});
 
   Lex::MinusGreaterQuestionTokenIndex token;
   AnyExprId type;
@@ -483,7 +485,7 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<NodeIdOneOf<ReturnTypeId, ReturnFormId>> return_type;
+  std::optional<AnyReturnDeclId> return_type;
   TokenKind token;
 };
 

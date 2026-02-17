@@ -35,9 +35,11 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
                        Context::FormExpr form_expr) -> SemIR::InstBlockId {
   llvm::SmallVector<SemIR::InstId, 1> return_patterns;
-  auto form_inst = context.insts().Get(form_expr.form_inst_id);
+  auto form_inst = context.insts().Get(
+      context.constant_values().GetConstantInstId(form_expr.form_inst_id));
   CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind: {
+    case SemIR::RefForm::Kind:
+    case SemIR::ValueForm::Kind: {
       break;
     }
     case CARBON_KIND(SemIR::InitForm _): {
@@ -56,6 +58,11 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
     case SemIR::ErrorInst::Kind: {
       break;
     }
+    case SemIR::SymbolicBinding::Kind:
+      CARBON_CHECK(
+          context.constant_values().Get(form_expr.form_inst_id).is_symbolic());
+      context.TODO(loc_id, "Support symbolic return forms");
+      break;
     default:
       CARBON_FATAL("unexpected inst kind: {0}", form_inst);
   }

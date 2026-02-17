@@ -53,6 +53,8 @@ class FullPatternStack {
     OutsideParamList
   };
 
+  auto empty() const -> bool { return kind_stack_.empty(); }
+
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
