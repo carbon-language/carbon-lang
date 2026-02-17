@@ -114,12 +114,12 @@ static auto ConvertArgToTemplateArg(Context& context,
     return MakePlaceholderTemplateArg(context, arg_id);
   }
 
-  if (isa<clang::NonTypeTemplateParmDecl>(param_decl)) {
-    auto non_type = cast<clang::NonTypeTemplateParmDecl>(param_decl);
+  if (const auto* non_type =
+          dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
     auto param_type = non_type->getType();
 
     // Handle integer parameters.
-    if (param_type.getTypePtr()->isIntegerType()) {
+    if (param_type->isIntegerType()) {
       // Get the Carbon type corresponding to the parameter's Clang type.
       const TypeExpr type_expr =
           ImportCppType(context, SemIR::LocId(arg_id), param_type);
@@ -138,7 +138,7 @@ static auto ConvertArgToTemplateArg(Context& context,
         if (const_inst_id.has_value()) {
           if (auto int_value =
                   context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
-            const llvm::APInt ap_int = context.ints().Get(int_value->int_id);
+            const llvm::APInt& ap_int = context.ints().Get(int_value->int_id);
             auto aps_int = llvm::APSInt(ap_int).extOrTrunc(
                 context.ast_context().getIntWidth(param_type));
             auto template_arg = clang::TemplateArgument(context.ast_context(),
