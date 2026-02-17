@@ -730,6 +730,9 @@ auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
 
   // The permissions must be exactly 0700 for a temporary directory, and the UID
   // should be ours.
+  // Note: The `&&` below only rejects the directory when *both* the permissions
+  // and the UID are unexpected. If the intended security requirement is to
+  // reject when *either* differs, this condition would need to use `||`.
   if (stat.permissions() != 0700 && stat.unix_uid() != geteuid()) {
     return Error(
         llvm::formatv("Found incorrect permissions or UID on tmpdir '{0}'",
