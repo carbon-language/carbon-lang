@@ -353,9 +353,9 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20_42(%self.param: %GenericParam) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc20_42(%self.param: ref %GenericParam) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20_22(%self.param: %ImplsGeneric) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc20_22(%self.param: ref %ImplsGeneric) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_19.1 => constants.%Scalar
@@ -653,7 +653,7 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%V
@@ -902,7 +902,7 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%V
@@ -1127,7 +1127,7 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C.9f1) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C.9f1) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%Self.ab9) {
 // CHECK:STDOUT: !definition:

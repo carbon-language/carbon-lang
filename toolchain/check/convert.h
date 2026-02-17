@@ -64,6 +64,7 @@ struct ConversionTarget {
   SemIR::InstId storage_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that `storage_id`
   // depends on, and that can be discarded if `storage_id` is not accessed.
+  // If this is not null or empty, its last element must be storage_id.
   PendingBlock* storage_access_block = nullptr;
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback, diagnose
@@ -93,7 +94,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 // Converts `value_id` to an initializing expression of the type of
 // `storage_id`, and returns the possibly-converted initializing expression.
 // `storage_id` is used as the storage argument of the resulting expression
-// except as noted below. The caller is responsible for passing the result to an
+// except as noted below, and when it is used as the storage argument it must
+// precede `value_id`. The caller is responsible for passing the result to an
 // inst that is documented as consuming it, such as `Assign`.
 //
 // `for_return` indicates that this conversion is initializing the operand of a

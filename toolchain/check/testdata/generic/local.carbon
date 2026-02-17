@@ -185,7 +185,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C.d45) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C.d45) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_11.1 => constants.%T

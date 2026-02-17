@@ -160,5 +160,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.a1c) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type.a1c) = "no_op";
 // CHECK:STDOUT:

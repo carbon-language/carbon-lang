@@ -206,7 +206,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc25(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc25(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc21(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc21(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

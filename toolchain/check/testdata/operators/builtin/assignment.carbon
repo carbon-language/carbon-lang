@@ -359,11 +359,11 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc27(%self.param: %ptr.235) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc27(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: %struct_type.a.b.501) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: ref %struct_type.a.b.501) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %tuple.type.d07) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: ref %tuple.type.d07) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

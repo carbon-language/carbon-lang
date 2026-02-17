@@ -83,6 +83,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  // TODO: This should provide `Destroy` for enums and other trivially
+  // destructible types.
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
     return SemIR::InstId::None;

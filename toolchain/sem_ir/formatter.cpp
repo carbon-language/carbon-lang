@@ -747,9 +747,7 @@ auto Formatter::FormatParamList(InstBlockId params_id,
       continue;
     }
     CARBON_CHECK(!sem_ir_->insts().Is<OutParam>(param_id));
-    FormatName(param_id);
-    out_ << ": ";
-    FormatTypeOfInst(param_id);
+    FormatNameAndForm(param_id, sem_ir_->insts().Get(param_id));
   }
 
   out_ << ")";
@@ -1004,6 +1002,12 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
     return;
   }
 
+  FormatNameAndForm(inst_id, inst);
+
+  out_ << " = ";
+}
+
+auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   FormatName(inst_id);
 
   if (inst.kind().has_type()) {
@@ -1033,8 +1037,6 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       }
     }
   }
-
-  out_ << " = ";
 }
 
 auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {

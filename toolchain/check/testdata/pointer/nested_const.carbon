@@ -31,7 +31,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %ptr.6e8: type = ptr_type %const.58f [concrete]
 // CHECK:STDOUT:   %const.fa2: type = const_type %ptr.6e8 [concrete]
 // CHECK:STDOUT:   %pattern_type.800: type = pattern_type %const.fa2 [concrete]
-// CHECK:STDOUT:   %.d3c: form = init_form %const.20a, call_param1 [concrete]
+// CHECK:STDOUT:   %.f4c: Core.Form = init_form %const.20a, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.a65: type = pattern_type %const.20a [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -82,7 +82,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %int_32.loc16_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc16_41: type = const_type %i32.loc16_47 [concrete = constants.%const.20a]
-// CHECK:STDOUT:     %.loc16_41: form = init_form %const.loc16_41, call_param1 [concrete = constants.%.d3c]
+// CHECK:STDOUT:     %.loc16_41: Core.Form = init_form %const.loc16_41, call_param1 [concrete = constants.%.f4c]
 // CHECK:STDOUT:     %p.param: %const.fa2 = value_param call_param0
 // CHECK:STDOUT:     %.loc16_9: type = splice_block %const.loc16_9 [concrete = constants.%const.fa2] {
 // CHECK:STDOUT:       %int_32.loc16_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

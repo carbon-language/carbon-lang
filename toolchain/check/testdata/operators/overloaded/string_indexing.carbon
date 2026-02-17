@@ -141,8 +141,8 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.aa4 = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.0ce: @str.as.IndexWith.impl.%str.as.IndexWith.impl.At.type (%str.as.IndexWith.impl.At.type.85b) = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, loaded [symbolic = @str.as.IndexWith.impl.%str.as.IndexWith.impl.At (constants.%str.as.IndexWith.impl.At.4fc)]
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.aa4, %Core.import_ref.0ce), @str.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.0ce8: @str.as.IndexWith.impl.%str.as.IndexWith.impl.At.type (%str.as.IndexWith.impl.At.type.85b) = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, loaded [symbolic = @str.as.IndexWith.impl.%str.as.IndexWith.impl.At (constants.%str.as.IndexWith.impl.At.4fc)]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.aa4, %Core.import_ref.0ce8), @str.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.8ed = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.373 = impl_witness_table (%Core.import_ref.8ed), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }

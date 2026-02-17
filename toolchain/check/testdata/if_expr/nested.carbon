@@ -27,7 +27,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.e68: form = init_form %i32, call_param3 [concrete]
+// CHECK:STDOUT:   %.591: Core.Form = init_form %i32, call_param3 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -109,7 +109,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15_36: form = init_form %i32.loc15, call_param3 [concrete = constants.%.e68]
+// CHECK:STDOUT:     %.loc15_36: Core.Form = init_form %i32.loc15, call_param3 [concrete = constants.%.591]
 // CHECK:STDOUT:     %a.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc15_9: init type = call constants.%Bool() [concrete = bool]

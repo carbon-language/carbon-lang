@@ -133,7 +133,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.9fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.8de: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %Dest, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest, %Self) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert: %ImplicitAs.Convert.type = struct_value () [symbolic]
@@ -172,7 +172,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %return.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.2 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %.loc4_31.2: form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.e5f)]
+// CHECK:STDOUT:       %.loc4_31.2: Core.Form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:         %.loc4_20.2: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = specific_constant @ImplicitAs.%Self.loc3_35.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
@@ -203,7 +203,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.8de)]
-// CHECK:STDOUT:   %.loc4_31.1: form = init_form %Dest, call_param1 [symbolic = %.loc4_31.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.loc4_31.1: Core.Form = init_form %Dest, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @ImplicitAs.Convert.%Dest (%Dest);
@@ -221,7 +221,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc4_14 => constants.%pattern_type.8de
-// CHECK:STDOUT:   %.loc4_31.1 => constants.%.e5f
+// CHECK:STDOUT:   %.loc4_31.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -362,7 +362,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.738 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e9a: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %Dest, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.282: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance2.type)> [concrete]
 // CHECK:STDOUT:   %Self.df1: %ImplicitAs.type.282 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.03b: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%NonInstance2.type, %Self.738) [symbolic]
@@ -483,7 +483,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.031) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.738)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.e9a)]
-// CHECK:STDOUT:   %.1: form = init_form %Dest, call_param1 [symbolic = %.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %Dest, call_param1 [symbolic = %.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -519,7 +519,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self => constants.%Self.738
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.e9a
-// CHECK:STDOUT:   %.1 => constants.%.e5f
+// CHECK:STDOUT:   %.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -575,7 +575,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.738 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e9a: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %Dest, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.deb: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance3.type)> [concrete]
 // CHECK:STDOUT:   %Self.9cf: %ImplicitAs.type.deb = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.8ec: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%NonInstance3.type, %Self.738) [symbolic]
@@ -698,7 +698,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.031) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.738)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.e9a)]
-// CHECK:STDOUT:   %.1: form = init_form %Dest, call_param1 [symbolic = %.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %Dest, call_param1 [symbolic = %.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -734,7 +734,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self => constants.%Self.738
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.e9a
-// CHECK:STDOUT:   %.1 => constants.%.e5f
+// CHECK:STDOUT:   %.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

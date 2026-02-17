@@ -439,9 +439,9 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc35_29(%self.param: %Grass) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc35_29(%self.param: ref %Grass) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc35_17(%self.param: %Goat) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc35_17(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Edible(constants.%Self.461) {
 // CHECK:STDOUT: !definition:

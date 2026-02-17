@@ -208,11 +208,11 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.F(%self.param: %A);
+// CHECK:STDOUT: fn @A.F(%self.param: ref %A);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.F(%self.param: %B);
+// CHECK:STDOUT: fn @B.F(%self.param: ref %B);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F(%self.param: %C);
+// CHECK:STDOUT: fn @C.F(%self.param: ref %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a.param: %ptr.643, %b.param: %ptr.27c, %c.param: %ptr.31e, %d.param: %ptr.805) {
 // CHECK:STDOUT: !entry:

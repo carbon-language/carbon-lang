@@ -66,7 +66,7 @@ class Derived {
 // CHECK:STDOUT:   %Derived.elem.683: type = unbound_element_type %Derived, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.base.d.81a: type = struct_type {.base: %Base, .d: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.3b4: <witness> = complete_type_witness %struct_type.base.d.81a [concrete]
-// CHECK:STDOUT:   %.9cc: form = init_form %Derived, call_param0 [concrete]
+// CHECK:STDOUT:   %.b42: Core.Form = init_form %Derived, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.db9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
@@ -100,7 +100,7 @@ class Derived {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %.204: form = init_form %tuple.type.d07, call_param1 [concrete]
+// CHECK:STDOUT:   %.97a: Core.Form = init_form %tuple.type.d07, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
@@ -149,7 +149,7 @@ class Derived {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.db9 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %.loc13: form = init_form %Derived.ref, call_param0 [concrete = constants.%.9cc]
+// CHECK:STDOUT:     %.loc13: Core.Form = init_form %Derived.ref, call_param0 [concrete = constants.%.b42]
 // CHECK:STDOUT:     %return.param: ref %Derived = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -165,7 +165,7 @@ class Derived {
 // CHECK:STDOUT:     %i32.loc17_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc17_35.1: %tuple.type.24b = tuple_literal (%i32.loc17_27, %i32.loc17_32) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
-// CHECK:STDOUT:     %.loc17_35.3: form = init_form %.loc17_35.2, call_param1 [concrete = constants.%.204]
+// CHECK:STDOUT:     %.loc17_35.3: Core.Form = init_form %.loc17_35.2, call_param1 [concrete = constants.%.97a]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param

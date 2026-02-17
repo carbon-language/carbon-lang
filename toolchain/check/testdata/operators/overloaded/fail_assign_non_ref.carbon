@@ -179,9 +179,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.Inc.impl.Op(%self.param: %C);
+// CHECK:STDOUT: fn @C.as.Inc.impl.Op(%self.param: ref %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.AddAssignWith.impl.Op(%self.param: %C, %other.param: %C);
+// CHECK:STDOUT: fn @C.as.AddAssignWith.impl.Op(%self.param: ref %C, %other.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:

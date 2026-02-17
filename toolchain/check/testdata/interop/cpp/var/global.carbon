@@ -7,9 +7,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/globals.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/var/global.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/globals.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/var/global.carbon
 
 // ============================================================================
 // Global scope
@@ -33,27 +33,6 @@ fn MyF() {
   let local: Cpp.C = Cpp.global;
   let local_ptr: Cpp.C* = Cpp.global_ptr;
   let local_ref: Cpp.C* = Cpp.global_ref;
-}
-
-// ============================================================================
-// Namespace
-// ============================================================================
-
-// --- namespace.h
-
-namespace N {
-class C {};
-C global;
-}  // namespace N
-
-// --- import_namespace.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "namespace.h";
-
-fn MyF() {
-  let local: Cpp.N.C = Cpp.N.global;
 }
 
 // ============================================================================
@@ -191,77 +170,6 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc9_30.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_30.1 [concrete = constants.%global_ref.var]
 // CHECK:STDOUT:   %.loc9_30.3: %ptr.d9e = acquire_value %.loc9_30.2
 // CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_30.3
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- import_namespace.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .N = %N
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .global = %global.var
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %global.patt: %pattern_type = ref_binding_pattern global [concrete]
-// CHECK:STDOUT:   %global.var_patt: %pattern_type = var_pattern %global.patt [concrete]
-// CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   import Cpp//...
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local.patt: %pattern_type = value_binding_pattern local [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc7_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N.ref.loc7_27: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:   %global.ref: ref %C = name_ref global, imports.%global.var [concrete = imports.%global.var]
-// CHECK:STDOUT:   %.loc7_19: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc7_14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %N.ref.loc7_17: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_29: %C = acquire_value %global.ref
-// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

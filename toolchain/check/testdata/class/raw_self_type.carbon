@@ -176,7 +176,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr.8e5) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr.8e5) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MemberNamedSelf.F(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.0d4) {
 // CHECK:STDOUT: !entry:

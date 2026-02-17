@@ -355,11 +355,11 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.AF();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc36(%self.param: %D) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc36(%self.param: ref %D) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc35(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc35(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc34(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc34(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc33(%self.param: %A) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc33(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:

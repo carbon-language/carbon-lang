@@ -120,7 +120,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.9fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.8de: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %Dest, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest, %Self) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert: %ImplicitAs.Convert.type = struct_value () [symbolic]
@@ -159,7 +159,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.2 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %.loc4_31.2: form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.e5f)]
+// CHECK:STDOUT:       %.loc4_31.2: Core.Form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:         %.loc4_20.2: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = specific_constant @ImplicitAs.%Self.loc3_35.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
@@ -190,7 +190,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.8de)]
-// CHECK:STDOUT:   %.loc4_31.1: form = init_form %Dest, call_param1 [symbolic = %.loc4_31.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.loc4_31.1: Core.Form = init_form %Dest, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @ImplicitAs.Convert.%Dest (%Dest);
@@ -208,7 +208,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc4_14 => constants.%pattern_type.8de
-// CHECK:STDOUT:   %.loc4_31.1 => constants.%.e5f
+// CHECK:STDOUT:   %.loc4_31.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -852,7 +852,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.generic: %Factory.type.2e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %Factory.type.142: type = facet_type <@Factory, @Factory(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.cc4: %Factory.type.142 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %.c6c: form = init_form %T, call_param0 [symbolic]
+// CHECK:STDOUT:   %.41b: Core.Form = init_form %T, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Factory.Make.type.086: type = fn_type @Factory.Make, @Factory(%T, %Self.cc4) [symbolic]
 // CHECK:STDOUT:   %Factory.Make.6b9: %Factory.Make.type.086 = struct_value () [symbolic]
@@ -860,7 +860,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0.cdd: %Factory.assoc_type.129 = assoc_entity element0, @Factory.%Factory.Make.decl [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.cc4 [symbolic]
 // CHECK:STDOUT:   %pattern_type.077: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %T, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %T, call_param1 [symbolic]
 // CHECK:STDOUT:   %Factory.Method.type.900: type = fn_type @Factory.Method, @Factory(%T, %Self.cc4) [symbolic]
 // CHECK:STDOUT:   %Factory.Method.655: %Factory.Method.type.900 = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1.a88: %Factory.assoc_type.129 = assoc_entity element1, @Factory.%Factory.Method.decl [symbolic]
@@ -878,12 +878,12 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.Method.type.631: type = fn_type @Factory.Method, @Factory(%B, %Self.cc4) [symbolic]
 // CHECK:STDOUT:   %Factory.Method.6ef: %Factory.Method.type.631 = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1.5e4: %Factory.assoc_type.3bd = assoc_entity element1, @Factory.%Factory.Method.decl [concrete]
-// CHECK:STDOUT:   %.312: form = init_form %B, call_param0 [concrete]
+// CHECK:STDOUT:   %.e82: Core.Form = init_form %B, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.1f4: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.type: type = fn_type @A.as.Factory.impl.Make [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Make: %A.as.Factory.impl.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %.521: form = init_form %B, call_param1 [concrete]
+// CHECK:STDOUT:   %.916: Core.Form = init_form %B, call_param1 [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Method.type: type = fn_type @A.as.Factory.impl.Method [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Method: %A.as.Factory.impl.Method.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.5dd = facet_value %A, (%Factory.impl_witness) [concrete]
@@ -941,7 +941,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt: @Factory.Make.%pattern_type (%pattern_type.51d) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_19.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc6_16.2: form = init_form %T.ref, call_param0 [symbolic = %.loc6_16.1 (constants.%.c6c)]
+// CHECK:STDOUT:       %.loc6_16.2: Core.Form = init_form %T.ref, call_param0 [symbolic = %.loc6_16.1 (constants.%.41b)]
 // CHECK:STDOUT:       %return.param: ref @Factory.Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Factory.Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -953,7 +953,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt: @Factory.Method.%pattern_type.loc8_27 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_19.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc8_30.2: form = init_form %T.ref, call_param1 [symbolic = %.loc8_30.1 (constants.%.e5f)]
+// CHECK:STDOUT:       %.loc8_30.2: Core.Form = init_form %T.ref, call_param1 [symbolic = %.loc8_30.1 (constants.%.3cf)]
 // CHECK:STDOUT:       %self.param: @Factory.Method.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_19.1: type = splice_block %.loc8_19.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:         %.loc8_19.2: @Factory.Method.%Factory.type (%Factory.type.142) = specific_constant @Factory.%Self.loc4_29.1, @Factory(constants.%T) [symbolic = %Self (constants.%Self.cc4)]
@@ -985,7 +985,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc15: form = init_form %B.ref, call_param0 [concrete = constants.%.312]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %B.ref, call_param0 [concrete = constants.%.e82]
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -996,7 +996,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc16: form = init_form %B.ref, call_param1 [concrete = constants.%.521]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %B.ref, call_param1 [concrete = constants.%.916]
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @A.as.Factory.impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = value_binding self, %self.param
@@ -1031,7 +1031,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.Make(@Factory.%T.loc4_19.2: type, @Factory.%Self.loc4_29.1: @Factory.%Factory.type.loc4 (%Factory.type.142)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc6_16.1: form = init_form %T, call_param0 [symbolic = %.loc6_16.1 (constants.%.c6c)]
+// CHECK:STDOUT:   %.loc6_16.1: Core.Form = init_form %T, call_param0 [symbolic = %.loc6_16.1 (constants.%.41b)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @Factory.Make.%T (%T);
@@ -1043,7 +1043,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self: @Factory.Method.%Factory.type (%Factory.type.142) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.cc4)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc8_13: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc8_13 (constants.%pattern_type.077)]
-// CHECK:STDOUT:   %.loc8_30.1: form = init_form %T, call_param1 [symbolic = %.loc8_30.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.loc8_30.1: Core.Form = init_form %T, call_param1 [symbolic = %.loc8_30.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.loc8_27: type = pattern_type %T [symbolic = %pattern_type.loc8_27 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Factory.Method.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @Factory.Method.%T (%T);
@@ -1061,7 +1061,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.Make(constants.%T, constants.%Self.cc4) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %.loc6_16.1 => constants.%.c6c
+// CHECK:STDOUT:   %.loc6_16.1 => constants.%.41b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1071,7 +1071,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self.cc4
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc8_13 => constants.%pattern_type.077
-// CHECK:STDOUT:   %.loc8_30.1 => constants.%.e5f
+// CHECK:STDOUT:   %.loc8_30.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.loc8_27 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1113,7 +1113,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.Make(constants.%B, constants.%Factory.facet) {
 // CHECK:STDOUT:   %T => constants.%B
-// CHECK:STDOUT:   %.loc6_16.1 => constants.%.312
+// CHECK:STDOUT:   %.loc6_16.1 => constants.%.e82
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1123,7 +1123,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self => constants.%Factory.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%A
 // CHECK:STDOUT:   %pattern_type.loc8_13 => constants.%pattern_type.1ab
-// CHECK:STDOUT:   %.loc8_30.1 => constants.%.521
+// CHECK:STDOUT:   %.loc8_30.1 => constants.%.916
 // CHECK:STDOUT:   %pattern_type.loc8_27 => constants.%pattern_type.1f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1144,14 +1144,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.197 [symbolic]
 // CHECK:STDOUT:   %pattern_type.12d: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %T, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %T, call_param1 [symbolic]
 // CHECK:STDOUT:   %Factory.Make.type.865: type = fn_type @Factory.Make, @Factory(%T, %Self.197) [symbolic]
 // CHECK:STDOUT:   %Factory.Make.400: %Factory.Make.type.865 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.c6c: form = init_form %T, call_param0 [symbolic]
+// CHECK:STDOUT:   %.41b: Core.Form = init_form %T, call_param0 [symbolic]
 // CHECK:STDOUT:   %Factory.type.5dd: type = facet_type <@Factory, @Factory(%B)> [concrete]
 // CHECK:STDOUT:   %Self.843: %Factory.type.5dd = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %.312: form = init_form %B, call_param0 [concrete]
+// CHECK:STDOUT:   %.e82: Core.Form = init_form %B, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.1f4: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [concrete]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [concrete]
@@ -1173,7 +1173,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.type: type = fn_type @A.as.Factory.impl.Make [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Make: %A.as.Factory.impl.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %.521: form = init_form %B, call_param1 [concrete]
+// CHECK:STDOUT:   %.916: Core.Form = init_form %B, call_param1 [concrete]
 // CHECK:STDOUT:   %InstanceB.type: type = fn_type @InstanceB [concrete]
 // CHECK:STDOUT:   %InstanceB: %InstanceB.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1.97c: %Factory.assoc_type.129 = assoc_entity element1, imports.%Main.import_ref.71e [symbolic]
@@ -1235,7 +1235,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc4_15.2: form = init_form %B.ref.loc4, call_param0 [concrete = constants.%.312]
+// CHECK:STDOUT:     %.loc4_15.2: Core.Form = init_form %B.ref.loc4, call_param0 [concrete = constants.%.e82]
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1246,7 +1246,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc7: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc7_23.2: form = init_form %B.ref.loc7, call_param1 [concrete = constants.%.521]
+// CHECK:STDOUT:     %.loc7_23.2: Core.Form = init_form %B.ref.loc7, call_param1 [concrete = constants.%.916]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = value_binding a, %a.param
@@ -1300,7 +1300,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self: @Factory.Method.%Factory.type (%Factory.type.142) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.197)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.12d)]
-// CHECK:STDOUT:   %.1: form = init_form %T, call_param1 [symbolic = %.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T, call_param1 [symbolic = %.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -1308,7 +1308,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.Make(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.a2eb4c.3: @Factory.%Factory.type.1 (%Factory.type.142)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.1: form = init_form %T, call_param0 [symbolic = %.1 (constants.%.c6c)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T, call_param0 [symbolic = %.1 (constants.%.41b)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -1361,13 +1361,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self.197
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.12d
-// CHECK:STDOUT:   %.1 => constants.%.e5f
+// CHECK:STDOUT:   %.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.Make(constants.%T, constants.%Self.197) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.c6c
+// CHECK:STDOUT:   %.1 => constants.%.41b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1424,15 +1424,15 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.197 [symbolic]
 // CHECK:STDOUT:   %pattern_type.12d: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.e5f: form = init_form %T, call_param1 [symbolic]
+// CHECK:STDOUT:   %.3cf: Core.Form = init_form %T, call_param1 [symbolic]
 // CHECK:STDOUT:   %Factory.Make.type.865: type = fn_type @Factory.Make, @Factory(%T, %Self.197) [symbolic]
 // CHECK:STDOUT:   %Factory.Make.400: %Factory.Make.type.865 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.c6c: form = init_form %T, call_param0 [symbolic]
+// CHECK:STDOUT:   %.41b: Core.Form = init_form %T, call_param0 [symbolic]
 // CHECK:STDOUT:   %Factory.type.5dd: type = facet_type <@Factory, @Factory(%B)> [concrete]
 // CHECK:STDOUT:   %Self.843: %Factory.type.5dd = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %.64f: form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
@@ -1447,7 +1447,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc1.875: %Factory.assoc_type.930 = assoc_entity element1, imports.%Main.import_ref.f85 [concrete]
 // CHECK:STDOUT:   %assoc0.16e: %Factory.assoc_type.129 = assoc_entity element0, imports.%Main.import_ref.c54 [symbolic]
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %.887: form = init_form %C, call_param1 [concrete]
+// CHECK:STDOUT:   %.b89: Core.Form = init_form %C, call_param1 [concrete]
 // CHECK:STDOUT:   %InstanceC.type: type = fn_type @InstanceC [concrete]
 // CHECK:STDOUT:   %InstanceC: %InstanceC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1.97c: %Factory.assoc_type.129 = assoc_entity element1, imports.%Main.import_ref.71e [symbolic]
@@ -1506,7 +1506,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8: form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.768]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1517,7 +1517,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc16: form = init_form %C.ref.loc16, call_param1 [concrete = constants.%.887]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %C.ref.loc16, call_param1 [concrete = constants.%.b89]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = value_binding a, %a.param
@@ -1579,7 +1579,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self: @Factory.Method.%Factory.type (%Factory.type.142) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.197)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.12d)]
-// CHECK:STDOUT:   %.1: form = init_form %T, call_param1 [symbolic = %.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T, call_param1 [symbolic = %.1 (constants.%.3cf)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -1587,7 +1587,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.Make(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.a2eb4c.3: @Factory.%Factory.type.1 (%Factory.type.142)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.1: form = init_form %T, call_param0 [symbolic = %.1 (constants.%.c6c)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T, call_param0 [symbolic = %.1 (constants.%.41b)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -1627,13 +1627,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self.197
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.12d
-// CHECK:STDOUT:   %.1 => constants.%.e5f
+// CHECK:STDOUT:   %.1 => constants.%.3cf
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.Make(constants.%T, constants.%Self.197) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.c6c
+// CHECK:STDOUT:   %.1 => constants.%.41b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

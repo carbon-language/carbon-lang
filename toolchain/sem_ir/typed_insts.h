@@ -745,7 +745,7 @@ struct FloatValue {
 };
 
 // The type `Core.Form`.
-struct FormType : public SingletonTypeInst<InstKind::FormType, "form"> {
+struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
   // `FormType` is always set complete in file.cpp.
   static constexpr auto TypeId =
       TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));

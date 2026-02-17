@@ -72,7 +72,7 @@ auto HandlePrimitiveFormFinish(Context& context) -> void {
 
 auto HandleFormLiteralFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::FormLiteral);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::FormLiteral);
 }
 
 }  // namespace Carbon::Parse

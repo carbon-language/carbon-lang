@@ -37,11 +37,11 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CConvert.Main(ptr sret({ i32, i1 }) %return, ptr %o) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.cb8cde10e3c2d324(ptr %o), !dbg !10
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.03e3348579103d79(ptr %o), !dbg !10
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   %Optional.Get.call = call ptr @_CGet.Optional.Core.cb8cde10e3c2d324(ptr %o), !dbg !12
+// CHECK:STDOUT:   %Optional.Get.call = call ptr @_CGet.Optional.Core.03e3348579103d79(ptr %o), !dbg !12
 // CHECK:STDOUT:   %.loc18_12.2 = load i32, ptr %Optional.Get.call, align 4, !dbg !13
 // CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.622e77b643a0d3a8"(ptr %return, i32 %.loc18_12.2), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !14
@@ -82,13 +82,13 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CHasValue.Optional.Core.cb8cde10e3c2d324(ptr %self) #0 !dbg !33 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CHasValue.Optional.Core.03e3348579103d79(ptr %self) #0 !dbg !33 {
 // CHECK:STDOUT:   %1 = call i1 @"_CHas.e8f8f92d3d08d149:OptionalStorage.Core.b88d1103f417c6d4"(ptr %self), !dbg !37
 // CHECK:STDOUT:   ret i1 %1, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CGet.Optional.Core.cb8cde10e3c2d324(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CGet.Optional.Core.03e3348579103d79(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT:   %1 = call ptr @"_CGet.e8f8f92d3d08d149:OptionalStorage.Core.b88d1103f417c6d4"(ptr %self), !dbg !42
 // CHECK:STDOUT:   ret ptr %1, !dbg !43
 // CHECK:STDOUT: }
@@ -282,13 +282,13 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: !30 = !DILocation(line: 30, column: 3, scope: !17)
 // CHECK:STDOUT: !31 = !DILocation(line: 31, column: 3, scope: !17)
 // CHECK:STDOUT: !32 = !DILocation(line: 23, column: 1, scope: !17)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.cb8cde10e3c2d324", scope: null, file: !34, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.03e3348579103d79", scope: null, file: !34, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
 // CHECK:STDOUT: !34 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !33, type: !7)
 // CHECK:STDOUT: !37 = !DILocation(line: 33, column: 12, scope: !33)
 // CHECK:STDOUT: !38 = !DILocation(line: 33, column: 5, scope: !33)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.Optional.Core.cb8cde10e3c2d324", scope: null, file: !34, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !40)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.Optional.Core.03e3348579103d79", scope: null, file: !34, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !40)
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !7)
 // CHECK:STDOUT: !42 = !DILocation(line: 36, column: 12, scope: !39)
