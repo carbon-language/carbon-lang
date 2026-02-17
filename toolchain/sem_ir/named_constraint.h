@@ -15,7 +15,9 @@ namespace Carbon::SemIR {
 struct NamedConstraintFields {
   // The following members are set at the `{` of the constraint definition.
 
-  // The constraint scopes.
+  // The constraint scopes. The scope-without-self contains the symbolic `Self`
+  // entity, which is then a generic binding of the generic-with-self. The
+  // scope-with-self contains the rest of the entities in the constraint.
   NameScopeId scope_without_self_id = NameScopeId::None;
   NameScopeId scope_with_self_id = NameScopeId::None;
   // The block of instructions outside the constraint-with-self. This is where
