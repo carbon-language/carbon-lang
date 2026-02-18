@@ -44,13 +44,20 @@ fn Var() {
   var v: (Abstract2,);
 }
 
-// --- abstract_let.carbon
+// --- fail_todo_abstract_let.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract3 {
 }
 
 fn F(a: Abstract3) {
+  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:25: error: initialization of abstract type `(Abstract3,)` [AbstractTypeInInit]
+  // CHECK:STDERR:   let l: (Abstract3,) = (a,);
+  // CHECK:STDERR:                         ^~~~
+  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: abstract class Abstract3 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let l: (Abstract3,) = (a,);
 }
 
@@ -235,7 +242,7 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- fail_todo_abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
@@ -289,11 +296,11 @@ fn Var5() {
 // CHECK:STDOUT:     %l.patt: %pattern_type.016 = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc7_28: %tuple.type.c99 = tuple_literal (%a.ref)
-// CHECK:STDOUT:   %.loc7_21.1: type = splice_block %.loc7_21.3 [concrete = constants.%tuple.type.c99] {
-// CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
-// CHECK:STDOUT:     %.loc7_21.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc7_21.3: type = converted %.loc7_21.2, constants.%tuple.type.c99 [concrete = constants.%tuple.type.c99]
+// CHECK:STDOUT:   %.loc14_28: %tuple.type.c99 = tuple_literal (%a.ref)
+// CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%tuple.type.c99] {
+// CHECK:STDOUT:     %Abstract3.ref.loc14: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
+// CHECK:STDOUT:     %.loc14_21.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc14) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%tuple.type.c99 [concrete = constants.%tuple.type.c99]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %tuple.type.c99 = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return

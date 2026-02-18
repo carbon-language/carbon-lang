@@ -42,13 +42,20 @@ abstract class Abstract2 {}
 // CHECK:STDERR:
 var v: {.m2: Abstract2};
 
-// --- abstract_let.carbon
+// --- fail_todo_abstract_let.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract3 {
 }
 
 fn F(a: Abstract3) {
+  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:29: error: initialization of abstract type `{.m3: Abstract3}` [AbstractTypeInInit]
+  // CHECK:STDERR:   let l: {.m3: Abstract3} = {.m3 = a};
+  // CHECK:STDERR:                             ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: abstract class Abstract3 {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let l: {.m3: Abstract3} = {.m3 = a};
 }
 
@@ -190,7 +197,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- fail_todo_abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
@@ -233,9 +240,9 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %l.patt: %pattern_type.816 = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc7_37: %struct_type.m3.b1b = struct_literal (%a.ref)
-// CHECK:STDOUT:   %.loc7_25: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.b1b] {
-// CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
+// CHECK:STDOUT:   %.loc14_37: %struct_type.m3.b1b = struct_literal (%a.ref)
+// CHECK:STDOUT:   %.loc14_25: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.b1b] {
+// CHECK:STDOUT:     %Abstract3.ref.loc14: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
 // CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.b1b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %struct_type.m3.b1b = value_binding l, <error> [concrete = <error>]
