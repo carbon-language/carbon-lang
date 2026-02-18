@@ -236,6 +236,7 @@ cc_library(
     hdrs = ["entry_point.h"],
     deps = [
         ":file",
+        ":typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
