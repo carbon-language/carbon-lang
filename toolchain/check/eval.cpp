@@ -2571,6 +2571,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 // control flow and (eventually) side effects and mutable state.
 class FunctionExecContext : public EvalContext {
  public:
+  // A block argument passed to `BranchWithArg`.
+  struct BlockArgValue {
+    SemIR::InstBlockId block_id = SemIR::InstBlockId::None;
+    SemIR::ConstantId arg_id = SemIR::ConstantId::None;
+  };
+
   FunctionExecContext(Context* context, SemIR::LocId loc_id,
                       SemIR::SpecificId specific_id,
                       Map<SemIR::InstId, SemIR::ConstantId>* locals,
@@ -2579,22 +2585,58 @@ class FunctionExecContext : public EvalContext {
                     LocalEvalInfo{.locals = locals}),
         args_(context->inst_blocks().Get(args_id)) {}
 
-  // Returns the instructions to execute to complete this function invocation.
-  // In order to support `splice_block`, this is a stack of blocks. When the
-  // innermost block is complete, it will be popped and the next outer block
-  // will execute.
-  auto blocks() -> llvm::SmallVectorImpl<llvm::ArrayRef<SemIR::InstId>>& {
-    return blocks_;
-  }
-
   // Returns the argument values supplied in the call to the function.
   auto args() const -> llvm::ArrayRef<SemIR::InstId> { return args_; }
 
   using EvalContext::locals;
 
+  // Branch control flow to the given block. This replaces the innermost block
+  // in the block stack, but doesn't affect any enclosing blocks.
+  auto BranchTo(SemIR::InstBlockId block_id) -> void {
+    blocks_.back() = inst_blocks().Get(block_id);
+  }
+
+  // Push a new block to be executed immediately. After the block finishes,
+  // control will resume after the current instruction.
+  auto PushBlock(SemIR::InstBlockId block_id) -> void {
+    blocks_.push_back(inst_blocks().Get(block_id));
+  }
+
+  // Pops and returns the next instruction to be executed.
+  auto PopNextInstId() -> SemIR::InstId {
+    while (blocks_.back().empty()) {
+      blocks_.pop_back();
+      CARBON_CHECK(!blocks_.empty(), "Fell off end of function");
+    }
+    return blocks_.back().consume_front();
+  }
+
+  // Sets the most recent block argument value provided by a `BranchWithArg`.
+  // This can later be retrieved by a `BlockArg`.
+  auto SetCurrentBlockArgValue(BlockArgValue arg) -> void {
+    current_block_arg_value_ = arg;
+  }
+
+  // Returns the most recent block argument value provided by a `BranchWithArg`.
+  auto current_block_arg_value() const -> BlockArgValue {
+    return current_block_arg_value_;
+  }
+
  private:
+  // The stack of code blocks that we are currently evaluating. This is kept as
+  // a stack so that we can schedule the function body to execute after the decl
+  // block and so that we can handle `SpliceBlock`s. When the innermost block is
+  // complete, it will be popped and the next outer block will execute.
   llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
+
+  // The arguments in the function call.
   llvm::ArrayRef<SemIR::InstId> args_;
+
+  // The block argument provided by the most recently executed `BranchWithArg`.
+  // We assume that we only need to track one of these, as the branch target
+  // will invoke `BlockArg` before the next `BranchWithArg` happens. We will
+  // need to track more than one of these if that ever changes.
+  BlockArgValue current_block_arg_value_;
 };
 
 // Handles the result of executing an instruction in a function. Returns an
@@ -2648,12 +2690,24 @@ static auto TryExecTypedInst(FunctionExecContext& eval_context,
 }
 
 template <>
+auto TryExecTypedInst<SemIR::BlockArg>(FunctionExecContext& eval_context,
+                                       SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto block_arg = inst.As<SemIR::BlockArg>();
+  CARBON_CHECK(
+      block_arg.block_id == eval_context.current_block_arg_value().block_id,
+      "BlockArg does not refer to most recent BranchWithArg");
+  eval_context.locals().Update(inst_id,
+                               eval_context.current_block_arg_value().arg_id);
+  return SemIR::ConstantId::None;
+}
+
+template <>
 auto TryExecTypedInst<SemIR::Branch>(FunctionExecContext& eval_context,
                                      SemIR::InstId /*inst_id*/,
                                      SemIR::Inst inst) -> SemIR::ConstantId {
   auto branch = inst.As<SemIR::Branch>();
-  eval_context.blocks().back() =
-      eval_context.context().inst_blocks().Get(branch.target_id);
+  eval_context.BranchTo(branch.target_id);
   return SemIR::ConstantId::None;
 }
 
@@ -2668,13 +2722,23 @@ auto TryExecTypedInst<SemIR::BranchIf>(FunctionExecContext& eval_context,
   }
   auto cond = eval_context.insts().GetAs<SemIR::BoolLiteral>(cond_id);
   if (cond.value == SemIR::BoolValue::True) {
-    eval_context.blocks().back() =
-        eval_context.context().inst_blocks().Get(branch_if.target_id);
+    eval_context.BranchTo(branch_if.target_id);
   }
   return SemIR::ConstantId::None;
 }
 
-// TODO: BranchWithArg and BlockArg.
+template <>
+auto TryExecTypedInst<SemIR::BranchWithArg>(FunctionExecContext& eval_context,
+                                            SemIR::InstId /*inst_id*/,
+                                            SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto branch = inst.As<SemIR::BranchWithArg>();
+  eval_context.SetCurrentBlockArgValue(
+      {.block_id = branch.target_id,
+       .arg_id = eval_context.GetConstantValue(branch.arg_id)});
+  eval_context.BranchTo(branch.target_id);
+  return SemIR::ConstantId::None;
+}
 
 template <>
 auto TryExecTypedInst<SemIR::Return>(FunctionExecContext& eval_context,
@@ -2717,8 +2781,7 @@ auto TryExecTypedInst<SemIR::SpliceBlock>(FunctionExecContext& eval_context,
                                           SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto splice_block = inst.As<SemIR::SpliceBlock>();
-  eval_context.blocks().push_back(
-      eval_context.context().inst_blocks().Get(splice_block.block_id));
+  eval_context.PushBlock(splice_block.block_id);
   // TODO: Copy the values from the result_id instruction to the result of
   // the splice_block instruction once the spliced block finishes.
   return SemIR::ConstantId::None;
@@ -2825,25 +2888,15 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
       });
 
   // Execute the function decl block followed by the body.
-  auto push_block = [&](SemIR::InstBlockId block_id) {
-    eval_context.blocks().push_back(
-        eval_context.context().inst_blocks().Get(block_id));
-  };
-  push_block(function.body_block_ids.front());
-  push_block(eval_context.insts()
-                 .GetAs<SemIR::FunctionDecl>(function.definition_id)
-                 .decl_block_id);
+  eval_context.PushBlock(function.body_block_ids.front());
+  eval_context.PushBlock(eval_context.insts()
+                             .GetAs<SemIR::FunctionDecl>(function.definition_id)
+                             .decl_block_id);
 
   // Execute the blocks. This is mostly expression evaluation, with special
   // handling for control flow and parameters.
   while (true) {
-    if (eval_context.blocks().back().empty()) {
-      eval_context.blocks().pop_back();
-      CARBON_CHECK(!eval_context.blocks().empty(), "Fell off end of function");
-      continue;
-    }
-
-    auto inst_id = eval_context.blocks().back().consume_front();
+    auto inst_id = eval_context.PopNextInstId();
     auto inst = eval_context.context().insts().Get(inst_id);
     if (auto result = TryExecInst(eval_context, inst_id, inst);
         result.has_value()) {

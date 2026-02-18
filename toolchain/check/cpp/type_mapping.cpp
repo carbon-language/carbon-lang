@@ -520,6 +520,7 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
       break;
 
     case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::Dependent:
       CARBON_FATAL("Argument does not have primitive form");
   }
 

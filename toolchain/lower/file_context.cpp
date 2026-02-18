@@ -200,6 +200,7 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
     case SemIR::ExprCategory::Pattern:
     case SemIR::ExprCategory::Mixed:
     case SemIR::ExprCategory::RefTagged:
+    case SemIR::ExprCategory::Dependent:
       CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
                    sem_ir().insts().Get(const_inst_id));
   };

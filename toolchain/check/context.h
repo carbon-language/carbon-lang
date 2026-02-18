@@ -260,9 +260,9 @@ class Context {
     // TODO: Consider creating an AnyForm inst category to refer to those insts.
     SemIR::InstId form_inst_id;
     // The inst ID of the form expression's type component.
-    SemIR::TypeInstId type_component_id;
+    SemIR::TypeInstId type_component_inst_id;
     // The type ID corresponding to type_component_id.
-    SemIR::TypeId type_id;
+    SemIR::TypeId type_component_id;
   };
 
   // Pushes form_expr onto the stack of return form declarations for in-progress

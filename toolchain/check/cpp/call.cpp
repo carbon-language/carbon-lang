@@ -114,10 +114,51 @@ static auto ConvertArgToTemplateArg(Context& context,
     return MakePlaceholderTemplateArg(context, arg_id);
   }
 
-  if (isa<clang::NonTypeTemplateParmDecl>(param_decl)) {
-    // TODO: Check the argument has a concrete constant value, and convert it to
-    // a Clang constant value.
-    context.TODO(arg_id, "argument for non-type template parameter");
+  if (const auto* non_type =
+          dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
+    auto param_type = non_type->getType();
+
+    // Handle integer parameters.
+    if (param_type->isIntegerType()) {
+      // Get the Carbon type corresponding to the parameter's Clang type.
+      const auto type_expr =
+          ImportCppType(context, SemIR::LocId(arg_id), param_type);
+
+      // Try to convert the argument to the parameter type.
+      const auto converted_inst_id =
+          Convert(context, SemIR::LocId(arg_id), arg_id,
+                  {
+                      .kind = ConversionTarget::Value,
+                      .type_id = type_expr.type_id,
+                  });
+
+      if (converted_inst_id == SemIR::ErrorInst::InstId) {
+        return std::nullopt;
+      }
+
+      auto const_inst_id =
+          context.constant_values().GetConstantInstId(converted_inst_id);
+      if (const_inst_id.has_value()) {
+        if (auto int_value =
+                context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
+          const auto& ap_int = context.ints().Get(int_value->int_id);
+          const bool is_unsigned =
+              !param_type->isSignedIntegerOrEnumerationType();
+          auto aps_int =
+              llvm::APSInt(ap_int, is_unsigned)
+                  .extOrTrunc(context.ast_context().getIntWidth(param_type));
+          auto template_arg = clang::TemplateArgument(context.ast_context(),
+                                                      aps_int, param_type);
+          // TODO: provide a better location.
+          auto loc = clang::TemplateArgumentLocInfo();
+          return clang::TemplateArgumentLoc(template_arg, loc);
+        }
+      }
+    }
+
+    // TODO: Support other types.
+    context.TODO(arg_id,
+                 "unsupported argument type for non-type template parameter");
     return std::nullopt;
   }
 
