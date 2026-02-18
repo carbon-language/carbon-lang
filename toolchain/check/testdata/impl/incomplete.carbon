@@ -192,11 +192,7 @@ interface X {
 }
 
 // Requires `X` to be complete, doesn't require Z to be complete.
-// CHECK:STDERR: nested_require_incomplete_interface.carbon:[[@LINE+4]]:6: warning: binding `T` unused [UnusedBinding]
-// CHECK:STDERR: fn F(T:! X where .X1 = {}) {}
-// CHECK:STDERR:      ^
-// CHECK:STDERR:
-fn F(T:! X where .X1 = {}) {}
+fn F(unused T:! X where .X1 = {}) {}
 
 // --- fail_incomplete_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -780,23 +776,23 @@ interface B {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc20_12.1: type = splice_block %.loc20_12.2 [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:     %.loc16_19.1: type = splice_block %.loc16_19.2 [concrete = constants.%X_where.type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X.type]
 // CHECK:STDOUT:       %.Self.2: %X.type = symbolic_binding .Self [symbolic_self = constants.%.Self.637]
 // CHECK:STDOUT:       %.Self.ref: %X.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.637]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc20_18: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc16_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %X1.ref: %X.assoc_type = name_ref X1, @X1.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%X.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.loc20_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc20_25.2: type = converted %.loc20_25.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc20_12.2: type = where_expr %.Self.2 [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:       %.loc16_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc16_32.2: type = converted %.loc16_32.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc16_19.2: type = where_expr %.Self.2 [concrete = constants.%X_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%X.type
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc20_25.2
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc16_32.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc20_6.2: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc20_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc16_13.2: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -859,8 +855,8 @@ interface B {
 // CHECK:STDOUT:   assoc_const X1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc20_6.2: %X_where.type) {
-// CHECK:STDOUT:   %T.loc20_6.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc20_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc16_13.2: %X_where.type) {
+// CHECK:STDOUT:   %T.loc16_13.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -890,7 +886,7 @@ interface B {
 // CHECK:STDOUT: specific @X1(constants.%.Self.637) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc20_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc16_13.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon
