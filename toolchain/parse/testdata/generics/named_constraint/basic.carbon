@@ -26,7 +26,7 @@ constraint ForwardDeclared;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Empty'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSuffix', text: 'Empty'},
 // CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -35,7 +35,7 @@ constraint ForwardDeclared;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'WithRequire'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSuffix', text: 'WithRequire'},
 // CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -44,7 +44,7 @@ constraint ForwardDeclared;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'ForwardDeclared'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSuffix', text: 'ForwardDeclared'},
 // CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
