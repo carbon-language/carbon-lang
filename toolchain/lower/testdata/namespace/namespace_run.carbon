@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/namespace/namespaced_run.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/namespace/namespace_run.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/namespace/namespaced_run.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/namespace/namespace_run.carbon
 
 namespace Foo;
 
@@ -18,8 +18,8 @@ fn Run() {
     Foo.Run();
 }
 
-// CHECK:STDOUT: ; ModuleID = 'namespaced_run.carbon'
-// CHECK:STDOUT: source_filename = "namespaced_run.carbon"
+// CHECK:STDOUT: ; ModuleID = 'namespace_run.carbon'
+// CHECK:STDOUT: source_filename = "namespace_run.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CRun.Foo.Main() #0 !dbg !4 {
@@ -42,7 +42,7 @@ fn Run() {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "namespaced_run.carbon", directory: "")
+// CHECK:STDOUT: !3 = !DIFile(filename: "namespace_run.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "_CRun.Foo.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
