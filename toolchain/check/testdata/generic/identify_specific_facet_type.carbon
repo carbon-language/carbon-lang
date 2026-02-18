@@ -17,14 +17,17 @@ library "[[@TEST_NAME]]";
 // is invalid, so the impl as a whole is invalid.
 
 interface K(T:! type) {}
-constraint J(N:! i32) {
+constraint L(N:! i32) {
   require impls K(array(i32, N));
+}
+constraint J(N:! i32) {
+  require impls L(N);
 }
 
 // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE-6]]:30: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE-9]]:30: note: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR:   require impls K(array(i32, N));
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:

@@ -73,7 +73,8 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // returns None if any error is found.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                const SemIR::FacetType& facet_type)
+                                const SemIR::FacetType& facet_type,
+                                DiagnosticContextFn diagnostic_context)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.

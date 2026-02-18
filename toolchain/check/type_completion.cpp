@@ -885,8 +885,12 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                const SemIR::FacetType& facet_type)
+                                const SemIR::FacetType& facet_type,
+                                DiagnosticContextFn diagnostic_context)
     -> SemIR::IdentifiedFacetTypeId {
+  CARBON_CHECK(diagnostic_context);
+  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
+
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
                                     .self_const_id = self_const_id};

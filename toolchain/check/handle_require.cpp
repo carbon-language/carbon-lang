@@ -209,21 +209,16 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  auto identified_facet_type_id = SemIR::IdentifiedFacetTypeId::None;
-  {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              RequireImplsUnidentifiedFacetType, Context,
-              "facet type {0} cannot be identified in `require` declaration",
-              InstIdAsType);
-          builder.Context(constraint_inst_id, RequireImplsUnidentifiedFacetType,
-                          constraint_inst_id);
-        });
-    identified_facet_type_id = RequireIdentifiedFacetType(
-        context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
-        *constraint_facet_type);
-  }
+  auto identified_facet_type_id = RequireIdentifiedFacetType(
+      context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
+      *constraint_facet_type, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(
+            RequireImplsUnidentifiedFacetType, Context,
+            "facet type {0} cannot be identified in `require` declaration",
+            InstIdAsType);
+        builder.Context(constraint_inst_id, RequireImplsUnidentifiedFacetType,
+                        constraint_inst_id);
+      });
   if (!identified_facet_type_id.has_value()) {
     // The constraint can't be used. A diagnostic was emitted by
     // RequireIdentifiedFacetType().

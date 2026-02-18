@@ -2657,8 +2657,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     // GetLocalConstantId gave us an attached constant.
     auto unattached_self_const_id =
         resolver.local_constant_values().GetUnattachedConstant(self_const_id);
-    RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
-                               unattached_self_const_id, *facet_type);
+    RequireIdentifiedFacetType(
+        resolver.local_context(), SemIR::LocId::None, unattached_self_const_id,
+        *facet_type, []([[maybe_unused]] auto& builder) {
+          CARBON_FATAL("Imported impl constraint can't be identified");
+        });
   }
   if (import_impl.is_complete()) {
     ImportImplDefinition(resolver, import_impl, new_impl);

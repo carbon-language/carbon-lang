@@ -795,20 +795,15 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
 
-  auto identified_id = SemIR::IdentifiedFacetTypeId::None;
-  {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
-                            "facet type {0} cannot be identified in `impl as`",
-                            InstIdAsType);
-          builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,
-                          constraint_id);
-        });
-    identified_id = RequireIdentifiedFacetType(
-        context, SemIR::LocId(constraint_id),
-        context.constant_values().Get(self_id), *facet_type);
-  }
+  auto identified_id = RequireIdentifiedFacetType(
+      context, SemIR::LocId(constraint_id),
+      context.constant_values().Get(self_id), *facet_type, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
+                          "facet type {0} cannot be identified in `impl as`",
+                          InstIdAsType);
+        builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,
+                        constraint_id);
+      });
   if (!identified_id.has_value()) {
     return SemIR::SpecificInterface::None;
   }
