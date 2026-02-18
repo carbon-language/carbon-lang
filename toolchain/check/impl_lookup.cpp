@@ -601,12 +601,12 @@ static auto QueryIsConcrete(Context& context, SemIR::ConstantId self_const_id,
 }
 
 namespace {
-// A class to filter imported impls based on whether they could possibly match a
-// query, prior to importing them. For now we only consider impls that are for
-// an interface that's being queried.
+// A class to filter imported impls based on whether they could possibly match
+// a query, prior to importing them. For now we only consider impls that are
+// for an interface that's being queried.
 //
-// TODO: There's a lot more we could do to filter out impls that can't possibly
-// match.
+// TODO: There's a lot more we could do to filter out impls that can't
+// possibly match.
 class ImportImplFilter {
  public:
   explicit ImportImplFilter(Context& context, SemIR::ImportIRId import_ir_id,
@@ -734,8 +734,8 @@ static auto CollectCandidateImplsForQuery(
     // parameters of the impl.
     //
     // As a shortcut, if the impl's constraint is not symbolic (does not
-    // depend on any generic parameters), then we can determine whether we match
-    // by looking if the specific ids match exactly.
+    // depend on any generic parameters), then we can determine whether we
+    // match by looking if the specific ids match exactly.
     auto impl_interface_const_id =
         context.constant_values().Get(impl.constraint_id);
     if (!impl_interface_const_id.is_symbolic() &&
@@ -749,9 +749,9 @@ static auto CollectCandidateImplsForQuery(
     if (!type_structure) {
       continue;
     }
-    // TODO: We can skip the comparison here if the `impl_interface_const_id` is
-    // not symbolic, since when the interface and specific ids match, and they
-    // aren't symbolic, the structure will be identical.
+    // TODO: We can skip the comparison here if the `impl_interface_const_id`
+    // is not symbolic, since when the interface and specific ids match, and
+    // they aren't symbolic, the structure will be identical.
     if (!query_type_structure.CompareStructure(
             TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
             *type_structure)) {
