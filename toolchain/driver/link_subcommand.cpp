@@ -103,10 +103,17 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     driver_env.emitter.Emit(LinkObjectFilesMissing);
     return {.success = false};
   }
-  clang_args.append(options_.object_filenames.begin(),
-                    options_.object_filenames.end());
+
+  // Note that we append any extra Clang args before our object filenames. This
+  // allows us to propagate object filenames that collide with Clang flags using
+  // `--` before the filenames. While in theory, this could create a problem in
+  // the presence of mixtures of object files in the two lists and the order
+  // being dependent, we don't expect that in practice.
   clang_args.append(options_.extra_clang_args.begin(),
                     options_.extra_clang_args.end());
+  clang_args.push_back("--");
+  clang_args.append(options_.object_filenames.begin(),
+                    options_.object_filenames.end());
 
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);

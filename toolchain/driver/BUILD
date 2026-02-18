@@ -248,6 +248,7 @@ cc_test(
         "//common:error_test_helpers",
         "//common:filesystem",
         "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
         "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
