@@ -51,6 +51,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // 1 reserved id for `RequireImplsBlockId::Empty`.
       require_impls_blocks_(allocator_, check_ir_id, 1),
       observes_(check_ir_id),
+      // 1 reserved id for `ObserveBlockId::Empty`.
+      observe_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
       facet_types_(check_ir_id),
       identified_facet_types_(check_ir_id),

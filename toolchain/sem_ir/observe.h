@@ -37,6 +37,8 @@ struct Observe : Printable<Observe> {
 };
 
 using ObserveStore = ValueStore<ObserveId, Observe, Tag<CheckIRId>>;
+using ObserveBlockStore =
+    BlockValueStore<ObserveBlockId, ObserveId, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

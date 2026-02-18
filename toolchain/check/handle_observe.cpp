@@ -109,6 +109,7 @@ auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .parent_scope_inst_id = scope_inst_id});
   ReplaceInstBeforeConstantUse(context, decl_id, observe_decl);
+  context.observe_stack().AppendToTop(observe_decl.observe_id);
   return true;
 }
 

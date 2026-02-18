@@ -199,6 +199,10 @@ class File : public Printable<File> {
   }
   auto observes() -> ObserveStore& { return observes_; }
   auto observes() const -> const ObserveStore& { return observes_; }
+  auto observe_blocks() -> ObserveBlockStore& { return observe_blocks_; }
+  auto observe_blocks() const -> const ObserveBlockStore& {
+    return observe_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -380,6 +384,9 @@ class File : public Printable<File> {
 
   // Storage for observes.
   ObserveStore observes_;
+
+  // Storage for blocks of Observe.
+  ObserveBlockStore observe_blocks_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;

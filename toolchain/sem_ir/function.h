@@ -124,6 +124,9 @@ struct FunctionFields {
   // TODO: Extend this to support composite return forms.
   InstId return_pattern_id;
 
+  // This block consists of references to the `ObserveDecl` insts.
+  ObserveBlockId observe_block_id = ObserveBlockId::None;
+
   // Which kind of special function this is, if any. This is used in cases where
   // a special function would otherwise be indistinguishable from a normal
   // function.
