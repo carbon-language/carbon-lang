@@ -2572,7 +2572,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 class FunctionExecContext : public EvalContext {
  public:
   // A block argument passed to `BranchWithArg`.
-  struct BlockArg {
+  struct BlockArgValue {
     SemIR::InstBlockId block_id = SemIR::InstBlockId::None;
     SemIR::ConstantId arg_id = SemIR::ConstantId::None;
   };
@@ -2611,12 +2611,16 @@ class FunctionExecContext : public EvalContext {
     return blocks_.back().consume_front();
   }
 
-  // Sets the most recent block argument seen by a `BranchWithArg`. This can
-  // later be retrieved by a `BlockArg`.
-  auto SetLastBlockArg(BlockArg arg) -> void { last_block_arg_ = arg; }
+  // Sets the most recent block argument value provided by a `BranchWithArg`.
+  // This can later be retrieved by a `BlockArg`.
+  auto SetMostRecentBlockArgValue(BlockArgValue arg) -> void {
+    most_recent_block_arg_value_ = arg;
+  }
 
-  // Returns the most recent block argument seen by a `BranchWithArg`.
-  auto last_block_arg() const -> BlockArg { return last_block_arg_; }
+  // Returns the most recent block argument value provided by a `BranchWithArg`.
+  auto most_recent_block_arg_value() const -> BlockArgValue {
+    return most_recent_block_arg_value_;
+  }
 
  private:
   // The stack of code blocks that we are currently evaluating. This is kept as
@@ -2628,11 +2632,11 @@ class FunctionExecContext : public EvalContext {
   // The arguments in the function call.
   llvm::ArrayRef<SemIR::InstId> args_;
 
-  // The last `BranchWithArg` argument seen. We assume that we only need to
-  // track one of these, as the branch target will invoke `BlockArg` before the
-  // next `BranchWithArg` happens. We will need to track more than one of these
-  // if that ever changes.
-  BlockArg last_block_arg_;
+  // The block argument provided by the most recently executed `BranchWithArg`.
+  // We assume that we only need to track one of these, as the branch target
+  // will invoke `BlockArg` before the next `BranchWithArg` happens. We will
+  // need to track more than one of these if that ever changes.
+  BlockArgValue most_recent_block_arg_value_;
 };
 
 // Handles the result of executing an instruction in a function. Returns an
@@ -2690,9 +2694,11 @@ auto TryExecTypedInst<SemIR::BlockArg>(FunctionExecContext& eval_context,
                                        SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto block_arg = inst.As<SemIR::BlockArg>();
-  CARBON_CHECK(block_arg.block_id == eval_context.last_block_arg().block_id,
-               "BlockArg does not refer to most recent BranchWithArg");
-  eval_context.locals().Update(inst_id, eval_context.last_block_arg().arg_id);
+  CARBON_CHECK(
+      block_arg.block_id == eval_context.most_recent_block_arg_value().block_id,
+      "BlockArg does not refer to most recent BranchWithArg");
+  eval_context.locals().Update(
+      inst_id, eval_context.most_recent_block_arg_value().arg_id);
   return SemIR::ConstantId::None;
 }
 
@@ -2727,7 +2733,7 @@ auto TryExecTypedInst<SemIR::BranchWithArg>(FunctionExecContext& eval_context,
                                             SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto branch = inst.As<SemIR::BranchWithArg>();
-  eval_context.SetLastBlockArg(
+  eval_context.SetMostRecentBlockArgValue(
       {.block_id = branch.target_id,
        .arg_id = eval_context.GetConstantValue(branch.arg_id)});
   eval_context.BranchTo(branch.target_id);
