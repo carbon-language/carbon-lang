@@ -106,8 +106,10 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // important when build systems only allow appending custom user flags to
   // allow them to be used for driver.
   //
-  // Extract any arguments of that form, remove the prefix, and prepend them to
-  // the arg list prior to the busybox subcommand arguments.
+  // Extract any arguments of that form, remove the prefix, and insert them to
+  // the argument list just before the first positional parameter or subcommand.
+  // This let's them come after any other flags to the base driver and override
+  // them if needed.
   llvm::SmallVector<llvm::StringRef> extra_driver_args;
   llvm::erase_if(args, [&extra_driver_args](llvm::StringRef arg) {
     if (arg.consume_front("-Xcarbon=")) {
