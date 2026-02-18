@@ -111,12 +111,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At: %C.as.IndexWith.impl.At.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.bbe = facet_value %C, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith+Self.At.type.cc5: type = fn_type @IndexWith+Self.At, @IndexWith(%SubscriptType.9ec, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.cc5: type = fn_type @IndexWith.WithSelf.At, @IndexWith(%SubscriptType.9ec, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType.val: %ElementType = struct_value () [concrete]
 // CHECK:STDOUT:   %SubscriptType.val: %SubscriptType.9ec = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.8f0: type = fn_type_with_self_type %IndexWith+Self.At.type.cc5, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.8f0: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.cc5, %IndexWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -303,11 +303,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.type: type = fn_type @tuple.type.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At: %tuple.type.as.IndexWith.impl.At.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.d54 = facet_value %tuple.type.d23, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith+Self.At.type.4d2: type = fn_type @IndexWith+Self.At, @IndexWith(Core.IntLiteral, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.4d2: type = fn_type @IndexWith.WithSelf.At, @IndexWith(Core.IntLiteral, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %empty_tuple.bfb: %C = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple.d21: %tuple.type.d23 = tuple_value (%empty_tuple.bfb, %empty_tuple.bfb) [concrete]
-// CHECK:STDOUT:   %.0a8: type = fn_type_with_self_type %IndexWith+Self.At.type.4d2, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.0a8: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.4d2, %IndexWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

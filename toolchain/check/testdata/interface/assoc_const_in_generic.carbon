@@ -42,10 +42,10 @@ fn H() {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 2 [symbolic]
 // CHECK:STDOUT:   %.f4a: Core.Form = init_form %U, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.62e: type = pattern_type %U [symbolic]
-// CHECK:STDOUT:   %I+Self.F.type.1d6: type = fn_type @I+Self.F, @I(%T, %Self.fdb) [symbolic]
-// CHECK:STDOUT:   %I+Self.F.cd4: %I+Self.F.type.1d6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.1d6: type = fn_type @I.WithSelf.F, @I(%T, %Self.fdb) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.cd4: %I.WithSelf.F.type.1d6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.76c: type = assoc_entity_type @I, @I(%T) [symbolic]
-// CHECK:STDOUT:   %assoc0.203: %I.assoc_type.76c = assoc_entity element0, @I.%I+Self.F.decl [symbolic]
+// CHECK:STDOUT:   %assoc0.203: %I.assoc_type.76c = assoc_entity element0, @I.%I.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.e36: <witness> = require_complete_type %I.type.1ab [symbolic]
@@ -57,10 +57,10 @@ fn H() {
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.type.ab5: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %Self.7ae: %I.type.ab5 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %I+Self.F.type.3f5: type = fn_type @I+Self.F, @I(%empty_struct_type, %Self.fdb) [symbolic]
-// CHECK:STDOUT:   %I+Self.F.02c: %I+Self.F.type.3f5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.3f5: type = fn_type @I.WithSelf.F, @I(%empty_struct_type, %Self.fdb) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.02c: %I.WithSelf.F.type.3f5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.294: type = assoc_entity_type @I, @I(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %assoc0.c64: %I.assoc_type.294 = assoc_entity element0, @I.%I+Self.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.c64: %I.assoc_type.294 = assoc_entity element0, @I.%I.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %complete_type.5b1: <witness> = complete_type_witness %I.type.ab5 [concrete]
 // CHECK:STDOUT:   %complete_type.7fc: <witness> = complete_type_witness %I.assoc_type.294 [concrete]
 // CHECK:STDOUT: }
@@ -98,35 +98,35 @@ fn H() {
 // CHECK:STDOUT:     interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %I+Self.F.decl: @I.%I+Self.F.type (%I+Self.F.type.1d6) = fn_decl @I+Self.F [symbolic = @I.%I+Self.F (constants.%I+Self.F.cd4)] {
+// CHECK:STDOUT:     %I.WithSelf.F.decl: @I.%I.WithSelf.F.type (%I.WithSelf.F.type.1d6) = fn_decl @I.WithSelf.F [symbolic = @I.%I.WithSelf.F (constants.%I.WithSelf.F.cd4)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
-// CHECK:STDOUT:       %return.patt: @I+Self.F.%pattern_type (%pattern_type.62e) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @I+Self.F.%pattern_type (%pattern_type.62e) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc16_21.2: Core.Form = init_form %U.ref, call_param0 [symbolic = %.loc16_21.1 (constants.%.f4a)]
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc16_8.2: type = symbolic_binding U, 2 [symbolic = %U.loc16_8.1 (constants.%U)]
-// CHECK:STDOUT:       %return.param: ref @I+Self.F.%U.loc16_8.1 (%U) = out_param call_param0
-// CHECK:STDOUT:       %return: ref @I+Self.F.%U.loc16_8.1 (%U) = return_slot %return.param
+// CHECK:STDOUT:       %return.param: ref @I.WithSelf.F.%U.loc16_8.1 (%U) = out_param call_param0
+// CHECK:STDOUT:       %return: ref @I.WithSelf.F.%U.loc16_8.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc16_22.1: @I.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, %I+Self.F.decl [symbolic = %assoc0.loc16_22.2 (constants.%assoc0.203)]
+// CHECK:STDOUT:     %assoc0.loc16_22.1: @I.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc16_22.2 (constants.%assoc0.203)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc15_23.1
 // CHECK:STDOUT:     .F = %assoc0.loc16_22.1
-// CHECK:STDOUT:     witness = (%I+Self.F.decl)
+// CHECK:STDOUT:     witness = (%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I+Self.F(@I.%T.loc15_13.2: type, @I.%Self.loc15_23.1: @I.%I.type.loc15 (%I.type.1ab), %U.loc16_8.2: type) {
+// CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%T.loc15_13.2: type, @I.%Self.loc15_23.1: @I.%I.type.loc15 (%I.type.1ab), %U.loc16_8.2: type) {
 // CHECK:STDOUT:   %U.loc16_8.1: type = symbolic_binding U, 2 [symbolic = %U.loc16_8.1 (constants.%U)]
 // CHECK:STDOUT:   %.loc16_21.1: Core.Form = init_form %U.loc16_8.1, call_param0 [symbolic = %.loc16_21.1 (constants.%.f4a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U.loc16_8.1 [symbolic = %pattern_type (constants.%pattern_type.62e)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> out %return.param: @I+Self.F.%U.loc16_8.1 (%U);
+// CHECK:STDOUT:   fn() -> out %return.param: @I.WithSelf.F.%U.loc16_8.1 (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc19_6.2: type) {
@@ -136,7 +136,7 @@ fn H() {
 // CHECK:STDOUT:   %I.type.loc23_6.2: type = facet_type <@I, @I(%T.loc19_6.1)> [symbolic = %I.type.loc23_6.2 (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %require_complete.loc23_7.1: <witness> = require_complete_type %I.type.loc23_6.2 [symbolic = %require_complete.loc23_7.1 (constants.%require_complete.e36)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc19_6.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.76c)]
-// CHECK:STDOUT:   %assoc0: @G.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.%I+Self.F.decl [symbolic = %assoc0 (constants.%assoc0.203)]
+// CHECK:STDOUT:   %assoc0: @G.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.%I.WithSelf.F.decl [symbolic = %assoc0 (constants.%assoc0.203)]
 // CHECK:STDOUT:   %require_complete.loc23_7.2: <witness> = require_complete_type %I.assoc_type [symbolic = %require_complete.loc23_7.2 (constants.%require_complete.ac0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -173,13 +173,13 @@ fn H() {
 // CHECK:STDOUT:   %T.loc16 => constants.%T
 // CHECK:STDOUT:   %I.type.loc16 => constants.%I.type.1ab
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self.fdb
-// CHECK:STDOUT:   %I+Self.F.type => constants.%I+Self.F.type.1d6
-// CHECK:STDOUT:   %I+Self.F => constants.%I+Self.F.cd4
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.1d6
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.cd4
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.76c
 // CHECK:STDOUT:   %assoc0.loc16_22.2 => constants.%assoc0.203
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I+Self.F(constants.%T, constants.%Self.fdb, constants.%U) {
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%T, constants.%Self.fdb, constants.%U) {
 // CHECK:STDOUT:   %U.loc16_8.1 => constants.%U
 // CHECK:STDOUT:   %.loc16_21.1 => constants.%.f4a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.62e
@@ -213,8 +213,8 @@ fn H() {
 // CHECK:STDOUT:   %T.loc16 => constants.%empty_struct_type
 // CHECK:STDOUT:   %I.type.loc16 => constants.%I.type.ab5
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self.fdb
-// CHECK:STDOUT:   %I+Self.F.type => constants.%I+Self.F.type.3f5
-// CHECK:STDOUT:   %I+Self.F => constants.%I+Self.F.02c
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.3f5
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.02c
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.294
 // CHECK:STDOUT:   %assoc0.loc16_22.2 => constants.%assoc0.c64
 // CHECK:STDOUT: }

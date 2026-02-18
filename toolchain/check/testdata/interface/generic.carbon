@@ -97,10 +97,10 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Self.629: %WithAssocFn.type.d36 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %.22a: Core.Form = init_form %X, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.type.6c9: type = fn_type @WithAssocFn+Self.F, @WithAssocFn(%T.67d, %Self.629) [symbolic]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.6d9: %WithAssocFn+Self.F.type.6c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.6c9: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%T.67d, %Self.629) [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.6d9: %WithAssocFn.WithSelf.F.type.6c9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.assoc_type.b93: type = assoc_entity_type @WithAssocFn, @WithAssocFn(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.395: %WithAssocFn.assoc_type.b93 = assoc_entity element0, @WithAssocFn.%WithAssocFn+Self.F.decl [symbolic]
+// CHECK:STDOUT:   %assoc0.395: %WithAssocFn.assoc_type.b93 = assoc_entity element0, @WithAssocFn.%WithAssocFn.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Simple.type.12a: type = facet_type <@Simple, @Simple(%C)> [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.as.Simple.impl.%Simple.impl_witness_table [concrete]
@@ -109,15 +109,15 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.type.19d: type = facet_type <@WithAssocFn, @WithAssocFn(%C)> [concrete]
 // CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness @C.as.WithAssocFn.impl.%WithAssocFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.63e: %WithAssocFn.type.19d = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.type.836: type = fn_type @WithAssocFn+Self.F, @WithAssocFn(%C, %Self.629) [symbolic]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.a5a: %WithAssocFn+Self.F.type.836 = struct_value () [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.836: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%C, %Self.629) [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.a5a: %WithAssocFn.WithSelf.F.type.836 = struct_value () [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.assoc_type.cc0: type = assoc_entity_type @WithAssocFn, @WithAssocFn(%C) [concrete]
-// CHECK:STDOUT:   %assoc0.50d: %WithAssocFn.assoc_type.cc0 = assoc_entity element0, @WithAssocFn.%WithAssocFn+Self.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.50d: %WithAssocFn.assoc_type.cc0 = assoc_entity element0, @WithAssocFn.%WithAssocFn.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F.type: type = fn_type @C.as.WithAssocFn.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F: %C.as.WithAssocFn.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.19d = facet_value %C, (%WithAssocFn.impl_witness) [concrete]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.type.a47: type = fn_type @WithAssocFn+Self.F, @WithAssocFn(%C, %WithAssocFn.facet) [concrete]
-// CHECK:STDOUT:   %WithAssocFn+Self.F.975: %WithAssocFn+Self.F.type.a47 = struct_value () [concrete]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.a47: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%C, %WithAssocFn.facet) [concrete]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.975: %WithAssocFn.WithSelf.F.type.a47 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %N: %T.67d = symbolic_binding N, 1 [symbolic]
@@ -224,7 +224,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     interface_with_self_decl @WithAssocFn [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %WithAssocFn+Self.F.decl: @WithAssocFn.%WithAssocFn+Self.F.type (%WithAssocFn+Self.F.type.6c9) = fn_decl @WithAssocFn+Self.F [symbolic = @WithAssocFn.%WithAssocFn+Self.F (constants.%WithAssocFn+Self.F.6d9)] {
+// CHECK:STDOUT:     %WithAssocFn.WithSelf.F.decl: @WithAssocFn.%WithAssocFn.WithSelf.F.type (%WithAssocFn.WithSelf.F.type.6c9) = fn_decl @WithAssocFn.WithSelf.F [symbolic = @WithAssocFn.%WithAssocFn.WithSelf.F (constants.%WithAssocFn.WithSelf.F.6d9)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.05f = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
@@ -233,14 +233,14 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc10_14.1: @WithAssocFn.%WithAssocFn.assoc_type (%WithAssocFn.assoc_type.b93) = assoc_entity element0, %WithAssocFn+Self.F.decl [symbolic = %assoc0.loc10_14.2 (constants.%assoc0.395)]
+// CHECK:STDOUT:     %assoc0.loc10_14.1: @WithAssocFn.%WithAssocFn.assoc_type (%WithAssocFn.assoc_type.b93) = assoc_entity element0, %WithAssocFn.WithSelf.F.decl [symbolic = %assoc0.loc10_14.2 (constants.%assoc0.395)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_33.1
 // CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc10_14.1
-// CHECK:STDOUT:     witness = (%WithAssocFn+Self.F.decl)
+// CHECK:STDOUT:     witness = (%WithAssocFn.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -313,7 +313,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WithAssocFn+Self.F(@WithAssocFn.%T.loc8_23.2: type, @WithAssocFn.%Self.loc8_33.1: @WithAssocFn.%WithAssocFn.type.loc8 (%WithAssocFn.type.d36)) {
+// CHECK:STDOUT: generic fn @WithAssocFn.WithSelf.F(@WithAssocFn.%T.loc8_23.2: type, @WithAssocFn.%Self.loc8_33.1: @WithAssocFn.%WithAssocFn.type.loc8 (%WithAssocFn.type.d36)) {
 // CHECK:STDOUT:   fn() -> out %return.param: %X;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,7 +364,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn+Self.F(constants.%T.67d, constants.%Self.629) {}
+// CHECK:STDOUT: specific @WithAssocFn.WithSelf.F(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_18.1 => constants.%C
@@ -395,8 +395,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10 => constants.%C
 // CHECK:STDOUT:   %WithAssocFn.type.loc10 => constants.%WithAssocFn.type.19d
 // CHECK:STDOUT:   %Self.loc10 => constants.%Self.629
-// CHECK:STDOUT:   %WithAssocFn+Self.F.type => constants.%WithAssocFn+Self.F.type.836
-// CHECK:STDOUT:   %WithAssocFn+Self.F => constants.%WithAssocFn+Self.F.a5a
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.836
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.a5a
 // CHECK:STDOUT:   %WithAssocFn.assoc_type => constants.%WithAssocFn.assoc_type.cc0
 // CHECK:STDOUT:   %assoc0.loc10_14.2 => constants.%assoc0.50d
 // CHECK:STDOUT: }
@@ -406,13 +406,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10 => constants.%C
 // CHECK:STDOUT:   %WithAssocFn.type.loc10 => constants.%WithAssocFn.type.19d
 // CHECK:STDOUT:   %Self.loc10 => constants.%WithAssocFn.facet
-// CHECK:STDOUT:   %WithAssocFn+Self.F.type => constants.%WithAssocFn+Self.F.type.a47
-// CHECK:STDOUT:   %WithAssocFn+Self.F => constants.%WithAssocFn+Self.F.975
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.a47
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.975
 // CHECK:STDOUT:   %WithAssocFn.assoc_type => constants.%WithAssocFn.assoc_type.cc0
 // CHECK:STDOUT:   %assoc0.loc10_14.2 => constants.%assoc0.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn+Self.F(constants.%C, constants.%WithAssocFn.facet) {}
+// CHECK:STDOUT: specific @WithAssocFn.WithSelf.F(constants.%C, constants.%WithAssocFn.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.67d, constants.%N) {
 // CHECK:STDOUT:   %T.loc22_28.1 => constants.%T.67d

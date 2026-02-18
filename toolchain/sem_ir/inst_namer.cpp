@@ -723,7 +723,7 @@ auto InstNamer::PushEntity(InterfaceId interface_id, ScopeId scope_id,
   LocId interface_loc(interface.latest_decl_id());
   auto name = sem_ir_->names().GetIRBaseName(interface.name_id).str();
   scope.name = globals_.AllocateName(*this, interface_loc, name);
-  name += "+Self";
+  name += ".WithSelf";
   scope.name_with_self = globals_.AllocateName(*this, interface_loc, name);
   AddBlockLabel(scope_id, interface.body_block_without_self_id, "interface",
                 interface_loc);
@@ -745,7 +745,7 @@ auto InstNamer::PushEntity(NamedConstraintId named_constraint_id,
   LocId constraint_loc(constraint.latest_decl_id());
   auto name = sem_ir_->names().GetIRBaseName(constraint.name_id).str();
   scope.name = globals_.AllocateName(*this, constraint_loc, name);
-  name += "+Self";
+  name += ".WithSelf";
   scope.name_with_self = globals_.AllocateName(*this, constraint_loc, name);
   AddBlockLabel(scope_id, constraint.body_block_without_self_id, "constraint",
                 constraint_loc);

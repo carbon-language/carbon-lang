@@ -38,10 +38,10 @@ fn F(c: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I+Self.F.type: type = fn_type @I+Self.F, @I(%Self) [symbolic]
-// CHECK:STDOUT:   %I+Self.F: %I+Self.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I+Self.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -73,13 +73,13 @@ fn F(c: C) {
 // CHECK:STDOUT:   interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %I+Self.F.decl: @I.%I+Self.F.type (%I+Self.F.type) = fn_decl @I+Self.F [symbolic = @I.%I+Self.F (constants.%I+Self.F)] {} {}
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I+Self.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %I.WithSelf.F.decl: @I.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.%I.WithSelf.F (constants.%I.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%I+Self.F.decl)
+// CHECK:STDOUT:   witness = (%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -97,7 +97,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I+Self.F(@I.%Self.loc15: %I.type) {
+// CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self.loc15: %I.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -113,9 +113,9 @@ fn F(c: C) {
 // CHECK:STDOUT: specific @I(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self
-// CHECK:STDOUT:   %I+Self.F.type => constants.%I+Self.F.type
-// CHECK:STDOUT:   %I+Self.F => constants.%I+Self.F
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I+Self.F(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:

@@ -101,14 +101,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual.type: type = fn_type @C.as.EqWith.impl.NotEqual [concrete]
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual: %C.as.EqWith.impl.NotEqual.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EqWith.facet: %EqWith.type.ae7 = facet_value %C, (%EqWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %EqWith+Self.Equal.type.fc2: type = fn_type @EqWith+Self.Equal, @EqWith(%C, %EqWith.facet) [concrete]
-// CHECK:STDOUT:   %EqWith+Self.NotEqual.type.eb7: type = fn_type @EqWith+Self.NotEqual, @EqWith(%C, %EqWith.facet) [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.fc2: type = fn_type @EqWith.WithSelf.Equal, @EqWith(%C, %EqWith.facet) [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.eb7: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith(%C, %EqWith.facet) [concrete]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [concrete]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ea4: type = fn_type_with_self_type %EqWith+Self.Equal.type.fc2, %EqWith.facet [concrete]
+// CHECK:STDOUT:   %.ea4: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.fc2, %EqWith.facet [concrete]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [concrete]
 // CHECK:STDOUT:   %TestNotEqual: %TestNotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.e2b: type = fn_type_with_self_type %EqWith+Self.NotEqual.type.eb7, %EqWith.facet [concrete]
+// CHECK:STDOUT:   %.e2b: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.eb7, %EqWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

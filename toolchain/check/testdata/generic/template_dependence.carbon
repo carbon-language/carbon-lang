@@ -48,10 +48,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67db0b.1) [template]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f8f9.1, @Copy [template]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e8f8f9.1, (%Copy.lookup_impl_witness.2e6) [template]
-// CHECK:STDOUT:   %Copy+Self.Op.type.d82: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [template]
-// CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy+Self.Op.type.d82, %Copy.facet [template]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d82: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [template]
+// CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d82, %Copy.facet [template]
 // CHECK:STDOUT:   %impl.elem0.1c7: %.299 = impl_witness_access %Copy.lookup_impl_witness.2e6, element0 [template]
-// CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy+Self.Op(%Copy.facet) [template]
+// CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy.WithSelf.Op(%Copy.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -96,10 +96,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_15.1) [template = %.loc6_10.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]
-// CHECK:STDOUT:   %Copy+Self.Op.type: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [template = %Copy+Self.Op.type (constants.%Copy+Self.Op.type.d82)]
-// CHECK:STDOUT:   %.loc6_10.4: type = fn_type_with_self_type %Copy+Self.Op.type, %Copy.facet [template = %.loc6_10.4 (constants.%.299)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [template = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
+// CHECK:STDOUT:   %.loc6_10.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [template = %.loc6_10.4 (constants.%.299)]
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.4 (%.299) = impl_witness_access %Copy.lookup_impl_witness, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.1c7)]
-// CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy+Self.Op(%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.366)]
+// CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.WithSelf.Op(%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.366)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_30.1 (%ptr.125)) -> out %return.param: @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) {
 // CHECK:STDOUT:   !entry:
@@ -108,10 +108,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc6_10.2: @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = acquire_value %.loc6_10.1
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @F.%.loc6_10.4 (%.299) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %.loc6_10.2, %impl.elem0.loc6_10.1
-// CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy+Self.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.366)]
+// CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.WithSelf.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.366)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
-// CHECK:STDOUT:     %Copy+Self.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
-// CHECK:STDOUT:     return %Copy+Self.Op.call
+// CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
+// CHECK:STDOUT:     return %Copy.WithSelf.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -97,8 +97,8 @@ fn F() {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
-// CHECK:STDOUT:   %Copy+Self.Op.type.a4f: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy+Self.Op.type.a4f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.a4f: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy.WithSelf.Op.type.a4f, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -141,8 +141,8 @@ fn F() {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
-// CHECK:STDOUT:   %Copy+Self.Op.type.a4f: type = fn_type @Copy+Self.Op, @Copy(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy+Self.Op.type.a4f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.a4f: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy.WithSelf.Op.type.a4f, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
