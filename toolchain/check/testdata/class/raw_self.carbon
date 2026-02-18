@@ -42,7 +42,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %.38b: form = init_form %tuple.type.d07, call_param2 [concrete]
+// CHECK:STDOUT:   %.0a8: Core.Form = init_form %tuple.type.d07, call_param2 [concrete]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G [concrete]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [concrete]
@@ -111,7 +111,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %i32.loc25_46: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc25_49.1: %tuple.type.24b = tuple_literal (%i32.loc25_41, %i32.loc25_46) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:     %.loc25_49.2: type = converted %.loc25_49.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
-// CHECK:STDOUT:     %.loc25_49.3: form = init_form %.loc25_49.2, call_param2 [concrete = constants.%.38b]
+// CHECK:STDOUT:     %.loc25_49.3: Core.Form = init_form %.loc25_49.2, call_param2 [concrete = constants.%.0a8]
 // CHECK:STDOUT:     %self.param.loc25_16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc25_12: %Class = value_binding self, %self.param.loc25_16
@@ -157,7 +157,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %i32.loc17_42: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc17_45.1: %tuple.type.24b = tuple_literal (%i32.loc17_37, %i32.loc17_42) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:     %.loc17_45.2: type = converted %.loc17_45.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
-// CHECK:STDOUT:     %.loc17_45.3: form = init_form %.loc17_45.2, call_param2 [concrete = constants.%.38b]
+// CHECK:STDOUT:     %.loc17_45.3: Core.Form = init_form %.loc17_45.2, call_param2 [concrete = constants.%.0a8]
 // CHECK:STDOUT:     %self.param.loc17_12: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc17_8: %Class = value_binding self, %self.param.loc17_12
@@ -183,7 +183,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .n = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc21_20: %Class, %self.param.loc21_34: %i32) {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc21_20: ref %Class, %self.param.loc21_34: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_3: ref %Class = name_ref self, %self.loc21_16
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc18 [concrete = @Class.%.loc18]
@@ -212,14 +212,14 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %bound_method.loc26_15.2: <bound method> = bound_method %.loc26_15.2, %specific_fn.loc26_15
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26_15: init %i32 = call %bound_method.loc26_15.2(%.loc26_15.2)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param.loc25, element0
-// CHECK:STDOUT:   %.loc26_25.2: init %i32 to %tuple.elem0 = initialize_from %Int.as.Copy.impl.Op.call.loc26_15
+// CHECK:STDOUT:   %.loc26_25.2: init %i32 to %tuple.elem0 = in_place_init %Int.as.Copy.impl.Op.call.loc26_15
 // CHECK:STDOUT:   %impl.elem0.loc26_19: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc26_19.1: <bound method> = bound_method %self.ref.loc26_19, %impl.elem0.loc26_19
 // CHECK:STDOUT:   %specific_fn.loc26_19: <specific function> = specific_function %impl.elem0.loc26_19, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc26_19.2: <bound method> = bound_method %self.ref.loc26_19, %specific_fn.loc26_19
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26_19: init %i32 = call %bound_method.loc26_19.2(%self.ref.loc26_19)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param.loc25, element1
-// CHECK:STDOUT:   %.loc26_25.3: init %i32 to %tuple.elem1 = initialize_from %Int.as.Copy.impl.Op.call.loc26_19
+// CHECK:STDOUT:   %.loc26_25.3: init %i32 to %tuple.elem1 = in_place_init %Int.as.Copy.impl.Op.call.loc26_19
 // CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.d07 to %return.param.loc25 = tuple_init (%.loc26_25.2, %.loc26_25.3)
 // CHECK:STDOUT:   %.loc26_26: init %tuple.type.d07 = converted %.loc26_25.1, %.loc26_25.4
 // CHECK:STDOUT:   return %.loc26_26 to %return.param.loc25

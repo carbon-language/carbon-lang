@@ -67,7 +67,7 @@ fn NotRef(a: i32, b: i32) = "int.left_shift_assign";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%a.param: %i32, %b.param: %i32) {
+// CHECK:STDOUT: fn @Call(%a.param: ref %i32, %b.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
@@ -77,7 +77,7 @@ fn NotRef(a: i32, b: i32) = "int.left_shift_assign";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallMixed(%a.param: %i32, %b.param: %i64) {
+// CHECK:STDOUT: fn @CallMixed(%a.param: ref %i32, %b.param: %i64) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MixedTypes.ref: %MixedTypes.type = name_ref MixedTypes, file.%MixedTypes.decl [concrete = constants.%MixedTypes]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a

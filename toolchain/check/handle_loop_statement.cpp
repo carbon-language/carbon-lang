@@ -160,6 +160,9 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Create the cursor variable.
   // TODO: Produce a custom diagnostic if the range operand can't be used as a
   // range.
+  // TODO: We need to allocate the `VarStorage` before building the operator.
+  // The current order risks violating the preconditions on `Initialize` and
+  // risks violating the topological ordering of insts.
   auto cursor_id =
       BuildUnaryOperator(context, node_id,
                          {.interface_name = CoreIdentifier::Iterate,
@@ -177,7 +180,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
   // Call `<range>.(Iterate.Next)(&cursor)`.
-  auto cursor_type_inst_id = context.types().GetInstId(cursor_type_id);
+  auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
   auto cursor_addr_id = AddInst<SemIR::AddrOf>(
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),

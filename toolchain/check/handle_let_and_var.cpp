@@ -15,7 +15,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"

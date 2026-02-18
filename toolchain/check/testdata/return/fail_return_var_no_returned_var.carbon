@@ -25,7 +25,7 @@ fn Procedure() -> {} {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %.e6e: form = init_form %empty_struct_type, call_param0 [concrete]
+// CHECK:STDOUT:   %.dde: Core.Form = init_form %empty_struct_type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [concrete]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [concrete]
@@ -41,7 +41,7 @@ fn Procedure() -> {} {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc15_20.3: form = init_form %.loc15_20.2, call_param0 [concrete = constants.%.e6e]
+// CHECK:STDOUT:     %.loc15_20.3: Core.Form = init_form %.loc15_20.2, call_param0 [concrete = constants.%.dde]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }

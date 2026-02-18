@@ -93,7 +93,7 @@ final impl CppCompat.ULong32 as ImplicitAs(IntLiteral()) {
 
 // TODO: ImplicitAs from UInt(N) to ULong32 if N < 32.
 impl u32 as ImplicitAs(CppCompat.ULong32) {
-  fn Convert[self: Self]() -> CppCompat.ULong32 = "int.convert_checked";
+  fn Convert[self: Self]() -> CppCompat.ULong32 = "int.convert";
 }
 
 // TODO: ImplicitAs from ULong32 to UInt(N) if N > 32.
@@ -142,7 +142,7 @@ final impl CppCompat.ULongLong64 as ImplicitAs(IntLiteral()) {
 
 // TODO: ImplicitAs from UInt(N) to ULongLong64 if N < 64.
 impl u64 as ImplicitAs(CppCompat.ULongLong64) {
-  fn Convert[self: Self]() -> CppCompat.ULongLong64 = "int.convert_checked";
+  fn Convert[self: Self]() -> CppCompat.ULongLong64 = "int.convert";
 }
 
 // TODO: ImplicitAs from ULongLong64 to UInt(N) if N > 64.

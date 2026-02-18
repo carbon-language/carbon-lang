@@ -71,7 +71,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
       AddInstInNoBlock<SemIR::RequirementBaseFacetType>(
           context, SemIR::LocId(node_id),
           {.base_type_inst_id =
-               context.types().GetInstId(self_with_constraints_type_id)}));
+               context.types().GetTypeInstId(self_with_constraints_type_id)}));
 
   // Add a context stack for tracking rewrite constraints, that will be used to
   // allow later constraints to read from them eagerly.

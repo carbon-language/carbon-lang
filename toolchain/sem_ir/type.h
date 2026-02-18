@@ -83,7 +83,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetAsTypeInstId(InstId inst_id) const -> TypeInstId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> TypeInstId;
+  auto GetTypeInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
@@ -141,7 +141,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // case where they might be in different generics and thus might have
   // different ConstantIds, but are still symbolically equal.
   auto AreEqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
-    return GetInstId(a) == GetInstId(b);
+    return GetTypeInstId(a) == GetTypeInstId(b);
   }
 
   // Gets the value representation to use for a type. This returns an

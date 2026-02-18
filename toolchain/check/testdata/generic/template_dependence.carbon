@@ -38,12 +38,12 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %T.67db0b.1 [template]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [template]
-// CHECK:STDOUT:   %.ba4d87.1: form = init_form %ptr.e8f8f9.1, call_param1 [template]
+// CHECK:STDOUT:   %.4fe7d1.1: Core.Form = init_form %ptr.e8f8f9.1, call_param1 [template]
 // CHECK:STDOUT:   %pattern_type.4f4b84.1: type = pattern_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %require_complete.fbe: <witness> = require_complete_type %ptr.125 [template]
+// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67db0b.1) [template]
@@ -67,7 +67,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5_36: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %ptr.loc5_37: type = ptr_type %T.ref.loc5_36 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
-// CHECK:STDOUT:     %.loc5_37.2: form = init_form %ptr.loc5_37, call_param1 [template = %.loc5_37.1 (constants.%.ba4d87.1)]
+// CHECK:STDOUT:     %.loc5_37.2: Core.Form = init_form %ptr.loc5_37, call_param1 [template = %.loc5_37.1 (constants.%.4fe7d1.1)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %x.param: @F.%ptr.loc5_30.1 (%ptr.125) = value_param call_param0
@@ -87,12 +87,12 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.loc5_29.1: type = ptr_type %T.loc5_15.1 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:   %ptr.loc5_30.1: type = ptr_type %ptr.loc5_29.1 [template = %ptr.loc5_30.1 (constants.%ptr.125)]
 // CHECK:STDOUT:   %pattern_type.loc5_25: type = pattern_type %ptr.loc5_30.1 [template = %pattern_type.loc5_25 (constants.%pattern_type.8bb)]
-// CHECK:STDOUT:   %.loc5_37.1: form = init_form %ptr.loc5_29.1, call_param1 [template = %.loc5_37.1 (constants.%.ba4d87.1)]
+// CHECK:STDOUT:   %.loc5_37.1: Core.Form = init_form %ptr.loc5_29.1, call_param1 [template = %.loc5_37.1 (constants.%.4fe7d1.1)]
 // CHECK:STDOUT:   %pattern_type.loc5_33: type = pattern_type %ptr.loc5_29.1 [template = %pattern_type.loc5_33 (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_37: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_37 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.fbe)]
+// CHECK:STDOUT:   %require_complete.loc5_37: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_37 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %.loc6_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_15.1) [template = %.loc6_10.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]
@@ -119,7 +119,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.loc5_29.1 => constants.%ptr.e8f8f9.1
 // CHECK:STDOUT:   %ptr.loc5_30.1 => constants.%ptr.125
 // CHECK:STDOUT:   %pattern_type.loc5_25 => constants.%pattern_type.8bb
-// CHECK:STDOUT:   %.loc5_37.1 => constants.%.ba4d87.1
+// CHECK:STDOUT:   %.loc5_37.1 => constants.%.4fe7d1.1
 // CHECK:STDOUT:   %pattern_type.loc5_33 => constants.%pattern_type.4f4b84.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,7 +132,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T, %U) [template]
 // CHECK:STDOUT:   %tuple.type.a5e: type = tuple_type (%T, %U) [template]
-// CHECK:STDOUT:   %.5b7: form = init_form %tuple.type.a5e, call_param0 [template]
+// CHECK:STDOUT:   %.fbc: Core.Form = init_form %tuple.type.a5e, call_param0 [template]
 // CHECK:STDOUT:   %pattern_type.eee: type = pattern_type %tuple.type.a5e [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -154,7 +154,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %U.ref.loc5: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc5_43.3: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:     %.loc5_43.4: type = converted %.loc5_43.3, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
-// CHECK:STDOUT:     %.loc5_43.5: form = init_form %.loc5_43.4, call_param0 [template = %.loc5_43.2 (constants.%.5b7)]
+// CHECK:STDOUT:     %.loc5_43.5: Core.Form = init_form %.loc5_43.4, call_param0 [template = %.loc5_43.2 (constants.%.fbc)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     <elided>
@@ -169,7 +169,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %U.loc5_25.1: type = symbolic_binding U, 1 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple.type (constants.%tuple.type.a5e)]
-// CHECK:STDOUT:   %.loc5_43.2: form = init_form %tuple.type, call_param0 [template = %.loc5_43.2 (constants.%.5b7)]
+// CHECK:STDOUT:   %.loc5_43.2: Core.Form = init_form %tuple.type, call_param0 [template = %.loc5_43.2 (constants.%.fbc)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [template = %pattern_type (constants.%pattern_type.eee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -193,7 +193,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %U.loc5_25.1 => constants.%U
 // CHECK:STDOUT:   %tuple => constants.%tuple
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a5e
-// CHECK:STDOUT:   %.loc5_43.2 => constants.%.5b7
+// CHECK:STDOUT:   %.loc5_43.2 => constants.%.fbc
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.eee
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

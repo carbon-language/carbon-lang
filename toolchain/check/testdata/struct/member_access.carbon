@@ -155,7 +155,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc15_46.2(%float) [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc15_46.2: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc15_46.3: ref %f64.d77 = struct_access file.%x.var, element0 [concrete = constants.%.82d]
-// CHECK:STDOUT:   %.loc15_46.4: init %f64.d77 to %.loc15_46.3 = initialize_from %.loc15_46.2 [concrete = constants.%float.0a8]
+// CHECK:STDOUT:   %.loc15_46.4: init %f64.d77 to %.loc15_46.3 = in_place_init %.loc15_46.2 [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %impl.elem0.loc15_46.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc15_46.3: <bound method> = bound_method %int_1, %impl.elem0.loc15_46.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc15_46.2: <specific function> = specific_function %impl.elem0.loc15_46.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -163,7 +163,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_46.4(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_46.5: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_46.6: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.b93]
-// CHECK:STDOUT:   %.loc15_46.7: init %i32 to %.loc15_46.6 = initialize_from %.loc15_46.5 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_46.7: init %i32 to %.loc15_46.6 = in_place_init %.loc15_46.5 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_46.8: init %struct_type.a.b.d2f to file.%x.var = struct_init (%.loc15_46.4, %.loc15_46.7) [concrete = constants.%struct.454]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.d2f = converted %.loc15_46.1, %.loc15_46.8 [concrete = constants.%struct.454]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1

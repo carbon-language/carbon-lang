@@ -176,7 +176,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_44.1: init %i32 = call %bound_method.loc18_44.2(%int_1.loc18) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_44.2: init %i32 = converted %int_1.loc18, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_44.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_44.3: ref %i32 = struct_access file.%x.var, element0 [concrete = constants.%.61d]
-// CHECK:STDOUT:   %.loc18_44.4: init %i32 to %.loc18_44.3 = initialize_from %.loc18_44.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_44.4: init %i32 to %.loc18_44.3 = in_place_init %.loc18_44.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc18_44.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc18_44.3: <bound method> = bound_method %int_2.loc18, %impl.elem0.loc18_44.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc18_44.2: <specific function> = specific_function %impl.elem0.loc18_44.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -184,7 +184,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_44.2: init %i32 = call %bound_method.loc18_44.4(%int_2.loc18) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_44.5: init %i32 = converted %int_2.loc18, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_44.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_44.6: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.fe1]
-// CHECK:STDOUT:   %.loc18_44.7: init %i32 to %.loc18_44.6 = initialize_from %.loc18_44.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc18_44.7: init %i32 to %.loc18_44.6 = in_place_init %.loc18_44.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_44.8: init %struct_type.a.b.501 to file.%x.var = struct_init (%.loc18_44.4, %.loc18_44.7) [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   %.loc18_1: init %struct_type.a.b.501 = converted %.loc18_44.1, %.loc18_44.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign file.%x.var, %.loc18_1
@@ -197,7 +197,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %bound_method.loc19_29.2: <bound method> = bound_method %.loc19_29.2, %specific_fn.loc19_29.1
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc19_29.1: init %i32 = call %bound_method.loc19_29.2(%.loc19_29.2)
 // CHECK:STDOUT:   %.loc19_29.3: ref %i32 = struct_access file.%y.var, element0 [concrete = constants.%.101]
-// CHECK:STDOUT:   %.loc19_29.4: init %i32 to %.loc19_29.3 = initialize_from %Int.as.Copy.impl.Op.call.loc19_29.1
+// CHECK:STDOUT:   %.loc19_29.4: init %i32 to %.loc19_29.3 = in_place_init %Int.as.Copy.impl.Op.call.loc19_29.1
 // CHECK:STDOUT:   %.loc19_29.5: ref %i32 = struct_access %x.ref, element1 [concrete = constants.%.fe1]
 // CHECK:STDOUT:   %.loc19_29.6: %i32 = acquire_value %.loc19_29.5
 // CHECK:STDOUT:   %impl.elem0.loc19_29.2: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -206,7 +206,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %bound_method.loc19_29.4: <bound method> = bound_method %.loc19_29.6, %specific_fn.loc19_29.2
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc19_29.2: init %i32 = call %bound_method.loc19_29.4(%.loc19_29.6)
 // CHECK:STDOUT:   %.loc19_29.7: ref %i32 = struct_access file.%y.var, element1 [concrete = constants.%.960]
-// CHECK:STDOUT:   %.loc19_29.8: init %i32 to %.loc19_29.7 = initialize_from %Int.as.Copy.impl.Op.call.loc19_29.2
+// CHECK:STDOUT:   %.loc19_29.8: init %i32 to %.loc19_29.7 = in_place_init %Int.as.Copy.impl.Op.call.loc19_29.2
 // CHECK:STDOUT:   %.loc19_29.9: init %struct_type.a.b.501 to file.%y.var = struct_init (%.loc19_29.4, %.loc19_29.8)
 // CHECK:STDOUT:   %.loc19_1: init %struct_type.a.b.501 = converted %x.ref, %.loc19_29.9
 // CHECK:STDOUT:   assign file.%y.var, %.loc19_1

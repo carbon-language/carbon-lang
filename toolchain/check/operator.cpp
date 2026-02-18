@@ -57,7 +57,7 @@ static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
 
 // Returns whether the instruction is a value of C++ class type.
 static auto HasCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
-  return IsCppClassType(context, context.types().GetInstId(
+  return IsCppClassType(context, context.types().GetTypeInstId(
                                      context.insts().Get(inst_id).type_id()));
 }
 

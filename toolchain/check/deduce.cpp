@@ -43,7 +43,8 @@ class DeductionWorklist {
 
   // Adds a single (param, arg) type deduction.
   auto Add(SemIR::TypeId param, SemIR::TypeId arg) -> void {
-    Add(context_->types().GetInstId(param), context_->types().GetInstId(arg));
+    Add(context_->types().GetTypeInstId(param),
+        context_->types().GetTypeInstId(arg));
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -300,8 +301,9 @@ auto DeductionContext::Deduce() -> bool {
 
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
-      Add(context().types().GetInstId(param_type_id),
-          context().types().GetInstId(context().insts().Get(arg_id).type_id()));
+      Add(context().types().GetTypeInstId(param_type_id),
+          context().types().GetTypeInstId(
+              context().insts().Get(arg_id).type_id()));
     } else {
       // The argument (e.g. a TupleLiteral of types) may be convertible to a
       // compile-time value (e.g. TupleType) that we can decompose further.

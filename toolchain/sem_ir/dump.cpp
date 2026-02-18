@@ -462,7 +462,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
     return out.TakeStr();
   }
 
-  InstId inst_id = file.types().GetInstId(type_id);
+  InstId inst_id = file.types().GetTypeInstId(type_id);
   out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
   auto const_id = file.types().GetConstantId(type_id);

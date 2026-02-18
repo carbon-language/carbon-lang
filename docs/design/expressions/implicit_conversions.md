@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
     -   [Facet types](#facet-types)
+    -   [Struct, tuple, and array types](#struct-tuple-and-array-types)
 -   [Consistency with `as`](#consistency-with-as)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
@@ -188,6 +189,10 @@ A type `T` with [facet type](../generics/terminology.md#facet-type) `TT1` can be
 implicitly converted to the facet type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-facet-types)
 of `TT2`.
+
+### Struct, tuple, and array types
+
+See [here](/docs/design/values.md#type-conversions).
 
 ## Consistency with `as`
 

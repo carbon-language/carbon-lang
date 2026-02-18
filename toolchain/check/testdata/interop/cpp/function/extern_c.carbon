@@ -234,7 +234,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %addr.loc11_12.2: %ptr.1f9 = addr_of %.loc11_14
 // CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_34.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
-// CHECK:STDOUT:   %.loc11_12: init %X to %.loc9_34.1 = in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_12: init %X to %.loc9_34.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc11_12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

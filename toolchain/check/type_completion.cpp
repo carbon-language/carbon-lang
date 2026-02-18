@@ -328,7 +328,7 @@ auto TypeCompleter::ProcessStep() -> bool {
     return true;
   }
 
-  auto inst_id = context_->types().GetInstId(type_id);
+  auto inst_id = context_->types().GetTypeInstId(type_id);
   auto inst = context_->insts().Get(inst_id);
   auto old_work_list_size = work_list_.size();
 
@@ -484,8 +484,8 @@ auto TypeCompleter::MakePointerValueRepr(
   // TODO: Should we add `const` qualification to `pointee_id`?
   return {.kind = SemIR::ValueRepr::Pointer,
           .aggregate_kind = aggregate_kind,
-          .type_id = GetPointerType(*context_,
-                                    context_->types().GetInstId(pointee_id))};
+          .type_id = GetPointerType(
+              *context_, context_->types().GetTypeInstId(pointee_id))};
 }
 
 auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
@@ -541,7 +541,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                                   field_type_id)) {
       same_as_object_rep = false;
       field.type_inst_id =
-          context_->types().GetInstId(field_info.value_repr.type_id);
+          context_->types().GetTypeInstId(field_info.value_repr.type_id);
     }
     value_rep_fields.push_back(field);
     // Take the first non-None abstract_class_id, if any.
@@ -584,7 +584,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
       same_as_object_rep = false;
     }
     value_rep_elements.push_back(
-        context_->types().GetInstId(element_info.value_repr.type_id));
+        context_->types().GetTypeInstId(element_info.value_repr.type_id));
     // Take the first non-None abstract_class_id, if any.
     if (element_info.abstract_class_id.has_value() &&
         !abstract_class_id.has_value()) {
@@ -739,7 +739,7 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
         SemIR::RequireCompleteType{
             .type_id =
                 GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-            .complete_type_inst_id = context.types().GetInstId(type_id)});
+            .complete_type_inst_id = context.types().GetTypeInstId(type_id)});
   }
 
   return true;

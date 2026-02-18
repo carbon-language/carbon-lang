@@ -96,6 +96,51 @@ CARBON_PARSE_STATE(ArrayExprComma)
 //   (state done)
 CARBON_PARSE_STATE(ArrayExprFinish)
 
+// Handles the start of a form literal.
+//
+// form ( ...
+// ^~~~~~
+//   1. PrimitiveForm
+//   2. FormLiteralFinish
+//
+// form ???
+// ^~~~
+//   1. FormLiteralFinish
+CARBON_PARSE_STATE(FormLiteral)
+
+// Handles the category modifier and type of a form literal.
+//
+// form ( val ...
+//        ^~~
+// form ( var ...
+//        ^~~
+// form ( ref ...
+//        ^~~
+// form ( ???
+//       ^
+//   1. Expr
+//   2. PrimitiveFormFinish
+CARBON_PARSE_STATE(PrimitiveForm)
+
+// Finishes handling of PrimitiveForm.
+//
+// form ( ... )
+//           ^
+// form ???
+//         ^
+CARBON_PARSE_STATE(PrimitiveFormFinish)
+
+// Handles the end of a form literal.
+//
+// form ( ... )
+//            ^
+// form ( ??? )
+//        ^~~~~
+// form ???
+//     ^
+//   (state done)
+CARBON_PARSE_STATE(FormLiteralFinish)
+
 // Handles the `{` of a brace expression.
 //
 // {}
@@ -485,9 +530,14 @@ CARBON_PARSE_STATE(Expr)
 //   1. ParenExpr
 //   2. ExprInPostfixLoop
 //
-//  [
+//  array
 // ^
 //   1. ArrayExpr
+//   2. ExprInPostfixLoop
+//
+//  form
+// ^
+//   1. FormExpr
 //   2. ExprInPostfixLoop
 //
 //  ???
@@ -765,6 +815,12 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 //   2. FunctionReturnTypeFinish
 //   3. FunctionSignatureFinish
 //
+// fn F(...) ->? ...
+//           ^~~
+//   1. Expr
+//   2. FunctionReturnFormFinish
+//   3. FunctionSignatureFinish
+//
 // fn F(...) ...
 //          ^
 //   1. FunctionSignatureFinish
@@ -776,6 +832,13 @@ CARBON_PARSE_STATE(FunctionAfterParams)
 //                  ^
 //   (state done)
 CARBON_PARSE_STATE(FunctionReturnTypeFinish)
+
+// Finishes a function return form.
+//
+// fn F(...) ->? expr ...
+//                  ^
+//   (state done)
+CARBON_PARSE_STATE(FunctionReturnFormFinish)
 
 // Finishes a function signature. If it's a declaration, the function is done;
 // otherwise, this also starts definition processing.
@@ -1086,11 +1149,11 @@ CARBON_PARSE_STATE(Pattern)
 // with `ref` in expression patterns. See issue #6342.
 //
 // [ref] name: ...
-// ^~~~~
+// ^~~~~~~~~~~
 // [ref] self: ...
-// ^~~~~
+// ^~~~~~~~~~~
 // [ref] _: ...
-// ^~
+// ^~~~~~~~
 //   1. Expr
 //   2. BindingPatternFinishAsRegular
 //
@@ -1103,6 +1166,15 @@ CARBON_PARSE_STATE(Pattern)
 //   1. Expr
 //   2. BindingPatternFinishAsGeneric
 //
+// name:? ...
+// ^~~~~~
+// self:? ...
+// ^~~~~~
+// _:? ...
+// ^~~
+//   1. Expr
+//   2. BindingPatternFinishAsForm
+//
 //  ???
 // ^
 //   1. BindingPatternFinishAsRegular
@@ -1113,7 +1185,7 @@ CARBON_PARSE_STATE(BindingPattern)
 // name: type
 //           ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
+CARBON_PARSE_STATE_VARIANTS3(BindingPatternFinish, Generic, Regular, Form)
 
 // Handles `var` in a pattern context.
 //

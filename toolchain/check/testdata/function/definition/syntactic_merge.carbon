@@ -769,7 +769,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.64f: form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
@@ -791,7 +791,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: form = init_form %C.ref, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref, call_param0 [concrete = constants.%.768]
 // CHECK:STDOUT:     %return.param.loc7: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return.loc7: ref %C = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
@@ -800,7 +800,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8_13: form = init_form %D.ref, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc8_13: Core.Form = init_form %D.ref, call_param0 [concrete = constants.%.768]
 // CHECK:STDOUT:     %return.param.loc8: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return.loc8: ref %C = return_slot %return.param.loc8
 // CHECK:STDOUT:   }

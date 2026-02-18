@@ -95,7 +95,7 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return "`" +
            StringifyConstantInst(
                *sem_ir_,
-               sem_ir_->types().GetInstId(
+               sem_ir_->types().GetTypeInstId(
                    sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
            "`";
   }
@@ -107,12 +107,12 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   }
   if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
     return StringifyConstantInst(*sem_ir_,
-                                 sem_ir_->types().GetInstId(type->type_id));
+                                 sem_ir_->types().GetTypeInstId(type->type_id));
   }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
     return "`" +
            StringifyConstantInst(*sem_ir_,
-                                 sem_ir_->types().GetInstId(*type_id)) +
+                                 sem_ir_->types().GetTypeInstId(*type_id)) +
            "`";
   }
   if (auto* facet_type_id = llvm::any_cast<SemIR::FacetTypeId>(&arg)) {

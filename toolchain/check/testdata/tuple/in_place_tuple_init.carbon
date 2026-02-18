@@ -114,7 +114,7 @@ fn H() {
 // CHECK:STDOUT:   return %F.call.loc9 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.d07) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %tuple.type.d07) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
@@ -228,7 +228,7 @@ fn H() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: %tuple.type.99b) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref %tuple.type.99b) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
@@ -250,7 +250,7 @@ fn H() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_50.1: init %i32 = call %bound_method.loc13_50.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_50.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_50.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %v.var, element0
-// CHECK:STDOUT:   %.loc13_50.3: init %i32 to %tuple.elem0 = initialize_from %.loc13_50.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13_50.3: init %i32 to %tuple.elem0 = in_place_init %.loc13_50.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc13_50.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc13_50.3: <bound method> = bound_method %int_2, %impl.elem0.loc13_50.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc13_50.2: <specific function> = specific_function %impl.elem0.loc13_50.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -258,7 +258,7 @@ fn H() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_50.2: init %i32 = call %bound_method.loc13_50.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_50.4: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13_50.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %tuple.elem2: ref %i32 = tuple_access %v.var, element2
-// CHECK:STDOUT:   %.loc13_50.5: init %i32 to %tuple.elem2 = initialize_from %.loc13_50.4 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc13_50.5: init %i32 to %tuple.elem2 = in_place_init %.loc13_50.4 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_50.6: init %tuple.type.516 to %v.var = tuple_init (%.loc13_50.3, %F.call, %.loc13_50.5)
 // CHECK:STDOUT:   %.loc13_3: init %tuple.type.516 = converted %.loc13_50.1, %.loc13_50.6
 // CHECK:STDOUT:   assign %v.var, %.loc13_3
@@ -284,5 +284,5 @@ fn H() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %tuple.type.516) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %tuple.type.516) = "no_op";
 // CHECK:STDOUT:

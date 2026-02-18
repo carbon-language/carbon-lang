@@ -151,7 +151,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.F(%self.param.loc21: %Base) {
+// CHECK:STDOUT: fn @Base.F(%self.param.loc21: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc21
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]

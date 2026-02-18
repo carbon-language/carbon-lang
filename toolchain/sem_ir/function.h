@@ -28,6 +28,9 @@ struct FunctionFields {
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
+  // Kinds of evaluation modifiers that can apply to functions.
+  enum class EvaluationMode : uint8_t { None, Eval, MustEval };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -78,6 +81,10 @@ struct FunctionFields {
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
   int32_t virtual_index = -1;
+
+  // Which, if any, evaluation modifier (eval or musteval) is applied to this
+  // function.
+  EvaluationMode evaluation_mode = EvaluationMode::None;
 
   // The implicit self parameter pattern, if any, in
   // implicit_param_patterns_id from EntityWithParamsBase.

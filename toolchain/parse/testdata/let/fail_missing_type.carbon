@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_missing_type.carbon
 
-// CHECK:STDERR: fail_missing_type.carbon:[[@LINE+4]]:7: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_missing_type.carbon:[[@LINE+4]]:7: error: expected `:`, `:!`, or `:?` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: let a = 4;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:

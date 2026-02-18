@@ -183,7 +183,7 @@ class ScopeStack {
     return destroy_id_stack_;
   }
 
-  auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
+  auto compile_time_binding_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
 

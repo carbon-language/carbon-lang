@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/consumer.h"
 
 #include <algorithm>
 #include <cstdint>

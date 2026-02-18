@@ -601,19 +601,21 @@ Assert(different_order.y == 2);
 ```
 
 Initialization and assignment occur field-by-field. The order of fields is
-determined from the target on the left side of the `=`. This rule matches what
-we expect for classes with encapsulation more generally.
+determined by the source on the right side of the `=`, and individual operations
+are generally interleaved field-by-field. See [here](values.md#type-conversions)
+for details about the semantics, and
+[here](pattern_matching.md#evaluation-order) for details about the order of
+operations.
 
-**Open question:** What operations and in what order happen for assignment and
-initialization?
+> **Open question:** Do we need a way for a class to require the source order to
+> match? Should that be the default, with an opt out?
 
--   Is assignment just destruction followed by initialization? Is that
-    destruction completed for the whole object before initializing, or is it
-    interleaved field-by-field?
--   When initializing to a literal value, is a temporary containing the literal
-    value constructed first or are the fields initialized directly? The latter
-    approach supports types that can't be moved or copied, such as mutex.
--   Perhaps some operations are _not_ ordered with respect to each other?
+> **Open question:** What operations and in what order happen for assignment?
+>
+> -   Is assignment just destruction followed by initialization? Is that
+>     destruction completed for the whole object before initializing, or is it
+>     interleaved field-by-field?
+> -   Perhaps some operations are _not_ ordered with respect to each other?
 
 ### Operations performed field-wise
 

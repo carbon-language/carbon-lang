@@ -75,15 +75,19 @@ auto FileContext::PrepareToLower() -> void {
   // Lower all types that were required to be complete.
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
-      types_.Set(type_id, BuildType(sem_ir_->types().GetInstId(type_id)));
+      types_.Set(type_id, BuildType(sem_ir_->types().GetTypeInstId(type_id)));
     }
   }
 
   // Lower function declarations.
-  for (auto [id, _] : sem_ir_->functions().enumerate()) {
+  for (auto [id, function] : sem_ir_->functions().enumerate()) {
     if (id == sem_ir().global_ctor_id()) {
       // The global constructor is only lowered when we generate its definition.
       // LLVM doesn't allow an internal linkage function to be undefined.
+      continue;
+    }
+    if (function.evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
+      // musteval functions are never lowered.
       continue;
     }
     functions_.Set(id, BuildFunctionDecl(id));
@@ -122,7 +126,8 @@ auto FileContext::LowerDefinitions() -> void {
           const_id.is_constant()) {
         llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
       } else {
-        llvm_var = BuildGlobalVariableDecl(*var);
+        // We should never be emitting a definition for a C++ global variable.
+        llvm_var = BuildNonCppGlobalVariableDecl(*var);
       }
 
       // Convert the declaration of this variable into a definition by adding an
@@ -181,7 +186,8 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
   // initializing expressions, `FinishInit` will perform a copy if needed.
   switch (auto cat = SemIR::GetExprCategory(sem_ir(), const_inst_id)) {
     case SemIR::ExprCategory::Value:
-    case SemIR::ExprCategory::Initializing:
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
       break;
 
     case SemIR::ExprCategory::DurableRef:
@@ -194,6 +200,7 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
     case SemIR::ExprCategory::Pattern:
     case SemIR::ExprCategory::Mixed:
     case SemIR::ExprCategory::RefTagged:
+    case SemIR::ExprCategory::Dependent:
       CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
                    sem_ir().insts().Get(const_inst_id));
   };
@@ -1163,6 +1170,26 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> LoweredTypes {
 }
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+    -> llvm::Constant* {
+  auto var_name_id =
+      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
+  if (auto cpp_global_var_id =
+          sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
+      cpp_global_var_id.has_value()) {
+    SemIR::ClangDeclId clang_decl_id =
+        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
+    CARBON_CHECK(clang_decl_id.has_value(),
+                 "CppGlobalVar should have a clang_decl_id");
+    return cpp_code_generator_->GetAddrOfGlobal(
+        cast<clang::VarDecl>(
+            sem_ir().clang_decls().Get(clang_decl_id).key.decl),
+        /*isForDefinition=*/false);
+  }
+
+  return BuildNonCppGlobalVariableDecl(var_storage);
+}
+
+auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
   Mangler m(*this);
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);

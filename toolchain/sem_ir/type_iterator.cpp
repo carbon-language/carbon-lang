@@ -58,8 +58,10 @@ auto TypeIterator::Next() -> Step {
 }
 
 auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
-  auto inst_id = sem_ir_->types().GetInstId(type_id);
+  auto inst_id = sem_ir_->types().GetTypeInstId(type_id);
   auto inst = sem_ir_->insts().Get(inst_id);
+  // TODO: This categorization should mostly be driven by information in the
+  // inst kind.
   CARBON_KIND_SWITCH(inst) {
       // ==== Symbolic types ====
 
@@ -67,6 +69,8 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case SymbolicBindingPattern::Kind: {
       return Step::SymbolicType{.facet_type_id = type_id};
     }
+
+    case Call::Kind:
     case TypeOfInst::Kind: {
       return Step::TemplateType();
     }
@@ -104,6 +108,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case NamespaceType::Kind:
     case RequireSpecificDefinitionType::Kind:
     case TypeType::Kind:
+    case UnboundElementType::Kind:
     case WitnessType::Kind: {
       return Step::ConcreteType{.type_id = type_id};
     }

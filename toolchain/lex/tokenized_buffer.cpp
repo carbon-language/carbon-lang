@@ -16,7 +16,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/shared_value_stores.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"

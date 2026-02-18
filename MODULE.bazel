@@ -28,16 +28,16 @@ http_archive = use_repo_rule(
     "http_archive",
 )
 
-bazel_dep(name = "abseil-cpp", version = "20250512.1")
+bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
-bazel_dep(name = "google_benchmark", version = "1.9.4")
-bazel_dep(name = "googletest", version = "1.17.0")
-bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.2.6")
-bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
+bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
-bazel_dep(name = "tcmalloc", version = "0.0.0-20250331-43fcf6e")
-bazel_dep(name = "tree-sitter-bazel", version = "0.26.3")
+bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
+bazel_dep(name = "tree-sitter-bazel", version = "0.26.3.bcr.1")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.
@@ -61,8 +61,8 @@ archive_override(
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
     module_name = "bazel_clang_tidy",
-    # HEAD as of 2025-01-09.
-    commit = "db677011c7363509a288a9fb3bf0a50830bbf791",
+    # HEAD as of 2026-01-28.
+    commit = "c4d35e0d0b838309358e57a2efed831780f85cd0",
     remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
@@ -77,26 +77,26 @@ register_toolchains("@bazel_cc_toolchain//:all")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    # HEAD as of 2025-01-09.
-    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    # HEAD as of 2026-01-28.
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
-boost_unordered_version = "1.85.0"
+boost_unordered_version = "1.88.0"
 
 http_archive(
     name = "boost_unordered",
     build_file = "@//:third_party/boost_unordered/BUILD.bazel",
-    integrity = "sha256-2dQ4IQH/xFiK1iWCkrMYLeR8zsSQqGchKOdTuf1u0zI=",
+    integrity = "sha256-a5ydXEQCspPhFmCD9vNa3JUIVeitbodEYaJhfOSO8no=",
     strip_prefix = "boost_unordered-{0}".format(boost_unordered_version),
     urls = ["https://github.com/MikePopoloski/boost_unordered/archive/v{0}.tar.gz".format(boost_unordered_version)],
 )
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "protobuf", version = "33.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf", version = "34.0-rc1", repo_name = "com_google_protobuf")
 bazel_dep(name = "zlib-ng", version = "2.0.7", repo_name = "llvm_zlib")
-bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
 ###############################################################################
 # llvm-project
@@ -135,7 +135,7 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "1.6.0")
+bazel_dep(name = "rules_python", version = "1.8.3")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(

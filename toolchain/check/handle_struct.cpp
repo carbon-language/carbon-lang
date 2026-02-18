@@ -54,8 +54,8 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
-  auto value_type_inst_id =
-      context.types().GetInstId(context.insts().Get(value_inst_id).type_id());
+  auto value_type_inst_id = context.types().GetTypeInstId(
+      context.insts().Get(value_inst_id).type_id());
   context.struct_type_fields_stack().AppendToTop(
       {.name_id = name_id, .type_inst_id = value_type_inst_id});
 

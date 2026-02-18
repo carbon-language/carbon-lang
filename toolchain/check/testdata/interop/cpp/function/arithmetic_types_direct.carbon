@@ -288,7 +288,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "int_return.h";
 
-fn Carbon_foo(val: i32);
+fn Carbon_foo(value: i32);
 
 fn F() {
   //@dump-sem-ir-begin

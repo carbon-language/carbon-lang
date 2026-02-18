@@ -54,7 +54,7 @@ impl forall f32;
 // CHECK:STDERR:
 impl forall [] u32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:21: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:21: error: expected `:`, `:!`, or `:?` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: impl forall [invalid] i8;
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:

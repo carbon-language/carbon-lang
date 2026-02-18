@@ -13,7 +13,7 @@
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/install_paths.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/driver/runtimes_cache.h"
 
 namespace Carbon {
@@ -57,6 +57,10 @@ struct DriverEnv {
   // invoked as part of a single command line program execution. Defaults to
   // `false` for safe and correct library execution.
   bool enable_leaking = false;
+
+  // Whether to build runtimes on-demand. Only used when `prebuilt_runtimes` is
+  // empty.
+  bool build_runtimes_on_demand = false;
 
   // A diagnostic consumer, to be able to connect output.
   Diagnostics::StreamConsumer consumer;

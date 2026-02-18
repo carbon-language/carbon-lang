@@ -209,7 +209,7 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
   // block.
   auto rebuild_generic_constant_callbacks =
       RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
-  auto type_inst_id = SubstInst(context, context.types().GetInstId(type_id),
+  auto type_inst_id = SubstInst(context, context.types().GetTypeInstId(type_id),
                                 rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));
@@ -424,7 +424,7 @@ auto DiscardGenericDecl(Context& context) -> void {
 
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   auto all_bindings =
-      context.scope_stack().compile_time_bindings_stack().PeekAllValues();
+      context.scope_stack().compile_time_binding_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),

@@ -63,12 +63,12 @@ var c_bad: C((3, 4)) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let val:! (i32,);
+  let value:! (i32,);
 }
 
 class C {}
 
-impl C as I where .val = (1,) {}
+impl C as I where .value = (1,) {}
 
 // --- import_symbolic_decl.carbon
 
@@ -77,7 +77,7 @@ import library "symbolic_decl";
 
 fn F() -> (i32,) {
   //@dump-sem-ir-begin
-  return (C as I).val;
+  return (C as I).value;
   //@dump-sem-ir-end
 }
 
@@ -250,7 +250,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_17.2: <bound method> = bound_method %.loc5_17.1, %specific_fn.loc5
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc5: init %i32 = call %bound_method.loc5_17.2(%.loc5_17.1)
-// CHECK:STDOUT:   %.loc5_17.2: init %tuple.type.dd4 = tuple_init (%Int.as.Copy.impl.Op.call.loc5)
+// CHECK:STDOUT:   %.loc5_17.2: init %tuple.type.dd4 to file.%a.var = tuple_init (%Int.as.Copy.impl.Op.call.loc5)
 // CHECK:STDOUT:   %.loc5_1: init %tuple.type.dd4 = converted %a_ref.ref, %.loc5_17.2
 // CHECK:STDOUT:   assign file.%a.var, %.loc5_1
 // CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.cfa = name_ref b_ref, imports.%Implicit.b_ref [concrete = imports.%b_ref.var]
@@ -267,7 +267,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %tuple.elem0.loc6_38.5: ref %tuple.type.dd4 = tuple_access %tuple.elem0.loc6_38.4, element0 [concrete = constants.%tuple.elem0.021]
 // CHECK:STDOUT:   %.loc6_38.2: init %tuple.type.dd4 to %tuple.elem0.loc6_38.5 = tuple_init (%Int.as.Copy.impl.Op.call.loc6_38.1)
 // CHECK:STDOUT:   %.loc6_38.3: init %tuple.type.dd4 = converted %tuple.elem0.loc6_38.2, %.loc6_38.2
-// CHECK:STDOUT:   %.loc6_38.4: init %tuple.type.dd4 to %tuple.elem0.loc6_38.5 = initialize_from %.loc6_38.3
+// CHECK:STDOUT:   %.loc6_38.4: init %tuple.type.dd4 to %tuple.elem0.loc6_38.5 = in_place_init %.loc6_38.3
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.1: ref %i32 = tuple_access %tuple.elem0.loc6_38.1, element1 [concrete = constants.%tuple.elem1.1c3]
 // CHECK:STDOUT:   %.loc6_38.5: %i32 = acquire_value %tuple.elem1.loc6_38.1
 // CHECK:STDOUT:   %impl.elem0.loc6_38.2: %.70e = impl_witness_access constants.%Copy.impl_witness.a2f, element0 [concrete = constants.%Int.as.Copy.impl.Op.2b1]
@@ -276,7 +276,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %bound_method.loc6_38.4: <bound method> = bound_method %.loc6_38.5, %specific_fn.loc6_38.2
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_38.2: init %i32 = call %bound_method.loc6_38.4(%.loc6_38.5)
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.2: ref %i32 = tuple_access %tuple.elem0.loc6_38.4, element1 [concrete = constants.%tuple.elem1.83b]
-// CHECK:STDOUT:   %.loc6_38.6: init %i32 to %tuple.elem1.loc6_38.2 = initialize_from %Int.as.Copy.impl.Op.call.loc6_38.2
+// CHECK:STDOUT:   %.loc6_38.6: init %i32 to %tuple.elem1.loc6_38.2 = in_place_init %Int.as.Copy.impl.Op.call.loc6_38.2
 // CHECK:STDOUT:   %.loc6_38.7: init %tuple.type.154 to %tuple.elem0.loc6_38.4 = tuple_init (%.loc6_38.4, %.loc6_38.6)
 // CHECK:STDOUT:   %.loc6_38.8: init %tuple.type.154 = converted %tuple.elem0.loc6_38.1, %.loc6_38.7
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.3: ref %tuple.type.c2c = tuple_access %b_ref.ref, element1 [concrete = constants.%tuple.elem1.565]
@@ -289,7 +289,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_38.3: init %i32 = call %bound_method.loc6_38.6(%.loc6_38.9)
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.4: ref %tuple.type.c2c = tuple_access file.%b.var, element1 [concrete = constants.%tuple.elem1.11d]
 // CHECK:STDOUT:   %tuple.elem0.loc6_38.7: ref %i32 = tuple_access %tuple.elem1.loc6_38.4, element0 [concrete = constants.%tuple.elem0.5bc]
-// CHECK:STDOUT:   %.loc6_38.10: init %i32 to %tuple.elem0.loc6_38.7 = initialize_from %Int.as.Copy.impl.Op.call.loc6_38.3
+// CHECK:STDOUT:   %.loc6_38.10: init %i32 to %tuple.elem0.loc6_38.7 = in_place_init %Int.as.Copy.impl.Op.call.loc6_38.3
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.5: ref %i32 = tuple_access %tuple.elem1.loc6_38.3, element1 [concrete = constants.%tuple.elem1.7b5]
 // CHECK:STDOUT:   %.loc6_38.11: %i32 = acquire_value %tuple.elem1.loc6_38.5
 // CHECK:STDOUT:   %impl.elem0.loc6_38.4: %.70e = impl_witness_access constants.%Copy.impl_witness.a2f, element0 [concrete = constants.%Int.as.Copy.impl.Op.2b1]
@@ -298,7 +298,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %bound_method.loc6_38.8: <bound method> = bound_method %.loc6_38.11, %specific_fn.loc6_38.4
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_38.4: init %i32 = call %bound_method.loc6_38.8(%.loc6_38.11)
 // CHECK:STDOUT:   %tuple.elem1.loc6_38.6: ref %i32 = tuple_access %tuple.elem1.loc6_38.4, element1 [concrete = constants.%tuple.elem1.240]
-// CHECK:STDOUT:   %.loc6_38.12: init %i32 to %tuple.elem1.loc6_38.6 = initialize_from %Int.as.Copy.impl.Op.call.loc6_38.4
+// CHECK:STDOUT:   %.loc6_38.12: init %i32 to %tuple.elem1.loc6_38.6 = in_place_init %Int.as.Copy.impl.Op.call.loc6_38.4
 // CHECK:STDOUT:   %.loc6_38.13: init %tuple.type.c2c to %tuple.elem1.loc6_38.4 = tuple_init (%.loc6_38.10, %.loc6_38.12)
 // CHECK:STDOUT:   %.loc6_38.14: init %tuple.type.c2c = converted %tuple.elem1.loc6_38.3, %.loc6_38.13
 // CHECK:STDOUT:   %.loc6_38.15: init %tuple.type.cfa to file.%b.var = tuple_init (%.loc6_38.8, %.loc6_38.14)
@@ -325,7 +325,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.8b4: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.ce8 [concrete]
+// CHECK:STDOUT:   %assoc0.5ae: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.ca6 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -343,11 +343,11 @@ fn F() -> (i32,) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.bf0: %I.assoc_type = import_ref Main//symbolic_decl, loc5_10, loaded [concrete = constants.%assoc0.8b4]
-// CHECK:STDOUT:   %Main.import_ref.fd7: %tuple.type.a1c = import_ref Main//symbolic_decl, loc10_31, loaded [concrete = constants.%tuple.246]
+// CHECK:STDOUT:   %Main.import_ref.a8c: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.5ae]
+// CHECK:STDOUT:   %Main.import_ref.fd7: %tuple.type.a1c = import_ref Main//symbolic_decl, loc10_33, loaded [concrete = constants.%tuple.246]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.fd7), @C.as.I.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.ce8: %tuple.type.a1c = import_ref Main//symbolic_decl, loc5_10, loaded [concrete = %val]
-// CHECK:STDOUT:   %val: %tuple.type.a1c = assoc_const_decl @val [concrete] {}
+// CHECK:STDOUT:   %Main.import_ref.ca6: %tuple.type.a1c = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
+// CHECK:STDOUT:   %value: %tuple.type.a1c = assoc_const_decl @value [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -360,7 +360,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %.loc7_13: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_13 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc7_18.1: type = converted %.loc7_13, %as_type [concrete = constants.%C]
-// CHECK:STDOUT:   %val.ref: %I.assoc_type = name_ref val, imports.%Main.import_ref.bf0 [concrete = constants.%assoc0.8b4]
+// CHECK:STDOUT:   %value.ref: %I.assoc_type = name_ref value, imports.%Main.import_ref.a8c [concrete = constants.%assoc0.5ae]
 // CHECK:STDOUT:   %impl.elem0.loc7_18.1: %tuple.type.a1c = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%tuple.246]
 // CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access %impl.elem0.loc7_18.1, element0 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %impl.elem0.loc7_18.2: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -369,7 +369,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %bound_method.loc7_18.2: <bound method> = bound_method %tuple.elem0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_18.2(%tuple.elem0) [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc7_18.2: init %tuple.type.a1c = tuple_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%tuple.246]
-// CHECK:STDOUT:   %.loc7_22: init %tuple.type.a1c = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.246]
-// CHECK:STDOUT:   return %.loc7_22
+// CHECK:STDOUT:   %.loc7_24: init %tuple.type.a1c = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.246]
+// CHECK:STDOUT:   return %.loc7_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

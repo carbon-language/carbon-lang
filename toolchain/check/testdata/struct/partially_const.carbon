@@ -26,7 +26,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.0b6: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete]
-// CHECK:STDOUT:   %.aee: form = init_form %struct_type.a.b.c.0b6, call_param1 [concrete]
+// CHECK:STDOUT:   %.cb1: Core.Form = init_form %struct_type.a.b.c.0b6, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.8ae: type = pattern_type %struct_type.a.b.c.0b6 [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
@@ -96,7 +96,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:     %int_32.loc15_43: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_43: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete = constants.%struct_type.a.b.c.0b6]
-// CHECK:STDOUT:     %.loc15_46: form = init_form %struct_type.a.b.c, call_param1 [concrete = constants.%.aee]
+// CHECK:STDOUT:     %.loc15_46: Core.Form = init_form %struct_type.a.b.c, call_param1 [concrete = constants.%.cb1]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_12: type = splice_block %i32.loc15_12 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -121,14 +121,14 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16_33.1: init %i32 = call %bound_method.loc16_33.2(%int_0.loc16_16) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.2: init %i32 = converted %int_0.loc16_16, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16_33.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.3: ref %i32 = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc16_33.4: init %i32 to %.loc16_33.3 = initialize_from %.loc16_33.2 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc16_33.4: init %i32 to %.loc16_33.3 = in_place_init %.loc16_33.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %impl.elem0.loc16_24: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc16_24.1: <bound method> = bound_method %n.ref, %impl.elem0.loc16_24
 // CHECK:STDOUT:   %specific_fn.loc16_24: <specific function> = specific_function %impl.elem0.loc16_24, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_24.2: <bound method> = bound_method %n.ref, %specific_fn.loc16_24
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_24.2(%n.ref)
 // CHECK:STDOUT:   %.loc16_33.5: ref %i32 = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc16_33.6: init %i32 to %.loc16_33.5 = initialize_from %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc16_33.6: init %i32 to %.loc16_33.5 = in_place_init %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %impl.elem0.loc16_33.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc16_33.3: <bound method> = bound_method %int_0.loc16_32, %impl.elem0.loc16_33.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc16_33.2: <specific function> = specific_function %impl.elem0.loc16_33.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -136,7 +136,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16_33.2: init %i32 = call %bound_method.loc16_33.4(%int_0.loc16_32) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.7: init %i32 = converted %int_0.loc16_32, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16_33.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.8: ref %i32 = struct_access %return.param, element2
-// CHECK:STDOUT:   %.loc16_33.9: init %i32 to %.loc16_33.8 = initialize_from %.loc16_33.7 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc16_33.9: init %i32 to %.loc16_33.8 = in_place_init %.loc16_33.7 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.10: init %struct_type.a.b.c.0b6 to %return.param = struct_init (%.loc16_33.4, %.loc16_33.6, %.loc16_33.9)
 // CHECK:STDOUT:   %.loc16_34: init %struct_type.a.b.c.0b6 = converted %.loc16_33.1, %.loc16_33.10
 // CHECK:STDOUT:   return %.loc16_34 to %return.param

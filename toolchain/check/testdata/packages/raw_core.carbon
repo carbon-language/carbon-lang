@@ -307,7 +307,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %bound_method.loc6_25.4: <bound method> = bound_method %.loc6_25.2, %specific_fn.loc6_25.2 [concrete = constants.%bound_method.5f6]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_25.4(%.loc6_25.2) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.2: ref %i32 = class_element_access file.%c.var, element0 [concrete = constants.%.cb0]
-// CHECK:STDOUT:   %.loc6_40.3: init %i32 to %.loc6_40.2 = initialize_from %Int.as.Copy.impl.Op.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc6_40.3: init %i32 to %.loc6_40.2 = in_place_init %Int.as.Copy.impl.Op.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.4: init %Core to file.%c.var = class_init (%.loc6_40.3) [concrete = constants.%Core.val]
 // CHECK:STDOUT:   %.loc6_1: init %Core = converted %.loc6_40.1, %.loc6_40.4 [concrete = constants.%Core.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1

@@ -104,7 +104,7 @@ static auto GetSelfFacetValueForInterfaceMemberSpecific(
   // Create a facet value to be the value of `Self` in the interface.
   // TODO: Pass this in instead of creating it here. The caller sometimes
   // already has a facet value.
-  auto type_inst_id = context.types().GetInstId(self_type_id);
+  auto type_inst_id = context.types().GetTypeInstId(self_type_id);
   auto witnesses_block_id =
       context.inst_blocks().AddCanonical({self_witness_id});
   auto self_value_const_id = TryEvalInst(
@@ -226,7 +226,7 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
         context.functions().Get(fn->function_id).generic_id, self_type_id,
         self_witness_id);
     return GetFunctionTypeWithSelfType(
-        context, context.types().GetInstId(interface_fn_type_id),
+        context, context.types().GetTypeInstId(interface_fn_type_id),
         self_facet_id);
   }
 

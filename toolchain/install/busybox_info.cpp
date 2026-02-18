@@ -22,6 +22,22 @@ static auto GetMode(const std::filesystem::path& argv0)
   return std::nullopt;
 }
 
+// Try to walk up the path using `.parent_path()` if we can to avoid extra
+// components to resolve. However, if the path is relative to the current
+// working directory and we run out of parent components, walk up by appending
+// `../` components instead.
+static auto WalkUp(std::filesystem::path p) -> std::filesystem::path {
+  // Remove `./` components.
+  while (p.filename() == ".") {
+    p = p.parent_path();
+  }
+  if (!p.is_absolute() && (p.empty() || p.filename() == "..")) {
+    return p / "..";
+  } else {
+    return p.parent_path();
+  }
+}
+
 auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   // Need storage due to `unsetenv` affecting `getenv` lifetime; using `path`
   // for `GetMode`.
@@ -73,9 +89,14 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       parent_path = parent_path.parent_path();
     }
     if (parent_path.filename() == "bin") {
+      // Note that we use a specialized approach to walking up rather than
+      // always appending `../` components. While largely equivalent, this helps
+      // keep paths shorter and avoids redundant work. We also don't expect to
+      // need to respect _internally_ strange symlinking structures that would
+      // need to use appended `../` components.
       auto lib_path = info.bin_path.filename() == "carbon"
-                          ? parent_path / ".." / "lib" / "carbon"
-                          : parent_path / ".." / "..";
+                          ? WalkUp(std::move(parent_path)) / "lib" / "carbon"
+                          : WalkUp(WalkUp(std::move(parent_path)));
       auto busybox_path = lib_path / "carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {

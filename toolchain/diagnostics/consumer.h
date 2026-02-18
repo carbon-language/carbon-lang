@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_CONSUMER_H_
-#define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_CONSUMER_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_CONSUMER_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_CONSUMER_H_
 
 #include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
@@ -89,4 +89,4 @@ class ErrorTrackingConsumer : public Consumer {
 
 }  // namespace Carbon::Diagnostics
 
-#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_CONSUMER_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_CONSUMER_H_

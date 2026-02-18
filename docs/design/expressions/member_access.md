@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
-    -   [Types and facets](#types-and-facets)
+    -   [Types, forms, and facets](#types-forms-and-facets)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
@@ -127,12 +127,17 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, if the first operand is a type, facet, package, or
-namespace, a search for the member name is performed in the first operand.
-Otherwise, a search for the member name is performed in the type of the first
-operand. In either case, the search must succeed. In the latter case, if the
-result is an instance member, then [instance binding](#instance-binding) is
+For a simple member access, if the first operand is a type, form, facet,
+package, or namespace, a search for the member name is performed in the first
+operand. Otherwise, a search for the member name is performed in the type of the
+first operand. In either case, the search must succeed. In the latter case, if
+the result is an instance member, then [instance binding](#instance-binding) is
 performed on the first operand.
+
+A search for a name within a form searches for the name in its
+[type component](/docs/design/values.md#expression-forms). Note that this means
+that the form of an expression never affects simple member access into that
+expression, except through its type component.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
@@ -189,11 +194,12 @@ class Bar {
 }
 ```
 
-### Types and facets
+### Types, forms, and facets
 
-If the first operand is a type or facet, it must be a compile-time constant.
-This disallows member access into a type except during compile-time, see leads
-issue [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
+If the first operand is a type, form, or facet, it must be a compile-time
+constant. This disallows member access into a type except during compile-time,
+see leads issue
+[#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
 
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
@@ -227,6 +233,9 @@ class Avatar {
 
 Simple member access `(Avatar as Cowboy).Draw` finds the `Cowboy.Draw`
 implementation for `Avatar`, ignoring `Renderable.Draw`.
+
+Similarly, a form has members, specifically the members of the form's type
+component.
 
 ### Tuple indexing
 
@@ -273,9 +282,9 @@ let n: i32 = p->(e);
 
 ### Values
 
-If the first operand is not a type, package, namespace, or facet, it does not
-have member names, and a search is performed into the type of the first operand
-instead.
+If the first operand is not a type, form, package, namespace, or facet, it does
+not have member names, and a search is performed into the type of the first
+operand instead.
 
 ```carbon
 interface Printable {
@@ -723,16 +732,22 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
 ## Instance binding
 
 Next, _instance binding_ may be performed. This associates an expression with a
-particular object instance. For example, this is the value bound to `self` when
-calling a method.
+particular object or value instance. For example, this is the value bound to
+`self` when calling a method.
 
 For the simple member access syntax `x.y`, if `x` is an entity that has member
 names, such as a namespace or a type, then `y` is looked up within `x`, and
 instance binding is not performed. Otherwise, `y` is looked up within the type
 of `x` and instance binding is performed if an instance member is found.
 
-If instance binding is performed:
+If instance binding is to be performed, the result of instance binding depends
+on what instance member `M` was found:
 
+-   For a field member of a struct type or tuple type, `x` is converted to a
+    struct or tuple form by
+    [form decomposition](/docs/design/values.md#category-conversions), and the
+    `.f` element of the result of that conversion becomes the result of `x.f`.
+    All other elements are [discarded](/docs/design/values.md#form-conversions).
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an

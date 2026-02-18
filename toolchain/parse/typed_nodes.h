@@ -365,6 +365,16 @@ struct VarBindingPattern {
   AnyExprId type;
 };
 
+// A form binding pattern, such as `name:? Form`.
+struct FormBindingPattern {
+  static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A template binding name: `template T`.
 struct TemplateBindingName {
   static constexpr auto Kind =
@@ -452,6 +462,14 @@ struct ReturnType {
   AnyExprId type;
 };
 
+// A return form: `->? form(var i32)`
+struct ReturnForm {
+  static constexpr auto Kind = NodeKind::ReturnForm.Define({.child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
+  AnyExprId type;
+};
+
 // A function signature: `fn F() -> i32`.
 template <const NodeKind& KindT, typename TokenKind,
           NodeCategory::RawEnumType Category>
@@ -462,7 +480,7 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<NodeIdOneOf<ReturnTypeId, ReturnFormId>> return_type;
   TokenKind token;
 };
 
@@ -961,6 +979,49 @@ struct ArrayExpr {
   AnyExprId type;
   ArrayExprCommaId comma;
   AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
+};
+
+struct RefPrimitiveForm {
+  static constexpr auto Kind = NodeKind::RefPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId type;
+};
+
+struct VarPrimitiveForm {
+  static constexpr auto Kind = NodeKind::VarPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyExprId type;
+};
+
+struct ValPrimitiveForm {
+  static constexpr auto Kind = NodeKind::ValPrimitiveForm.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::ValTokenIndex token;
+  AnyExprId type;
+};
+
+using FormLiteralKeyword =
+    LeafNode<NodeKind::FormLiteralKeyword, Lex::FormTokenIndex>;
+
+using FormLiteralOpenParen =
+    LeafNode<NodeKind::FormLiteralOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `form` literal: `form(ref i32)`
+struct FormLiteral {
+  static constexpr auto Kind = NodeKind::FormLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = NodeKind::FormLiteralKeyword,
+       .child_count = 3});
+
+  FormLiteralKeywordId keyword;
+  FormLiteralOpenParenId start;
+  AnyPrimitiveFormIdId category;
   Lex::CloseParenTokenIndex token;
 };
 

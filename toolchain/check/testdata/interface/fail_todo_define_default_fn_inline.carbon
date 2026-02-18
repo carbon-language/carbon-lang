@@ -40,7 +40,7 @@ interface Interface {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.88a: form = init_form %i32, call_param2 [concrete]
+// CHECK:STDOUT:   %.8ef: Core.Form = init_form %i32, call_param2 [concrete]
 // CHECK:STDOUT:   %Interface.G.type: type = fn_type @Interface.G [concrete]
 // CHECK:STDOUT:   %Interface.G: %Interface.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%Interface.G.decl [concrete]
@@ -78,7 +78,7 @@ interface Interface {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc26_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc26_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc26_35: form = init_form %i32.loc26_35, call_param2 [concrete = constants.%.88a]
+// CHECK:STDOUT:     %.loc26_35: Core.Form = init_form %i32.loc26_35, call_param2 [concrete = constants.%.8ef]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc26_19: type = splice_block %i32.loc26_19 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc26_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

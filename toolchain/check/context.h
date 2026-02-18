@@ -26,7 +26,7 @@
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/region_stack.h"
 #include "toolchain/check/scope_stack.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -260,9 +260,9 @@ class Context {
     // TODO: Consider creating an AnyForm inst category to refer to those insts.
     SemIR::InstId form_inst_id;
     // The inst ID of the form expression's type component.
-    SemIR::TypeInstId type_component_id;
+    SemIR::TypeInstId type_component_inst_id;
     // The type ID corresponding to type_component_id.
-    SemIR::TypeId type_id;
+    SemIR::TypeId type_component_id;
   };
 
   // Pushes form_expr onto the stack of return form declarations for in-progress

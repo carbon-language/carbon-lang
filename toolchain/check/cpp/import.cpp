@@ -822,7 +822,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   if (type.isBooleanType()) {
     CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.BoolTy));
     return ExprAsType(context, Parse::NodeId::None,
-                      context.types().GetInstId(GetSingletonType(
+                      context.types().GetTypeInstId(GetSingletonType(
                           context, SemIR::BoolType::TypeInstId)));
   }
   if (type.isInteger()) {
@@ -992,7 +992,7 @@ static auto MapReferenceType(Context& context, clang::QualType type,
   SemIR::TypeId pointer_type_id =
       GetPointerType(context, referenced_type_expr.inst_id);
   pointer_type_id =
-      GetConstType(context, context.types().GetInstId(pointer_type_id));
+      GetConstType(context, context.types().GetTypeInstId(pointer_type_id));
   return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
@@ -1252,14 +1252,14 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                          orig_ret_type.getAsString()));
       return {.form_inst_id = SemIR::ErrorInst::InstId,
-              .type_component_id = SemIR::ErrorInst::TypeInstId,
-              .type_id = SemIR::ErrorInst::TypeId};
+              .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+              .type_component_id = SemIR::ErrorInst::TypeId};
     }
     Context::FormExpr result = {
         .form_inst_id = is_reference ? make_ref_form(orig_type_inst_id)
                                      : make_init_form(orig_type_inst_id),
-        .type_component_id = orig_type_inst_id,
-        .type_id = type_id};
+        .type_component_inst_id = orig_type_inst_id,
+        .type_component_id = type_id};
 
     return result;
   }
@@ -1268,17 +1268,17 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ctor) {
     // void.
     return {.form_inst_id = SemIR::InstId::None,
-            .type_component_id = SemIR::TypeInstId::None,
-            .type_id = SemIR::TypeId::None};
+            .type_component_inst_id = SemIR::TypeInstId::None,
+            .type_component_id = SemIR::TypeId::None};
   }
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
       LookupClangDeclInstId(context, SemIR::ClangDeclKey(ctor->getParent())));
-  return {
-      .form_inst_id = make_init_form(record_type_inst_id),
-      .type_component_id = record_type_inst_id,
-      .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
+  return {.form_inst_id = make_init_form(record_type_inst_id),
+          .type_component_inst_id = record_type_inst_id,
+          .type_component_id =
+              context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
 // Information about a function's declared return type, corresponding to the
@@ -1446,26 +1446,16 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
                            clang::FunctionDecl* clang_decl,
                            SemIR::ClangDeclKey::Signature signature)
     -> std::optional<SemIR::FunctionId> {
-  context.scope_stack().PushForDeclName();
-  context.inst_block_stack().Push();
-  context.pattern_block_stack().Push();
+  StartFunctionSignature(context);
 
   auto function_params_insts =
       CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
 
-  auto pattern_block_id = context.pattern_block_stack().Pop();
-  auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;
   }
-
-  auto function_decl = SemIR::FunctionDecl{
-      SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
-  auto decl_id = AddPlaceholderImportedInstInNoBlock(
-      context,
-      MakeImportedLocIdAndInst(context, import_ir_inst_id, function_decl));
 
   auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
@@ -1482,39 +1472,47 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
                           ->getMethodVTableIndex(method_decl);
     }
   }
-  auto function_info = SemIR::Function{
-      {.name_id = GetFunctionName(context, clang_decl),
-       .parent_scope_id = GetParentNameScopeId(context, clang_decl),
-       .generic_id = SemIR::GenericId::None,
-       .first_param_node_id = Parse::NodeId::None,
-       .last_param_node_id = Parse::NodeId::None,
-       .pattern_block_id = pattern_block_id,
-       .implicit_param_patterns_id =
-           function_params_insts->implicit_param_patterns_id,
-       .param_patterns_id = function_params_insts->param_patterns_id,
-       .is_extern = false,
-       .extern_library_id = SemIR::LibraryNameId::None,
-       .non_owning_decl_id = SemIR::InstId::None,
-       .first_owning_decl_id = decl_id,
-       .definition_id = SemIR::InstId::None},
-      {.call_param_patterns_id = function_params_insts->call_param_patterns_id,
-       .call_params_id = function_params_insts->call_params_id,
-       .return_type_inst_id = function_params_insts->return_type_inst_id,
-       .return_form_inst_id = function_params_insts->return_form_inst_id,
-       .return_patterns_id = function_params_insts->return_patterns_id,
-       .virtual_modifier = virtual_modifier,
-       .virtual_index = virtual_index,
-       .self_param_id = FindSelfPattern(
-           context, function_params_insts->implicit_param_patterns_id),
-       .clang_decl_id = context.clang_decls().Add(
-           {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature),
-            .inst_id = decl_id})}};
 
-  function_decl.function_id = context.functions().Add(function_info);
-  function_decl.type_id = GetFunctionType(context, function_decl.function_id,
-                                          SemIR::SpecificId::None);
-  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
-  return function_decl.function_id;
+  auto [decl_id, function_id] = MakeFunctionDecl(
+      context, import_ir_inst_id, decl_block_id, /*build_generic=*/false,
+      /*is_definition=*/false,
+      SemIR::Function{
+          {
+              .name_id = GetFunctionName(context, clang_decl),
+              .parent_scope_id = GetParentNameScopeId(context, clang_decl),
+              .generic_id = SemIR::GenericId::None,
+              .first_param_node_id = Parse::NodeId::None,
+              .last_param_node_id = Parse::NodeId::None,
+              .pattern_block_id = pattern_block_id,
+              .implicit_param_patterns_id =
+                  function_params_insts->implicit_param_patterns_id,
+              .param_patterns_id = function_params_insts->param_patterns_id,
+              .is_extern = false,
+              .extern_library_id = SemIR::LibraryNameId::None,
+              .non_owning_decl_id = SemIR::InstId::None,
+              // Set by `MakeFunctionDecl`.
+              .first_owning_decl_id = SemIR::InstId::None,
+          },
+          {
+              .call_param_patterns_id =
+                  function_params_insts->call_param_patterns_id,
+              .call_params_id = function_params_insts->call_params_id,
+              .return_type_inst_id = function_params_insts->return_type_inst_id,
+              .return_form_inst_id = function_params_insts->return_form_inst_id,
+              .return_patterns_id = function_params_insts->return_patterns_id,
+              .virtual_modifier = virtual_modifier,
+              .virtual_index = virtual_index,
+              .self_param_id = FindSelfPattern(
+                  context, function_params_insts->implicit_param_patterns_id),
+          }});
+  context.imports().push_back(decl_id);
+
+  context.functions().Get(function_id).clang_decl_id =
+      context.clang_decls().Add(
+          {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature),
+           .inst_id = decl_id});
+
+  return function_id;
 }
 
 // Imports a C++ function, returning a corresponding Carbon function.
@@ -1678,6 +1676,8 @@ static auto AddDependentUnimportedDecls(Context& context,
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
     }
+  } else if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    AddDependentUnimportedTypeDecls(context, var_decl->getType(), worklist);
   }
   auto* parent = GetParentDecl(clang_decl);
   if (llvm::isa_and_nonnull<clang::TagDecl, clang::NamespaceDecl,

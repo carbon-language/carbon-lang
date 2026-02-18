@@ -12,7 +12,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::SemIR {

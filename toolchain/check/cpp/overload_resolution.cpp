@@ -15,7 +15,7 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"

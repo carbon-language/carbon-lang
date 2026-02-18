@@ -71,38 +71,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto form_expr = ExprAsReturnForm(context, type_node_id, type_inst_id);
   context.PushReturnForm(form_expr);
-
-  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
-  auto form_inst = context.insts().Get(form_expr.form_inst_id);
-  CARBON_KIND_SWITCH(form_inst) {
-    case SemIR::RefForm::Kind: {
-      break;
-    }
-    case CARBON_KIND(SemIR::InitForm init_form): {
-      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
-      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, node_id,
-          {.type_id = pattern_type_id,
-           .type_inst_id = form_expr.type_component_id});
-      return_patterns.push_back(AddPatternInst(
-          context,
-          SemIR::LocIdAndInst::UncheckedLoc(
-              type_node_id,
-              SemIR::OutParamPattern{.type_id = pattern_type_id,
-                                     .subpattern_id = return_slot_pattern_id,
-                                     .index = init_form.index})));
-      break;
-    }
-    case SemIR::ErrorInst::Kind: {
-      break;
-    }
-    default:
-      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
-  }
-
-  context.node_stack().Push(
-      node_id, context.inst_blocks().AddCanonical(return_patterns));
+  auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
+  context.node_stack().Push(node_id, return_patterns_id);
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
+  return context.TODO(node_id, "Support ->?");
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -115,10 +90,11 @@ static auto DiagnoseModifiers(Context& context,
                               std::optional<SemIR::Inst> parent_scope_inst,
                               SemIR::InstId self_param_id) -> void {
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
-                           KeywordModifierSet::Method |
-                           KeywordModifierSet::Interface);
+  LimitModifiersOnDecl(
+      context, introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Extern |
+          KeywordModifierSet::Export | KeywordModifierSet::Method |
+          KeywordModifierSet::Interface | KeywordModifierSet::Evaluation);
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
@@ -151,6 +127,16 @@ static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
       .Case(KeywordModifierSet::Override,
             SemIR::Function::VirtualModifier::Override)
       .Default(SemIR::Function::VirtualModifier::None);
+}
+
+// Returns the evaluation modifier as an enum.
+static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::EvaluationMode {
+  return modifier_set.ToEnum<SemIR::Function::EvaluationMode>()
+      .Case(KeywordModifierSet::Eval, SemIR::Function::EvaluationMode::Eval)
+      .Case(KeywordModifierSet::MustEval,
+            SemIR::Function::EvaluationMode::MustEval)
+      .Default(SemIR::Function::EvaluationMode::None);
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -224,6 +210,15 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   auto prev_type_id = SemIR::TypeId::None;
   auto prev_import_ir_id = SemIR::ImportIRId::None;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
+      // This is a function in an interface definition scope (see
+      // NameScope::is_interface_definition()).
+      auto function_decl =
+          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
+      prev_function_id = function_decl.function_id;
+      prev_type_id = function_decl.type_id;
+      break;
+    }
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       prev_function_id = function_decl.function_id;
       prev_type_id = function_decl.type_id;
@@ -296,6 +291,97 @@ static auto MaybeAddToNameLookup(
                                     modifier_set.GetAccessKind());
 }
 
+// Returns whether the given type is `i32`.
+static auto IsI32(Context& context, Parse::NodeId node_id,
+                  SemIR::TypeId type_id) -> bool {
+  return type_id == MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                                context.ints().Add(32));
+}
+
+// Returns whether the given parameter list is valid for the entry point
+// function `Main.Run`.
+static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
+                                       SemIR::InstBlockId param_patterns_id)
+    -> bool {
+  if (!param_patterns_id.has_value()) {
+    // Positional parameters for are not supported.
+    return false;
+  }
+
+  for (auto [index, param_pattern_id] :
+       llvm::enumerate(context.inst_blocks().Get(param_patterns_id))) {
+    if (param_pattern_id == SemIR::ErrorInst::InstId) {
+      // Ignore erroneous parameters.
+      continue;
+    }
+
+    auto param =
+        context.insts().TryGetAs<SemIR::ValueParamPattern>(param_pattern_id);
+    if (!param) {
+      // Only value parameters are supported for now.
+      return false;
+    }
+
+    if (param->type_id == SemIR::ErrorInst::TypeId) {
+      // Ignore parameters with erroneous types.
+      continue;
+    }
+
+    auto param_type_inst_id = context.types()
+                                  .GetAs<SemIR::PatternType>(param->type_id)
+                                  .scrutinee_type_inst_id;
+    switch (index) {
+      case 0: {
+        // `argc` should be a 32-bit integer.
+        if (!IsI32(
+                context, node_id,
+                context.types().GetTypeIdForTypeInstId(param_type_inst_id))) {
+          return false;
+        }
+        break;
+      }
+      case 1: {
+        // `argv` should be a pointer.
+        // TODO: Consider checking the pointee type also.
+        if (!context.insts().Is<SemIR::PointerType>(param_type_inst_id)) {
+          return false;
+        }
+        break;
+      }
+      default: {
+        // TODO: Decide whether to allow a third `envp` parameter.
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// Returns whether the given return type is valid for the entry point
+// function `Main.Run`.
+static auto IsValidEntryPointReturnType(Context& context, Parse::NodeId node_id,
+                                        SemIR::TypeId return_type_id) -> bool {
+  // An implicit or explicit return type of `()` is OK.
+  // TODO: Translate this to returning an `i32` with value `0` in lowering.
+  if (!return_type_id.has_value()) {
+    return true;
+  }
+  if (return_type_id == GetTupleType(context, {})) {
+    return true;
+  }
+
+  if (IsI32(context, node_id, return_type_id)) {
+    // Explicit return type of `i32` or an adapter for it is OK.
+    return true;
+  }
+
+  // For now, disallow anything else.
+  // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
+  // have an interface for this.
+  return false;
+}
+
 // If the function is the entry point, do corresponding validation.
 static auto ValidateForEntryPoint(Context& context,
                                   Parse::AnyFunctionDeclId node_id,
@@ -306,21 +392,22 @@ static auto ValidateForEntryPoint(Context& context,
     return;
   }
 
-  auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
   // TODO: Update this once valid signatures for the entry point are decided.
+  // See https://github.com/carbon-language/carbon-lang/issues/6735
   if (function_info.implicit_param_patterns_id.has_value() ||
-      !function_info.param_patterns_id.has_value() ||
-      !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
-      (return_type_id.has_value() &&
-       return_type_id != GetTupleType(context, {}) &&
-       // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
-       // have an interface for this.
-       return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
-                                     context.ints().Add(32)))) {
-    CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
-                      "invalid signature for `Main.Run` function; expected "
-                      "`fn ()` or `fn () -> i32`");
-    context.emitter().Emit(node_id, InvalidMainRunSignature);
+      !IsValidEntryPointParamList(context, node_id,
+                                  function_info.param_patterns_id)) {
+    CARBON_DIAGNOSTIC(InvalidMainRunParameters, Error,
+                      "invalid parameters for `Main.Run` function; expected "
+                      "`()` or `(argc: i32, argv: Core.Optional(char*)*)`");
+    context.emitter().Emit(node_id, InvalidMainRunParameters);
+  } else if (!IsValidEntryPointReturnType(
+                 context, node_id,
+                 function_info.GetDeclaredReturnType(context.sem_ir()))) {
+    CARBON_DIAGNOSTIC(InvalidMainRunReturnType, Error,
+                      "invalid return type for `Main.Run` function; expected "
+                      "`fn (...)` or `fn (...) -> i32`");
+    context.emitter().Emit(node_id, InvalidMainRunReturnType);
   }
 }
 
@@ -416,7 +503,7 @@ static auto BuildFunctionDecl(Context& context,
       maybe_return_patterns_id) {
     return_patterns_id = *maybe_return_patterns_id;
     auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_id;
+    return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
   }
 
@@ -438,6 +525,7 @@ static auto BuildFunctionDecl(Context& context,
                     parent_scope_inst_id, parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
+  auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -456,6 +544,7 @@ static auto BuildFunctionDecl(Context& context,
                        .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,
                        .virtual_modifier = virtual_modifier,
+                       .evaluation_mode = evaluation_mode,
                        .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
@@ -526,15 +615,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 static auto HandleFunctionDefinitionAfterSignature(
     Context& context, Parse::FunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  // Create the function scope and the entry block.
-  context.scope_stack().PushForFunctionBody(decl_id);
-  context.inst_block_stack().Push();
-  context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context,
-                         context.functions().Get(function_id).generic_id);
-
-  CheckFunctionDefinitionSignature(context, function_id);
-
+  StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
@@ -586,15 +667,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope();
-
-  auto& function = context.functions().Get(function_id);
-  function.body_block_ids = context.region_stack().PopRegion();
-
-  // If this is a generic function, collect information about the definition.
-  FinishGenericDefinition(context, function.generic_id);
 
   return true;
 }
@@ -629,33 +703,6 @@ static auto LookupBuiltinFunctionKind(Context& context,
                            builtin_name.str());
   }
   return kind;
-}
-
-// Returns whether `function` is a valid declaration of `builtin_kind`.
-static auto IsValidBuiltinDeclaration(Context& context,
-                                      const SemIR::Function& function,
-                                      SemIR::BuiltinFunctionKind builtin_kind)
-    -> bool {
-  if (!function.call_params_id.has_value()) {
-    // For now, we have no builtins that support positional parameters.
-    return false;
-  }
-
-  // Find the list of call parameters other than the implicit return slots.
-  auto call_params = context.inst_blocks()
-                         .Get(function.call_params_id)
-                         .drop_back(context.inst_blocks()
-                                        .GetOrEmpty(function.return_patterns_id)
-                                        .size());
-
-  // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
-  if (!return_type_id.has_value()) {
-    return_type_id = GetTupleType(context, {});
-  }
-
-  return builtin_kind.IsValidType(context.sem_ir(), call_params,
-                                  return_type_id);
 }
 
 auto HandleParseNode(Context& context,

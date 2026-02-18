@@ -754,9 +754,7 @@ auto Formatter::FormatParamList(InstBlockId params_id,
       continue;
     }
     CARBON_CHECK(!sem_ir_->insts().Is<OutParam>(param_id));
-    FormatName(param_id);
-    out_ << ": ";
-    FormatTypeOfInst(param_id);
+    FormatNameAndForm(param_id, sem_ir_->insts().Get(param_id));
   }
 
   out_ << ")";
@@ -1011,6 +1009,12 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
     return;
   }
 
+  FormatNameAndForm(inst_id, inst);
+
+  out_ << " = ";
+}
+
+auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   FormatName(inst_id);
 
   if (inst.kind().has_type()) {
@@ -1022,6 +1026,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
       case ExprCategory::RefTagged:
+      case ExprCategory::Dependent:
         FormatTypeOfInst(inst_id);
         break;
       case ExprCategory::DurableRef:
@@ -1029,18 +1034,17 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
         out_ << "ref ";
         FormatTypeOfInst(inst_id);
         break;
-      case ExprCategory::Initializing: {
+      case ExprCategory::InPlaceInitializing:
+      case ExprCategory::ReprInitializing: {
         out_ << "init ";
         FormatTypeOfInst(inst_id);
-        auto init_target_id = FindReturnSlotArgForInitializer(
+        auto init_target_id = FindStorageArgForInitializer(
             *sem_ir_, inst_id, /*allow_transitive=*/false);
         FormatReturnSlotArg(init_target_id);
         break;
       }
     }
   }
-
-  out_ << " = ";
 }
 
 auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
@@ -1159,7 +1163,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(InitializeFrom init): {
+    case CARBON_KIND(InPlaceInit init): {
       FormatArgs(init.src_id);
       return;
     }
@@ -1264,21 +1268,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case CARBON_KIND(WhereExpr where): {
       FormatArgs(where.period_self_id);
       FormatTrailingBlock(where.requirements_id);
-      return;
-    }
-
-    case CARBON_KIND(InPlaceInit in_place): {
-      // Omit dest_id if it will be part of the expression form.
-      //
-      // TODO: should it always be part of the expression form? If so, fix
-      // FindReturnSlotArgForInitializer to always return it, and then
-      // FormatInstRhsDefault will do the right thing.
-      if (SemIR::InitRepr::ForType(*sem_ir_, in_place.type_id)
-              .MightBeInPlace()) {
-        FormatArgs(in_place.src_id);
-      } else {
-        FormatArgs(in_place.src_id, in_place.dest_id);
-      }
       return;
     }
 

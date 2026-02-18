@@ -110,7 +110,7 @@ class StepStack {
 
   // Pushes an instruction by its TypeId.
   auto PushTypeId(TypeId type_id) -> void {
-    PushInstId(sem_ir_->types().GetInstId(type_id));
+    PushInstId(sem_ir_->types().GetTypeInstId(type_id));
   }
 
   // Pushes a specific interface by the interface's entity name.

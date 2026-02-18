@@ -266,8 +266,8 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
-                                 SemIR::InstId source_id) -> void {
+auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
+                                        SemIR::InstId source_id) -> void {
   switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
       break;

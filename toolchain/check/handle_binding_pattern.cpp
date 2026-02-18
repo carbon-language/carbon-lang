@@ -301,6 +301,11 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
                                  Parse::NodeKind::VarBindingPattern);
 }
 
+auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "Implement :? support");
+}
+
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternStartId /*node_id*/)
     -> bool {
@@ -414,7 +419,7 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   }
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context, context.types().GetTypeInstId(class_info.self_type_id),
       cast_type_inst_id);
   auto field_id =
       AddInst<SemIR::FieldDecl>(context, node_id,

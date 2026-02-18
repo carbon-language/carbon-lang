@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Name binding patterns](#name-binding-patterns)
         -   [Anonymous bindings](#anonymous-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
-        -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
@@ -36,10 +35,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Alternatives considered](#alternatives-considered-6)
         -   [Guards](#guards)
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
+-   [Evaluation order](#evaluation-order)
+    -   [Alternatives considered](#alternatives-considered-7)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
--   [Alternatives considered](#alternatives-considered-7)
+-   [Alternatives considered](#alternatives-considered-8)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -60,13 +61,12 @@ of the full pattern as well.
 
 ## Pattern Syntax and Semantics
 
-Expressions are patterns, as described below. A pattern that is not an
+All expressions are patterns, but they may be either tuple patterns, struct
+patterns, or expression patterns, as described below. A pattern that is not an
 expression, because it contains pattern-specific syntax such as a binding
 pattern, is a _proper pattern_. Many expression forms, such as arbitrary
 function calls, are not permitted as proper patterns, so cannot contain binding
 patterns.
-
--   _pattern_ ::= _proper-pattern_
 
 ```carbon
 fn F(n: i32) -> i32 { return n; }
@@ -81,10 +81,11 @@ match (F(42)) {
 
 An expression is a pattern.
 
--   _pattern_ ::= _expression_
+-   _expression-pattern_ ::= _expression_
+-   _pattern_ ::= _expression-pattern_
 
-The pattern is compared with the expression using the `==` operator: _pattern_
-`==` _scrutinee_.
+The scrutinee is compared with the expression using the `==` operator:
+_expression_ `==` _scrutinee_.
 
 ```carbon
 fn F(n: i32) {
@@ -96,30 +97,29 @@ fn F(n: i32) {
 }
 ```
 
-Any `==` operations performed by a pattern match occur in lexical order, but for
-repeated matches against the same _pattern_, later comparisons may be skipped by
-reusing the result from an earlier comparison:
+As depicted here, _expression-pattern_ is ambiguous with _tuple-pattern_,
+_struct-pattern_, and _alternative-pattern_. In the case of _tuple-pattern_ and
+_struct-pattern_, the ambiguity is resolved in their favor, meaning that a tuple
+or struct literal in a pattern context is not interpreted as an expression
+pattern, but as a tuple or struct pattern whose elements are expression
+patterns. For example:
 
 ```carbon
-class ChattyIntMatcher {
-  impl as EqWith(i32) {
-    fn Eq[self: ChattyIntMatcher](other: i32) {
-      Print("Matching {0}", other);
-      return other == 1;
-    }
-  }
-}
-
-fn F() {
-  // Prints `Matching 1` then `Matching 2`,
-  // may or may not then print `Matching 1` again.
-  match ((1, 2)) {
-    case ({} as ChattyIntMatcher, 0) => {}
-    case (1, {} as ChattyIntMatcher) => {}
-    case ({} as ChattyIntMatcher, 2) => {}
-  }
+match (0, 1, 2) {
+  case (F(), 0, G()) => ...
 }
 ```
+
+Here `(F(), 0, G())` is not an expression, but three separate expressions in a
+tuple pattern. As a result, this code will call `F()` but not `G()`, because the
+mismatch between the middle tuple elements will cause pattern matching to fail
+before reaching `G()`. Other than this short-circuiting behavior, a tuple
+pattern of expression patterns behaves the same as if it were a single
+expression pattern.
+
+The resolution of the _alternative-pattern_ ambiguity is not specified, because
+_alternative-pattern_ is specified to behave the same way an expression pattern
+would, in the cases where they overlap.
 
 #### Alternatives considered
 
@@ -131,14 +131,16 @@ fn F() {
 
 A name binding pattern is a pattern.
 
--   _binding-pattern_ ::= _identifier_ `:` _expression_
--   _proper-pattern_ ::= _binding-pattern_
+-   _binding-pattern_ ::= `ref`? (_identifier_ | `self`) `:` _expression_
+-   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _pattern_ ::= _binding-pattern_
 
 A name binding pattern declares a _binding_ with a name specified by the
 _identifier_, which can be used as an expression. If the binding pattern is
-enclosed by a `var` pattern, it is a _reference binding pattern_, and the
-binding is a durable reference expression. Otherwise, it is a _value binding
-pattern_, and the binding is a value expression.
+prefixed with `ref` or enclosed by a `var` pattern, it is a _reference binding
+pattern_, and otherwise it is a _value binding pattern_. A binding pattern
+enclosed by a `var` pattern cannot have a `ref` prefix, because it would be
+redundant.
 
 A _variable binding pattern_ is a special kind of reference binding pattern,
 which is the immediate subpattern of its enclosing `var` pattern.
@@ -147,15 +149,36 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-The type of the binding is specified by the _expression_. If the pattern is a
-value binding pattern, the scrutinee is implicitly converted to a value
-expression of that type if necessary, and the binding is _bound_ to the
-converted value. If the pattern is a reference binding pattern, the enclosing
-`var` pattern will ensure that the scrutinee is already a durable reference
-expression with the specified type, and the binding is bound directly to it.
+If the pattern syntax uses `:` it is a _runtime binding pattern_. If it uses
+`:!`, it is a _compile-time binding pattern_, and it cannot appear inside a
+`var` pattern. A compile-time binding pattern is either a _symbolic binding
+pattern_ or a _template binding pattern_, depending on whether it is prefixed
+with `template`.
 
-A use of a value binding is a value expression of the declared type, and a use
-of a reference binding is a durable reference expression of the declared type.
+The binding declared by a binding pattern has a
+[primitive form](values.md#expression-forms) with the following components:
+
+-   The type is _expression_.
+-   The category is "value" if the pattern is a value binding pattern, "durable
+    entire reference" if it's a variable binding pattern, or "durable non-entire
+    reference" if it's a non-variable reference binding pattern.
+-   The phase is "runtime", "symbolic", or "template" depending on whether the
+    pattern is a runtime, symbolic, or template binding pattern.
+
+During pattern matching, the scrutinee is implicitly converted as needed to have
+the same form, and the binding is _bound_ to (and consumes) the result of these
+conversions. This makes a runtime or template binding a kind of reusable alias
+for the converted scrutinee expression, with the same form and value. Symbolic
+bindings are more complex: the binding will have the same type, category, and
+phase as the converted scrutinee expression, but its constant value is an opaque
+symbol introduced by the binding, which the type system knows to be equal to the
+converted scrutinee expression.
+
+Note that there is no way to implicitly convert to a durable reference
+expression from any other category, so the scrutinee of a reference binding
+pattern must already be a durable reference. `var` pattern matching ensures that
+this is the case for the bindings nested inside it, but for `ref` binding
+patterns the user-provided scrutinee must meet this requirement itself.
 
 ```carbon
 fn F() -> i32 {
@@ -170,41 +193,23 @@ fn F() -> i32 {
 }
 ```
 
-When a new object needs to be created for the binding, the lifetime of the bound
-value matches the scope of the binding.
-
-```carbon
-class NoisyDestructor {
-  fn Make() -> Self { return {}; }
-  impl i32 as ImplicitAs(NoisyDestructor) {
-    fn Convert[self: i32]() -> Self { return Make(); }
-  }
-  destructor {
-    Print("Destroyed!");
-  }
-}
-
-fn G() {
-  // Does not print "Destroyed!".
-  let n: NoisyDestructor = NoisyDestructor.Make();
-  Print("Body of G");
-  // Prints "Destroyed!" here.
-}
-
-fn H(n: i32) {
-  // Does not print "Destroyed!".
-  let (v: NoisyDestructor, w: i32) = (n, n);
-  Print("Body of H");
-  // Prints "Destroyed!" here.
-}
-```
+When `self` is used instead of an identifier, the pattern must appear in the
+implicit parameter list of a method (as discussed [here](classes.md#methods)).
+During pattern matching in a method call, the parameter pattern containing
+`self` is matched with the object that the method was invoked on. In all other
+respects, the `self` pattern behaves just like an ordinary binding pattern,
+introducing a binding named `self` into scope, just as if `self` were an
+identifier rather than a keyword.
 
 #### Anonymous bindings
 
-A syntax like a binding but with `_` in place of an identifier can be used to
-ignore part of a value.
+A syntax like a binding but with `_` in place of an identifier is an anonymous
+binding. It does not participate in name lookup (so there can be multiple such
+patterns in the same scope), and in all other respects it behaves as if it were
+wrapped in an [`unused` pattern](#unused).
 
 -   _binding-pattern_ ::= `_` `:` _expression_
+-   _binding-pattern_ ::= `template`? `_` `:!` _expression_
 
 ```carbon
 fn F(n: i32) {
@@ -238,27 +243,6 @@ fn H(m: i32) {}
 -   [Named identifiers prefixed with `_`](/proposals/p2022.md#named-identifiers-prefixed-with-_)
 -   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
 -   [Attributes](/proposals/p2022.md#attributes)
-
-#### Compile-time bindings
-
-A `:!` can be used in place of `:` for a binding that is usable at compile time.
-
--   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
--   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
-    _expression_
--   _proper-pattern_ ::= _compile-time-pattern_
-
-```carbon
-// ✅ `F` takes a symbolic facet parameter `T` and a parameter `x` of type `T`.
-fn F(T:! type, x: T) {
-  var v: T = x;
-}
-```
-
-The `template` keyword indicates the binding pattern is introducing a template
-binding, so name lookups into the binding will not be fully resolved until its
-value is known.
 
 #### `auto` and type deduction
 
@@ -310,12 +294,18 @@ specified.
 A `var` prefix indicates that a pattern provides mutable storage for the
 scrutinee.
 
--   _proper-pattern_ ::= `var` _proper-pattern_
+-   _pattern_ ::= `var` _pattern_
 
-A `var` pattern matches when its nested pattern matches. The type of the storage
-is the resolved type of the nested _pattern_. Any binding patterns within the
-nested pattern are reference binding patterns, and their bindings refer to
-portions of the corresponding storage rather than to the scrutinee.
+The scrutinee is expected to have the same type as the resolved type of the
+nested _pattern_, and it is expected to be a runtime-phase ephemeral entire
+reference expression, which therefore refers to a newly-allocated temporary
+object. The scrutinee expression is converted as needed to satisfy those
+expectations, and the `var` pattern takes ownership of the referenced object,
+promotes it to a _durable_ entire reference expression, and matches the nested
+_pattern_ with it.
+
+The lifetime of the allocated object extends to the end of scope of the `var`
+pattern (that is the scope that any bindings declared within it would have).
 
 ```carbon
 fn F(p: i32*);
@@ -382,56 +372,48 @@ fn G() {
 
 A tuple of patterns can be used as a pattern.
 
--   _tuple-pattern_ ::= `(` [_expression_ `,`]\* _proper-pattern_ [`,`
-    _pattern_]\*
-    `,`? `)`
--   _proper-pattern_ ::= _tuple-pattern_
+-   _tuple-pattern_ ::= `(` [_pattern_ `,` [_pattern_ [`,` _pattern_]\* `,`? ] ]
+    `)`
+-   _pattern_ ::= _tuple-pattern_
 
-A _tuple-pattern_ containing no commas is treated as grouping parens: the
-contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
-the behavior is as follows.
-
-A tuple pattern is matched left-to-right. The scrutinee is required to be of
-tuple type.
-
-Note that a tuple pattern must contain at least one _proper-pattern_. Otherwise,
-it is a tuple-valued expression. However, a tuple pattern and a corresponding
-tuple-valued expression are matched in the same way because `==` for a tuple
-compares fields left-to-right.
+The scrutinee is required to be of tuple type, with the same arity as the number
+of nested _patterns_. It is converted to a tuple form by
+[form decomposition](values.md#form-conversions), and then each nested _pattern_
+is matched against the corresponding element of the converted scrutinee's
+[result](values.md#expression-forms). The tuple pattern matches if all of these
+sub-matches succeed.
 
 ### Struct patterns
 
 A struct can be matched with a struct pattern.
 
--   _proper-pattern_ ::= `{` [_field-init_ `,`]\* _proper-field-pattern_ [`,`
-    _field-pattern_]\*
-    `}`
--   _proper-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `}`
--   _field-init_ ::= _designator_ `=` _expression_
--   _proper-field-pattern_ ::= _designator_ `=` _proper-pattern_
--   _proper-field-pattern_ ::= _binding-pattern_
--   _field-pattern_ ::= _field-init_
--   _field-pattern_ ::= _proper-field-pattern_
+-   _struct-pattern_ ::= `{` [_field-pattern_ [`,` _field-pattern_ ]\* ] `}`
+-   _struct-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `}`
+-   _field-pattern_ ::= _designator_ `=` _pattern_
+-   _field-pattern_ ::= _binding-pattern_
+-   _pattern_ ::= _struct-pattern_
 
-A struct pattern resembles a struct literal, with at least one field initialized
-with a proper pattern:
+A struct pattern resembles a struct literal, except that the initializers can be
+patterns.
 
 ```carbon
 match ({.a = 1, .b = 2}) {
-  // Struct literal as an expression pattern.
+  // Struct literal as a pattern.
   case {.b = 2, .a = 1} => {}
-  // Struct pattern.
+  // Proper struct pattern.
   case {.b = n: i32, .a = m: i32} => {}
 }
 ```
 
-The scrutinee is required to be of struct type, and to have the same set of
-field names as the pattern. The pattern is matched left-to-right, meaning that
-matching is performed in the field order specified in the pattern, not in the
-field order of the scrutinee. This is consistent with the behavior of matching
-against a struct-valued expression, where the expression pattern becomes the
-left operand of the `==` and so determines the order in which `==` comparisons
-for fields are performed.
+The scrutinee is required to be of struct type, and every field name in the
+pattern must be a field name in the scrutinee. It is converted to a struct form
+by [form decomposition](values.md#form-conversions) and then each
+_field-pattern_ is matched with the same-named element of the converted
+scrutinee's [result](values.md#expression-forms). If the scrutinee result has
+any field names not present in the pattern, those sub-results are
+[discarded](values.md#form-conversions) in lexical order if the pattern has a
+trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does not. The
+struct pattern matches if all of these sub-matches succeed.
 
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
@@ -441,6 +423,9 @@ match ({.a = 1, .b = 2}) {
   case {a: i32, b: i32} => { return a + b; }
 }
 ```
+
+Likewise, `ref a: T` is synonymous with `.a = ref a: T`, and `var a: T` is
+synonymous with `.a = var a: T`.
 
 If some fields should be ignored when matching, a trailing `, _` can be added to
 specify this:
@@ -462,19 +447,22 @@ This is valid even if all fields are actually named in the pattern.
 
 An alternative pattern is used to match one alternative of a choice type.
 
--   _proper-pattern_ ::= _callee-expression_ _tuple-pattern_
--   _proper-pattern_ ::= _designator_ _tuple-pattern_?
+-   _alternative-pattern_ ::= _callee-expression_ _tuple-pattern_?
+-   _alternative-pattern_ ::= _designator_ _tuple-pattern_? \_ _pattern_ ::=
+    _alternative-pattern_
 
 Here, _callee-expression_ is syntactically an expression that is valid as the
 callee in a function call expression, and an alternative pattern is
-syntactically a function call expression whose argument list contains at least
-one _proper-pattern_.
+syntactically a function call expression whose argument list may contain proper
+patterns.
 
-If a _callee-expression_ is provided, it is required to name a choice type
-alternative that has a parameter list, and the scrutinee is implicitly converted
-to that choice type. Otherwise, the scrutinee is required to be of some choice
-type, and the designator is looked up in that type and is required to name an
-alternative with a parameter list if and only if a _tuple-pattern_ is specified.
+Semantically, if the argument list contains no proper patterns, it behaves like
+an expression pattern. Otherwise, if a _callee-expression_ is provided, it is
+required to name a choice type alternative that has a parameter list, and the
+scrutinee is implicitly converted to that choice type. Otherwise, the scrutinee
+is required to be of some choice type, and the designator is looked up in that
+type and is required to name an alternative with a parameter list if and only if
+a _tuple-pattern_ is specified.
 
 The pattern matches if the active alternative in the scrutinee is the specified
 alternative, and the arguments of the alternative match the given tuple pattern
@@ -750,8 +738,10 @@ In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
-Any initializing expressions in the scrutinee of a `match` statement are
-[materialized](values.md#temporary-materialization) before pattern matching
+If the scrutinee expression's [form](values.md#expression-forms) contains any
+primitive forms with category "initializing", they are converted to ephemeral
+non-entire reference expressions by
+[materialization](values.md#temporary-materialization) before pattern matching
 begins, so that the result can be reused by multiple `case`s. However, the
 objects created by `var` patterns are not reused by multiple `case`s:
 
@@ -812,6 +802,131 @@ fn Foo() -> i32 {
 
 This extracts the first value from the result of calling `Bar()` and binds it to
 a local variable named `p` which is then returned.
+
+## Evaluation order
+
+A pattern matching operation's potentially-observable side effects are a series
+of calls to functions that might be user-defined. This includes function calls
+and operators in the scrutinee and in expression patterns, and also type
+conversions and category conversions. Note that category conversions on tuple
+and struct types, and type conversions between tuple and struct types, are not
+modeled as function calls, but are broken down into function calls on their
+elements. Note also that for function and operator calls in expressions, we are
+only considering top-level calls, that is calls that aren't inputs to other
+calls within the expression, because the entire sub-expression of a top-level
+call acts as a single unit for purposes of evaluation ordering.
+
+For example, suppose `A` is implicitly convertible to a `C` and `B` is
+implicitly convertible to `D`, but both conversions are value expressions
+(rather than initializing expressions), and consider the following code:
+
+```
+fn MakeA() -> A;
+fn MakeB() -> B;
+
+var cd: (C, D) = (MakeA(), MakeB());
+```
+
+Evaluation of the last line involves 6 function calls:
+
+1. Call `MakeA`.
+2. Call `A.(Core.ImplicitAsPrimitive(C)).Convert`, to convert the `A` object to
+   a `C` value, as part of type conversion.
+3. Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`, as
+   part of category conversion.
+4. Call `MakeB`.
+5. Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
+6. Call `B.(Core.Copy).Op`.
+
+> **Note:** These `Core` interfaces haven't been specified yet, and their
+> details may change.
+
+To define the evaluation order of these calls, we have to consider the
+dependencies between them, which we'll model as a DAG, with function calls as
+nodes, and edges representing data dependencies. It will also be useful to
+include leaf patterns (that is, patterns that have no subpatterns) as nodes in
+the graph; they don't have side effects as such, so they aren't part of the
+evaluation order, but they do constrain the evaluation order.
+
+```mermaid
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+flowchart BT
+  2["A.(Core.ImplicitAsPrimitive(C))"]-->1[/"MakeA"\]
+  3["A.(Core.Copy)"]-->2
+  5["B.(Core.ImplicitAsPrimitive(D))"]-->4[/"MakeB"\]
+  6["B.(Core.Copy)"]-->5
+  7[\"cd: (C, D)"/]-->3
+  7-->6
+```
+
+This DAG will always have a few key properties:
+
+-   The sources are the primitive patterns. Only the sources can have multiple
+    out-edges.
+-   The sinks are function calls in the scrutinee expression, and in expression
+    patterns. Only scrutinee expression sinks can have multiple in-edges.
+-   The interior nodes always have one edge in and one edge out, forming a set
+    of paths that connect a source to a sink.
+-   The paths to calls in expression patterns are trivial: they consist of a
+    single edge from an expression pattern source to a function call sink.
+    Furthermore, a given source or sink has at most one such edge.
+-   Each path to the scrutinee connects a type in the pattern to a type in the
+    scrutinee, and together the paths uniquely cover the entire pattern and
+    scrutinee types. Furthermore, they are minimal, in the sense that unless the
+    path is a single edge, its source and sink types won't both be tuple or
+    struct types.
+
+> **Future work:** this design needs to be reconciled with the design for
+> [user-defined sum types](sum_types.md#user-defined-sum-types), because
+> `Match.Op` can violate this topology. This should probably be folded into a
+> broader redesign of sum type customization, which we expect to be necessary
+> for other reasons.
+
+The order of evaluation is determined by a depth-first postorder traversal of
+the this DAG: while visiting a node, we recursively visit all its children, and
+a call occurs when we finish visiting the corresponding node (revisiting a node
+is a no-op). By eagerly consuming the result of each function call as soon as
+possible, this minimizes the number of simultaneously-live temporaries, which
+enables more efficient code generation.
+
+When visiting a pattern, we visit its out-paths in the scrutinee type's
+left-to-right source code order (recall that each path is associated with a
+unique part of the scrutinee type). An edge to an expression pattern call, if
+any, is visited last. The patterns themselves are visited in their own
+left-to-right source code order. So, returning to our earlier example, the 6
+function calls will be evaluated in the order we listed them.
+
+In some cases, visiting the patterns in their own order may lead to visiting the
+types within a scrutinee call out of order, but if it would lead to visiting the
+scrutinee calls themselves out of order, the program is ill-formed. For example:
+
+```carbon
+// ❌ Error: visiting `.c: C` first leads to evaluating `MakeA()` before
+// `MakeB()`
+var {c: C, d: D} = {.d = MakeB(), .c = MakeA()};
+
+// ✅ OK: only one pattern, and we use scrutinee order to visit its children.
+var cd: {.c: C, .d: D} = {.d = MakeB(), .c = MakeA()};
+
+// ✅ OK: only one scrutinee call, so it can't be out of order.
+fn MakeAB() -> {.d: B, .c: A};
+var {c: C, d: D} = MakeAB();
+```
+
+As a result, the overall evaluation order is always consistent with the written
+order of the patterns, and with the written order of the scrutinee expressions.
+Within those constraints, the order of the scrutinee types acts as a
+tie-breaker. Note in particular that this means the fields of a struct-type
+binding are not necessarily initialized in declaration order.
+
+Note that generally speaking, pattern-match evaluation stops as soon as it's
+known that the match will fail, in which case only a prefix of the full
+evaluation order will be evaluated.
+
+### Alternatives considered
+
+-   [Breadth-first evaluation order](/proposals/p5545.md#breadth-first-evaluation-order)
+-   [Depth-first evaluation with a different "horizontal" order](/proposals/p5545.md#depth-first-evaluation-with-a-different-horizontal-order)
 
 ## Open questions
 

@@ -33,7 +33,7 @@ cc_library(
     srcs = ["compile_helper.cpp"],
     hdrs = ["compile_helper.h"],
     deps = [
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:emitter",
         "//toolchain/lex",
         "//toolchain/parse",
         "//toolchain/parse:tree",

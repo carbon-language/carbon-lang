@@ -103,7 +103,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %addr.loc7_49.1: %ptr.a04 = addr_of %.loc7_41.3
 // CHECK:STDOUT:   %addr.loc7_49.2: %ptr.270 = addr_of %.loc7_1
 // CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%addr.loc7_49.1, %addr.loc7_49.2)
-// CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = in_place_init %f__carbon_thunk.call
+// CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = mark_in_place_init %f__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_49
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

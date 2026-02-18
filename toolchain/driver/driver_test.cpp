@@ -65,6 +65,7 @@ class DriverTest : public testing::Test {
     std::error_code ec;
     auto original_dir = std::filesystem::current_path(ec);
     CARBON_CHECK(!ec, "{0}", ec.message());
+    Driver original_driver = std::move(driver_);
 
     const auto* unit_test = ::testing::UnitTest::GetInstance();
     const auto* test_info = unit_test->current_test_info();
@@ -78,12 +79,24 @@ class DriverTest : public testing::Test {
     std::filesystem::current_path(test_dir, ec);
     CARBON_CHECK(!ec, "Could not change the current working dir to '{0}': {1}",
                  test_dir, ec.message());
-    return llvm::scope_exit([original_dir, test_dir] {
+
+    // Build an overlay filesystem between the in-memory one and this new
+    // directory.
+    llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlay_fs =
+        new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem());
+    overlay_fs->pushOverlay(fs_);
+
+    // Rebuild the driver around this filesystem.
+    driver_ = Driver(overlay_fs, &installation_, /*input_stream=*/nullptr,
+                     &test_output_stream_, &test_error_stream_);
+
+    return llvm::scope_exit([this, original_dir, original_driver, test_dir] {
       std::error_code ec;
       std::filesystem::current_path(original_dir, ec);
       CARBON_CHECK(!ec,
                    "Could not change the current working dir to '{0}': {1}",
                    original_dir, ec.message());
+      driver_ = original_driver;
       std::filesystem::remove_all(test_dir, ec);
       CARBON_CHECK(!ec, "Could not remove the test working dir '{0}': {1}",
                    test_dir, ec.message());
@@ -169,7 +182,7 @@ TEST_F(DriverTest, DumpParseTree) {
 
 TEST_F(DriverTest, StdoutOutput) {
   // Use explicit filenames so we can look for those to validate output.
-  MakeTestFile("fn Main() {}", "test.carbon");
+  MakeTestFile("fn Run() {}", "test.carbon");
 
   EXPECT_TRUE(driver_
                   .RunCommand({"compile", "--no-prelude-import", "--output=-",
@@ -177,7 +190,7 @@ TEST_F(DriverTest, StdoutOutput) {
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // The default is textual assembly.
-  EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("Main:"));
+  EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("main:"));
 
   EXPECT_TRUE(driver_
                   .RunCommand({"compile", "--no-prelude-import", "--output=-",
@@ -198,7 +211,7 @@ TEST_F(DriverTest, FileOutput) {
 
   // Use explicit filenames as the default output filename is computed from
   // this, and we can use this to validate output.
-  MakeTestFile("fn Main() {}", "test.carbon");
+  MakeTestFile("fn Run() {}", "test.carbon");
 
   // Object output (the default) uses `.o`.
   // TODO: This should actually reflect the platform defaults.
@@ -221,18 +234,41 @@ TEST_F(DriverTest, FileOutput) {
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
-  EXPECT_THAT(*Testing::ReadFile("test.s"), ContainsRegex("Main:"));
+  EXPECT_THAT(*Testing::ReadFile("test.s"), ContainsRegex("main:"));
+}
+
+TEST_F(DriverTest, Link) {
+  auto scope = ScopedTempWorkingDir();
+
+  // First compile a file to get a linkable object.
+  MakeTestFile("fn Run() {}", "test.carbon");
+  ASSERT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success)
+      << test_error_stream_.TakeStr();
+
+  // Now link this into a binary. Note that we suppress building runtimes on
+  // demand here as no runtimes should be needed for the empty program.
+  EXPECT_TRUE(driver_
+                  .RunCommand({"--no-build-runtimes", "link", "--output=test",
+                               "test.o"})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+
+  // Ensure we wrote an executable file of some form with the correct name.
+  // TODO: We may need to update this if we implicitly synthesize a
+  // platform-specific `.exe` suffix or something similar.
+  auto result = llvm::object::createBinary("test");
+  if (auto error = result.takeError()) {
+    FAIL() << toString(std::move(error));
+  }
+  // Executables are also classified as object files.
+  EXPECT_TRUE(result->getBinary()->isObject());
 }
 
 TEST_F(DriverTest, ConfigJson) {
-  // The command won't succeed because we won't find the installation digest to
-  // print. We can still test the overall output is valid JSON.
-  EXPECT_FALSE(driver_.RunCommand({"config", "--json"}).success);
-
-  // Ensure the failure was what we expected.
-  EXPECT_THAT(
-      test_error_stream_.TakeStr(),
-      HasSubstr("error: unable to read the installation's digest file"));
+  EXPECT_TRUE(driver_.RunCommand({"config", "--json"}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
 
   // Make sure the output parses as JSON.
   std::string output = test_output_stream_.TakeStr();

@@ -42,84 +42,91 @@
 
 namespace Carbon::Check {
 
-// Marks the initializer `init_id` as initializing `target.storage_id`.
-static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
-                               ConversionTarget& target) -> void {
-  if (!target.storage_id.has_value()) {
-    return;
-  }
+// Overwrites the contents of the storage arg of the initializing expression
+// `init_id` with the inst at `target.storage_id`, and returns the ID that
+// should now be used to refer to `init_id`'s storage. Has no effect and returns
+// `target.storage_id` unchanged if `target.storage_id` is None or `init_id`
+// doesn't have a storage arg.
+static auto OverwriteStorageArg(SemIR::File& sem_ir, SemIR::InstId init_id,
+                                const ConversionTarget& target)
+    -> SemIR::InstId {
   CARBON_CHECK(target.is_initializer());
-  auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
-  if (return_slot_arg_id.has_value()) {
-    // Replace the temporary in the return slot with a reference to our target.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
-                     SemIR::TemporaryStorage::Kind,
-                 "Return slot for initializer does not contain a temporary; "
-                 "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_arg_id));
-    target.storage_id = target.storage_access_block->MergeReplacing(
-        return_slot_arg_id, target.storage_id);
+  if (!target.storage_id.has_value()) {
+    return SemIR::InstId::None;
   }
+  auto storage_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
+  if (!storage_arg_id.has_value()) {
+    return target.storage_id;
+  }
+  // Replace the temporary in the return slot with a reference to our target.
+  CARBON_CHECK(sem_ir.insts().Get(storage_arg_id).kind() ==
+                   SemIR::TemporaryStorage::Kind,
+               "Return slot for initializer does not contain a temporary; "
+               "initialized multiple times? Have {0}",
+               sem_ir.insts().Get(storage_arg_id));
+  return target.storage_access_block->MergeReplacing(storage_arg_id,
+                                                     target.storage_id);
 }
 
-// For a value or initializing expression using a copy value representation,
-// copy the value into a temporary object.
-static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
+// Materializes and returns a temporary initialized from the initializer
+// `init_id`. If `init_id` has a storage arg, it must be a `TemporaryStorage`;
+// if not, this function allocates one for it.
+static auto MaterializeTemporary(Context& context, SemIR::InstId init_id)
     -> SemIR::InstId {
-  // TODO: Consider using `None` to mean that we immediately materialize and
-  // initialize a temporary, rather than two separate instructions.
-  auto init = context.insts().Get(init_id);
-  auto temporary_id = AddInst<SemIR::TemporaryStorage>(
-      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  auto& sem_ir = context.sem_ir();
+  auto category = SemIR::GetExprCategory(sem_ir, init_id);
+  CARBON_CHECK(SemIR::IsInitializerCategory(category));
+  auto init = sem_ir.insts().Get(init_id);
+  auto storage_id = FindStorageArgForInitializer(sem_ir, init_id);
+  if (!storage_id.has_value()) {
+    CARBON_CHECK(category == SemIR::ExprCategory::ReprInitializing);
+    // The initializer has no storage arg, but we want to produce an ephemeral
+    // reference, so we need to allocate temporary storage.
+    storage_id = AddInst<SemIR::TemporaryStorage>(
+        context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  }
+
+  CARBON_CHECK(
+      sem_ir.insts().Get(storage_id).kind() == SemIR::TemporaryStorage::Kind,
+      "Storage arg for initializer does not contain a temporary; "
+      "initialized multiple times? Have {0}",
+      sem_ir.insts().Get(storage_id));
   return AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(init_id),
                                               {.type_id = init.type_id(),
-                                               .storage_id = temporary_id,
+                                               .storage_id = storage_id,
                                                .init_id = init_id});
 }
 
-// Commits to using a temporary to store the result of the initializing
-// expression described by `init_id`, and returns the location of the
-// temporary. If `discarded` is `true`, the result is discarded, and no
-// temporary will be created if possible; if no temporary is created, the
-// return value will be `SemIR::InstId::None`.
-static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
-                              bool discarded) -> SemIR::InstId {
+// Discards the initializer `init_id`. If `init_id` intrinsically writes to
+// memory, this materializes a temporary for it and starts its lifetime.
+//
+// TODO: We should probably start its lifetime unconditionally, because
+// types with by-copy representations can still have nontrivial destructors.
+static auto DiscardInitializer(Context& context, SemIR::InstId init_id)
+    -> void {
   auto& sem_ir = context.sem_ir();
-  auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
-  if (return_slot_arg_id.has_value()) {
-    // The return slot should already have a materialized temporary in it.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
-                     SemIR::TemporaryStorage::Kind,
-                 "Return slot for initializer does not contain a temporary; "
-                 "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_arg_id));
-    auto init = sem_ir.insts().Get(init_id);
-    return AddInstWithCleanup<SemIR::Temporary>(
-        context, SemIR::LocId(init_id),
-        {.type_id = init.type_id(),
-         .storage_id = return_slot_arg_id,
-         .init_id = init_id});
+  auto storage_id = FindStorageArgForInitializer(sem_ir, init_id);
+  if (!storage_id.has_value()) {
+    CARBON_CHECK(SemIR::GetExprCategory(sem_ir, init_id) ==
+                 SemIR::ExprCategory::ReprInitializing);
+    return;
   }
 
-  if (discarded) {
-    // Don't invent a temporary that we're going to discard.
-    return SemIR::InstId::None;
-  }
-
-  // The initializer has no return slot, but we want to produce a temporary
-  // object. Materialize one now.
-  return CopyValueToTemporary(context, init_id);
+  // init_id writes to temporary storage, so we need to materialize a temporary
+  // for it.
+  MaterializeTemporary(context, init_id);
 }
 
-// Materialize a temporary to hold the result of the given expression if it is
-// an initializing expression.
-static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
+// If `expr_id` is an initializer, materializes it and returns the resulting
+// ephemeral reference expression. Otherwise, returns `expr_id`.
+static auto MaterializeIfInitializer(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  if (GetExprCategory(context.sem_ir(), expr_id) ==
-      SemIR::ExprCategory::Initializing) {
-    return FinalizeTemporary(context, expr_id, /*discarded=*/false);
+  if (SemIR::IsInitializerCategory(
+          SemIR::GetExprCategory(context.sem_ir(), expr_id))) {
+    return MaterializeTemporary(context, expr_id);
+  } else {
+    return expr_id;
   }
-  return expr_id;
 }
 
 // Helper to allow `MakeElementAccessInst` to call `AddInst` with either a
@@ -169,9 +176,9 @@ static auto GetAggregateElementConversionTargetKind(SemIR::File& sem_ir,
     CARBON_CHECK(init_repr.kind != SemIR::InitRepr::Dependent,
                  "Aggregate should not have dependent init kind");
     if (init_repr.kind == SemIR::InitRepr::InPlace) {
-      return ConversionTarget::FullInitializer;
+      return ConversionTarget::InPlaceInitializing;
     }
-    return ConversionTarget::Initializer;
+    return ConversionTarget::Initializing;
   }
 
   // Otherwise, we want a value representation for each element.
@@ -250,7 +257,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
     literal_elems = sem_ir.inst_blocks().Get(tuple_literal->elements_id);
   } else {
-    value_id = MaterializeIfInitializing(context, value_id);
+    value_id = MaterializeIfInitializer(context, value_id);
   }
 
   // Check that the tuple is the right size.
@@ -312,7 +319,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
-            ConversionTarget::FullInitializer, return_slot_arg_id,
+            ConversionTarget::InPlaceInitializing, return_slot_arg_id,
             array_type.element_type_inst_id, target_block, i, i);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
@@ -352,7 +359,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     literal_elems_id = tuple_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
   } else {
-    value_id = MaterializeIfInitializing(context, value_id);
+    value_id = MaterializeIfInitializer(context, value_id);
   }
 
   // Check that the tuples are the same size.
@@ -462,7 +469,7 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
   // TODO: Should we add this as an instruction? It will contain
   // references to local InstIds.
   auto tuple_type_id = GetTupleType(context, type_inst_ids);
-  return context.types().GetInstId(tuple_type_id);
+  return context.types().GetTypeInstId(tuple_type_id);
 }
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
@@ -496,7 +503,7 @@ static auto ConvertStructToStructOrClass(
     literal_elems_id = struct_literal->elements_id;
     literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
   } else {
-    value_id = MaterializeIfInitializing(context, value_id);
+    value_id = MaterializeIfInitializer(context, value_id);
   }
 
   // Check that the structs are the same size.
@@ -563,10 +570,10 @@ static auto ConvertStructToStructOrClass(
                             .GetAs<SemIR::VtableDecl>(canonical_vtable_decl_id)
                             .vtable_id,
            .specific_id = vtable_class_type->specific_id});
-      auto init_id = AddInst<SemIR::InitializeFrom>(context, value_loc_id,
-                                                    {.type_id = vptr_type_id,
-                                                     .src_id = vtable_ptr_id,
-                                                     .dest_id = dest_id});
+      auto init_id = AddInst<SemIR::InPlaceInit>(context, value_loc_id,
+                                                 {.type_id = vptr_type_id,
+                                                  .src_id = vtable_ptr_id,
+                                                  .dest_id = dest_id});
       new_block.Set(i, init_id);
       continue;
     }
@@ -677,7 +684,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   // point to.
   bool need_temporary = !target.is_initializer();
   if (need_temporary) {
-    target.kind = ConversionTarget::Initializer;
+    target.kind = ConversionTarget::Initializing;
     target.storage_access_block = &target_block;
     target.storage_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
@@ -801,12 +808,12 @@ static auto IsValidExprCategoryForConversionTarget(
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
-             category == SemIR::ExprCategory::Initializing;
+             category == SemIR::ExprCategory::ReprInitializing ||
+             category == SemIR::ExprCategory::InPlaceInitializing;
     case ConversionTarget::RefParam:
     case ConversionTarget::UnmarkedRefParam:
       return category == SemIR::ExprCategory::DurableRef ||
-             category == SemIR::ExprCategory::EphemeralRef ||
-             category == SemIR::ExprCategory::Initializing;
+             category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::DurableRef:
       return category == SemIR::ExprCategory::DurableRef;
     case ConversionTarget::CppThunkRef:
@@ -814,9 +821,10 @@ static auto IsValidExprCategoryForConversionTarget(
     case ConversionTarget::ExplicitAs:
     case ConversionTarget::ExplicitUnsafeAs:
       return true;
-    case ConversionTarget::Initializer:
-    case ConversionTarget::FullInitializer:
-      return category == SemIR::ExprCategory::Initializing;
+    case ConversionTarget::InPlaceInitializing:
+      return category == SemIR::ExprCategory::InPlaceInitializing;
+    case ConversionTarget::Initializing:
+      return category == SemIR::ExprCategory::ReprInitializing;
   }
 }
 
@@ -885,7 +893,7 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
   }
 
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Partial) &&
-      (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
+      (!allow_unsafe || SemIR::IsInitializerCategory(cat))) {
     // TODO: Allow removing `partial` for initializing expressions as a safe
     // conversion. `PerformBuiltinConversion` will need to initialize the vptr
     // as part of the conversion.
@@ -893,7 +901,7 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
   }
 
   if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed) &&
-      (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
+      (!allow_unsafe || SemIR::IsInitializerCategory(cat))) {
     // As an unsafe conversion, `MaybeUnformed` can be removed from a value or
     // reference expression.
     return false;
@@ -976,15 +984,21 @@ static auto PerformBuiltinConversion(
 
     // If the source is an initializing expression, we may be able to pull a
     // value right out of it.
-    if (value_cat == SemIR::ExprCategory::Initializing &&
+    if (value_cat == SemIR::ExprCategory::ReprInitializing &&
         CanUseValueOfInitializer(sem_ir, value_type_id, target.kind)) {
       return AddInst<SemIR::ValueOfInitializer>(
           context, loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
 
     // Materialization is handled as part of the enclosing conversion.
-    if (value_cat == SemIR::ExprCategory::Initializing &&
+    if (SemIR::IsInitializerCategory(value_cat) &&
         target.kind == ConversionTarget::ValueOrRef) {
+      return value_id;
+    }
+
+    // Final destination store is handled as part of the enclosing conversion.
+    if (value_cat == SemIR::ExprCategory::ReprInitializing &&
+        target.kind == ConversionTarget::InPlaceInitializing) {
       return value_id;
     }
 
@@ -1244,7 +1258,7 @@ static auto PerformBuiltinConversion(
     if (auto struct_type =
             sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       if (struct_type->fields_id == SemIR::StructTypeFieldsId::Empty) {
-        type_value_id = sem_ir.types().GetInstId(value_type_id);
+        type_value_id = sem_ir.types().GetTypeInstId(value_type_id);
       }
     }
 
@@ -1370,7 +1384,7 @@ static auto IsCppEnum(Context& context, SemIR::TypeId type_id) -> bool {
 // Given a value expression, form a corresponding initializer that copies from
 // that value to the specified target, if it is possible to do so.
 static auto PerformCopy(Context& context, SemIR::InstId expr_id,
-                        ConversionTarget& target) -> SemIR::InstId {
+                        const ConversionTarget& target) -> SemIR::InstId {
   // TODO: We don't have a mechanism yet to generate `Copy` impls for each enum
   // type imported from C++. For now we fake it by providing a direct copy.
   auto type_id = context.insts().Get(expr_id).type_id();
@@ -1388,7 +1402,6 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
                           "cannot copy value of type {0}", TypeOfInstId);
         return context.emitter().Build(expr_id, CopyOfUncopyableType, expr_id);
       });
-  MarkInitializerFor(context.sem_ir(), copy_id, target);
   return copy_id;
 }
 
@@ -1503,14 +1516,17 @@ class CategoryConverter {
   Context& context_;
   SemIR::File& sem_ir_;
   SemIR::LocId loc_id_;
-  ConversionTarget& target_;
+  const ConversionTarget& target_;
   bool performed_builtin_conversion_;
 };
 
 auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                                const SemIR::ExprCategory category) const
     -> State {
-  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category);
+  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category ||
+                // TODO: Drop this special case once PerformCopy on C++ enums
+                // produces an initializing expression.
+                IsCppEnum(context_, target_.type_id));
   switch (category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
@@ -1521,15 +1537,37 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
     case SemIR::ExprCategory::Error:
       return Done{SemIR::ErrorInst::InstId};
 
-    case SemIR::ExprCategory::Initializing:
+    case SemIR::ExprCategory::Dependent:
+      context_.TODO(expr_id, "Support symbolic expression forms");
+      return Done{SemIR::ErrorInst::InstId};
+
+    case SemIR::ExprCategory::InPlaceInitializing:
+    case SemIR::ExprCategory::ReprInitializing:
       if (target_.is_initializer()) {
-        if (!performed_builtin_conversion_) {
-          // Don't fill in the return slot if we created the expression through
-          // a builtin conversion. In that case, we will have created it with
-          // the target already set.
-          // TODO: Find a better way to track whether we need to do this,
-          // and then make target_ immutable if possible.
-          MarkInitializerFor(sem_ir_, expr_id, target_);
+        // Overwrite the initializer's storage argument with the inst currently
+        // at target_.storage_id, if both are present. However, we skip this
+        // in certain cases:
+        // - If we created the expression through a builtin conversion, we
+        //   will have created it with the target already set.
+        // - If the type is a C++ enum, we don't actually have an initializing
+        //   expression, we're just pretending we do.
+        auto new_storage_id = target_.storage_id;
+        if (!performed_builtin_conversion_ &&
+            !IsCppEnum(context_, target_.type_id)) {
+          new_storage_id = OverwriteStorageArg(sem_ir_, expr_id, target_);
+        }
+
+        // If in-place initialization was requested, and it hasn't already
+        // happened, ensure it happens now.
+        if (target_.kind == ConversionTarget::InPlaceInitializing &&
+            category != SemIR::ExprCategory::InPlaceInitializing &&
+            SemIR::InitRepr::ForType(sem_ir_, target_.type_id)
+                .MightBeByCopy()) {
+          target_.storage_access_block->InsertHere();
+          return Done{AddInst<SemIR::InPlaceInit>(context_, loc_id_,
+                                                  {.type_id = target_.type_id,
+                                                   .src_id = expr_id,
+                                                   .dest_id = new_storage_id})};
         }
         return Done{expr_id};
       }
@@ -1540,10 +1578,10 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       // TODO: If the target is DurableRef, materialize a VarStorage instead of
       // a TemporaryStorage to lifetime-extend.
       if (target_.kind == ConversionTarget::Discarded) {
-        return Done{FinalizeTemporary(context_, expr_id, /*discarded=*/true)};
+        DiscardInitializer(context_, expr_id);
+        return Done{SemIR::InstId::None};
       } else {
-        return NextStep{.expr_id = FinalizeTemporary(context_, expr_id,
-                                                     /*discarded=*/false),
+        return NextStep{.expr_id = MaterializeTemporary(context_, expr_id),
                         .category = SemIR::ExprCategory::EphemeralRef};
       }
 
@@ -1627,7 +1665,31 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
 
       // When initializing from a value, perform a copy.
       if (target_.is_initializer()) {
-        return Done{PerformCopy(context_, expr_id, target_)};
+        auto copy_id = PerformCopy(context_, expr_id, target_);
+        if (copy_id == SemIR::ErrorInst::InstId) {
+          return Done{SemIR::ErrorInst::InstId};
+        }
+        // Deal with special-case category behavior of PerformCopy.
+        switch (SemIR::GetExprCategory(sem_ir_, copy_id)) {
+          case SemIR::ExprCategory::Value:
+            // As a temporary workaround, PerformCopy on a C++ enum currently
+            // returns the unchanged value, but we treat it as an initializing
+            // expression.
+            // TODO: Drop this case once it's no longer applicable.
+            CARBON_CHECK(IsCppEnum(context_, target_.type_id));
+            [[fallthrough]];
+          case SemIR::ExprCategory::ReprInitializing:
+            // The common case: PerformCopy produces an initializing expression.
+            return NextStep{.expr_id = copy_id,
+                            .category = SemIR::ExprCategory::ReprInitializing};
+          case SemIR::ExprCategory::InPlaceInitializing:
+            // A C++ copy operation produces an ephemeral entire reference.
+            return NextStep{
+                .expr_id = copy_id,
+                .category = SemIR::ExprCategory::InPlaceInitializing};
+          default:
+            CARBON_FATAL("Unexpected category of copy operation {0}", category);
+        }
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a
@@ -1714,13 +1776,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  if (target.kind != ConversionTarget::FullInitializer &&
-      (target.kind != ConversionTarget::Initializer ||
-       !SemIR::InitRepr::ForType(context.sem_ir(), target.type_id)
-            .MightBeInPlace())) {
-    // storage_id should only be used for a FullInitializer, or an Initializer
-    // if the type has an in-place init representation. This ensures we don't
-    // accidentally use it for anything else.
+  // Clear storage_id in cases where it's clearly meaningless, to avoid misuse
+  // and simplify the resulting SemIR.
+  if (!target.is_initializer() ||
+      SemIR::InitRepr::ForType(context.sem_ir(), target.type_id).kind ==
+          SemIR::InitRepr::None) {
     target.storage_id = SemIR::InstId::None;
   }
 
@@ -1752,7 +1812,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       target.kind == ConversionTarget::Value &&
       (OperandIsDependent(context, expr_id) ||
        OperandIsDependent(context, target.type_id))) {
-    auto target_type_inst_id = context.types().GetInstId(target.type_id);
+    auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
         SemIR::ConvertToValueAction{
@@ -1765,7 +1825,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
     SemIR::InstId interface_args[] = {
-        context.types().GetInstId(target.type_id)};
+        context.types().GetTypeInstId(target.type_id)};
     Operator op = {
         .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
@@ -1830,27 +1890,23 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       CategoryConverter(context, loc_id, target, performed_builtin_conversion)
           .Convert(expr_id);
 
-  // Perform a final destination store, if necessary.
-  if (target.kind == ConversionTarget::FullInitializer) {
-    if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
-        init_rep.MightBeByCopy()) {
-      target.storage_access_block->InsertHere();
-      expr_id = AddInst<SemIR::InitializeFrom>(context, loc_id,
-                                               {.type_id = target.type_id,
-                                                .src_id = expr_id,
-                                                .dest_id = target.storage_id});
-    }
-  }
-
   return expr_id;
 }
 
 auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
-                SemIR::InstId value_id) -> SemIR::InstId {
+                SemIR::InstId value_id, bool for_return) -> SemIR::InstId {
+  auto type_id = context.insts().Get(storage_id).type_id();
+  if (for_return &&
+      !SemIR::InitRepr::ForType(context.sem_ir(), type_id).MightBeInPlace()) {
+    // TODO: is it safe to use storage_id when the init repr is dependent?
+    storage_id = SemIR::InstId::None;
+  }
+  // TODO: add CHECK that storage_id.index < value_id.index to enforce the
+  // precondition, once existing violations have been cleaned up.
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
-                 {.kind = ConversionTarget::Initializer,
-                  .type_id = context.insts().Get(storage_id).type_id(),
+                 {.kind = ConversionTarget::Initializing,
+                  .type_id = type_id,
                   .storage_id = storage_id,
                   .storage_access_block = &target_block});
 }
@@ -1943,7 +1999,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
     -> TypeExpr {
-  return {.inst_id = context.types().GetInstId(type_id), .type_id = type_id};
+  return {.inst_id = context.types().GetTypeInstId(type_id),
+          .type_id = type_id};
 }
 
 static auto DiagnoseTypeExprEvaluationFailure(Context& context,
@@ -1979,8 +2036,8 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr {
   constexpr Context::FormExpr ErrorFormExpr = {
       .form_inst_id = SemIR::ErrorInst::InstId,
-      .type_component_id = SemIR::ErrorInst::TypeInstId,
-      .type_id = SemIR::ErrorInst::TypeId};
+      .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+      .type_component_id = SemIR::ErrorInst::TypeId};
   auto form_inst_id = SemIR::InstId::None;
   auto type_inst_id = SemIR::InstId::None;
   if (auto ref_tag = context.insts().TryGetAs<SemIR::RefTagExpr>(value_id)) {
@@ -2025,9 +2082,11 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());
 
-  return {.form_inst_id = form_inst_id,
-          .type_component_id = context.types().GetAsTypeInstId(type_inst_id),
-          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
+  return {
+      .form_inst_id = form_inst_id,
+      .type_component_inst_id = context.types().GetAsTypeInstId(type_inst_id),
+      .type_component_id =
+          context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {

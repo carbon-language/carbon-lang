@@ -178,12 +178,13 @@ class FunctionContext {
   auto StoreObject(TypeInFile type, llvm::Value* value, llvm::Value* addr)
       -> void;
 
-  // After emitting an initializer `init_id`, finishes performing the
-  // initialization of `dest_id` from that initializer. This is a no-op if the
-  // initialization was performed in-place, and otherwise performs a store or a
-  // copy.
-  auto FinishInit(TypeInFile type, SemIR::InstId dest_id,
-                  SemIR::InstId source_id) -> void;
+  // Emits the instructions necessary to initialize the storage at `dest_id`
+  // from the repr-initializing expression `source_id`. This assumes the
+  // instructions for `source_id` have already been emitted, so it's a no-op if
+  // the initialization was performed in-place, and otherwise performs a store
+  // or a copy.
+  auto InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
+                         SemIR::InstId source_id) -> void;
 
   // When fingerprinting for a specific, adds the call, found in the function
   // body, to <function_id, specific_id>. `function_id` and `specific_id` are

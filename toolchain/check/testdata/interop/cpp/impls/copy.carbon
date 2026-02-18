@@ -264,7 +264,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %.loc8_10.4: %ptr.29d = converted %addr.loc8_10.1, %.loc8_10.3
 // CHECK:STDOUT:   %addr.loc8_10.2: %ptr.e47 = addr_of %.loc6_40.1
 // CHECK:STDOUT:   %Copyable__carbon_thunk.call: init %empty_tuple.type = call imports.%Copyable__carbon_thunk.decl(%.loc8_10.4, %addr.loc8_10.2)
-// CHECK:STDOUT:   %.loc8_10.5: init %Copyable to %.loc6_40.1 = in_place_init %Copyable__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_10.5: init %Copyable to %.loc6_40.1 = mark_in_place_init %Copyable__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -283,7 +283,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %.loc14_10.4: %ptr.093 = converted %addr.loc14_10.1, %.loc14_10.3
 // CHECK:STDOUT:   %addr.loc14_10.2: %ptr.84c = addr_of %.loc12_48.1
 // CHECK:STDOUT:   %ExplicitCopy__carbon_thunk.call: init %empty_tuple.type = call imports.%ExplicitCopy__carbon_thunk.decl(%.loc14_10.4, %addr.loc14_10.2)
-// CHECK:STDOUT:   %.loc14_10.5: init %ExplicitCopy to %.loc12_48.1 = in_place_init %ExplicitCopy__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14_10.5: init %ExplicitCopy to %.loc12_48.1 = mark_in_place_init %ExplicitCopy__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

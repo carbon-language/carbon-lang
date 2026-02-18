@@ -116,7 +116,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
 // CHECK:STDOUT:   %addr.loc7: %ptr.270 = addr_of %.loc7_1
 // CHECK:STDOUT:   %A__carbon_thunk.call.loc7: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc7)
-// CHECK:STDOUT:   %.loc7_43: init %A to %.loc7_1 = in_place_init %A__carbon_thunk.call.loc7
+// CHECK:STDOUT:   %.loc7_43: init %A to %.loc7_1 = mark_in_place_init %A__carbon_thunk.call.loc7
 // CHECK:STDOUT:   assign file.%a1.var, %.loc7_43
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc8_38: type = name_ref B, imports.%B.decl [concrete = constants.%B]
@@ -124,7 +124,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %.loc8_1: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
 // CHECK:STDOUT:   %addr.loc8: %ptr.a04 = addr_of %.loc8_1
 // CHECK:STDOUT:   %B__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_43: init %B to %.loc8_1 = in_place_init %B__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_43: init %B to %.loc8_1 = mark_in_place_init %B__carbon_thunk.call.loc8
 // CHECK:STDOUT:   assign file.%b1.var, %.loc8_43
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc9_39: type = name_ref B, imports.%B.decl [concrete = constants.%B]
@@ -132,7 +132,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %.loc9_1: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
 // CHECK:STDOUT:   %addr.loc9: %ptr.a04 = addr_of %.loc9_1
 // CHECK:STDOUT:   %B__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_44: init %B to %.loc9_1 = in_place_init %B__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_44: init %B to %.loc9_1 = mark_in_place_init %B__carbon_thunk.call.loc9
 // CHECK:STDOUT:   assign file.%b2.var, %.loc9_44
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc10_39: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -140,7 +140,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %.loc10_1: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
 // CHECK:STDOUT:   %addr.loc10: %ptr.270 = addr_of %.loc10_1
 // CHECK:STDOUT:   %A__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc10)
-// CHECK:STDOUT:   %.loc10_44: init %A to %.loc10_1 = in_place_init %A__carbon_thunk.call.loc10
+// CHECK:STDOUT:   %.loc10_44: init %A to %.loc10_1 = mark_in_place_init %A__carbon_thunk.call.loc10
 // CHECK:STDOUT:   assign file.%a2.var, %.loc10_44
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

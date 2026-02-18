@@ -7,15 +7,20 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -193,6 +198,72 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Creates and returns a function that can be used to construct a
+// std::initializer_list from an array.
+//
+// TODO: This should ideally be implemented in Carbon code rather than by
+// synthesizing a function.
+// TODO: We should cache and reuse the generated function.
+static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
+                                          clang::QualType init_list_type,
+                                          int32_t size) -> SemIR::InstId {
+  // Extract the element type `T` from the `std::initializer_list<T>` type.
+  clang::QualType element_type;
+  bool is_std_initializer_list =
+      context.clang_sema().isStdInitializerList(init_list_type, &element_type);
+  CARBON_CHECK(is_std_initializer_list);
+  auto element_type_inst_id =
+      ImportCppType(context, loc_id, element_type).inst_id;
+  if (element_type_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Import the `std::initializer_list<T>` type and check we recognize its
+  // layout.
+  auto [init_list_type_inst_id, init_list_type_id] =
+      ImportCppType(context, loc_id, init_list_type);
+  if (init_list_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::InstId;
+  }
+  auto layout =
+      SemIR::GetStdInitializerListLayout(context.sem_ir(), init_list_type_id);
+  if (layout.kind == SemIR::StdInitializerListLayout::None) {
+    context.TODO(loc_id, "Unsupported layout for std::initializer_list");
+    return SemIR::ErrorInst::InstId;
+  }
+  auto init_list_class_id = context.sem_ir()
+                                .types()
+                                .GetAs<SemIR::ClassType>(init_list_type_id)
+                                .class_id;
+  auto& init_list_class = context.classes().Get(init_list_class_id);
+
+  // Build the array type `T[size]` that we use as the parameter type.
+  // TODO: This will eventually be called from impl lookup, possibly while
+  // forming a specific, so we should not be adding instructions here.
+  auto bound_id = AddInst(
+      context, SemIR::LocIdAndInst(
+                   loc_id, SemIR::IntValue{
+                               .type_id = GetSingletonType(
+                                   context, SemIR::IntLiteralType::TypeInstId),
+                               .int_id = context.ints().Add(size)}));
+  auto array_type_inst_id = AddTypeInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   loc_id, SemIR::ArrayType{
+                               .type_id = SemIR::TypeType::TypeId,
+                               .bound_id = bound_id,
+                               .element_type_inst_id = element_type_inst_id}));
+  auto array_type_id =
+      context.types().GetTypeIdForTypeInstId(array_type_inst_id);
+
+  // Create a builtin function to perform the conversion from array type to
+  // initializer list type. We name the synthesized function as if it were a
+  // constructor of std::initializer_list.
+  return MakeBuiltinFunction(
+      context, loc_id, SemIR::BuiltinFunctionKind::CppStdInitializerListMake,
+      init_list_class.scope_id, init_list_class.name_id,
+      {.param_type_ids = {array_type_id}, .return_type_id = init_list_type_id});
+}
+
 // Returns information about the Carbon signature to import when importing a C++
 // constructor or conversion operator.
 static auto GetConversionSignatureToImport(
@@ -296,6 +367,7 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     switch (step.Kind) {
       case clang::InitializationSequence::SK_UserConversion:
       case clang::InitializationSequence::SK_ConstructorInitialization:
+      case clang::InitializationSequence::SK_StdInitializerListConstructorCall:
       case clang::InitializationSequence::
           SK_ConstructorInitializationFromList: {
         if (auto* ctor =
@@ -329,6 +401,20 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
         // TODO: There may be other conversions later in the sequence that we
         // need to model; we've only applied the first one here.
         return result_id;
+      }
+
+      case clang::InitializationSequence::SK_StdInitializerList: {
+        return MakeCppStdInitializerListMake(
+            context, loc_id, step.Type,
+            cast<clang::InitListExpr>(arg_expr)->getNumInits());
+      }
+
+      case clang::InitializationSequence::SK_ListInitialization: {
+        // Aggregate initialization is handled by the normal Carbon conversion
+        // logic, so we ignore it here.
+        // TODO: So far we only support aggregate initialization for arrays and
+        // empty classes.
+        continue;
       }
 
       case clang::InitializationSequence::SK_ConversionSequence:
@@ -497,6 +583,9 @@ auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {
 
 static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
     -> clang::FunctionDecl* {
+  if (inst_id == SemIR::InstId::None) {
+    return nullptr;
+  }
   auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
       context.insts().Get(inst_id).type_id());
   if (!function_type) {

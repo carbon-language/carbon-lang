@@ -39,7 +39,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.501: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b.501 [concrete]
-// CHECK:STDOUT:   %.64f: form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -68,7 +68,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %bound_method.646: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
-// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -109,7 +109,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc20: form = init_form %C.ref.loc20, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc20: Core.Form = init_form %C.ref.loc20, call_param0 [concrete = constants.%.768]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -119,7 +119,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc25: form = init_form %i32.loc25, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25, call_param0 [concrete = constants.%.437]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -157,7 +157,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.1: init %i32 = call %bound_method.loc21_43.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_43.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_43.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc21_43.4: init %i32 to %.loc21_43.3 = initialize_from %.loc21_43.2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc21_43.4: init %i32 to %.loc21_43.3 = in_place_init %.loc21_43.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc21_43.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc21_43.3: <bound method> = bound_method %int_2, %impl.elem0.loc21_43.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc21_43.2: <specific function> = specific_function %impl.elem0.loc21_43.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -165,7 +165,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.2: init %i32 = call %bound_method.loc21_43.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.6: ref %i32 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc21_43.7: init %i32 to %.loc21_43.6 = initialize_from %.loc21_43.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc21_43.7: init %i32 to %.loc21_43.6 = in_place_init %.loc21_43.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.8: init %C to %return.param = class_init (%.loc21_43.4, %.loc21_43.7) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc21_12: init %C = converted %.loc21_43.1, %.loc21_43.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return.param, %.loc21_12
@@ -200,5 +200,5 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %.loc26_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

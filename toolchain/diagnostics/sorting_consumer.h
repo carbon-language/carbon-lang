@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
-#define CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
 
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/emitter.h"
 
 namespace Carbon::Diagnostics {
 
@@ -40,10 +40,23 @@ class SortingConsumer : public Consumer {
 
   // Sorts and flushes buffered diagnostics.
   auto Flush() -> void override {
-    llvm::stable_sort(diagnostics_,
-                      [](const Diagnostic& lhs, const Diagnostic& rhs) {
-                        return lhs.last_byte_offset < rhs.last_byte_offset;
-                      });
+    llvm::stable_sort(
+        diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
+          if (lhs.last_byte_offset != rhs.last_byte_offset) {
+            return lhs.last_byte_offset < rhs.last_byte_offset;
+          }
+
+          if (lhs.is_on_scope && rhs.is_on_scope) {
+            // When both are on-scope, we need to compare the locations.
+            const auto& lhs_loc = lhs.messages[0].loc;
+            const auto& rhs_loc = rhs.messages[0].loc;
+            return std::tie(lhs_loc.line_number, lhs_loc.column_number) <
+                   std::tie(rhs_loc.line_number, rhs_loc.column_number);
+          } else {
+            // Order non-on-scope before on-scope diagnostics.
+            return !lhs.is_on_scope && rhs.is_on_scope;
+          }
+        });
     for (auto& diag : diagnostics_) {
       next_consumer_->HandleDiagnostic(std::move(diag));
     }
@@ -60,4 +73,4 @@ class SortingConsumer : public Consumer {
 
 }  // namespace Carbon::Diagnostics
 
-#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_

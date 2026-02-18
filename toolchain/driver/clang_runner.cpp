@@ -173,22 +173,30 @@ auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                           prebuilt_runtimes.Get(Runtimes::Libcxx));
   return RunInternal(args, target, prebuilt_resource_dir_path.native(),
                      std::move(libunwind_path), std::move(libcxx_path),
-                     enable_leaking);
+                     /*link_runtime_libs=*/true, enable_leaking);
 }
 
 auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
                       Runtimes::Cache& runtimes_cache,
                       llvm::ThreadPoolInterface& runtimes_build_thread_pool,
                       bool enable_leaking) -> ErrorOr<bool> {
+  std::string target = ComputeClangTarget(args);
+
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
   if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
-    return RunWithNoRuntimes(args, enable_leaking);
+    // Note that we do allow linking default libraries here -- we want to learn
+    // if a command ever goes through this path and Clang thinks it needs to
+    // link a library as the goal here is to correctly detect that this will
+    // _not_ happen. Suppressing the linking of default libraries would hide a
+    // failure in that case.
+    return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
+                       /*libunwind_path=*/std::nullopt,
+                       /*libcxx_path=*/std::nullopt, /*link_runtime_libs=*/true,
+                       enable_leaking);
   }
-
-  std::string target = ComputeClangTarget(args);
 
   Runtimes::Cache::Features features = {.target = target};
   CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache.Lookup(features));
@@ -219,7 +227,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // return.
   return RunInternal(args, target, resource_dir_path.native(),
                      std::move(libunwind_path), std::move(libcxx_path),
-                     enable_leaking);
+                     /*link_runtime_libs=*/true, enable_leaking);
 }
 
 auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
@@ -227,7 +235,8 @@ auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
   std::string target = ComputeClangTarget(args);
   return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
                      /*libunwind_path=*/std::nullopt,
-                     /*libcxx_path=*/std::nullopt, enable_leaking);
+                     /*libcxx_path=*/std::nullopt, /*link_runtime_libs=*/false,
+                     enable_leaking);
 }
 
 auto ClangRunner::RunInternal(
@@ -235,8 +244,8 @@ auto ClangRunner::RunInternal(
     std::optional<llvm::StringRef> target_resource_dir_path,
 
     std::optional<std::filesystem::path> libunwind_path,
-    std::optional<std::filesystem::path> libcxx_path, bool enable_leaking)
-    -> ErrorOr<bool> {
+    std::optional<std::filesystem::path> libcxx_path, bool link_runtime_libs,
+    bool enable_leaking) -> ErrorOr<bool> {
   llvm::BumpPtrAllocator alloc;
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
@@ -278,19 +287,39 @@ auto ClangRunner::RunInternal(
 
   AppendDefaultClangArgs(*installation_, target, prefix_args);
 
-  // We don't have a direct way to configure the linker search paths in the
-  // Clang driver outside of command line flags, so we inject them here with
-  // flags. Note that we only inject these as _search_ paths to allow the normal
-  // linking rules to govern whether or not to link a given library. We also
-  // build our runtimes exclusively as static archives so we don't need to use
-  // command line flags to force static runtime linking to occur.
-  if (libunwind_path) {
-    prefix_args.push_back(
-        llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
-  }
-  if (libcxx_path) {
-    prefix_args.push_back(
-        llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+  if (link_runtime_libs) {
+    // We don't have a direct way to configure the linker search paths in the
+    // Clang driver outside of command line flags, so we inject them here with
+    // flags. Note that we only inject these as _search_ paths to allow the
+    // normal linking rules to govern whether or not to link a given library. We
+    // also build our runtimes exclusively as static archives so we don't need
+    // to use command line flags to force static runtime linking to occur.
+    if (libunwind_path) {
+      prefix_args.push_back(
+          llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
+    }
+    if (libcxx_path) {
+      prefix_args.push_back(
+          llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+    }
+  } else {
+    // If we are suppressing the linking of default libs, ensure we didn't get a
+    // path to add to the link for them, or an override of the resource
+    // directory.
+    CARBON_CHECK(!target_resource_dir_path);
+    CARBON_CHECK(!libunwind_path);
+    CARBON_CHECK(!libcxx_path);
+
+    // Now suppress all the default library linking, as we don't expect to have
+    // any target runtimes on this code path.
+    //
+    // TODO: What we actually want here is something more like `-nostdlib++`,
+    // `-unwindlib=none`, `-rtlib=none`; however, the last of these doesn't
+    // exist in Clang and looks tricky to introduce. This is almost certainly
+    // wrong, as it likely suppresses the linking of the _C_ standard library,
+    // which isn't one of the Clang runtime libraries we're trying to control
+    // here. But the only user of this currently doesn't need to distinguish.
+    prefix_args.push_back("-nostdlib");
   }
   prefix_args.push_back("--end-no-unused-arguments");
 

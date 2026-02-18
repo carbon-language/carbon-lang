@@ -57,13 +57,13 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %require_complete.e360af.1: <witness> = require_complete_type %I.type.1ab3e4.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c404c.1: type = pattern_type %A.95c0c7.2 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.2: type = ptr_type %V.67d [symbolic]
-// CHECK:STDOUT:   %.ba4d87.2: form = init_form %ptr.e8f8f9.2, call_param1 [symbolic]
+// CHECK:STDOUT:   %.4fe7d1.2: Core.Form = init_form %ptr.e8f8f9.2, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.2: type = pattern_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %A.as.I.impl.F.type.58747b.1: type = fn_type @A.as.I.impl.F, @A.as.I.impl(%V.67d) [symbolic]
 // CHECK:STDOUT:   %A.as.I.impl.F.afeb91.1: %A.as.I.impl.F.type.58747b.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %A.elem.8a20fa.2: type = unbound_element_type %A.95c0c7.2, %V.67d [symbolic]
 // CHECK:STDOUT:   %require_complete.fd656a.1: <witness> = require_complete_type %A.95c0c7.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4455.1: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
@@ -79,7 +79,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %ptr.5da: type = ptr_type %A.95c0c7.3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.5da [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.4: type = ptr_type %W [symbolic]
-// CHECK:STDOUT:   %.ba4d87.4: form = init_form %ptr.e8f8f9.4, call_param1 [symbolic]
+// CHECK:STDOUT:   %.4fe7d1.4: Core.Form = init_form %ptr.e8f8f9.4, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.4: type = pattern_type %ptr.e8f8f9.4 [symbolic]
 // CHECK:STDOUT:   %I.type.1ab3e4.3: type = facet_type <@I, @I(%W)> [symbolic]
 // CHECK:STDOUT:   %I.F.type.93703d.3: type = fn_type @I.F, @I(%W) [symbolic]
@@ -101,7 +101,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A.ed7: type = class_type @A, @A(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.ed2: type = ptr_type %A.ed7 [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.f0e: form = init_form %ptr.c28, call_param1 [concrete]
+// CHECK:STDOUT:   %.98f: Core.Form = init_form %ptr.c28, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.1cc: type = pattern_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %I.type.ab5: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %I.F.type.550: type = fn_type @I.F, @I(%empty_struct_type) [concrete]
@@ -168,7 +168,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %V.ref: type = name_ref V, @A.as.I.impl.%V.loc12_14.2 [symbolic = %V (constants.%V.67d)]
 // CHECK:STDOUT:       %ptr.loc13_30.2: type = ptr_type %V.ref [symbolic = %ptr.loc13_30.1 (constants.%ptr.e8f8f9.2)]
-// CHECK:STDOUT:       %.loc13_30.2: form = init_form %ptr.loc13_30.2, call_param1 [symbolic = %.loc13_30.1 (constants.%.ba4d87.2)]
+// CHECK:STDOUT:       %.loc13_30.2: Core.Form = init_form %ptr.loc13_30.2, call_param1 [symbolic = %.loc13_30.1 (constants.%.4fe7d1.2)]
 // CHECK:STDOUT:       %self.param: ref @A.as.I.impl.F.%A (%A.95c0c7.2) = ref_param call_param0
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @A.as.I.impl.%A.loc12_27.2 [symbolic = %A (constants.%A.95c0c7.2)]
 // CHECK:STDOUT:       %self: ref @A.as.I.impl.F.%A (%A.95c0c7.2) = ref_binding self, %self.param
@@ -190,12 +190,12 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.95c0c7.2)]
 // CHECK:STDOUT:   %pattern_type.loc13_12: type = pattern_type %A [symbolic = %pattern_type.loc13_12 (constants.%pattern_type.2c404c.1)]
 // CHECK:STDOUT:   %ptr.loc13_30.1: type = ptr_type %V [symbolic = %ptr.loc13_30.1 (constants.%ptr.e8f8f9.2)]
-// CHECK:STDOUT:   %.loc13_30.1: form = init_form %ptr.loc13_30.1, call_param1 [symbolic = %.loc13_30.1 (constants.%.ba4d87.2)]
+// CHECK:STDOUT:   %.loc13_30.1: Core.Form = init_form %ptr.loc13_30.1, call_param1 [symbolic = %.loc13_30.1 (constants.%.4fe7d1.2)]
 // CHECK:STDOUT:   %pattern_type.loc13_26: type = pattern_type %ptr.loc13_30.1 [symbolic = %pattern_type.loc13_26 (constants.%pattern_type.4f4b84.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_30: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete.loc13_30 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %require_complete.loc13_16: <witness> = require_complete_type %A [symbolic = %require_complete.loc13_16 (constants.%require_complete.fd656a.1)]
+// CHECK:STDOUT:   %require_complete.loc13_30: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete.loc13_30 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %V [symbolic = %A.elem (constants.%A.elem.8a20fa.2)]
 // CHECK:STDOUT:   %.loc14_12.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%V) [symbolic = %.loc14_12.1 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc13_30.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
@@ -204,7 +204,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %impl.elem0.loc14_12.2: @A.as.I.impl.F.%.loc14_12.2 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_12.2: <specific function> = specific_impl_function %impl.elem0.loc14_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @A.as.I.impl.F.%A (%A.95c0c7.2)) -> out %return.param: @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
+// CHECK:STDOUT:   fn(%self.param: ref @A.as.I.impl.F.%A (%A.95c0c7.2)) -> out %return.param: @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @A.as.I.impl.F.%A (%A.95c0c7.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.8a20fa.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
@@ -290,7 +290,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A => constants.%A.95c0c7.2
 // CHECK:STDOUT:   %pattern_type.loc13_12 => constants.%pattern_type.2c404c.1
 // CHECK:STDOUT:   %ptr.loc13_30.1 => constants.%ptr.e8f8f9.2
-// CHECK:STDOUT:   %.loc13_30.1 => constants.%.ba4d87.2
+// CHECK:STDOUT:   %.loc13_30.1 => constants.%.4fe7d1.2
 // CHECK:STDOUT:   %pattern_type.loc13_26 => constants.%pattern_type.4f4b84.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -300,7 +300,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %ptr.loc19_33.1 => constants.%ptr.5da
 // CHECK:STDOUT:   %pattern_type.loc19_26 => constants.%pattern_type.605
 // CHECK:STDOUT:   %ptr.loc19_40.1 => constants.%ptr.e8f8f9.4
-// CHECK:STDOUT:   %.loc19_40.1 => constants.%.ba4d87.4
+// CHECK:STDOUT:   %.loc19_40.1 => constants.%.4fe7d1.4
 // CHECK:STDOUT:   %pattern_type.loc19_36 => constants.%pattern_type.4f4b84.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,12 +333,12 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A => constants.%A.ed7
 // CHECK:STDOUT:   %pattern_type.loc13_12 => constants.%pattern_type.853
 // CHECK:STDOUT:   %ptr.loc13_30.1 => constants.%ptr.c28
-// CHECK:STDOUT:   %.loc13_30.1 => constants.%.f0e
+// CHECK:STDOUT:   %.loc13_30.1 => constants.%.98f
 // CHECK:STDOUT:   %pattern_type.loc13_26 => constants.%pattern_type.1cc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_30 => constants.%complete_type.38e
 // CHECK:STDOUT:   %require_complete.loc13_16 => constants.%complete_type.0a6
+// CHECK:STDOUT:   %require_complete.loc13_30 => constants.%complete_type.38e
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.599
 // CHECK:STDOUT:   %.loc14_12.1 => constants.%.07c
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.3fd

@@ -231,15 +231,13 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc8_5.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc8_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.1(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc8_5.2: init %Dest to %.loc8_5.1 = in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_5.2: init %Dest to %.loc8_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_5.3: init %Dest = converted %s.ref, %.loc8_5.2
 // CHECK:STDOUT:   %.loc8_5.4: ref %Dest = temporary %.loc8_5.1, %.loc8_5.3
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc8_5.4, constants.%Dest.cpp_destructor
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc8_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
 // CHECK:STDOUT: !entry:
@@ -251,15 +249,13 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %addr.loc14_5.1: %ptr.472 = addr_of %.loc14_3
 // CHECK:STDOUT:   %addr.loc14_5.2: %ptr.9ae = addr_of %.loc14_5.1
 // CHECK:STDOUT:   %Dest2__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest2__carbon_thunk.decl(%addr.loc14_5.1, %addr.loc14_5.2)
-// CHECK:STDOUT:   %.loc14_5.2: init %Dest2 to %.loc14_5.1 = in_place_init %Dest2__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14_5.2: init %Dest2 to %.loc14_5.1 = mark_in_place_init %Dest2__carbon_thunk.call
 // CHECK:STDOUT:   %.loc14_5.3: init %Dest2 = converted %s.ref, %.loc14_5.2
 // CHECK:STDOUT:   %.loc14_5.4: ref %Dest2 = temporary %.loc14_5.1, %.loc14_5.3
 // CHECK:STDOUT:   %Dest2.cpp_destructor.bound: <bound method> = bound_method %.loc14_5.4, constants.%Dest2.cpp_destructor
 // CHECK:STDOUT:   %Dest2.cpp_destructor.call: init %empty_tuple.type = call %Dest2.cpp_destructor.bound(%.loc14_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: %Dest2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
@@ -271,15 +267,13 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %addr.loc20_5.1: %ptr.1fc = addr_of %.loc20_3
 // CHECK:STDOUT:   %addr.loc20_5.2: %ptr.5b5 = addr_of %.loc20_5.1
 // CHECK:STDOUT:   %ExplicitConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%ExplicitConstructor__carbon_thunk.decl(%addr.loc20_5.1, %addr.loc20_5.2)
-// CHECK:STDOUT:   %.loc20_5.2: init %ExplicitConstructor to %.loc20_5.1 = in_place_init %ExplicitConstructor__carbon_thunk.call
+// CHECK:STDOUT:   %.loc20_5.2: init %ExplicitConstructor to %.loc20_5.1 = mark_in_place_init %ExplicitConstructor__carbon_thunk.call
 // CHECK:STDOUT:   %.loc20_5.3: init %ExplicitConstructor = converted %s.ref, %.loc20_5.2
 // CHECK:STDOUT:   %.loc20_5.4: ref %ExplicitConstructor = temporary %.loc20_5.1, %.loc20_5.3
 // CHECK:STDOUT:   %ExplicitConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc20_5.4, constants.%ExplicitConstructor.cpp_destructor
 // CHECK:STDOUT:   %ExplicitConstructor.cpp_destructor.call: init %empty_tuple.type = call %ExplicitConstructor.cpp_destructor.bound(%.loc20_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: %ExplicitConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
@@ -290,7 +284,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc26_5.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc26_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl.b58ecd.2(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc26_5.2: init %Dest to %.loc26_5.1 = in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc26_5.2: init %Dest to %.loc26_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc26_5.3: init %Dest = converted %s.ref, %.loc26_5.2
 // CHECK:STDOUT:   %.loc26_5.4: ref %Dest = temporary %.loc26_5.1, %.loc26_5.3
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc26_5.4, constants.%Dest.cpp_destructor
@@ -381,7 +375,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %addr.loc8_43.1: %ptr.1fc = addr_of %.loc8_43.2
 // CHECK:STDOUT:   %addr.loc8_43.2: %ptr.ca4178.1 = addr_of %.loc8_43.1
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.1(%addr.loc8_43.1, %addr.loc8_43.2)
-// CHECK:STDOUT:   %.loc8_43.3: init %ConditionallyExplicit.c52b91.1 to %.loc8_43.1 = in_place_init %ConditionallyExplicit__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_43.3: init %ConditionallyExplicit.c52b91.1 to %.loc8_43.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc8
 // CHECK:STDOUT:   %.loc8_43.4: init %ConditionallyExplicit.c52b91.1 = converted %s.ref.loc8, %.loc8_43.3
 // CHECK:STDOUT:   %.loc8_43.5: ref %ConditionallyExplicit.c52b91.1 = temporary %.loc8_43.1, %.loc8_43.4
 // CHECK:STDOUT:   %.loc8_43.6: %ConditionallyExplicit.c52b91.1 = acquire_value %.loc8_43.5
@@ -394,7 +388,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %addr.loc9_5.1: %ptr.1fc = addr_of %.loc9_3
 // CHECK:STDOUT:   %addr.loc9_5.2: %ptr.ca4178.1 = addr_of %.loc9_5.1
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.1(%addr.loc9_5.1, %addr.loc9_5.2)
-// CHECK:STDOUT:   %.loc9_5.2: init %ConditionallyExplicit.c52b91.1 to %.loc9_5.1 = in_place_init %ConditionallyExplicit__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_5.2: init %ConditionallyExplicit.c52b91.1 to %.loc9_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_5.3: init %ConditionallyExplicit.c52b91.1 = converted %s.ref.loc9, %.loc9_5.2
 // CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.c52b91.1 = temporary %.loc9_5.1, %.loc9_5.3
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%ConditionallyExplicit.cpp_destructor.1ba031.1
@@ -403,8 +397,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call.loc8: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound.loc8(%.loc8_43.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %ConditionallyExplicit.c52b91.1) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
@@ -416,15 +408,13 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %addr.loc15_5.1: %ptr.1fc = addr_of %.loc15_3
 // CHECK:STDOUT:   %addr.loc15_5.2: %ptr.ca4178.2 = addr_of %.loc15_5.1
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.call: init %empty_tuple.type = call imports.%ConditionallyExplicit__carbon_thunk.decl.22daaa.2(%addr.loc15_5.1, %addr.loc15_5.2)
-// CHECK:STDOUT:   %.loc15_5.2: init %ConditionallyExplicit.c52b91.2 to %.loc15_5.1 = in_place_init %ConditionallyExplicit__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_5.2: init %ConditionallyExplicit.c52b91.2 to %.loc15_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_5.3: init %ConditionallyExplicit.c52b91.2 = converted %s.ref, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.c52b91.2 = temporary %.loc15_5.1, %.loc15_5.3
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.bound: <bound method> = bound_method %.loc15_5.4, constants.%ConditionallyExplicit.cpp_destructor.1ba031.2
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: %ConditionallyExplicit.c52b91.2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -440,7 +430,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc21_21.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr.loc21: %ptr.551 = addr_of %.loc21_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref.loc21, %addr.loc21)
-// CHECK:STDOUT:   %.loc21_21.2: init %Dest to %.loc21_21.1 = in_place_init %Dest__carbon_thunk.call.loc21
+// CHECK:STDOUT:   %.loc21_21.2: init %Dest to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call.loc21
 // CHECK:STDOUT:   %.loc21_21.3: init %Dest = converted %s.ref.loc21, %.loc21_21.2
 // CHECK:STDOUT:   %.loc21_21.4: ref %Dest = temporary %.loc21_21.1, %.loc21_21.3
 // CHECK:STDOUT:   %.loc21_21.5: %Dest = acquire_value %.loc21_21.4
@@ -452,7 +442,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc22_5.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr.loc22: %ptr.551 = addr_of %.loc22_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref.loc22, %addr.loc22)
-// CHECK:STDOUT:   %.loc22_5.2: init %Dest to %.loc22_5.1 = in_place_init %Dest__carbon_thunk.call.loc22
+// CHECK:STDOUT:   %.loc22_5.2: init %Dest to %.loc22_5.1 = mark_in_place_init %Dest__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_5.3: init %Dest = converted %s.ref.loc22, %.loc22_5.2
 // CHECK:STDOUT:   %.loc22_5.4: ref %Dest = temporary %.loc22_5.1, %.loc22_5.3
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_5.4, constants.%Dest.cpp_destructor
@@ -461,8 +451,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call.loc21: init %empty_tuple.type = call %Dest.cpp_destructor.bound.loc21(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -473,7 +461,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc28_5.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc28_5.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc28_5.2: init %Dest to %.loc28_5.1 = in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc28_5.2: init %Dest to %.loc28_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc28_5.3: init %Dest = converted %s.ref, %.loc28_5.2
 // CHECK:STDOUT:   %.loc28_5.4: ref %Dest = temporary %.loc28_5.1, %.loc28_5.3
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc28_5.4, constants.%Dest.cpp_destructor
@@ -558,7 +546,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc21_21.1: ref %Dest.5e7 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc21_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc21_21.2: init %Dest.5e7 to %.loc21_21.1 = in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_21.2: init %Dest.5e7 to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc21_21.3: init %Dest.5e7 = converted %s.ref, %.loc21_21.2
 // CHECK:STDOUT:   %.loc21_21.4: ref %Dest.5e7 = temporary %.loc21_21.1, %.loc21_21.3
 // CHECK:STDOUT:   %.loc21_21.5: %Dest.5e7 = acquire_value %.loc21_21.4
@@ -567,6 +555,4 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Dest.5e7) = "no_op";
 // CHECK:STDOUT:

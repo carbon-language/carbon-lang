@@ -445,7 +445,7 @@ auto MatchContext::DoEmitPatternMatch(
   auto return_slot_id = AddInst<SemIR::ReturnSlot>(
       context, SemIR::LocId(entry.pattern_id),
       {.type_id = type_id,
-       .type_inst_id = context.types().GetInstId(type_id),
+       .type_inst_id = context.types().GetTypeInstId(type_id),
        .storage_id = entry.scrutinee_id});
   bool already_in_lookup =
       context.scope_stack()
