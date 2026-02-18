@@ -121,7 +121,7 @@ only entire reference expressions can be destructively moved.
 > them. We need to figure out how to support that without violating the
 > invariant that a live object has live fields.
 
-Value binding and copy initialization can be applied to any reference
+Value acquisition and copy initialization can be applied to any reference
 expression, but materialization only produces ephemeral entire reference
 expressions. An entire reference expression can be implicitly converted to
 non-entire; this has no run-time effect because it merely discards static

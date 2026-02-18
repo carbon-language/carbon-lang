@@ -64,6 +64,7 @@ cc_binary(
         "//toolchain/base:install_paths",
         "//toolchain/base:llvm_tools_def",
         "//toolchain/driver",
+        "@llvm-project//clang:driver",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -294,6 +294,97 @@ static auto MaybeAddToNameLookup(Context& context,
                                     modifier_set.GetAccessKind());
 }
 
+// Returns whether the given type is `i32`.
+static auto IsI32(Context& context, Parse::NodeId node_id,
+                  SemIR::TypeId type_id) -> bool {
+  return type_id == MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                                context.ints().Add(32));
+}
+
+// Returns whether the given parameter list is valid for the entry point
+// function `Main.Run`.
+static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
+                                       SemIR::InstBlockId param_patterns_id)
+    -> bool {
+  if (!param_patterns_id.has_value()) {
+    // Positional parameters for are not supported.
+    return false;
+  }
+
+  for (auto [index, param_pattern_id] :
+       llvm::enumerate(context.inst_blocks().Get(param_patterns_id))) {
+    if (param_pattern_id == SemIR::ErrorInst::InstId) {
+      // Ignore erroneous parameters.
+      continue;
+    }
+
+    auto param =
+        context.insts().TryGetAs<SemIR::ValueParamPattern>(param_pattern_id);
+    if (!param) {
+      // Only value parameters are supported for now.
+      return false;
+    }
+
+    if (param->type_id == SemIR::ErrorInst::TypeId) {
+      // Ignore parameters with erroneous types.
+      continue;
+    }
+
+    auto param_type_inst_id = context.types()
+                                  .GetAs<SemIR::PatternType>(param->type_id)
+                                  .scrutinee_type_inst_id;
+    switch (index) {
+      case 0: {
+        // `argc` should be a 32-bit integer.
+        if (!IsI32(
+                context, node_id,
+                context.types().GetTypeIdForTypeInstId(param_type_inst_id))) {
+          return false;
+        }
+        break;
+      }
+      case 1: {
+        // `argv` should be a pointer.
+        // TODO: Consider checking the pointee type also.
+        if (!context.insts().Is<SemIR::PointerType>(param_type_inst_id)) {
+          return false;
+        }
+        break;
+      }
+      default: {
+        // TODO: Decide whether to allow a third `envp` parameter.
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// Returns whether the given return type is valid for the entry point
+// function `Main.Run`.
+static auto IsValidEntryPointReturnType(Context& context, Parse::NodeId node_id,
+                                        SemIR::TypeId return_type_id) -> bool {
+  // An implicit or explicit return type of `()` is OK.
+  // TODO: Translate this to returning an `i32` with value `0` in lowering.
+  if (!return_type_id.has_value()) {
+    return true;
+  }
+  if (return_type_id == GetTupleType(context, {})) {
+    return true;
+  }
+
+  if (IsI32(context, node_id, return_type_id)) {
+    // Explicit return type of `i32` or an adapter for it is OK.
+    return true;
+  }
+
+  // For now, disallow anything else.
+  // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
+  // have an interface for this.
+  return false;
+}
+
 // If the function is the entry point, do corresponding validation.
 static auto ValidateForEntryPoint(Context& context,
                                   Parse::AnyFunctionDeclId node_id,
@@ -304,21 +395,22 @@ static auto ValidateForEntryPoint(Context& context,
     return;
   }
 
-  auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
   // TODO: Update this once valid signatures for the entry point are decided.
+  // See https://github.com/carbon-language/carbon-lang/issues/6735
   if (function_info.implicit_param_patterns_id.has_value() ||
-      !function_info.param_patterns_id.has_value() ||
-      !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
-      (return_type_id.has_value() &&
-       return_type_id != GetTupleType(context, {}) &&
-       // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
-       // have an interface for this.
-       return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
-                                     context.ints().Add(32)))) {
-    CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
-                      "invalid signature for `Main.Run` function; expected "
-                      "`fn ()` or `fn () -> i32`");
-    context.emitter().Emit(node_id, InvalidMainRunSignature);
+      !IsValidEntryPointParamList(context, node_id,
+                                  function_info.param_patterns_id)) {
+    CARBON_DIAGNOSTIC(InvalidMainRunParameters, Error,
+                      "invalid parameters for `Main.Run` function; expected "
+                      "`()` or `(argc: i32, argv: Core.Optional(char*)*)`");
+    context.emitter().Emit(node_id, InvalidMainRunParameters);
+  } else if (!IsValidEntryPointReturnType(
+                 context, node_id,
+                 function_info.GetDeclaredReturnType(context.sem_ir()))) {
+    CARBON_DIAGNOSTIC(InvalidMainRunReturnType, Error,
+                      "invalid return type for `Main.Run` function; expected "
+                      "`fn (...)` or `fn (...) -> i32`");
+    context.emitter().Emit(node_id, InvalidMainRunReturnType);
   }
 }
 
@@ -414,7 +506,7 @@ static auto BuildFunctionDecl(Context& context,
       maybe_return_patterns_id) {
     return_patterns_id = *maybe_return_patterns_id;
     auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_id;
+    return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
   }
 

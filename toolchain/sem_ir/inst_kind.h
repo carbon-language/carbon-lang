@@ -88,6 +88,8 @@ enum class ExprCategory : int8_t {
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
   Mixed,
+  // The category of this instruction is dependent because its form is symbolic.
+  Dependent,
   // This instruction is a `RefTagExpr`, and so its semantics (including its
   // expression category) depends on the usage context.
   RefTagged,

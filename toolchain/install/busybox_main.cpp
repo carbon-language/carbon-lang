@@ -7,12 +7,15 @@
 #include <cstdlib>
 #include <string>
 
+#include "clang/Driver/Driver.h"
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
 #include "common/init_llvm.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/LLVMDriver.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/driver/driver.h"
@@ -46,8 +49,16 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 
   auto fs = llvm::vfs::getRealFileSystem();
 
-  llvm::SmallVector<llvm::StringRef> raw_args;
+  llvm::SmallVector<const char*> raw_args;
   raw_args.append(argv + 1, argv + argc);
+
+  // Expand any response files in the arguments.
+  llvm::BumpPtrAllocator alloc;
+  if (llvm::Error error = clang::driver::expandResponseFiles(
+          raw_args, busybox_info.mode && *busybox_info.mode == "clang-cl",
+          alloc, fs.get())) {
+    return Error(llvm::toString(std::move(error)));
+  }
 
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(argc + 1);
@@ -85,23 +96,36 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 
             .Default({*busybox_info.mode, "--"});
 
-    // When we're operating as a busybox, we also support a special command line
-    // syntax for passing flags to the base Carbon driver as
-    // `-Xcarbon=--some-carbon-flag=some-value`. Extract any arguments of that
-    // form, remove the prefix, and prepend them to the arg list prior to the
-    // busybox subcommand arguments.
-    llvm::erase_if(raw_args, [&args](llvm::StringRef raw_arg) {
-      if (raw_arg.consume_front("-Xcarbon=")) {
-        args.push_back(raw_arg);
-        return true;
-      }
-      return false;
-    });
-
     // And now append the subcommand args.
     args.append(subcommand_args);
   }
-  args.append(raw_args);
+  llvm::append_range(args, raw_args);
+
+  // We also support a special command line syntax for passing flags to the base
+  // Carbon driver as `-Xcarbon=--some-carbon-flag=some-value`. This is
+  // important when build systems only allow appending custom user flags to
+  // allow them to be used for driver.
+  //
+  // Extract any arguments of that form, remove the prefix, and insert them to
+  // the argument list just before the first positional parameter or subcommand.
+  // This let's them come after any other flags to the base driver and override
+  // them if needed.
+  llvm::SmallVector<llvm::StringRef> extra_driver_args;
+  llvm::erase_if(args, [&extra_driver_args](llvm::StringRef arg) {
+    if (arg.consume_front("-Xcarbon=")) {
+      extra_driver_args.push_back(arg);
+      return true;
+    }
+    return false;
+  });
+  if (!extra_driver_args.empty()) {
+    auto* subcommand_it = llvm::find_if(args, [](llvm::StringRef arg) {
+      // Flags start with `-`, unless it is the string `-` or `--`.
+      return !arg.starts_with("-") || arg == "-" || arg == "--";
+    });
+    args.insert(subcommand_it, extra_driver_args.begin(),
+                extra_driver_args.end());
+  }
 
   Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs(),
                 /*fuzzing=*/false, /*enable_leaking=*/true);
