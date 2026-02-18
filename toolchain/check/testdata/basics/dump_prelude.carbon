@@ -4,7 +4,6 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
-// TODO: Remove the exclusion of optional.carbon after #6727 is fixed.
 // ARGS: compile --phase=check --dump-sem-ir %s
 //
 // NOAUTOUPDATE

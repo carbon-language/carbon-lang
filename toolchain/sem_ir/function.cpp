@@ -77,7 +77,7 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
 
   auto fn_type_val_id =
       sem_ir.constant_values().GetConstantInstId(fn_type_inst_id);
-  if (fn_type_val_id == SemIR::ErrorInst::InstId) {
+  if (fn_type_val_id == ErrorInst::InstId) {
     return CalleeError();
   }
   auto fn_type = sem_ir.insts().TryGetAs<FunctionType>(fn_type_val_id);
