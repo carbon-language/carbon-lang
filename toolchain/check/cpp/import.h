@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 
+#include "clang/AST/APValue.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -80,6 +81,13 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 // identifier name.
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo*;
+
+// Converts an `APValue` to a Carbon constant. If successful, returns
+// the new Carbon constant `InstId`. Returns `ErrorInst::InstId` for
+// unsupported types.
+auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
+                          const clang::APValue& ap_value, clang::QualType type)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 
