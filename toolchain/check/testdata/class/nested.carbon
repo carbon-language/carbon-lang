@@ -87,7 +87,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.565: type = pattern_type %ptr.78a [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
@@ -95,13 +94,15 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.561: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Outer) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.dc1: %ptr.as.Copy.impl.Op.type.561 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.e2d: %Copy.type = facet_value %ptr.56b, (%Copy.impl_witness.3e0) [concrete]
-// CHECK:STDOUT:   %.111: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.e2d [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ed5: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.e2d) [concrete]
+// CHECK:STDOUT:   %.be6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ed5, %Copy.facet.e2d [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.904: <specific function> = specific_function %ptr.as.Copy.impl.Op.dc1, @ptr.as.Copy.impl.Op(%Outer) [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.044: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%Inner) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.72d: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Inner) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8ab: %ptr.as.Copy.impl.Op.type.72d = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.ea8: %Copy.type = facet_value %ptr.78a, (%Copy.impl_witness.044) [concrete]
-// CHECK:STDOUT:   %.817: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.ea8 [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.4b9: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.ea8) [concrete]
+// CHECK:STDOUT:   %.b9c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.4b9, %Copy.facet.ea8 [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.f24: <specific function> = specific_function %ptr.as.Copy.impl.Op.8ab, @ptr.as.Copy.impl.Op(%Inner) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,7 +285,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %po.ref.loc48: %Outer.elem.1e5 = name_ref po, @Outer.%.loc40 [concrete = @Outer.%.loc40]
 // CHECK:STDOUT:   %.loc48_4.2: ref %ptr.56b = class_element_access %.loc48_4.1, element0
 // CHECK:STDOUT:   %a.ref.loc48_11: %ptr.56b = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0.loc48: %.111 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
+// CHECK:STDOUT:   %impl.elem0.loc48: %.be6 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
 // CHECK:STDOUT:   %bound_method.loc48_11.1: <bound method> = bound_method %a.ref.loc48_11, %impl.elem0.loc48
 // CHECK:STDOUT:   %specific_fn.loc48: <specific function> = specific_function %impl.elem0.loc48, @ptr.as.Copy.impl.Op(constants.%Outer) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.904]
 // CHECK:STDOUT:   %bound_method.loc48_11.2: <bound method> = bound_method %a.ref.loc48_11, %specific_fn.loc48
@@ -295,7 +296,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %qo.ref: %Outer.elem.1e5 = name_ref qo, @Outer.%.loc41 [concrete = @Outer.%.loc41]
 // CHECK:STDOUT:   %.loc49_4.2: ref %ptr.56b = class_element_access %.loc49_4.1, element1
 // CHECK:STDOUT:   %a.ref.loc49_11: %ptr.56b = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0.loc49: %.111 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
+// CHECK:STDOUT:   %impl.elem0.loc49: %.be6 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
 // CHECK:STDOUT:   %bound_method.loc49_11.1: <bound method> = bound_method %a.ref.loc49_11, %impl.elem0.loc49
 // CHECK:STDOUT:   %specific_fn.loc49: <specific function> = specific_function %impl.elem0.loc49, @ptr.as.Copy.impl.Op(constants.%Outer) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.904]
 // CHECK:STDOUT:   %bound_method.loc49_11.2: <bound method> = bound_method %a.ref.loc49_11, %specific_fn.loc49
@@ -310,7 +311,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %pi.ref.loc50_12: %Outer.elem.6db = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
 // CHECK:STDOUT:   %.loc50_12.2: ref %ptr.78a = class_element_access %.loc50_12.1, element2
 // CHECK:STDOUT:   %.loc50_12.3: %ptr.78a = acquire_value %.loc50_12.2
-// CHECK:STDOUT:   %impl.elem0.loc50: %.817 = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
+// CHECK:STDOUT:   %impl.elem0.loc50: %.b9c = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
 // CHECK:STDOUT:   %bound_method.loc50_12.1: <bound method> = bound_method %.loc50_12.3, %impl.elem0.loc50
 // CHECK:STDOUT:   %specific_fn.loc50: <specific function> = specific_function %impl.elem0.loc50, @ptr.as.Copy.impl.Op(constants.%Inner) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.f24]
 // CHECK:STDOUT:   %bound_method.loc50_12.2: <bound method> = bound_method %.loc50_12.3, %specific_fn.loc50
@@ -321,7 +322,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %po.ref.loc51: %Inner.elem.9e0 = name_ref po, @Inner.%.loc24 [concrete = @Inner.%.loc24]
 // CHECK:STDOUT:   %.loc51_4.2: ref %ptr.56b = class_element_access %.loc51_4.1, element1
 // CHECK:STDOUT:   %a.ref.loc51: %ptr.56b = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0.loc51: %.111 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
+// CHECK:STDOUT:   %impl.elem0.loc51: %.be6 = impl_witness_access constants.%Copy.impl_witness.3e0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.dc1]
 // CHECK:STDOUT:   %bound_method.loc51_11.1: <bound method> = bound_method %a.ref.loc51, %impl.elem0.loc51
 // CHECK:STDOUT:   %specific_fn.loc51: <specific function> = specific_function %impl.elem0.loc51, @ptr.as.Copy.impl.Op(constants.%Outer) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.904]
 // CHECK:STDOUT:   %bound_method.loc51_11.2: <bound method> = bound_method %a.ref.loc51, %specific_fn.loc51
@@ -336,7 +337,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %pi.ref.loc52_12: %Outer.elem.6db = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
 // CHECK:STDOUT:   %.loc52_12.2: ref %ptr.78a = class_element_access %.loc52_12.1, element2
 // CHECK:STDOUT:   %.loc52_12.3: %ptr.78a = acquire_value %.loc52_12.2
-// CHECK:STDOUT:   %impl.elem0.loc52: %.817 = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
+// CHECK:STDOUT:   %impl.elem0.loc52: %.b9c = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
 // CHECK:STDOUT:   %bound_method.loc52_12.1: <bound method> = bound_method %.loc52_12.3, %impl.elem0.loc52
 // CHECK:STDOUT:   %specific_fn.loc52: <specific function> = specific_function %impl.elem0.loc52, @ptr.as.Copy.impl.Op(constants.%Inner) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.f24]
 // CHECK:STDOUT:   %bound_method.loc52_12.2: <bound method> = bound_method %.loc52_12.3, %specific_fn.loc52
@@ -351,7 +352,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %pi.ref.loc53: %Outer.elem.6db = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
 // CHECK:STDOUT:   %.loc53_12.2: ref %ptr.78a = class_element_access %.loc53_12.1, element2
 // CHECK:STDOUT:   %.loc53_12.3: %ptr.78a = acquire_value %.loc53_12.2
-// CHECK:STDOUT:   %impl.elem0.loc53: %.817 = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
+// CHECK:STDOUT:   %impl.elem0.loc53: %.b9c = impl_witness_access constants.%Copy.impl_witness.044, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8ab]
 // CHECK:STDOUT:   %bound_method.loc53_12.1: <bound method> = bound_method %.loc53_12.3, %impl.elem0.loc53
 // CHECK:STDOUT:   %specific_fn.loc53: <specific function> = specific_function %impl.elem0.loc53, @ptr.as.Copy.impl.Op(constants.%Inner) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.f24]
 // CHECK:STDOUT:   %bound_method.loc53_12.2: <bound method> = bound_method %.loc53_12.3, %specific_fn.loc53

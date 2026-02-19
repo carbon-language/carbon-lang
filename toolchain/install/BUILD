@@ -10,7 +10,7 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
-load("//toolchain/base:runtime_sources.bzl", "BUILTINS_FILEGROUPS", "CRT_FILES")
+load("//toolchain/base:runtimes_build_info.bzl", "BUILTINS_FILEGROUPS", "CRT_FILES")
 load("configure_cmake_file.bzl", "configure_cmake_file")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
@@ -252,8 +252,8 @@ configure_cmake_file(
 filegroup(
     name = "libcxx",
     srcs = [
+        "@llvm-project//libcxx:libcxx_all_srcs",
         "@llvm-project//libcxx:libcxx_hdrs",
-        "@llvm-project//libcxx:libcxx_srcs",
     ],
 )
 

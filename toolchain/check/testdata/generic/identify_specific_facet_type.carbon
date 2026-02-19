@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
-// is invalid. So the constraint J is seen as having 0 interfaces to impl.
+// is invalid, so the impl as a whole is invalid.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
@@ -27,6 +27,9 @@ constraint J(N:! i32) {
   require impls K(array(i32, N));
 }
 
+// TODO: This should be be a "facet type cannot be identified" diagnostic, but
+// we need to plumb that diagnoser through the construction of the specific.
+//
 // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
@@ -37,22 +40,23 @@ impl {} as J(-1) {}
 library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
-// is invalid. So the constraint J is seen as having 0 interfaces to impl.
-//
-// `extend require` is identified in the same way as the non-extend case.
+// is invalid, so the impl as a whole is invalid.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+6]]:37: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:24: error: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:                                     ^
-  // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:3: note: in `require` used here [ResolvingSpecificHere]
-  // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
   extend require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// TODO: This should be be a "facet type cannot be identified" diagnostic, but
+// we need to plumb that diagnoser through the construction of the specific.
+//
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+7]]:12: note: in `J(-1)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: impl {} as J(-1) {}
+// CHECK:STDERR:            ^~~~~
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: checking for complete facet type `J(-1)` here [RequiringCompleteFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
 // CHECK:STDERR:

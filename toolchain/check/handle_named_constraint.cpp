@@ -122,29 +122,69 @@ auto HandleParseNode(Context& context,
   CARBON_CHECK(!constraint_info.has_definition_started(),
                "Can't merge with defined named constraints.");
   constraint_info.definition_id = decl_inst_id;
-  constraint_info.scope_id = context.name_scopes().Add(
+  constraint_info.scope_without_self_id = context.name_scopes().Add(
       decl_inst_id, SemIR::NameId::None, constraint_info.parent_scope_id);
 
-  auto self_specific_id =
-      context.generics().GetSelfSpecific(constraint_info.generic_id);
   StartGenericDefinition(context, constraint_info.generic_id);
 
   context.inst_block_stack().Push();
-  context.require_impls_stack().PushArray();
+
+  // Enter the constraint-without-self scope, which is used for the Self
+  // instruction, since it needs to reference the constraint (without-self)
+  // generic. Self can't reference the constraint-with-self generic since it's a
+  // parameter to the generic.
+  context.scope_stack().PushForEntity(
+      decl_inst_id, constraint_info.scope_without_self_id,
+      context.generics().GetSelfSpecific(constraint_info.generic_id));
 
   // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
   // type is the named constraint, excluding any other interfaces mentioned by
   // `require` declarations. This makes it an empty facet type.
-  SemIR::TypeId self_type_id =
-      GetNamedConstraintType(context, named_constraint_id, self_specific_id);
-  constraint_info.self_param_id = AddSelfGenericParameter(
-      context, node_id, self_type_id, constraint_info.scope_id, is_template);
+  SemIR::TypeId self_type_id = GetNamedConstraintType(
+      context, named_constraint_id,
+      context.generics().GetSelfSpecific(constraint_info.generic_id));
+  constraint_info.self_param_id = AddSelfSymbolicBindingToScope(
+      context, node_id, self_type_id, constraint_info.scope_without_self_id,
+      is_template);
 
-  // Enter the constraint scope.
-  context.scope_stack().PushForEntity(decl_inst_id, constraint_info.scope_id,
-                                      self_specific_id);
+  // Start the declaration of constraint-with-self.
+  StartGenericDecl(context);
 
-  constraint_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  // Push `Self` as a parameter of the constraint-with-self.
+  context.scope_stack().PushCompileTimeBinding(constraint_info.self_param_id);
+
+  // Add the interface-with-self declaration and build the generic for it. This
+  // captures the `interface_info.self_param_id` as a parameter of the generic.
+  auto constraint_with_self_decl = SemIR::NamedConstraintWithSelfDecl{
+      .named_constraint_id = named_constraint_id};
+  auto decl_with_self_inst_id =
+      AddPlaceholderInst(context, node_id, constraint_with_self_decl);
+  auto generic_with_self_id = BuildGenericDecl(context, decl_with_self_inst_id);
+  constraint_info.generic_with_self_id = generic_with_self_id;
+  ReplaceInstBeforeConstantUse(context, decl_with_self_inst_id,
+                               constraint_with_self_decl);
+
+  constraint_info.scope_with_self_id =
+      context.name_scopes().Add(decl_with_self_inst_id, SemIR::NameId::None,
+                                constraint_info.scope_without_self_id);
+
+  // Start the definition of constraint-with-self.
+  StartGenericDefinition(context, constraint_info.generic_with_self_id);
+
+  // Enter a scope for the constraint-with-self.
+  context.scope_stack().PushForEntity(
+      decl_with_self_inst_id, constraint_info.scope_with_self_id,
+      context.generics().GetSelfSpecific(constraint_info.generic_with_self_id));
+
+  constraint_info.body_block_without_self_id =
+      context.inst_block_stack().PeekOrAdd();
+
+  context.inst_block_stack().Push();
+
+  constraint_info.body_block_with_self_id =
+      context.inst_block_stack().PeekOrAdd();
+
+  context.require_impls_stack().PushArray();
 
   context.node_stack().Push(node_id, named_constraint_id);
   return true;
@@ -155,6 +195,7 @@ auto HandleParseNode(Context& context,
   auto named_constraint_id =
       context.node_stack()
           .Pop<Parse::NodeKind::NamedConstraintDefinitionStart>();
+  // Pop the body_block_with_self.
   context.inst_block_stack().Pop();
 
   auto require_impls_block_id = context.require_impls_blocks().Add(
@@ -169,6 +210,13 @@ auto HandleParseNode(Context& context,
     constraint_info.complete = true;
   }
 
+  // Finish the definition of constraint-with-self.
+  FinishGenericDefinition(context, constraint_info.generic_with_self_id);
+
+  // Pop the body_block_without_self.
+  context.inst_block_stack().Pop();
+
+  // Finish the definition of interfconstraintace-without-self.
   FinishGenericDefinition(context, constraint_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.

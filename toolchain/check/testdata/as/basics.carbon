@@ -375,11 +375,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.val: %X = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %As.type.d1e: type = facet_type <@As, @As(%Y)> [concrete]
 // CHECK:STDOUT:   %As.impl_witness.e92: <witness> = impl_witness @X.as.As.impl.%As.impl_witness_table [concrete]
-// CHECK:STDOUT:   %As.Convert.type.5a7: type = fn_type @As.Convert, @As(%Y) [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.type: type = fn_type @X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert: %X.as.As.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.c03: %As.type.d1e = facet_value %X, (%As.impl_witness.e92) [concrete]
-// CHECK:STDOUT:   %.c8a: type = fn_type_with_self_type %As.Convert.type.5a7, %As.facet.c03 [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As(%Y, %As.facet.c03) [concrete]
+// CHECK:STDOUT:   %.84a: type = fn_type_with_self_type %As.WithSelf.Convert.type.edc, %As.facet.c03 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -408,7 +408,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_21.6: ref %X = temporary %.loc19_21.2, %.loc19_21.5
 // CHECK:STDOUT:   %.loc19_23.1: ref %X = converted %.loc19_21.1, %.loc19_21.6
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %impl.elem0: %.c8a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.84a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
 // CHECK:STDOUT:   %.loc19_23.2: %X = acquire_value %.loc19_23.1

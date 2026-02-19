@@ -63,25 +63,17 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.984: %Z.type.0ed = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.0bf: type = assoc_entity_type @Z, @Z(%T) [symbolic]
-// CHECK:STDOUT:   %assoc0.f88: %Z.assoc_type.0bf = assoc_entity element0, imports.%Main.import_ref.f14 [symbolic]
-// CHECK:STDOUT:   %Z.F.type.6cb: type = fn_type @Z.F, @Z(%T) [symbolic]
-// CHECK:STDOUT:   %Z.F.6cc: %Z.F.type.6cb = struct_value () [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.type.091: type = fn_type @Z.WithSelf.F, @Z(%T, %Self.984) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.073: %Z.WithSelf.F.type.091 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Z.type.9f3244.1: type = facet_type <@Z, @Z(%Self.binding.as_type.f60)> [symbolic]
-// CHECK:STDOUT:   %Z.assoc_type.449133.1: type = assoc_entity_type @Z, @Z(%Self.binding.as_type.f60) [symbolic]
-// CHECK:STDOUT:   %assoc0.179: %Z.assoc_type.449133.1 = assoc_entity element0, imports.%Main.import_ref.5847cb.1 [symbolic]
-// CHECK:STDOUT:   %Z.F.type.0ab8e8.1: type = fn_type @Z.F, @Z(%Self.binding.as_type.f60) [symbolic]
-// CHECK:STDOUT:   %Z.F.d97fe5.1: %Z.F.type.0ab8e8.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.fcd60c.1: %Z.type.9f3244.1 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %require_complete.18ce0f.1: <witness> = require_complete_type %Z.type.9f3244.1 [symbolic]
 // CHECK:STDOUT:   %A: %X.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %X.type [concrete]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self.d4d: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.63e: type = symbolic_binding_type Self, 0, %Self.d4d [symbolic]
 // CHECK:STDOUT:   %Z.type.d16: type = facet_type <@Z, @Z(%Self.binding.as_type.63e)> [symbolic]
-// CHECK:STDOUT:   %Z.assoc_type.df3: type = assoc_entity_type @Z, @Z(%Self.binding.as_type.63e) [symbolic]
-// CHECK:STDOUT:   %assoc0.e61: %Z.assoc_type.df3 = assoc_entity element0, imports.%Main.import_ref.5847cb.2 [symbolic]
-// CHECK:STDOUT:   %Z.F.type.388: type = fn_type @Z.F, @Z(%Self.binding.as_type.63e) [symbolic]
-// CHECK:STDOUT:   %Z.F.791: %Z.F.type.388 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.890: %Z.type.d16 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %B: %Y.type = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.95b: type = pattern_type %Y.type [concrete]
@@ -89,44 +81,46 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A [symbolic]
 // CHECK:STDOUT:   %Z.type.9f3244.2: type = facet_type <@Z, @Z(%A.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %require_complete.18ce0f.2: <witness> = require_complete_type %Z.type.9f3244.2 [symbolic]
 // CHECK:STDOUT:   %Self.fcd60c.2: %Z.type.9f3244.2 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Z.F.type.0ab8e8.2: type = fn_type @Z.F, @Z(%A.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %Z.F.d97fe5.2: %Z.F.type.0ab8e8.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Z.assoc_type.449133.2: type = assoc_entity_type @Z, @Z(%A.binding.as_type) [symbolic]
-// CHECK:STDOUT:   %assoc0.f48: %Z.assoc_type.449133.2 = assoc_entity element0, imports.%Main.import_ref.f14 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z.type.9f3244.2 [symbolic]
-// CHECK:STDOUT:   %assoc0.d5a: %Z.assoc_type.0bf = assoc_entity element0, imports.%Main.import_ref.5847cb.3 [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.type.6cc: type = fn_type @Z.WithSelf.F, @Z(%A.binding.as_type, %Self.984) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.926: %Z.WithSelf.F.type.6cc = struct_value () [symbolic]
+// CHECK:STDOUT:   %Z.assoc_type.449: type = assoc_entity_type @Z, @Z(%A.binding.as_type) [symbolic]
+// CHECK:STDOUT:   %assoc0.9a4: %Z.assoc_type.449 = assoc_entity element0, imports.%Main.import_ref.7b4 [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.type.048: type = fn_type @Z.WithSelf.F, @Z(%A.binding.as_type, %A) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.aaa: %Z.WithSelf.F.type.048 = struct_value () [symbolic]
+// CHECK:STDOUT:   %assoc0.20d: %Z.assoc_type.0bf = assoc_entity element0, imports.%Main.import_ref.47b [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A, @Z, @Z(%A.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type.9f3244.2 = facet_value %A.binding.as_type, (%Z.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %.168: type = fn_type_with_self_type %Z.F.type.0ab8e8.2, %Z.facet [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.168 = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Z.F(%A.binding.as_type, %Z.facet) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.type.501: type = fn_type @Z.WithSelf.F, @Z(%A.binding.as_type, %Z.facet) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.F.cf6: %Z.WithSelf.F.type.501 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.d31: type = fn_type_with_self_type %Z.WithSelf.F.type.501, %Z.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.d31 = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Z.WithSelf.F(%A.binding.as_type, %Z.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Z = import_ref Main//a, Z, unloaded
 // CHECK:STDOUT:   %Main.Y: type = import_ref Main//a, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//a, X, loaded [concrete = constants.%X.type]
-// CHECK:STDOUT:   %Main.import_ref.145 = import_ref Main//a, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f4a: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = import_ref Main//a, loc4_9, loaded [symbolic = @Z.%assoc0 (constants.%assoc0.d5a)]
+// CHECK:STDOUT:   %Main.import_ref.13d: type = import_ref Main//a, loc12_31, loaded [symbolic = @X.%Z.type (constants.%Z.type.9f3244.1)]
+// CHECK:STDOUT:   %Main.import_ref.f56: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = import_ref Main//a, loc4_9, loaded [symbolic = @Z.%assoc0 (constants.%assoc0.20d)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//a, loc3_13, loaded [symbolic = @Z.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.f14: @Z.%Z.F.type (%Z.F.type.6cb) = import_ref Main//a, loc4_9, loaded [symbolic = @Z.%Z.F (constants.%Z.F.6cc)]
-// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//a, loc3_13, loaded [symbolic = @Z.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.1dc: @Z.%Z.type (%Z.type.0ed) = import_ref Main//a, loc3_23, loaded [symbolic = @Z.%Self (constants.%Self.984)]
-// CHECK:STDOUT:   %Main.import_ref.5847cb.1 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//a, loc12_18, loaded [symbolic = @X.Self.binding.as_type.impls.Z.type.require.%Self.binding.as_type (constants.%Self.binding.as_type.f60)]
-// CHECK:STDOUT:   %Main.import_ref.8d6: type = import_ref Main//a, loc12_30, loaded [symbolic = @X.Self.binding.as_type.impls.Z.type.require.%Z.type (constants.%Z.type.9f3244.1)]
-// CHECK:STDOUT:   %Main.import_ref.e33cd1.1: %X.type = import_ref Main//a, loc11_14, loaded [symbolic = constants.%Self.f45]
+// CHECK:STDOUT:   %Main.import_ref.7b4: @Z.%Z.WithSelf.F.type (%Z.WithSelf.F.type.091) = import_ref Main//a, loc4_9, loaded [symbolic = @Z.%Z.WithSelf.F (constants.%Z.WithSelf.F.073)]
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//a, loc3_13, loaded [symbolic = @Z.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.1dc578.2: @Z.%Z.type.1 (%Z.type.0ed) = import_ref Main//a, loc3_23, loaded [symbolic = @Z.%Self.1 (constants.%Self.984)]
+// CHECK:STDOUT:   %Main.import_ref.145 = import_ref Main//a, loc3_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//a, loc3_13, loaded [symbolic = @Z.%T.1 (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//a, loc12_18, loaded [symbolic = @X.WithSelf.Self.binding.as_type.impls.Z.type.require.%Self.binding.as_type (constants.%Self.binding.as_type.f60)]
+// CHECK:STDOUT:   %Main.import_ref.8d6: type = import_ref Main//a, loc12_30, loaded [symbolic = @X.WithSelf.Self.binding.as_type.impls.Z.type.require.%Z.type (constants.%Z.type.9f3244.1)]
+// CHECK:STDOUT:   %Main.import_ref.e33cd1.2: %X.type = import_ref Main//a, loc11_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//a, loc11_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f88: type = import_ref Main//a, loc12_31, loaded [symbolic = constants.%Z.type.9f3244.1]
-// CHECK:STDOUT:   %Main.import_ref.5847cb.2 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.7bb: type = import_ref Main//a, loc8_18, loaded [symbolic = @Y.Self.binding.as_type.impls.Z.type.require.%Self.binding.as_type (constants.%Self.binding.as_type.63e)]
-// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//a, loc8_30, loaded [symbolic = @Y.Self.binding.as_type.impls.Z.type.require.%Z.type (constants.%Z.type.d16)]
-// CHECK:STDOUT:   %Main.import_ref.8c7: %Y.type = import_ref Main//a, loc7_13, loaded [symbolic = constants.%Self.d4d]
-// CHECK:STDOUT:   %Main.import_ref.3e2c97.1 = import_ref Main//a, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.80a = import_ref Main//a, loc8_31, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5847cb.3 = import_ref Main//a, loc4_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b51 = import_ref Main//a, loc8_31, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7bb: type = import_ref Main//a, loc8_18, loaded [symbolic = @Y.WithSelf.Self.binding.as_type.impls.Z.type.require.%Self.binding.as_type (constants.%Self.binding.as_type.63e)]
+// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//a, loc8_30, loaded [symbolic = @Y.WithSelf.Self.binding.as_type.impls.Z.type.require.%Z.type (constants.%Z.type.d16)]
+// CHECK:STDOUT:   %Main.import_ref.8c73c0.2: %Y.type = import_ref Main//a, loc7_13, loaded [symbolic = constants.%Self.d4d]
+// CHECK:STDOUT:   %Main.import_ref.3e2 = import_ref Main//a, loc7_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.47b = import_ref Main//a, loc4_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,21 +149,17 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Z(imports.%Main.import_ref.b3bc94.1: type) [from "a.carbon"] {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic interface @Z(imports.%Main.import_ref.b3bc94.3: type) [from "a.carbon"] {
+// CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T)> [symbolic = %Z.type (constants.%Z.type.0ed)]
-// CHECK:STDOUT:   %Self: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.984)]
-// CHECK:STDOUT:   %Z.F.type: type = fn_type @Z.F, @Z(%T) [symbolic = %Z.F.type (constants.%Z.F.type.6cb)]
-// CHECK:STDOUT:   %Z.F: @Z.%Z.F.type (%Z.F.type.6cb) = struct_value () [symbolic = %Z.F (constants.%Z.F.6cc)]
-// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%T) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.0bf)]
-// CHECK:STDOUT:   %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, imports.%Main.import_ref.f14 [symbolic = %assoc0 (constants.%assoc0.f88)]
+// CHECK:STDOUT:   %Z.type.1: type = facet_type <@Z, @Z(%T.1)> [symbolic = %Z.type.1 (constants.%Z.type.0ed)]
+// CHECK:STDOUT:   %Self.1: @Z.%Z.type.1 (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.1 (constants.%Self.984)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.145
-// CHECK:STDOUT:     .F = imports.%Main.import_ref.f4a
+// CHECK:STDOUT:     .F = imports.%Main.import_ref.f56
 // CHECK:STDOUT:     witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -178,12 +168,12 @@ fn F(B:! Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3e2c97.1
-// CHECK:STDOUT:   extend imports.%Main.import_ref.80a
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3e2
+// CHECK:STDOUT:   extend imports.%Main.import_ref.b51
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Y.Self.binding.as_type.impls.Z.type.require {
+// CHECK:STDOUT:   @Y.WithSelf.Self.binding.as_type.impls.Z.type.require {
 // CHECK:STDOUT:     require imports.%Main.import_ref.7bb impls imports.%Main.import_ref.5ab
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -192,27 +182,27 @@ fn F(B:! Y) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b
 // CHECK:STDOUT:   .F = <poisoned>
-// CHECK:STDOUT:   extend imports.%Main.import_ref.f88
+// CHECK:STDOUT:   extend imports.%Main.import_ref.13d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @X.Self.binding.as_type.impls.Z.type.require {
+// CHECK:STDOUT:   @X.WithSelf.Self.binding.as_type.impls.Z.type.require {
 // CHECK:STDOUT:     require imports.%Main.import_ref.67f impls imports.%Main.import_ref.8d6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @X.Self.binding.as_type.impls.Z.type.require(imports.%Main.import_ref.e33cd1.1: %X.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic require @X.WithSelf.Self.binding.as_type.impls.Z.type.require(imports.%Main.import_ref.e33cd1.2: %X.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f45)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.f60)]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic = %Z.type (constants.%Z.type.9f3244.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Y.Self.binding.as_type.impls.Z.type.require(imports.%Main.import_ref.8c7: %Y.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic require @Y.WithSelf.Self.binding.as_type.impls.Z.type.require(imports.%Main.import_ref.8c73c0.2: %Y.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d4d)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.63e)]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic = %Z.type (constants.%Z.type.d16)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Z.F(imports.%Main.import_ref.b3bc94.2: type, imports.%Main.import_ref.1dc: @Z.%Z.type (%Z.type.0ed)) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @Z.WithSelf.F(imports.%Main.import_ref.b3bc94.2: type, imports.%Main.import_ref.1dc578.2: @Z.%Z.type.1 (%Z.type.0ed)) [from "a.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,67 +213,71 @@ fn F(B:! Y) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A.loc4_6.1 [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%A.binding.as_type)> [symbolic = %Z.type (constants.%Z.type.9f3244.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z.type [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%A.binding.as_type) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.449133.2)]
-// CHECK:STDOUT:   %assoc0: @F.%Z.assoc_type (%Z.assoc_type.449133.2) = assoc_entity element0, imports.%Main.import_ref.f14 [symbolic = %assoc0 (constants.%assoc0.f48)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z.type [symbolic = %require_complete (constants.%require_complete.18ce0f.2)]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%A.binding.as_type) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.449)]
+// CHECK:STDOUT:   %assoc0: @F.%Z.assoc_type (%Z.assoc_type.449) = assoc_entity element0, imports.%Main.import_ref.7b4 [symbolic = %assoc0 (constants.%assoc0.9a4)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc4_6.1, @Z, @Z(%A.binding.as_type) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %Z.F.type: type = fn_type @Z.F, @Z(%A.binding.as_type) [symbolic = %Z.F.type (constants.%Z.F.type.0ab8e8.2)]
 // CHECK:STDOUT:   %Z.facet: @F.%Z.type (%Z.type.9f3244.2) = facet_value %A.binding.as_type, (%Z.lookup_impl_witness) [symbolic = %Z.facet (constants.%Z.facet)]
-// CHECK:STDOUT:   %.loc5_4.3: type = fn_type_with_self_type %Z.F.type, %Z.facet [symbolic = %.loc5_4.3 (constants.%.168)]
-// CHECK:STDOUT:   %impl.elem0.loc5_4.2: @F.%.loc5_4.3 (%.168) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc5_4.2: <specific function> = specific_impl_function %impl.elem0.loc5_4.2, @Z.F(%A.binding.as_type, %Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %Z.WithSelf.F.type: type = fn_type @Z.WithSelf.F, @Z(%A.binding.as_type, %Z.facet) [symbolic = %Z.WithSelf.F.type (constants.%Z.WithSelf.F.type.501)]
+// CHECK:STDOUT:   %.loc5_4.3: type = fn_type_with_self_type %Z.WithSelf.F.type, %Z.facet [symbolic = %.loc5_4.3 (constants.%.d31)]
+// CHECK:STDOUT:   %impl.elem0.loc5_4.2: @F.%.loc5_4.3 (%.d31) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc5_4.2: <specific function> = specific_impl_function %impl.elem0.loc5_4.2, @Z.WithSelf.F(%A.binding.as_type, %Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %A.ref: %X.type = name_ref A, %A.loc4_6.2 [symbolic = %A.loc4_6.1 (constants.%A)]
 // CHECK:STDOUT:     %A.as_type: type = facet_access_type %A.ref [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
 // CHECK:STDOUT:     %.loc5_4.1: type = converted %A.ref, %A.as_type [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
-// CHECK:STDOUT:     %.loc5_4.2: @F.%Z.assoc_type (%Z.assoc_type.449133.2) = specific_constant imports.%Main.import_ref.f4a, @Z(constants.%A.binding.as_type) [symbolic = %assoc0 (constants.%assoc0.f48)]
-// CHECK:STDOUT:     %F.ref: @F.%Z.assoc_type (%Z.assoc_type.449133.2) = name_ref F, %.loc5_4.2 [symbolic = %assoc0 (constants.%assoc0.f48)]
-// CHECK:STDOUT:     %impl.elem0.loc5_4.1: @F.%.loc5_4.3 (%.168) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %specific_impl_fn.loc5_4.1: <specific function> = specific_impl_function %impl.elem0.loc5_4.1, @Z.F(constants.%A.binding.as_type, constants.%Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %Z.F.call: init %empty_tuple.type = call %specific_impl_fn.loc5_4.1()
+// CHECK:STDOUT:     %.loc5_4.2: @F.%Z.assoc_type (%Z.assoc_type.449) = specific_constant imports.%Main.import_ref.f56, @Z(constants.%A.binding.as_type, constants.%A) [symbolic = %assoc0 (constants.%assoc0.9a4)]
+// CHECK:STDOUT:     %F.ref: @F.%Z.assoc_type (%Z.assoc_type.449) = name_ref F, %.loc5_4.2 [symbolic = %assoc0 (constants.%assoc0.9a4)]
+// CHECK:STDOUT:     %impl.elem0.loc5_4.1: @F.%.loc5_4.3 (%.d31) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %specific_impl_fn.loc5_4.1: <specific function> = specific_impl_function %impl.elem0.loc5_4.1, @Z.WithSelf.F(constants.%A.binding.as_type, constants.%Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %Z.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc5_4.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.F(constants.%T, constants.%Self.984) {}
+// CHECK:STDOUT: specific @Z(constants.%T, constants.%Self.984) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf.F(constants.%T, constants.%Self.984) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.binding.as_type.f60) {
-// CHECK:STDOUT:   %T => constants.%Self.binding.as_type.f60
+// CHECK:STDOUT:   %T.1 => constants.%Self.binding.as_type.f60
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Z.type => constants.%Z.type.9f3244.1
-// CHECK:STDOUT:   %Self => constants.%Self.fcd60c.1
-// CHECK:STDOUT:   %Z.F.type => constants.%Z.F.type.0ab8e8.1
-// CHECK:STDOUT:   %Z.F => constants.%Z.F.d97fe5.1
-// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.449133.1
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.179
+// CHECK:STDOUT:   %Z.type.1 => constants.%Z.type.9f3244.1
+// CHECK:STDOUT:   %Self.1 => constants.%Self.fcd60c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.Self.binding.as_type.impls.Z.type.require(constants.%Self.f45) {
+// CHECK:STDOUT: specific @X(constants.%Self.f45) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Self.f45
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.f60
+// CHECK:STDOUT:   %Z.type => constants.%Z.type.9f3244.1
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.18ce0f.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X.WithSelf.Self.binding.as_type.impls.Z.type.require(constants.%Self.f45) {
 // CHECK:STDOUT:   %Self => constants.%Self.f45
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.f60
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.9f3244.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.binding.as_type.63e) {
-// CHECK:STDOUT:   %T => constants.%Self.binding.as_type.63e
+// CHECK:STDOUT:   %T.1 => constants.%Self.binding.as_type.63e
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Z.type => constants.%Z.type.d16
-// CHECK:STDOUT:   %Self => constants.%Self.890
-// CHECK:STDOUT:   %Z.F.type => constants.%Z.F.type.388
-// CHECK:STDOUT:   %Z.F => constants.%Z.F.791
-// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.df3
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.e61
+// CHECK:STDOUT:   %Z.type.1 => constants.%Z.type.d16
+// CHECK:STDOUT:   %Self.1 => constants.%Self.890
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%Self.d4d) {
+// CHECK:STDOUT: specific @Y(constants.%Self.d4d) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.WithSelf.Self.binding.as_type.impls.Z.type.require(constants.%Self.d4d) {
 // CHECK:STDOUT:   %Self => constants.%Self.d4d
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.63e
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.d16
@@ -294,23 +288,60 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %B.loc4_20.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%A.binding.as_type) {
-// CHECK:STDOUT:   %T => constants.%A.binding.as_type
-// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X(constants.%A) {
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%A
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.9f3244.2
-// CHECK:STDOUT:   %Self => constants.%Self.fcd60c.2
-// CHECK:STDOUT:   %Z.F.type => constants.%Z.F.type.0ab8e8.2
-// CHECK:STDOUT:   %Z.F => constants.%Z.F.d97fe5.2
-// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.449133.2
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.f48
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.18ce0f.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.Self.binding.as_type.impls.Z.type.require(constants.%A) {
+// CHECK:STDOUT: specific @Z(constants.%A.binding.as_type) {
+// CHECK:STDOUT:   %T.1 => constants.%A.binding.as_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Z.type.1 => constants.%Z.type.9f3244.2
+// CHECK:STDOUT:   %Self.1 => constants.%Self.fcd60c.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%A.binding.as_type, constants.%Self.984) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%A.binding.as_type
+// CHECK:STDOUT:   %Z.type.2 => constants.%Z.type.9f3244.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self.984
+// CHECK:STDOUT:   %Z.WithSelf.F.type => constants.%Z.WithSelf.F.type.6cc
+// CHECK:STDOUT:   %Z.WithSelf.F => constants.%Z.WithSelf.F.926
+// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.449
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9a4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%A.binding.as_type, constants.%A) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%A.binding.as_type
+// CHECK:STDOUT:   %Z.type.2 => constants.%Z.type.9f3244.2
+// CHECK:STDOUT:   %Self.2 => constants.%A
+// CHECK:STDOUT:   %Z.WithSelf.F.type => constants.%Z.WithSelf.F.type.048
+// CHECK:STDOUT:   %Z.WithSelf.F => constants.%Z.WithSelf.F.aaa
+// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.449
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9a4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X.WithSelf.Self.binding.as_type.impls.Z.type.require(constants.%A) {
 // CHECK:STDOUT:   %Self => constants.%A
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.9f3244.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.F(constants.%A.binding.as_type, constants.%Z.facet) {}
+// CHECK:STDOUT: specific @Z(constants.%A.binding.as_type, constants.%Z.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.2 => constants.%A.binding.as_type
+// CHECK:STDOUT:   %Z.type.2 => constants.%Z.type.9f3244.2
+// CHECK:STDOUT:   %Self.2 => constants.%Z.facet
+// CHECK:STDOUT:   %Z.WithSelf.F.type => constants.%Z.WithSelf.F.type.501
+// CHECK:STDOUT:   %Z.WithSelf.F => constants.%Z.WithSelf.F.cf6
+// CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.449
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.9a4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf.F(constants.%A.binding.as_type, constants.%Z.facet) {}
 // CHECK:STDOUT:

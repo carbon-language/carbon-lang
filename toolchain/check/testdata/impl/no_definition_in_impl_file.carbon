@@ -127,6 +127,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @A [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -137,10 +138,13 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.A.impl: %.loc10_7.2 as %A.ref;
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
@@ -187,6 +191,8 @@ impl () as D;
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -230,6 +236,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @B [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -240,10 +247,13 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: %.loc10_7.2 as %B.ref;
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -272,6 +282,8 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.9f2 [from "fail_decl_only_in_api.carbon"];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -295,6 +307,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
 // CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @C [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -305,10 +318,13 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.C.impl: %.loc10_7.2 as %C.ref;
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
+// CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
@@ -345,6 +361,8 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.2d264c.2: %.loc8_7.2 as %C.ref;
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -376,6 +394,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D {
 // CHECK:STDOUT:   %Self: %D.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @D [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -385,4 +404,6 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.D.impl: %.loc10_7.2 as %D.ref;
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @D(constants.%Self) {}
 // CHECK:STDOUT:

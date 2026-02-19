@@ -252,10 +252,11 @@ struct AssociatedEntityType {
   // The interface in which the entity was declared.
   InterfaceId interface_id;
   // The specific for the interface in which the entity was declared.
-  SpecificId interface_specific_id;
+  SpecificId interface_without_self_specific_id;
 
   auto GetSpecificInterface() -> SpecificInterface {
-    return {.interface_id = interface_id, .specific_id = interface_specific_id};
+    return {.interface_id = interface_id,
+            .specific_id = interface_without_self_specific_id};
   }
 };
 
@@ -1082,12 +1083,23 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
-  // Always `type`.
+  // If the interface is not generic, this is `type`, otherwise it's
+  // `GenericInterfaceType`.
   TypeId type_id;
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
   DeclInstBlockId decl_block_id;
+};
+
+struct InterfaceWithSelfDecl {
+  static constexpr auto Kind =
+      InstKind::InterfaceWithSelfDecl.Define<Parse::AnyInterfaceDeclId>(
+          {.ir_name = "interface_with_self_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+  // No type: an interface-with-self declaration is not a value.
+  InterfaceId interface_id;
 };
 
 // An arbitrary-precision integer type, which is used as the type of integer
@@ -1210,12 +1222,24 @@ struct NamedConstraintDecl {
       InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
           {.ir_name = "constraint_decl", .is_lowered = false});
 
-  // Always `type`.
+  // If the constraint is not generic, this is `type`, otherwise it's
+  // `GenericNamedConstraintType`.
   TypeId type_id;
   NamedConstraintId named_constraint_id;
   // The declaration block, containing the constraint name's qualifiers and the
   // constraint's generic parameters.
   DeclInstBlockId decl_block_id;
+};
+
+struct NamedConstraintWithSelfDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintWithSelfDecl
+          .Define<Parse::AnyNamedConstraintDeclId>(
+              {.ir_name = "constraint_with_self_decl",
+               .constant_kind = InstConstantKind::AlwaysUnique,
+               .is_lowered = false});
+  // No type: an constraint-with-self declaration is not a value.
+  NamedConstraintId named_constraint_id;
 };
 
 // A name reference, with the value of the name. This only handles name

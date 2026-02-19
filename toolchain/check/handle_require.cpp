@@ -38,8 +38,8 @@ auto HandleParseNode(Context& context, Parse::RequireIntroducerId node_id)
   auto scope_id = context.scope_stack().PeekNameScopeId();
   auto scope_inst_id = context.name_scopes().Get(scope_id).inst_id();
   auto scope_inst = context.insts().Get(scope_inst_id);
-  if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-      !scope_inst.Is<SemIR::NamedConstraintDecl>()) {
+  if (!scope_inst.Is<SemIR::InterfaceWithSelfDecl>() &&
+      !scope_inst.Is<SemIR::NamedConstraintWithSelfDecl>()) {
     CARBON_DIAGNOSTIC(
         RequireInWrongScope, Error,
         "`require` can only be used in an `interface` or `constraint`");
@@ -60,14 +60,10 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
     return true;
   }
 
-  auto scope_id = context.scope_stack().PeekNameScopeId();
   auto lookup_result =
-      LookupNameInExactScope(context, node_id, SemIR::NameId::SelfType,
-                             scope_id, context.name_scopes().Get(scope_id),
-                             /*is_being_declared=*/false);
-  CARBON_CHECK(lookup_result.is_found());
-
-  auto self_inst_id = lookup_result.target_inst_id();
+      LookupUnqualifiedName(context, node_id, SemIR::NameId::SelfType,
+                            /*required=*/true);
+  auto self_inst_id = lookup_result.scope_result.target_inst_id();
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
   if (self_type_id == SemIR::ErrorInst::TypeId) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
@@ -314,21 +310,17 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       return true;
     }
 
-    // The generic of a require declaration is always inside an interface or
-    // constraint, which makes its last generic binding the inner `Self` facet
-    // of the interface/constraint definition. Thus the last argument of its
-    // `self_specific` is that inner `Self`.
-    auto self_specific_id = context.generics().GetSelfSpecific(
-        context.require_impls().Get(require_impls_id).generic_id);
-    const auto& self_specific = context.specifics().Get(self_specific_id);
-    auto self_specific_args = context.inst_blocks().Get(self_specific.args_id);
-    auto inner_self_inst_id = self_specific_args.back();
-
     // The extended scope instruction must be part of the enclosing scope (and
     // generic). A specific for the enclosing scope will be applied to it when
     // using the instruction later. To do so, we wrap the constraint facet type
     // it in a SpecificConstant, which preserves the require declaration's
     // specific along with the facet type.
+    //
+    // TODO: Remove the separate generic for each require decl, then we don't
+    // need a SpecificConstant anymore, as the constraint_inst_id will already
+    // be in the generic of the interface-with-self.
+    auto self_specific_id = context.generics().GetSelfSpecific(
+        context.require_impls().Get(require_impls_id).generic_id);
     auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
         context, node_id,
         {.type_id = SemIR::TypeType::TypeId,
@@ -336,8 +328,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
          .specific_id = self_specific_id});
     auto enclosing_scope_id = context.scope_stack().PeekNameScopeId();
     auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
-    enclosing_scope.AddExtendedScope(
-        {constraint_id_in_self_specific, inner_self_inst_id});
+    enclosing_scope.AddExtendedScope(constraint_id_in_self_specific);
   }
 
   context.require_impls_stack().AppendToTop(require_impls_id);

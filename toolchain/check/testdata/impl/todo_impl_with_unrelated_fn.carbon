@@ -30,10 +30,10 @@ class X {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %A.B.type: type = fn_type @A.B [concrete]
-// CHECK:STDOUT:   %A.B: %A.B.type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.386: type = fn_type @A.WithSelf.B, @A(%Self) [symbolic]
+// CHECK:STDOUT:   %A.WithSelf.B.b88: %A.WithSelf.B.type.386 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%A.B.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%A.WithSelf.B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.as.A.impl.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B.type: type = fn_type @X.as.A.impl.B [concrete]
@@ -41,6 +41,8 @@ class X {
 // CHECK:STDOUT:   %X.as.A.impl.F.type: type = fn_type @X.as.A.impl.F [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.F: %X.as.A.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.c6b: type = fn_type @A.WithSelf.B, @A(%A.facet) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.f2a: %A.WithSelf.B.type.c6b = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -55,14 +57,17 @@ class X {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %A.B.decl: %A.B.type = fn_decl @A.B [concrete = constants.%A.B] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %A.B.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Self.loc15: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %A.WithSelf.B.decl: @A.%A.WithSelf.B.type (%A.WithSelf.B.type.386) = fn_decl @A.WithSelf.B [symbolic = @A.%A.WithSelf.B (constants.%A.WithSelf.B.b88)] {} {}
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %A.WithSelf.B.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .B = %assoc0
-// CHECK:STDOUT:   witness = (%A.B.decl)
+// CHECK:STDOUT:   witness = (%A.WithSelf.B.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -92,7 +97,7 @@ class X {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @A.B(@A.%Self: %A.type) {
+// CHECK:STDOUT: generic fn @A.WithSelf.B(@A.%Self.loc15: %A.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +111,21 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.B(constants.%Self) {}
+// CHECK:STDOUT: specific @A(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc16 => constants.%Self
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.386
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.b88
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.B(constants.%A.facet) {}
+// CHECK:STDOUT: specific @A.WithSelf.B(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%A.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc16 => constants.%A.facet
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.c6b
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.f2a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A.WithSelf.B(constants.%A.facet) {}
 // CHECK:STDOUT:

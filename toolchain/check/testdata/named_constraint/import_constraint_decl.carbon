@@ -84,6 +84,7 @@ impl C as B {}
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self.f45: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %Self.651: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.f45 [symbolic]
 // CHECK:STDOUT:   %T: %B.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %B.type [concrete]
@@ -94,12 +95,12 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
+// CHECK:STDOUT:   %Main.import_ref.fa0 = import_ref Main//b, loc5_25, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//b, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.67f: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.WithSelf.Self.binding.as_type.impls.I.type.require.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.e33: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
-// CHECK:STDOUT:   %Main.import_ref.65b437.1 = import_ref Main//b, loc4_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.121 = import_ref Main//b, loc5_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e33cd1.2: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
+// CHECK:STDOUT:   %Main.import_ref.65b = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -131,16 +132,16 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b437.1
-// CHECK:STDOUT:   extend imports.%Main.import_ref.121
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.65b
+// CHECK:STDOUT:   extend imports.%Main.import_ref.fa0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.Self.binding.as_type.impls.I.type.require {
+// CHECK:STDOUT:   @B.WithSelf.Self.binding.as_type.impls.I.type.require {
 // CHECK:STDOUT:     require imports.%Main.import_ref.67f impls imports.%Main.import_ref.72a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.e33: %B.type) [from "b.carbon"] {
+// CHECK:STDOUT: generic require @B.WithSelf.Self.binding.as_type.impls.I.type.require(imports.%Main.import_ref.e33cd1.2: %B.type) [from "b.carbon"] {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f45)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
@@ -156,7 +157,13 @@ impl C as B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.Self.binding.as_type.impls.I.type.require(constants.%Self.f45) {
+// CHECK:STDOUT: specific @B(constants.%Self.f45) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.651) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B.WithSelf.Self.binding.as_type.impls.I.type.require(constants.%Self.f45) {
 // CHECK:STDOUT:   %Self => constants.%Self.f45
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }

@@ -72,7 +72,7 @@ interface J {
 }
 
 fn INotJ(T:! I where .Self impls J) {
-  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -101,13 +101,13 @@ interface A {}
 interface B { fn Bfn(); }
 
 fn F(T:! A & B) {
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.((A where .Self impls B).Bfn)();
   // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   T.((A where .Self impls B).Bfn)();
 
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:3: error: member name `Bfn` not found in `A` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:3: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   (A where .Self impls B).Bfn;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -128,13 +128,13 @@ interface J {
 }
 
 fn INotJ[T:! I where .Self impls J](x: T) {
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GNonInstance();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   x.GNonInstance();
 
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GSelf` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GSelf` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GSelf();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
