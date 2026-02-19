@@ -8,8 +8,6 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/lower/clang_global_decl.h"
-#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -173,15 +171,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     return "main";
   }
 
-  // TODO: We should never need to do this: Clang should emit C++ function
-  // declarations for us.
-  if (function.clang_decl_id.has_value()) {
-    CARBON_CHECK(function.special_function_kind !=
-                     SemIR::Function::SpecialFunctionKind::HasCppThunk,
-                 "Shouldn't mangle C++ function that uses a thunk");
-    const auto& clang_decl = sem_ir().clang_decls().Get(function.clang_decl_id);
-    return MangleCppClang(cast<clang::NamedDecl>(clang_decl.key.decl));
-  }
+  // Clang should emit C++ function declarations for us.
+  CARBON_CHECK(!function.clang_decl_id.has_value(),
+               "Shouldn't mangle C++ function");
 
   RawStringOstream os;
   os << "_C";
@@ -249,12 +241,6 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
   // the mangling.
   MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
   return os.TakeStr();
-}
-
-auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
-  return file_context_.cpp_code_generator()
-      .GetMangledName(CreateGlobalDecl(decl))
-      .str();
 }
 
 auto Mangler::MangleVTable(const SemIR::Class& class_info,

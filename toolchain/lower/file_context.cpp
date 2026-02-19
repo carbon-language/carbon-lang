@@ -665,6 +665,16 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info =
       FunctionTypeInfoBuilder(this, specific_id).Build(function);
+  auto make_function_info =
+      [&](llvm::Function* llvm_function) -> std::optional<FunctionInfo> {
+    return {{.type = function_type_info.type,
+             .di_type = function_type_info.di_type,
+             .lowered_param_pattern_ids =
+                 std::move(function_type_info.lowered_param_pattern_ids),
+             .unused_param_pattern_ids =
+                 std::move(function_type_info.unused_param_pattern_ids),
+             .llvm_function = llvm_function}};
+  };
 
   // TODO: For an imported inline function, consider generating an
   // `available_externally` definition.
@@ -676,6 +686,15 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     linkage = llvm::Function::InternalLinkage;
   }
 
+  // If this is a C++ function, tell Clang that we referenced it.
+  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
+      clang_decl_id.has_value()) {
+    CARBON_CHECK(!specific_id.has_value(),
+                 "Specific functions cannot have C++ definitions");
+    return make_function_info(HandleReferencedCppFunction(
+        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction()));
+  }
+
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
@@ -684,61 +703,38 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
     // produced by declarations of the same Carbon function. Name collisions
     // between non-private members of the same library should have been
-    // diagnosed by check if detected, but it's not clear that check will always
-    // be able to see this problem. In theory, name collisions could also occur
-    // due to fingerprint collision.
-    return {{.type = function_type_info.type,
-             .di_type = function_type_info.di_type,
-             .lowered_param_pattern_ids =
-                 std::move(function_type_info.lowered_param_pattern_ids),
-             .unused_param_pattern_ids =
-                 std::move(function_type_info.unused_param_pattern_ids),
-             .llvm_function = existing}};
+    // diagnosed by check if detected, but it's not clear that check will
+    // always be able to see this problem. In theory, name collisions could
+    // also occur due to fingerprint collision.
+    return make_function_info(existing);
   }
 
-  llvm::Function* llvm_function;
-  // If this is a C++ function, tell Clang that we referenced it.
-  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-      clang_decl_id.has_value()) {
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Specific functions cannot have C++ definitions");
-    llvm_function = HandleReferencedCppFunction(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
-  } else {
-    // If this is a specific function, we may need to do additional work to emit
-    // its definition.
-    if (specific_id.has_value()) {
-      HandleReferencedSpecificFunction(function_id, specific_id,
-                                       function_type_info.type);
-    }
-
-    llvm_function = llvm::Function::Create(function_type_info.type, linkage,
-                                           mangled_name, llvm_module());
-
-    CARBON_CHECK(llvm_function->getName() == mangled_name,
-                 "Mangled name collision: {0}", mangled_name);
-
-    // Set up parameters and the return slot.
-    for (auto [inst_id, arg] :
-         llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
-                         llvm_function->args())) {
-      arg.setName(sem_ir().names().GetIRBaseName(
-          SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
-    }
-    if (function_type_info.sret_type != nullptr) {
-      auto& return_arg = *llvm_function->args().begin();
-      return_arg.addAttr(llvm::Attribute::getWithStructRetType(
-          llvm_context(), function_type_info.sret_type));
-    }
+  // If this is a specific function, we may need to do additional work to
+  // emit its definition.
+  if (specific_id.has_value()) {
+    HandleReferencedSpecificFunction(function_id, specific_id,
+                                     function_type_info.type);
   }
 
-  return {{.type = function_type_info.type,
-           .di_type = function_type_info.di_type,
-           .lowered_param_pattern_ids =
-               std::move(function_type_info.lowered_param_pattern_ids),
-           .unused_param_pattern_ids =
-               std::move(function_type_info.unused_param_pattern_ids),
-           .llvm_function = llvm_function}};
+  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
+                                               mangled_name, llvm_module());
+  CARBON_CHECK(llvm_function->getName() == mangled_name,
+               "Mangled name collision: {0}", mangled_name);
+
+  // Set up parameters and the return slot.
+  for (auto [inst_id, arg] :
+       llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
+                       llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(
+        SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
+  }
+  if (function_type_info.sret_type != nullptr) {
+    auto& return_arg = *llvm_function->args().begin();
+    return_arg.addAttr(llvm::Attribute::getWithStructRetType(
+        llvm_context(), function_type_info.sret_type));
+  }
+
+  return make_function_info(llvm_function);
 }
 
 // Find the file and function ID describing the definition of a function.
