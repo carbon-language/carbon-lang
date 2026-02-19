@@ -10,6 +10,8 @@
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/impl_lookup.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/deduce.h"
