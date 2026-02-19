@@ -46,11 +46,11 @@ var f: Form();
 // CHECK:STDOUT:     %f.var_patt: %pattern_type.13f = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref Core.Form = var %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc13_13.1: type = splice_block %.loc13_13.3 [concrete = Core.Form] {
+// CHECK:STDOUT:   %.loc9_13.1: type = splice_block %.loc9_13.3 [concrete = Core.Form] {
 // CHECK:STDOUT:     %Form.ref: %Form.type = name_ref Form, imports.%Main.Form [concrete = constants.%Form]
 // CHECK:STDOUT:     %Form.call: init type = call %Form.ref() [concrete = Core.Form]
-// CHECK:STDOUT:     %.loc13_13.2: type = value_of_initializer %Form.call [concrete = Core.Form]
-// CHECK:STDOUT:     %.loc13_13.3: type = converted %Form.call, %.loc13_13.2 [concrete = Core.Form]
+// CHECK:STDOUT:     %.loc9_13.2: type = value_of_initializer %Form.call [concrete = Core.Form]
+// CHECK:STDOUT:     %.loc9_13.3: type = converted %Form.call, %.loc9_13.2 [concrete = Core.Form]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref Core.Form = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
