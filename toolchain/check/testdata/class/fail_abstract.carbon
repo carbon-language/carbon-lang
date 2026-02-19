@@ -222,25 +222,21 @@ fn F() {
   // to the `Abstract` value since `Abstract` and `Derived` have pointer value
   // representations.
   //
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+18]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+14]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE-15]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+11]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+7]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE-22]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+4]]:7: warning: binding `l` unused [UnusedBinding]
-  // CHECK:STDERR:   let l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  let l: Abstract = {.base = {}} as Derived;
+  let unused l: Abstract = {.base = {}} as Derived;
 }
 
 // --- fail_call_abstract_return.carbon
@@ -954,16 +950,16 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.a2e = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc33_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc33_32.1: %struct_type.base.f5e = struct_literal (%.loc33_31) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc29_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc29_39.1: %struct_type.base.f5e = struct_literal (%.loc29_38) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc33_32.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc33_32.3: ref %Derived = temporary %.loc33_32.2, <error>
-// CHECK:STDOUT:   %.loc33_34: ref %Derived = converted %.loc33_32.1, %.loc33_32.3
+// CHECK:STDOUT:   %.loc29_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc29_39.3: ref %Derived = temporary %.loc29_39.2, <error>
+// CHECK:STDOUT:   %.loc29_41: ref %Derived = converted %.loc29_39.1, %.loc29_39.3
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc33_32.3, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc33_32.3)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc29_39.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc29_39.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

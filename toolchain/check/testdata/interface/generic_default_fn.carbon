@@ -10,13 +10,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/generic_default_fn.carbon
 
-interface I(T:! type) {
+interface I(_:! type) {
   // TODO: Use `default` here.
   fn F[ref self: Self]() -> Self*;
 }
 
-// CHECK:STDERR: generic_default_fn.carbon:[[@LINE+4]]:6: warning: binding `T` unused [UnusedBinding]
-// CHECK:STDERR: fn I(T:! type).F[ref self: Self]() -> Self* { return &self; }
-// CHECK:STDERR:      ^
-// CHECK:STDERR:
-fn I(T:! type).F[ref self: Self]() -> Self* { return &self; }
+fn I(_:! type).F[ref self: Self]() -> Self* {
+  return &self;
+}
