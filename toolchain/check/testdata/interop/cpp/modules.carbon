@@ -42,7 +42,7 @@ import Cpp inline '''
 // CHECK:STDERR:
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
 // CHECK:STDERR:    17 | module Foo;
-// CHECK:STDERR:       | ~~~~~~~^~~
+// CHECK:STDERR:       |        ^~~~
 // CHECK:STDERR:
 module Foo;
 ''';
@@ -70,7 +70,7 @@ int n;
 // CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
 // CHECK:STDERR:    25 | module Foo;
-// CHECK:STDERR:       | ~~~~~~~^~~
+// CHECK:STDERR:       |        ^~~~
 // CHECK:STDERR:
 module Foo;
 ''';

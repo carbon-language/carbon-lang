@@ -386,11 +386,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_ZN1YC1ERKS_(ptr noundef nonnull align 4 dereferenceable(12) %agg.tmp, ptr noundef nonnull align 4 dereferenceable(12) %1)
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y(ptr dead_on_return noundef %agg.tmp)
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y(ptr noundef dead_on_return %agg.tmp)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr dead_on_return noundef) #1
+// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr noundef dead_on_return) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1YC1ERKS_(ptr noundef nonnull align 4 dereferenceable(12), ptr noundef nonnull align 4 dereferenceable(12)) unnamed_addr #1
 // CHECK:STDOUT:
