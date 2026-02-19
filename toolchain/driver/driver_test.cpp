@@ -303,7 +303,7 @@ TEST_F(DriverTest, LinkWithFlagLikeFiles) {
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   EXPECT_THAT(out, StrEq(""));
   // This error seems to stem from incorrectly handling `--` in the LLD command
-  // line. See above -- this should go away when the underlying bugs are fixed.
+  // line. See above; this should go away when the underlying bugs are fixed.
   EXPECT_THAT(err,
               HasSubstr("error: completed parsing all 1 configured positional "
                         "arguments, but found a subsequent `--`"));
