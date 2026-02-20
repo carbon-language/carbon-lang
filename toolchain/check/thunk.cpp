@@ -77,7 +77,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   // Rebuild the binding pattern.
   return AddBindingPattern(context, SemIR::LocId(pattern_id),
                            entity_name.name_id, type_id, type_expr_region_id,
-                           pattern.kind, entity_name.is_template)
+                           pattern.kind, entity_name.is_template,
+                           /*is_unused=*/false)
       .pattern_id;
 }
 

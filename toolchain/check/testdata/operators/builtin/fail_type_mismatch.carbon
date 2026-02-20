@@ -13,14 +13,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   var x: bool = not 12;
-  // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var x: bool = not 12;
-  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
+  // CHECK:STDERR:   var unused x: bool = not 12;
+  // CHECK:STDERR:                        ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var unused x: bool = not 12;
+  // CHECK:STDERR:                        ^~~~~~
   // CHECK:STDERR:
-  var x: bool = not 12;
+  var unused x: bool = not 12;
 }
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -70,13 +70,13 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc23_17.1: bool = converted %int_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_17.2: <error> = not <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_24.1: bool = converted %int_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_24.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc23_10.1: type = splice_block %.loc23_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc23_17.1: type = splice_block %.loc23_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc23_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc23_10.3: type = converted %Bool.call, %.loc23_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc23_17.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc23_17.3: type = converted %Bool.call, %.loc23_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp

@@ -18,7 +18,7 @@ import Cpp;
 
 // This is valid, unlike in C++, because `Cpp.void` is complete but abstract in
 // Carbon. Values of type `Cpp.void` exist, but objects of that type do not.
-fn F(x: Cpp.void) {}
+fn F(unused x: Cpp.void) {}
 
 // --- fail_void_abstract.carbon
 
@@ -27,14 +27,14 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn G() {
-  // CHECK:STDERR: fail_void_abstract.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Cpp.void` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var x: Cpp.void;
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_void_abstract.carbon:[[@LINE+7]]:17: error: binding pattern has abstract type `Cpp.void` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR:   var unused x: Cpp.void;
+  // CHECK:STDERR:                 ^~~~~~~~
   // CHECK:STDERR: {{.*}}/prelude/types/cpp/void.carbon:24:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class CppCompat.VoidBase {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var x: Cpp.void;
+  var unused x: Cpp.void;
 }
 
 // --- fail_void_argument.carbon

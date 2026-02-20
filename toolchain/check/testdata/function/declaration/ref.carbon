@@ -18,7 +18,7 @@
 fn F() -> ref i32;
 
 fn G() {
-  let ref x: i32 = F();
+  let unused ref x: i32 = F();
 }
 
 // CHECK:STDOUT: --- ref_return.carbon

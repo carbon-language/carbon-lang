@@ -253,6 +253,8 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
                SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
+//
+// It is invalid to call this with a callee that has an error inside it.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
                          SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;

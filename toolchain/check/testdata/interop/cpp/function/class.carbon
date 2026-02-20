@@ -216,7 +216,7 @@ fn F(c: Cpp.N.C) {
   //@dump-sem-ir-begin
   Cpp.foo(c);
   // Check that the parameter type was imported correctly.
-  var x: Cpp.N.C;
+  var unused x: Cpp.N.C;
   //@dump-sem-ir-end
 }
 
@@ -265,7 +265,7 @@ import Cpp library "definition_in_outer_definition.h";
 fn F(c: Cpp.O.C) {
   //@dump-sem-ir-begin
   Cpp.foo(c);
-  var x: Cpp.O;
+  var unused x: Cpp.O;
   //@dump-sem-ir-end
 }
 

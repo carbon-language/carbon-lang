@@ -106,8 +106,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F() {
   InterfaceParam({});
@@ -122,8 +122,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
@@ -132,9 +132,9 @@ fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   InterfaceParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-10]]:19: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn InterfaceParam(U:! Z) {}
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-10]]:26: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn InterfaceParam(unused U:! Z) {}
+  // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   InterfaceParam({.a = ()});
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `N` [ConversionFailureNonTypeToFacet]
@@ -143,9 +143,9 @@ fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(N)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ConstraintParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-20]]:20: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn ConstraintParam(U:! N) {}
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-20]]:27: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn ConstraintParam(unused U:! N) {}
+  // CHECK:STDERR:                           ^
   // CHECK:STDERR:
   ConstraintParam({.a = ()});
 }
@@ -158,8 +158,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F() {
   InterfaceParam(());
@@ -182,8 +182,8 @@ impl forall [T:! type, U:! type] U as Z(T) {}
 constraint N(U:! type) {}
 
 class C;
-fn InterfaceParam(U:! Z(C)) {}
-fn ConstraintParam(U:! N(C)) {}
+fn InterfaceParam(unused U:! Z(C)) {}
+fn ConstraintParam(unused U:! N(C)) {}
 
 fn F() {
   InterfaceParam({});
@@ -199,8 +199,8 @@ impl forall [T:! type, U:! type] U as Z(T) {}
 constraint N(U:! type) {}
 
 class C;
-fn InterfaceParam(U:! Z(C)) {}
-fn ConstraintParam(U:! N(C)) {}
+fn InterfaceParam(unused U:! Z(C)) {}
+fn ConstraintParam(unused U:! N(C)) {}
 
 fn F() {
   InterfaceParam(());
@@ -222,8 +222,8 @@ impl forall [T:! type, U:! type] U as Z(T) {}
 
 constraint N(U:! type) {}
 
-fn InterfaceParam(T:! type, U:! Z(T)) {}
-fn ConstraintParam(T:! type, U:! N(T)) {}
+fn InterfaceParam(T:! type, unused U:! Z(T)) {}
+fn ConstraintParam(T:! type, unused U:! N(T)) {}
 
 fn F(T:! type) {
   InterfaceParam((), {});
@@ -241,8 +241,8 @@ impl forall [T:! type, U:! type] U as Z(T) {}
 
 constraint N(U:! type) {}
 
-fn InterfaceParam(T:! type, U:! Z(T)) {}
-fn ConstraintParam(T:! type, U:! N(T)) {}
+fn InterfaceParam(T:! type, unused U:! Z(T)) {}
+fn ConstraintParam(T:! type, unused U:! N(T)) {}
 
 fn F(T:! type) {
   InterfaceParam({}, ());

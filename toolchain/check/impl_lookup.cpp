@@ -225,8 +225,8 @@ static auto GetRequiredImplsFromConstraint(
         builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
                         facet_type_inst_id);
       });
-  auto identified_id =
-      RequireIdentifiedFacetType(context, query_self_const_id, facet_type_inst);
+  auto identified_id = RequireIdentifiedFacetType(
+      context, loc_id, query_self_const_id, facet_type_inst);
   if (!identified_id.has_value()) {
     return std::nullopt;
   }
@@ -357,7 +357,7 @@ static auto LookupImplWitnessInSelfFacetValue(
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
   auto identified_id = RequireIdentifiedFacetType(
-      context, self_facet_value_const_id, *facet_type);
+      context, loc_id, self_facet_value_const_id, *facet_type);
   // This should not be possible as FacetValue is constructed by a conversion
   // to a facet type, which performs impl lookup for that facet type, and
   // lookup only succeeds for identified facet types.

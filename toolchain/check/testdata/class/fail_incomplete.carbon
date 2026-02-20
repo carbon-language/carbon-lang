@@ -88,14 +88,14 @@ fn Copy(p: Class*) -> Class {
 }
 
 fn Let(p: Class*) {
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   let c: Class = *p;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:17: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   let unused c: Class = *p;
+  // CHECK:STDERR:                 ^~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-77]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
-  let c: Class = *p;
+  let unused c: Class = *p;
 }
 
 fn TakeIncomplete(c: Class);

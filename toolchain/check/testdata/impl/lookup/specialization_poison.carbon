@@ -19,7 +19,7 @@ interface I {
 }
 
 impl forall [U:! type] U as I where .T = () {
-  fn F[self: Self]() -> () { return (); }
+  fn F[unused self: Self]() -> () { return (); }
 }
 
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
@@ -58,12 +58,12 @@ impl forall [U:! type] U as I where .T = () {}
 
 class C {}
 
-fn H[W:! type](v: W) {
+fn H[W:! type](unused v: W) {
   // This concrete impl lookup query poisons any further specializations.
-  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
-  // CHECK:STDERR:   let a: C.(I.T) = ();
-  // CHECK:STDERR:          ^~~~~~~
-  let a: C.(I.T) = ();
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:17: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   let unused a: C.(I.T) = ();
+  // CHECK:STDERR:                 ^~~~~~~
+  let unused a: C.(I.T) = ();
 }
 
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
@@ -86,7 +86,7 @@ interface I {
 class C(U:! type) {}
 
 impl forall [U:! type] C(U) as I where .T = () {
-  fn F[self: Self]() -> () { return (); }
+  fn F[unused self: Self]() -> () { return (); }
 }
 
 fn G(c: C(())) -> () {
@@ -105,7 +105,7 @@ fn G(c: C(())) -> () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C(()) as I where .T = {} {
-  fn F[self: Self]() -> {} { return {}; }
+  fn F[unused self: Self]() -> {} { return {}; }
 }
 
 // --- fail_final_poisoned_concrete_query_nested_type_in_interface.carbon
@@ -117,7 +117,7 @@ interface I(U:! type) {
 }
 
 impl forall [U:! type] U as I(U) where .T = () {
-  fn F[self: Self]() -> () { return (); }
+  fn F[unused self: Self]() -> () { return (); }
 }
 
 class C {}
@@ -138,7 +138,7 @@ fn G(c: C) -> () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I(C) where .T = {} {
-  fn F[self: Self]() -> {} { return {}; }
+  fn F[unused self: Self]() -> {} { return {}; }
 }
 
 // --- todo_fail_final_poisoned_by_generic_query.carbon
@@ -150,7 +150,7 @@ interface I {
 }
 
 impl forall [U:! type] U as I where .T = () {
-  fn F[self: Self]() -> () { return (); }
+  fn F[unused self: Self]() -> () { return (); }
 }
 
 fn H[W:! type](v: W) -> W.(I.T) {

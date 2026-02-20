@@ -36,11 +36,11 @@ fn TestOp() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [concrete]
 // CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness @C.as.Dec.impl.%Dec.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Dec.Op.type: type = fn_type @Dec.Op [concrete]
 // CHECK:STDOUT:   %C.as.Dec.impl.Op.type: type = fn_type @C.as.Dec.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Dec.impl.Op: %C.as.Dec.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%Dec.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b0c: type = fn_type_with_self_type %Dec.Op.type, %Dec.facet [concrete]
+// CHECK:STDOUT:   %Dec.WithSelf.Op.type.874: type = fn_type @Dec.WithSelf.Op, @Dec(%Dec.facet) [concrete]
+// CHECK:STDOUT:   %.4d8: type = fn_type_with_self_type %Dec.WithSelf.Op.type.874, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -50,7 +50,7 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.b0c = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%C.as.Dec.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.4d8 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%C.as.Dec.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.Dec.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   <elided>

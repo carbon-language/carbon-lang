@@ -10,22 +10,19 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
-#include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
-#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
-#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
-#include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -86,6 +83,7 @@ static auto DiagnoseModifiers(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               DeclIntroducerState& introducer,
                               bool is_definition,
+                              SemIR::NameScopeId parent_scope_id,
                               SemIR::InstId parent_scope_inst_id,
                               std::optional<SemIR::Inst> parent_scope_inst,
                               SemIR::InstId self_param_id) -> void {
@@ -99,7 +97,7 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
 
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
@@ -266,11 +264,11 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 }
 
 // Adds the declaration to name lookup when appropriate.
-static auto MaybeAddToNameLookup(
-    Context& context, const DeclNameStack::NameContext& name_context,
-    const KeywordModifierSet& modifier_set,
-    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
-    -> void {
+static auto MaybeAddToNameLookup(Context& context,
+                                 const DeclNameStack::NameContext& name_context,
+                                 const KeywordModifierSet& modifier_set,
+                                 SemIR::NameScopeId parent_scope_id,
+                                 SemIR::InstId decl_id) -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
       name_context.prev_inst_id().has_value()) {
     return;
@@ -279,11 +277,13 @@ static auto MaybeAddToNameLookup(
   // At interface scope, a function declaration introduces an associated
   // function.
   auto lookup_result_id = decl_id;
-  if (parent_scope_inst && !name_context.has_qualifiers) {
-    if (auto interface_scope =
-            parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
-      lookup_result_id = BuildAssociatedEntity(
-          context, interface_scope->interface_id, decl_id);
+  if (parent_scope_id.has_value() && !name_context.has_qualifiers) {
+    const auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+    if (parent_scope.is_interface_definition()) {
+      auto interface_decl = context.insts().GetAs<SemIR::InterfaceWithSelfDecl>(
+          parent_scope.inst_id());
+      lookup_result_id =
+          BuildAssociatedEntity(context, interface_decl.interface_id, decl_id);
     }
   }
 
@@ -522,7 +522,8 @@ static auto BuildFunctionDecl(Context& context,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
   DiagnoseModifiers(context, node_id, introducer, is_definition,
-                    parent_scope_inst_id, parent_scope_inst, self_param_id);
+                    name_context.parent_scope_id, parent_scope_inst_id,
+                    parent_scope_inst, self_param_id);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
@@ -591,7 +592,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // Add to name lookup if needed, now that the decl is built.
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
-                       parent_scope_inst, decl_id);
+                       name_context.parent_scope_id, decl_id);
 
   ValidateForEntryPoint(context, node_id, function_decl.function_id,
                         function_info);
@@ -603,8 +604,73 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
+// Checks that "unused" marker is only used in definitions, and emits a
+// diagnostic for every binding that is marked unused.
+static auto CheckUnusedBindingsInPattern(Context& context,
+                                         SemIR::InstId pattern_id) -> void {
+  llvm::SmallVector<SemIR::InstId> work_list;
+  work_list.push_back(pattern_id);
+
+  while (!work_list.empty()) {
+    auto current_id = work_list.pop_back_val();
+    auto inst = context.insts().Get(current_id);
+    CARBON_KIND_SWITCH(inst) {
+      case SemIR::OutParamPattern::Kind:
+      case SemIR::RefParamPattern::Kind:
+      case SemIR::ValueParamPattern::Kind:
+      case SemIR::VarParamPattern::Kind: {
+        auto param = inst.As<SemIR::AnyParamPattern>();
+        work_list.push_back(param.subpattern_id);
+        break;
+      }
+      case SemIR::RefBindingPattern::Kind:
+      case SemIR::SymbolicBindingPattern::Kind:
+      case SemIR::ValueBindingPattern::Kind: {
+        auto bind = inst.As<SemIR::AnyBindingPattern>();
+        auto& entity_name = context.entity_names().Get(bind.entity_name_id);
+        // We need special treatment for the name "_" which is implicitly
+        // unused but actually permitted in declarations.
+        if (entity_name.is_unused &&
+            entity_name.name_id != SemIR::NameId::Underscore) {
+          CARBON_DIAGNOSTIC(UnusedModifierOnDeclaration, Error,
+                            "`unused` modifier on declaration");
+          context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::VarPattern var_pattern): {
+        work_list.push_back(var_pattern.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+        auto elements = context.inst_blocks().Get(tuple_pattern.elements_id);
+        for (auto element_id : llvm::reverse(elements)) {
+          work_list.push_back(element_id);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
+
+static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
+                                               SemIR::FunctionId function_id)
+    -> void {
+  const auto& function = context.functions().Get(function_id);
+  if (function.param_patterns_id.has_value()) {
+    for (auto pattern_id :
+         context.inst_blocks().Get(function.param_patterns_id)) {
+      CheckUnusedBindingsInPattern(context, pattern_id);
+    }
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
-  BuildFunctionDecl(context, node_id, /*is_definition=*/false);
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/false);
+  DiagnoseUnusedMarkersInDeclaration(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }
@@ -668,7 +734,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   }
 
   FinishFunctionDefinition(context, function_id);
-  context.decl_name_stack().PopScope();
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
 
   return true;
 }

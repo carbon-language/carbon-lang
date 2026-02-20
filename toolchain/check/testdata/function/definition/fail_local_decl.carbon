@@ -40,15 +40,15 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `private` not allowed; requires class or file scope [ModifierPrivateNotAllowed]
-  // CHECK:STDERR:   private var v: {};
+  // CHECK:STDERR:   private var unused v: {};
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  private var v: {};
+  private var unused v: {};
   // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
-  // CHECK:STDERR:   protected var w: {};
+  // CHECK:STDERR:   protected var unused w: {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
-  protected var w: {};
+  protected var unused w: {};
 }
 
 // CHECK:STDOUT: --- fail_virtual.carbon
@@ -133,9 +133,9 @@ fn F() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.a96 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_struct_type = var %v.var_patt
-// CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc9_19.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc9_26.1: type = splice_block %.loc9_26.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc9_26.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc9_26.3: type = converted %.loc9_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_struct_type = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -143,9 +143,9 @@ fn F() {
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.a96 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_struct_type = var %w.var_patt
-// CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc14_21.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc14_28.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = ref_binding w, %w.var
 // CHECK:STDOUT:   %DestroyOp.bound.loc14: <bound method> = bound_method %w.var, constants.%DestroyOp

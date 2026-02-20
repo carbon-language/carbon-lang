@@ -36,14 +36,14 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var v: Abstract;
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:17: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR:   var unused v: Abstract;
+  // CHECK:STDERR:                 ^~~~~~~~
   // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var v: Abstract;
+  var unused v: Abstract;
 }
 
 // --- fail_abstract_var_function_param.carbon
@@ -53,13 +53,13 @@ abstract class Abstract {
 }
 
 // CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE+7]]:13: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: fn F(var p: Abstract) {
+// CHECK:STDERR: fn F(var _: Abstract) {
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE-6]]:1: note: class was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(var p: Abstract) {
+fn F(var _: Abstract) {
 }
 
 // --- fail_todo_abstract_let.carbon
@@ -69,14 +69,14 @@ abstract class Abstract {
 }
 
 fn F(a: Abstract) {
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = a;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   let unused l: Abstract = a;
+  // CHECK:STDERR:                            ^
   // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let l: Abstract = a;
+  let unused l: Abstract = a;
 }
 
 // --- fail_abstract_adapter.carbon
@@ -190,27 +190,6 @@ fn Access(d: Derived) -> {} {
   return d.base.a;
 }
 
-// --- fail_abstract_let_temporary_struct_literal.carbon
-library "[[@TEST_NAME]]";
-
-abstract class Abstract {
-}
-
-fn F() {
-  // An abstract value of a class type that has a pointer value representation
-  // is allowed, but it has to be initialized from some a value of some concrete
-  // class type.
-  //
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+7]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = {};
-  // CHECK:STDERR:                     ^~
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE-11]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let l: Abstract = {};
-}
-
 // --- fail_todo_abstract_let_temporary.carbon
 library "[[@TEST_NAME]]";
 
@@ -226,21 +205,21 @@ fn F() {
   // to the `Abstract` value since `Abstract` and `Derived` have pointer value
   // representations.
   //
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+14]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+14]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE-15]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+7]]:21: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+7]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE-22]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let l: Abstract = {.base = {}} as Derived;
+  let unused l: Abstract = {.base = {}} as Derived;
 }
 
 // --- fail_call_abstract_return.carbon
@@ -389,13 +368,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: <error> = var_param_pattern %p.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.param_patt [concrete]
+// CHECK:STDOUT:     %_.patt: <error> = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: <error> = var_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.var_patt: <error> = var_pattern %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: ref <error> = ref_param call_param0
+// CHECK:STDOUT:     %_.param: ref <error> = ref_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %p: ref <error> = ref_binding p, %p.param
+// CHECK:STDOUT:     %_: ref <error> = ref_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -407,7 +386,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: ref <error>) {
+// CHECK:STDOUT: fn @F(%_.param: ref <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -835,55 +814,6 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Abstract [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Abstract = %Abstract.decl
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Abstract
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -954,16 +884,16 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.a2e = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc29_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc29_32.1: %struct_type.base.f5e = struct_literal (%.loc29_31) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc29_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc29_39.1: %struct_type.base.f5e = struct_literal (%.loc29_38) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc29_32.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc29_32.3: ref %Derived = temporary %.loc29_32.2, <error>
-// CHECK:STDOUT:   %.loc29_34: ref %Derived = converted %.loc29_32.1, %.loc29_32.3
+// CHECK:STDOUT:   %.loc29_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc29_39.3: ref %Derived = temporary %.loc29_39.2, <error>
+// CHECK:STDOUT:   %.loc29_41: ref %Derived = converted %.loc29_39.1, %.loc29_39.3
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc29_32.3, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc29_32.3)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc29_39.3, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc29_39.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

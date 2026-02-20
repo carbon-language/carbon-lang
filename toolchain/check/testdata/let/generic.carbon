@@ -22,7 +22,7 @@ fn F() {
   // CHECK:STDERR:
   let T:! type = i32;
   var p: T*;
-  let a: T = *p;
+  let unused a: T = *p;
 }
 
 // --- fail_todo_assignment.carbon

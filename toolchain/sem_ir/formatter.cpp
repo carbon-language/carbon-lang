@@ -89,11 +89,6 @@ auto Formatter::Format() -> void {
     FormatRequireImpls(id, require);
   }
 
-  for (const auto& [id, assoc_const] :
-       sem_ir_->associated_constants().enumerate()) {
-    FormatAssociatedConstant(id, assoc_const);
-  }
-
   for (const auto& [id, impl] : sem_ir_->impls().enumerate()) {
     FormatImpl(id, impl);
   }
@@ -403,16 +398,28 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
 
   llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  if (interface_info.scope_id.has_value()) {
+  if (interface_info.is_complete()) {
     out_ << ' ';
     OpenBrace();
-    FormatCodeBlock(interface_info.body_block_id);
+    FormatCodeBlock(interface_info.body_block_without_self_id);
 
-    // Always include the !members label because we always list the witness in
-    // this section.
+    bool body_block_empty =
+        sem_ir_->inst_blocks()
+            .GetOrEmpty(interface_info.body_block_with_self_id)
+            .empty();
+    if (!body_block_empty) {
+      IndentLabel();
+      out_ << "!with Self:\n";
+      FormatCodeBlock(interface_info.body_block_with_self_id);
+    }
+
+    // Always include the !members without self label because we always list the
+    // witness in this section.
     IndentLabel();
     out_ << "!members:\n";
-    FormatNameScope(interface_info.scope_id);
+
+    FormatNameScope(interface_info.scope_without_self_id);
+    FormatNameScope(interface_info.scope_with_self_id);
 
     Indent();
     out_ << "witness = ";
@@ -442,16 +449,27 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
 
   llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  if (constraint_info.scope_id.has_value()) {
+  if (constraint_info.is_complete()) {
     out_ << ' ';
     OpenBrace();
-    FormatCodeBlock(constraint_info.body_block_id);
+    FormatCodeBlock(constraint_info.body_block_without_self_id);
+
+    bool body_block_empty =
+        sem_ir_->inst_blocks()
+            .GetOrEmpty(constraint_info.body_block_with_self_id)
+            .empty();
+    if (!body_block_empty) {
+      IndentLabel();
+      out_ << "!with Self:\n";
+      FormatCodeBlock(constraint_info.body_block_with_self_id);
+    }
 
     // Always include the !members label because we always list the witness in
     // this section.
     IndentLabel();
     out_ << "!members:\n";
-    FormatNameScope(constraint_info.scope_id);
+    FormatNameScope(constraint_info.scope_without_self_id);
+    FormatNameScope(constraint_info.scope_with_self_id);
 
     FormatRequireImplsBlock(constraint_info.require_impls_block_id);
 
@@ -473,31 +491,6 @@ auto Formatter::FormatRequireImpls(RequireImplsId /*id*/,
   PrepareToFormatDecl(require.decl_id);
   FormatGenericStart("require", require.generic_id);
   FormatGenericEnd();
-}
-
-auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
-                                         const AssociatedConstant& assoc_const)
-    -> void {
-  if (!ShouldFormatEntity(assoc_const.decl_id)) {
-    return;
-  }
-
-  PrepareToFormatDecl(assoc_const.decl_id);
-  FormatEntityStart("assoc_const", assoc_const.generic_id, id);
-
-  llvm::SaveAndRestore assoc_const_scope(scope_, inst_namer_.GetScopeFor(id));
-
-  out_ << " ";
-  FormatName(assoc_const.name_id);
-  out_ << ":! ";
-  FormatTypeOfInst(assoc_const.decl_id);
-  if (assoc_const.default_value_id.has_value()) {
-    out_ << " = ";
-    FormatArg(assoc_const.default_value_id);
-  }
-  out_ << ";\n";
-
-  FormatEntityEnd(assoc_const.generic_id);
 }
 
 auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
@@ -724,8 +717,8 @@ auto Formatter::FormatGenericEnd() -> void {
   out_ << '\n';
 }
 
-auto Formatter::FormatParamList(InstBlockId params_id,
-                                SemIR::InstId return_form_id) -> void {
+auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
+    -> void {
   if (!params_id.has_value()) {
     // TODO: This happens for imported functions, for which we don't currently
     // import the call parameters list.
@@ -846,7 +839,7 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
     out_ << "\n";
   }
 
-  for (auto [extended_scope_id, _] : scope.extended_scopes()) {
+  for (auto extended_scope_id : scope.extended_scopes()) {
     Indent();
     out_ << "extend ";
     FormatName(extended_scope_id);
@@ -1320,18 +1313,20 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   // If there's a return argument, don't print it here, because it's printed on
   // the LHS.
-  auto callee_function = SemIR::GetCalleeAsFunction(*sem_ir_, inst.callee_id);
-  auto function = sem_ir_->functions().Get(callee_function.function_id);
-  auto return_form_id = function.GetDeclaredReturnForm(
-      *sem_ir_, callee_function.resolved_specific_id);
   int return_arg_index = -1;
-  if (return_form_id.has_value()) {
-    if (auto init_form =
-            sem_ir_->insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
-      auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
-          init_form->type_component_inst_id);
-      if (SemIR::InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
-        return_arg_index = init_form->index.index;
+  auto callee = GetCallee(*sem_ir_, inst.callee_id);
+  if (auto* callee_function = std::get_if<CalleeFunction>(&callee)) {
+    auto function = sem_ir_->functions().Get(callee_function->function_id);
+    auto return_form_id = function.GetDeclaredReturnForm(
+        *sem_ir_, callee_function->resolved_specific_id);
+    if (return_form_id.has_value()) {
+      if (auto init_form =
+              sem_ir_->insts().TryGetAs<InitForm>(return_form_id)) {
+        auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
+            init_form->type_component_inst_id);
+        if (InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
+          return_arg_index = init_form->index.index;
+        }
       }
     }
   }

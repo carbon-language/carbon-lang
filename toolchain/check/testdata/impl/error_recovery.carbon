@@ -34,7 +34,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -66,7 +66,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -95,7 +95,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 fn G() {
   // This impl lookup resolves to a final witness, which poisons any future

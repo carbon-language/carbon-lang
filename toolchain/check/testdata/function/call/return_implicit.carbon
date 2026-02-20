@@ -16,7 +16,7 @@ fn MakeImplicitEmptyTuple() {
 }
 
 fn Main() {
-  var b: () = MakeImplicitEmptyTuple();
+  var unused b: () = MakeImplicitEmptyTuple();
 }
 
 // CHECK:STDOUT: --- return_implicit.carbon
@@ -69,9 +69,9 @@ fn Main() {
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: %MakeImplicitEmptyTuple.type = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [concrete = constants.%MakeImplicitEmptyTuple]
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init %empty_tuple.type = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
-// CHECK:STDOUT:   %.loc19_11.1: type = splice_block %.loc19_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc19_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc19_11.3: type = converted %.loc19_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc19_18.1: type = splice_block %.loc19_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc19_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc19_18.3: type = converted %.loc19_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %b.var, constants.%DestroyOp

@@ -15,14 +15,14 @@
 interface Eats {}
 interface Animal {}
 
-fn Feed[T:! Eats](e: T) {}
+fn Feed[T:! Eats](unused e: T) {}
 
 // CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+7]]:37: error: cannot convert type `T` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDERR:                                     ^~~~~~~
 // CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE-5]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn Feed[T:! Eats](e: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Feed[T:! Eats](unused e: T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 
@@ -80,10 +80,10 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc18_9.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc18_9.1 (constants.%T.f11)]
 // CHECK:STDOUT:     %e.param: @Feed.%T.binding.as_type (%T.binding.as_type.265) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_22.1: type = splice_block %.loc18_22.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.265)] {
+// CHECK:STDOUT:     %.loc18_29.1: type = splice_block %.loc18_29.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.265)] {
 // CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc18_9.2 [symbolic = %T.loc18_9.1 (constants.%T.f11)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.265)]
-// CHECK:STDOUT:       %.loc18_22.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.265)]
+// CHECK:STDOUT:       %.loc18_29.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.265)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.265) = value_binding e, %e.param
 // CHECK:STDOUT:   }
@@ -109,6 +109,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
+// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -119,6 +120,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
+// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -155,6 +157,14 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.e4f) = name_ref a, %a
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.f11) {

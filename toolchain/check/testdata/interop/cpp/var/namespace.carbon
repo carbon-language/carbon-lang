@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "namespace.h";
 
 fn MyF() {
-  let local: Cpp.N.C = Cpp.N.global;
+  let unused local: Cpp.N.C = Cpp.N.global;
 }
 
 // --- type_in_namespace.carbon

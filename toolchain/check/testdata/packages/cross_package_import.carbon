@@ -32,7 +32,7 @@ extern fn F();
 
 package Other library "[[@TEST_NAME]]";
 
-fn F(x: ()) {}
+fn F(unused x: ()) {}
 
 // --- other_fn2.carbon
 
@@ -106,8 +106,8 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import [InImport]
 // CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn F(x: ()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fn F(unused x: ()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import [InImport]
 // CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F() {}
@@ -265,9 +265,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }

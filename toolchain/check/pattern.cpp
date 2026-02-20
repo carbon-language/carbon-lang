@@ -49,8 +49,8 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
                        SemIR::ExprRegionId type_region_id,
-                       SemIR::InstKind pattern_kind, bool is_template)
-    -> BindingPatternInfo {
+                       SemIR::InstKind pattern_kind, bool is_template,
+                       bool is_unused) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern_kind) {
     case SemIR::InstKind::RefBindingPattern:
@@ -71,7 +71,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
-      is_template);
+      is_template, is_unused || name_id == SemIR::NameId::Underscore);
 
   auto bind_id = AddInstInNoBlock(
       context,
@@ -147,7 +147,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
   SemIR::InstId pattern_id =
       AddBindingPattern(context, loc_id, name_id, type_id, type_expr_region_id,
                         binding_pattern_kind,
-                        /*is_template=*/false)
+                        /*is_template=*/false, /*is_unused=*/false)
           .pattern_id;
 
   const auto& param_pattern_kind =

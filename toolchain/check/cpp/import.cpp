@@ -53,6 +53,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
@@ -1448,7 +1449,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   auto function_params_insts =
       CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
 
-  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
+  auto [pattern_block_id, decl_block_id] =
+      FinishFunctionSignature(context, /*check_unused=*/false);
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;
@@ -1706,7 +1708,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::EntityNameId entity_name_id =
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
-          SemIR::CompileTimeBindIndex::None, false);
+          SemIR::CompileTimeBindIndex::None, false, /*is_unused=*/false);
 
   // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
   // import_ref and don't create a `NameBindingDecl` here; we'd never use it for

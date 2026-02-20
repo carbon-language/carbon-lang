@@ -59,7 +59,7 @@ import Cpp library "templates.h";
 
 class C { adapt {}; }
 impl C as Core.ImplicitAs(i32) {
-  eval fn Convert[self: Self]() -> i32 { return 123; }
+  eval fn Convert[unused self: Self]() -> i32 { return 123; }
 }
 var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
 

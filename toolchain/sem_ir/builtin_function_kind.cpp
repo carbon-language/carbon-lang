@@ -454,6 +454,10 @@ constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
 constexpr BuiltinInfo MaybeUnformedMakeType = {
     "maybe_unformed.make_type", ValidateSignature<auto(Type)->Type>};
 
+// Returns the `Form` type.
+constexpr BuiltinInfo FormMakeType = {"form.make_type",
+                                      ValidateSignature<auto()->Type>};
+
 // Converts between char types, with a diagnostic if the value doesn't fit.
 constexpr BuiltinInfo CharConvertChecked = {
     "char.convert_checked",

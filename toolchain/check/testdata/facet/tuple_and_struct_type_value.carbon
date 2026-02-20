@@ -18,8 +18,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F(T:! (type, ), U:! type, Empty:! ()) {
   // Passes a symbolic binding of type TupleType.
@@ -50,8 +50,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F(T:! {}) {
   // Passes a symbolic binding of type StructType.
@@ -71,8 +71,8 @@ impl forall [U:! type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(U:! Z) {}
-fn ConstraintParam(U:! N) {}
+fn InterfaceParam(unused U:! Z) {}
+fn ConstraintParam(unused U:! N) {}
 
 fn F(T:! {.a: type}) {
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
@@ -81,9 +81,9 @@ fn F(T:! {.a: type}) {
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+7]]:3: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   InterfaceParam(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-10]]:19: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn InterfaceParam(U:! Z) {}
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-10]]:26: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn InterfaceParam(unused U:! Z) {}
+  // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   InterfaceParam(T);
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `N` [ConversionFailureNonTypeToFacet]
@@ -92,9 +92,9 @@ fn F(T:! {.a: type}) {
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+7]]:3: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(N)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ConstraintParam(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-20]]:20: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn ConstraintParam(U:! N) {}
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-20]]:27: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn ConstraintParam(unused U:! N) {}
+  // CHECK:STDERR:                           ^
   // CHECK:STDERR:
   ConstraintParam(T);
 }

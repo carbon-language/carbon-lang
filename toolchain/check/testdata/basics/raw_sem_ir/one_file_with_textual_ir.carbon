@@ -31,7 +31,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst6000002A}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name60000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name60000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block6000000B, call_params_id: inst_block6000000C, return_type_inst_id: inst60000020, return_form_inst_id: inst60000021, return_patterns_id: inst_block6000000A, body: [inst_block6000000F]}

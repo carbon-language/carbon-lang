@@ -20,7 +20,7 @@ eval fn F(B:! bool) -> type {
 }
 
 fn G(B:! bool) {
-  let n: F(B) = ({}, {});
+  let unused n: F(B) = ({}, {});
 }
 
 fn H() {
@@ -39,7 +39,7 @@ eval fn F(B:! bool) -> type {
 }
 
 fn G(B:! bool) {
-  let n: F(B) = ({}, {});
+  let unused n: F(B) = ({}, {});
 }
 
 fn H() {

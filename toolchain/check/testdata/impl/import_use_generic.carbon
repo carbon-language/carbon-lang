@@ -67,14 +67,16 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
-// CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.08c: type = fn_type @I.WithSelf.F, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.705: %I.WithSelf.F.type.08c = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.c16: type = fn_type @I.WithSelf.F, @I(%I.facet) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.708: %I.WithSelf.F.type.c16 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -102,14 +104,17 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {} {}
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Self.loc6: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %I.WithSelf.F.decl: @I.%I.WithSelf.F.type (%I.WithSelf.F.type.08c) = fn_decl @I.WithSelf.F [symbolic = @I.%I.WithSelf.F (constants.%I.WithSelf.F.705)] {} {}
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc6
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%I.F.decl)
+// CHECK:STDOUT:   witness = (%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -148,7 +153,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self.loc6: %I.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,7 +170,14 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.loc4_9.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.F(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc7 => constants.%Self
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.08c
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.705
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.1 => constants.%T
@@ -179,7 +191,14 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.F(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.F(constants.%I.facet) {}
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc7 => constants.%I.facet
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.c16
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.708
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_in_fn_decl.carbon
 // CHECK:STDOUT:
@@ -197,10 +216,10 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %C.val: %C.850 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.a1f: type = fn_type @I.WithSelf.F, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.cc3: %I.WithSelf.F.type.a1f = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.b58 [concrete]
-// CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
-// CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.972 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.impl_witness.e33: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
@@ -210,7 +229,9 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %C.as.I.impl.F.type.b66: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.930: %C.as.I.impl.F.type.b66 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.850, (%I.impl_witness.79b) [concrete]
-// CHECK:STDOUT:   %.7ef: type = fn_type_with_self_type %I.F.type, %I.facet [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.ca6: type = fn_type @I.WithSelf.F, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.ed7: %I.WithSelf.F.type.ca6 = struct_value () [concrete]
+// CHECK:STDOUT:   %.864: type = fn_type_with_self_type %I.WithSelf.F.type.ca6, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn: <specific function> = specific_function %C.as.I.impl.F.930, @C.as.I.impl.F(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
@@ -222,11 +243,11 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.820 = import_ref Main//import_generic, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//import_generic, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//import_generic, loc6_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ce7: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.a54: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//import_generic, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b58: %I.F.type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//import_generic, loc6_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//import_generic, loc6_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//import_generic, loc6_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.972: @I.%I.WithSelf.F.type (%I.WithSelf.F.type.a1f) = import_ref Main//import_generic, loc7_9, loaded [symbolic = @I.%I.WithSelf.F (constants.%I.WithSelf.F.cc3)]
 // CHECK:STDOUT:   %Main.import_ref.ce3: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.e33)]
 // CHECK:STDOUT:   %Main.import_ref.870: @C.as.I.impl.%C.as.I.impl.F.type (%C.as.I.impl.F.type.ec1) = import_ref Main//import_generic, loc11_10, loaded [symbolic = @C.as.I.impl.%C.as.I.impl.F (constants.%C.as.I.impl.F.983)]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.870), @C.as.I.impl [concrete]
@@ -260,7 +281,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {
 // CHECK:STDOUT:     %c.ref: ref %C.850 = name_ref c, file.%c [concrete = file.%c.var]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.ce7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.a54 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.loc16: %I.type = converted %c.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {
@@ -269,10 +290,10 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %.loc25_15: type = converted %.loc25_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.850]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.ce7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.a54 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.79b) [concrete = constants.%I.facet]
 // CHECK:STDOUT:     %.loc25_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:     %impl.elem0: %.7ef = impl_witness_access constants.%I.impl_witness.79b, element0 [concrete = constants.%C.as.I.impl.F.930]
+// CHECK:STDOUT:     %impl.elem0: %.864 = impl_witness_access constants.%I.impl_witness.79b, element0 [concrete = constants.%C.as.I.impl.F.930]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%C.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc25_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
@@ -282,7 +303,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: interface @I [from "import_generic.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.ce7
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.a54
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -316,7 +337,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(imports.%Main.import_ref.236: %I.type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @I.WithSelf.F(imports.%Main.import_ref.2362f8.2: %I.type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,7 +374,14 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.F(constants.%Self) {}
+// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.a1f
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.cc3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -375,6 +403,13 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type => constants.%C.as.I.impl.F.type.b66
 // CHECK:STDOUT:   %C.as.I.impl.F => constants.%C.as.I.impl.F.930
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.facet
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.ca6
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.ed7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.F(constants.%empty_struct_type) {

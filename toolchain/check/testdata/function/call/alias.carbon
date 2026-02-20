@@ -17,7 +17,7 @@ fn A() -> () { return (); }
 alias B = A;
 
 fn Main() {
-  var b: () = B();
+  var unused b: () = B();
 }
 
 // CHECK:STDOUT: --- alias.carbon
@@ -86,9 +86,9 @@ fn Main() {
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %A.call
-// CHECK:STDOUT:   %.loc20_11.1: type = splice_block %.loc20_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc20_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc20_11.3: type = converted %.loc20_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc20_18.1: type = splice_block %.loc20_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc20_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc20_18.3: type = converted %.loc20_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %b.var, constants.%DestroyOp

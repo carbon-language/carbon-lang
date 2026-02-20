@@ -166,10 +166,6 @@ class Formatter {
   auto FormatRequireImpls(RequireImplsId id, const RequireImpls& require)
       -> void;
 
-  // Formats an associated constant entity.
-  auto FormatAssociatedConstant(AssociatedConstantId id,
-                                const AssociatedConstant& assoc_const) -> void;
-
   // Formats a full impl.
   auto FormatImpl(ImplId id, const Impl& impl) -> void;
 

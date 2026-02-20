@@ -24,8 +24,8 @@ import Cpp library "enum.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  let a: Cpp.Enum = Cpp.Enum.a;
-  let b: Cpp.Enum = Cpp.b;
+  let unused a: Cpp.Enum = Cpp.Enum.a;
+  let unused b: Cpp.Enum = Cpp.b;
 }
 //@dump-sem-ir-end
 
@@ -36,23 +36,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
-  // CHECK:STDERR:   let c: Cpp.Other = Cpp.Enum.c;
-  // CHECK:STDERR:                      ^~~~~~~~~~
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:22: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c: Cpp.Other = Cpp.Enum.c;
-  // CHECK:STDERR:                      ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
+  // CHECK:STDERR:   let unused c: Cpp.Other = Cpp.Enum.c;
+  // CHECK:STDERR:                             ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:29: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused c: Cpp.Other = Cpp.Enum.c;
+  // CHECK:STDERR:                             ^~~~~~~~~~
   // CHECK:STDERR:
-  let c: Cpp.Other = Cpp.Enum.c;
+  let unused c: Cpp.Other = Cpp.Enum.c;
 
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
-  // CHECK:STDERR:   let c2: Cpp.Other = Cpp.c;
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:23: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c2: Cpp.Other = Cpp.c;
-  // CHECK:STDERR:                       ^~~~~
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:30: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
+  // CHECK:STDERR:   let unused c2: Cpp.Other = Cpp.c;
+  // CHECK:STDERR:                              ^~~~~
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:30: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused c2: Cpp.Other = Cpp.c;
+  // CHECK:STDERR:                              ^~~~~
   // CHECK:STDERR:
-  let c2: Cpp.Other = Cpp.c;
+  let unused c2: Cpp.Other = Cpp.c;
 }
 
 // --- fail_non_enum_member.carbon
@@ -62,11 +62,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+4]]:22: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let c: Cpp.Other = Cpp.Enum.d;
-  // CHECK:STDERR:                      ^~~~~~~~~~
+  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+4]]:29: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused c: Cpp.Other = Cpp.Enum.d;
+  // CHECK:STDERR:                             ^~~~~~~~~~
   // CHECK:STDERR:
-  let c: Cpp.Other = Cpp.Enum.d;
+  let unused c: Cpp.Other = Cpp.Enum.d;
 }
 
 // CHECK:STDOUT: --- import_enum.carbon
@@ -100,21 +100,21 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc8_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc8_31: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_20 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc8_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %Enum = value_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc9_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc9: type = splice_block %Enum.ref.loc9 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc9: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %Enum = value_binding b, %b.ref

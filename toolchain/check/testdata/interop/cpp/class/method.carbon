@@ -164,26 +164,8 @@ import Cpp library "object_param_qualifiers_overloaded.h";
 
 fn CallF(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
   //@dump-sem-ir-begin
-  var a: i32 = v.F();
-  var b: i32* = p->F();
-  //@dump-sem-ir-end
-}
-
-// --- use_object_param_qualifiers_qualified.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "object_param_qualifiers.h";
-
-fn F(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
-  //@dump-sem-ir-begin
-  v.(Cpp.HasQualifiers.const_this)();
-  v.(Cpp.HasQualifiers.const_ref_this)();
-
-  p->(Cpp.HasQualifiers.plain)();
-  p->(Cpp.HasQualifiers.ref_this)();
-  p->(Cpp.HasQualifiers.const_this)();
-  p->(Cpp.HasQualifiers.const_ref_this)();
+  var unused a: i32 = v.F();
+  var unused b: i32* = p->F();
   //@dump-sem-ir-end
 }
 
@@ -412,12 +394,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.235 = var %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_18: ref %HasQualifiers = deref %p.ref
+// CHECK:STDOUT:   %.loc9_25: ref %HasQualifiers = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %HasQualifiers.F.cpp_overload_set.type = name_ref F, imports.%HasQualifiers.F.cpp_overload_set.value [concrete = constants.%HasQualifiers.F.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_18, %F.ref.loc9
-// CHECK:STDOUT:   %HasQualifiers.F.call: init %ptr.235 = call imports.%HasQualifiers.F.decl.f862ea.2(%.loc9_18)
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_25, %F.ref.loc9
+// CHECK:STDOUT:   %HasQualifiers.F.call: init %ptr.235 = call imports.%HasQualifiers.F.decl.f862ea.2(%.loc9_25)
 // CHECK:STDOUT:   assign %b.var, %HasQualifiers.F.call
-// CHECK:STDOUT:   %.loc9_13: type = splice_block %ptr.loc9 [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.235]
@@ -433,114 +415,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %i32) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- use_object_param_qualifiers_qualified.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
-// CHECK:STDOUT:   %pattern_type.e15: type = pattern_type %HasQualifiers [concrete]
-// CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
-// CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.value: %HasQualifiers.const_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %const_this__carbon_thunk.type: type = fn_type @const_this__carbon_thunk [concrete]
-// CHECK:STDOUT:   %const_this__carbon_thunk: %const_this__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_ref_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk.type: type = fn_type @const_ref_this__carbon_thunk [concrete]
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk: %const_ref_this__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.plain.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.value: %HasQualifiers.plain.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.plain.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.plain.type: type = fn_type @HasQualifiers.plain [concrete]
-// CHECK:STDOUT:   %HasQualifiers.plain: %HasQualifiers.plain.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HasQualifiers.ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.ref_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.ref_this.cpp_overload_set.value: %HasQualifiers.ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.ref_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %HasQualifiers.ref_this.type: type = fn_type @HasQualifiers.ref_this [concrete]
-// CHECK:STDOUT:   %HasQualifiers.ref_this: %HasQualifiers.ref_this.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .HasQualifiers = %HasQualifiers.decl
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasQualifiers.decl: type = class_decl @HasQualifiers [concrete = constants.%HasQualifiers] {} {}
-// CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.value: %HasQualifiers.const_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %const_this__carbon_thunk.decl: %const_this__carbon_thunk.type = fn_decl @const_this__carbon_thunk [concrete = constants.%const_this__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk.decl: %const_ref_this__carbon_thunk.type = fn_decl @const_ref_this__carbon_thunk [concrete = constants.%const_ref_this__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.value: %HasQualifiers.plain.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.plain.cpp_overload_set [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
-// CHECK:STDOUT:   %HasQualifiers.plain.decl: %HasQualifiers.plain.type = fn_decl @HasQualifiers.plain [concrete = constants.%HasQualifiers.plain] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.e15 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %HasQualifiers = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %HasQualifiers = ref_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasQualifiers.ref_this.cpp_overload_set.value: %HasQualifiers.ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %HasQualifiers.ref_this.decl: %HasQualifiers.ref_this.type = fn_decl @HasQualifiers.ref_this [concrete = constants.%HasQualifiers.ref_this] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.e15 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %HasQualifiers = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %HasQualifiers = ref_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%v.param: %HasQualifiers, %p.param: %ptr.ec3) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref.loc8: %HasQualifiers = name_ref v, %v
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc8: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %const_this.ref.loc8: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %v.ref.loc8, %const_this.ref.loc8
-// CHECK:STDOUT:   %const_this__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%v.ref.loc8)
-// CHECK:STDOUT:   %v.ref.loc9: %HasQualifiers = name_ref v, %v
-// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc9: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %const_ref_this.ref.loc9: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %v.ref.loc9, %const_ref_this.ref.loc9
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%v.ref.loc9)
-// CHECK:STDOUT:   %p.ref.loc11: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc11: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %plain.ref: %HasQualifiers.plain.cpp_overload_set.type = name_ref plain, imports.%HasQualifiers.plain.cpp_overload_set.value [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc11: ref %HasQualifiers = deref %p.ref.loc11
-// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11, %plain.ref
-// CHECK:STDOUT:   %HasQualifiers.plain.call: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl(%.loc11)
-// CHECK:STDOUT:   %p.ref.loc12: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc12: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %ref_this.ref: %HasQualifiers.ref_this.cpp_overload_set.type = name_ref ref_this, imports.%HasQualifiers.ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12: ref %HasQualifiers = deref %p.ref.loc12
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %ref_this.ref
-// CHECK:STDOUT:   %HasQualifiers.ref_this.call: init %empty_tuple.type = call imports.%HasQualifiers.ref_this.decl(%.loc12)
-// CHECK:STDOUT:   %p.ref.loc13: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc13: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %const_this.ref.loc13: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc13_4.1: ref %HasQualifiers = deref %p.ref.loc13
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_4.1, %const_this.ref.loc13
-// CHECK:STDOUT:   %.loc13_4.2: %HasQualifiers = acquire_value %.loc13_4.1
-// CHECK:STDOUT:   %const_this__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc13_4.2)
-// CHECK:STDOUT:   %p.ref.loc14: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %HasQualifiers.ref.loc14: type = name_ref HasQualifiers, imports.%HasQualifiers.decl [concrete = constants.%HasQualifiers]
-// CHECK:STDOUT:   %const_ref_this.ref.loc14: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc14_4.1: ref %HasQualifiers = deref %p.ref.loc14
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_4.1, %const_ref_this.ref.loc14
-// CHECK:STDOUT:   %.loc14_4.2: %HasQualifiers = acquire_value %.loc14_4.1
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc14: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc14_4.2)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_explicit_object_param.carbon
 // CHECK:STDOUT:

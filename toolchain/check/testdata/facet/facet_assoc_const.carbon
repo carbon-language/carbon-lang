@@ -15,95 +15,95 @@ library "[[@TEST_NAME]]";
 
 interface I { let T:! type; }
 
-fn F(T:! I where .T = {}) {}
+fn F(unused T:! I where .T = {}) {}
 
 // --- success_associated.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let T:! type; let U:! type; }
 
-fn F(T:! I where .T = .U) {}
+fn F(unused T:! I where .T = .U) {}
 
 // --- fail_two_different.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! L where .W = {} and .W = ()) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = {} and .W = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = {} and .W = ()) {}
+fn F(unused T:! L where .W = {} and .W = ()) {}
 
 // --- fail_two_different_first_associated.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `.(L.X)` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! L where .W = .X and .W = ()) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `.(L.X)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = .X and .W = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = .X and .W = ()) {}
+fn F(unused T:! L where .W = .X and .W = ()) {}
 
 // --- fail_two_different_second_associated.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `()` and `.(L.X)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! L where .W = () and .W = .X) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `()` and `.(L.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! L where .W = () and .W = .X) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = () and .W = .X) {}
+fn F(unused T:! L where .W = () and .W = .X) {}
 
 // --- fail_two_different_first_bad.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_first_bad.carbon:[[@LINE+4]]:23: error: name `BAD5` not found [NameNotFound]
-// CHECK:STDERR: fn F(T:! L where .W = BAD5 and .W = ()) {}
-// CHECK:STDERR:                       ^~~~
+// CHECK:STDERR: fail_two_different_first_bad.carbon:[[@LINE+4]]:30: error: name `BAD5` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused T:! L where .W = BAD5 and .W = ()) {}
+// CHECK:STDERR:                              ^~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = BAD5 and .W = ()) {}
+fn F(unused T:! L where .W = BAD5 and .W = ()) {}
 
 // --- fail_two_different_second_bad.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_second_bad.carbon:[[@LINE+4]]:35: error: name `BAD6` not found [NameNotFound]
-// CHECK:STDERR: fn F(T:! L where .W = {} and .W = BAD6) {}
-// CHECK:STDERR:                                   ^~~~
+// CHECK:STDERR: fail_two_different_second_bad.carbon:[[@LINE+4]]:42: error: name `BAD6` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused T:! L where .W = {} and .W = BAD6) {}
+// CHECK:STDERR:                                          ^~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = {} and .W = BAD6) {}
+fn F(unused T:! L where .W = {} and .W = BAD6) {}
 
 // --- fail_two_different_both_bad.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:23: error: name `BAD7` not found [NameNotFound]
-// CHECK:STDERR: fn F(T:! L where .W = BAD7 and .W = BAD8) {}
-// CHECK:STDERR:                       ^~~~
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:30: error: name `BAD7` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused T:! L where .W = BAD7 and .W = BAD8) {}
+// CHECK:STDERR:                              ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+4]]:37: error: name `BAD8` not found [NameNotFound]
-// CHECK:STDERR: fn F(T:! L where .W = BAD7 and .W = BAD8) {}
-// CHECK:STDERR:                                     ^~~~
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+4]]:44: error: name `BAD8` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused T:! L where .W = BAD7 and .W = BAD8) {}
+// CHECK:STDERR:                                            ^~~~
 // CHECK:STDERR:
-fn F(T:! L where .W = BAD7 and .W = BAD8) {}
+fn F(unused T:! L where .W = BAD7 and .W = BAD8) {}
 
 // --- fail_two_different_combined_from_bitand.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! (L where .W = {}) & (L where .W = ())) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! (L where .W = {}) & (L where .W = ())) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! (L where .W = {}) & (L where .W = ())) {}
+fn F(unused T:! (L where .W = {}) & (L where .W = ())) {}
 
 // --- two_different_combined_from_impl_and_facet.carbon
 library "[[@TEST_NAME]]";
@@ -113,7 +113,7 @@ interface L { let W:! type; }
 interface M {}
 impl forall [T:! M] T as L where .W = () {}
 
-fn F(T:! M & (L where .W = {})) {}
+fn F(unused T:! M & (L where .W = {})) {}
 
 class C;
 impl C as L where .W = {} {}
@@ -139,20 +139,20 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // One of `b` or `c` must fail, because `T.W` is either found to be `()` from
   // the impl or `{}` from the facet type of T.
 
-  let b: () = G(T, a);
+  let unused b: () = G(T, a);
   // TODO: This diagnostic sucks. Can we make the facet type's value take
   // precidence over final, since that's what is written in the code and more
   // likely to show up in diagnostics? Or should we diagnose `T` as being
   // invalid directly, where we can see both `.W` values and print them?
   //
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   let c: {} = H(T, a);
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:22: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let unused c: {} = H(T, a);
+  // CHECK:STDERR:                      ^~~~~~~
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  let c: {} = H(T, a);
+  let unused c: {} = H(T, a);
 }
 
 // --- fail_many_different.carbon
@@ -160,11 +160,11 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn G(T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:17: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn G(unused T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
+fn G(unused T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
 
 // --- rewrite_uses_second_facet.carbon
 library "[[@TEST_NAME]]";
@@ -180,18 +180,18 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.(M.Y)` given two different values `T.(M.X)` and `.(M.X)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:38: error: associated constant `.(M.Y)` given two different values `T.(M.X)` and `.(M.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! M where .X = (), unused U:! M where .Y = T.X and .Y = .X) {}
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
+fn F(T:! M where .X = (), unused U:! M where .Y = T.X and .Y = .X) {}
 
 // --- repeated.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-fn F(T:! M where .X = {} and .X = {}) {}
+fn F(unused T:! M where .X = {} and .X = {}) {}
 
 fn G(T:! M where .X = {}) {
   F(T);
@@ -202,7 +202,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-fn F(T:! M where .X = .Y and .X = .Y) {}
+fn F(unused T:! M where .X = .Y and .X = .Y) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
   F(T);
@@ -213,9 +213,9 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-fn F1(T:! M where .X = () and .Y = .X and .X = .Y) {}
+fn F1(unused T:! M where .X = () and .Y = .X and .X = .Y) {}
 
-fn F2(T:! M where .X = () and .X = .X) {}
+fn F2(unused T:! M where .X = () and .X = .X) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
   F1(T);
@@ -240,11 +240,11 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! M where .X = {} and .X = () and .X = {}) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:17: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! M where .X = {} and .X = () and .X = {}) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! M where .X = {} and .X = () and .X = {}) {}
+fn F(unused T:! M where .X = {} and .X = () and .X = {}) {}
 
 // --- fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
@@ -253,20 +253,20 @@ interface M { let X:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(T:! M where .X = .X) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused T:! M where .X = .X) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! M where .X = .X) {}
+fn F(unused T:! M where .X = .X) {}
 
 // Even though `.X = ()` is specified, the rewrites are resolved left to right
 // and a cycle `.X = .X` is found first.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn G(T:! M where .X = .X and .X = ()) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(unused T:! M where .X = .X and .X = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(T:! M where .X = .X and .X = ()) {}
+fn G(unused T:! M where .X = .X and .X = ()) {}
 
 // --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
@@ -277,11 +277,11 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 // The value of .X and .Y becomes <error> but .Z is still valid.
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(T:! M where .X = .Y and .Y = .X and .Z = ()) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused T:! M where .X = .Y and .Y = .X and .Z = ()) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! M where .X = .Y and .Y = .X and .Z = ()) {}
+fn F(unused T:! M where .X = .Y and .Y = .X and .Z = ()) {}
 //@dump-sem-ir-end
 
 // --- fail_cycle_between_interfaces.carbon
@@ -297,11 +297,11 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(J.X3)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(J.X3)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(unused T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
+fn G(unused T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 
 // --- fail_indirect_cycle.carbon
 library "[[@TEST_NAME]]";
@@ -427,7 +427,7 @@ interface N {
   let Y:! {.a: {}};
 }
 
-fn F(T:! N where .Y = {.a = {}}) { }
+fn F(unused T:! N where .Y = {.a = {}}) { }
 
 // --- non-type_repeated.carbon
 library "[[@TEST_NAME]]";
@@ -436,7 +436,7 @@ interface N {
   let Y:! {.a: {}};
 }
 
-fn F(T:! N where .Y = {.a = {}} and .Y = {.a = {}}) { }
+fn F(unused T:! N where .Y = {.a = {}} and .Y = {.a = {}}) { }
 
 // --- fail_non-type_different.carbon
 library "[[@TEST_NAME]]";
@@ -445,11 +445,11 @@ interface N {
   let Y:! {.a: type};
 }
 
-// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:10: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:17: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
+fn F(unused T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 
 // --- self_repeated_explicitly.carbon
 library "[[@TEST_NAME]]";
@@ -459,7 +459,7 @@ interface N {
   let Y2:! type;
 }
 
-fn F(T:! N where .Y2 = .Y1 and .Y2 = .Self.Y1) { }
+fn F(unused T:! N where .Y2 = .Y1 and .Y2 = .Self.Y1) { }
 
 // --- self_repeated_explicitly_with_value.carbon
 library "[[@TEST_NAME]]";
@@ -469,7 +469,7 @@ interface N {
   let Y2:! type;
 }
 
-fn F(T:! N where .Y1 = () and .Y2 = .Y1 and .Y2 = .Self.Y1) { }
+fn F(unused T:! N where .Y1 = () and .Y2 = .Y1 and .Y2 = .Self.Y1) { }
 
 // --- fail_cycle_through_self_reference.carbon
 library "[[@TEST_NAME]]";
@@ -479,11 +479,11 @@ interface Z {
   let U:! Z;
 }
 
-// CHECK:STDERR: fail_cycle_through_self_reference.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(A:! Z where .T = .U.T and .U = .Self) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_through_self_reference.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused A:! Z where .T = .U.T and .U = .Self) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(A:! Z where .T = .U.T and .U = .Self) {}
+fn F(unused A:! Z where .T = .U.T and .U = .Self) {}
 
 // --- reference_same_constant_in_different_self.carbon
 library "[[@TEST_NAME]]";
@@ -493,7 +493,7 @@ interface Z {
   let U:! Z;
 }
 
-fn F(A:! Z where .T = (), B:! Z where .T = .U.T and .U = A) {}
+fn F(A:! Z where .T = (), unused B:! Z where .T = .U.T and .U = A) {}
 
 // --- non_cycle_with_self_reference.carbon
 library "[[@TEST_NAME]]";
@@ -518,11 +518,11 @@ interface Z {
   let T3:! type;
 }
 
-// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+fn F(unused T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
 
 // --- fail_cycle_with_branching_in_rhs.carbon
 library "[[@TEST_NAME]]";
@@ -537,17 +537,17 @@ interface Z {
 
 // TODO: There should only be one diagnostic here.
 //
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T3)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.T3)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(unused T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+fn F(unused T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
 
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(unused T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+fn G(unused T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
 
 // --- no_cycle_with_branching_in_rhs.carbon
 library "[[@TEST_NAME]]";
@@ -637,7 +637,7 @@ interface J {
 // If we assume the nested `.J1` access will resolve to a facet value, we may
 // loop forever trying to resolve the `.I2` access. We should gracefully accept
 // that it does not resolve further.
-fn F(T:! I & J where .I1 = .J1.I2) {}
+fn F(unused T:! I & J where .I1 = .J1.I2) {}
 
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:
@@ -666,43 +666,43 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.2 [concrete = <error>] {
+// CHECK:STDOUT:     %.loc13_19.1: type = splice_block %.loc13_19.2 [concrete = <error>] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref.loc13_18: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
-// CHECK:STDOUT:       %.Self.as_type.loc13_18: type = facet_access_type %.Self.ref.loc13_18 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc13_18: type = converted %.Self.ref.loc13_18, %.Self.as_type.loc13_18 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %X.ref.loc13_18: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %impl.elem0.loc13_18: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.Self.ref.loc13_23: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
-// CHECK:STDOUT:       %.Self.as_type.loc13_23: type = facet_access_type %.Self.ref.loc13_23 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc13_23: type = converted %.Self.ref.loc13_23, %.Self.as_type.loc13_23 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %Y.ref.loc13_23: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:       %impl.elem1.loc13_23: type = impl_witness_access constants.%M.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
+// CHECK:STDOUT:       %.Self.ref.loc13_25: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
+// CHECK:STDOUT:       %.Self.as_type.loc13_25: type = facet_access_type %.Self.ref.loc13_25 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc13_25: type = converted %.Self.ref.loc13_25, %.Self.as_type.loc13_25 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %X.ref.loc13_25: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %impl.elem0.loc13_25: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.Self.ref.loc13_30: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_30: type = facet_access_type %.Self.ref.loc13_30 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_30: type = converted %.Self.ref.loc13_30, %.Self.as_type.loc13_30 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %Y.ref.loc13_30: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:       %impl.elem1.loc13_30: type = impl_witness_access constants.%M.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %.Self.ref.loc13_35: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
-// CHECK:STDOUT:       %.Self.as_type.loc13_35: type = facet_access_type %.Self.ref.loc13_35 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %.loc13_35: type = converted %.Self.ref.loc13_35, %.Self.as_type.loc13_35 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:       %X.ref.loc13_35: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %impl.elem0.loc13_35: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc13_35, %impl.elem1.loc13_23 [symbolic_self = constants.%impl.elem1]
+// CHECK:STDOUT:       %.Self.ref.loc13_37: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
+// CHECK:STDOUT:       %.Self.as_type.loc13_37: type = facet_access_type %.Self.ref.loc13_37 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc13_37: type = converted %.Self.ref.loc13_37, %.Self.as_type.loc13_37 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %Y.ref.loc13_37: %M.assoc_type = name_ref Y, @Y.%assoc1 [concrete = constants.%assoc1]
+// CHECK:STDOUT:       %impl.elem1.loc13_37: type = impl_witness_access constants.%M.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
 // CHECK:STDOUT:       %.Self.ref.loc13_42: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
 // CHECK:STDOUT:       %.Self.as_type.loc13_42: type = facet_access_type %.Self.ref.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_42: type = converted %.Self.ref.loc13_42, %.Self.as_type.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %X.ref.loc13_42: %M.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %impl.elem0.loc13_42: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc13_42, %impl.elem1.loc13_30 [symbolic_self = constants.%impl.elem1]
+// CHECK:STDOUT:       %.Self.ref.loc13_49: %M.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.b4d]
+// CHECK:STDOUT:       %.Self.as_type.loc13_49: type = facet_access_type %.Self.ref.loc13_49 [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc13_49: type = converted %.Self.ref.loc13_49, %.Self.as_type.loc13_49 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %Z.ref: %M.assoc_type = name_ref Z, @Z.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:       %impl.elem2: type = impl_witness_access constants.%M.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
-// CHECK:STDOUT:       %.loc13_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc13_48.2: type = converted %.loc13_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self.2 [concrete = <error>] {
+// CHECK:STDOUT:       %.loc13_55.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc13_55.2: type = converted %.loc13_55.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc13_19.2: type = where_expr %.Self.2 [concrete = <error>] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%M.type
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_18, %impl.elem1.loc13_23
-// CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_30, %impl.elem0.subst
-// CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_48.2
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_25, %impl.elem1.loc13_30
+// CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_37, %impl.elem0.subst
+// CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_55.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]

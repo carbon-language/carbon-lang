@@ -119,6 +119,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "@carbon//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "@carbon//bazel/llvm_project:0008_Add_filegroups_for_installed_compiler-rt_headers.patch",
+        "@carbon//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
     ],
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],

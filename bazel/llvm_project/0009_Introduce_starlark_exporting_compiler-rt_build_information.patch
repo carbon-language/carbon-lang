@@ -1,0 +1,35 @@
+Commit ID: 530e0f9ebec68a481e6c67e81e5ac6551a6a0bef
+Change ID: zyxuvzwmzsnorloyuupuurxkppkoplnw
+Author   : Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:06)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:28)
+
+    Introduce starlark exporting compiler-rt build information
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
+new file mode 100644
+index 0000000000..4d0bdeeff3
+--- /dev/null
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
+@@ -0,0 +1,22 @@
++# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
++# See https://llvm.org/LICENSE.txt for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++"""Starlark variables and macros for building parts of compiler-rt.
++
++Variables provide baseline information for how to build various parts of
++compiler-rt. These can be used to generate non-Bazel builds of the library.
++
++TODO: Add macros that provide a convenient way to construct a Bazel target for
++the Clang resource directory with builtins and crt files.
++"""
++
++crt_copts = [
++    "-DCRT_HAS_INITFINI_ARRAY",
++    "-DEH_USE_FRAME_REGISTRY",
++    "-O3",
++    "-fPIC",
++    "-ffreestanding",
++    "-fno-lto",
++    "-std=c11",
++]

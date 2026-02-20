@@ -30,13 +30,13 @@ interface Modifiers {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Modifiers.type: type = facet_type <@Modifiers> [concrete]
 // CHECK:STDOUT:   %Self: %Modifiers.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Modifiers.Final.type: type = fn_type @Modifiers.Final [concrete]
-// CHECK:STDOUT:   %Modifiers.Final: %Modifiers.Final.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final.type: type = fn_type @Modifiers.WithSelf.Final, @Modifiers(%Self) [symbolic]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final: %Modifiers.WithSelf.Final.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Modifiers.assoc_type: type = assoc_entity_type @Modifiers [concrete]
-// CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, @Modifiers.%Modifiers.Final.decl [concrete]
-// CHECK:STDOUT:   %Modifiers.Default.type: type = fn_type @Modifiers.Default [concrete]
-// CHECK:STDOUT:   %Modifiers.Default: %Modifiers.Default.type = struct_value () [concrete]
-// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, @Modifiers.%Modifiers.Default.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, @Modifiers.%Modifiers.WithSelf.Final.decl [concrete]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default.type: type = fn_type @Modifiers.WithSelf.Default, @Modifiers(%Self) [symbolic]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default: %Modifiers.WithSelf.Default.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, @Modifiers.%Modifiers.WithSelf.Default.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,22 +47,25 @@ interface Modifiers {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Self: %Modifiers.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Modifiers.Final.decl: %Modifiers.Final.type = fn_decl @Modifiers.Final [concrete = constants.%Modifiers.Final] {} {}
-// CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, %Modifiers.Final.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Modifiers.Default.decl: %Modifiers.Default.type = fn_decl @Modifiers.Default [concrete = constants.%Modifiers.Default] {} {}
-// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, %Modifiers.Default.decl [concrete = constants.%assoc1]
+// CHECK:STDOUT:   %Self.loc15: %Modifiers.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @Modifiers [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final.decl: @Modifiers.%Modifiers.WithSelf.Final.type (%Modifiers.WithSelf.Final.type) = fn_decl @Modifiers.WithSelf.Final [symbolic = @Modifiers.%Modifiers.WithSelf.Final (constants.%Modifiers.WithSelf.Final)] {} {}
+// CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, %Modifiers.WithSelf.Final.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default.decl: @Modifiers.%Modifiers.WithSelf.Default.type (%Modifiers.WithSelf.Default.type) = fn_decl @Modifiers.WithSelf.Default [symbolic = @Modifiers.%Modifiers.WithSelf.Default (constants.%Modifiers.WithSelf.Default)] {} {}
+// CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, %Modifiers.WithSelf.Default.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc15
 // CHECK:STDOUT:   .Final = %assoc0
 // CHECK:STDOUT:   .Default = %assoc1
-// CHECK:STDOUT:   witness = (%Modifiers.Final.decl, %Modifiers.Default.decl)
+// CHECK:STDOUT:   witness = (%Modifiers.WithSelf.Final.decl, %Modifiers.WithSelf.Default.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Modifiers.Final(@Modifiers.%Self: %Modifiers.type) {
+// CHECK:STDOUT: generic fn @Modifiers.WithSelf.Final(@Modifiers.%Self.loc15: %Modifiers.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -71,7 +74,7 @@ interface Modifiers {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Modifiers.Default(@Modifiers.%Self: %Modifiers.type) {
+// CHECK:STDOUT: generic fn @Modifiers.WithSelf.Default(@Modifiers.%Self.loc15: %Modifiers.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -80,7 +83,16 @@ interface Modifiers {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Modifiers.Final(constants.%Self) {}
+// CHECK:STDOUT: specific @Modifiers(constants.%Self) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc20 => constants.%Self
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final.type => constants.%Modifiers.WithSelf.Final.type
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final => constants.%Modifiers.WithSelf.Final
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default.type => constants.%Modifiers.WithSelf.Default.type
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default => constants.%Modifiers.WithSelf.Default
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Modifiers.Default(constants.%Self) {}
+// CHECK:STDOUT: specific @Modifiers.WithSelf.Final(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Modifiers.WithSelf.Default(constants.%Self) {}
 // CHECK:STDOUT:

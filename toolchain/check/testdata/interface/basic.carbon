@@ -28,10 +28,10 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %Self.61e: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self.8e7: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared(%Self.8e7) [symbolic]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F: %ForwardDeclared.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
-// CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%ForwardDeclared.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%ForwardDeclared.WithSelf.F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,6 +46,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
+// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -55,21 +56,28 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
-// CHECK:STDOUT:   %ForwardDeclared.F.decl: %ForwardDeclared.F.type = fn_decl @ForwardDeclared.F [concrete = constants.%ForwardDeclared.F] {} {}
-// CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, %ForwardDeclared.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Self.loc20: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
+// CHECK:STDOUT:   interface_with_self_decl @ForwardDeclared [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.decl: @ForwardDeclared.%ForwardDeclared.WithSelf.F.type (%ForwardDeclared.WithSelf.F.type) = fn_decl @ForwardDeclared.WithSelf.F [symbolic = @ForwardDeclared.%ForwardDeclared.WithSelf.F (constants.%ForwardDeclared.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, %ForwardDeclared.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc20
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%ForwardDeclared.F.decl)
+// CHECK:STDOUT:   witness = (%ForwardDeclared.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ForwardDeclared.F(@ForwardDeclared.%Self: %ForwardDeclared.type) {
+// CHECK:STDOUT: generic fn @ForwardDeclared.WithSelf.F(@ForwardDeclared.%Self.loc20: %ForwardDeclared.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclared.F(constants.%Self.8e7) {}
+// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.8e7) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.8e7) {}
 // CHECK:STDOUT:
