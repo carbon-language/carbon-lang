@@ -65,13 +65,22 @@ auto RequireIdentifiedFacetType(Context& context,
     -> SemIR::IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a complete class.
 auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id) -> void;
 
 // Emits an error diagnostic explaining that an interface is not defined.
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a complete interface.
 auto DiagnoseIncompleteInterface(Context& context,
                                  SemIR::InterfaceId interface_id) -> void;
 
 // Adds a note to a diagnostic explaining that a class is abstract.
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a concrete class.
 auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
                            bool direct_use) -> void;
 

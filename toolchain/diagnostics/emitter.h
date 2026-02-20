@@ -214,6 +214,14 @@ class Emitter {
     }
   }
 
+  // Verifies that a callback is registered to provide context if a diagnostic
+  // is emitted. Allows a code path to require context, which then means its
+  // diagnostics to be framed as Notes.
+  //
+  // This is best effort as the registered callback can in practice do nothing,
+  // but that would be highly unusual.
+  auto CheckHasContext() -> void { CARBON_CHECK(!context_fns_.empty()); }
+
  protected:
   // Callback type used to report context messages from ConvertLoc.
   // Note that the first parameter type is Loc rather than

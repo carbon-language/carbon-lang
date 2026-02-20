@@ -29,6 +29,9 @@ namespace Carbon::Check {
 
 auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id)
     -> void {
+  // The caller must provide context for any diagnostics in type completion.
+  context.emitter().CheckHasContext();
+
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
   if (class_info.has_definition_started()) {
@@ -37,8 +40,6 @@ auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id)
     context.emitter().Emit(class_info.definition_id,
                            ClassIncompleteWithinDefinition);
   } else {
-    // TODO: Rename to `ClassIncomplete` and phase message as an Error not a
-    // Note: "is not defined".
     CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Error,
                       "class was forward declared here");
     context.emitter().Emit(class_info.latest_decl_id(),
@@ -48,6 +49,9 @@ auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id)
 
 auto DiagnoseIncompleteInterface(Context& context,
                                  SemIR::InterfaceId interface_id) -> void {
+  // The caller must provide context for any diagnostics in type completion.
+  context.emitter().CheckHasContext();
+
   const auto& interface_info = context.interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
@@ -56,8 +60,6 @@ auto DiagnoseIncompleteInterface(Context& context,
     context.emitter().Emit(interface_info.definition_id,
                            InterfaceIncompleteWithinDefinition);
   } else {
-    // TODO: Rename to `InterfaceIncomplete` and phase message as an Error not a
-    // Note: "is not defined".
     CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Error,
                       "interface was forward declared here");
     context.emitter().Emit(interface_info.latest_decl_id(),
@@ -67,12 +69,13 @@ auto DiagnoseIncompleteInterface(Context& context,
 
 auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
                            bool direct_use) -> void {
+  // The caller must provide context for any diagnostics in type completion.
+  context.emitter().CheckHasContext();
+
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(
       class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
       "Class is not abstract");
-  // TODO: Rename to `ClassAbstract` and phase message as an Error not a Note:
-  // "is declared abstract".
   CARBON_DIAGNOSTIC(
       ClassAbstractHere, Error,
       "{0:=0:uses class that|=1:class} was declared abstract here",
@@ -83,6 +86,9 @@ auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
 
 static auto DiagnoseIncompleteNamedConstraint(
     Context& context, SemIR::NamedConstraintId named_constraint_id) -> void {
+  // The caller must provide context for any diagnostics in type completion.
+  context.emitter().CheckHasContext();
+
   const auto& constraint = context.named_constraints().Get(named_constraint_id);
   CARBON_CHECK(!constraint.is_complete(), "Named constraint is not incomplete");
   if (constraint.is_being_defined()) {
@@ -91,8 +97,6 @@ static auto DiagnoseIncompleteNamedConstraint(
     context.emitter().Emit(constraint.definition_id,
                            NamedConstraintIncompleteWithinDefinition);
   } else {
-    // TODO: Rename to `NamedConstraintIncomplete` and phase message as an Error
-    // not a Note: "is not defined".
     CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Error,
                       "constraint was forward declared here");
     context.emitter().Emit(constraint.latest_decl_id(),
