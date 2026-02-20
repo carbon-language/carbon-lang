@@ -159,11 +159,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   };
 
   auto abstract_diagnostic_context = [&](auto& builder) {
-    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Note,
+    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Context,
                       "binding pattern has abstract type {0} in `var` "
                       "pattern",
                       SemIR::TypeId);
-    builder.Note(type_node, AbstractTypeInVarPattern, cast_type_id);
+    builder.Context(type_node, AbstractTypeInVarPattern, cast_type_id);
   };
 
   // A `self` binding can only appear in an implicit parameter list.
@@ -252,12 +252,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       if (!RequireCompleteType(
               context, cast_type_id, type_node, [&](auto& builder) {
                 CARBON_DIAGNOSTIC(
-                    IncompleteTypeInBindingDecl, Note,
+                    IncompleteTypeInBindingDecl, Context,
                     "binding pattern has incomplete type {0} in name "
                     "binding declaration",
                     InstIdAsType);
-                builder.Note(type_node, IncompleteTypeInBindingDecl,
-                             cast_type_inst_id);
+                builder.Context(type_node, IncompleteTypeInBindingDecl,
+                                cast_type_inst_id);
               })) {
         cast_type_id = SemIR::ErrorInst::TypeId;
       }
@@ -403,16 +403,16 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   CARBON_CHECK(parent_class_decl);
   if (!RequireCompleteType(
           context, cast_type_id, type_node, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Note,
+            CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Context,
                               "field has incomplete type {0}", SemIR::TypeId);
-            builder.Note(type_node, IncompleteTypeInFieldDecl, cast_type_id);
+            builder.Context(type_node, IncompleteTypeInFieldDecl, cast_type_id);
           })) {
     cast_type_id = SemIR::ErrorInst::TypeId;
   }
   if (!RequireConcreteType(context, cast_type_id, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Note,
+        CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Context,
                           "field has abstract type {0}", SemIR::TypeId);
-        builder.Note(type_node, AbstractTypeInFieldDecl, cast_type_id);
+        builder.Context(type_node, AbstractTypeInFieldDecl, cast_type_id);
       })) {
     cast_type_id = SemIR::ErrorInst::TypeId;
   }

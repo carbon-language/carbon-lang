@@ -203,7 +203,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+7]]:1: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR: ^~~~~~~~~~~
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+4]]:1: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+4]]:1: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -218,7 +218,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
 // CHECK:STDERR: var test_i32: i32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_i32: i32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -227,7 +227,7 @@ var test_i32: i32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `f32` [ConversionFailure]
 // CHECK:STDERR: var test_f32: f32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_f32: f32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -236,7 +236,7 @@ var test_f32: f32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `u32` [ConversionFailure]
 // CHECK:STDERR: var test_u32: u32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_u32: u32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -245,7 +245,7 @@ var test_u32: u32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `bool` [ConversionFailure]
 // CHECK:STDERR: var test_bool: bool = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_bool: bool = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -254,7 +254,7 @@ var test_bool: bool = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `char` [ConversionFailure]
 // CHECK:STDERR: var test_char: char = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_char: char = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -263,7 +263,7 @@ var test_char: char = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `str` [ConversionFailure]
 // CHECK:STDERR: var test_str: str = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplInMemberAccessWithContext]
 // CHECK:STDERR: var test_str: str = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

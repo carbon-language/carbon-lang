@@ -365,7 +365,7 @@ CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFileNote)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
-CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
+CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessWithContext)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)

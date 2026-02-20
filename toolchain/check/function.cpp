@@ -330,19 +330,20 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
     if (!RequireCompleteType(
             context, arg_type_id, SemIR::LocId(return_pattern_id),
             [&](auto& builder) {
-              CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Note,
+              CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Context,
                                 "function returns incomplete type {0}",
                                 SemIR::TypeId);
-              builder.Note(loc_id, IncompleteTypeInFunctionReturnType,
-                           arg_type_id);
+              builder.Context(loc_id, IncompleteTypeInFunctionReturnType,
+                              arg_type_id);
             })) {
       return SemIR::ErrorInst::TypeId;
     }
     if (!RequireConcreteType(context, arg_type_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Note,
+          CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
                             "function returns abstract type {0}",
                             SemIR::TypeId);
-          builder.Note(loc_id, AbstractTypeInFunctionReturnType, arg_type_id);
+          builder.Context(loc_id, AbstractTypeInFunctionReturnType,
+                          arg_type_id);
         })) {
       return SemIR::ErrorInst::TypeId;
     }
@@ -376,10 +377,10 @@ auto CheckFunctionDefinitionSignature(Context& context,
         context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         SemIR::LocId(param_ref_id), [&](auto& builder) {
           CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Note,
+              IncompleteTypeInFunctionParam, Context,
               "parameter has incomplete type {0} in function definition",
               TypeOfInstId);
-          builder.Note(param_ref_id, IncompleteTypeInFunctionParam,
+          builder.Context(param_ref_id, IncompleteTypeInFunctionParam,
                        param_ref_id);
         });
   }

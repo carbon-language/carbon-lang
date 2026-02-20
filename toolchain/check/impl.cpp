@@ -224,11 +224,11 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   if (!RequireCompleteType(
           context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
           SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Note,
+            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Context,
                               "`extend impl as` incomplete facet type {0}",
                               InstIdAsType);
-            builder.Note(impl.latest_decl_id(), ExtendImplAsIncomplete,
-                         impl.constraint_id);
+            builder.Context(impl.latest_decl_id(), ExtendImplAsIncomplete,
+                            impl.constraint_id);
           })) {
     parent_scope.set_has_error();
     return false;
@@ -516,12 +516,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
             SemIR::LocId(impl.constraint_id), [&](auto& builder) {
               CARBON_DIAGNOSTIC(
-                  ImplAsIncompleteFacetTypeDefinition, Note,
+                  ImplAsIncompleteFacetTypeDefinition, Context,
                   "definition of impl as incomplete facet type {0}",
                   InstIdAsType);
-              builder.Note(SemIR::LocId(impl.latest_decl_id()),
-                           ImplAsIncompleteFacetTypeDefinition,
-                           impl.constraint_id);
+              builder.Context(SemIR::LocId(impl.latest_decl_id()),
+                              ImplAsIncompleteFacetTypeDefinition,
+                              impl.constraint_id);
             })) {
       FillImplWitnessWithErrors(context, impl);
       return;
@@ -780,10 +780,10 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
   {
     Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Note,
+          CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
                             "facet type {0} cannot be identified in `impl as`",
                             InstIdAsType);
-          builder.Note(impl_decl_id, ImplOfUnidentifiedFacetType,
+          builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,
                        constraint_id);
         });
     identified_id = RequireIdentifiedFacetType(

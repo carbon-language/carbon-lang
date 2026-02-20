@@ -18,7 +18,7 @@ fn F[T:! type](x: T) -> T {
   // CHECK:STDERR: fail_return.carbon:[[@LINE+7]]:10: error: cannot copy value of type `T` [CopyOfUncopyableType]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+4]]:10: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+4]]:10: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:          ^
   // CHECK:STDERR:
@@ -33,7 +33,7 @@ fn F[T:! Core.Destroy](x: T) {
   // CHECK:STDERR: fail_var.carbon:[[@LINE+7]]:14: error: cannot copy value of type `T` [CopyOfUncopyableType]
   // CHECK:STDERR:   var y: T = x;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:14: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:14: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   var y: T = x;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:

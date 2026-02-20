@@ -220,9 +220,9 @@ static auto GetRequiredImplsFromConstraint(
 
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Note,
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
                           "facet type {0} can not be identified", InstIdAsType);
-        builder.Note(loc_id, ImplLookupInUnidentifiedFacetType,
+        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
                      facet_type_inst_id);
       });
   auto identified_id =

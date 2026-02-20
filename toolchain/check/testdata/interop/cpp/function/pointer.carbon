@@ -420,7 +420,7 @@ fn F() {
   // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `Core.Optional(Cpp.S* as Core.OptionalStorage)` to `Cpp.S*` [ConversionFailure]
   // CHECK:STDERR:   let a: Cpp.S* = Cpp.Indirect({} as Cpp.S);
   // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+4]]:19: note: type `Core.Optional(Cpp.S* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(Cpp.S*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+4]]:19: note: type `Core.Optional(Cpp.S* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(Cpp.S*)` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   let a: Cpp.S* = Cpp.Indirect({} as Cpp.S);
   // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

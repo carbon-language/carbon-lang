@@ -24,7 +24,7 @@ fn F(U:! type, V:! type) {
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-10]]:13: note: initializing function parameter [InCallToFunctionParam]
@@ -47,7 +47,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
   // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
   // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE-11]]:13: note: initializing function parameter [InCallToFunctionParam]

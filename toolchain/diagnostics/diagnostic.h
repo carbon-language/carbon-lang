@@ -25,6 +25,12 @@ enum class Level : int8_t {
   // A note, not indicating an error on its own, but possibly providing
   // additional information for an error or warning.
   Note,
+  // Describes the high level operation being performed. If a diagnostic is
+  // issued, the first Context message will steal its level and be displayed as
+  // if it is the top-level diagnostic, and the rest are treated as Note
+  // messages. The diagnostic message also becomes a Note of the first Context
+  // message.
+  Context,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
   // An error diagnostic, indicating that the program is not valid.

@@ -39,7 +39,7 @@ fn F() {
   // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
   // CHECK:STDERR:   let c: Cpp.Other = Cpp.Enum.c;
   // CHECK:STDERR:                      ^~~~~~~~~~
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:22: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:22: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   let c: Cpp.Other = Cpp.Enum.c;
   // CHECK:STDERR:                      ^~~~~~~~~~
   // CHECK:STDERR:
@@ -48,7 +48,7 @@ fn F() {
   // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
   // CHECK:STDERR:   let c2: Cpp.Other = Cpp.c;
   // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:23: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:23: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessWithContext]
   // CHECK:STDERR:   let c2: Cpp.Other = Cpp.c;
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:

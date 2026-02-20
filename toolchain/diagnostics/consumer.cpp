@@ -40,6 +40,8 @@ auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
         break;
       case Level::LocationInfo:
         break;
+      case Level::Context:
+        CARBON_FATAL("Context messages are presented as a different level");
     }
     *stream_ << message.Format();
     if (include_diagnostic_kind_) {

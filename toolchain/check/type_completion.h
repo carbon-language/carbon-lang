@@ -38,7 +38,7 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 // `loc_id` is used as the location for a diagnostic produced at that time.
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
-                         DiagnosticNoteFn diagnostic_context) -> bool;
+                         DiagnosticContextFn diagnostic_context) -> bool;
 
 // Returns true for types that have an object representation that may be used as
 // a return type or variable type.
@@ -49,7 +49,7 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 // Note: class types are abstract if marked using the `abstract` keyword; tuple
 // and struct types are abstract if any element is abstract.
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         DiagnosticNoteFn diagnostic_context) -> bool;
+                         DiagnosticContextFn diagnostic_context) -> bool;
 
 auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
 

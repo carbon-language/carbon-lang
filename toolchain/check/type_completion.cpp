@@ -713,7 +713,7 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
 
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
-                         DiagnosticNoteFn diagnostic_context) -> bool {
+                         DiagnosticContextFn diagnostic_context) -> bool {
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
 
@@ -745,7 +745,7 @@ auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool {
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         DiagnosticNoteFn diagnostic_context) -> bool {
+                         DiagnosticContextFn diagnostic_context) -> bool {
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
 
