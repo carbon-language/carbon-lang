@@ -79,8 +79,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     entity_name.bind_index_value =
         context.scope_stack().AddCompileTimeBinding().index;
     entity_name.is_template = is_template;
-  }
-  if (pattern_kind == SemIR::InstKind::FormBindingPattern) {
+  } else if (pattern_kind == SemIR::InstKind::FormBindingPattern) {
     entity_name.form_id = form_id;
   }
   auto entity_name_id = context.entity_names().Add(entity_name);

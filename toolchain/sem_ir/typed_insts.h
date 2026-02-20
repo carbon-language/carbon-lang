@@ -1985,7 +1985,7 @@ struct TypeComponentOf {
            .constant_kind = InstConstantKind::Indirect,
            .is_lowered = false});
 
-  // Always TypeType
+  // Always TypeType.
   TypeId type_id;
   InstId form_inst_id;
 };

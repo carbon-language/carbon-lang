@@ -178,7 +178,7 @@ struct AnyPrimitiveForm {
 
   InstKind kind;
 
-  // Always FormType
+  // Always FormType.
   TypeId type_id;
 
   // The type component of the form.

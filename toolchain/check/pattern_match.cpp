@@ -102,11 +102,9 @@ class MatchContext {
   // different kind in order to facilitate code reuse.
   //
   // TODO: Is there a more principled way for those use cases to share code?
-  // TODO: adjust order of arguments to match DoEmitPatternMatchOffStack.
+  // TODO: Adjust order of arguments to match DoEmitPatternMatchOffStack.
   template <typename BindingPatternT>
-    requires std::is_same_v<BindingPatternT, SemIR::RefBindingPattern> ||
-             std::is_same_v<BindingPatternT, SemIR::SymbolicBindingPattern> ||
-             std::is_same_v<BindingPatternT, SemIR::ValueBindingPattern>
+    requires SameAsOneOf<BindingPatternT, SemIR::RefBindingPattern, SemIR::SymbolicBindingPattern, SemIR::ValueBindingPattern>
   auto DoEmitPatternMatch(Context& context, BindingPatternT binding_pattern,
                           WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context,
@@ -267,10 +265,10 @@ auto MatchContext::DoEmitPatternMatchOffStack(Context& context, WorkItem entry,
     -> std::optional<WorkItem> {
   auto initial_size = stack_.size();
   DoEmitPatternMatch(context, inst, entry);
-  if (stack_.size() == initial_size) {
+  if (initial_size == stack_.size()) {
     return std::nullopt;
   }
-  CARBON_CHECK(stack_.size() == initial_size + 1);
+  CARBON_CHECK(initial_size + 1 == stack_.size());
   return stack_.pop_back_val();
 }
 
