@@ -1762,44 +1762,27 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         return SemIR::ErrorInst::InstId;
       }
 
-      auto abstract_diagnostic_context = [&](auto& builder) {
-        CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
-                          "initialization of abstract type {0}", SemIR::TypeId);
-        builder.Context(loc_id, AbstractTypeInInit, target.type_id);
-      };
-
-      if (target.is_initializer()) {
-        if (!RequireConcreteType(context, target.type_id,
-                                 abstract_diagnostic_context)) {
-          return SemIR::ErrorInst::InstId;
-        }
-      } else {
-        // TODO: Switch from RequireConcreteType to RequireCompleteType (and
-        // ensure FacetTypes are treated as complete). We want to allow
-        // constructing a value of an abstract class type, but right now if we
-        // proceed into Convert with an abstract target type, we crash.
-        if (!RequireConcreteType(context, target.type_id,
-                                 abstract_diagnostic_context)) {
-          return SemIR::ErrorInst::InstId;
-        }
+      // TODO: Don't require a concrete type when `!target.is_initializer()`. We
+      // want to allow constructing a value of an abstract class type, but right
+      // now if we proceed into Convert with an abstract target type, we crash.
+      if (!RequireConcreteType(context, target.type_id, [&](auto& builder) {
+            CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
+                              "initialization of abstract type {0}",
+                              SemIR::TypeId);
+            builder.Context(loc_id, AbstractTypeInInit, target.type_id);
+          })) {
+        return SemIR::ErrorInst::InstId;
       }
     } else {
       if (!TryToCompleteType(context, target.type_id, loc_id)) {
         return SemIR::ErrorInst::InstId;
       }
 
-      if (target.is_initializer()) {
-        if (!TryIsConcreteType(context, target.type_id)) {
-          return SemIR::ErrorInst::InstId;
-        }
-      } else {
-        // TODO: Switch from TryIsConcreteType to TryToCompleteType (and
-        // ensure FacetTypes are treated as complete). We want to allow
-        // constructing a value of an abstract class type, but right now if we
-        // proceed into Convert with an abstract target type, we crash.
-        if (!TryIsConcreteType(context, target.type_id)) {
-          return SemIR::ErrorInst::InstId;
-        }
+      // TODO: Don't require a concrete type when `!target.is_initializer()`. We
+      // want to allow constructing a value of an abstract class type, but right
+      // now if we proceed into Convert with an abstract target type, we crash.
+      if (!TryIsConcreteType(context, target.type_id)) {
+        return SemIR::ErrorInst::InstId;
       }
     }
   }

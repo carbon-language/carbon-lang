@@ -40,6 +40,13 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
                          DiagnosticContextFn diagnostic_context) -> bool;
 
+// Returns whether the type is concrete. Usually you want a diagnostic when it's
+// not concrete, so call RequireConcreteType.
+//
+// The `type_id` must be complete, so `TryToCompleteType` must have already
+// been called, or this function may crash.
+auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
+
 // Returns true for types that have an object representation that may be used as
 // a return type or variable type.
 //
@@ -50,8 +57,6 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 // and struct types are abstract if any element is abstract.
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          DiagnosticContextFn diagnostic_context) -> bool;
-
-auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is
