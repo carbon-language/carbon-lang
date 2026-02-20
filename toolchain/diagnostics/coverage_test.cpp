@@ -22,8 +22,9 @@ constexpr Kind Kinds[] = {
 constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
     Kind::TestDiagnostic,
-    Kind::TestDiagnosticOnScope,
+    Kind::TestDiagnosticContext,
     Kind::TestDiagnosticNote,
+    Kind::TestDiagnosticOnScope,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.

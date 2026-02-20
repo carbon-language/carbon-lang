@@ -80,6 +80,25 @@ TEST_F(EmitterTest, EmitNote) {
   emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
 }
 
+TEST_F(EmitterTest, EmitContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 2, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
 TEST_F(EmitterTest, Flush) {
   bool flushed = false;
   auto flush_fn = [&]() { flushed = true; };

@@ -590,7 +590,8 @@ CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 
 // TestDiagnostic is only for unit tests.
 CARBON_DIAGNOSTIC_KIND(TestDiagnostic)
-CARBON_DIAGNOSTIC_KIND(TestDiagnosticOnScope)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticContext)
 CARBON_DIAGNOSTIC_KIND(TestDiagnosticNote)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticOnScope)
 
 #undef CARBON_DIAGNOSTIC_KIND
