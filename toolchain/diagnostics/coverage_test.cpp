@@ -25,6 +25,7 @@ constexpr Kind UntestedKinds[] = {
     Kind::TestDiagnosticContext,
     Kind::TestDiagnosticNote,
     Kind::TestDiagnosticOnScope,
+    Kind::TestDiagnosticSoftContext,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.

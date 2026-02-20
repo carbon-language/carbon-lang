@@ -99,6 +99,50 @@ TEST_F(EmitterTest, EmitContext) {
   emitter_.Emit(1, TestDiagnostic);
 }
 
+TEST_F(EmitterTest, EmitSoftContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, Context, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(IsDiagnosticMessage(
+                          Diagnostics::Kind::TestDiagnosticSoftContext,
+                          Diagnostics::Level::Context, 1, 2, "soft context"),
+                      IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                          Diagnostics::Level::Warning, 1, 1,
+                                          "simple warning")))));
+  Diagnostics::SoftContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticSoftContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
+TEST_F(EmitterTest, EmitContextAndSoftContext) {
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, Context, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Warning,
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
+                                  Diagnostics::Level::Context, 1, 3, "context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
+    builder.Context(3, TestDiagnosticContext);
+  });
+  // This SoftContext does not produce a message, since the Context supersedes
+  // it.
+  Diagnostics::SoftContextScope soft_scope(&emitter_, [&](auto& builder) {
+    builder.Context(2, TestDiagnosticSoftContext);
+  });
+  emitter_.Emit(1, TestDiagnostic);
+}
+
 TEST_F(EmitterTest, Flush) {
   bool flushed = false;
   auto flush_fn = [&]() { flushed = true; };
