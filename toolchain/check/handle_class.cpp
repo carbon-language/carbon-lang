@@ -378,30 +378,22 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_type_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  {
-    Diagnostics::ContextScope diagnostic_scope(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Note,
-                            "adapted type {0} is an incomplete type",
-                            InstIdAsType);
-          builder.Note(node_id, IncompleteTypeInAdaptDecl,
-                       adapted_type_inst_id);
-        });
-    if (!RequireCompleteType(context, adapted_type_id, node_id)) {
-      adapted_type_id = SemIR::ErrorInst::TypeId;
-    }
+  if (!RequireCompleteType(
+          context, adapted_type_id, node_id, [&](auto& builder) {
+            CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Note,
+                              "adapted type {0} is an incomplete type",
+                              InstIdAsType);
+            builder.Note(node_id, IncompleteTypeInAdaptDecl,
+                         adapted_type_inst_id);
+          })) {
+    adapted_type_id = SemIR::ErrorInst::TypeId;
   }
-  {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Note,
-                            "adapted type {0} is an abstract type",
-                            InstIdAsType);
-          builder.Note(node_id, AbstractTypeInAdaptDecl, adapted_type_inst_id);
-        });
-    if (!RequireConcreteType(context, adapted_type_id)) {
-      adapted_type_id = SemIR::ErrorInst::TypeId;
-    }
+  if (!RequireConcreteType(context, adapted_type_id, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Note,
+                          "adapted type {0} is an abstract type", InstIdAsType);
+        builder.Note(node_id, AbstractTypeInAdaptDecl, adapted_type_inst_id);
+      })) {
+    adapted_type_id = SemIR::ErrorInst::TypeId;
   }
   if (adapted_type_id == SemIR::ErrorInst::TypeId) {
     adapted_type_inst_id = SemIR::ErrorInst::TypeInstId;
@@ -460,17 +452,14 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto [base_type_inst_id, base_type_id] =
       ExprAsType(context, node_id, base_expr_id);
-  {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Note,
-                            "base {0} is an incomplete type", InstIdAsType);
-          builder.Note(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
-        });
-    base_type_id = AsCompleteType(context, base_type_id, node_id);
-  }
-
   if (base_type_id == SemIR::ErrorInst::TypeId) {
+    return BaseInfo::Error;
+  }
+  if (!RequireCompleteType(context, base_type_id, node_id, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Note,
+                          "base {0} is an incomplete type", InstIdAsType);
+        builder.Note(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
+      })) {
     return BaseInfo::Error;
   }
 

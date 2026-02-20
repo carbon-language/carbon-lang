@@ -303,17 +303,15 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
     // TODO: Allow name lookup into classes that are being defined even if they
     // are not complete.
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
+    RequireCompleteType(
+        context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
+        loc_id, [&](auto& builder) {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Note,
                             "member access into incomplete class {0}",
                             InstIdAsType);
           builder.Note(loc_id, QualifiedExprInIncompleteClassScope,
                        lookup_inst_id);
         });
-    RequireCompleteType(
-        context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-        loc_id);
     auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
                                   .specific_id = class_ty->specific_id,
@@ -323,18 +321,16 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
     // TODO: Allow name lookup into facet types that are being defined even if
     // they are not complete.
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Note,
-                            "member access into incomplete facet type {0}",
-                            InstIdAsType);
-          builder.Note(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                       lookup_inst_id);
-        });
     if (RequireCompleteType(
             context,
-            context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-            loc_id)) {
+            context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
+            [&](auto& builder) {
+              CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Note,
+                                "member access into incomplete facet type {0}",
+                                InstIdAsType);
+              builder.Note(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                           lookup_inst_id);
+            })) {
       auto facet_type_info =
           context.facet_types().Get(facet_type->facet_type_id);
       // Name lookup into "extend" constraints but not "self impls" constraints.

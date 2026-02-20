@@ -14,6 +14,7 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/require_impls.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/facet_type_info.h"
@@ -711,7 +712,11 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
 }
 
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id) -> bool {
+                         SemIR::LocId loc_id,
+                         DiagnosticNoteFn diagnostic_context) -> bool {
+  CARBON_CHECK(diagnostic_context);
+  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
+
   if (!TypeCompleter(&context, loc_id, true).Complete(type_id)) {
     return false;
   }
@@ -739,7 +744,11 @@ auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool {
   return !complete_info.abstract_class_id.has_value();
 }
 
-auto RequireConcreteType(Context& context, SemIR::TypeId type_id) -> bool {
+auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
+                         DiagnosticNoteFn diagnostic_context) -> bool {
+  CARBON_CHECK(diagnostic_context);
+  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
+
   // TODO: For symbolic types, should add an implicit constraint that they are
   // not abstract.
   auto complete_info = context.types().GetCompleteTypeInfo(type_id);
@@ -941,13 +950,6 @@ auto RequireIdentifiedFacetType(Context& context,
 
   // TODO: Process other kinds of requirements.
   return context.identified_facet_types().Add({key, extends, impls});
-}
-
-auto AsCompleteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id) -> SemIR::TypeId {
-  return RequireCompleteType(context, type_id, loc_id)
-             ? type_id
-             : SemIR::ErrorInst::TypeId;
 }
 
 }  // namespace Carbon::Check

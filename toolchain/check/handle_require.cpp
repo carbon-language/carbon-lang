@@ -305,16 +305,15 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   // also construct a specific for the `constraint_inst_id`, finding any
   // monomorphization errors that result.
   if (extend) {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Note,
-                            "`extend require` of incomplete facet type {0}",
-                            InstIdAsType);
-          builder.Note(constraint_inst_id, RequireImplsIncompleteFacetType,
-                       constraint_inst_id);
-        });
-    if (!RequireCompleteType(context, constraint_type_id,
-                             SemIR::LocId(constraint_inst_id))) {
+    if (!RequireCompleteType(
+            context, constraint_type_id, SemIR::LocId(constraint_inst_id),
+            [&](auto& builder) {
+              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Note,
+                                "`extend require` of incomplete facet type {0}",
+                                InstIdAsType);
+              builder.Note(constraint_inst_id, RequireImplsIncompleteFacetType,
+                           constraint_inst_id);
+            })) {
       return true;
     }
 

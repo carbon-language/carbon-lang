@@ -221,21 +221,17 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
     return false;
   }
 
-  {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Note,
-                            "`extend impl as` incomplete facet type {0}",
-                            InstIdAsType);
-          builder.Note(impl.latest_decl_id(), ExtendImplAsIncomplete,
-                       impl.constraint_id);
-        });
-    if (!RequireCompleteType(
-            context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-            SemIR::LocId(impl.constraint_id))) {
-      parent_scope.set_has_error();
-      return false;
-    }
+  if (!RequireCompleteType(
+          context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
+          SemIR::LocId(impl.constraint_id), [&](auto& builder) {
+            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Note,
+                              "`extend impl as` incomplete facet type {0}",
+                              InstIdAsType);
+            builder.Note(impl.latest_decl_id(), ExtendImplAsIncomplete,
+                         impl.constraint_id);
+          })) {
+    parent_scope.set_has_error();
+    return false;
   }
 
   if (!impl.generic_id.has_value()) {
@@ -516,17 +512,17 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   }
 
   {
-    Diagnostics::ContextScope diagnostic_context(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Note,
-                            "definition of impl as incomplete facet type {0}",
-                            InstIdAsType);
-          builder.Note(SemIR::LocId(impl.latest_decl_id()),
-                       ImplAsIncompleteFacetTypeDefinition, impl.constraint_id);
-        });
     if (!RequireCompleteType(
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-            SemIR::LocId(impl.constraint_id))) {
+            SemIR::LocId(impl.constraint_id), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(
+                  ImplAsIncompleteFacetTypeDefinition, Note,
+                  "definition of impl as incomplete facet type {0}",
+                  InstIdAsType);
+              builder.Note(SemIR::LocId(impl.latest_decl_id()),
+                           ImplAsIncompleteFacetTypeDefinition,
+                           impl.constraint_id);
+            })) {
       FillImplWitnessWithErrors(context, impl);
       return;
     }

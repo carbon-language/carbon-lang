@@ -37,7 +37,8 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 // the completeness of the type will be enforced during monomorphization, and
 // `loc_id` is used as the location for a diagnostic produced at that time.
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id) -> bool;
+                         SemIR::LocId loc_id,
+                         DiagnosticNoteFn diagnostic_context) -> bool;
 
 // Returns true for types that have an object representation that may be used as
 // a return type or variable type.
@@ -47,15 +48,10 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
 //
 // Note: class types are abstract if marked using the `abstract` keyword; tuple
 // and struct types are abstract if any element is abstract.
-auto RequireConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
+auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
+                         DiagnosticNoteFn diagnostic_context) -> bool;
 
 auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
-
-// Returns the type `type_id` if it is a complete type, or produces an
-// incomplete type error and returns an error type. This is a convenience
-// wrapper around `RequireCompleteType`.
-auto AsCompleteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id) -> SemIR::TypeId;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is

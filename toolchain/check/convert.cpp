@@ -1738,44 +1738,42 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     context.emitter().Emit(expr_id, RefTagNoRefParam);
   }
 
-  auto diagnoser = [&](auto& builder) {
-    CARBON_CHECK(!target.is_initializer(),
-                 "Initialization of incomplete types is expected to be "
-                 "caught elsewhere.");
-    CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Note,
-                      "forming value of incomplete type {0}", SemIR::TypeId);
-    CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Note,
-                      "invalid use of incomplete type {0}", SemIR::TypeId);
-    builder.Note(loc_id,
-                 target.kind == ConversionTarget::Value
-                     ? IncompleteTypeInValueConversion
-                     : IncompleteTypeInConversion,
-                 target.type_id);
-  };
-  auto abstract_diagnoser = [&](auto& builder) {
-    CARBON_DIAGNOSTIC(AbstractTypeInInit, Note,
-                      "initialization of abstract type {0}", SemIR::TypeId);
-    builder.Note(loc_id, AbstractTypeInInit, target.type_id);
-  };
-
   // We can only perform initialization for complete, non-abstract types. Note
   // that we allow conversion to incomplete to facet types, since their
   // representation is fixed. This allows us to support using the `Self` of an
   // interface inside its definition.
   if (!context.types().IsFacetType(target.type_id)) {
     if (target.diagnose) {
-      {
-        Diagnostics::ContextScope diagnostic_scope(&context.emitter(),
-                                                   diagnoser);
-        if (!RequireCompleteType(context, target.type_id, loc_id)) {
-          return SemIR::ErrorInst::InstId;
-        }
+      if (!RequireCompleteType(
+              context, target.type_id, loc_id, [&](auto& builder) {
+                CARBON_CHECK(
+                    !target.is_initializer(),
+                    "Initialization of incomplete types is expected to be "
+                    "caught elsewhere.");
+                CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Note,
+                                  "forming value of incomplete type {0}",
+                                  SemIR::TypeId);
+                CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Note,
+                                  "invalid use of incomplete type {0}",
+                                  SemIR::TypeId);
+                builder.Note(loc_id,
+                             target.kind == ConversionTarget::Value
+                                 ? IncompleteTypeInValueConversion
+                                 : IncompleteTypeInConversion,
+                             target.type_id);
+              })) {
+        return SemIR::ErrorInst::InstId;
       }
 
+      auto abstract_diagnostic_context = [&](auto& builder) {
+        CARBON_DIAGNOSTIC(AbstractTypeInInit, Note,
+                          "initialization of abstract type {0}", SemIR::TypeId);
+        builder.Note(loc_id, AbstractTypeInInit, target.type_id);
+      };
+
       if (target.is_initializer()) {
-        Diagnostics::ContextScope diagnostic_context(&context.emitter(),
-                                                     abstract_diagnoser);
-        if (!RequireConcreteType(context, target.type_id)) {
+        if (!RequireConcreteType(context, target.type_id,
+                                 abstract_diagnostic_context)) {
           return SemIR::ErrorInst::InstId;
         }
       } else {
@@ -1783,9 +1781,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         // ensure FacetTypes are treated as complete). We want to allow
         // constructing a value of an abstract class type, but right now if we
         // proceed into Convert with an abstract target type, we crash.
-        Diagnostics::ContextScope diagnostic_context(&context.emitter(),
-                                                     abstract_diagnoser);
-        if (!RequireConcreteType(context, target.type_id)) {
+        if (!RequireConcreteType(context, target.type_id,
+                                 abstract_diagnostic_context)) {
           return SemIR::ErrorInst::InstId;
         }
       }
