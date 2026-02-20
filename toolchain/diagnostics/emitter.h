@@ -137,8 +137,11 @@ class Emitter {
     static auto FormatFn(const Message& message,
                          std::index_sequence<N...> /*indices*/) -> std::string;
 
+    bool has_context_message() const { return has_context_message_; }
+
     Emitter<LocT>* emitter_;
     Diagnostic diagnostic_;
+    bool has_context_message_ = false;
   };
 
   class ContextBuilder {
@@ -248,19 +251,13 @@ class Emitter {
   template <typename OtherLocT, typename ContextFn>
   friend class ContextScope;
   template <typename OtherLocT, typename ContextFn>
-  friend class SoftContextScope;
-  template <typename OtherLocT, typename AnnotateFn>
   friend class AnnotationScope;
   friend class NoLocEmitter;
 
-  struct ContextFn {
-    llvm::function_ref<auto(ContextBuilder& builder)->void> fn;
-    bool soft;
-  };
-
   Consumer* consumer_;
   llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
-  llvm::SmallVector<ContextFn> context_fns_;
+  llvm::SmallVector<llvm::function_ref<auto(ContextBuilder& builder)->void>>
+      context_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
@@ -313,7 +310,7 @@ class ContextScope {
     }
       : emitter_(emitter), context_(std::move(context)) {
     emitter_->Flush();
-    emitter_->context_fns_.push_back({context_, false});
+    emitter_->context_fns_.push_back(context_);
   }
   ~ContextScope() {
     emitter_->Flush();
@@ -329,41 +326,6 @@ class ContextScope {
 template <typename LocT, typename ContextFn>
 ContextScope(Emitter<LocT>* emitter, ContextFn context)
     -> ContextScope<LocT, ContextFn>;
-
-// An RAII object that denotes a scope in which any diagnostic produced should
-// become a note attached to the higher-level operation failure described by a
-// Context message.
-//
-// This is like ContextScope, but if another ContextScope (or SoftContextScope)
-// already exists, it will supersede this one, and the context message will be
-// discarded. This can be used to give a default higher-level operation when
-// no better one has already been provided.
-template <typename LocT, typename ContextFn>
-class SoftContextScope {
- public:
-  SoftContextScope(Emitter<LocT>* emitter, ContextFn context)
-    requires requires(ContextFn context,
-                      Emitter<LocT>::ContextBuilder& builder) {
-      { context(builder) } -> std::same_as<void>;
-    }
-      : emitter_(emitter), context_(std::move(context)) {
-    emitter_->Flush();
-    emitter_->context_fns_.push_back({context_, true});
-  }
-  ~SoftContextScope() {
-    emitter_->Flush();
-    emitter_->context_fns_.pop_back();
-  }
-
- private:
-  Emitter<LocT>* emitter_;
-  // Make a copy of the context function to ensure that it lives long enough.
-  ContextFn context_;
-};
-
-template <typename LocT, typename ContextFn>
-SoftContextScope(Emitter<LocT>* emitter, ContextFn context)
-    -> SoftContextScope<LocT, ContextFn>;
 
 // An RAII object that denotes a scope in which any diagnostic produced should
 // be annotated in some way.
@@ -478,11 +440,8 @@ Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
                "building diagnostic with level {0}; expected Warning or Error",
                diagnostic_.level);
   ContextBuilder context_builder(emitter, this);
-  bool first = true;
-  for (auto [context_fn, soft_context] : emitter_->context_fns_) {
-    if (std::exchange(first, false) || !soft_context) {
-      context_fn(context_builder);
-    }
+  for (auto context_fn : emitter_->context_fns_) {
+    context_fn(context_builder);
   }
   AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
@@ -520,6 +479,10 @@ auto Emitter<LocT>::Builder::AddMessageWithLoc(
       diagnostic_base.Level <= diagnostic_.level,
       "message with level {0} is higher than the diagnostic's level {1}",
       diagnostic_base.Level, diagnostic_.level);
+  if (diagnostic_base.Level == Level::SoftContext ||
+      diagnostic_base.Level == Level::Context) {
+    has_context_message_ = true;
+  }
   diagnostic_.messages.push_back(
       Message{.kind = diagnostic_base.Kind,
               .level = diagnostic_base.Level,
@@ -565,8 +528,13 @@ auto Emitter<LocT>::ContextBuilder::Context(
   if (!emitter_) {
     return *this;
   }
-  CARBON_CHECK(diagnostic_base.Level == Level::Context, "{0}",
-               static_cast<int>(diagnostic_base.Level));
+  CARBON_CHECK(diagnostic_base.Level == Level::SoftContext ||
+                   diagnostic_base.Level == Level::Context,
+               "{0}", static_cast<int>(diagnostic_base.Level));
+  if (builder_->has_context_message() &&
+      diagnostic_base.Level == Level::SoftContext) {
+    return *this;
+  }
   builder_->AddMessage(LocT(loc), diagnostic_base,
                        {emitter_->template MakeAny<Args>(args)...});
   return *this;
