@@ -5,4 +5,4 @@
 package Core library "prelude/types/form";
 
 // TODO: this should be a concrete constant, not a function.
-fn Form() -> type = "bool.make_type";
+fn Form() -> type = "form.make_type";
