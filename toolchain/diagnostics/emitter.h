@@ -137,7 +137,8 @@ class Emitter {
     static auto FormatFn(const Message& message,
                          std::index_sequence<N...> /*indices*/) -> std::string;
 
-    bool has_context_message() const { return has_context_message_; }
+    // Whether a Context or SoftContext message has been added to the Builder.
+    auto has_context_message() const -> bool { return has_context_message_; }
 
     Emitter<LocT>* emitter_;
     Diagnostic diagnostic_;
