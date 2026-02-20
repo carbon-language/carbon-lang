@@ -96,7 +96,7 @@ auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
   auto operations_id = context.inst_block_stack().Pop();
 
   if (scope_inst_id == SemIR::ErrorInst::InstId) {
-    // Declared in wrong scope, we already diagnosed this.
+    // We already diagnosed the errors.
     return true;
   }
 
