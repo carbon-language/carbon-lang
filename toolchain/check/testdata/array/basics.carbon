@@ -84,7 +84,7 @@ class Incomplete;
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: array(Incomplete, 1);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class is not defined [ClassIncomplete]
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+7]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var a: array(1, 1);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessWithContext]
+// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var a: array(1, 1);
 // CHECK:STDERR:              ^
 // CHECK:STDERR:

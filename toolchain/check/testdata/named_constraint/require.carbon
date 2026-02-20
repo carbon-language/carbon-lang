@@ -164,7 +164,7 @@ constraint Z {
   // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE+7]]:17: error: facet type `Y` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint is not defined [NamedConstraintIncomplete]
+  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR: constraint Y;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -292,7 +292,7 @@ constraint Z(T:! type) {
   // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+7]]:11: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   require 1 impls Y;
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+4]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+4]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   require 1 impls Y;
   // CHECK:STDERR:           ^
   // CHECK:STDERR:

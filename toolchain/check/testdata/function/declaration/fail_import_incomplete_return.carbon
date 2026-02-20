@@ -28,7 +28,7 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:21: note: return type declared here [IncompleteReturnTypeHere]
@@ -39,7 +39,7 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnDUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:21: note: return type declared here [IncompleteReturnTypeHere]
@@ -62,7 +62,7 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:   ReturnCUnused();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-10]]:1: in import [InImport]
@@ -75,7 +75,7 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-19]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import [InImport]

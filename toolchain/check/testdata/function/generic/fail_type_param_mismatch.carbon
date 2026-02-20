@@ -15,7 +15,7 @@ fn F(T:! type, U:! type) {
   // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `T` to `U` [ConversionFailure]
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:              ^~
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+4]]:14: note: type `T` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+4]]:14: note: type `T` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:

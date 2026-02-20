@@ -24,7 +24,7 @@ var d: D;
 // CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `C` to `C*` [ConversionFailure]
 // CHECK:STDERR: var x: (C*, C*) = (c, d);
 // CHECK:STDERR:                   ^~~~~~
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+4]]:19: note: type `C` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessWithContext]
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+4]]:19: note: type `C` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (C*, C*) = (c, d);
 // CHECK:STDERR:                   ^~~~~~
 // CHECK:STDERR:
@@ -39,7 +39,7 @@ class Incomplete;
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `(Complete, Incomplete)` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var t: (Complete, Incomplete);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class is not defined [ClassIncomplete]
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -55,7 +55,7 @@ class C {}
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `type` to `C` [ConversionFailure]
 // CHECK:STDERR: var x: (C, ) = (C, );
 // CHECK:STDERR:                ^~~~~
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+4]]:16: note: type `type` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessWithContext]
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+4]]:16: note: type `type` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (C, ) = (C, );
 // CHECK:STDERR:                ^~~~~
 // CHECK:STDERR:
@@ -70,7 +70,7 @@ var c: C;
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+7]]:8: error: cannot implicitly convert non-type value of type `C` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var x: c;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+4]]:8: note: type `C` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessWithContext]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+4]]:8: note: type `C` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: c;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:

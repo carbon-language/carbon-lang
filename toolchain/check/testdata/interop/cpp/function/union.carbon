@@ -57,7 +57,7 @@ fn F(p: Cpp.U*) {
   // CHECK:STDERR:   Cpp.foo1(*p);
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
@@ -69,7 +69,7 @@ fn F(p: Cpp.U*) {
   // CHECK:STDERR:   Cpp.foo2(*p);
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
@@ -286,7 +286,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.Incomplete.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -374,7 +374,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]

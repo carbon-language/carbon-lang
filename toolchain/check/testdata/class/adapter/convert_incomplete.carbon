@@ -55,7 +55,7 @@ fn F(p: Adapter(X)*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:15: error: cannot convert expression of type `Adapter(X)` to `X*` with `as` [ConversionFailure]
   // CHECK:STDERR:   let x: X* = *p as X*;
   // CHECK:STDERR:               ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:15: note: type `Adapter(X)` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:15: note: type `Adapter(X)` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let x: X* = *p as X*;
   // CHECK:STDERR:               ^~~~~~~~
   // CHECK:STDERR:

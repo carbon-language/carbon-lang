@@ -50,7 +50,7 @@ fn MyF() {
   // CHECK:STDERR:   var e: Cpp.UnsizedEnum;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./declaration.h:4:6: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: ./declaration.h:4:6: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: enum UnsizedEnum;
   // CHECK:STDERR:      ^
   // CHECK:STDERR:

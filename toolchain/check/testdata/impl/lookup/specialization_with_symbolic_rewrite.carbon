@@ -48,7 +48,7 @@ fn F(T:! Z(C), t: T) {
   // CHECK:STDERR: fail_nonfinal_specialized_symbolic_rewrite.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `T` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = t;
   // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_nonfinal_specialized_symbolic_rewrite.carbon:[[@LINE+4]]:16: note: type `T` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_nonfinal_specialized_symbolic_rewrite.carbon:[[@LINE+4]]:16: note: type `T` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: T.X = t;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:

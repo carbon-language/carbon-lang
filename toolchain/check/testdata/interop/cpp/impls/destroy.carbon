@@ -130,7 +130,7 @@ fn AmbiguousDestroy() {
 
 fn DeletedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    42 |   var a: Cpp.DeletedDestructor = {};
+  // CHECK:STDERR:    39 |   var a: Cpp.DeletedDestructor = {};
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]

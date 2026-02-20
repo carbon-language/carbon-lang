@@ -33,7 +33,7 @@ interface I {
 // CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE+7]]:26: error: invalid use of incomplete type `C` [IncompleteTypeInConversion]
 // CHECK:STDERR: impl {} as I where .T = ({} as C) {}
 // CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE-9]]:1: note: class is not defined [ClassIncomplete]
+// CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE-9]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ fn F[U:! I](a: U) {
   // CHECK:STDERR: fail_incomplete_type_usage.carbon:[[@LINE+7]]:3: error: invalid use of incomplete type `C` [IncompleteTypeInConversion]
   // CHECK:STDERR:   a.T;
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_incomplete_type_usage.carbon:[[@LINE-10]]:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: fail_incomplete_type_usage.carbon:[[@LINE-10]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ interface B {
   // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE+7]]:24: error: facet type `A` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
   // CHECK:STDERR:   extend require impls A;
   // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE-6]]:1: note: constraint is not defined [NamedConstraintIncomplete]
+  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR: constraint A;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:

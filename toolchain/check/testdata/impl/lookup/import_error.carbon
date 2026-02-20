@@ -35,7 +35,7 @@ fn F[U:! type](T:! Z) {
   // CHECK:STDERR: fail_import_error.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `()` to `T.(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = ();
   // CHECK:STDERR:                ^~
-  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+4]]:16: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+4]]:16: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: T.X = ();
   // CHECK:STDERR:                ^~
   // CHECK:STDERR:

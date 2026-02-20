@@ -16,7 +16,7 @@ fn Main() {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:

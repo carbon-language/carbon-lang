@@ -40,7 +40,7 @@ class Empty {
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: class is not defined [ClassIncomplete]
+// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

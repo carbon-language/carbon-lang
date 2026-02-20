@@ -59,7 +59,7 @@ fn F() {
   // CHECK:STDERR: fail_use_incomplete_string.carbon:[[@LINE+7]]:3: error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
   // CHECK:STDERR:   "hello";
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: incomplete_string.carbon:4:1: note: class is not defined [ClassIncomplete]
+  // CHECK:STDERR: incomplete_string.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class String;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:

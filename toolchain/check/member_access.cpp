@@ -250,10 +250,11 @@ static auto PerformImplLookup(
         Diagnostics::ContextScope scope(&context.emitter(),
                                         missing_impl_diagnostic_context);
         // TODO: Pass in the expression whose type we are printing.
-        CARBON_DIAGNOSTIC(MissingImplInMemberAccessWithContext, Error,
+        // TODO: Rename to `MissingImplInMemberAccessWithContext`.
+        CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Error,
                           "type {1} does not implement interface {0}",
                           SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(loc_id, MissingImplInMemberAccessWithContext,
+        context.emitter().Emit(loc_id, MissingImplInMemberAccessNote,
                                interface_type_id, self_type_id);
       } else {
         // TODO: Pass in the expression whose type we are printing.

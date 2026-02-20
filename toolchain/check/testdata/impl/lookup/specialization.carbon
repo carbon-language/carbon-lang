@@ -240,7 +240,7 @@ fn F[D:! Y](d: D) {
   // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
   // CHECK:STDERR:
@@ -342,7 +342,7 @@ fn F[U:! type](T:! Z(C)) {
   // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = {} as C;
   // CHECK:STDERR:                ^~~~~~~
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessWithContext]
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: T.X = {} as C;
   // CHECK:STDERR:                ^~~~~~~
   // CHECK:STDERR:

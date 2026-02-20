@@ -112,7 +112,7 @@ class D {}
 // CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE+7]]:19: error: member access into facet of incomplete type `I` [IncompleteTypeInMemberAccessOfFacet]
 // CHECK:STDERR: impl D as I where .T = C;
 // CHECK:STDERR:                   ^~
-// CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE-6]]:1: note: interface is not defined [InterfaceIncomplete]
+// CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:

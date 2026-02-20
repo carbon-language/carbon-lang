@@ -61,7 +61,7 @@ class FailIncomplete;
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+11]]:20: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
 // CHECK:STDERR:                    ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class is not defined [ClassIncomplete]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class FailIncomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
