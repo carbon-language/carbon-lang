@@ -23,17 +23,13 @@ inline constexpr llvm::StringLiteral CrtCopts[] = {CRT_COPTS};
 // breaks.
 //
 // clang-format off
-inline constexpr llvm::StringLiteral BuiltinsGenericSrcs[] = {BUILTINS_GENERIC_SRCS};
-inline constexpr llvm::StringLiteral BuiltinsMacosSrcs[] = {BUILTINS_MACOS_SRCS};
-inline constexpr llvm::StringLiteral BuiltinsBf16Srcs[] = {BUILTINS_BF16_SRCS};
-inline constexpr llvm::StringLiteral BuiltinsTfSrcs[] = {BUILTINS_TF_SRCS};
-inline constexpr llvm::StringLiteral BuiltinsX86ArchSrcs[] = {BUILTINS_X86_ARCH_SRCS};
-inline constexpr llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {BUILTINS_X86_FP80_SRCS};
 inline constexpr llvm::StringLiteral BuiltinsAarch64Srcs[] = {BUILTINS_AARCH64_SRCS};
 // NOLINTNEXTLINE(readability-identifier-naming)
 inline constexpr llvm::StringLiteral BuiltinsX86_64Srcs[] = {BUILTINS_X86_64_SRCS};
 inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {BUILTINS_I386_SRCS};
 // clang-format on
+
+inline constexpr llvm::StringLiteral BuiltinsCopts[] = {BUILTINS_COPTS};
 
 inline constexpr llvm::StringLiteral LibcxxLinuxSrcs[] = {LIBCXX_LINUX_SRCS};
 inline constexpr llvm::StringLiteral LibcxxMacosSrcs[] = {LIBCXX_MACOS_SRCS};
