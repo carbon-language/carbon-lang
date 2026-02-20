@@ -405,31 +405,6 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   return out;
 }
 
-// Coerces an inst to a different but compatible kind. The intended usage looks
-// like `UnsafeCastKindVia<InstCat>::To<DestInst>(source)`, which coerces a
-// typed inst `source` to a `DestInst` value whose fields are populated from the
-// corresponding fields of `source`. The correspondence between the two inst
-// types is defined by the inst category `InstCat`, which they must both be
-// members of. This coercion may discard information, but will not invent
-// information that wasn't in the source value (so `SourceType` must not have
-// more arguments than `DestType`).
-template <typename InstCat>
-  requires requires { typename InstCat::CategoryInfo; }
-struct UnsafeCastKindVia {
-  template <typename DestInst, typename SourceInst>
-    requires Internal::InstLikeType<DestInst> &&
-             Internal::InstLikeType<SourceInst> &&
-             (Internal::InstLikeTypeInfo<InstCat>::IsKind(DestInst::Kind)) &&
-             (Internal::InstLikeTypeInfo<InstCat>::IsKind(SourceInst::Kind)) &&
-             (Internal::InstLikeTypeInfo<SourceInst>::NumArgs >=
-              Internal::InstLikeTypeInfo<DestInst>::NumArgs)
-  static auto To(SourceInst source) -> DestInst {
-    auto as_category = Inst(source).As<InstCat>();
-    as_category.kind = DestInst::Kind;
-    return Inst(as_category).As<DestInst>();
-  }
-};
-
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {

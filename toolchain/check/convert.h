@@ -15,6 +15,9 @@ namespace Carbon::Check {
 // Description of the target of a conversion.
 struct ConversionTarget {
   enum Kind : int8_t {
+    // Perform no conversion. The source expression must already have type
+    // `type_id`.
+    NoOp,
     // Convert to a value of type `type_id`.
     Value,
     // Convert to either a value or a reference of type `type_id`.

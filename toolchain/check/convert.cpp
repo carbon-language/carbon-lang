@@ -818,6 +818,7 @@ static auto IsValidExprCategoryForConversionTarget(
       return category == SemIR::ExprCategory::DurableRef;
     case ConversionTarget::CppThunkRef:
       return category == SemIR::ExprCategory::EphemeralRef;
+    case ConversionTarget::NoOp:
     case ConversionTarget::ExplicitAs:
     case ConversionTarget::ExplicitUnsafeAs:
       return true;
@@ -1726,6 +1727,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       context.emitter().Emit(expr_id, UseOfNonExprAsValue);
     }
     return SemIR::ErrorInst::InstId;
+  }
+
+  if (target.kind == ConversionTarget::NoOp) {
+    CARBON_CHECK(target.type_id == sem_ir.insts().Get(expr_id).type_id());
+    return expr_id;
   }
 
   // Diagnose unnecessary `ref` tags early, so that they're not obscured by
