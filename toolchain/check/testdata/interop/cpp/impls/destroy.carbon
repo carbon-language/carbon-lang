@@ -105,7 +105,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn AmbiguousDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+23]]:10: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+20]]:10: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var a: Cpp.AmbiguousDestructor = {};
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
@@ -124,9 +124,6 @@ fn AmbiguousDestroy() {
   // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
   // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:10: note: while completing C++ type `Cpp.AmbiguousDestructorT` [InCppTypeCompletion]
-  // CHECK:STDERR:   var a: Cpp.AmbiguousDestructor = {};
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var a: Cpp.AmbiguousDestructor = {};
 }
@@ -135,7 +132,7 @@ fn DeletedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR:    42 |   var a: Cpp.DeletedDestructor = {};
   // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-33]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
   // CHECK:STDERR:       |   ^
@@ -147,7 +144,7 @@ fn PrivateDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var a: Cpp.PrivateDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-45]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-42]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~PrivateDestructor();
   // CHECK:STDERR:   ^
@@ -159,7 +156,7 @@ fn ProtectedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var a: Cpp.ProtectedDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-57]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-54]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~ProtectedDestructor();
   // CHECK:STDERR:   ^

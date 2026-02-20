@@ -16,13 +16,9 @@ auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
     printed_diagnostic_ = true;
   }
 
-  auto message_level = [&, first = true, diag_level = diagnostic.level](
-                           const Message& m) mutable {
-    if (m.level == Level::LocationInfo) {
-      return m.level;
-    }
-    if (std::exchange(first, false)) {
-      return diag_level;
+  auto message_level = [&, first = true](const Message& m) mutable {
+    if (m.level >= Level::Context && std::exchange(first, false)) {
+      return diagnostic.level;
     }
     return std::min(Level::Note, m.level);
   };

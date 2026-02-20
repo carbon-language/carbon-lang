@@ -65,7 +65,7 @@ import Cpp library "instantiation_error.h";
 //@dump-sem-ir-begin
 var x: Cpp.XY.r#type = 0;
 
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+15]]:8: error: member access into incomplete class `Cpp.X` [QualifiedExprInIncompleteClassScope]
+// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+12]]:8: error: member access into incomplete class `Cpp.X` [QualifiedExprInIncompleteClassScope]
 // CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
 // CHECK:STDERR:        ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
@@ -76,9 +76,6 @@ var x: Cpp.XY.r#type = 0;
 // CHECK:STDERR: ./instantiation_error.h:2:29: note: in instantiation of template class 'X<int>' requested here [CppInteropParseNote]
 // CHECK:STDERR:     2 | template<typename T> struct X {
 // CHECK:STDERR:       |                             ^
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+4]]:8: note: while completing C++ type `Cpp.X` [InCppTypeCompletion]
-// CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
-// CHECK:STDERR:        ^~~~~~~~~~~~~
 // CHECK:STDERR:
 var y: Cpp.Xint.r#type = 0;
 //@dump-sem-ir-end
