@@ -127,7 +127,7 @@ static auto HandleAnyBindingPatternType(Context& context,
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
   if (node_kind == Parse::FormBindingPattern::Kind) {
-    auto as_form = ExprAsForm(context, node_id, original_inst_id);
+    auto as_form = FormExprAsForm(context, node_id, original_inst_id);
     return {.node_id = node_id,
             .inst_id = as_form.form_inst_id,
             .type_component_id = as_form.type_component_id};

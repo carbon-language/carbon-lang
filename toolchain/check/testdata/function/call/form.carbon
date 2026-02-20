@@ -50,6 +50,13 @@ fn G() {
   //@dump-sem-ir-end
 }
 
+// --- type_component_needs_conversion.carbon
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+fn F(x:? form(ref ()));
+//@dump-sem-ir-end
+
 // --- fail_param_form_not_constant.carbon
 library "[[@TEST_NAME]]";
 
@@ -334,6 +341,37 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- type_component_needs_conversion.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.9f9: Core.Form = ref_form %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc4_6.1: %pattern_type = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type = form_param_pattern %.loc4_6.1, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: ref %empty_tuple.type = ref_param call_param0
+// CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.9f9] {
+// CHECK:STDOUT:       %.loc4_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc4_20.2: type = converted %.loc4_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc4_15.2: Core.Form = ref_form %.loc4_20.2 [concrete = constants.%.9f9]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4_6.2: ref %empty_tuple.type = form_binding x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%x.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_ref_return_form.carbon
 // CHECK:STDOUT:

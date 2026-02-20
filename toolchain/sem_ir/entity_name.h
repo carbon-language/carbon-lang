@@ -57,8 +57,8 @@ struct EntityName : public Printable<EntityName> {
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
 
-  // The declared form of the binding. This is only guaranteed to be set for
-  // `:?` bindings.
+  // The declared form of the binding. This is guaranteed to be set for
+  // `:?` bindings, and may be set for other binding kinds as well.
   //
   // TODO: Unify this with the previous two fields, which also represent form
   // information.

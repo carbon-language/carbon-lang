@@ -142,7 +142,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
       .type_component_inst_id = SemIR::TypeInstId::None,
       .type_component_id = SemIR::TypeId::None};
   if (signature.return_type_id.has_value()) {
-    return_form = ExprAsReturnForm(
+    return_form = ReturnExprAsForm(
         context, loc_id,
         context.types().GetTypeInstId(signature.return_type_id));
     return_patterns_id = AddReturnPatterns(context, loc_id, return_form);

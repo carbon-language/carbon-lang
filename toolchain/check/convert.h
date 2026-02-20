@@ -185,20 +185,21 @@ inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose = true) -> TypeExpr;
 
-// Converts an expression for use as a form.
+// Converts an expression in a form position for use as a form.
 //
-// `ExprAsReturnForm` should be used instead if the expression is in the
-// return-type position, because this function does not use the special-case
-// syntax and semantics that apply there.
+// Note that the right-hand side of a `->` return type declaration is not
+// a form position for this purpose, because it uses a special syntax to specify
+// forms. `ReturnExprAsForm` should be used instead in that case.
 //
 // `diagnose` has the same effect as in `ExprAsType`.
-auto ExprAsForm(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
-                bool diagnose = true) -> Context::FormExpr;
+auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
+                    SemIR::InstId value_id, bool diagnose = true)
+    -> Context::FormExpr;
 
 // Evaluates an expression in the return-type position (following `->`, not
 // `->?`) for use as a form, following the special-case language rules for
 // evaluating an expression in that position.
-auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
+auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr;
 
 // Handles an expression whose result value is unused.

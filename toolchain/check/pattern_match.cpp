@@ -104,15 +104,17 @@ class MatchContext {
   // TODO: Is there a more principled way for those use cases to share code?
   // TODO: Adjust order of arguments to match DoEmitPatternMatchOffStack.
   template <typename BindingPatternT>
-    requires SameAsOneOf<BindingPatternT, SemIR::RefBindingPattern, SemIR::SymbolicBindingPattern, SemIR::ValueBindingPattern>
+    requires SameAsOneOf<BindingPatternT, SemIR::RefBindingPattern,
+                         SemIR::SymbolicBindingPattern,
+                         SemIR::ValueBindingPattern>
   auto DoEmitPatternMatch(Context& context, BindingPatternT binding_pattern,
                           WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context,
                           SemIR::ValueParamPattern param_pattern,
                           WorkItem entry) -> void;
   template <typename RefParamPatternT>
-    requires std::is_same_v<RefParamPatternT, SemIR::RefParamPattern> ||
-             std::is_same_v<RefParamPatternT, SemIR::VarParamPattern>
+    requires SameAsOneOf<RefParamPatternT, SemIR::RefParamPattern,
+                         SemIR::VarParamPattern>
   auto DoEmitPatternMatch(Context& context, RefParamPatternT param_pattern,
                           WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context,
@@ -273,9 +275,9 @@ auto MatchContext::DoEmitPatternMatchOffStack(Context& context, WorkItem entry,
 }
 
 template <typename BindingPatternT>
-  requires std::is_same_v<BindingPatternT, SemIR::RefBindingPattern> ||
-           std::is_same_v<BindingPatternT, SemIR::SymbolicBindingPattern> ||
-           std::is_same_v<BindingPatternT, SemIR::ValueBindingPattern>
+  requires SameAsOneOf<BindingPatternT, SemIR::RefBindingPattern,
+                       SemIR::SymbolicBindingPattern,
+                       SemIR::ValueBindingPattern>
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       BindingPatternT /*binding_pattern*/,
                                       MatchContext::WorkItem entry) -> void {
@@ -300,15 +302,12 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   auto value_id = SemIR::InstId::None;
   if (kind_ == MatchKind::Local) {
     auto conversion_kind = []() -> ConversionTarget::Kind {
-      if constexpr (std::same_as<BindingPatternT,
-                                 SemIR::SymbolicBindingPattern> ||
-                    std::same_as<BindingPatternT, SemIR::ValueBindingPattern>) {
+      if constexpr (SameAsOneOf<BindingPatternT, SemIR::SymbolicBindingPattern,
+                                SemIR::ValueBindingPattern>) {
         return ConversionTarget::Value;
-      } else if constexpr (std::same_as<BindingPatternT,
-                                        SemIR::RefBindingPattern>) {
-        return ConversionTarget::DurableRef;
       } else {
-        static_assert(false);
+        static_assert(std::same_as<BindingPatternT, SemIR::RefBindingPattern>);
+        return ConversionTarget::DurableRef;
       }
     }();
 
@@ -381,8 +380,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 }
 
 template <typename RefParamPatternT>
-  requires std::is_same_v<RefParamPatternT, SemIR::RefParamPattern> ||
-           std::is_same_v<RefParamPatternT, SemIR::VarParamPattern>
+  requires SameAsOneOf<RefParamPatternT, SemIR::RefParamPattern,
+                       SemIR::VarParamPattern>
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       RefParamPatternT param_pattern,
                                       WorkItem entry) -> void {
@@ -477,17 +476,23 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::FormParamPattern param_pattern,
                                       WorkItem entry) -> void {
-  auto binding_pattern = context.insts().GetAs<SemIR::FormBindingPattern>(
-      param_pattern.subpattern_id);
-  auto form_id =
-      context.entity_names().Get(binding_pattern.entity_name_id).form_id;
-  if (form_id.is_symbolic()) {
-    context.TODO(entry.pattern_id, "Support symbolic form parameters");
-    return;
-  }
-  auto form_inst_id = context.constant_values().GetInstId(form_id);
-  auto form_inst = context.insts().Get(form_inst_id);
-  CARBON_KIND_SWITCH(form_inst) {
+  auto form_kind = [&]() -> SemIR::InstKind {
+    if (param_pattern.subpattern_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::Kind;
+    }
+    auto binding_pattern = context.insts().GetAs<SemIR::FormBindingPattern>(
+        param_pattern.subpattern_id);
+    auto form_id =
+        context.entity_names().Get(binding_pattern.entity_name_id).form_id;
+    if (form_id.is_symbolic()) {
+      context.TODO(entry.pattern_id, "Support symbolic form parameters");
+      return SemIR::ErrorInst::Kind;
+    }
+    auto form_inst_id = context.constant_values().GetInstId(form_id);
+    return context.insts().Get(form_inst_id).kind();
+  }();
+
+  switch (form_kind) {
     case SemIR::InitForm::Kind: {
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
@@ -517,6 +522,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       }
       break;
     }
+    case SemIR::ErrorInst::Kind:
+      // Default to value form for error recovery.
     case SemIR::ValueForm::Kind: {
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
@@ -527,10 +534,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       }
       break;
     }
-    case SemIR::ErrorInst::Kind:
-      break;
     default:
-      CARBON_FATAL("Unexpected form {0}", form_inst);
+      CARBON_FATAL("Unexpected form kind {0}", form_kind);
   }
 }
 
@@ -558,6 +563,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           context, entry,
           SemIR::CoerceKindVia<SemIR::AnyBindingPattern>::To<
               SemIR::ValueBindingPattern>(binding_pattern)));
+      break;
+    case SemIR::ErrorInst::Kind:
       break;
     default:
       CARBON_FATAL("Unexpected form {0}", form_inst);

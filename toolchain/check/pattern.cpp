@@ -54,6 +54,9 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern_kind) {
+    case SemIR::InstKind::FormBindingPattern:
+      bind_name_kind = SemIR::InstKind::FormBinding;
+      break;
     case SemIR::InstKind::RefBindingPattern:
       bind_name_kind = SemIR::InstKind::RefBinding;
       break;
@@ -62,9 +65,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       break;
     case SemIR::InstKind::ValueBindingPattern:
       bind_name_kind = SemIR::InstKind::ValueBinding;
-      break;
-    case SemIR::InstKind::FormBindingPattern:
-      bind_name_kind = SemIR::InstKind::FormBinding;
       break;
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",

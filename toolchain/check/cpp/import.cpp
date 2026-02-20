@@ -1248,9 +1248,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                          orig_ret_type.getAsString()));
-      return {.form_inst_id = SemIR::ErrorInst::InstId,
-              .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
-              .type_component_id = SemIR::ErrorInst::TypeId};
+      return Context::FormExpr::Error;
     }
     Context::FormExpr result = {
         .form_inst_id = is_reference ? make_ref_form(orig_type_inst_id)
