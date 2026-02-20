@@ -82,12 +82,10 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo*;
 
-// Converts an `APValue` to a Carbon constant. If successful, returns
-// the new Carbon constant `InstId`. Returns `ErrorInst::InstId` for
-// unsupported types.
+// Converts an `APValue` to a Carbon `ConstantId`.
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
-    -> SemIR::InstId;
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

@@ -2080,39 +2080,29 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 // TODO: dedup with code in `MapConstant` and `TryEvaluateMacroToConstant`.
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
-    -> SemIR::InstId {
-  auto cpp_loc = GetCppLocation(context, loc_id);
-  SemIR::ImportIRInstId imported_loc_id =
-      AddImportIRInst(context.sem_ir(), cpp_loc);
-
+    -> SemIR::ConstantId {
   SemIR::TypeId type_id = MapType(context, loc_id, type).type_id;
   if (!type_id.has_value()) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ConstantId::NotConstant;
   }
 
-  SemIR::InstId inst_id = SemIR::InstId::None;
   if (ap_value.isInt()) {
     int64_t value = ap_value.getInt().getExtValue();
+
     if (type->isBooleanType()) {
-      inst_id = AddInstInNoBlock(
-          context,
-          MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
-              context, imported_loc_id,
-              {.type_id = type_id, .value = SemIR::BoolValue::From(value)}));
+      return TryEvalInst(
+          context, SemIR::BoolLiteral{.type_id = type_id,
+                                      .value = SemIR::BoolValue::From(value)});
+
     } else {
       IntId int_id = context.ints().Add(value);
-      inst_id = AddInstInNoBlock(context,
-                                 MakeImportedLocIdAndInst<SemIR::IntValue>(
-                                     context, imported_loc_id,
-                                     {.type_id = type_id, .int_id = int_id}));
+      return TryEvalInst(context,
+                         SemIR::IntValue{.type_id = type_id, .int_id = int_id});
     }
   } else {
     // TODO: support other types.
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ConstantId::NotConstant;
   }
-
-  context.imports().push_back(inst_id);
-  return inst_id;
 }
 
 // Maps a Clang literal expression to a Carbon constant.

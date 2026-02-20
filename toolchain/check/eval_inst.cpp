@@ -145,11 +145,10 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // If the C++ global is constant, map it to a Carbon constant.
     if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
       if (const auto* ap_value = var_decl->getEvaluatedValue()) {
-        auto const_inst_id = MapAPValueToConstant(
-            context, SemIR::LocId(inst_id), *ap_value, var_decl->getType());
-        if (const_inst_id != SemIR::ErrorInst::InstId) {
-          return ConstantEvalResult::NewSamePhase(
-              context.insts().Get(const_inst_id));
+        auto const_id = MapAPValueToConstant(context, SemIR::LocId(inst_id),
+                                             *ap_value, var_decl->getType());
+        if (const_id.has_value() && const_id.is_constant()) {
+          return ConstantEvalResult::Existing(const_id);
         }
       }
     }
