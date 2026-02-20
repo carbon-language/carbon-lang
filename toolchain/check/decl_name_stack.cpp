@@ -336,7 +336,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                           "cannot declare a member of incomplete class {0}",
                           SemIR::TypeId);
         builder.Context(loc_id, QualifiedDeclInIncompleteClassScope,
-                     context.classes().Get(class_id).self_type_id);
+                        context.classes().Get(class_id).self_type_id);
       });
   DiagnoseIncompleteClass(context, class_id);
 }

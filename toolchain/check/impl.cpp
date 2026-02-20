@@ -784,7 +784,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                             "facet type {0} cannot be identified in `impl as`",
                             InstIdAsType);
           builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,
-                       constraint_id);
+                          constraint_id);
         });
     identified_id = RequireIdentifiedFacetType(
         context, context.constant_values().Get(self_id), *facet_type);

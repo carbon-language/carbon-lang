@@ -482,7 +482,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
               "looking up a C++ operator with incomplete operand type {0}",
               SemIR::TypeId);
           builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                       arg_type_id);
+                          arg_type_id);
         })) {
       return SemIR::ErrorInst::InstId;
     }

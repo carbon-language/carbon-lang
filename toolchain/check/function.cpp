@@ -381,7 +381,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
               "parameter has incomplete type {0} in function definition",
               TypeOfInstId);
           builder.Context(param_ref_id, IncompleteTypeInFunctionParam,
-                       param_ref_id);
+                          param_ref_id);
         });
   }
 
