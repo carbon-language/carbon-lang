@@ -100,19 +100,20 @@ TEST_F(EmitterTest, EmitContext) {
 }
 
 TEST_F(EmitterTest, EmitSoftContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, Context, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
           Diagnostics::Level::Warning,
-          ElementsAre(IsDiagnosticMessage(
-                          Diagnostics::Kind::TestDiagnosticSoftContext,
-                          Diagnostics::Level::Context, 1, 2, "soft context"),
-                      IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                          Diagnostics::Level::Warning, 1, 1,
-                                          "simple warning")))));
-  Diagnostics::SoftContextScope soft_scope(&emitter_, [&](auto& builder) {
+          ElementsAre(
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
+                                  Diagnostics::Level::SoftContext, 1, 2,
+                                  "soft context"),
+              IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                                  Diagnostics::Level::Warning, 1, 1,
+                                  "simple warning")))));
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
     builder.Context(2, TestDiagnosticSoftContext);
   });
   emitter_.Emit(1, TestDiagnostic);
@@ -120,7 +121,7 @@ TEST_F(EmitterTest, EmitSoftContext) {
 
 TEST_F(EmitterTest, EmitContextAndSoftContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, Context, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -137,7 +138,7 @@ TEST_F(EmitterTest, EmitContextAndSoftContext) {
   });
   // This SoftContext does not produce a message, since the Context supersedes
   // it.
-  Diagnostics::SoftContextScope soft_scope(&emitter_, [&](auto& builder) {
+  Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
     builder.Context(2, TestDiagnosticSoftContext);
   });
   emitter_.Emit(1, TestDiagnostic);
