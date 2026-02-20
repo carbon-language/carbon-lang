@@ -21,9 +21,6 @@ constraint J(N:! i32) {
   require impls K(array(i32, N));
 }
 
-// TODO: This should be be a "facet type cannot be identified" diagnostic, but
-// we need to plumb that diagnoser through the construction of the specific.
-//
 // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
@@ -44,9 +41,6 @@ constraint J(N:! i32) {
   extend require impls K(array(i32, N));
 }
 
-// TODO: This should be be a "facet type cannot be identified" diagnostic, but
-// we need to plumb that diagnoser through the construction of the specific.
-//
 // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
