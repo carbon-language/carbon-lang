@@ -98,4 +98,18 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
+    -> bool {
+  return context.TODO(node_id, "struct pattern");
+}
+
+auto HandleParseNode(Context& context, Parse::StructPatternFieldId node_id)
+    -> bool {
+  return context.TODO(node_id, "struct pattern");
+}
+
+auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
+  return context.TODO(node_id, "struct pattern");
+}
+
 }  // namespace Carbon::Check

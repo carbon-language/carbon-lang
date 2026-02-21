@@ -1377,6 +1377,34 @@ struct StructTypeLiteral {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// Struct patterns
+// ---------------
+
+// `{`
+using StructPatternStart =
+    LeafNode<NodeKind::StructPatternStart, Lex::OpenCurlyBraceTokenIndex>;
+
+// `.field = pattern` inside a struct pattern.
+struct StructPatternField {
+  static constexpr auto Kind = NodeKind::StructPatternField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId designator;
+  Lex::EqualTokenIndex token;
+  AnyPatternId pattern;
+};
+
+// A struct pattern: `{.x = a: i32, .y = b: i32}`.
+struct StructPattern {
+  static constexpr auto Kind =
+      NodeKind::StructPattern.Define({.category = NodeCategory::Pattern,
+                                      .bracketed_by = StructPatternStart::Kind});
+
+  StructPatternStartId left_brace;
+  CommaSeparatedList<StructPatternFieldId, PatternListCommaId> fields;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
 // `class` declarations and definitions
 // ------------------------------------
 

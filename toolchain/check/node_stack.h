@@ -418,6 +418,7 @@ class NodeStack {
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
+      case Parse::NodeKind::StructPatternField:
       case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
@@ -469,6 +470,7 @@ class NodeStack {
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
+      case Parse::NodeKind::StructPatternStart:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
       case Parse::NodeKind::TemplateBindingName:
