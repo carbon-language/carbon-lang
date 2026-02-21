@@ -1,0 +1,72 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Publishes the Carbon Language VSCode extension to both the VS Code
+# Marketplace and Open VSX Registry (open-vsx.org).
+
+name: Publish VSCode Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_targets:
+        description: 'Where to publish'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - marketplace-only
+          - open-vsx-only
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: utils/vscode
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            github.com:443
+            registry.npmjs.org:443
+            marketplace.visualstudio.com:443
+            open-vsx.org:443
+
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build VSIX package
+        run: npx vsce package -o carbon.vsix
+
+      - name: Publish to VS Code Marketplace
+        if: >-
+          inputs.publish_targets == 'both' ||
+          inputs.publish_targets == 'marketplace-only'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        if: >-
+          inputs.publish_targets == 'both' ||
+          inputs.publish_targets == 'open-vsx-only'
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish carbon.vsix --pat "$OVSX_PAT"

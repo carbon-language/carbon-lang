@@ -83,6 +83,7 @@
     "@vscode/vsce": "^2.27.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.13.0",
+    "ovsx": "^0.10.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0"
   },

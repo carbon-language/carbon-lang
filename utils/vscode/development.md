@@ -50,6 +50,24 @@ in your `$PATH` environment variable to use it.
     3. Next to the extension name, click the "..." and select "Update".
     4. Select the `carbon.vsix` file.
 
+-   Build and publish to Open VSX manually:
+
+    1. `npm install && vsce package -o carbon.vsix`
+    2. `npx ovsx publish carbon.vsix --pat <your-open-vsx-token>`
+
+    Note: The `carbon-lang` namespace must exist on open-vsx.org. Create it
+    with: `npx ovsx create-namespace carbon-lang --pat <your-token>`
+
+-   Publish via CI (recommended):
+
+    1. Go to the
+       [Publish VSCode Extension](https://github.com/carbon-language/carbon-lang/actions/workflows/publish_vscode_extension.yaml)
+       workflow in GitHub Actions.
+    2. Click "Run workflow" and select the publish target (both, marketplace
+       only, or Open VSX only).
+    3. The workflow requires two repository secrets: `VSCE_PAT` (VS Code
+       Marketplace token) and `OVSX_PAT` (Open VSX token).
+
 ## Development
 
 1.  `bazel build //toolchain` in project root.
