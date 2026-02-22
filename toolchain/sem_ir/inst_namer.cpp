@@ -646,8 +646,10 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope)
 
   auto scope_prefix = GetNameForParentNameScope(observe.parent_scope_id);
 
-  scope.name = globals_.AllocateName(
-      *this, observe_loc, llvm::formatv("{0}.observe", scope_prefix));
+  scope.name =
+      globals_.AllocateName(*this, observe_loc,
+                            llvm::formatv("{0}{1}observe", scope_prefix,
+                                          scope_prefix.empty() ? "" : "."));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::ObserveDecl>(observe.decl_id);
   AddBlockLabel(scope_id, decl.operations_id, "observe", observe_loc);
@@ -1306,6 +1308,20 @@ auto InstNamer::NamingContext::NameInst() -> void {
     // The namespace is specified here due to the name conflict.
     case CARBON_KIND(SemIR::Namespace inst): {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
+      return;
+    }
+    case CARBON_KIND(ObserveDecl inst): {
+      AddEntityNameAndMaybePush(inst.observe_id, ".decl");
+      auto observe_scope_id = inst_namer_->GetScopeFor(inst.observe_id);
+      PushBlockId(observe_scope_id, inst.operations_id);
+      return;
+    }
+    case ObserveEquivalent::Kind: {
+      AddInstName("eq");
+      return;
+    }
+    case ObserveImpls::Kind: {
+      AddInstName("impls");
       return;
     }
     case CARBON_KIND_ANY(AnyParam, inst): {

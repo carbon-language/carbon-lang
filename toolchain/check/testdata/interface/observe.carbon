@@ -533,7 +533,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:     %c: @Transitive.TakesC.%as_type (%as_type.ecc) = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc4: %Transitive.assoc_type = assoc_entity element4, %Transitive.TakesC.decl [concrete = constants.%assoc4]
-// CHECK:STDOUT:   observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc16_11, <unexpected>.inst{{[0-9A-F]+}}.loc16_11, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_11, <unexpected>.inst{{[0-9A-F]+}}.loc16_11, <unexpected>.inst{{[0-9A-F]+}}.loc16_13, <unexpected>.inst{{[0-9A-F]+}}.loc16_21, <unexpected>.inst{{[0-9A-F]+}}.loc16_21, <unexpected>.inst{{[0-9A-F]+}}.loc16_21, <unexpected>.inst{{[0-9A-F]+}}.loc16_21, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_16, <unexpected>.inst{{[0-9A-F]+}}.loc16_18)
+// CHECK:STDOUT:   %Transitive.observe.decl = observe_decl @Transitive.observe, (@Transitive.observe.%impl.elem0, @Transitive.observe.%A.ref, @Transitive.observe.%impl.elem1, @Transitive.observe.%B.ref, @Transitive.observe.%B.as_type.loc16_16.1, @Transitive.observe.%.loc16_16.1, @Transitive.observe.%A.as_type, @Transitive.observe.%.loc16_11, @Transitive.observe.%eq.loc16_13, @Transitive.observe.%impl.elem2, @Transitive.observe.%C.ref, @Transitive.observe.%C.as_type, @Transitive.observe.%.loc16_21, @Transitive.observe.%B.as_type.loc16_16.2, @Transitive.observe.%.loc16_16.2, @Transitive.observe.%eq.loc16_18)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1070,7 +1070,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type.d92)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc10_11, <unexpected>.inst{{[0-9A-F]+}}.loc10_19, <unexpected>.inst{{[0-9A-F]+}}.loc10_11, <unexpected>.inst{{[0-9A-F]+}}.loc10_11, <unexpected>.inst{{[0-9A-F]+}}.loc10_13)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%B.ref, @observe.%T.as_type, @observe.%.loc10, @observe.%impls)
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%T.binding.as_type (%T.binding.as_type.d92) = name_ref x, %x
 // CHECK:STDOUT:     return
@@ -1360,7 +1360,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type.d92), %y.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc12_11, <unexpected>.inst{{[0-9A-F]+}}.loc12_16, <unexpected>.inst{{[0-9A-F]+}}.loc12_16, <unexpected>.inst{{[0-9A-F]+}}.loc12_16, <unexpected>.inst{{[0-9A-F]+}}.loc12_11, <unexpected>.inst{{[0-9A-F]+}}.loc12_11, <unexpected>.inst{{[0-9A-F]+}}.loc12_13, <unexpected>.inst{{[0-9A-F]+}}.loc12_24, <unexpected>.inst{{[0-9A-F]+}}.loc12_16, <unexpected>.inst{{[0-9A-F]+}}.loc12_16, <unexpected>.inst{{[0-9A-F]+}}.loc12_18)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%U.ref, @observe.%U.as_type.loc12_16.1, @observe.%.loc12_16.1, @observe.%T.as_type, @observe.%.loc12_11, @observe.%eq, @observe.%B.ref, @observe.%U.as_type.loc12_16.2, @observe.%.loc12_16.2, @observe.%impls)
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%T.binding.as_type (%T.binding.as_type.d92) = name_ref x, %x
 // CHECK:STDOUT:     %RequiresC.ref: %RequiresC.type = name_ref RequiresC, file.%RequiresC.decl [concrete = constants.%RequiresC]
@@ -1578,7 +1578,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type), %y.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_13)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%U.ref, @observe.%U.as_type, @observe.%.loc9_16, @observe.%T.as_type, @observe.%.loc9_11, @observe.%eq)
 // CHECK:STDOUT:     %InnerF.decl: %InnerF.type = fn_decl @InnerF [concrete = constants.%InnerF] {
 // CHECK:STDOUT:       %y.patt: @InnerF.%pattern_type (%pattern_type.2d9) = value_binding_pattern y [concrete]
 // CHECK:STDOUT:       %y.param_patt: @InnerF.%pattern_type (%pattern_type.2d9) = value_param_pattern %y.patt, call_param0 [concrete]
@@ -1843,7 +1843,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @InnerF.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_15)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%U.ref, @observe.%U.as_type, @observe.%.loc11_18, @observe.%T.as_type, @observe.%.loc11_13, @observe.%eq)
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %y.ref: @InnerF.%U.binding.as_type (%U.binding.as_type) = name_ref y, %y
 // CHECK:STDOUT:     %.loc13_16.1: %A.type = as_compatible constants.%T [symbolic = %T (constants.%T)]
@@ -2055,7 +2055,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %y: @InnerF.%U.binding.as_type (%U.binding.as_type) = value_binding y, %y.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc21_11, <unexpected>.inst{{[0-9A-F]+}}.loc21_16, <unexpected>.inst{{[0-9A-F]+}}.loc21_16, <unexpected>.inst{{[0-9A-F]+}}.loc21_16, <unexpected>.inst{{[0-9A-F]+}}.loc21_11, <unexpected>.inst{{[0-9A-F]+}}.loc21_11, <unexpected>.inst{{[0-9A-F]+}}.loc21_13)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%U.ref, @observe.%U.as_type, @observe.%.loc21_16, @observe.%T.as_type, @observe.%.loc21_11, @observe.%eq)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2282,7 +2282,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @InnerF.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_18, <unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_13, <unexpected>.inst{{[0-9A-F]+}}.loc11_15)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%U.ref, @observe.%U.as_type, @observe.%.loc11_18, @observe.%T.as_type, @observe.%.loc11_13, @observe.%eq)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -2472,7 +2472,7 @@ fn F[T:! A](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type), %y.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     observe_decl @<null name>, (<unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_16, <unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_11, <unexpected>.inst{{[0-9A-F]+}}.loc9_13)
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe, (@observe.%T.ref, @observe.%V.ref, @observe.%V.as_type, @observe.%.loc9_16, @observe.%T.as_type, @observe.%.loc9_11, @observe.%eq)
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %y.ref: @F.%U.binding.as_type (%U.binding.as_type) = name_ref y, %y
 // CHECK:STDOUT:     return
