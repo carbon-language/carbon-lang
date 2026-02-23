@@ -476,28 +476,27 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::FormParamPattern param_pattern,
                                       WorkItem entry) -> void {
-  auto form_kind = [&]() -> SemIR::InstKind {
-    if (param_pattern.subpattern_id == SemIR::ErrorInst::InstId) {
-      return SemIR::ErrorInst::Kind;
-    }
+  SemIR::InstKind form_kind = SemIR::ErrorInst::Kind;
+  if (param_pattern.subpattern_id != SemIR::ErrorInst::InstId) {
     auto binding_pattern = context.insts().GetAs<SemIR::FormBindingPattern>(
         param_pattern.subpattern_id);
     auto form_id =
         context.entity_names().Get(binding_pattern.entity_name_id).form_id;
     if (form_id.is_symbolic()) {
       context.TODO(entry.pattern_id, "Support symbolic form parameters");
-      return SemIR::ErrorInst::Kind;
+      form_kind = SemIR::ErrorInst::Kind;
+    } else {
+      auto form_inst_id = context.constant_values().GetInstId(form_id);
+      form_kind = context.insts().Get(form_inst_id).kind();
     }
-    auto form_inst_id = context.constant_values().GetInstId(form_id);
-    return context.insts().Get(form_inst_id).kind();
-  }();
+  }
 
   switch (form_kind) {
     case SemIR::InitForm::Kind: {
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
-              SemIR::CoerceKindVia<SemIR::AnyVarPattern>::To<SemIR::VarPattern>(
-                  param_pattern))) {
+              SemIR::UnsafeCastKindVia<SemIR::AnyVarPattern>::To<
+                  SemIR::VarPattern>(param_pattern))) {
         entry.scrutinee_id = new_entry->scrutinee_id;
       } else {
         CARBON_FATAL("VarPattern should always add a WorkItem");
@@ -505,7 +504,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
-              SemIR::CoerceKindVia<SemIR::AnyParamPattern>::To<
+              SemIR::UnsafeCastKindVia<SemIR::AnyParamPattern>::To<
                   SemIR::VarParamPattern>(param_pattern))) {
         CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
         AddWork(*new_entry);
@@ -515,7 +514,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case SemIR::RefForm::Kind: {
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
-              SemIR::CoerceKindVia<SemIR::AnyParamPattern>::To<
+              SemIR::UnsafeCastKindVia<SemIR::AnyParamPattern>::To<
                   SemIR::RefParamPattern>(param_pattern))) {
         CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
         AddWork(*new_entry);
@@ -527,7 +526,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case SemIR::ValueForm::Kind: {
       if (auto new_entry = DoEmitPatternMatchOffStack(
               context, entry,
-              SemIR::CoerceKindVia<SemIR::AnyParamPattern>::To<
+              SemIR::UnsafeCastKindVia<SemIR::AnyParamPattern>::To<
                   SemIR::ValueParamPattern>(param_pattern))) {
         CARBON_CHECK(new_entry->pattern_id == param_pattern.subpattern_id);
         AddWork(*new_entry);
@@ -555,13 +554,13 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case SemIR::RefForm::Kind:
       CARBON_CHECK(!DoEmitPatternMatchOffStack(
           context, entry,
-          SemIR::CoerceKindVia<SemIR::AnyBindingPattern>::To<
+          SemIR::UnsafeCastKindVia<SemIR::AnyBindingPattern>::To<
               SemIR::RefBindingPattern>(binding_pattern)));
       break;
     case SemIR::ValueForm::Kind:
       CARBON_CHECK(!DoEmitPatternMatchOffStack(
           context, entry,
-          SemIR::CoerceKindVia<SemIR::AnyBindingPattern>::To<
+          SemIR::UnsafeCastKindVia<SemIR::AnyBindingPattern>::To<
               SemIR::ValueBindingPattern>(binding_pattern)));
       break;
     case SemIR::ErrorInst::Kind:

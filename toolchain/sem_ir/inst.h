@@ -406,8 +406,8 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 }
 
 // Coerces an inst to a different but compatible kind. The intended usage looks
-// like `CoerceKindVia<InstCat>::To<DestInst>(source)`, which coerces a typed
-// inst `source` to a `DestInst` value whose fields are populated from the
+// like `UnsafeCastKindVia<InstCat>::To<DestInst>(source)`, which coerces a
+// typed inst `source` to a `DestInst` value whose fields are populated from the
 // corresponding fields of `source`. The correspondence between the two inst
 // types is defined by the inst category `InstCat`, which they must both be
 // members of. This coercion may discard information, but will not invent
@@ -415,7 +415,7 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // more arguments than `DestType`).
 template <typename InstCat>
   requires requires { typename InstCat::CategoryInfo; }
-struct CoerceKindVia {
+struct UnsafeCastKindVia {
   template <typename DestInst, typename SourceInst>
     requires Internal::InstLikeType<DestInst> &&
              Internal::InstLikeType<SourceInst> &&

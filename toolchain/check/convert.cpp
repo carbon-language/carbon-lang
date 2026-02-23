@@ -2010,15 +2010,15 @@ static auto DiagnoseTypeExprEvaluationFailure(Context& context,
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
-  auto type_inst_id =
+  auto type_as_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::InstId) {
+  if (type_as_inst_id == SemIR::ErrorInst::InstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }
 
-  auto type_const_id = context.constant_values().Get(type_inst_id);
-  if (!type_const_id.is_constant()) {
+  auto type_as_const_id = context.constant_values().Get(type_as_inst_id);
+  if (!type_as_const_id.is_constant()) {
     if (diagnose) {
       DiagnoseTypeExprEvaluationFailure(context, loc_id);
     }
@@ -2026,8 +2026,9 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
             .type_id = SemIR::ErrorInst::TypeId};
   }
 
-  return {.inst_id = context.types().GetAsTypeInstId(type_inst_id),
-          .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
+  return {
+      .inst_id = context.types().GetAsTypeInstId(type_as_inst_id),
+      .type_id = context.types().GetTypeIdForTypeConstantId(type_as_const_id)};
 }
 
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
