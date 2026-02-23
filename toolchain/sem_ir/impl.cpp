@@ -23,7 +23,7 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   if (auto facet_type =
           sem_ir_.types().TryGetAs<FacetType>(facet_type_type_id)) {
     auto identified_id = sem_ir_.identified_facet_types().Lookup(
-        {facet_type->facet_type_id, self_const_id});
+        {facet_type->facet_type_id, self_const_id, -1});
     if (identified_id.has_value()) {
       const auto& identified =
           sem_ir_.identified_facet_types().Get(identified_id);

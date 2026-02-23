@@ -822,8 +822,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
-    -> SemIR::SpecificId {
+                               SemIR::ConstantId self_facet,
+                               bool resolve_definition) -> SemIR::SpecificId {
   ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
                                          generic_with_self_id,
                                          specific_without_self_id);
@@ -846,7 +846,9 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   }
 
   auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
-  ResolveSpecificDefinition(context, loc_id, specific_id);
+  if (resolve_definition) {
+    ResolveSpecificDefinition(context, loc_id, specific_id);
+  }
   return specific_id;
 }
 

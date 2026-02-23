@@ -153,7 +153,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
+                               SemIR::ConstantId self_facet,
+                               bool resolve_definition = true)
     -> SemIR::SpecificId;
 
 // Copy the arguments of a specific into the context of another generic. The

@@ -16,7 +16,6 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
-#include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -25,6 +24,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -333,25 +333,21 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 // names the query interface in its facet type. Note that `query_self_inst_id`
 // is allowed to be a non-canonical facet value in order to find a concrete
 // witness, so it's not referenced as a constant value.
-static auto LookupImplWitnessInSelfFacetValue(
+static auto LookupImplWitnessInQuerySelfFacetValue(
     Context& context, SemIR::LocId loc_id,
     SemIR::InstId self_facet_value_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> EvalImplLookupResult {
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
+  auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
       context.insts().Get(self_facet_value_inst_id).type_id());
-  if (!facet_type) {
+  if (!self_facet_type) {
     return EvalImplLookupResult::MakeNone();
   }
 
   auto self_facet_value_const_id =
       context.constant_values().Get(self_facet_value_inst_id);
 
-  // The position of the interface in `required_impls()` is also the
-  // position of the witness for that interface in `FacetValue`. The
-  // `FacetValue` witnesses are the output of an impl lookup, which finds and
-  // returns witnesses in the same order.
   auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, self_facet_value_const_id, *facet_type,
+      context, loc_id, self_facet_value_const_id, *self_facet_type,
       [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetTypeOfQuerySelf, Context,
                           "facet type of value {0} can not be identified",
@@ -376,10 +372,15 @@ static auto LookupImplWitnessInSelfFacetValue(
   if (it == facet_type_req_impls.end()) {
     return EvalImplLookupResult::MakeNone();
   }
-  auto index = (*it).index();
 
   if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
           self_facet_value_inst_id)) {
+    // For the identified facet type of a `FacetValue`'s type, the position of
+    // the interface in `required_impls()` is also the position of the witness
+    // for that interface in `FacetValue`. The `FacetValue` witnesses are the
+    // output of an impl lookup, which finds and returns witnesses in the same
+    // order.
+    auto index = (*it).index();
     auto witness_id =
         context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
     if (context.insts().Is<SemIR::ImplWitness>(witness_id)) {
@@ -909,7 +910,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
 
-  auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
+  auto facet_lookup_result = LookupImplWitnessInQuerySelfFacetValue(
       context, loc_id, self_facet_value_inst_id, query_specific_interface);
   if (facet_lookup_result.has_final_value()) {
     return facet_lookup_result;

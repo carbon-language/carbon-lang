@@ -25,6 +25,7 @@ using SingleExtendFacetType =
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
+  [[nodiscard]]
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> FacetTypeInfo;
 
@@ -128,6 +129,11 @@ using FacetTypeInfoStore =
 struct IdentifiedFacetTypeKey {
   FacetTypeId facet_type_id;
   ConstantId self_const_id;
+  // Inside a named constraint, each identification of the `Self` facet type can
+  // be unique, as it can be modified by each require declaration seen so far.
+  // Uses -1 for identifying a facet type with a self-type from outside the
+  // definition of an named constraint.
+  int32_t num_require_impls = -1;
 
   friend auto operator==(const IdentifiedFacetTypeKey& lhs,
                          const IdentifiedFacetTypeKey& rhs) -> bool = default;
