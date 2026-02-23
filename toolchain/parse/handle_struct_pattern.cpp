@@ -26,19 +26,26 @@ auto HandleStructPatternField(Context& context) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::Period)) {
-    CARBON_DIAGNOSTIC(ExpectedStructPatternField, Error,
-                      "expected `.field = pattern` in struct pattern");
-    context.emitter().Emit(*context.position(), ExpectedStructPatternField);
+    if (context.PositionIs(Lex::TokenKind::Identifier)) {
+      CARBON_DIAGNOSTIC(StructPatternShorthandNotImplemented, Error,
+                        "TODO: struct pattern shorthand");
+      context.emitter().Emit(*context.position(),
+                             StructPatternShorthandNotImplemented);
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedStructPatternField, Error,
+                        "expected `.field = pattern` in struct pattern");
+      context.emitter().Emit(*context.position(), ExpectedStructPatternField);
+    }
     state.has_error = true;
     context.PushState(state, StateKind::StructPatternFieldFinish);
     return;
   }
 
-  context.PushState(state, StateKind::StructPatternFieldAfterDesignator);
+  context.PushState(state, StateKind::StructPatternFieldValue);
   context.PushState(StateKind::PeriodAsStruct);
 }
 
-auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
+auto HandleStructPatternFieldValue(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {

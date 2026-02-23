@@ -973,26 +973,34 @@ CARBON_PARSE_STATE(StructPatternList)
 //
 // .field = pattern
 // ^
+// { .field = pattern ... }
+//  ^
 //   1. PeriodAsStruct
-//   2. StructPatternFieldAfterDesignator
+//   2. StructPatternFieldValue
 CARBON_PARSE_STATE(StructPatternField)
 
 // Handles the `=` and pattern after a designator in a struct pattern field.
 //
 // .field = pattern
 //        ^
+// { .field = pattern ... }
+//          ^
 //   1. Pattern
 //   2. StructPatternFieldFinish
-CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
+CARBON_PARSE_STATE(StructPatternFieldValue)
 
 // Finishes parsing a struct pattern field, including optional trailing `,`.
 //
 // .field = pattern , ...
 //                  ^
+// { .field = pattern , ... }
+//                    ^
 //   1. StructPatternField
 //
 // .field = pattern }
 //                  ^
+// { .field = pattern ... }
+//                        ^
 //   (state done)
 CARBON_PARSE_STATE(StructPatternFieldFinish)
 
