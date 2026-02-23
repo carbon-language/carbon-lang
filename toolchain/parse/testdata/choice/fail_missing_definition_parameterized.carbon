@@ -18,9 +18,9 @@ choice MissingDefinition(T:! type);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeSuffix', text: 'MissingDefinition'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'MissingDefinition'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSuffix', text: 'T'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},

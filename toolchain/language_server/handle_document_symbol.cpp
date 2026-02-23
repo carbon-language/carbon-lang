@@ -17,16 +17,16 @@
 
 namespace Carbon::LanguageServer {
 
-// Returns the token of first child of kind IdentifierNameBeforeSuffix or
-// IdentifierNameNotBeforeSuffix.
+// Returns the token of first child of kind IdentifierNameMaybeBeforeSignature
+// or IdentifierNameNotBeforeSignature.
 static auto GetSymbolIdentifier(const Parse::TreeAndSubtrees& tree_and_subtrees,
                                 Parse::NodeId node)
     -> std::optional<Lex::TokenIndex> {
   const auto& tokens = tree_and_subtrees.tree().tokens();
   for (auto child : tree_and_subtrees.children(node)) {
     switch (tree_and_subtrees.tree().node_kind(child)) {
-      case Parse::NodeKind::IdentifierNameBeforeSuffix:
-      case Parse::NodeKind::IdentifierNameNotBeforeSuffix: {
+      case Parse::NodeKind::IdentifierNameMaybeBeforeSignature:
+      case Parse::NodeKind::IdentifierNameNotBeforeSignature: {
         auto token = tree_and_subtrees.tree().node_token(child);
         if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
           return token;

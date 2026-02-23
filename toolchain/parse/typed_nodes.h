@@ -127,20 +127,19 @@ using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
-// A name in a non-expression context, such as a declaration, that is known to
-// be followed by some suffix within the same name path component, as opposed to
-// being followed by the name path component separator `.`, or by the end of the
-// name path. Such suffixes include parameter lists, argument lists, and return
-// types.
-using IdentifierNameBeforeSuffix =
-    LeafNode<NodeKind::IdentifierNameBeforeSuffix, Lex::IdentifierTokenIndex,
+// A name that may be immediately followed by a signature (i.e. parameter lists
+// and/or a return declaration). There may be false positives, because we make
+// this determination based on the context and a single token of lookahead.
+using IdentifierNameMaybeBeforeSignature =
+    LeafNode<NodeKind::IdentifierNameMaybeBeforeSignature,
+             Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
-// A name in a non-expression context, such as a declaration, that is known
-// to be followed by the name path component separator `.`, or by the end of
-// the name path.
-using IdentifierNameNotBeforeSuffix =
-    LeafNode<NodeKind::IdentifierNameNotBeforeSuffix, Lex::IdentifierTokenIndex,
+// A name that is known not to be immediately followed by a signature (i.e.
+// parameter lists and/or a return declaration).
+using IdentifierNameNotBeforeSignature =
+    LeafNode<NodeKind::IdentifierNameNotBeforeSignature,
+             Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
@@ -175,9 +174,9 @@ using UnderscoreName =
 struct IdentifierNameQualifierWithParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithParams.Define(
-          {.bracketed_by = IdentifierNameBeforeSuffix::Kind});
+          {.bracketed_by = IdentifierNameMaybeBeforeSignature::Kind});
 
-  IdentifierNameBeforeSuffixId name;
+  IdentifierNameMaybeBeforeSignatureId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
@@ -187,9 +186,9 @@ struct IdentifierNameQualifierWithParams {
 struct IdentifierNameQualifierWithoutParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithoutParams.Define(
-          {.bracketed_by = IdentifierNameNotBeforeSuffix::Kind});
+          {.bracketed_by = IdentifierNameNotBeforeSignature::Kind});
 
-  IdentifierNameNotBeforeSuffixId name;
+  IdentifierNameNotBeforeSignatureId name;
   Lex::PeriodTokenIndex token;
 };
 
@@ -352,7 +351,7 @@ struct LetBindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeSuffix, SelfValueName, UnderscoreName,
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               RefBindingName>
       name;
   Lex::ColonTokenIndex token;
@@ -392,7 +391,7 @@ struct CompileTimeBindingPatternStart {
   static constexpr auto Kind =
       NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeSuffix, SelfValueName, UnderscoreName,
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;
   // This is a virtual token. The `:!` token is owned by the
@@ -649,7 +648,7 @@ struct FieldNameAndType {
   static constexpr auto Kind =
       NodeKind::FieldNameAndType.Define({.child_count = 2});
 
-  IdentifierNameNotBeforeSuffixId name;
+  IdentifierNameNotBeforeSignatureId name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -1293,7 +1292,7 @@ struct DesignatorExpr {
       {.category = NodeCategory::Expr, .child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeSuffix, SelfTypeName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfTypeName> name;
 };
 
 struct RequirementEqual {
@@ -1397,7 +1396,7 @@ struct StructFieldDesignator {
       NodeKind::StructFieldDesignator.Define({.child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierNameNotBeforeSuffix, BaseName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, BaseName> name;
 };
 
 // `.a = 0`

@@ -54,9 +54,9 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     HandleName(context, state, *identifier,
-               NodeKind::IdentifierNameNotBeforeSuffix,
+               NodeKind::IdentifierNameNotBeforeSignature,
                NodeKind::IdentifierNameQualifierWithoutParams,
-               NodeKind::IdentifierNameBeforeSuffix);
+               NodeKind::IdentifierNameMaybeBeforeSignature);
     return;
   }
 
@@ -99,7 +99,7 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
     CARBON_CHECK(context.tree().node_kind(NodeId(state.subtree_start)) ==
-                 NodeKind::IdentifierNameBeforeSuffix);
+                 NodeKind::IdentifierNameMaybeBeforeSignature);
     context.AddNode(NodeKind::IdentifierNameQualifierWithParams, *period,
                     state.has_error);
     context.PushState(StateKind::DeclNameAndParams);
