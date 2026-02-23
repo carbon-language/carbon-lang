@@ -15,8 +15,8 @@ library "[[@TEST_NAME]]";
 
 interface Y2 {}
 interface Y(T:! Y2) {}
-// TODO: The identified error should be a note of the convert error, by making
-// the convert error into a Context message.
+// TODO: The error should be that Self does not implement Y2, not that it can't
+// be identified. We should allow identifying `Self`.
 //
 // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+17]]:37: error: facet type of value `Self` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
 // CHECK:STDERR: constraint W { extend require impls Y(Self); }
