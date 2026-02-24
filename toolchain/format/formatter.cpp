@@ -4,6 +4,8 @@
 
 #include "toolchain/format/formatter.h"
 
+#include <cstdlib>
+
 namespace Carbon::Format {
 
 auto Formatter::Run() -> bool {
@@ -15,9 +17,24 @@ auto Formatter::Run() -> bool {
   auto comments = tokens_->comments();
   auto comment_it = comments.begin();
 
+  // Scan for blank lines in the original source to preserve formatting.
+  // A blank line is a line that has no tokens or comments.
+  int prev_line = -1;
+  for (auto token : tokens_->tokens()) {
+    auto line = tokens_->GetLine(token);
+    if (line != prev_line + 1 && prev_line >= 0) {
+      // There was a gap in lines, mark all intermediate lines as blank.
+      for (int i = prev_line + 1; i < line; ++i) {
+        blank_lines_.insert(i);
+      }
+    }
+    prev_line = line;
+  }
+
   // If there are no tokens or comments, format as empty.
   if (tokens_->size() == 0 && comment_it == comments.end()) {
     *out_ << "\n";
+    output_line_ = 1;
     return true;
   }
 
@@ -32,6 +49,7 @@ auto Formatter::Run() -> bool {
       *out_ << tokens_->GetCommentText(*comment_it);
       // Comment text includes a terminating newline, so just update the state.
       line_state_ = LineState::Empty;
+      ++output_line_;
       ++comment_it;
     }
 
@@ -94,7 +112,14 @@ auto Formatter::PrepareForPackedContent() -> void {
 auto Formatter::RequireEmptyLine() -> void {
   if (line_state_ != LineState::Empty) {
     *out_ << "\n";
+    ++output_line_;
     line_state_ = LineState::Empty;
+  }
+  // Check if there was a blank line in the original source at this output line.
+  // This preserves blank lines between code blocks.
+  if (blank_lines_.count(output_line_) > 0) {
+    *out_ << "\n";
+    ++output_line_;
   }
 }
 
