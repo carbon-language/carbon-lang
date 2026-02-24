@@ -20,11 +20,4 @@ constexpr bool b = true;
 
 class C(B:! bool) {}
 fn F() -> C(Cpp.b);
-// CHECK:STDERR: bool.carbon:[[@LINE+7]]:18: error: cannot implicitly convert expression of type `C(true)` to `C(true)` [ConversionFailure]
-// CHECK:STDERR: let x: C(true) = F();
-// CHECK:STDERR:                  ^~~
-// CHECK:STDERR: bool.carbon:[[@LINE+4]]:18: note: type `C(true)` does not implement interface `Core.ImplicitAs(C(true))` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: let x: C(true) = F();
-// CHECK:STDERR:                  ^~~
-// CHECK:STDERR:
 let x: C(true) = F();

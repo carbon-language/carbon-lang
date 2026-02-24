@@ -9,6 +9,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/cpp/constant.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -145,8 +146,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // If the C++ global is constant, map it to a Carbon constant.
     if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
       if (const auto* ap_value = var_decl->getEvaluatedValue()) {
+        auto clang_type = MapToCppType(context, inst.type_id);
+        if (clang_type.isNull()) {
+          return ConstantEvalResult::TODO;
+        }
+
         auto const_id = MapAPValueToConstant(context, SemIR::LocId(inst_id),
-                                             *ap_value, var_decl->getType());
+                                             *ap_value, clang_type);
         if (const_id.has_value() && const_id.is_constant()) {
           return ConstantEvalResult::Existing(const_id);
         }
