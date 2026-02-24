@@ -105,8 +105,10 @@ struct AccessOptionalMemberAction {
 // A value acquisition. Used when an expression contains a reference and we want
 // a value.
 struct AcquireValue {
-  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>(
-      {.ir_name = "acquire_value"});
+  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>({
+      .ir_name = "acquire_value",
+      .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
+  });
 
   TypeId type_id;
   InstId value_id;
