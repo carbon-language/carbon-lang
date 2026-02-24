@@ -10,7 +10,6 @@
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/base/value_store.h"
 
 namespace Carbon::SemIR {
 

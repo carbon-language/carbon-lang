@@ -15,7 +15,7 @@ auto FormatterChunks::StartContent() -> void {
 }
 
 auto FormatterChunks::AddContent(bool include_in_output) -> ChunkId {
-  CARBON_CHECK(content_start_id_ != None);
+  CARBON_CHECK(content_start_id_ != None, "Must call StartContent first");
   auto chunk_id = ChunkId{.index = chunks_.size()};
   chunks_.push_back(
       {.include_in_output = include_in_output, .data = std::string()});
@@ -25,7 +25,7 @@ auto FormatterChunks::AddContent(bool include_in_output) -> ChunkId {
 }
 
 auto FormatterChunks::AddParent(ChunkId child_chunk_id) -> ChunkId {
-  CARBON_CHECK(content_start_id_ == None, "Parents are added before content");
+  CARBON_CHECK(content_start_id_ == None, "Already called StartContent");
   llvm::SmallVector<ChunkId> children;
   if (child_chunk_id != None) {
     children.push_back(child_chunk_id);
@@ -37,8 +37,9 @@ auto FormatterChunks::AddParent(ChunkId child_chunk_id) -> ChunkId {
 
 auto FormatterChunks::FormatChildContent(
     ChunkId parent_chunk_id, llvm::function_ref<auto()->void> format) -> void {
-  CARBON_CHECK(content_start_id_ != None, "Parents are added before content");
-  CARBON_CHECK(current_parent_id_ == None, "Nested FormatChildChunk");
+  CARBON_CHECK(content_start_id_ != None, "Must call StartContent first");
+  CARBON_CHECK(current_parent_id_ == None, "Cannot nest FormatChildContent");
+
   // If the parent is already included, we don't need to make a chunk.
   if (Get(parent_chunk_id).include_in_output) {
     format();
@@ -47,8 +48,7 @@ auto FormatterChunks::FormatChildContent(
 
   // Otherwise, create a new chunk and include it only if the parent is later
   // found to be used.
-  auto chunk = AddContent(/*include_in_output=*/false);
-  AppendChildToParent(chunk, parent_chunk_id);
+  AppendChildToParent(AddContent(/*include_in_output=*/false), parent_chunk_id);
 
   current_parent_id_ = parent_chunk_id;
   format();

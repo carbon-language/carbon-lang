@@ -216,7 +216,6 @@ cc_library(
     hdrs = ["formatter_chunks.h"],
     deps = [
         "//common:check",
-        "//toolchain/base:value_store",
         "@llvm-project//llvm:Support",
     ],
 )

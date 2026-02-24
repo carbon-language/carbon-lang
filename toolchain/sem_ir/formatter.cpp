@@ -55,24 +55,25 @@ Formatter::Formatter(
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
-      // Create a placeholder visible chunk and assign it to all instructions
-      // that don't have a chunk of their own.
       tentative_inst_chunks_(sem_ir_->insts(), FormatterChunks::None) {
   if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
 
+  // Reserve space for parents. There will be more content, but we don't try to
+  // guess how much.
   size_t reserve_chunks = scope_label_chunks_.size();
   for (auto [_, insts] : GetTentativeScopes(*sem_ir_)) {
     reserve_chunks += insts.size();
   }
   chunks_.Reserve(reserve_chunks);
 
+  // Create parent chunks for scopes.
   for (auto& chunk : scope_label_chunks_) {
     chunk = chunks_.AddParent();
   }
 
-  // Create empty parent chunks for instructions that we output lazily.
+  // Create parent chunks for the tentative instructions.
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
     auto scope_chunk = scope_label_chunks_[static_cast<size_t>(scope_id)];
     for (auto inst_id : insts) {
@@ -84,7 +85,7 @@ Formatter::Formatter(
 
   CARBON_CHECK(chunks_.size() == reserve_chunks);
 
-  // Create a content chunk for the start of the output.
+  // Prepare to add content.
   chunks_.StartContent();
 }
 
