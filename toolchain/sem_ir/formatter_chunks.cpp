@@ -8,77 +8,99 @@
 
 namespace Carbon::SemIR {
 
-auto FormatterChunks::FlushChunk() -> void {
-  CARBON_CHECK(output_chunks_.back().chunk.empty());
-  output_chunks_.back().chunk = std::move(buffer_);
-  buffer_.clear();
+auto FormatterChunks::StartContent() -> void {
+  CARBON_CHECK(content_start_id_ == None);
+  content_start_id_ = ChunkId{.index = chunks_.size()};
+  AddContent(/*include_in_output=*/true);
 }
 
-auto FormatterChunks::AddChunkNoFlush(bool include_in_output) -> ChunkId {
-  CARBON_CHECK(buffer_.empty());
-  output_chunks_.push_back({.include_in_output = include_in_output});
-  return ChunkId{.index = output_chunks_.size() - 1};
+auto FormatterChunks::AddContent(bool include_in_output) -> ChunkId {
+  CARBON_CHECK(content_start_id_ != None);
+  auto chunk_id = ChunkId{.index = chunks_.size()};
+  chunks_.push_back(
+      {.include_in_output = include_in_output, .data = std::string()});
+  out_ = std::make_unique<llvm::raw_string_ostream>(
+      std::get<std::string>(Get(chunk_id).data));
+  return chunk_id;
 }
 
-auto FormatterChunks::AddChunk(bool include_in_output) -> ChunkId {
-  FlushChunk();
-  return AddChunkNoFlush(include_in_output);
+auto FormatterChunks::AddParent(ChunkId child_chunk_id) -> ChunkId {
+  CARBON_CHECK(content_start_id_ == None, "Parents are added before content");
+  llvm::SmallVector<ChunkId> children;
+  if (child_chunk_id != None) {
+    children.push_back(child_chunk_id);
+  }
+  auto chunk_id = ChunkId{.index = chunks_.size()};
+  chunks_.push_back({.include_in_output = false, .data = std::move(children)});
+  return chunk_id;
 }
 
-auto FormatterChunks::AddTentativeChunkWithChild(ChunkId child_chunk)
-    -> ChunkId {
-  auto chunk = AddChunkNoFlush(/*include_in_output=*/false);
-  output_chunks_[chunk.index].dependencies.push_back(child_chunk);
-  return chunk;
-}
-
-auto FormatterChunks::FormatTentativeChunkWithParent(
-    ChunkId parent_chunk, llvm::function_ref<auto()->void> format) -> void {
-  CARBON_CHECK(output_chunks_.back().include_in_output,
-               "All non-included chunks must be added first.");
-
+auto FormatterChunks::FormatChildContent(
+    ChunkId parent_chunk_id, llvm::function_ref<auto()->void> format) -> void {
+  CARBON_CHECK(content_start_id_ != None, "Parents are added before content");
+  CARBON_CHECK(current_parent_id_ == None, "Nested FormatChildChunk");
   // If the parent is already included, we don't need to make a chunk.
-  if (output_chunks_[parent_chunk.index].include_in_output) {
+  if (Get(parent_chunk_id).include_in_output) {
     format();
     return;
   }
 
   // Otherwise, create a new chunk and include it only if the parent is later
   // found to be used.
-  auto chunk = AddChunk(false);
-  output_chunks_[parent_chunk.index].dependencies.push_back(chunk);
+  auto chunk = AddContent(/*include_in_output=*/false);
+  AppendChildToParent(chunk, parent_chunk_id);
+
+  current_parent_id_ = parent_chunk_id;
   format();
-  auto next_chunk = AddChunk(true);
-  CARBON_CHECK(next_chunk.index == chunk.index + 1, "Nested FormatChildChunk");
+  current_parent_id_ = None;
+
+  // Reset the output stream so that the next call to `out()` creates a new
+  // chunk.
+  out_.reset();
 }
 
-auto FormatterChunks::IncludeChunkInOutput(ChunkId chunk) -> void {
-  CARBON_CHECK(chunk.index != output_chunks_.size() - 1,
-               "Should only be called on earlier chunks");
+auto FormatterChunks::AppendChildToParent(ChunkId child_chunk_id,
+                                          ChunkId parent_chunk_id) -> void {
+  CARBON_CHECK(!Get(parent_chunk_id).include_in_output);
+  auto* children =
+      std::get_if<llvm::SmallVector<ChunkId>>(&Get(parent_chunk_id).data);
+  CARBON_CHECK(children);
+  children->push_back(child_chunk_id);
+}
 
-  if (auto& current_chunk = output_chunks_.back();
-      !current_chunk.include_in_output) {
-    current_chunk.dependencies.push_back(chunk);
-    return;
+auto FormatterChunks::AppendChildToCurrentParent(ChunkId chunk_id) -> void {
+  if (current_parent_id_ != None) {
+    // If the parent is not included, add the `chunk` to the parent's children
+    // for conditional inclusion.
+    if (!Get(current_parent_id_).include_in_output) {
+      AppendChildToParent(chunk_id, current_parent_id_);
+      return;
+    }
   }
 
-  llvm::SmallVector<ChunkId> to_add = {chunk};
-  while (!to_add.empty()) {
-    auto& chunk_ref = output_chunks_[to_add.pop_back_val().index];
+  // If the parent is already included, or there is no parent (this is not
+  // currently a tentative chunk), include the chunk and all of its children.
+  llvm::SmallVector<ChunkId> to_include = {chunk_id};
+  while (!to_include.empty()) {
+    auto& chunk_ref = Get(to_include.pop_back_val());
     if (chunk_ref.include_in_output) {
       continue;
     }
     chunk_ref.include_in_output = true;
-    to_add.append(chunk_ref.dependencies);
-    chunk_ref.dependencies.clear();
+    if (auto* children =
+            std::get_if<llvm::SmallVector<ChunkId>>(&chunk_ref.data)) {
+      to_include.append(*children);
+      children->clear();
+    }
   }
 }
 
 auto FormatterChunks::Write(llvm::raw_ostream& stream) -> void {
-  FlushChunk();
-  for (const auto& chunk : output_chunks_) {
+  CARBON_CHECK(content_start_id_ != None);
+  for (const auto& chunk :
+       llvm::ArrayRef(chunks_).drop_front(content_start_id_.index)) {
     if (chunk.include_in_output) {
-      stream << chunk.chunk;
+      stream << std::get<std::string>(chunk.data);
     }
   }
 }

@@ -7,81 +7,117 @@
 
 #include <string>
 
+#include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/value_store.h"
 
 namespace Carbon::SemIR {
 
 // Manages the chunks created by the formatter.
 //
-// All output of the formatter is stored as `OutputChunk`s. Tentative scopes,
-// such as constants, may have output for instructions made optional; these are
-// stored as `include_in_output=false`, but have dependencies in case they're
-// later referenced. Unreferenced tentative chunks are omitted from the output.
+// There are two kinds of `Chunk`s:
+// - Parent `Chunk`s, with children in a vector.
+// - Content `Chunk`s, with content in a string.
 //
-// Output of the main file scope is always included in output, and causes
-// referenced tentative instructions to be included in output, including
-// indirect dependencies. During this, `Formatter::FormatName` will mark
-// referenced instructions for inclusion.
+// Initially, `AddParent` is called one or more times. Then `StartContent` is
+// called once to switch modes, and creates an initial content `Chunk`. After
+// that, either content may be written to `out()` immediately (going to the
+// current content `Chunk`), or `FormatChildContent` may be used to create a
+// content `Chunk` which is a child of a parent.
+//
+// Content `Chunk`s that are created implicitly (not through
+// `FormatChildContent`) are automatically included in output. Other `Chunk`s
+// are included only when marked as a child of a `Chunk` that is included, using
+// `AppendChildToCurrentParent`.
 class FormatterChunks {
  public:
+  // A type-safe index into `chunks_`.
   struct ChunkId {
+    auto operator==(const ChunkId& other) const -> bool = default;
+
     size_t index;
   };
 
-  // A chunk of the buffered output.
-  struct OutputChunk {
+  // Either a parent or content.
+  struct Chunk {
     // Whether this chunk is known to be included in the output.
     bool include_in_output;
-    // The textual contents of this chunk.
-    std::string chunk = std::string();
-    // Indices in `ouput_chunks_` that should be included in the output if this
-    // one is.
-    llvm::SmallVector<ChunkId> dependencies = {};
+
+    // Either children or content.
+    std::variant<llvm::SmallVector<ChunkId>, std::string> data;
   };
 
-  // Flushes the buffered output to the current chunk.
-  auto FlushChunk() -> void;
+  // An empty `ChunkId`.
+  static constexpr ChunkId None = ChunkId(-1);
 
-  // Adds a new chunk with `include_in_output`. Does not flush existing output,
-  // so should only be called if there is no buffered output.
-  auto AddChunkNoFlush(bool include_in_output) -> ChunkId;
+  // Reserves space for at least `count` chunks.
+  auto Reserve(size_t count) -> void { chunks_.reserve(count); }
 
-  // Flushes the current chunk and add a new chunk with `include_in_output`.
-  auto AddChunk(bool include_in_output) -> ChunkId;
+  // Adds a `Chunk` that can have `children`. It can optionally start with one
+  // `child_chunk`.
+  auto AddParent(ChunkId child_chunk_id = None) -> ChunkId;
 
-  // Adds a new tentative `OutputChunk`. If the new chunk is included in
-  // output, it'll also include `child_chunk`.
-  auto AddTentativeChunkWithChild(ChunkId child_chunk) -> ChunkId;
+  // Switches from adding parents to adding content. This immediately makes
+  // `out()` valid.
+  auto StartContent() -> void;
 
-  // Adds a new tentative `OutputChunk`. If the `parent_chunk` is included in
+  // Adds a new content `Chunk`. If the `parent_chunk` is included in
   // output, it'll also include the new chunk. Calls `format` to support adding
   // content to the new chunk.
-  auto FormatTentativeChunkWithParent(ChunkId parent_chunk,
-                                      llvm::function_ref<auto()->void> format)
-      -> void;
+  auto FormatChildContent(ChunkId parent_chunk_id,
+                          llvm::function_ref<auto()->void> format) -> void;
 
   // Marks the given chunk as being included in the output if the current chunk
-  // is.
-  auto IncludeChunkInOutput(ChunkId chunk) -> void;
+  // is. When `FormatChildContent` is currently active, there's a parent that
+  // will determine `include_in_output for the child; otherwise, the child is
+  // always included.
+  //
+  // For example, instructions in the file scope are added to implicitly-created
+  // `Chunks` (`FormatChildContent` is not used). When
+  // `AppendChildToCurrentParent` is called in that context, there's no parent
+  // to limit visibility, so the child is also included.
+  auto AppendChildToCurrentParent(ChunkId child_chunk_id) -> void;
 
   // Writes included chunks to the given stream.
   auto Write(llvm::raw_ostream& stream) -> void;
 
-  // Returns stream representing the buffer for the current chunk.
-  auto out() -> llvm::raw_ostream& { return out_; }
+  // Returns a stream to write to the current chunk. Only valid to use after
+  // `StartContent`, and may add a new chunk if one hasn't been started.
+  auto out() -> llvm::raw_ostream& {
+    CARBON_CHECK(content_start_id_ != None);
+    if (!out_) {
+      AddContent(/*include_in_output=*/true);
+    }
+    return *out_;
+  }
+
+  auto size() -> size_t { return chunks_.size(); }
 
  private:
-  friend struct TentativeOutputScope;
+  // Adds a `Chunk` that will have `content`.
+  auto AddContent(bool include_in_output) -> ChunkId;
 
-  // The output stream buffer.
-  std::string buffer_;
+  // Adds `child_chunk_id` to the children of `parent_chunk_id`.
+  auto AppendChildToParent(ChunkId child_chunk_id, ChunkId parent_chunk_id)
+      -> void;
 
-  // The output stream.
-  llvm::raw_string_ostream out_{buffer_};
+  // Indexes into `chunks_`.
+  auto Get(ChunkId chunk_id) -> Chunk& { return chunks_[chunk_id.index]; }
 
-  // Chunks of output text that we have created so far.
-  llvm::SmallVector<OutputChunk> output_chunks_;
+  // An output stream pointing at the current content `Chunk`.
+  std::unique_ptr<llvm::raw_string_ostream> out_;
+
+  // The location where content started. Set by `StartContent`.
+  ChunkId content_start_id_ = None;
+
+  // The current parent `Chunk`. This is only set during calls to
+  // `FormatChildContent`.
+  ChunkId current_parent_id_ = None;
+
+  // A sequential ordering of `Chunk`s. This will have all parent `Chunk`s
+  // first, followed by content `Chunk`s at `content_start_`.
+  llvm::SmallVector<Chunk> chunks_;
 };
 
 }  // namespace Carbon::SemIR
