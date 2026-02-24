@@ -8,7 +8,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
-#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
