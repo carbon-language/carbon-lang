@@ -43,9 +43,8 @@ auto FormatterChunks::AddChunk(bool include_in_output) -> ChunkId {
 }
 
 auto FormatterChunks::IncludeChunkInOutput(ChunkId chunk) -> void {
-  if (chunk.index == output_chunks_.size() - 1) {
-    return;
-  }
+  CARBON_CHECK(chunk.index != output_chunks_.size() - 1,
+               "Should only be called on earlier chunks");
 
   if (auto& current_chunk = output_chunks_.back();
       !current_chunk.include_in_output) {
