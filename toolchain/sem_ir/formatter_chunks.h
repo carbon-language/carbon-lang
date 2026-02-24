@@ -40,16 +40,6 @@ class FormatterChunks {
     llvm::SmallVector<ChunkId> dependencies = {};
   };
 
-  // All formatted output within the scope of this object is redirected to a
-  // new tentative `OutputChunk`. The new chunk will depend on `parent_chunk`.
-  struct TentativeScope {
-    explicit TentativeScope(FormatterChunks* chunks, ChunkId parent_chunk);
-    ~TentativeScope();
-
-    FormatterChunks* chunks;
-    ChunkId chunk;
-  };
-
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
@@ -59,6 +49,15 @@ class FormatterChunks {
 
   // Flushes the current chunk and add a new chunk to the output.
   auto AddChunk(bool include_in_output) -> ChunkId;
+
+  // Adds a tentative chunk that depends on `parent_chunk`.
+  auto AddTentativeChildChunkNoFlush(ChunkId parent_chunk) -> ChunkId;
+
+  // Adds a new tentative `OutputChunk` and redirects `format` output to it. The
+  // new chunk will depend on `parent_chunk`.
+  auto FormatTentativeChildChunk(ChunkId parent_chunk,
+                                 llvm::function_ref<auto()->void> format)
+      -> void;
 
   // Marks the given chunk as being included in the output if the current chunk
   // is.

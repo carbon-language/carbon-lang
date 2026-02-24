@@ -2647,9 +2647,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Public: type = class_type @Public [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   complete_type_witness = %complete_type

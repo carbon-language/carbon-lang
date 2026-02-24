@@ -141,9 +141,6 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%E1.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [concrete]

@@ -422,9 +422,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.874) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {

@@ -161,9 +161,6 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.092 = symbolic_binding_pattern T, 0 [concrete]

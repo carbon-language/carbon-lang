@@ -426,9 +426,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.DoIt(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Use(%T.loc8_8.2: %I.type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -472,9 +469,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %I.WithSelf.Make.type.f20, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.Make(%T) [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Use(%T.loc8_8.2: %I.type) {
@@ -528,9 +522,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %.fa6: type = fn_type_with_self_type %I.WithSelf.Copy.type.035, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.fa6 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.Copy(%T) [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -614,9 +605,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.Hello(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Use(%T.loc8_8.2: %I.type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -660,9 +648,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %.fa6: type = fn_type_with_self_type %I.WithSelf.Copy.type.035, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.fa6 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.Copy(%T) [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @UseIndirect(%T.loc8_16.2: %I.type) {
@@ -723,9 +708,6 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -123,9 +123,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "header.h"
@@ -133,9 +130,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- system_header.carbon
 // CHECK:STDOUT:

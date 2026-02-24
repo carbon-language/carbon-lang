@@ -176,9 +176,6 @@ impl () as B(1) {}
 // CHECK:STDOUT:   %empty_struct: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %B.decl: %B.type = constraint_decl @B [concrete = constants.%empty_struct] {
 // CHECK:STDOUT:     %X.patt: <error> = symbolic_binding_pattern X, 0 [concrete]

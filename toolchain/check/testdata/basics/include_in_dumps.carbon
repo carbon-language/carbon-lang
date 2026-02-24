@@ -134,9 +134,6 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %I.WithSelf.Op.b3e: %I.WithSelf.Op.type.c9a = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT: }

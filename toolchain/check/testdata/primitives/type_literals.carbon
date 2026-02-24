@@ -286,9 +286,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.95b: type = pattern_type %i64 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i8.patt: %pattern_type.e3f = ref_binding_pattern test_i8 [concrete]
@@ -349,9 +346,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.157: type = pattern_type %u64 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u8.patt: %pattern_type.8f3 = ref_binding_pattern test_u8 [concrete]
@@ -410,9 +404,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
 // CHECK:STDOUT:   %f128.b8c: type = class_type @Float, @Float(%int_128) [concrete]
 // CHECK:STDOUT:   %pattern_type.22c: type = pattern_type %f128.b8c [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -511,9 +502,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %str.c1c: %ptr.3e8 = string_literal "Test" [concrete]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.c1c, %int_4) [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
