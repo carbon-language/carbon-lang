@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/ostream.h"
+#include "llvm/ADT/DenseSet.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Format {
@@ -20,7 +21,7 @@ namespace Carbon::Format {
 // implementation that only handles simple code. Before adding too much more
 // complexity, it should be rewritten.
 //
-// TODO: Add retention of blank lines between original code.
+// This formatter preserves blank lines from the original source code.
 //
 // TODO: Add support for formatting line ranges (will need flags too).
 class Formatter {
@@ -76,6 +77,12 @@ class Formatter {
 
   // The current code indent level, to be added to new lines.
   int indent_ = 0;
+
+  // Tracks line numbers that have blank lines before them in the original code.
+  llvm::DenseSet<int> blank_lines_;
+
+  // The current output line number, used for blank line preservation.
+  int output_line_ = 0;
 };
 
 }  // namespace Carbon::Format
