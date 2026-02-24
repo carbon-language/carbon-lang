@@ -351,16 +351,16 @@ class Formatter {
   // first open brace or the semicolon in the entity declaration.
   llvm::StringRef pending_imported_from_;
 
-  // Chunks for each scope's labels, including `File` scope. These don't
-  // directly contain content, and are instead parents of chunks containing a
-  // scope's `<label> {` and `}` output (not individual instructions).
+  // Chunks for each scope's labels, including `File` scope. These are parents
+  // of chunks containing a scope's `<label> {` and `}` output, and children of
+  // the scope's instructions in `tentative_inst_chunks_`.
   std::array<FormatterChunks::ChunkId,
              static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope)>
       scope_label_chunks_;
 
   // Chunks for each instruction in a tentative top-level scope. These don't
   // directly contain content, and are instead parents of the instruction's
-  // output to help indirect conclusion.
+  // output to help indirect inclusion.
   FixedSizeValueStore<InstId, FormatterChunks::ChunkId, Tag<CheckIRId>>
       tentative_inst_chunks_;
 
