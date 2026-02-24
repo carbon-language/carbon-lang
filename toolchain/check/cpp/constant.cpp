@@ -19,15 +19,13 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
   }
 
   if (ap_value.isInt()) {
-    int64_t value = ap_value.getInt().getExtValue();
-
     if (type->isBooleanType()) {
+      auto value = SemIR::BoolValue::From(!ap_value.getInt().isZero());
       return TryEvalInst(
-          context, SemIR::BoolLiteral{.type_id = type_id,
-                                      .value = SemIR::BoolValue::From(value)});
+          context, SemIR::BoolLiteral{.type_id = type_id, .value = value});
 
     } else {
-      IntId int_id = context.ints().Add(value);
+      IntId int_id = context.ints().Add(ap_value.getInt());
       return TryEvalInst(context,
                          SemIR::IntValue{.type_id = type_id, .int_id = int_id});
     }
