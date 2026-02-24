@@ -40,23 +40,30 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
                          DiagnosticContextFn diagnostic_context) -> bool;
 
-// Returns whether the type is concrete. Usually you want a diagnostic when it's
-// not concrete, so call RequireConcreteType.
+// Returns whether the type is complete and concrete.
 //
-// The `type_id` must be complete, so `TryToCompleteType` must have already
-// been called, or this function may crash.
-auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool;
+// Avoid calling this where possible, as it can lead to coherence issues.
+// Usually you want a diagnostic when it's not, so call RequireConcreteType.
+//
+// The `type_id` must be complete, so `TryToCompleteType` must have already been
+// called, or this function may crash.
+auto TryIsConcreteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id) -> bool;
 
-// Returns true for types that have an object representation that may be used as
-// a return type or variable type.
+// Returns true for types that are complete and that have an object
+// representation that may be used as a return type or variable type.
 //
-// The `type_id` must be complete, so `RequireCompleteType` must have already
-// been called, or this function may crash.
+// The `complete_type_diagnostic_context` is used to contextualize diagnostics
+// in checking that the type is complete. The `concrete_type_diagnostic_context`
+// is used to contextualize diagnostics in checking that the type is concrete.
 //
 // Note: class types are abstract if marked using the `abstract` keyword; tuple
 // and struct types are abstract if any element is abstract.
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         DiagnosticContextFn diagnostic_context) -> bool;
+                         SemIR::LocId loc_id,
+                         DiagnosticContextFn complete_type_diagnostic_context,
+                         DiagnosticContextFn concrete_type_diagnostic_context)
+    -> bool;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is

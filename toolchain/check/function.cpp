@@ -328,7 +328,7 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
   if (!init_repr.is_valid()) {
     // TODO: Consider suppressing the diagnostics if we've already diagnosed a
     // definition or call to this function.
-    if (!RequireCompleteType(
+    if (!RequireConcreteType(
             context, arg_type_id, SemIR::LocId(return_pattern_id),
             [&](auto& builder) {
               CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Context,
@@ -336,16 +336,14 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
                                 SemIR::TypeId);
               builder.Context(loc_id, IncompleteTypeInFunctionReturnType,
                               arg_type_id);
+            },
+            [&](auto& builder) {
+              CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
+                                "function returns abstract type {0}",
+                                SemIR::TypeId);
+              builder.Context(loc_id, AbstractTypeInFunctionReturnType,
+                              arg_type_id);
             })) {
-      return SemIR::ErrorInst::TypeId;
-    }
-    if (!RequireConcreteType(context, arg_type_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
-                            "function returns abstract type {0}",
-                            SemIR::TypeId);
-          builder.Context(loc_id, AbstractTypeInFunctionReturnType,
-                          arg_type_id);
-        })) {
       return SemIR::ErrorInst::TypeId;
     }
   }

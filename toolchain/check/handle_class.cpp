@@ -378,21 +378,22 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_type_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  if (!RequireCompleteType(
-          context, adapted_type_id, node_id, [&](auto& builder) {
+  if (!RequireConcreteType(
+          context, adapted_type_id, node_id,
+          [&](auto& builder) {
             CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Context,
                               "adapted type {0} is an incomplete type",
                               InstIdAsType);
             builder.Context(node_id, IncompleteTypeInAdaptDecl,
                             adapted_type_inst_id);
+          },
+          [&](auto& builder) {
+            CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Context,
+                              "adapted type {0} is an abstract type",
+                              InstIdAsType);
+            builder.Context(node_id, AbstractTypeInAdaptDecl,
+                            adapted_type_inst_id);
           })) {
-    adapted_type_id = SemIR::ErrorInst::TypeId;
-  }
-  if (!RequireConcreteType(context, adapted_type_id, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Context,
-                          "adapted type {0} is an abstract type", InstIdAsType);
-        builder.Context(node_id, AbstractTypeInAdaptDecl, adapted_type_inst_id);
-      })) {
     adapted_type_id = SemIR::ErrorInst::TypeId;
   }
   if (adapted_type_id == SemIR::ErrorInst::TypeId) {

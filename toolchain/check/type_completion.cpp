@@ -803,7 +803,12 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool {
+auto TryIsConcreteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id) -> bool {
+  if (!TryToCompleteType(context, type_id, loc_id)) {
+    return false;
+  }
+
   auto complete_info = context.types().GetCompleteTypeInfo(type_id);
   CARBON_CHECK(complete_info.value_repr.type_id.has_value(),
                "TryIsConcreteType called for an incomplete type. Call "
@@ -812,9 +817,18 @@ auto TryIsConcreteType(Context& context, SemIR::TypeId type_id) -> bool {
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         DiagnosticContextFn diagnostic_context) -> bool {
-  CARBON_CHECK(diagnostic_context);
-  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
+                         SemIR::LocId loc_id,
+                         DiagnosticContextFn complete_type_diagnostic_context,
+                         DiagnosticContextFn concrete_type_diagnostic_context)
+    -> bool {
+  if (!RequireCompleteType(context, type_id, loc_id,
+                           complete_type_diagnostic_context)) {
+    return false;
+  }
+
+  CARBON_CHECK(concrete_type_diagnostic_context);
+  Diagnostics::ContextScope scope(&context.emitter(),
+                                  concrete_type_diagnostic_context);
 
   // TODO: For symbolic types, should add an implicit constraint that they are
   // not abstract.
