@@ -23,8 +23,9 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
       auto value = SemIR::BoolValue::From(!ap_value.getInt().isZero());
       return TryEvalInst(
           context, SemIR::BoolLiteral{.type_id = type_id, .value = value});
-
     } else {
+      CARBON_CHECK(type->isIntegralOrEnumerationType());
+
       IntId int_id = context.ints().Add(ap_value.getInt());
       return TryEvalInst(context,
                          SemIR::IntValue{.type_id = type_id, .int_id = int_id});
