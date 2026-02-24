@@ -21,3 +21,15 @@ constexpr bool b = true;
 class C(B:! bool) {}
 fn F() -> C(Cpp.b);
 let x: C(true) = F();
+
+// --- int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr int i = 123;
+''';
+
+class C(I:! i32) {}
+fn F() -> C(Cpp.i);
+let x: C(123) = F();
