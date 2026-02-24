@@ -54,25 +54,25 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness @C.as.Inc.impl.%Inc.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Inc.Op.type: type = fn_type @Inc.Op [concrete]
 // CHECK:STDOUT:   %pattern_type.476: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
+// CHECK:STDOUT:   %Inc.WithSelf.Op.type.700: type = fn_type @Inc.WithSelf.Op, @Inc(%Inc.facet) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.fc6: type = generic_interface_type @AddAssignWith [concrete]
 // CHECK:STDOUT:   %AddAssignWith.generic: %AddAssignWith.type.fc6 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.16b: type = facet_type <@AddAssignWith, @AddAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness @C.as.AddAssignWith.impl.%AddAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %AddAssignWith.Op.type.98e: type = fn_type @AddAssignWith.Op, @AddAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.type: type = fn_type @C.as.AddAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op: %C.as.AddAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.16b = facet_value %C, (%AddAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.type.2b1: type = fn_type @AddAssignWith.WithSelf.Op, @AddAssignWith(%C, %AddAssignWith.facet) [concrete]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.176: type = fn_type_with_self_type %Inc.Op.type, %Inc.facet [concrete]
+// CHECK:STDOUT:   %.38a: type = fn_type_with_self_type %Inc.WithSelf.Op.type.700, %Inc.facet [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.a9d: type = fn_type_with_self_type %AddAssignWith.Op.type.98e, %AddAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.168: type = fn_type_with_self_type %AddAssignWith.WithSelf.Op.type.2b1, %AddAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -186,7 +186,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.176 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.38a = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>)
 // CHECK:STDOUT:   return
@@ -196,7 +196,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.a9d = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.168 = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
 // CHECK:STDOUT:   return

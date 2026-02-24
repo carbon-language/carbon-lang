@@ -20,11 +20,11 @@ fn ConditionIsNonConstant(b: bool) {
   // We choose to not accept this even if both arms evaluate to the same
   // constant value, because it notionally involves evaluating a non-constant
   // condition.
-  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   var v: if b then i32 else i32 = 1;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   var unused v: if b then i32 else i32 = 1;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var v: if b then i32 else i32 = 1;
+  var unused v: if b then i32 else i32 = 1;
 }
 
 // --- fail_non_constant_result.carbon
@@ -32,16 +32,16 @@ fn ConditionIsNonConstant(b: bool) {
 package NonConstantResult;
 
 fn ChosenBranchIsNonConstant(t: type) {
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   var v: if true then t else i32 = 1;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   var unused v: if true then t else i32 = 1;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var v: if true then t else i32 = 1;
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   var w: if false then i32 else t = 1;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
+  var unused v: if true then t else i32 = 1;
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   var unused w: if false then i32 else t = 1;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var w: if false then i32 else t = 1;
+  var unused w: if false then i32 else t = 1;
 }
 
 // CHECK:STDOUT: --- fail_non_constant_condition.carbon
@@ -102,27 +102,27 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   br !.loc12_13
+// CHECK:STDOUT:   br !.loc12_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_13:
+// CHECK:STDOUT: !.loc12_20:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %int_32.loc12_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_20)
+// CHECK:STDOUT:   %int_32.loc12_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_27)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %int_32.loc12_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_29)
+// CHECK:STDOUT:   %int_32.loc12_36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12_36: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_36)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc12: type = block_arg !if.expr.result
-// CHECK:STDOUT:   br !.loc12_7
+// CHECK:STDOUT:   br !.loc12_14
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_7:
+// CHECK:STDOUT: !.loc12_14:
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -178,9 +178,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   br !.loc9_13
+// CHECK:STDOUT:   br !.loc9_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc9_13:
+// CHECK:STDOUT: !.loc9_20:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
@@ -195,9 +195,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9: type = block_arg !if.expr.result.loc9
-// CHECK:STDOUT:   br !.loc9_7
+// CHECK:STDOUT:   br !.loc9_14
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc9_7:
+// CHECK:STDOUT: !.loc9_14:
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete]
@@ -206,9 +206,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
-// CHECK:STDOUT:   br !.loc14_13
+// CHECK:STDOUT:   br !.loc14_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14_13:
+// CHECK:STDOUT: !.loc14_20:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   if %false br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
@@ -223,9 +223,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
 // CHECK:STDOUT:   %.loc14: type = block_arg !if.expr.result.loc14
-// CHECK:STDOUT:   br !.loc14_7
+// CHECK:STDOUT:   br !.loc14_14
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14_7:
+// CHECK:STDOUT: !.loc14_14:
 // CHECK:STDOUT:   %w: ref <error> = ref_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

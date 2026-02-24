@@ -19,3 +19,12 @@ Diagnostics:
   Suppress:
     # The `#error` requiring a macro definition.
     - pp_hash_error
+
+---
+
+# Suppress diagnostics for template source files.
+If:
+  PathMatch: .*\.tpl\.h
+Diagnostics:
+  Suppress:
+    - undeclared_var_use

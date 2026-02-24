@@ -193,9 +193,12 @@ impl () as B(1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self: <error> = symbolic_binding Self, 1 [concrete = <error>]
+// CHECK:STDOUT:     constraint_with_self_decl @B [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self
+// CHECK:STDOUT:     .A = <poisoned>
+// CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     .X = <poisoned>
 // CHECK:STDOUT:     has_error
@@ -205,4 +208,6 @@ impl () as B(1) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(<error>) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(<error>, <error>) {}
 // CHECK:STDOUT:

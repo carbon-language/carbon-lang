@@ -95,10 +95,11 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
 
 // Returns the `NameId` for an identifier node.
 static auto GetIdentifierAsNameId(
-    Context& context, Parse::NodeIdOneOf<Parse::IdentifierNameNotBeforeParamsId,
-                                         Parse::IdentifierNameBeforeParamsId,
-                                         Parse::IdentifierNameExprId>
-                          node_id) -> SemIR::NameId {
+    Context& context,
+    Parse::NodeIdOneOf<Parse::IdentifierNameNotBeforeSignatureId,
+                       Parse::IdentifierNameMaybeBeforeSignatureId,
+                       Parse::IdentifierNameExprId>
+        node_id) -> SemIR::NameId {
   CARBON_CHECK(!context.parse_tree().node_has_error(node_id),
                "TODO: Support checking error parse nodes");
   auto token = context.parse_tree().node_token(node_id);
@@ -115,14 +116,16 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::IdentifierNameNotBeforeParamsId node_id) -> bool {
+                     Parse::IdentifierNameNotBeforeSignatureId node_id)
+    -> bool {
   // The parent is responsible for binding the name.
   context.node_stack().Push(node_id, GetIdentifierAsNameId(context, node_id));
   return true;
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::IdentifierNameBeforeParamsId node_id) -> bool {
+                     Parse::IdentifierNameMaybeBeforeSignatureId node_id)
+    -> bool {
   // Push a pattern block stack entry to handle the parameter pattern.
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(

@@ -97,6 +97,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -112,6 +113,8 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_impl_function_scope.carbon
 // CHECK:STDOUT:
@@ -145,6 +148,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -171,16 +175,18 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_impl_self_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Z.Zero.type: type = fn_type @Z.Zero [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.e4a: type = fn_type @Z.WithSelf.Zero, @Z(%Self.c59) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Z.Zero: %Z.Zero.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.3f4: %Z.WithSelf.Zero.type.e4a = struct_value () [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
-// CHECK:STDOUT:   %assoc0.aba: %Z.assoc_type = assoc_entity element0, @Z.%Z.Zero.decl [concrete]
+// CHECK:STDOUT:   %assoc0.cc0: %Z.assoc_type = assoc_entity element0, @Z.%Z.WithSelf.Zero.decl [concrete]
 // CHECK:STDOUT:   %<error>.as.Z.impl.Zero.type: type = fn_type @<error>.as.Z.impl.Zero, @<error>.as.Z.impl(%Self.c59) [symbolic]
 // CHECK:STDOUT:   %<error>.as.Z.impl.Zero: %<error>.as.Z.impl.Zero.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
@@ -188,13 +194,19 @@ fn F() {
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.type: type = fn_type @Point.as.Z.impl.Zero [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero: %Point.as.Z.impl.Zero.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.bb1: type = fn_type @Z.WithSelf.Zero, @Z(%Z.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.22c: %Z.WithSelf.Zero.type.bb1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.01a: type = fn_type_with_self_type %Z.Zero.type, %Z.facet [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Point.type.facet: %type = facet_value %Point, () [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.15e: type = fn_type @Z.WithSelf.Zero, @Z(%Point.type.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.55b: %Z.WithSelf.Zero.type.15e = struct_value () [concrete]
+// CHECK:STDOUT:   %.c1b: type = fn_type_with_self_type %Z.WithSelf.Zero.type.bb1, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
@@ -223,23 +235,27 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
-// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   %Z.Zero.decl: %Z.Zero.type = fn_decl @Z.Zero [concrete = constants.%Z.Zero] {} {}
-// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Zero.decl [concrete = constants.%assoc0.aba]
+// CHECK:STDOUT:   %Self.loc3: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !with Self:
+// CHECK:STDOUT:   %Z.WithSelf.Zero.decl: @Z.%Z.WithSelf.Zero.type (%Z.WithSelf.Zero.type.e4a) = fn_decl @Z.WithSelf.Zero [symbolic = @Z.%Z.WithSelf.Zero (constants.%Z.WithSelf.Zero.3f4)] {} {}
+// CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.WithSelf.Zero.decl [concrete = constants.%assoc0.cc0]
 // CHECK:STDOUT:   impl_decl @<error>.as.Z.impl [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.loc3
+// CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:   .Zero = %assoc0
 // CHECK:STDOUT:   .Z = <poisoned>
-// CHECK:STDOUT:   witness = (%Z.Zero.decl)
+// CHECK:STDOUT:   witness = (%Z.WithSelf.Zero.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @<error>.as.Z.impl(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic impl @<error>.as.Z.impl(@Z.%Self.loc3: %Z.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c59)]
 // CHECK:STDOUT:   %<error>.as.Z.impl.Zero.type: type = fn_type @<error>.as.Z.impl.Zero, @<error>.as.Z.impl(%Self) [symbolic = %<error>.as.Z.impl.Zero.type (constants.%<error>.as.Z.impl.Zero.type)]
@@ -279,11 +295,11 @@ fn F() {
 // CHECK:STDOUT:   extend @Point.as.Z.impl.%Z.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Z.Zero(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic fn @Z.WithSelf.Zero(@Z.%Self.loc3: %Z.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @<error>.as.Z.impl.Zero(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic fn @<error>.as.Z.impl.Zero(@Z.%Self.loc3: %Z.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -305,8 +321,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_5.3: init %Point to %.loc25_5.2 = class_init () [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %.loc25_5.4: ref %Point = temporary %.loc25_5.2, %.loc25_5.3
 // CHECK:STDOUT:   %.loc25_7: ref %Point = converted %.loc25_5.1, %.loc25_5.4
-// CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0.aba]
-// CHECK:STDOUT:   %impl.elem0: %.01a = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
+// CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0.cc0]
+// CHECK:STDOUT:   %impl.elem0: %.c1b = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc25_5.4, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc25_5.4)
@@ -315,7 +331,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Point) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.Zero(constants.%Self.c59) {}
+// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc4 => constants.%Self.c59
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.e4a
+// CHECK:STDOUT:   %Z.WithSelf.Zero => constants.%Z.WithSelf.Zero.3f4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf.Zero(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @<error>.as.Z.impl(constants.%Self.c59) {
 // CHECK:STDOUT: !definition:
@@ -326,5 +349,19 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @<error>.as.Z.impl.Zero(constants.%Self.c59) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.Zero(constants.%Z.facet) {}
+// CHECK:STDOUT: specific @Z(constants.%Z.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc4 => constants.%Z.facet
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.bb1
+// CHECK:STDOUT:   %Z.WithSelf.Zero => constants.%Z.WithSelf.Zero.22c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf.Zero(constants.%Z.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z(constants.%Point.type.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self.loc4 => constants.%Point.type.facet
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.15e
+// CHECK:STDOUT:   %Z.WithSelf.Zero => constants.%Z.WithSelf.Zero.55b
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

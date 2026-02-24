@@ -95,9 +95,9 @@ fn AddressOfTupleElementValue() {
 }
 
 fn AddressOfParam(param: i32) {
-  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+4]]:26: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   var param_addr: i32* = &param;
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+4]]:33: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:   var unused param_addr: i32* = &param;
+  // CHECK:STDERR:                                 ^
   // CHECK:STDERR:
-  var param_addr: i32* = &param;
+  var unused param_addr: i32* = &param;
 }

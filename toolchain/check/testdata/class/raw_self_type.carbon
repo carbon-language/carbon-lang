@@ -15,7 +15,7 @@
 class Class {
   fn F() {
     var r#Self: Self*;
-    var p: Self* = r#Self;
+    var unused p: Self* = r#Self;
   }
 }
 
@@ -25,7 +25,7 @@ class MemberNamedSelf {
   fn F(x: Self, y: r#Self);
 }
 
-fn MemberNamedSelf.F(x: Self, y: r#Self) {}
+fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 
 // CHECK:STDOUT: --- raw_self_type.carbon
 // CHECK:STDOUT:
@@ -39,7 +39,6 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %ptr.8e5: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.018: type = pattern_type %ptr.8e5 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
@@ -47,7 +46,8 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.02e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.120: %ptr.as.Copy.impl.Op.type.02e = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.8e5, (%Copy.impl_witness.9d3) [concrete]
-// CHECK:STDOUT:   %.105: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.130: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.370: type = fn_type_with_self_type %Copy.WithSelf.Op.type.130, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.120, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
@@ -89,10 +89,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.f56 = value_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc28: %MemberNamedSelf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc28_25: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %Self.ref.loc28_32: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc28: %MemberNamedSelf = value_binding x, %x.param.loc28
 // CHECK:STDOUT:     %y.param.loc28: %Self.0d4 = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc28_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
+// CHECK:STDOUT:     %Self.ref.loc28_48: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
 // CHECK:STDOUT:     %y.loc28: %Self.0d4 = value_binding y, %y.param.loc28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -156,17 +156,17 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.018 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.8e5 = var %p.var_patt
-// CHECK:STDOUT:   %Self.ref.loc18_20: ref %ptr.8e5 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc18_20: %ptr.8e5 = acquire_value %Self.ref.loc18_20
-// CHECK:STDOUT:   %impl.elem0: %.105 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
-// CHECK:STDOUT:   %bound_method.loc18_20.1: <bound method> = bound_method %.loc18_20, %impl.elem0
+// CHECK:STDOUT:   %Self.ref.loc18_27: ref %ptr.8e5 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc18_27: %ptr.8e5 = acquire_value %Self.ref.loc18_27
+// CHECK:STDOUT:   %impl.elem0: %.370 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
+// CHECK:STDOUT:   %bound_method.loc18_27.1: <bound method> = bound_method %.loc18_27, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_20.2: <bound method> = bound_method %.loc18_20, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc18_20.2(%.loc18_20)
+// CHECK:STDOUT:   %bound_method.loc18_27.2: <bound method> = bound_method %.loc18_27, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc18_27.2(%.loc18_27)
 // CHECK:STDOUT:   assign %p.var, %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %.loc18_16: type = splice_block %ptr.loc18 [concrete = constants.%ptr.8e5] {
-// CHECK:STDOUT:     %Self.ref.loc18_12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_12 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:   %.loc18_23: type = splice_block %ptr.loc18 [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:     %Self.ref.loc18_19: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_19 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.8e5 = ref_binding p, %p.var
 // CHECK:STDOUT:   %DestroyOp.bound.loc18: <bound method> = bound_method %p.var, constants.%DestroyOp

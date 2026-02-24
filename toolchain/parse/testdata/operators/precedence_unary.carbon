@@ -21,9 +21,9 @@ fn F(p: i32*) {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'p'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'p'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},

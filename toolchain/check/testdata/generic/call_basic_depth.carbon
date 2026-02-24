@@ -11,12 +11,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/call_basic_depth.carbon
 
 class C {
-  fn Cfn[self: Self, T:! type](x: T) {
+  fn Cfn[unused self: Self, T:! type](unused x: T) {
   }
 }
 
 //@dump-sem-ir-begin
-fn F[T:! type](x: T) {
+fn F[T:! type](unused x: T) {
 }
 //@dump-sem-ir-end
 

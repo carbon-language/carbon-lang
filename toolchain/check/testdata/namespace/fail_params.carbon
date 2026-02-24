@@ -39,13 +39,13 @@ namespace C[T:! type](x: T);
 
 namespace D;
 // CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter list [RedeclParamListDiffers]
-// CHECK:STDERR: fn D(T:! type).F() {}
+// CHECK:STDERR: fn D(unused T:! type).F() {}
 // CHECK:STDERR:    ^
 // CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: note: previously declared without parameter list [RedeclParamListPrevious]
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-fn D(T:! type).F() {}
+fn D(unused T:! type).F() {}
 
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:
@@ -55,7 +55,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.117: type = fn_type @F.loc48 [concrete]
 // CHECK:STDOUT:   %F.d98: %F.type.117 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -86,15 +87,15 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.param: %T = value_param call_param0
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %x: %T = value_binding x, %x.param
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T.67db0b.1]
+// CHECK:STDOUT:   %x.param: %T.67db0b.1 = value_param call_param0
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.67db0b.1]
+// CHECK:STDOUT:   %x: %T.67db0b.1 = value_binding x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.117 = fn_decl @F.loc48 [concrete = constants.%F.d98] {} {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc48_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc48_13.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,8 +104,9 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_6.2: type) {
-// CHECK:STDOUT:   %T.loc48_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_13.3: type) {
+// CHECK:STDOUT:   %T.loc48_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.1 (constants.%T.67db0b.1)]
+// CHECK:STDOUT:   %T.loc48_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -114,7 +116,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.loc48(constants.%T) {
-// CHECK:STDOUT:   %T.loc48_6.1 => constants.%T
+// CHECK:STDOUT: specific @F.loc48(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.loc48_13.1 => constants.%T.67db0b.2
+// CHECK:STDOUT:   %T.loc48_13.2 => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

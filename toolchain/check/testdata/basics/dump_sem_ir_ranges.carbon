@@ -20,7 +20,7 @@
 library "[[@TEST_NAME]]";
 
 fn A() {
-  var a: ();
+  var unused a: ();
 }
 
 fn B() -> () {

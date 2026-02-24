@@ -126,9 +126,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %0 = getelementptr inbounds i8, ptr %this1, i64 32
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4) %0)
-// CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds ([4 x ptr], ptr @_ZTT1D, i64 0, i64 1))
+// CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds (ptr, ptr @_ZTT1D, i64 1))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds ([4 x ptr], ptr @_ZTT1D, i64 0, i64 2))
+// CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds (ptr, ptr @_ZTT1D, i64 2))
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !15
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !15

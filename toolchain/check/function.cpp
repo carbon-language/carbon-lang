@@ -153,7 +153,8 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
                          return_patterns_id);
 
   context.full_pattern_stack().PopFullPattern();
-  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
+  auto [pattern_block_id, decl_block_id] =
+      FinishFunctionSignature(context, /*check_unused=*/false);
 
   // Add the function declaration.
   // TODO: This should probably handle generics.
@@ -409,11 +410,11 @@ auto StartFunctionSignature(Context& context) -> void {
   context.pattern_block_stack().Push();
 }
 
-auto FinishFunctionSignature(Context& context)
+auto FinishFunctionSignature(Context& context, bool check_unused)
     -> FinishFunctionSignatureResult {
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(check_unused);
   return {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id};
 }
 
@@ -461,7 +462,7 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void {
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(/*check_unused=*/true);
 
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();

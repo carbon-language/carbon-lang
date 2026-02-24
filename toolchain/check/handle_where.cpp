@@ -9,6 +9,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -188,7 +189,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   context.rewrites_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(/*check_unused=*/true);
   SemIR::InstId period_self_id =
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();

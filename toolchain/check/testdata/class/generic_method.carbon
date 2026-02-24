@@ -17,7 +17,7 @@ class Class(T:! type) {
   fn F[self: Self](n: T);
 }
 
-fn Class(T:! type).F[self: Self](n: T) {}
+fn Class(T:! type).F[unused self: Self](unused n: T) {}
 
 // CHECK:STDOUT: --- generic_method.carbon
 // CHECK:STDOUT:
@@ -68,9 +68,9 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc20: type = symbolic_binding T, 0 [symbolic = @Class.%T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:     %self.param.loc20: @Class.F.%Class (%Class) = value_param call_param0
-// CHECK:STDOUT:     %.loc20_28.1: type = splice_block %Self.ref.loc20 [symbolic = %Class (constants.%Class)] {
-// CHECK:STDOUT:       %.loc20_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_28.2 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:     %.loc20_35.1: type = splice_block %Self.ref.loc20 [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:       %.loc20_35.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_35.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: @Class.F.%Class (%Class) = value_binding self, %self.param.loc20
 // CHECK:STDOUT:     %n.param.loc20: @Class.F.%T.loc17 (%T) = value_param call_param1
@@ -128,8 +128,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %pattern_type.loc17_20: type = pattern_type %T.loc17 [symbolic = %pattern_type.loc17_20 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_26: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_26 (constants.%require_complete.43d)]
-// CHECK:STDOUT:   %require_complete.loc20_35: <witness> = require_complete_type %T.loc17 [symbolic = %require_complete.loc20_35 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc20_33: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_33 (constants.%require_complete.43d)]
+// CHECK:STDOUT:   %require_complete.loc20_49: <witness> = require_complete_type %T.loc17 [symbolic = %require_complete.loc20_49 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param.loc20: @Class.F.%Class (%Class), %n.param.loc20: @Class.F.%T.loc17 (%T)) {
 // CHECK:STDOUT:   !entry:

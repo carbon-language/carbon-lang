@@ -35,7 +35,7 @@ class CppCompat.NullptrT {
   }
 
   impl as Copy {
-    fn Op[self: Self]() -> Self {
+    fn Op[unused self: Self]() -> Self {
       return Make();
     }
   }
@@ -43,7 +43,7 @@ class CppCompat.NullptrT {
   // TODO: impl as EqWith(Self)
 
   impl forall [T:! type] as ImplicitAs(Optional(T*)) {
-    fn Convert[self: Self]() -> Optional(T*) {
+    fn Convert[unused self: Self]() -> Optional(T*) {
       return Optional(T*).None();
     }
   }

@@ -18,7 +18,7 @@ var x: {,} = {};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},

@@ -12,6 +12,7 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/ids.h"
@@ -307,7 +308,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   // The scopes and blocks for the choice itself.
   context.inst_block_stack().Pop();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Choice>();
-  context.scope_stack().Pop();
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.decl_name_stack().PopScope();
 
   FinishGenericDefinition(context, class_info.generic_id);

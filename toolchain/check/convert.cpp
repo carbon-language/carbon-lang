@@ -1741,6 +1741,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // that `RequireConcreteType` returns true for facet types, since their
   // representation is fixed. This allows us to support using the `Self` of an
   // interface inside its definition.
+  //
+  // TODO: If `!target.is_initializer()` then we don't want to require the type
+  // to be concrete, only complete. But if we continue into Convert with an
+  // abstract type, we crash elsewhere.
   if (!RequireConcreteType(
           context, target.type_id, loc_id,
           [&] {
@@ -1764,7 +1768,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                 target.type_id);
           },
           [&] {
-            if (!target.diagnose || !target.is_initializer()) {
+            if (!target.diagnose) {
               return context.emitter().BuildSuppressed();
             }
             CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,

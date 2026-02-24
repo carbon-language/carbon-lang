@@ -95,8 +95,8 @@ CARBON_PARSE_NODE_KIND(Placeholder)
 
 CARBON_PARSE_NODE_KIND(EmptyDecl)
 
-CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeParams)
-CARBON_PARSE_NODE_KIND(IdentifierNameBeforeParams)
+CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeSignature)
+CARBON_PARSE_NODE_KIND(IdentifierNameMaybeBeforeSignature)
 
 CARBON_PARSE_NODE_KIND(IdentifierNameExpr)
 

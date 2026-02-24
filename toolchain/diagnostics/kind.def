@@ -36,6 +36,8 @@ CARBON_DIAGNOSTIC_KIND(FailureBuildingRuntimes)
 CARBON_DIAGNOSTIC_KIND(FailureRunningClang)
 CARBON_DIAGNOSTIC_KIND(FailureRunningClangToLink)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
+CARBON_DIAGNOSTIC_KIND(LinkObjectFilesMissing)
+CARBON_DIAGNOSTIC_KIND(LinkOutputOptionMissing)
 CARBON_DIAGNOSTIC_KIND(ToolFuzzingDisallowed)
 
 // ============================================================================
@@ -549,12 +551,20 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
 // Facet type completeness.
 CARBON_DIAGNOSTIC_KIND(IdentifyingFacetTypeHere)
+CARBON_DIAGNOSTIC_KIND(RequiringCompleteFacetTypeHere)
 
 // Generics.
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
+
+// Unused diagnostics.
+CARBON_DIAGNOSTIC_KIND(UnusedButUsed)
+CARBON_DIAGNOSTIC_KIND(UnusedButUsedHere)
+CARBON_DIAGNOSTIC_KIND(UnusedModifierOnDeclaration)
+CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
+CARBON_DIAGNOSTIC_KIND(UnusedBinding)
 
 // ============================================================================
 // CodeGen diagnostics

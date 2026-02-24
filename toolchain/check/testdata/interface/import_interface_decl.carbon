@@ -49,6 +49,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,4 +77,6 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.9f2 [from "fail_b.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%Self) {}
 // CHECK:STDOUT:

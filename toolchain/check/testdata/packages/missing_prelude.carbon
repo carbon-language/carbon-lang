@@ -42,7 +42,7 @@ var n: i32;
 
 package Core library "[[@TEST_NAME]]";
 
-fn Int[T:! type](N:! T) -> {} { return {}; }
+fn Int[T:! type](unused N:! T) -> {} { return {}; }
 
 // --- use_fake_int.carbon
 
@@ -60,7 +60,7 @@ package Core library "[[@TEST_NAME]]";
 
 // Note that we are intentionally using a different type here from other cases
 // to test that this function is called, not the one from prelude_fake_int.
-fn Int[T:! type](N:! T) -> () { return (); }
+fn Int[T:! type](unused N:! T) -> () { return (); }
 
 var n: () = i32;
 
@@ -184,40 +184,40 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc4_29.3: Core.Form = init_form %.loc4_29.2, call_param0 [concrete = constants.%.dde]
+// CHECK:STDOUT:     %.loc4_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_36.2: type = converted %.loc4_36.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc4_36.3: Core.Form = init_form %.loc4_36.2, call_param0 [concrete = constants.%.dde]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc4_22: type = splice_block %T.ref [symbolic = %T.loc4_8.1 (constants.%T)] {
+// CHECK:STDOUT:     %.loc4_29: type = splice_block %T.ref [symbolic = %T.loc4_8.1 (constants.%T)] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_8.2 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_18.2: @Int.%T.loc4_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc4_18.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_25.2: @Int.%T.loc4_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc4_25.1 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc4_8.2: type, %N.loc4_18.2: @Int.%T.loc4_8.1 (%T)) {
+// CHECK:STDOUT: generic fn @Int(%T.loc4_8.2: type, %N.loc4_25.2: @Int.%T.loc4_8.1 (%T)) {
 // CHECK:STDOUT:   %T.loc4_8.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc4_18.1: @Int.%T.loc4_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc4_18.1 (constants.%N)]
+// CHECK:STDOUT:   %N.loc4_25.1: @Int.%T.loc4_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc4_25.1 (constants.%N)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_8.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_42: init %empty_struct_type = converted %.loc4_41.1, %.loc4_41.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc4_42
+// CHECK:STDOUT:     %.loc4_48.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_48.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_49: init %empty_struct_type = converted %.loc4_48.1, %.loc4_48.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     return %.loc4_49
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc4_8.1 => constants.%T
-// CHECK:STDOUT:   %N.loc4_18.1 => constants.%N
+// CHECK:STDOUT:   %N.loc4_25.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -329,16 +329,16 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_29.2: type = converted %.loc8_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc8_29.3: Core.Form = init_form %.loc8_29.2, call_param0 [concrete = constants.%.842]
+// CHECK:STDOUT:     %.loc8_36.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_36.2: type = converted %.loc8_36.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_36.3: Core.Form = init_form %.loc8_36.2, call_param0 [concrete = constants.%.842]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc8_22: type = splice_block %T.ref [symbolic = %T.loc8_8.1 (constants.%T)] {
+// CHECK:STDOUT:     %.loc8_29: type = splice_block %T.ref [symbolic = %T.loc8_8.1 (constants.%T)] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc8_8.2 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc8_18.2: @Int.%T.loc8_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc8_18.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc8_25.2: @Int.%T.loc8_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc8_25.1 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -354,19 +354,19 @@ var n: {} = i32;
 // CHECK:STDOUT:   %n: ref %empty_tuple.type = ref_binding n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc8_8.2: type, %N.loc8_18.2: @Int.%T.loc8_8.1 (%T)) {
+// CHECK:STDOUT: generic fn @Int(%T.loc8_8.2: type, %N.loc8_25.2: @Int.%T.loc8_8.1 (%T)) {
 // CHECK:STDOUT:   %T.loc8_8.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc8_18.1: @Int.%T.loc8_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc8_18.1 (constants.%N)]
+// CHECK:STDOUT:   %N.loc8_25.1: @Int.%T.loc8_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc8_25.1 (constants.%N)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc8_8.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_42: init %empty_tuple.type = converted %.loc8_41.1, %.loc8_41.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc8_42
+// CHECK:STDOUT:     %.loc8_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_48.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_49: init %empty_tuple.type = converted %.loc8_48.1, %.loc8_48.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     return %.loc8_49
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,13 +381,13 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc8_8.1 => constants.%T
-// CHECK:STDOUT:   %N.loc8_18.1 => constants.%N
+// CHECK:STDOUT:   %N.loc8_25.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
 // CHECK:STDOUT:   %T.loc8_8.1 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc8_18.1 => constants.%int_32
+// CHECK:STDOUT:   %N.loc8_25.1 => constants.%int_32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dc0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

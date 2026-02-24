@@ -15,7 +15,7 @@
 fn F() -> (i32, i32, i32);
 
 fn G() {
-  var v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
+  var unused v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
 }
 
 // CHECK:STDOUT: --- nested_struct_in_place.carbon
@@ -88,33 +88,33 @@ fn G() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.3c2 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2f9 = var %v.var_patt
-// CHECK:STDOUT:   %F.ref.loc18_61: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc18_74.1: ref %tuple.type.189 = struct_access %v.var, element0
-// CHECK:STDOUT:   %F.call.loc18_63: init %tuple.type.189 to %.loc18_74.1 = call %F.ref.loc18_61()
-// CHECK:STDOUT:   %F.ref.loc18_71: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc18_74.2: ref %tuple.type.189 = struct_access %v.var, element1
-// CHECK:STDOUT:   %F.call.loc18_73: init %tuple.type.189 to %.loc18_74.2 = call %F.ref.loc18_71()
-// CHECK:STDOUT:   %.loc18_74.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc18_63, %F.call.loc18_73)
-// CHECK:STDOUT:   %.loc18_74.4: init %struct_type.a.b.2f9 to %v.var = struct_init (%F.call.loc18_63, %F.call.loc18_73)
-// CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.2f9 = converted %.loc18_74.3, %.loc18_74.4
+// CHECK:STDOUT:   %F.ref.loc18_68: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc18_81.1: ref %tuple.type.189 = struct_access %v.var, element0
+// CHECK:STDOUT:   %F.call.loc18_70: init %tuple.type.189 to %.loc18_81.1 = call %F.ref.loc18_68()
+// CHECK:STDOUT:   %F.ref.loc18_78: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc18_81.2: ref %tuple.type.189 = struct_access %v.var, element1
+// CHECK:STDOUT:   %F.call.loc18_80: init %tuple.type.189 to %.loc18_81.2 = call %F.ref.loc18_78()
+// CHECK:STDOUT:   %.loc18_81.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc18_70, %F.call.loc18_80)
+// CHECK:STDOUT:   %.loc18_81.4: init %struct_type.a.b.2f9 to %v.var = struct_init (%F.call.loc18_70, %F.call.loc18_80)
+// CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.2f9 = converted %.loc18_81.3, %.loc18_81.4
 // CHECK:STDOUT:   assign %v.var, %.loc18_3
-// CHECK:STDOUT:   %.loc18_51: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {
-// CHECK:STDOUT:     %int_32.loc18_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18_29.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_16, %i32.loc18_21, %i32.loc18_26) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc18_29.2: type = converted %.loc18_29.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
-// CHECK:STDOUT:     %int_32.loc18_37: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_37: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_42: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_42: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18_50.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_37, %i32.loc18_42, %i32.loc18_47) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc18_50.2: type = converted %.loc18_50.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:   %.loc18_58: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {
+// CHECK:STDOUT:     %int_32.loc18_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_36.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_23, %i32.loc18_28, %i32.loc18_33) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_36.2: type = converted %.loc18_36.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:     %int_32.loc18_44: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_44: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_54: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_54: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_57.1: %tuple.type.ff9 = tuple_literal (%i32.loc18_44, %i32.loc18_49, %i32.loc18_54) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_57.2: type = converted %.loc18_57.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %tuple.type.189, .b: %tuple.type.189} [concrete = constants.%struct_type.a.b.2f9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %struct_type.a.b.2f9 = ref_binding v, %v.var

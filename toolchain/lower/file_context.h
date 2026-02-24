@@ -209,6 +209,14 @@ class FileContext {
 
   class FunctionTypeInfoBuilder;
 
+  // Builds an LLVM function declaration for the given function, or returns an
+  // existing one if we've already lowered another declaration of the same
+  // function.
+  auto GetOrCreateLLVMFunction(const FunctionTypeInfo& function_type_info,
+                               SemIR::FunctionId function_id,
+                               SemIR::SpecificId specific_id)
+      -> llvm::Function*;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
   auto BuildFunctionDecl(

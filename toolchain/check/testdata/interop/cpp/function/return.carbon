@@ -70,7 +70,7 @@ auto ReturnNullPtr() -> nullptr_t;
 
 fn InitializeFromReturn() {
   //@dump-sem-ir-begin
-  var c: Cpp.nullptr_t = Cpp.ReturnNullPtr();
+  var unused c: Cpp.nullptr_t = Cpp.ReturnNullPtr();
   //@dump-sem-ir-end
 }
 
@@ -101,7 +101,7 @@ unsigned int ReturnU32();
 ''';
 
 fn Var() {
-  var my_u32: u32 = Cpp.ReturnU32();
+  var unused my_u32: u32 = Cpp.ReturnU32();
 }
 
 // CHECK:STDOUT: --- import_multiple.carbon
@@ -211,15 +211,15 @@ fn Var() {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.f05 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Cpp.nullptr_t = var %c.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc11_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc11_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnNullPtr.ref: %ReturnNullPtr.cpp_overload_set.type = name_ref ReturnNullPtr, imports.%ReturnNullPtr.cpp_overload_set.value [concrete = constants.%ReturnNullPtr.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc11_3: ref %Cpp.nullptr_t = splice_block %c.var {}
 // CHECK:STDOUT:   %addr: %ptr.142 = addr_of %.loc11_3
 // CHECK:STDOUT:   %ReturnNullPtr__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnNullPtr__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc11_44: init %Cpp.nullptr_t to %.loc11_3 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
-// CHECK:STDOUT:   assign %c.var, %.loc11_44
-// CHECK:STDOUT:   %.loc11_13: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
-// CHECK:STDOUT:     %Cpp.ref.loc11_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc11_51: init %Cpp.nullptr_t to %.loc11_3 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
+// CHECK:STDOUT:   assign %c.var, %.loc11_51
+// CHECK:STDOUT:   %.loc11_20: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
+// CHECK:STDOUT:     %Cpp.ref.loc11_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %nullptr_t.ref: type = name_ref nullptr_t, constants.%Cpp.nullptr_t [concrete = constants.%Cpp.nullptr_t]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = ref_binding c, %c.var

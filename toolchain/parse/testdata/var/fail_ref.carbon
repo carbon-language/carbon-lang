@@ -18,7 +18,7 @@ var ref x: i32 = 0;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 4},

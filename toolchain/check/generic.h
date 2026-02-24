@@ -125,6 +125,49 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
 auto DiagnoseIfGenericMissingExplicitParameters(
     Context& context, const SemIR::EntityWithParamsBase& entity_base) -> void;
 
+// Given a generic and specific for an entity, construct the specific for the
+// inner generic-with-self.
+//
+// Interfaces and named constraints each have two generics.
+// * A regular outward facing generic which includes just the generic bindings
+//   as written in the declaration.
+// * An inner generic-with-self which includes an additional generic binding of
+//   the `Self` facet value. Associated entities are located inside this inner
+//   generic-with-self.
+//
+// This function moves from a specific for the outer generic to a specific for
+// the inner generic-with-self. An entity which has no generic bindings will
+// have no outer generic-without-self and thus no specific-without-self, but
+// there is always an inner generic-with-self regardless, because of the
+// additional `Self` binding.
+//
+// If the generic-without-self has its definition completed, the resulting
+// specific will also. Note that during construction of an interface/constraint,
+// the definition cannot be complete yet.
+//
+// TODO: This should take a `diagnoser` parameter which is passed through to
+// MakeSpecific() and TryEvalBlockForSpecific(), so that monomorphization errors
+// get diagnosed to the correct semantic operation, instead of just to specific
+// instantiation.
+auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
+                               SemIR::GenericId generic_without_self_id,
+                               SemIR::GenericId generic_with_self_id,
+                               SemIR::SpecificId specific_without_self_id,
+                               SemIR::ConstantId self_facet)
+    -> SemIR::SpecificId;
+
+// Copy the arguments of a specific into the context of another generic. The
+// target generic must have the exact same bindings as the specific's generic.
+//
+// TODO: This should take a `diagnoser` parameter which is passed through to
+// MakeSpecific() and TryEvalBlockForSpecific(), so that monomorphization errors
+// get diagnosed to the correct semantic operation, instead of just to specific
+// instantiation.
+auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
+                           SemIR::SpecificId specific_id,
+                           SemIR::GenericId target_generic_id)
+    -> SemIR::SpecificId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

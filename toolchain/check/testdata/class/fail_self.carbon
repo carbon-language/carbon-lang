@@ -20,11 +20,11 @@ class Class {
   fn G() -> Self;
 }
 
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
-// CHECK:STDERR: fn Class.F(self: Self) {
-// CHECK:STDERR:            ^~~~~~~~~~
+// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:19: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+// CHECK:STDERR: fn Class.F(unused self: Self) {
+// CHECK:STDERR:                   ^~~~~~~~~~
 // CHECK:STDERR:
-fn Class.F(self: Self) {
+fn Class.F(unused self: Self) {
 }
 
 fn Class.G() -> Self {

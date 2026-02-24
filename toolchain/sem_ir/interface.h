@@ -12,14 +12,25 @@
 namespace Carbon::SemIR {
 
 // Interface-specific fields.
+//
+// TODO: Factor out the shared fields between InterfaceFields and
+// NamedConstraintFields.
 struct InterfaceFields {
   // The following members are set at the `{` of the interface definition.
 
-  // The interface scope.
-  NameScopeId scope_id = NameScopeId::None;
-  // The first block of the interface body.
+  // The interface scopes.
+  NameScopeId scope_without_self_id = NameScopeId::None;
+  NameScopeId scope_with_self_id = NameScopeId::None;
+  // The block of instructions outside the interface-with-self. This is where
+  // the `Self` instruction can be constructed.
+  InstBlockId body_block_without_self_id = InstBlockId::None;
+  // The interface-with-self generic, where the `Self` is a parameter to the
+  // generic. This generic contains all the associated entities of the
+  // interface.
+  GenericId generic_with_self_id = GenericId::None;
+  // The first block of the interface-with-self body.
   // TODO: Handle control flow in the interface body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::None;
+  InstBlockId body_block_with_self_id = InstBlockId::None;
   // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
 

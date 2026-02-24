@@ -29,8 +29,8 @@ import Cpp library "non_function_member_public.h";
 
 fn F(s: Cpp.S) {
   //@dump-sem-ir-begin
-  let instance_data: i32 = s.instance_data;
-  let static_data: i32 = Cpp.S.static_data;
+  let unused instance_data: i32 = s.instance_data;
+  let unused static_data: i32 = Cpp.S.static_data;
   //@dump-sem-ir-end
 }
 
@@ -46,8 +46,8 @@ class Derived {
 
 fn F(d: Derived) {
   //@dump-sem-ir-begin
-  let instance_data: i32 = d.instance_data;
-  let static_data: i32 = Derived.static_data;
+  let unused instance_data: i32 = d.instance_data;
+  let unused static_data: i32 = Derived.static_data;
   //@dump-sem-ir-end
 }
 
@@ -70,23 +70,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_protected.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+8]]:28: error: cannot access protected member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let instance_data: i32 = c.instance_data;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+8]]:35: error: cannot access protected member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
+  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let instance_data: i32 = c.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+7]]:26: error: cannot access protected member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let static_data: i32 = Cpp.C.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+4]]:26: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let static_data: i32 = Cpp.C.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~
+  let unused instance_data: i32 = c.instance_data;
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+7]]:33: error: cannot access protected member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let unused static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let static_data: i32 = Cpp.C.static_data;
+  let unused static_data: i32 = Cpp.C.static_data;
 }
 
 // --- fail_import_non_function_member_protected_extend.carbon
@@ -100,23 +100,23 @@ class Derived {
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+8]]:28: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let instance_data: i32 = d.instance_data;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+8]]:35: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
+  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let instance_data: i32 = d.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+7]]:26: error: cannot access protected member `static_data` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+4]]:26: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~
+  let unused instance_data: i32 = d.instance_data;
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+7]]:33: error: cannot access protected member `static_data` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let unused static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let static_data: i32 = Derived.static_data;
+  let unused static_data: i32 = Derived.static_data;
 }
 
 // --- import_non_function_member_protected_extend_call_in_member.carbon
@@ -129,10 +129,10 @@ class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() {
     //@dump-sem-ir-begin
-    let instance_data: i32 = self.instance_data;
-    let unqualified_static_data: i32 = static_data;
-    let derived_static_data: i32 = Derived.static_data;
-    let base_static_data: i32 = Cpp.C.static_data;
+    let unused instance_data: i32 = self.instance_data;
+    let unused unqualified_static_data: i32 = static_data;
+    let unused derived_static_data: i32 = Derived.static_data;
+    let unused base_static_data: i32 = Cpp.C.static_data;
     //@dump-sem-ir-end
   }
 }
@@ -155,23 +155,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_private.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+8]]:28: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let instance_data: i32 = c.instance_data;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+8]]:35: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
+  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let instance_data: i32 = c.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+7]]:26: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let static_data: i32 = Cpp.C.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+4]]:26: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let static_data: i32 = Cpp.C.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~
+  let unused instance_data: i32 = c.instance_data;
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+7]]:33: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let unused static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let static_data: i32 = Cpp.C.static_data;
+  let unused static_data: i32 = Cpp.C.static_data;
 }
 
 // --- fail_import_non_function_member_private_extend.carbon
@@ -183,44 +183,44 @@ import Cpp library "non_function_member_private.h";
 class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() {
-    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:30: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     let instance_data: i32 = self.instance_data;
-    // CHECK:STDERR:                              ^~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:37: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     let unused instance_data: i32 = self.instance_data;
+    // CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR: class C {
     // CHECK:STDERR:       ^
     // CHECK:STDERR:
-    let instance_data: i32 = self.instance_data;
+    let unused instance_data: i32 = self.instance_data;
   }
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:28: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let instance_data: i32 = d.instance_data;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:35: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
+  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let instance_data: i32 = d.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:34: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:34: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
+  let unused instance_data: i32 = d.instance_data;
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:41: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:41: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:31: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let base_static_data: i32 = Cpp.C.static_data;
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-4]]:34: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
+  let unused derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:38: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused base_static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-4]]:41: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let base_static_data: i32 = Cpp.C.static_data;
+  let unused base_static_data: i32 = Cpp.C.static_data;
 }
 
 // --- fail_import_non_function_member_private_extend_static_within_member_function.carbon
@@ -233,14 +233,14 @@ class Derived {
   extend base: Cpp.C;
   fn F() {
     // TODO: `C.static_data` is private, so this should fail.
-    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+7]]:40: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     let unqualified_static_data: i32 = static_data;
-    // CHECK:STDERR:                                        ^~~~~~~~~~~
-    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+4]]:40: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     let unqualified_static_data: i32 = static_data;
-    // CHECK:STDERR:                                        ^~~~~~~~~~~
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+7]]:47: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     let unused unqualified_static_data: i32 = static_data;
+    // CHECK:STDERR:                                               ^~~~~~~~~~~
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+4]]:47: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     let unused unqualified_static_data: i32 = static_data;
+    // CHECK:STDERR:                                               ^~~~~~~~~~~
     // CHECK:STDERR:
-    let unqualified_static_data: i32 = static_data;
+    let unused unqualified_static_data: i32 = static_data;
   }
 }
 
@@ -333,7 +333,7 @@ import Cpp library "function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F[unused self: Self]() {
     //@dump-sem-ir-begin
     static_fn();
     Derived.static_fn();
@@ -1643,13 +1643,13 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
 // CHECK:STDOUT:   %instance_data.ref: %S.elem = name_ref instance_data, @S.%.1 [concrete = @S.%.1]
-// CHECK:STDOUT:   %.loc8_29.1: ref %i32 = class_element_access %s.ref, element0
-// CHECK:STDOUT:   %.loc8_29.2: %i32 = acquire_value %.loc8_29.1
-// CHECK:STDOUT:   %.loc8_22: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc8_36.1: ref %i32 = class_element_access %s.ref, element0
+// CHECK:STDOUT:   %.loc8_36.2: %i32 = acquire_value %.loc8_36.1
+// CHECK:STDOUT:   %.loc8_29: type = splice_block %i32.loc8 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc8_29.2
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc8_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
@@ -1657,12 +1657,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
-// CHECK:STDOUT:   %.loc9_20: type = splice_block %i32.loc9 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc9_27: type = splice_block %i32.loc9 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_31: %i32 = acquire_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc9_31
+// CHECK:STDOUT:   %.loc9_38: %i32 = acquire_value %static_data.ref
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc9_38
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1690,27 +1690,27 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %instance_data.ref: %S.elem = name_ref instance_data, @S.%.1 [concrete = @S.%.1]
-// CHECK:STDOUT:   %.loc12_29.1: ref %S = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc12_29.2: ref %S = converted %d.ref, %.loc12_29.1
-// CHECK:STDOUT:   %.loc12_29.3: ref %i32 = class_element_access %.loc12_29.2, element0
-// CHECK:STDOUT:   %.loc12_22: type = splice_block %i32.loc12 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc12_36.1: ref %S = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc12_36.2: ref %S = converted %d.ref, %.loc12_36.1
+// CHECK:STDOUT:   %.loc12_36.3: ref %i32 = class_element_access %.loc12_36.2, element0
+// CHECK:STDOUT:   %.loc12_29: type = splice_block %i32.loc12 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_29.4: %i32 = acquire_value %.loc12_29.3
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc12_29.4
+// CHECK:STDOUT:   %.loc12_36.4: %i32 = acquire_value %.loc12_36.3
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc12_36.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.ref.loc13: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
-// CHECK:STDOUT:   %.loc13_20: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc13_27: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_33: %i32 = acquire_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc13_33
+// CHECK:STDOUT:   %.loc13_40: %i32 = acquire_value %static_data.ref
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc13_40
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1757,49 +1757,49 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
 // CHECK:STDOUT:   %instance_data.ref: %C.elem = name_ref instance_data, @C.%.1 [concrete = @C.%.1]
-// CHECK:STDOUT:   %.loc10_34.1: ref %C = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc10_34.2: ref %C = converted %self.ref, %.loc10_34.1
-// CHECK:STDOUT:   %.loc10_34.3: ref %i32 = class_element_access %.loc10_34.2, element0
-// CHECK:STDOUT:   %.loc10_24: type = splice_block %i32.loc10 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc10_41.1: ref %C = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc10_41.2: ref %C = converted %self.ref, %.loc10_41.1
+// CHECK:STDOUT:   %.loc10_41.3: ref %i32 = class_element_access %.loc10_41.2, element0
+// CHECK:STDOUT:   %.loc10_31: type = splice_block %i32.loc10 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_34.4: %i32 = acquire_value %.loc10_34.3
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc10_34.4
+// CHECK:STDOUT:   %.loc10_41.4: %i32 = acquire_value %.loc10_41.3
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc10_41.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.7ce = value_binding_pattern unqualified_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %static_data.ref.loc11: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
-// CHECK:STDOUT:   %.loc11_34: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc11_41: type = splice_block %i32.loc11 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_40: %i32 = acquire_value %static_data.ref.loc11
-// CHECK:STDOUT:   %unqualified_static_data: %i32 = value_binding unqualified_static_data, %.loc11_40
+// CHECK:STDOUT:   %.loc11_47: %i32 = acquire_value %static_data.ref.loc11
+// CHECK:STDOUT:   %unqualified_static_data: %i32 = value_binding unqualified_static_data, %.loc11_47
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.7ce = value_binding_pattern derived_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %static_data.ref.loc12: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
-// CHECK:STDOUT:   %.loc12_30: type = splice_block %i32.loc12 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc12_37: type = splice_block %i32.loc12 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_43: %i32 = acquire_value %static_data.ref.loc12
-// CHECK:STDOUT:   %derived_static_data: %i32 = value_binding derived_static_data, %.loc12_43
+// CHECK:STDOUT:   %.loc12_50: %i32 = acquire_value %static_data.ref.loc12
+// CHECK:STDOUT:   %derived_static_data: %i32 = value_binding derived_static_data, %.loc12_50
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %base_static_data.patt: %pattern_type.7ce = value_binding_pattern base_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %static_data.ref.loc13: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
-// CHECK:STDOUT:   %.loc13_27: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc13_34: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_38: %i32 = acquire_value %static_data.ref.loc13
-// CHECK:STDOUT:   %base_static_data: %i32 = value_binding base_static_data, %.loc13_38
+// CHECK:STDOUT:   %.loc13_45: %i32 = acquire_value %static_data.ref.loc13
+// CHECK:STDOUT:   %base_static_data: %i32 = value_binding base_static_data, %.loc13_45
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

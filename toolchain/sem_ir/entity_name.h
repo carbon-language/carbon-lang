@@ -17,14 +17,14 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << "}";
+        << ", is_unused: " << is_unused << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
     // This requires that there are no padding bits in the type. This is upheld
     // since it holds values all of the same size: each is 32 bits, with one
-    // split into 31 and 1 bits.
+    // split into 30, 1, and 1 bits.
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
@@ -53,9 +53,11 @@ struct EntityName : public Printable<EntityName> {
   // them for other kinds of `EntityName`.
 
   // The bind_index() value, unwrapped so it can be stored in a bit-field.
-  int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
+  int32_t bind_index_value : 30 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
+  // Whether this binding is marked unused.
+  bool is_unused : 1 = false;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore
@@ -67,12 +69,17 @@ struct EntityNameStore
 
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
-                              CompileTimeBindIndex bind_index, bool is_template)
-      -> EntityNameId {
-    return Add({.name_id = name_id,
-                .parent_scope_id = parent_scope_id,
-                .bind_index_value = bind_index.index,
-                .is_template = is_template});
+                              CompileTimeBindIndex bind_index, bool is_template,
+                              bool is_unused) -> EntityNameId {
+    EntityName name = {.name_id = name_id,
+                       .parent_scope_id = parent_scope_id,
+                       .bind_index_value = bind_index.index,
+                       .is_template = is_template,
+                       .is_unused = is_unused};
+    CARBON_CHECK(name.bind_index_value == bind_index.index,
+                 "Bind index out of range for bit-field: {0}",
+                 bind_index.index);
+    return Add(name);
   }
 
   // Convert an `EntityName` to a canonical ID. All calls to this with

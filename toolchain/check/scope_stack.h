@@ -17,14 +17,13 @@
 
 namespace Carbon::Check {
 
+class Context;
+
 // A stack of lexical and semantic scopes that we are currently performing
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const SemIR::File* sem_ir)
-      : sem_ir_(sem_ir),
-        lexical_lookup_(sem_ir->identifiers()),
-        full_pattern_stack_(&lexical_lookup_) {}
+  explicit ScopeStack(Context& context);
 
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
@@ -66,17 +65,18 @@ class ScopeStack {
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
   // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
-  auto Pop() -> void;
+  // If `check_unused` is set, checks and emits diagnostics for unused names.
+  auto Pop(bool check_unused = false) -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
-  auto PopIfEmpty() -> void {
+  auto PopIfEmpty(bool check_unused = false) -> void {
     if (scope_stack_.back().num_names == 0) {
-      Pop();
+      Pop(check_unused);
     }
   }
 
   // Pops scopes until we return to the specified scope index.
-  auto PopTo(ScopeIndex index) -> void;
+  auto PopTo(ScopeIndex index, bool check_unused = false) -> void;
 
   // Returns the scope index associated with the current scope.
   auto PeekIndex() const -> ScopeIndex { return Peek().index; }
@@ -106,18 +106,29 @@ class ScopeStack {
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
-  auto GetCurrentScopeAs() -> std::optional<InstT> {
+  auto TryGetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();
     if (!inst_id.has_value()) {
       return std::nullopt;
     }
-    return sem_ir_->insts().TryGetAs<InstT>(inst_id);
+    return sem_ir().insts().TryGetAs<InstT>(inst_id);
+  }
+
+  // Returns the current scope, assuming it is of the specified kind.
+  // Check-fails if there is no instruction for a current scope, or the scope is
+  // of a different kind.
+  template <typename InstT>
+  auto GetCurrentScopeAs() -> InstT {
+    auto inst_id = PeekInstId();
+    CARBON_CHECK(inst_id.has_value());
+    return sem_ir().insts().GetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be
   // the current `returned var` and returns an `None`. If there
   // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
+  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id, SemIR::NameId name_id)
+      -> SemIR::InstId;
 
   // Returns the `returned var` instruction that's currently in scope, or `None`
   // if there isn't one.
@@ -134,23 +145,29 @@ class ScopeStack {
 
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
   // do not look past `scope_index`. Returns the existing lookup result, if any.
+  // If `use_loc_id` is specified, the name is marked as used at that location.
   auto LookupInLexicalScopesWithin(SemIR::NameId name_id,
-                                   ScopeIndex scope_index) -> SemIR::InstId;
+                                   ScopeIndex scope_index,
+                                   SemIR::LocId use_loc_id, bool is_reachable)
+      -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
   // list of non-lexical scopes in which lookup should also be performed,
-  // ordered from outermost to innermost.
-  auto LookupInLexicalScopes(SemIR::NameId name_id)
+  // ordered from outermost to innermost. If `use_loc_id` is specified, the
+  // name is marked as used at that location.
+  auto LookupInLexicalScopes(SemIR::NameId name_id, SemIR::LocId use_loc_id,
+                             bool is_reachable)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
   // in that scope or any unfinished scope within it, and otherwise adds the
-  // name with the value `target_id` and returns `None`.
+  // name with the value `target_id` and returns `None`. `is_decl_reachable`
+  // indicates whether the name was declared in a reachable position.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::None)
-      -> SemIR::InstId;
+                       ScopeIndex scope_index = ScopeIndex::None,
+                       bool is_decl_reachable = true) -> SemIR::InstId;
 
   // Prepares to add a compile-time binding in the current scope, and returns
   // its index. The added binding must then be pushed using
@@ -190,6 +207,10 @@ class ScopeStack {
   auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
 
  private:
+  auto sem_ir() const -> const SemIR::File&;
+
+  auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
+
   // An entry in scope_stack_.
   struct ScopeStackEntry : public MoveOnly<ScopeStackEntry> {
     auto is_lexical_scope() const -> bool { return !scope_id.has_value(); }
@@ -276,6 +297,10 @@ class ScopeStack {
     }
   }
 
+  // Marks the name `name_id` as used at the given location.
+  auto MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id, bool is_reachable)
+      -> void;
+
   // Checks that the provided scope's `next_compile_time_bind_index` matches the
   // full size of the current `compile_time_binding_stack_`. The values should
   // always match, and this is used to validate the correspondence during
@@ -283,8 +308,8 @@ class ScopeStack {
   auto VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
                                       const ScopeStackEntry& scope) -> void;
 
-  // The current file.
-  const SemIR::File* sem_ir_;
+  // Context, used only for checks and emitting diagnostics.
+  Context* context_;
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
@@ -334,6 +359,10 @@ struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
     uint32_t index;
     // The instruction within the scope.
     SemIR::InstId inst_id;
+    // Whether the name was declared in a reachable position.
+    bool is_decl_reachable;
+    // The location of the first use of the name, if any.
+    SemIR::LocId use_loc_id;
   };
 
   // The suspended scope stack entry.

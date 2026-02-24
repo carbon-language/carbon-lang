@@ -21,8 +21,8 @@
 // tests.
 //
 // CHECK:STDOUT: CLANG_INCLUDE_DIRS:
-// CHECK:STDOUT:     {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/22/include
-// CHECK:STDOUT: CLANG_RESOURCE_DIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/22
+// CHECK:STDOUT:     {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/23/include
+// CHECK:STDOUT: CLANG_RESOURCE_DIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/23
 // CHECK:STDOUT: CLANG_SYSROOT: /
 // CHECK:STDOUT: INSTALL_ROOT: {{.*}}/toolchain/install/prefix/lib/carbon/
 // CHECK:STDOUT: LLVM_BINDIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/bin

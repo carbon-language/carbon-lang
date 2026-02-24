@@ -221,10 +221,12 @@ auto RestrictExternModifierOnDecl(Context& context,
   }
 }
 
-auto RequireDefaultFinalOnlyInInterfaces(
-    Context& context, DeclIntroducerState& introducer,
-    std::optional<SemIR::Inst> parent_scope_inst) -> void {
-  if (parent_scope_inst && parent_scope_inst->Is<SemIR::InterfaceDecl>()) {
+auto RequireDefaultFinalOnlyInInterfaces(Context& context,
+                                         DeclIntroducerState& introducer,
+                                         SemIR::NameScopeId parent_scope_id)
+    -> void {
+  if (parent_scope_id.has_value() &&
+      context.name_scopes().Get(parent_scope_id).is_interface_definition()) {
     // Both `default` and `final` allowed in an interface definition.
     return;
   }

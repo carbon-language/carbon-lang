@@ -214,8 +214,22 @@ class StepStack {
       return;
     }
     const auto& specific = sem_ir_->specifics().Get(specific_id);
-    auto args =
-        sem_ir_->inst_blocks().Get(specific.args_id).take_back(num_params);
+
+    auto drop_back_count = 0;
+    const auto& generic = sem_ir_->generics().Get(specific.generic_id);
+    if (sem_ir_->insts()
+            .IsOneOf<InterfaceWithSelfDecl, NamedConstraintWithSelfDecl>(
+                generic.decl_id)) {
+      // The with-self generic contains an additional `Self` parameter beyond
+      // the parameters of the entity, the argument for which we do not include
+      // in the display.
+      drop_back_count = 1;
+    }
+
+    auto args = sem_ir_->inst_blocks()
+                    .Get(specific.args_id)
+                    .drop_back(drop_back_count)
+                    .take_back(num_params);
     bool last = true;
     for (auto arg : llvm::reverse(args)) {
       PushString(last ? ")" : ", ");
@@ -288,8 +302,7 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, AssociatedEntityType inst) -> void {
     *out_ << "<associated entity in ";
     step_stack_->Push(">");
-    step_stack_->PushSpecificInterface(
-        SpecificInterface{inst.interface_id, inst.interface_specific_id});
+    step_stack_->PushSpecificInterface(inst.GetSpecificInterface());
   }
 
   auto StringifyInst(InstId /*inst_id*/, BoolLiteral inst) -> void {
@@ -823,9 +836,22 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
       break;
     }
+    case CARBON_KIND(InterfaceWithSelfDecl interface_with_self_decl): {
+      step_stack.PushEntityName(
+          sem_ir.interfaces().Get(interface_with_self_decl.interface_id),
+          specific_id);
+      break;
+    }
     case CARBON_KIND(NamedConstraintDecl constraint_decl): {
       step_stack.PushEntityName(
           sem_ir.named_constraints().Get(constraint_decl.named_constraint_id),
+          specific_id);
+      break;
+    }
+    case CARBON_KIND(NamedConstraintWithSelfDecl constraint_with_self_decl): {
+      step_stack.PushEntityName(
+          sem_ir.named_constraints().Get(
+              constraint_with_self_decl.named_constraint_id),
           specific_id);
       break;
     }

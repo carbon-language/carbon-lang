@@ -186,7 +186,7 @@ using AnyPackagingDeclId =
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 using AnyRuntimeBindingPatternName =
-    NodeIdOneOf<IdentifierNameNotBeforeParamsId, SelfValueNameId,
+    NodeIdOneOf<IdentifierNameNotBeforeSignatureId, SelfValueNameId,
                 UnderscoreNameId>;
 using AnyPrimitiveFormIdId =
     NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;

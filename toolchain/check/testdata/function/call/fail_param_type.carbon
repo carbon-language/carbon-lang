@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/fail_param_type.carbon
 
-fn G(a: i32) {}
+fn G(unused a: i32) {}
 
 fn F() {
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
@@ -21,9 +21,9 @@ fn F() {
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE+7]]:5: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:6: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn G(a: i32) {}
-  // CHECK:STDERR:      ^~~~~~
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:13: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn G(unused a: i32) {}
+  // CHECK:STDERR:             ^~~~~~
   // CHECK:STDERR:
   G(1.0);
 }

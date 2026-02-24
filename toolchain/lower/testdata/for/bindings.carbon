@@ -12,10 +12,10 @@
 
 class EmptyRange(T:! Core.Copy & Core.Destroy) {
   impl as Core.Iterate where .CursorType = {} and .ElementType = T {
-    fn NewCursor[self: Self]() -> {} {
+    fn NewCursor[unused self: Self]() -> {} {
       return {};
     }
-    fn Next[self: Self](_: {}*) -> Core.Optional(T) {
+    fn Next[unused self: Self](_: {}*) -> Core.Optional(T) {
       return Core.Optional(T).None();
     }
   }

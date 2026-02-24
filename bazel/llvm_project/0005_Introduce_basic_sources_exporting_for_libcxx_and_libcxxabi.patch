@@ -1,8 +1,8 @@
-Commit ID: e4ff7299fe7e35e70ba79f5d8e2c58658cfba678
+Commit ID: 3812a423c5ca98c5cf6ceee006a59d6c3a3b33df
 Change ID: mstnwoqruyypnoouksnyqssllrsozpos
-Bookmarks: bz-libcxx bz-libcxx@git bz-libcxx@origin
+Bookmarks: bz-libcxx* bz-libcxx@git
 Author   : Chandler Carruth <chandlerc@gmail.com> (2025-09-25 22:55:26)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2025-11-22 09:23:52)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-02-14 04:12:09)
 
     Introduce basic sources exporting for libcxx and libcxxabi
 
@@ -11,10 +11,10 @@ Committer: Chandler Carruth <chandlerc@gmail.com> (2025-11-22 09:23:52)
 
 diff --git a/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel
 new file mode 100644
-index 0000000000..a81a64c649
+index 0000000000..c8b517ab56
 --- /dev/null
 +++ b/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,139 @@
 +# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 +# See https://llvm.org/LICENSE.txt for license information.
 +# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -25,9 +25,11 @@ index 0000000000..a81a64c649
 +    default_visibility = ["//visibility:public"],
 +)
 +
-+exports_files(["include/__config_site.in"])
-+
-+exports_files(["vendor/llvm/default_assertion_handler.in"])
++exports_files([
++    "include/__config_site.in",
++    "include/module.modulemap.in",
++    "vendor/llvm/default_assertion_handler.in",
++])
 +
 +filegroup(
 +    name = "libcxx_hdrs",
@@ -54,19 +56,150 @@ index 0000000000..a81a64c649
 +    ),
 +)
 +
++LIBCXX_SRCS_PSTL_LIBDISPATCH = [
++    "src/pstl/libdispatch.cpp",
++]
++
 +filegroup(
-+    name = "libcxx_srcs",
++    name = "libcxx_srcs_pstl_libdispatch",
++    srcs = LIBCXX_SRCS_PSTL_LIBDISPATCH,
++)
++
++LIBCXX_SRCS_SUPPORT_IBM_PATTERNS = [
++    "src/support/ibm/**/*.cpp",
++]
++
++filegroup(
++    name = "libcxx_srcs_support_ibm",
++    srcs = glob(LIBCXX_SRCS_SUPPORT_IBM_PATTERNS),
++)
++
++LIBCXX_SRCS_SUPPORT_WIN32_PATTERNS = [
++    "src/support/win32/**/*.cpp",
++]
++
++filegroup(
++    name = "libcxx_srcs_support_win32",
++    srcs = glob(LIBCXX_SRCS_SUPPORT_WIN32_PATTERNS),
++)
++
++LIBCXX_SRCS_TZDB = [
++    "src/experimental/chrono_exception.cpp",
++    "src/experimental/time_zone.cpp",
++    "src/experimental/tzdb.cpp",
++    "src/experimental/tzdb_list.cpp",
++]
++
++filegroup(
++    name = "libcxx_srcs_tzdb",
++    srcs = LIBCXX_SRCS_TZDB,
++)
++
++# Exclude platform-dependent patterns that are provided by per-target filegroups
++# above.
++LIBCXX_SRCS_TARGET_EXCLUDES = (
++    LIBCXX_SRCS_PSTL_LIBDISPATCH +
++    LIBCXX_SRCS_SUPPORT_IBM_PATTERNS +
++    LIBCXX_SRCS_SUPPORT_WIN32_PATTERNS +
++    LIBCXX_SRCS_TZDB
++)
++
++filegroup(
++    name = "libcxx_srcs_generic",
 +    srcs = glob(
 +        [
 +            "src/**/*.cpp",
 +            "src/**/*.h",
 +            "src/**/*.ipp",
 +        ],
++        exclude = [
++            # Build is for use with libc++abi and so don't need 'new.cpp'.
++            "src/new.cpp",
++
++            # Build is for compiler-rt platforms so we have its int128 support.
++            "src/filesystem/int128_builtins.cpp",
++        ] + LIBCXX_SRCS_TARGET_EXCLUDES,
 +    ),
 +)
++
++filegroup(
++    name = "libcxx_linux_srcs",
++    srcs = [
++        ":libcxx_srcs_generic",
++        ":libcxx_srcs_tzdb",
++    ],
++)
++
++filegroup(
++    name = "libcxx_macos_srcs",
++    srcs = [
++        ":libcxx_srcs_generic",
++        # TODO: Include libdispatch sources here to enable that pstl backend.
++    ],
++)
++
++filegroup(
++    name = "libcxx_win32_srcs",
++    srcs = [
++        ":libcxx_srcs_generic",
++        ":libcxx_srcs_support_win32",
++    ],
++)
++
++filegroup(
++    name = "libcxx_all_srcs",
++    srcs = [
++        ":libcxx_linux_srcs",
++        ":libcxx_macos_srcs",
++        ":libcxx_win32_srcs",
++    ],
++)
+diff --git a/utils/bazel/llvm-project-overlay/libcxx/libcxx_library.bzl b/utils/bazel/llvm-project-overlay/libcxx/libcxx_library.bzl
+new file mode 100644
+index 0000000000..66f64f3610
+--- /dev/null
++++ b/utils/bazel/llvm-project-overlay/libcxx/libcxx_library.bzl
+@@ -0,0 +1,37 @@
++# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
++# See https://llvm.org/LICENSE.txt for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++"""Starlark variables and macros for building libc++ and libc++abi.
++
++Variables provide base line information for how to build libc++ and libc++abi
++source files. These can be used to generate non-Bazel builds of the library.
++
++TODO: Add macros that provide a convenient way to construct Bazel `cc_library`
++rules for libc++ and libc++abi.
++
++TODO: Add either sufficient usage in the macros, or add a how-to example here in
++the documentation so the use of these variables is more clear.
++"""
++
++_libcxx_base_copts = [
++    "-std=c++26",
++    "-O3",
++    "-fPIC",
++    "-fvisibility-inlines-hidden",
++    "-fvisibility=hidden",
++    "-nostdinc++",
++]
++
++_libcxx_defines = [
++    "-D_LIBCPP_BUILDING_LIBRARY",
++    "-D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
++]
++
++_libcxxabi_defines = [
++    "-DLIBCXX_BUILDING_LIBCXXABI",
++]
++
++libcxx_copts = _libcxx_base_copts + _libcxx_defines
++libcxxabi_copts = _libcxx_base_copts + _libcxxabi_defines
++libcxx_and_abi_copts = _libcxx_base_copts + _libcxx_defines + _libcxxabi_defines
 diff --git a/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
 new file mode 100644
-index 0000000000..cf491e4e46
+index 0000000000..279030b097
 --- /dev/null
 +++ b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
 @@ -0,0 +1,24 @@
@@ -89,8 +222,8 @@ index 0000000000..cf491e4e46
 +    name = "libcxxabi_srcs",
 +    srcs = glob([
 +        "src/**/*.cpp",
++        "src/**/*.h",
 +        "src/**/*.def",
 +        "src/**/*.inc",
-+        "src/**/*.h",
 +    ]),
 +)

@@ -22,7 +22,7 @@ class C {
 }
 
 fn F() {
-  let b: C.X = ();
+  let unused b: C.X = ();
 }
 
 // --- fail_final_extend_impl.carbon

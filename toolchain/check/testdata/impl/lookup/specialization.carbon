@@ -26,7 +26,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C.(Z(C).X) = {} as C;
+  let unused a: C.(Z(C).X) = {} as C;
 }
 
 // --- specialized_self_second.carbon
@@ -45,7 +45,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C.(Z(C).X) = {} as C;
+  let unused a: C.(Z(C).X) = {} as C;
 }
 
 // --- specialized_constraint_first.carbon
@@ -64,7 +64,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C.(Z(C).X) = {} as C;
+  let unused a: C.(Z(C).X) = {} as C;
 }
 
 // --- specialized_constraint_second.carbon
@@ -83,7 +83,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C.(Z(C).X) = {} as C;
+  let unused a: C.(Z(C).X) = {} as C;
 }
 
 // --- specialized_self_vs_constraint_self_first.carbon
@@ -102,7 +102,7 @@ fn F() {
   // The specialization of `C(())` should match in preference to the blanket impl
   // of `C(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C(()).(Z(C(())).X) = {} as C(());
+  let unused a: C(()).(Z(C(())).X) = {} as C(());
 }
 
 // --- specialized_self_vs_constraint_self_second.carbon
@@ -121,7 +121,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: C(()).(Z(C(())).X) = {} as C(());
+  let unused a: C(()).(Z(C(())).X) = {} as C(());
 }
 
 // --- generic_class_with_fully_specified_impl.carbon
@@ -142,7 +142,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have a struct
   // type which will fail to typecheck here when constructed from a `C` value.
-  let a: C(()).(Z(()).X) = {} as C(());
+  let unused a: C(()).(Z(()).X) = {} as C(());
 }
 
 // --- generic_class_with_blanket_impl_first.carbon
@@ -162,7 +162,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  let a: C(()).(Z(()).X) = {} as C(());
+  let unused a: C(()).(Z(()).X) = {} as C(());
 }
 
 // --- generic_class_with_blanket_impl_second.carbon
@@ -182,7 +182,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  let a: C(()).(Z(()).X) = {} as C(());
+  let unused a: C(()).(Z(()).X) = {} as C(());
 }
 
 // --- specialized_class_with_facet_value_param.carbon
@@ -211,7 +211,7 @@ impl forall [T:! Z] C(D(E), T) as Z where .X = C(E, E) {}
 impl forall [T:! Z] C(T, T) as Z where .X = () {}
 
 fn F() {
-  let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
+  let unused a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
 // --- fail_specialized_class_with_symbolic_facet_value_param.carbon
@@ -232,19 +232,19 @@ impl D as Y {}
 // caller has.
 impl forall [D:! Y] C(D) as Z where .X = () {}
 
-fn F[D:! Y](d: D) {
+fn F[D:! Y](unused d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
   //
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
-  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
-  // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
-  // CHECK:STDERR:                       ^~
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:30: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                              ^~
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:30: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                              ^~
   // CHECK:STDERR:
-  let a: C(D).(Z.X) = ();
+  let unused a: C(D).(Z.X) = ();
 }
 
 // --- pointer_specialization_first.carbon
@@ -263,7 +263,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: (C*).(Z.X) = {} as C;
+  let unused a: (C*).(Z.X) = {} as C;
 }
 
 // --- pointer_specialization_second.carbon
@@ -282,7 +282,7 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket impl
   // of `Z(T)`. If the blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here.
-  let a: (C*).(Z.X) = {} as C;
+  let unused a: (C*).(Z.X) = {} as C;
 }
 
 // --- cycle_in_deduce_avoided_by_specialization.carbon
@@ -304,7 +304,7 @@ impl forall [T:! Z] C(T) as Z where .X = () {}
 impl C(()) as Z where .X = C(()) {}
 
 fn F() {
-  let a: C(()).(Z.X) = {} as C(());
+  let unused a: C(()).(Z.X) = {} as C(());
 }
 
 // --- final_specialization_before_generic_use_of_type_constant.carbon
@@ -320,10 +320,10 @@ impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
 final impl forall [T:! type] T as Z(C) where .X = C {}
 
-fn F[U:! type](T:! Z(C)) {
+fn F[unused U:! type](T:! Z(C)) {
   // The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
-  let a: T.X = {} as C;
+  let unused a: T.X = {} as C;
 }
 
 // --- fail_specialization_written_after_generic_use_of_type_constant.carbon
@@ -337,16 +337,16 @@ class C {}
 
 impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
-fn F[U:! type](T:! Z(C)) {
+fn F[unused U:! type](T:! Z(C)) {
   // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
-  // CHECK:STDERR:   let a: T.X = {} as C;
-  // CHECK:STDERR:                ^~~~~~~
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: T.X = {} as C;
-  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: T.X = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:23: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused a: T.X = {} as C;
+  // CHECK:STDERR:                       ^~~~~~~
   // CHECK:STDERR:
-  let a: T.X = {} as C;
+  let unused a: T.X = {} as C;
 }
 
 final impl forall [T:! type] T as Z(C) where .X = C {}
@@ -385,7 +385,7 @@ impl C as Z where .V = {} {
 }
 
 fn F() {
-  let x: {}* = G(C);
+  let unused x: {}* = G(C);
 }
 
 // --- specialization_written_after_generic_use_with_generic_interface.carbon
@@ -422,7 +422,7 @@ impl C as Z(C) where .V = {} {
 }
 
 fn F() {
-  let x: {}* = G(C);
+  let unused x: {}* = G(C);
 }
 
 // --- type_structure_first_difference.carbon
@@ -451,7 +451,7 @@ fn F(T:! Z(C)) -> T.(Z(C).X) {
 
 fn G() {
     // This won't typecheck if the first impl is selected.
-    let a: () = F(C);
+    let unused a: () = F(C);
 }
 
 // --- extend_impl_as_specialization.carbon
@@ -471,7 +471,7 @@ class C(S:! type) {
 fn F() {
   var t: ();
   let a: ()* = C(()).CC(&t);
-  let b: C(()).X = *a;
+  let unused b: C(()).X = *a;
 }
 
 // --- final_impl_as_specialization.carbon
@@ -489,7 +489,7 @@ class C(S:! type) {
 }
 
 fn F() {
-  let a: () = C(()).CC();
+  let unused a: () = C(()).CC();
 }
 
 // --- final_extend_impl_as_specialization.carbon
@@ -508,5 +508,5 @@ class C(S:! type) {
 
 fn F() {
   let a: () = C(()).CC();
-  let b: C(()).X = a;
+  let unused b: C(()).X = a;
 }
