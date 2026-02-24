@@ -358,7 +358,7 @@ class Formatter {
              static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope)>
       scope_label_chunks_;
 
-  // Chunks for each instruction in a tenative top-level scope. These don't
+  // Chunks for each instruction in a tentative top-level scope. These don't
   // directly contain content, and are instead parents of the instruction's
   // output to help indirect conclusion.
   FixedSizeValueStore<InstId, FormatterChunks::ChunkId, Tag<CheckIRId>>

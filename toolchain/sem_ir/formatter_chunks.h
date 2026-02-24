@@ -58,7 +58,7 @@ class FormatterChunks {
   // output, it'll also include the new chunk. Calls `format` to support adding
   // content to the new chunk.
   auto FormatTentativeChunkWithParent(ChunkId parent_chunk,
-                                 llvm::function_ref<auto()->void> format)
+                                      llvm::function_ref<auto()->void> format)
       -> void;
 
   // Marks the given chunk as being included in the output if the current chunk
