@@ -2081,7 +2081,7 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
     -> SemIR::ConstantId {
-  SemIR::TypeId type_id = MapType(context, loc_id, type).type_id;
+  SemIR::TypeId type_id = ImportCppType(context, loc_id, type).type_id;
   if (!type_id.has_value()) {
     return SemIR::ConstantId::NotConstant;
   }
