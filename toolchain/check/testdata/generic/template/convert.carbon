@@ -54,7 +54,7 @@ fn Test(d: D) -> i32 {
   // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-10]]:16: note: cannot implicitly convert expression of type `D` to `i32` [ConversionFailure]
   // CHECK:STDERR:   let n: i32 = x;
   // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-13]]:16: note: type `D` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-13]]:16: note: type `D` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let n: i32 = x;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:

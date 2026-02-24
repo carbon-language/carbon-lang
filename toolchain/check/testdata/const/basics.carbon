@@ -54,7 +54,7 @@ fn G(p: const (const C)**) -> C** {
   // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -94,7 +94,7 @@ class X {}
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:40: error: cannot copy value of type `X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR:                                        ^~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR:                                        ^~~~~~~
 // CHECK:STDERR:
@@ -102,7 +102,7 @@ var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `const X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -118,7 +118,7 @@ var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:38: error: cannot copy value of type `const X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
 // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
 // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -146,7 +146,7 @@ fn PassConstReferenceToReference(p: const X*) {
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
   // CHECK:STDERR:   p->(X.TakeSelf)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   p->(X.TakeSelf)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]

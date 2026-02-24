@@ -42,7 +42,7 @@ fn Use() {
   // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+7]]:41: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
   // CHECK:STDERR:   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
   // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+4]]:41: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+4]]:41: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
   // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -50,7 +50,7 @@ fn Use() {
   // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+7]]:41: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
   // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+4]]:41: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+4]]:41: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
   // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -73,7 +73,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   var unused i: X = Init() as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused i: X = Init() as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -83,7 +83,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
   // CHECK:STDERR:   var unused j: X = Init() unsafe as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused j: X = Init() unsafe as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -91,7 +91,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused v: X = value as X;
   // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:21: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused v: X = value as X;
   // CHECK:STDERR:                     ^~~~~~~~~~
   // CHECK:STDERR:
@@ -99,7 +99,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:24: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:24: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:24: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -107,7 +107,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:22: error: cannot convert expression of type `Core.MaybeUnformed(X)*` to `X*` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:22: note: type `Core.MaybeUnformed(X)*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:22: note: type `Core.MaybeUnformed(X)*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
   // CHECK:STDERR:

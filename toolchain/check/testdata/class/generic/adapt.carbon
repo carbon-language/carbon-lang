@@ -55,7 +55,7 @@ fn Access(a: Adapter) -> i32 {
   // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -88,7 +88,7 @@ fn ImportedAccess(a: Adapter) -> i32 {
   // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:

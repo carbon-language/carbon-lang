@@ -130,7 +130,7 @@ fn G(p: partial C*) -> C* {
   // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `partial C*` to `C*` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+4]]:3: note: type `partial C*` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+4]]:3: note: type `partial C*` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:

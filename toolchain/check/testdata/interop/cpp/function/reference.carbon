@@ -306,7 +306,7 @@ fn F() {
   // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
   // CHECK:STDERR:   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
   // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+4]]:29: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+4]]:29: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
   // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

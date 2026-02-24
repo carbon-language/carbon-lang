@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+7]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var a: array(1, 1);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var a: array(1, 1);
 // CHECK:STDERR:              ^
 // CHECK:STDERR:

@@ -19,7 +19,7 @@ interface I {
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+6]]:8: error: cannot implicitly convert expression of type `C(i32 as I)` to `C(i32)` [ConversionFailure]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:        ^~~~~~~~~~
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+3]]:8: note: type `C(i32 as I)` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+3]]:8: note: type `C(i32 as I)` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:        ^~~~~~~~~~
   fn F(c: C(Self));

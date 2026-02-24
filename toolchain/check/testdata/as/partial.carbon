@@ -45,7 +45,7 @@ fn Use() {
   // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `partial X` to `X` [ConversionFailure]
   // CHECK:STDERR:   var unused i: X = Init();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:3: note: type `partial X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:3: note: type `partial X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused i: X = Init();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -53,7 +53,7 @@ fn Use() {
   // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   var unused j: X = Init() as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused j: X = Init() as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -61,7 +61,7 @@ fn Use() {
   // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `partial X` to `X` with `unsafe as` [ConversionFailure]
   // CHECK:STDERR:   var unused k: X = Init() unsafe as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused k: X = Init() unsafe as X;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -85,7 +85,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused v: X = value as X;
   // CHECK:STDERR:                     ^~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused v: X = value as X;
   // CHECK:STDERR:                     ^~~~~~~~~~
   // CHECK:STDERR:
@@ -93,7 +93,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+7]]:24: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:24: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:24: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -101,7 +101,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+7]]:22: error: cannot convert expression of type `partial X*` to `X*` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:22: note: type `partial X*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+4]]:22: note: type `partial X*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
   // CHECK:STDERR:

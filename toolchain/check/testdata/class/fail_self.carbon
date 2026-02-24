@@ -36,7 +36,7 @@ fn Class.G() -> Self {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: note: type `Class` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: note: type `Class` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:
@@ -51,7 +51,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `WrongSelf` to `Class` [ConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: note: type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing function parameter [InCallToFunctionParam]

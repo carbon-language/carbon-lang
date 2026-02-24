@@ -61,7 +61,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+7]]:24: error: cannot convert expression of type `const X` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+4]]:24: note: type `const X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+4]]:24: note: type `const X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: X* = &(reference as X);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,7 +69,7 @@ fn Use() {
   // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+7]]:22: error: cannot convert expression of type `const X*` to `X*` with `as` [ConversionFailure]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
-  // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+4]]:22: note: type `const X*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_cannot_remove_const.carbon:[[@LINE+4]]:22: note: type `const X*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused b: X* = ptr as X*;
   // CHECK:STDERR:                      ^~~~~~~~~
   // CHECK:STDERR:

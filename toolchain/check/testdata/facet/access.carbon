@@ -214,7 +214,7 @@ fn F(U:! I where .X = .Self) {
   // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let u: U = U.(I.G)();
   // CHECK:STDERR:              ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let u: U = U.(I.G)();
   // CHECK:STDERR:              ^~~~~~~~~
   // CHECK:STDERR:
@@ -226,7 +226,7 @@ fn F(U:! I where .X = .Self) {
   // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   u.(I.G)();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   u.(I.G)();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -238,7 +238,7 @@ fn F(U:! I where .X = .Self) {
   // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `.Self` into type implementing `I` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -262,7 +262,7 @@ fn F(U:! I where .X = .Self, v: U) {
   // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+7]]:15: error: cannot implicitly convert expression of type `.Self*` to `U*` [ConversionFailure]
   // CHECK:STDERR:   let u: U* = v.(I.G)();
   // CHECK:STDERR:               ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:15: note: type `.Self*` does not implement interface `Core.ImplicitAs(U*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:15: note: type `.Self*` does not implement interface `Core.ImplicitAs(U*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let u: U* = v.(I.G)();
   // CHECK:STDERR:               ^~~~~~~~~
   // CHECK:STDERR:

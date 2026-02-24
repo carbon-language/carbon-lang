@@ -81,7 +81,7 @@ fn F() {
   // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+7]]:32: error: cannot implicitly convert expression of type `Cpp.long_long` to `i64` [ConversionFailure]
   // CHECK:STDERR:   let unused carbon_i64: i64 = cpp_long_long;
   // CHECK:STDERR:                                ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+4]]:32: note: type `Cpp.long_long` does not implement interface `Core.ImplicitAs(i64)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+4]]:32: note: type `Cpp.long_long` does not implement interface `Core.ImplicitAs(i64)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused carbon_i64: i64 = cpp_long_long;
   // CHECK:STDERR:                                ^~~~~~~~~~~~~
   // CHECK:STDERR:

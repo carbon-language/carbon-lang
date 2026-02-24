@@ -47,7 +47,7 @@ interface I(T:! .Self) {
   // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `.Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn G() -> T;
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:13: note: type `.Self` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:13: note: type `.Self` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   fn G() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -185,7 +185,7 @@ fn G(U:! I(.Self) where .Self impls J(.Self)) {
   // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let u: U = U.I1();
   // CHECK:STDERR:              ^~~~~~
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let u: U = U.I1();
   // CHECK:STDERR:              ^~~~~~
   // CHECK:STDERR:
@@ -221,7 +221,7 @@ fn F(U:! I(.Self)) {
   // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let unused a: U = U.G();
   // CHECK:STDERR:                     ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: U = U.G();
   // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
@@ -240,7 +240,7 @@ fn F(U:! I where .X = .Self) {
   // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let unused a: U = U.G();
   // CHECK:STDERR:                     ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: U = U.G();
   // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
@@ -264,7 +264,7 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
   // CHECK:STDERR:   let unused t: T = T.G();
   // CHECK:STDERR:                     ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused t: T = T.G();
   // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
@@ -273,7 +273,7 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
   // CHECK:STDERR:   let unused u: T = U.G();
   // CHECK:STDERR:                     ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused u: T = U.G();
   // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
