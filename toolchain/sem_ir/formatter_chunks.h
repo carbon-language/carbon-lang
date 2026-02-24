@@ -41,8 +41,7 @@ class FormatterChunks {
   };
 
   // All formatted output within the scope of this object is redirected to a
-  // new tentative `OutputChunk`. The new chunk will depend on
-  // `parent_chunk_index`.
+  // new tentative `OutputChunk`. The new chunk will depend on `parent_chunk`.
   struct TentativeScope {
     explicit TentativeScope(FormatterChunks* chunks, ChunkId parent_chunk);
     ~TentativeScope();
@@ -50,8 +49,6 @@ class FormatterChunks {
     FormatterChunks* chunks;
     ChunkId chunk;
   };
-
-  explicit FormatterChunks();
 
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;

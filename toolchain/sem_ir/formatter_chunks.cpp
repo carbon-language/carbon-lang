@@ -25,8 +25,6 @@ FormatterChunks::TentativeScope::~TentativeScope() {
                "Nested FormatterChunks::TentativeScope");
 }
 
-FormatterChunks::FormatterChunks() = default;
-
 auto FormatterChunks::FlushChunk() -> void {
   CARBON_CHECK(output_chunks_.back().chunk.empty());
   output_chunks_.back().chunk = std::move(buffer_);
