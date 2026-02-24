@@ -25,16 +25,19 @@ auto FormatterChunks::AddChunk(bool include_in_output) -> ChunkId {
   return AddChunkNoFlush(include_in_output);
 }
 
-auto FormatterChunks::AddTentativeChildChunkNoFlush(ChunkId parent_chunk)
+auto FormatterChunks::AddTentativeChunkWithChild(ChunkId child_chunk)
     -> ChunkId {
-  auto chunk_id = AddChunkNoFlush(/*include_in_output=*/false);
-  output_chunks_[chunk_id.index].dependencies.push_back(parent_chunk);
-  return chunk_id;
+  auto chunk = AddChunkNoFlush(/*include_in_output=*/false);
+  output_chunks_[child_chunk.index].dependencies.push_back(chunk);
+  return chunk;
 }
 
-auto FormatterChunks::FormatTentativeChildChunk(
+auto FormatterChunks::FormatTentativeChunkWithParent(
     ChunkId parent_chunk, llvm::function_ref<auto()->void> format) -> void {
-  // If the parent is already included, format normally.
+  CARBON_CHECK(output_chunks_.back().include_in_output,
+               "All non-included chunks must be added first.");
+
+  // If the parent is already included, we don't need to make a chunk.
   if (output_chunks_[parent_chunk.index].include_in_output) {
     format();
     return;

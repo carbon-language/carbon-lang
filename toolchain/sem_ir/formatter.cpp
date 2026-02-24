@@ -73,7 +73,7 @@ Formatter::Formatter(
     auto scope_chunk = scope_label_chunks_[static_cast<size_t>(scope_id)];
     for (auto inst_id : insts) {
       tentative_inst_chunks_.Set(
-          inst_id, chunks_.AddTentativeChildChunkNoFlush(scope_chunk));
+          inst_id, chunks_.AddTentativeChunkWithChild(scope_chunk));
     }
   }
 
@@ -276,7 +276,7 @@ auto Formatter::FormatTopLevelScope(InstNamer::ScopeId scope_id,
   llvm::SaveAndRestore scope(scope_, scope_id);
   auto scope_chunk = scope_label_chunks_[static_cast<size_t>(scope_id)];
 
-  chunks_.FormatTentativeChildChunk(scope_chunk, [&] {
+  chunks_.FormatTentativeChunkWithParent(scope_chunk, [&] {
     // Note, we don't use OpenBrace() / CloseBrace() here because we always want
     // a newline to avoid misformatting if the first instruction is omitted.
     out() << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
@@ -299,13 +299,13 @@ auto Formatter::FormatTopLevelScope(InstNamer::ScopeId scope_id,
     } else {
       // Other scopes format each instruction in its own chunk, to support
       // tentative formatting.
-      chunks_.FormatTentativeChildChunk(tentative_inst_chunks_.Get(inst_id),
-                                        [&] { FormatInst(inst_id); });
+      chunks_.FormatTentativeChunkWithParent(
+          tentative_inst_chunks_.Get(inst_id), [&] { FormatInst(inst_id); });
     }
   }
   indent_ -= 2;
 
-  chunks_.FormatTentativeChildChunk(scope_chunk, [&] { out() << "}\n"; });
+  chunks_.FormatTentativeChunkWithParent(scope_chunk, [&] { out() << "}\n"; });
 }
 
 auto Formatter::FormatClass(ClassId id, const Class& class_info) -> void {

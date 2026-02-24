@@ -43,19 +43,21 @@ class FormatterChunks {
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
-  // Adds a new chunk to the output. Does not flush existing output, so should
-  // only be called if there is no buffered output.
+  // Adds a new chunk with `include_in_output`. Does not flush existing output,
+  // so should only be called if there is no buffered output.
   auto AddChunkNoFlush(bool include_in_output) -> ChunkId;
 
-  // Flushes the current chunk and add a new chunk to the output.
+  // Flushes the current chunk and add a new chunk with `include_in_output`.
   auto AddChunk(bool include_in_output) -> ChunkId;
 
-  // Adds a tentative chunk that depends on `parent_chunk`.
-  auto AddTentativeChildChunkNoFlush(ChunkId parent_chunk) -> ChunkId;
+  // Adds a new tentative `OutputChunk`. If the new chunk is included in
+  // output, it'll also include `child_chunk`.
+  auto AddTentativeChunkWithChild(ChunkId child_chunk) -> ChunkId;
 
-  // Adds a new tentative `OutputChunk` and redirects `format` output to it. The
-  // new chunk will depend on `parent_chunk`.
-  auto FormatTentativeChildChunk(ChunkId parent_chunk,
+  // Adds a new tentative `OutputChunk`. If the `parent_chunk` is included in
+  // output, it'll also include the new chunk. Calls `format` to support adding
+  // content to the new chunk.
+  auto FormatTentativeChunkWithParent(ChunkId parent_chunk,
                                  llvm::function_ref<auto()->void> format)
       -> void;
 
@@ -63,9 +65,10 @@ class FormatterChunks {
   // is.
   auto IncludeChunkInOutput(ChunkId chunk) -> void;
 
-  // Write buffered output to the given stream.
+  // Writes included chunks to the given stream.
   auto Write(llvm::raw_ostream& stream) -> void;
 
+  // Returns stream representing the buffer for the current chunk.
   auto out() -> llvm::raw_ostream& { return out_; }
 
  private:
