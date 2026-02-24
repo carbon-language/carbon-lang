@@ -84,11 +84,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc4_30.1: type = splice_block %.loc4_30.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:       %.loc4_30.3: type = converted %Bool.call, %.loc4_30.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -109,13 +105,11 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %int_32.loc12_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12_27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result(%i32.loc12_27)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %int_32.loc12_36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_36: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12_36: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result(%i32.loc12_36)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
@@ -165,6 +159,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
+// CHECK:STDOUT:     %.loc4: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %t: type = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -189,8 +184,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%t.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result.loc9(%i32.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
@@ -213,8 +207,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   if %false br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc14:
-// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc14: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result.loc14(%i32.loc14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:

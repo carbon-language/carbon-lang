@@ -107,7 +107,6 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,7 +118,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %.loc8: <error> = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,7 +131,6 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -153,7 +151,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %.loc10: <error> = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,10 +185,13 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc4_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_36.2: type = converted %.loc4_36.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc4_36.3: Core.Form = init_form %.loc4_36.2, call_param0 [concrete = constants.%.dde]
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc4_12.1: type = splice_block %.loc4_12.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc4_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_29: type = splice_block %T.ref [symbolic = %T.loc4_8.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_8.2 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_25.2: @Int.%T.loc4_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc4_25.1 (constants.%N)]
@@ -277,10 +278,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
 // CHECK:STDOUT:   %Int.call: init %empty_struct_type = call %Int.specific_fn()
-// CHECK:STDOUT:   assign file.%n.var, %Int.call
+// CHECK:STDOUT:   %.loc6_13.1: %empty_struct_type = type_literal %Int.call
+// CHECK:STDOUT:   %.loc6_13.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6_1: init %empty_struct_type = converted %.loc6_13.1, %.loc6_13.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign file.%n.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,10 +335,13 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc8_36.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_36.2: type = converted %.loc8_36.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_36.3: Core.Form = init_form %.loc8_36.2, call_param0 [concrete = constants.%.842]
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc8_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_29: type = splice_block %T.ref [symbolic = %T.loc8_8.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc8_8.2 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc8_25.2: @Int.%T.loc8_8.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc8_25.1 (constants.%N)]
@@ -372,10 +378,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
 // CHECK:STDOUT:   %Int.call: init %empty_tuple.type = call %Int.specific_fn()
-// CHECK:STDOUT:   assign file.%n.var, %Int.call
+// CHECK:STDOUT:   %.loc10_13.1: %empty_tuple.type = type_literal %Int.call
+// CHECK:STDOUT:   %.loc10_13.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_1: init %empty_tuple.type = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%n.var, %.loc10_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

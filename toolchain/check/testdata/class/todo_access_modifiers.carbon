@@ -61,11 +61,9 @@ class Access {
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %Access.F.decl: %Access.F.type = fn_decl @Access.F [concrete = constants.%Access.F] {} {}
 // CHECK:STDOUT:   %Access.G.decl: %Access.G.type = fn_decl @Access.G [concrete = constants.%Access.G] {} {}
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc21: %Access.elem = field_decl k, element0 [concrete]
-// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23: %Access.elem = field_decl l, element1 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.l [concrete = constants.%complete_type.48a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

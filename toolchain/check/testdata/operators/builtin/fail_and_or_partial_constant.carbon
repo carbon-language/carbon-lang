@@ -85,11 +85,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc4_23.1: type = splice_block %.loc4_23.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc4: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_23.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
-// CHECK:STDOUT:       %.loc4_23.3: type = converted %Bool.call.loc4, %.loc4_23.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -117,10 +113,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc9_25 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
-// CHECK:STDOUT:   %Bool.call.loc9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc9_36.1: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
-// CHECK:STDOUT:   %.loc9_36.2: type = converted %Bool.call.loc9, %.loc9_36.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_36.2)
+// CHECK:STDOUT:   %.loc9_36: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_36)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
 // CHECK:STDOUT:   %.loc9_47: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -155,10 +149,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc14_26.2 br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc14:
-// CHECK:STDOUT:   %Bool.call.loc14: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc14_36.1: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
-// CHECK:STDOUT:   %.loc14_36.2: type = converted %Bool.call.loc14, %.loc14_36.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_36.2)
+// CHECK:STDOUT:   %.loc14_36: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_36)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
 // CHECK:STDOUT:   %.loc14_47: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -211,11 +203,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc4_41.1: type = splice_block %.loc4_41.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc4: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_41.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
-// CHECK:STDOUT:       %.loc4_41.3: type = converted %Bool.call.loc4, %.loc4_41.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -243,10 +231,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc11_22 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
-// CHECK:STDOUT:   %Bool.call.loc11: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc11_37.1: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
-// CHECK:STDOUT:   %.loc11_37.2: type = converted %Bool.call.loc11, %.loc11_37.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_37.2)
+// CHECK:STDOUT:   %.loc11_37: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_37)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
 // CHECK:STDOUT:   %.loc11_48: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -281,10 +267,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc16_22.2 br !if.expr.then.loc16 else br !if.expr.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16:
-// CHECK:STDOUT:   %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc16_35.1: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
-// CHECK:STDOUT:   %.loc16_35.2: type = converted %Bool.call.loc16, %.loc16_35.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_35.2)
+// CHECK:STDOUT:   %.loc16_35: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
 // CHECK:STDOUT:   %.loc16_46: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

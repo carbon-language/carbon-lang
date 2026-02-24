@@ -73,8 +73,7 @@ auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Bool);
-  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+  auto type_inst_id = MakeBoolTypeLiteral(context, node_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
@@ -139,7 +138,8 @@ auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::TypeType::TypeInstId);
+  auto type_inst_id = MakeTypeTypeLiteral(context, node_id);
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 

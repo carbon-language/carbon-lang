@@ -13,6 +13,14 @@
 
 namespace Carbon::Check {
 
+// Forms a TypeType for a `type` literal.
+auto MakeTypeTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::InstId;
+
+// Forms a boolean type for a `bool` literal.
+auto MakeBoolTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::InstId;
+
 // Forms a BoolLiteral instruction with the given value and returns it.
 auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
                      SemIR::BoolValue value) -> SemIR::InstId;
@@ -44,11 +52,11 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId;
 
 // Forms a string literal type expression for a `str` literal.
-auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
+auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
     -> SemIR::InstId;
 
 // Forms a string type.
-auto MakeStringType(Context& context, SemIR::LocId) -> TypeExpr;
+auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr;
 
 }  // namespace Carbon::Check
 

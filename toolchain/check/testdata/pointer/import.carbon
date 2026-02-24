@@ -97,10 +97,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %a_orig.var_patt: %pattern_type.7ce = var_pattern %a_orig.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var %a_orig.var_patt [concrete]
-// CHECK:STDOUT:   %.loc4: type = splice_block %i32.loc4 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a_orig: ref %i32 = ref_binding a_orig, %a_orig.var [concrete = %a_orig.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: %pattern_type.fe8 = ref_binding_pattern a_ref [concrete]
@@ -108,8 +105,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %ptr.235 = var %a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %ptr [concrete = constants.%ptr.235] {
-// CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %ptr.235 = ref_binding a_ref, %a_ref.var [concrete = %a_ref.var]
@@ -192,8 +188,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.9e1 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4: type = splice_block %ptr [concrete = constants.%ptr.9e1] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.9e1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.9e1 = ref_binding a, %a.var [concrete = %a.var]

@@ -146,10 +146,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc11_29.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc11_29.2: type = converted %Bool.call, %.loc11_29.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc11_29.3: Core.Form = init_form %.loc11_29.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc11_29.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc11_29.2: Core.Form = init_form %.loc11_29.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc11_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
@@ -167,10 +165,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc15_32.2: type = converted %Bool.call, %.loc15_32.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc15_32.3: Core.Form = init_form %.loc15_32.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc15_32.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc15_32.2: Core.Form = init_form %.loc15_32.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc15_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
@@ -191,10 +187,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.2: type = converted %Bool.call, %.loc7_34.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.3: Core.Form = init_form %.loc7_34.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc7_34.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -212,10 +206,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_37.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc8_37.2: type = converted %Bool.call, %.loc8_37.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc8_37.3: Core.Form = init_form %.loc8_37.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc8_37.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc8_37.2: Core.Form = init_form %.loc8_37.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -314,10 +306,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc6_29.2: type = converted %Bool.call, %.loc6_29.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc6_29.3: Core.Form = init_form %.loc6_29.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc6_29.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc6_29.2: Core.Form = init_form %.loc6_29.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc6_17: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = value_binding a, %a.param
@@ -335,10 +325,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc14_32.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc14_32.2: type = converted %Bool.call, %.loc14_32.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc14_32.3: Core.Form = init_form %.loc14_32.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc14_32.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc14_32.2: Core.Form = init_form %.loc14_32.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc14_20: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = value_binding a, %a.param
@@ -436,10 +424,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc12_30.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc12_30.2: type = converted %Bool.call, %.loc12_30.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc12_30.3: Core.Form = init_form %.loc12_30.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc12_30.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc12_30.2: Core.Form = init_form %.loc12_30.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
@@ -457,10 +443,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc20_30.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc20_30.2: type = converted %Bool.call, %.loc20_30.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc20_30.3: Core.Form = init_form %.loc20_30.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc20_30.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc20_30.2: Core.Form = init_form %.loc20_30.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = value_binding a, %a.param
@@ -481,10 +465,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_34.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc8_34.2: type = converted %Bool.call, %.loc8_34.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc8_34.3: Core.Form = init_form %.loc8_34.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc8_34.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc8_34.2: Core.Form = init_form %.loc8_34.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc8_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -502,10 +484,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc9_37.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc9_37.2: type = converted %Bool.call, %.loc9_37.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc9_37.3: Core.Form = init_form %.loc9_37.2, call_param2 [concrete = constants.%.d29]
+// CHECK:STDOUT:     %.loc9_37.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc9_37.2: Core.Form = init_form %.loc9_37.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param

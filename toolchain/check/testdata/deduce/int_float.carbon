@@ -140,10 +140,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.7dc]
 // CHECK:STDOUT:     %a.param: %i64 = value_param call_param0
-// CHECK:STDOUT:     %.loc8_9: type = splice_block %i64 [concrete = constants.%i64] {
-// CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:       %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:     %a: %i64 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
@@ -298,10 +295,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.7dc]
 // CHECK:STDOUT:     %a.param: %f64.d77 = value_param call_param0
-// CHECK:STDOUT:     %.loc8_9: type = splice_block %f64 [concrete = constants.%f64.d77] {
-// CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:       %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %a: %f64.d77 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param

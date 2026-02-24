@@ -1247,8 +1247,6 @@ fn F() {
 // CHECK:STDOUT:   %cpp_operator.0a3797.19: %cpp_operator.type.1ea478.19 = struct_value () [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.1ea478.20: type = fn_type @cpp_operator.20 [concrete]
 // CHECK:STDOUT:   %cpp_operator.0a3797.20: %cpp_operator.type.1ea478.20 = struct_value () [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
@@ -1780,11 +1778,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc40_31.3: %ptr.bb2 = addr_of %.loc40_31.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc40_31.1, %addr.loc40_31.2, %addr.loc40_31.3)
 // CHECK:STDOUT:   %.loc40_31.2: init bool to %.loc40_31.1 = mark_in_place_init %operator_EqualEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc40_21.1: type = splice_block %.loc40_21.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc40: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc40_21.2: type = value_of_initializer %Bool.call.loc40 [concrete = bool]
-// CHECK:STDOUT:     %.loc40_21.3: type = converted %Bool.call.loc40, %.loc40_21.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc40_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc40_31.3: ref bool = temporary %.loc40_31.1, %.loc40_31.2
 // CHECK:STDOUT:   %.loc40_31.4: bool = acquire_value %.loc40_31.3
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc40_31.4
@@ -1803,11 +1797,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc41_35.3: %ptr.bb2 = addr_of %.loc41_35.1
 // CHECK:STDOUT:   %operator_ExclaimEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_ExclaimEqual__carbon_thunk.decl(%addr.loc41_35.1, %addr.loc41_35.2, %addr.loc41_35.3)
 // CHECK:STDOUT:   %.loc41_35.2: init bool to %.loc41_35.1 = mark_in_place_init %operator_ExclaimEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc41_25.1: type = splice_block %.loc41_25.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc41: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc41_25.2: type = value_of_initializer %Bool.call.loc41 [concrete = bool]
-// CHECK:STDOUT:     %.loc41_25.3: type = converted %Bool.call.loc41, %.loc41_25.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc41_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc41_35.3: ref bool = temporary %.loc41_35.1, %.loc41_35.2
 // CHECK:STDOUT:   %.loc41_35.4: bool = acquire_value %.loc41_35.3
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, %.loc41_35.4
@@ -1826,11 +1816,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc42_38.3: %ptr.bb2 = addr_of %.loc42_38.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc42_38.1, %addr.loc42_38.2, %addr.loc42_38.3)
 // CHECK:STDOUT:   %.loc42_38.2: init bool to %.loc42_38.1 = mark_in_place_init %operator_Greater__carbon_thunk.call
-// CHECK:STDOUT:   %.loc42_28.1: type = splice_block %.loc42_28.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc42: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc42_28.2: type = value_of_initializer %Bool.call.loc42 [concrete = bool]
-// CHECK:STDOUT:     %.loc42_28.3: type = converted %Bool.call.loc42, %.loc42_28.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc42_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc42_38.3: ref bool = temporary %.loc42_38.1, %.loc42_38.2
 // CHECK:STDOUT:   %.loc42_38.4: bool = acquire_value %.loc42_38.3
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc42_38.4
@@ -1849,11 +1835,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc43_35.3: %ptr.bb2 = addr_of %.loc43_35.1
 // CHECK:STDOUT:   %operator_Less__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Less__carbon_thunk.decl(%addr.loc43_35.1, %addr.loc43_35.2, %addr.loc43_35.3)
 // CHECK:STDOUT:   %.loc43_35.2: init bool to %.loc43_35.1 = mark_in_place_init %operator_Less__carbon_thunk.call
-// CHECK:STDOUT:   %.loc43_25.1: type = splice_block %.loc43_25.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc43: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc43_25.2: type = value_of_initializer %Bool.call.loc43 [concrete = bool]
-// CHECK:STDOUT:     %.loc43_25.3: type = converted %Bool.call.loc43, %.loc43_25.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc43_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc43_35.3: ref bool = temporary %.loc43_35.1, %.loc43_35.2
 // CHECK:STDOUT:   %.loc43_35.4: bool = acquire_value %.loc43_35.3
 // CHECK:STDOUT:   %less_than: bool = value_binding less_than, %.loc43_35.4
@@ -1872,11 +1854,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc44_47.3: %ptr.bb2 = addr_of %.loc44_47.1
 // CHECK:STDOUT:   %operator_GreaterEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_GreaterEqual__carbon_thunk.decl(%addr.loc44_47.1, %addr.loc44_47.2, %addr.loc44_47.3)
 // CHECK:STDOUT:   %.loc44_47.2: init bool to %.loc44_47.1 = mark_in_place_init %operator_GreaterEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc44_37.1: type = splice_block %.loc44_37.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc44: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc44_37.2: type = value_of_initializer %Bool.call.loc44 [concrete = bool]
-// CHECK:STDOUT:     %.loc44_37.3: type = converted %Bool.call.loc44, %.loc44_37.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc44_37: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc44_47.3: ref bool = temporary %.loc44_47.1, %.loc44_47.2
 // CHECK:STDOUT:   %.loc44_47.4: bool = acquire_value %.loc44_47.3
 // CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, %.loc44_47.4
@@ -1895,11 +1873,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc45_44.3: %ptr.bb2 = addr_of %.loc45_44.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc45_44.1, %addr.loc45_44.2, %addr.loc45_44.3)
 // CHECK:STDOUT:   %.loc45_44.2: init bool to %.loc45_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc45_34.1: type = splice_block %.loc45_34.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc45: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc45_34.2: type = value_of_initializer %Bool.call.loc45 [concrete = bool]
-// CHECK:STDOUT:     %.loc45_34.3: type = converted %Bool.call.loc45, %.loc45_34.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc45_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc45_44.3: ref bool = temporary %.loc45_44.1, %.loc45_44.2
 // CHECK:STDOUT:   %.loc45_44.4: bool = acquire_value %.loc45_44.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc45_44.4
@@ -1917,10 +1891,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc48_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %.loc48_30.2: %i32 = converted %int_42, %.loc48_30.1 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %C.cpp_operator.call: init %i32 = call %C.cpp_operator.bound(%c1.ref.loc48, %.loc48_30.2)
-// CHECK:STDOUT:   %.loc48_21: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc48_32.1: %i32 = value_of_initializer %C.cpp_operator.call
 // CHECK:STDOUT:   %.loc48_32.2: %i32 = converted %C.cpp_operator.call, %.loc48_32.1
 // CHECK:STDOUT:   %index: %i32 = value_binding index, %.loc48_32.2
@@ -2121,8 +2092,6 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.type: type = fn_type @operator_Greater__carbon_thunk [concrete]
@@ -2212,11 +2181,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc19_38.3: %ptr.bb2 = addr_of %.loc19_38.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc19_38.1, %addr.loc19_38.2, %addr.loc19_38.3)
 // CHECK:STDOUT:   %.loc19_38.2: init bool to %.loc19_38.1 = mark_in_place_init %operator_Greater__carbon_thunk.call
-// CHECK:STDOUT:   %.loc19_28.1: type = splice_block %.loc19_28.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc19: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc19_28.2: type = value_of_initializer %Bool.call.loc19 [concrete = bool]
-// CHECK:STDOUT:     %.loc19_28.3: type = converted %Bool.call.loc19, %.loc19_28.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc19_38.3: ref bool = temporary %.loc19_38.1, %.loc19_38.2
 // CHECK:STDOUT:   %.loc19_38.4: bool = acquire_value %.loc19_38.3
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc19_38.4
@@ -2225,22 +2190,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc26_25.1: type = splice_block %.loc26_25.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc26: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc26_25.2: type = value_of_initializer %Bool.call.loc26 [concrete = bool]
-// CHECK:STDOUT:     %.loc26_25.3: type = converted %Bool.call.loc26, %.loc26_25.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc26: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than: bool = value_binding less_than, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc33: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc33: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc33_37.1: type = splice_block %.loc33_37.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc33: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc33_37.2: type = value_of_initializer %Bool.call.loc33 [concrete = bool]
-// CHECK:STDOUT:     %.loc33_37.3: type = converted %Bool.call.loc33, %.loc33_37.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc33: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
@@ -2257,11 +2214,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc36_44.3: %ptr.bb2 = addr_of %.loc36_44.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc36_44.1, %addr.loc36_44.2, %addr.loc36_44.3)
 // CHECK:STDOUT:   %.loc36_44.2: init bool to %.loc36_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc36_34.1: type = splice_block %.loc36_34.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc36: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc36_34.2: type = value_of_initializer %Bool.call.loc36 [concrete = bool]
-// CHECK:STDOUT:     %.loc36_34.3: type = converted %Bool.call.loc36, %.loc36_34.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc36_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc36_44.3: ref bool = temporary %.loc36_44.1, %.loc36_44.2
 // CHECK:STDOUT:   %.loc36_44.4: bool = acquire_value %.loc36_44.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc36_44.4
@@ -2289,8 +2242,6 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
@@ -2373,11 +2324,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc16_31.3: %ptr.bb2 = addr_of %.loc16_31.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc16_31.1, %addr.loc16_31.2, %addr.loc16_31.3)
 // CHECK:STDOUT:   %.loc16_31.2: init bool to %.loc16_31.1 = mark_in_place_init %operator_EqualEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc16_21.1: type = splice_block %.loc16_21.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc16_21.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
-// CHECK:STDOUT:     %.loc16_21.3: type = converted %Bool.call.loc16, %.loc16_21.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc16_31.3: ref bool = temporary %.loc16_31.1, %.loc16_31.2
 // CHECK:STDOUT:   %.loc16_31.4: bool = acquire_value %.loc16_31.3
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc16_31.4
@@ -2386,11 +2333,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc23: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc23: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc23_25.1: type = splice_block %.loc23_25.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc23: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc23_25.2: type = value_of_initializer %Bool.call.loc23 [concrete = bool]
-// CHECK:STDOUT:     %.loc23_25.3: type = converted %Bool.call.loc23, %.loc23_25.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc16_31.3, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc16_31.3)

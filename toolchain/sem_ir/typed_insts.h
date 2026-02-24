@@ -1953,6 +1953,15 @@ struct TupleValue {
   InstBlockId elements_id;
 };
 
+// A type literal, such as `bool` or `type` or `i32`.
+struct TypeLiteral {
+  static constexpr auto Kind = InstKind::TypeLiteral.Define<Parse::NodeId>(
+      {.ir_name = "type_literal", .expr_category = ExprCategory::Value});
+
+  TypeId type_id;
+  InstId value_id;
+};
+
 // Returns the type of the instruction produced by an action. For example, given
 //
 //   %inst: <instruction> = some_action
