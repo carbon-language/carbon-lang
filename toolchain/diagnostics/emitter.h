@@ -111,10 +111,6 @@ class Emitter {
                      const DiagnosticBase<Args...>& diagnostic_base,
                      llvm::SmallVector<llvm::Any> args);
 
-    // Create a null `Builder` that will not emit anything. Notes will
-    // be silently ignored.
-    Builder() : emitter_(nullptr) {}
-
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
     template <typename... Args>
@@ -187,10 +183,6 @@ class Emitter {
   template <typename... Args>
   auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> Builder;
-
-  // Create a null `Builder` that will not emit anything. Notes will
-  // be silently ignored.
-  auto BuildSuppressed() -> Builder { return Builder(); }
 
   // Adds a flush function to flush pending diagnostics that might be enqueued
   // and not yet emitted. The flush function will be called whenever `Flush` is
@@ -386,9 +378,6 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 template <typename LocT>
 auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
     -> Builder& {
-  if (!emitter_) {
-    return *this;
-  }
   diagnostic_.messages.back().loc.snippet = snippet;
   return *this;
 }
@@ -398,9 +387,6 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::Note(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> Builder& {
-  if (!emitter_) {
-    return *this;
-  }
   CARBON_CHECK(diagnostic_base.Level == Level::Note ||
                    diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
@@ -411,9 +397,6 @@ auto Emitter<LocT>::Builder::Note(
 template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Emit() & -> void {
-  if (!emitter_) {
-    return;
-  }
   for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
     annotate_fn(*this);
   }
@@ -453,9 +436,6 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::AddMessage(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
-  if (!emitter_) {
-    return;
-  }
   auto converted = emitter_->ConvertLoc(
       loc,
       [&](Loc context_loc, const DiagnosticBase<>& context_diagnostic_base) {
@@ -473,9 +453,6 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::AddMessageWithLoc(
     Loc loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
-  if (!emitter_) {
-    return;
-  }
   CARBON_CHECK(
       diagnostic_base.Level <= diagnostic_.level,
       "message with level {0} is higher than the diagnostic's level {1}",
@@ -526,9 +503,6 @@ template <typename... Args>
 auto Emitter<LocT>::ContextBuilder::Context(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> ContextBuilder& {
-  if (!emitter_) {
-    return *this;
-  }
   CARBON_CHECK(diagnostic_base.Level == Level::SoftContext ||
                    diagnostic_base.Level == Level::Context,
                "{0}", static_cast<int>(diagnostic_base.Level));
