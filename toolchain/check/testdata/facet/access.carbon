@@ -312,10 +312,6 @@ interface I {
   let T:! type;
 }
 
-// CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+4]]:8: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-// CHECK:STDERR: let x: auto = I.T;
-// CHECK:STDERR:        ^~~~
-// CHECK:STDERR:
 let x: auto = I.T;
 
 interface J {
