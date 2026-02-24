@@ -28,7 +28,7 @@ auto FormatterChunks::AddChunk(bool include_in_output) -> ChunkId {
 auto FormatterChunks::AddTentativeChunkWithChild(ChunkId child_chunk)
     -> ChunkId {
   auto chunk = AddChunkNoFlush(/*include_in_output=*/false);
-  output_chunks_[child_chunk.index].dependencies.push_back(chunk);
+  output_chunks_[chunk.index].dependencies.push_back(child_chunk);
   return chunk;
 }
 
