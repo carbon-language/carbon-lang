@@ -11,6 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/named_constraint/incomplete.carbon
 
 // --- fail_incomplete_constraint_in_impl_lookup.carbon
+library "[[@TEST_NAME]]";
 
 interface Z {}
 
@@ -32,4 +33,35 @@ fn F(T:! N) {
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   T as Z;
+}
+
+// --- fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon
+library "[[@TEST_NAME]]";
+
+constraint N;
+
+interface Z {}
+// Since N is an incomplete constraint, it can not be identified for impl lookup
+// to determine if C implements N.
+impl forall [T:! N] T as Z {}
+
+class C;
+
+fn F() {
+  // TODO: The "can not be identified" diagnostic should not occur here. That
+  // diagnostic happened during deduction, which means to suppress diagnostics.
+  // Only the convert error should be emitted.
+  //
+  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+11]]:3: error: facet type `N` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:   C as Z;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE-17]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: constraint N;
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C as Z;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
+  C as Z;
 }
