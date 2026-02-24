@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_value_id = inst->value_id;
   } else if (auto inst =
                  context.insts().TryGetAs<SemIR::TypeLiteral>(expr_id)) {
-    // Treat type literals such as `type` or ``bool` like name references.
+    // Treat type literals such as `type` or `bool` like name references.
     alias_type_id = inst->type_id;
     alias_value_id = inst->value_id;
   } else {

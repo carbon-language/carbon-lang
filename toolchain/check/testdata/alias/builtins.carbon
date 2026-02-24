@@ -41,7 +41,7 @@ alias a = false;
 let a_test: bool = a;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_i32.carbon
+// CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -56,7 +56,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %a: type = alias_binding a, constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bool.carbon
+// CHECK:STDOUT: --- bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
@@ -65,7 +65,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc9: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc5: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: type = alias_binding b, bool [concrete = bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

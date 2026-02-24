@@ -82,7 +82,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc22: %F.type.6d5 = fn_decl @F.loc22 [concrete = constants.%F.e11] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
-// CHECK:STDOUT:   %.loc32: <error> = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc32: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.loc38_17.1: type = splice_block %.loc38_17.2 [concrete = type] {
