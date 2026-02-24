@@ -24,8 +24,7 @@ static auto MakeTypeLiteral(Context& context, SemIR::LocId loc_id,
   auto type_inst_id = ExprAsType(context, loc_id, value_id).inst_id;
   return AddTypeInst<SemIR::TypeLiteral>(
       context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .value_id = type_inst_id});
+      {.type_id = SemIR::TypeType::TypeId, .value_id = type_inst_id});
 }
 
 auto MakeTypeTypeLiteral(Context& context, Parse::NodeId node_id)

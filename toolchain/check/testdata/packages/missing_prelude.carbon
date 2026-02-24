@@ -103,6 +103,7 @@ namespace Core;
 // CHECK:STDERR:
 fn Core.Int[T:! type](N:! T) -> {} { return {}; }
 
+// Make sure use of `i32` doesn't crash after above errors.
 let n: type = i32;
 
 // --- fail_prelude_as_class.carbon
@@ -121,7 +122,7 @@ class Core {
   fn Int[T:! type](N:! T) -> {} { return {}; }
 }
 
-var n: {} = i32;
+let n: type = i32;
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
