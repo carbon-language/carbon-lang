@@ -145,7 +145,8 @@ auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
     -> bool {
-  return context.TODO(node_id, "HandleAutoTypeLiteral");
+  context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+  return true;
 }
 
 }  // namespace Carbon::Check
