@@ -60,6 +60,12 @@ enum class Level : int8_t {
 // Similar to `CARBON_DIAGNOSTIC`, but for diagnostics that are generated on a
 // scope; see `Diagnostic::is_on_scope` for details.
 #define CARBON_DIAGNOSTIC_ON_SCOPE(DiagnosticName, LevelValue, Format, ...) \
+  static_assert(::Carbon::Diagnostics::Level::LevelValue ==                 \
+                        ::Carbon::Diagnostics::Level::Warning ||            \
+                    ::Carbon::Diagnostics::Level::LevelValue ==             \
+                        ::Carbon::Diagnostics::Level::Error,                \
+                "Only use CARBON_DIAGNOSTIC_ON_SCOPE for the main "         \
+                "diagnostic, not notes");                                   \
   static constexpr auto DiagnosticName =                                    \
       ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(                   \
           ::Carbon::Diagnostics::Kind::DiagnosticName,                      \
