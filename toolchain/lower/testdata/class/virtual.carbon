@@ -46,6 +46,36 @@ fn Use(v: Classes.Intermediate*) {
   v->Fn();
 }
 
+// --- create_named_ctor.carbon
+
+library "[[@TEST_NAME]]";
+
+import Classes;
+
+fn MakePartialBase() -> partial Classes.Base {
+  return {};
+}
+
+fn MakePartialIntermediate() -> partial Classes.Intermediate {
+  return {.base = MakePartialBase()};
+}
+
+fn MakeBase() -> Classes.Base {
+  return MakePartialBase();
+}
+
+fn MakeIntermediate() -> Classes.Intermediate {
+  return MakePartialIntermediate();
+}
+
+fn MakeDerivedFromPartial() -> Classes.Derived {
+  return {.base = MakePartialIntermediate()};
+}
+
+fn MakeDerivedFromNonPartial() -> Classes.Derived {
+  return {.base = MakeIntermediate()};
+}
+
 // --- member_init.carbon
 
 package MemberInit;
@@ -198,8 +228,8 @@ fn Make() {
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @Base.val.loc7_3 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @Intermediate.val.ec2.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
-// CHECK:STDOUT: @Derived.val.loc9_3 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CDerived.Classes.$vtable", {} zeroinitializer } }
+// CHECK:STDOUT: @Intermediate.val.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
+// CHECK:STDOUT: @Derived.val.loc9_49.4 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCreate.Create() #0 !dbg !4 {
@@ -213,12 +243,15 @@ fn Make() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc8), !dbg !8
 // CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc8, ptr align 8 @Intermediate.val.ec2.loc8_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc8, ptr align 8 @Intermediate.val.loc8_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc9), !dbg !9
 // CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %_.var.loc9, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc9_48.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc9, ptr align 8 @Derived.val.loc9_3, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   %.loc9_49.5.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %_.var.loc9, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc9_49.6.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.5.base, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc9, ptr align 8 @Derived.val.loc9_49.4, i64 8, i1 false), !dbg !12
+// CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc9_49.6.vptr, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc12), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
@@ -246,6 +279,7 @@ fn Make() {
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
 // CHECK:STDOUT:
@@ -280,6 +314,124 @@ fn Make() {
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 16, column: 3, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 15, column: 1, scope: !15)
+// CHECK:STDOUT: ; ModuleID = 'create_named_ctor.carbon'
+// CHECK:STDOUT: source_filename = "create_named_ctor.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
+// CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
+// CHECK:STDOUT: @empty_struct.d84.loc7_12 = internal constant {} zeroinitializer
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakePartialBase.Main(ptr sret({}) %return) #0 !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @empty_struct.d84.loc7_12, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakePartialIntermediate.Main(ptr sret({ ptr, {} }) %return) #0 !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc11_35.temp = alloca {}, align 8, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_35.temp), !dbg !10
+// CHECK:STDOUT:   call void @_CMakePartialBase.Main(ptr %.loc11_35.temp), !dbg !10
+// CHECK:STDOUT:   %.loc11_36.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %return, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   store ptr poison, ptr %.loc11_36.2.vptr, align 8, !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakeBase.Main(ptr sret({}) %return) #0 !dbg !13 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc15_26.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_26.temp), !dbg !14
+// CHECK:STDOUT:   call void @_CMakePartialBase.Main(ptr %.loc15_26.temp), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakeIntermediate.Main(ptr sret({ ptr, {} }) %return) #0 !dbg !16 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc19_34.1.temp = alloca { ptr, {} }, align 8, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_34.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @_CMakePartialIntermediate.Main(ptr %.loc19_34.1.temp), !dbg !17
+// CHECK:STDOUT:   %.loc19_34.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %return, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   store ptr @"_CIntermediate.Classes.$vtable", ptr %.loc19_34.2.vptr, align 8, !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakeDerivedFromPartial.Main(ptr sret({ { ptr, {} } }) %return) #0 !dbg !19 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc23_43.1.temp = alloca { ptr, {} }, align 8, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_43.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @_CMakePartialIntermediate.Main(ptr %.loc23_43.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc23_44.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !21
+// CHECK:STDOUT:   %.loc23_43.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc23_44.2.base, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   store ptr @"_CIntermediate.Classes.$vtable", ptr %.loc23_43.2.vptr, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc23_44.6.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !21
+// CHECK:STDOUT:   %.loc23_44.7.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc23_44.6.base, i32 0, i32 0, !dbg !21
+// CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc23_44.7.vptr, align 8, !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CFn.Derived.Classes(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMakeDerivedFromNonPartial.Main(ptr sret({ { ptr, {} } }) %return) #0 !dbg !23 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc27_37.1.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !24
+// CHECK:STDOUT:   call void @_CMakeIntermediate.Main(ptr %.loc27_37.1.base), !dbg !25
+// CHECK:STDOUT:   %.loc27_37.4.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !24
+// CHECK:STDOUT:   %.loc27_37.5.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc27_37.4.base, i32 0, i32 0, !dbg !24
+// CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc27_37.5.vptr, align 8, !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "create_named_ctor.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "MakePartialBase", linkageName: "_CMakePartialBase.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "MakePartialIntermediate", linkageName: "_CMakePartialIntermediate.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 19, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 10, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 11, column: 3, scope: !9)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "MakeBase", linkageName: "_CMakeBase.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 10, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 15, column: 3, scope: !13)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "MakeIntermediate", linkageName: "_CMakeIntermediate.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 10, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 3, scope: !16)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "MakeDerivedFromPartial", linkageName: "_CMakeDerivedFromPartial.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 19, scope: !19)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 10, scope: !19)
+// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 3, scope: !19)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "MakeDerivedFromNonPartial", linkageName: "_CMakeDerivedFromNonPartial.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !24 = !DILocation(line: 27, column: 10, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 27, column: 19, scope: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 27, column: 3, scope: !23)
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
@@ -358,7 +510,7 @@ fn Make() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Derived.val.loc13_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
+// CHECK:STDOUT: @Derived.val.loc13_32.4 = internal constant { { ptr } } { { ptr } { ptr @"_CBase.Main.$vtable" } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
@@ -369,7 +521,10 @@ fn Make() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !7
 // CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %_.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Derived.val.loc13_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   %.loc13_32.5.base = getelementptr inbounds nuw { { ptr } }, ptr %_.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc13_32.6.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.5.base, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Derived.val.loc13_32.4, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc13_32.6.vptr, align 8, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -439,7 +594,7 @@ fn Make() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Derived.val.loc14_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
+// CHECK:STDOUT: @Derived.val.loc14_32.4 = internal constant { { ptr } } { { ptr } { ptr @"_CBase.Main.$vtable" } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
@@ -452,7 +607,10 @@ fn Make() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !7
 // CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   %.loc14_32.5.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc14_32.6.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.5.base, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_32.4, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc14_32.6.vptr, align 8, !dbg !8
 // CHECK:STDOUT:   %Derived.F.call.vtable = load ptr, ptr %v.var, align 8, !dbg !10
 // CHECK:STDOUT:   %Derived.F.call = call ptr @llvm.load.relative.i32(ptr %Derived.F.call.vtable, i32 0), !dbg !10
 // CHECK:STDOUT:   call void %Derived.F.call(ptr %v.var), !dbg !10

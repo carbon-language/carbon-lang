@@ -341,6 +341,18 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::UpdateInit inst) -> void {
+  // Ensure that our subordinate initializations have been performed. They may
+  // have been skipped if they were constant.
+  context.InitializeStorage(inst.base_init_id);
+  context.InitializeStorage(inst.update_init_id);
+
+  // TODO: Add a helper to poison a value slot.
+  context.SetLocal(inst_id,
+                   llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
   context.SetLocal(inst_id,
                    context.CreateAlloca(context.GetTypeOfInst(inst_id)));

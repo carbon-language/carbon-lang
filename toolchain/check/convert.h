@@ -82,14 +82,8 @@ struct ConversionTarget {
 };
 
 // Convert a value to another type and expression category.
-// TODO: The `vtable_id` parameter is too much of a special case here, and
-// should be removed - once partial classes are implemented, the vtable pointer
-// initialization will be done not in this conversion, but during initialization
-// of the object of non-partial class type from the object of partial class
-// type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target,
-             SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
+             ConversionTarget target) -> SemIR::InstId;
 
 // Converts `value_id` to an initializing expression of the type of
 // `storage_id`, and returns the possibly-converted initializing expression.

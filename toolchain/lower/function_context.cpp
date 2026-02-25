@@ -8,6 +8,7 @@
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 
@@ -291,6 +292,12 @@ auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
       CARBON_FATAL("Lowering aggregate initialization of dependent type {0}",
                    type.file->types().GetAsInst(type.type_id));
   }
+}
+
+auto FunctionContext::InitializeStorage(SemIR::InstId init_id) -> void {
+  InitializeStorage(GetTypeIdOfInst(init_id),
+                    SemIR::FindStorageArgForInitializer(sem_ir(), init_id),
+                    init_id);
 }
 
 auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {

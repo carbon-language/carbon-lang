@@ -2018,6 +2018,20 @@ struct UninitializedValue {
   TypeId type_id;
 };
 
+// Initializes an object by performing a base initialization followed by an
+// update step.
+struct UpdateInit {
+  static constexpr auto Kind = InstKind::UpdateInit.Define<Parse::NodeId>(
+      {.ir_name = "update_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
+
+  TypeId type_id;
+  // The base initializer. Always an in-place initializer.
+  InstId base_init_id;
+  // The update expression. Always an in-place initializer.
+  InstId update_init_id;
+};
+
 // Converts from a value expression to an ephemeral reference expression, in
 // the case where the value representation of the type is a pointer. For
 // example, when indexing a value expression of array type, this is used to

@@ -186,6 +186,10 @@ class FunctionContext {
   auto InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
                          SemIR::InstId source_id) -> void;
 
+  // Emits the instructions necessary to perform the initialization described by
+  // `init_id` in-place in its storage.
+  auto InitializeStorage(SemIR::InstId init_id) -> void;
+
   // When fingerprinting for a specific, adds the call, found in the function
   // body, to <function_id, specific_id>. `function_id` and `specific_id` are
   // IDs within the file identified by `function_file_id`.

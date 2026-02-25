@@ -755,6 +755,13 @@ auto EvalConstantInst(Context& context, SemIR::UnaryOperatorNot inst)
   return ConstantEvalResult::NotConstant;
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::UpdateInit /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Support folding together a ClassInit with an update that sets the
+  // vptr.
+  return ConstantEvalResult::TODO;
+}
+
 auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
     -> ConstantEvalResult {
   // Values of value expressions and initializing expressions are represented in
