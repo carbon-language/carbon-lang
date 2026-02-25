@@ -11,7 +11,6 @@ namespace Carbon::SemIR {
 auto FormatterChunks::StartContent() -> void {
   CARBON_CHECK(content_start_id_ == None);
   content_start_id_ = ChunkId{.index = chunks_.size()};
-  AddContent(/*include_in_output=*/true);
 }
 
 auto FormatterChunks::AddContent(bool include_in_output) -> ChunkId {

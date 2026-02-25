@@ -20,10 +20,9 @@ namespace Carbon::SemIR {
 // - Content `Chunk`s, with content in a string.
 //
 // Initially, `AddParent` is called one or more times. Then `StartContent` is
-// called once to switch modes, and creates an initial content `Chunk`. After
-// that, either content may be written to `out()` immediately (going to the
-// current content `Chunk`), or `FormatChildContent` may be used to create a
-// content `Chunk` which is a child of a parent.
+// called once to switch modes. Once content is started, `out()` adds text to
+// content `Chunk`s. `FormatChildContent` may be used to create a content
+// `Chunk` which is a child of a parent.
 //
 // Content `Chunk`s that are created implicitly (not through
 // `FormatChildContent`) are automatically included in output. Other `Chunk`s
@@ -38,51 +37,38 @@ class FormatterChunks {
     size_t index;
   };
 
-  // Either a parent or content.
-  struct Chunk {
-    // Whether this chunk is known to be included in the output.
-    bool include_in_output;
-
-    // Either children or content.
-    std::variant<llvm::SmallVector<ChunkId>, std::string> data;
-  };
-
   // An empty `ChunkId`.
   static constexpr ChunkId None = ChunkId(-1);
 
   // Reserves space for at least `count` chunks.
   auto Reserve(size_t count) -> void { chunks_.reserve(count); }
 
-  // Adds a `Chunk` that can have `children`. It can optionally start with one
-  // `child_chunk`.
+  // Adds a parent `Chunk` and returns its `ChunkId`. If `child_chunk_id` isn't
+  // `None`, it's added as a child. Must be called before `StartContent`.
   auto AddParent(ChunkId child_chunk_id = None) -> ChunkId;
 
-  // Switches from adding parents to adding content. This immediately makes
-  // `out()` valid.
+  // Switches from adding parents to adding content.
   auto StartContent() -> void;
 
-  // Adds a new content `Chunk`. If the `parent_chunk` is included in
+  // Adds a new content `Chunk`. If `parent_chunk_id` is included in
   // output, it'll also include the new chunk. Calls `format` to support adding
-  // content to the new chunk.
+  // content to the new chunk. Must be called after `StartContent`.
   auto FormatChildContent(ChunkId parent_chunk_id,
                           llvm::function_ref<auto()->void> format) -> void;
 
-  // Marks the given chunk as being included in the output if the current chunk
-  // is. When `FormatChildContent` is currently active, there's a parent that
-  // will determine `include_in_output for the child; otherwise, the child is
-  // always included.
-  //
-  // For example, instructions in the file scope are added to implicitly-created
-  // `Chunks` (`FormatChildContent` is not used). When
-  // `AppendChildToCurrentParent` is called in that context, there's no parent
-  // to limit visibility, so the child is also included.
+  // Adds `child_chunk_id` to the children of a `FormatChildContent`'s
+  // `parent_chunk_id` if called during `format`, or otherwise includes the
+  // chunk in output.
   auto AppendChildToCurrentParent(ChunkId child_chunk_id) -> void;
 
   // Writes included chunks to the given stream.
   auto Write(llvm::raw_ostream& stream) -> void;
 
-  // Returns a stream to write to the current chunk. Only valid to use after
-  // `StartContent`, and may add a new chunk if one hasn't been started.
+  // Returns a stream to write to a content `Chunk`. The returned reference is only valid
+  // until the next `Chunk` starts. Must be called after `StartContent`.
+  //
+  // This adds a new, parentless content `Chunk` if there's not a ready content
+  // `Chunk` to write to.
   auto out() -> llvm::raw_ostream& {
     CARBON_CHECK(content_start_id_ != None);
     if (!out_) {
@@ -94,7 +80,16 @@ class FormatterChunks {
   auto size() -> size_t { return chunks_.size(); }
 
  private:
-  // Adds a `Chunk` that will have `content`.
+  // Either a parent or content.
+  struct Chunk {
+    // Whether this chunk is known to be included in the output.
+    bool include_in_output;
+
+    // Either children or content.
+    std::variant<llvm::SmallVector<ChunkId>, std::string> data;
+  };
+
+  // Adds a `Chunk` that will have `content`, and directs `out_` to it.
   auto AddContent(bool include_in_output) -> ChunkId;
 
   // Adds `child_chunk_id` to the children of `parent_chunk_id`.
