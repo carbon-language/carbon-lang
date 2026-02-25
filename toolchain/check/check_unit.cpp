@@ -597,7 +597,7 @@ auto CheckUnit::FinishRun() -> void {
   context_.scope_stack().Pop(/*check_unused=*/true);
 
   // Finalizes reserved blocks, using `ReservedIds` to avoid missing values.
-  for (const auto& reserved_id : SemIR::InstBlockId::ReservedIds) {
+  for (auto reserved_id : SemIR::InstBlockId::ReservedIds) {
     if (reserved_id == SemIR::InstBlockId::Empty) {
       continue;
     }
