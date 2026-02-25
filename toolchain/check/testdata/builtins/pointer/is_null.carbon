@@ -113,9 +113,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestEmptyStruct.decl: %TestEmptyStruct.type = fn_decl @TestEmptyStruct [concrete = constants.%TestEmptyStruct] {
 // CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete]
@@ -208,9 +205,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %TestC.type: type = fn_type @TestC [concrete]
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IsNull.specific_fn.b1f: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -195,7 +195,6 @@ CARBON_DIAGNOSTIC_KIND(InCppMacroExpansion)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 CARBON_DIAGNOSTIC_KIND(InCallToEvalFn)
 CARBON_DIAGNOSTIC_KIND(InCppThunk)
-CARBON_DIAGNOSTIC_KIND(InCppTypeCompletion)
 
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
@@ -299,9 +298,9 @@ CARBON_DIAGNOSTIC_KIND(BaseIsFinal)
 CARBON_DIAGNOSTIC_KIND(BaseMissingExtend)
 CARBON_DIAGNOSTIC_KIND(BaseDeclAfterFieldDecl)
 CARBON_DIAGNOSTIC_KIND(ClassAbstractHere)
-CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
+CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutBase)
@@ -367,7 +366,7 @@ CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFileNote)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
-CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
+CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessInContext)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
@@ -549,10 +548,6 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeConstraintCycle)
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
-// Facet type completeness.
-CARBON_DIAGNOSTIC_KIND(IdentifyingFacetTypeHere)
-CARBON_DIAGNOSTIC_KIND(RequiringCompleteFacetTypeHere)
-
 // Generics.
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
@@ -595,7 +590,11 @@ CARBON_DIAGNOSTIC_KIND(LanguageServerDiagnosticInWrongFile)
 
 // TestDiagnostic is only for unit tests.
 CARBON_DIAGNOSTIC_KIND(TestDiagnostic)
-CARBON_DIAGNOSTIC_KIND(TestDiagnosticOnScope)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticContext)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticContext2)
 CARBON_DIAGNOSTIC_KIND(TestDiagnosticNote)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticOnScope)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticSoftContext)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticSoftContext2)
 
 #undef CARBON_DIAGNOSTIC_KIND

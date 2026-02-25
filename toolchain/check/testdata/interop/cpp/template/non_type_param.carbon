@@ -38,7 +38,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `Cpp.Simple` to `Cpp.Simple` [ConversionFailure]
 // CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:1: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:1: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -113,7 +113,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR: fail_type_argument.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
 // CHECK:STDERR:                          ^~~~~
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A);
 // CHECK:STDERR:                          ^~~~~
 // CHECK:STDERR:
@@ -130,7 +130,7 @@ var n: i32;
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDERR:                          ^~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDERR:                          ^~
 // CHECK:STDERR:
@@ -143,9 +143,6 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %pattern_type.8a6: type = pattern_type %TwoNonType [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.8a6 = ref_binding_pattern x [concrete]
@@ -156,12 +153,6 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_dependent.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {

@@ -223,9 +223,6 @@ class W(T:! type) {
 }
 
 interface A(N:! Core.IntLiteral()) {
-  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+3]]:26: error: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   fn AA() -> W(array((), N));
-  // CHECK:STDERR:                          ^
   fn AA() -> W(array((), N));
 }
 interface B(N:! Core.IntLiteral()) {
@@ -250,9 +247,12 @@ impl forall [N:! Core.IntLiteral(), T:! C(N)] T as B(N) {
 }
 
 fn F(T:! C(-1)) {
-  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+4]]:3: note: in `AA()` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `AA()` [ResolvingSpecificHere]
   // CHECK:STDERR:   T.(A(-1).AA)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE-27]]:26: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:   fn AA() -> W(array((), N));
+  // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   T.(A(-1).AA)();
 }

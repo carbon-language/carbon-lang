@@ -43,9 +43,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.483: type = fn_type_with_self_type %Negate.WithSelf.Op.type.900, %Negate.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a

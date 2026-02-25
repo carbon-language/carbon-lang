@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/expr_info.h"
+#include "toolchain/sem_ir/formatter_chunks.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -56,34 +57,40 @@ Formatter::Formatter(
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
       // Create a placeholder visible chunk and assign it to all instructions
       // that don't have a chunk of their own.
-      tentative_inst_chunks_(sem_ir_->insts(), chunks_.AddChunkNoFlush(true)) {
+      tentative_inst_chunks_(
+          sem_ir_->insts(),
+          chunks_.AddChunkNoFlush(/*include_in_output=*/true)) {
   if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
 
+  for (auto& chunk : scope_label_chunks_) {
+    chunk = chunks_.AddChunkNoFlush(/*include_in_output=*/false);
+  }
+
   // Create empty placeholder chunks for instructions that we output lazily.
-  for (auto [_, insts] : GetTentativeScopes(*sem_ir_)) {
+  for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
+    auto scope_chunk = scope_label_chunks_[static_cast<size_t>(scope_id)];
     for (auto inst_id : insts) {
-      tentative_inst_chunks_.Set(inst_id, chunks_.AddChunkNoFlush(false));
+      tentative_inst_chunks_.Set(
+          inst_id, chunks_.AddTentativeChunkWithChild(scope_chunk));
     }
   }
 
   // Create a real chunk for the start of the output.
-  chunks_.AddChunkNoFlush(true);
+  chunks_.AddChunkNoFlush(/*include_in_output=*/true);
 }
 
 auto Formatter::Format() -> void {
   out() << "--- " << sem_ir_->filename() << "\n";
 
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
-    FormatTopLevelScopeIfUsed(scope_id, insts,
-                              /*use_tentative_output_scopes=*/true);
+    FormatTopLevelScope(scope_id, insts);
   }
 
-  FormatTopLevelScopeIfUsed(
+  FormatTopLevelScope(
       InstNamer::ScopeId::File,
-      sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
-      /*use_tentative_output_scopes=*/false);
+      sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()));
 
   for (const auto& [id, interface] : sem_ir_->interfaces().enumerate()) {
     FormatInterface(id, interface);
@@ -260,42 +267,45 @@ auto Formatter::IndentLabel() -> void {
   Indent(-2);
 }
 
-auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
-                                          llvm::ArrayRef<InstId> block,
-                                          bool use_tentative_output_scopes)
-    -> void {
-  if (!use_tentative_output_scopes && use_dump_sem_ir_ranges_) {
-    // Don't format the scope if no instructions are in a dump range.
-    block = block.drop_while(
-        [&](InstId inst_id) { return !ShouldFormatInst(inst_id); });
-  }
-
+auto Formatter::FormatTopLevelScope(InstNamer::ScopeId scope_id,
+                                    llvm::ArrayRef<InstId> block) -> void {
   if (block.empty()) {
     return;
   }
 
   llvm::SaveAndRestore scope(scope_, scope_id);
-  // Note, we don't use OpenBrace() / CloseBrace() here because we always want
-  // a newline to avoid misformatting if the first instruction is omitted.
-  out() << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
+  auto scope_chunk = scope_label_chunks_[static_cast<size_t>(scope_id)];
+
+  chunks_.FormatTentativeChunkWithParent(scope_chunk, [&] {
+    // Note, we don't use OpenBrace() / CloseBrace() here because we always want
+    // a newline to avoid misformatting if the first instruction is omitted.
+    out() << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
+  });
+
   indent_ += 2;
   for (const InstId inst_id : block) {
     // Format instructions when needed, but do nothing for elided entries;
     // unlike normal code blocks, scopes are non-sequential so skipped
     // instructions are assumed to be uninteresting.
-    if (use_tentative_output_scopes) {
-      // This is for constants and imports. These use tentative logic to
-      // determine whether an instruction is printed.
-      FormatterChunks::TentativeScope scope(
-          &chunks_, tentative_inst_chunks_.Get(inst_id));
+    if (scope_id == InstNamer::ScopeId::File) {
+      // Applies range-based filtering of instructions.
+      if (!ShouldFormatInst(inst_id)) {
+        continue;
+      }
+
       FormatInst(inst_id);
-    } else if (ShouldFormatInst(inst_id)) {
-      // This is for the file scope. It uses only the range-based filtering.
-      FormatInst(inst_id);
+      // Include the `file` scope label directly here.
+      chunks_.IncludeChunkInOutput(scope_chunk);
+    } else {
+      // Other scopes format each instruction in its own chunk, to support
+      // tentative formatting.
+      chunks_.FormatTentativeChunkWithParent(
+          tentative_inst_chunks_.Get(inst_id), [&] { FormatInst(inst_id); });
     }
   }
-  out() << "}\n";
   indent_ -= 2;
+
+  chunks_.FormatTentativeChunkWithParent(scope_chunk, [&] { out() << "}\n"; });
 }
 
 auto Formatter::FormatClass(ClassId id, const Class& class_info) -> void {

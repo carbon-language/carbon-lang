@@ -89,7 +89,7 @@ fn PassNonConstB(p: B) {
   // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `B` to `const A` [ConversionFailure]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
@@ -105,7 +105,7 @@ fn PassConstB(p: const B) {
   // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `const B` to `const A` [ConversionFailure]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `const B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `const B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-26]]:15: note: initializing function parameter [InCallToFunctionParam]
@@ -444,9 +444,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ptr.375: type = ptr_type %const.30c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassNonConstBPtr(%p.param: %ptr.27c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstAPtr.ref: %TakeConstAPtr.type = name_ref TakeConstAPtr, file.%TakeConstAPtr.decl [concrete = constants.%TakeConstAPtr]
@@ -482,9 +479,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %TakeConstA.type: type = fn_type @TakeConstA [concrete]
 // CHECK:STDOUT:   %TakeConstA: %TakeConstA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.30c: type = const_type %B [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassNonConstB(%p.param: %B) {

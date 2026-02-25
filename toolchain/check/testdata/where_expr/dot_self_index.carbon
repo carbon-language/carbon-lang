@@ -63,9 +63,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %complete_type.863: <witness> = complete_type_witness %Empty_where.type.729 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]

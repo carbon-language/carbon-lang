@@ -93,9 +93,8 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
-                                 llvm::ArrayRef<InstId> block,
-                                 bool use_tentative_output_scopes) -> void;
+  auto FormatTopLevelScope(InstNamer::ScopeId scope_id,
+                           llvm::ArrayRef<InstId> block) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id, const Class& class_info) -> void;
@@ -352,8 +351,16 @@ class Formatter {
   // first open brace or the semicolon in the entity declaration.
   llvm::StringRef pending_imported_from_;
 
-  // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index.
+  // Chunks for each scope's labels, including `File` scope. These are parents
+  // of chunks containing a scope's `<label> {` and `}` output, and children of
+  // the scope's instructions in `tentative_inst_chunks_`.
+  std::array<FormatterChunks::ChunkId,
+             static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope)>
+      scope_label_chunks_;
+
+  // Chunks for each instruction in a tentative top-level scope. These don't
+  // directly contain content, and are instead parents of the instruction's
+  // output to help indirect inclusion.
   FixedSizeValueStore<InstId, FormatterChunks::ChunkId, Tag<CheckIRId>>
       tentative_inst_chunks_;
 

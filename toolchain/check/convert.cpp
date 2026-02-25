@@ -25,6 +25,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -1394,13 +1395,10 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
 
   auto copy_id = BuildUnaryOperator(
       context, SemIR::LocId(expr_id), {.interface_name = CoreIdentifier::Copy},
-      expr_id, [&] {
-        if (!target.diagnose) {
-          return context.emitter().BuildSuppressed();
-        }
-        CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
+      expr_id, target.diagnose, [&](auto& builder) {
+        CARBON_DIAGNOSTIC(CopyOfUncopyableType, Context,
                           "cannot copy value of type {0}", TypeOfInstId);
-        return context.emitter().Build(expr_id, CopyOfUncopyableType, expr_id);
+        builder.Context(expr_id, CopyOfUncopyableType, expr_id);
       });
   return copy_id;
 }
@@ -1737,47 +1735,49 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     context.emitter().Emit(expr_id, RefTagNoRefParam);
   }
 
-  // We can only perform initialization for complete, non-abstract types. Note
-  // that `RequireConcreteType` returns true for facet types, since their
+  // We can only perform initialization for complete, non-abstract types.
+  //
+  // TODO: Don't require a concrete type when `!target.is_initializer()`. We
+  // want to allow constructing a value of an abstract class type, but right now
+  // if we proceed into Convert with an abstract target type, we crash.
+  //
+  // Note that we allow conversion to incomplete to facet types, since their
   // representation is fixed. This allows us to support using the `Self` of an
   // interface inside its definition.
-  //
-  // TODO: If `!target.is_initializer()` then we don't want to require the type
-  // to be concrete, only complete. But if we continue into Convert with an
-  // abstract type, we crash elsewhere.
-  if (!RequireConcreteType(
-          context, target.type_id, loc_id,
-          [&] {
-            CARBON_CHECK(!target.is_initializer(),
-                         "Initialization of incomplete types is expected to be "
-                         "caught elsewhere.");
-            if (!target.diagnose) {
-              return context.emitter().BuildSuppressed();
-            }
-            CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                              "forming value of incomplete type {0}",
-                              SemIR::TypeId);
-            CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                              "invalid use of incomplete type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(
-                loc_id,
-                target.kind == ConversionTarget::Value
-                    ? IncompleteTypeInValueConversion
-                    : IncompleteTypeInConversion,
-                target.type_id);
-          },
-          [&] {
-            if (!target.diagnose) {
-              return context.emitter().BuildSuppressed();
-            }
-            CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
-                              "initialization of abstract type {0}",
-                              SemIR::TypeId);
-            return context.emitter().Build(loc_id, AbstractTypeInInit,
-                                           target.type_id);
-          })) {
-    return SemIR::ErrorInst::InstId;
+  if (!context.types().IsFacetType(target.type_id)) {
+    if (target.diagnose) {
+      if (!RequireConcreteType(
+              context, target.type_id, loc_id,
+              [&](auto& builder) {
+                CARBON_CHECK(
+                    !target.is_initializer(),
+                    "Initialization of incomplete types is expected to be "
+                    "caught elsewhere.");
+                CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Context,
+                                  "forming value of incomplete type {0}",
+                                  SemIR::TypeId);
+                CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Context,
+                                  "invalid use of incomplete type {0}",
+                                  SemIR::TypeId);
+                builder.Context(loc_id,
+                                target.kind == ConversionTarget::Value
+                                    ? IncompleteTypeInValueConversion
+                                    : IncompleteTypeInConversion,
+                                target.type_id);
+              },
+              [&](auto& builder) {
+                CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
+                                  "initialization of abstract type {0}",
+                                  SemIR::TypeId);
+                builder.Context(loc_id, AbstractTypeInInit, target.type_id);
+              })) {
+        return SemIR::ErrorInst::InstId;
+      }
+    } else {
+      if (!TryIsConcreteType(context, target.type_id, loc_id)) {
+        return SemIR::ErrorInst::InstId;
+      }
+    }
   }
 
   // Clear storage_id in cases where it's clearly meaningless, to avoid misuse
@@ -1835,37 +1835,35 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .interface_args_ref = interface_args,
         .op_name = CoreIdentifier::Convert,
     };
-    expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
-      if (!target.diagnose) {
-        return context.emitter().BuildSuppressed();
-      }
-      int target_kind_for_diag =
-          target.kind == ConversionTarget::ExplicitAs         ? 1
-          : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
-                                                              : 0;
-      if (target.type_id == SemIR::TypeType::TypeId ||
-          sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-        CARBON_DIAGNOSTIC(
-            ConversionFailureNonTypeToFacet, Error,
-            "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
-            "{2:to|into type implementing} {3}"
-            "{0:=1: with `as`|=2: with `unsafe as`|:}",
-            Diagnostics::IntAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
-            SemIR::TypeId);
-        return context.emitter().Build(
-            loc_id, ConversionFailureNonTypeToFacet, target_kind_for_diag,
-            expr_id, target.type_id == SemIR::TypeType::TypeId, target.type_id);
-      } else {
-        CARBON_DIAGNOSTIC(
-            ConversionFailure, Error,
-            "cannot{0:=0: implicitly|:} convert expression of type "
-            "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
-            Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
-        return context.emitter().Build(loc_id, ConversionFailure,
-                                       target_kind_for_diag, expr_id,
-                                       target.type_id);
-      }
-    });
+    expr_id = BuildUnaryOperator(
+        context, loc_id, op, expr_id, target.diagnose, [&](auto& builder) {
+          int target_kind_for_diag =
+              target.kind == ConversionTarget::ExplicitAs         ? 1
+              : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
+                                                                  : 0;
+          if (target.type_id == SemIR::TypeType::TypeId ||
+              sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+            CARBON_DIAGNOSTIC(
+                ConversionFailureNonTypeToFacet, Context,
+                "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
+                "{2:to|into type implementing} {3}"
+                "{0:=1: with `as`|=2: with `unsafe as`|:}",
+                Diagnostics::IntAsSelect, TypeOfInstId,
+                Diagnostics::BoolAsSelect, SemIR::TypeId);
+            builder.Context(loc_id, ConversionFailureNonTypeToFacet,
+                            target_kind_for_diag, expr_id,
+                            target.type_id == SemIR::TypeType::TypeId,
+                            target.type_id);
+          } else {
+            CARBON_DIAGNOSTIC(
+                ConversionFailure, Context,
+                "cannot{0:=0: implicitly|:} convert expression of type "
+                "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
+                Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
+            builder.Context(loc_id, ConversionFailure, target_kind_for_diag,
+                            expr_id, target.type_id);
+          }
+        });
 
     // Pull a value directly out of the initializer if possible and wanted.
     if (expr_id != SemIR::ErrorInst::InstId &&

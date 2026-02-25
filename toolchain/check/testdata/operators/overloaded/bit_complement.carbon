@@ -43,9 +43,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.0d9: type = fn_type_with_self_type %BitComplement.WithSelf.Op.type.568, %BitComplement.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a

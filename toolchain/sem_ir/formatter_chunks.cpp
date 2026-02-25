@@ -8,23 +8,6 @@
 
 namespace Carbon::SemIR {
 
-FormatterChunks::TentativeScope::TentativeScope(FormatterChunks* chunks,
-                                                ChunkId parent_chunk)
-    : chunks(chunks) {
-  // If our parent is not known to be included, create a new chunk and
-  // include it only if the parent is later found to be used.
-  if (!chunks->output_chunks_[parent_chunk.index].include_in_output) {
-    chunk = chunks->AddChunk(false);
-    chunks->output_chunks_[parent_chunk.index].dependencies.push_back(chunk);
-  }
-}
-
-FormatterChunks::TentativeScope::~TentativeScope() {
-  auto next_chunk = chunks->AddChunk(true);
-  CARBON_CHECK(next_chunk.index == chunk.index + 1,
-               "Nested FormatterChunks::TentativeScope");
-}
-
 auto FormatterChunks::FlushChunk() -> void {
   CARBON_CHECK(output_chunks_.back().chunk.empty());
   output_chunks_.back().chunk = std::move(buffer_);
@@ -40,6 +23,33 @@ auto FormatterChunks::AddChunkNoFlush(bool include_in_output) -> ChunkId {
 auto FormatterChunks::AddChunk(bool include_in_output) -> ChunkId {
   FlushChunk();
   return AddChunkNoFlush(include_in_output);
+}
+
+auto FormatterChunks::AddTentativeChunkWithChild(ChunkId child_chunk)
+    -> ChunkId {
+  auto chunk = AddChunkNoFlush(/*include_in_output=*/false);
+  output_chunks_[chunk.index].dependencies.push_back(child_chunk);
+  return chunk;
+}
+
+auto FormatterChunks::FormatTentativeChunkWithParent(
+    ChunkId parent_chunk, llvm::function_ref<auto()->void> format) -> void {
+  CARBON_CHECK(output_chunks_.back().include_in_output,
+               "All non-included chunks must be added first.");
+
+  // If the parent is already included, we don't need to make a chunk.
+  if (output_chunks_[parent_chunk.index].include_in_output) {
+    format();
+    return;
+  }
+
+  // Otherwise, create a new chunk and include it only if the parent is later
+  // found to be used.
+  auto chunk = AddChunk(false);
+  output_chunks_[parent_chunk.index].dependencies.push_back(chunk);
+  format();
+  auto next_chunk = AddChunk(true);
+  CARBON_CHECK(next_chunk.index == chunk.index + 1, "Nested FormatChildChunk");
 }
 
 auto FormatterChunks::IncludeChunkInOutput(ChunkId chunk) -> void {

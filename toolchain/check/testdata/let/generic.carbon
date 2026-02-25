@@ -40,9 +40,6 @@ fn F(a: i32) -> i32 {
 
 // CHECK:STDOUT: --- fail_todo_type.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_assignment.carbon

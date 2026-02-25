@@ -21,8 +21,7 @@ namespace Carbon::Check {
 // don't want to trigger a request for more monomorphization.
 // TODO: Remove the other call to this function.
 auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
-                       SemIR::LocId loc_id,
-                       MakeDiagnosticBuilderFn diagnoser = nullptr) -> bool;
+                       SemIR::LocId loc_id, bool diagnose = false) -> bool;
 
 // Completes the type `type_id`. CHECK-fails if it can't be completed.
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
@@ -38,36 +37,33 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 // the completeness of the type will be enforced during monomorphization, and
 // `loc_id` is used as the location for a diagnostic produced at that time.
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
-    -> bool;
+                         SemIR::LocId loc_id,
+                         DiagnosticContextFn diagnostic_context) -> bool;
 
-// Returns true for types that have an object representation that may be used as
-// a return type or variable type. Returns true for all facet types, since their
-// representation is always the same and is never considered abstract.
-// Otherwise, this is like `RequireCompleteType`, but also require the type to
-// not be abstract. If it is, `abstract_diagnoser` is used to diagnose the
-// problem, and this function returns false.
+// Returns whether the type is complete and concrete.
+//
+// Avoid calling this where possible, as it can lead to coherence issues.
+// Usually you want a diagnostic when it's not, so call RequireConcreteType.
+//
+// The `type_id` must be complete, so `TryToCompleteType` must have already been
+// called, or this function may crash.
+auto TryIsConcreteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id) -> bool;
+
+// Returns true for types that are complete and that have an object
+// representation that may be used as a return type or variable type.
+//
+// The `complete_type_diagnostic_context` is used to contextualize diagnostics
+// in checking that the type is complete. The `concrete_type_diagnostic_context`
+// is used to contextualize diagnostics in checking that the type is concrete.
 //
 // Note: class types are abstract if marked using the `abstract` keyword; tuple
 // and struct types are abstract if any element is abstract.
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
-                         MakeDiagnosticBuilderFn abstract_diagnoser) -> bool;
-
-// Returns the type `type_id` if it is a complete type, or produces an
-// incomplete type error and returns an error type. This is a convenience
-// wrapper around `RequireCompleteType`.
-auto AsCompleteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
-    -> SemIR::TypeId;
-
-// Returns the type `type_id` if it is a concrete type, or produces an
-// incomplete or abstract type error and returns an error type. This is a
-// convenience wrapper around `RequireConcreteType`.
-auto AsConcreteType(Context& context, SemIR::TypeId type_id,
-                    SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
-                    MakeDiagnosticBuilderFn abstract_diagnoser)
-    -> SemIR::TypeId;
+                         SemIR::LocId loc_id,
+                         DiagnosticContextFn complete_type_diagnostic_context,
+                         DiagnosticContextFn concrete_type_diagnostic_context)
+    -> bool;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is
@@ -77,21 +73,28 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 // returns None if any error is found.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                const SemIR::FacetType& facet_type,
-                                MakeDiagnosticBuilderFn diagnoser)
+                                const SemIR::FacetType& facet_type)
     -> SemIR::IdentifiedFacetTypeId;
 
-// Adds a note to a diagnostic explaining that a class is incomplete.
-auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
-                         DiagnosticBuilder& builder) -> void;
+// Emits an error diagnostic explaining that a class is incomplete.
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a complete class.
+auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id) -> void;
 
-// Adds a note to a diagnostic explaining that an interface is not defined.
-auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
-                             DiagnosticBuilder& builder) -> void;
+// Emits an error diagnostic explaining that an interface is not defined.
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a complete interface.
+auto DiagnoseIncompleteInterface(Context& context,
+                                 SemIR::InterfaceId interface_id) -> void;
 
 // Adds a note to a diagnostic explaining that a class is abstract.
-auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
-                       bool direct_use, DiagnosticBuilder& builder) -> void;
+//
+// The caller must ensure a Context message will be provided to point to the
+// failing operation that requires a concrete class.
+auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
+                           bool direct_use) -> void;
 
 }  // namespace Carbon::Check
 
