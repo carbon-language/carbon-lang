@@ -53,7 +53,8 @@ static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
         it = test_args.erase(it);
         for (const auto& split : split_files) {
           const std::string& filename = split->filename;
-          if (filename == StdinFilename || filename.ends_with(".h")) {
+          if (filename == StdinFilename || filename.ends_with(".h") ||
+              filename.ends_with(".modulemap")) {
             continue;
           }
           it = test_args.insert(it, filename);
