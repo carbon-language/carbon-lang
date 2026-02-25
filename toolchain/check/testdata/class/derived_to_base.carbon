@@ -444,9 +444,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ptr.375: type = ptr_type %const.30c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassNonConstBPtr(%p.param: %ptr.27c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstAPtr.ref: %TakeConstAPtr.type = name_ref TakeConstAPtr, file.%TakeConstAPtr.decl [concrete = constants.%TakeConstAPtr]
@@ -482,9 +479,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %TakeConstA.type: type = fn_type @TakeConstA [concrete]
 // CHECK:STDOUT:   %TakeConstA: %TakeConstA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.30c: type = const_type %B [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassNonConstB(%p.param: %B) {

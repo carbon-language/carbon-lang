@@ -30,9 +30,6 @@ fn A() {
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

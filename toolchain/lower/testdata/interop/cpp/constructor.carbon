@@ -107,7 +107,6 @@ import Cpp library "multi_argument.h";
 fn Zero() {
   let _: Cpp.C = Cpp.C.C();
   let _: Cpp.C = ();
-  let _: Cpp.C = {};
 }
 
 fn One() {
@@ -417,8 +416,6 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1CC2Eiiii = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc9_19.3 = internal constant {} zeroinitializer
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_ZN1CC1Ev.carbon_thunk(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
@@ -632,87 +629,80 @@ fn Four() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CZero.Main() #2 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_26.1.temp = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc8_19.2.temp = alloca {}, align 8, !dbg !19
-// CHECK:STDOUT:   %.loc9_19.2.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc7_26.1.temp = alloca [1 x i8], align 1, !dbg !18
+// CHECK:STDOUT:   %.loc8_19.2.temp = alloca [1 x i8], align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !18
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !19
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk_tuple(ptr %.loc8_19.2.temp), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.2.temp), !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_19.2.temp, ptr align 1 @C.val.loc9_19.3, i64 0, i1 false), !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COne.Main() #2 !dbg !22 {
+// CHECK:STDOUT: define void @_COne.Main() #2 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_27.1.temp = alloca {}, align 8, !dbg !23
-// CHECK:STDOUT:   %.loc14_18.1.temp = alloca {}, align 8, !dbg !24
-// CHECK:STDOUT:   %.loc15_21.2.temp = alloca {}, align 8, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_27.1.temp), !dbg !23
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 1, ptr %.loc13_27.1.temp), !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_18.1.temp), !dbg !24
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 2, ptr %.loc14_18.1.temp), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_21.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 3, ptr %.loc15_21.2.temp), !dbg !25
-// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT:   %.loc12_27.1.temp = alloca [1 x i8], align 1, !dbg !22
+// CHECK:STDOUT:   %.loc13_18.1.temp = alloca [1 x i8], align 1, !dbg !23
+// CHECK:STDOUT:   %.loc14_21.2.temp = alloca [1 x i8], align 1, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_27.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 1, ptr %.loc12_27.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !23
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk(i32 2, ptr %.loc13_18.1.temp), !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_21.2.temp), !dbg !24
+// CHECK:STDOUT:   call void @_ZN1CC1Ei.carbon_thunk_tuple(i32 3, ptr %.loc14_21.2.temp), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTwo.Main() #2 !dbg !27 {
+// CHECK:STDOUT: define void @_CTwo.Main() #2 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_30.1.temp = alloca {}, align 8, !dbg !28
-// CHECK:STDOUT:   %.loc20_23.2.temp = alloca {}, align 8, !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_30.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk(i32 1, i32 2, ptr %.loc19_30.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_23.2.temp), !dbg !29
-// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 3, i32 4, ptr %.loc20_23.2.temp), !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   %.loc18_30.1.temp = alloca [1 x i8], align 1, !dbg !27
+// CHECK:STDOUT:   %.loc19_23.2.temp = alloca [1 x i8], align 1, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_30.1.temp), !dbg !27
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk(i32 1, i32 2, ptr %.loc18_30.1.temp), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.2.temp), !dbg !28
+// CHECK:STDOUT:   call void @_ZN1CC1Eii.carbon_thunk_tuple(i32 3, i32 4, ptr %.loc19_23.2.temp), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CThree.Main() #2 !dbg !31 {
+// CHECK:STDOUT: define void @_CThree.Main() #2 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_33.1.temp = alloca {}, align 8, !dbg !32
-// CHECK:STDOUT:   %.loc25_26.2.temp = alloca {}, align 8, !dbg !33
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_33.1.temp), !dbg !32
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk3(i32 1, i32 2, i32 3, ptr %.loc24_33.1.temp), !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_26.2.temp), !dbg !33
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 4, i32 5, i32 6, ptr %.loc25_26.2.temp), !dbg !33
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   %.loc23_33.1.temp = alloca [1 x i8], align 1, !dbg !31
+// CHECK:STDOUT:   %.loc24_26.2.temp = alloca [1 x i8], align 1, !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_33.1.temp), !dbg !31
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk3(i32 1, i32 2, i32 3, ptr %.loc23_33.1.temp), !dbg !31
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_26.2.temp), !dbg !32
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple3(i32 4, i32 5, i32 6, ptr %.loc24_26.2.temp), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFour.Main() #2 !dbg !35 {
+// CHECK:STDOUT: define void @_CFour.Main() #2 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc29_36.1.temp = alloca {}, align 8, !dbg !36
-// CHECK:STDOUT:   %.loc30_29.2.temp = alloca {}, align 8, !dbg !37
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_36.1.temp), !dbg !36
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk(i32 1, i32 2, i32 3, i32 4, ptr %.loc29_36.1.temp), !dbg !36
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_29.2.temp), !dbg !37
-// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 5, i32 6, i32 7, i32 8, ptr %.loc30_29.2.temp), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT:   %.loc28_36.1.temp = alloca [1 x i8], align 1, !dbg !35
+// CHECK:STDOUT:   %.loc29_29.2.temp = alloca [1 x i8], align 1, !dbg !36
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_36.1.temp), !dbg !35
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk(i32 1, i32 2, i32 3, i32 4, ptr %.loc28_36.1.temp), !dbg !35
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_29.2.temp), !dbg !36
+// CHECK:STDOUT:   call void @_ZN1CC1Eiiii.carbon_thunk_tuple(i32 5, i32 6, i32 7, i32 8, ptr %.loc29_29.2.temp), !dbg !36
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1CC2Ei, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1CC2Eii, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1CC2Eiiii, { 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -738,22 +728,21 @@ fn Four() {
 // CHECK:STDOUT: !17 = !{null}
 // CHECK:STDOUT: !18 = !DILocation(line: 7, column: 18, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 8, column: 18, scope: !15)
-// CHECK:STDOUT: !20 = !DILocation(line: 9, column: 18, scope: !15)
-// CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "One", linkageName: "_COne.Main", scope: null, file: !7, line: 12, type: !16, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 18, scope: !22)
-// CHECK:STDOUT: !24 = !DILocation(line: 14, column: 18, scope: !22)
-// CHECK:STDOUT: !25 = !DILocation(line: 15, column: 18, scope: !22)
-// CHECK:STDOUT: !26 = !DILocation(line: 12, column: 1, scope: !22)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !7, line: 18, type: !16, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !28 = !DILocation(line: 19, column: 18, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 20, column: 18, scope: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 18, column: 1, scope: !27)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !7, line: 23, type: !16, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !32 = !DILocation(line: 24, column: 18, scope: !31)
-// CHECK:STDOUT: !33 = !DILocation(line: 25, column: 18, scope: !31)
-// CHECK:STDOUT: !34 = !DILocation(line: 23, column: 1, scope: !31)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !7, line: 28, type: !16, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !36 = !DILocation(line: 29, column: 18, scope: !35)
-// CHECK:STDOUT: !37 = !DILocation(line: 30, column: 18, scope: !35)
-// CHECK:STDOUT: !38 = !DILocation(line: 28, column: 1, scope: !35)
+// CHECK:STDOUT: !20 = !DILocation(line: 6, column: 1, scope: !15)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "One", linkageName: "_COne.Main", scope: null, file: !7, line: 11, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !22 = !DILocation(line: 12, column: 18, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 18, scope: !21)
+// CHECK:STDOUT: !24 = !DILocation(line: 14, column: 18, scope: !21)
+// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 1, scope: !21)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Two", linkageName: "_CTwo.Main", scope: null, file: !7, line: 17, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !27 = !DILocation(line: 18, column: 18, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 19, column: 18, scope: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 17, column: 1, scope: !26)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Three", linkageName: "_CThree.Main", scope: null, file: !7, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 18, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 24, column: 18, scope: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 22, column: 1, scope: !30)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Four", linkageName: "_CFour.Main", scope: null, file: !7, line: 27, type: !16, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !35 = !DILocation(line: 28, column: 18, scope: !34)
+// CHECK:STDOUT: !36 = !DILocation(line: 29, column: 18, scope: !34)
+// CHECK:STDOUT: !37 = !DILocation(line: 27, column: 1, scope: !34)

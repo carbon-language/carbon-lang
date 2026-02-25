@@ -477,7 +477,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr noundef nonnull align 8 dereferenceable(16)) unnamed_addr #3
+// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16)) unnamed_addr #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CVar.Main() #2 !dbg !26 {

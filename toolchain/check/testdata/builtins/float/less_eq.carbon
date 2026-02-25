@@ -51,9 +51,6 @@ fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_
 // CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LessEq.ref: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]

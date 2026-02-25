@@ -140,9 +140,6 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %ptr.0ab: type = ptr_type %ptr.d4c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConst(%p.param: %ptr.2a9) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeNonConst.ref: %TakeNonConst.type = name_ref TakeNonConst, file.%TakeNonConst.decl [concrete = constants.%TakeNonConst]
@@ -189,9 +186,6 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %ptr.8a5: type = ptr_type %ptr.2a9 [concrete]
 // CHECK:STDOUT:   %const.cbb: type = const_type %ptr.2a9 [concrete]
 // CHECK:STDOUT:   %ptr.e9d: type = ptr_type %const.cbb [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstNonConst(%p.param: %ptr.8a5) {

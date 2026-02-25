@@ -31,7 +31,7 @@ class package.C {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'package', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'package', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: 'package', has_error: yes},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: 'package', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},

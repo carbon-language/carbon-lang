@@ -35,7 +35,8 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // The first item should be an identifier, the placeholder `_`, or `self`.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
+                        *identifier);
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
     // Checking will validate the `self` is only declared in the implicit
@@ -45,7 +46,7 @@ auto HandleBindingPattern(Context& context) -> void {
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
   } else {
     // Add a placeholder for the name.
-    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         *context.position(), /*has_error=*/true);
     on_error(/*expected_name=*/true);
   }

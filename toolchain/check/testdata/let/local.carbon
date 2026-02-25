@@ -84,8 +84,5 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_symbolic.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallF();
 // CHECK:STDOUT:

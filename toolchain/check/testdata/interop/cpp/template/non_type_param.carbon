@@ -16,6 +16,7 @@ struct A {};
 
 template<int N> struct Simple {};
 Simple<123> MakeSimple123() { return Simple<123>(); }
+constexpr int Constant123 = 123;
 
 template<int M, int N> struct TwoNonType {};
 template<typename T, T N> struct DependentNonType {};
@@ -50,6 +51,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 var s: Cpp.Simple(100 + 20 + 3) = Cpp.MakeSimple123();
+
+// --- constant.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+var s: Cpp.Simple(Cpp.Constant123) = Cpp.MakeSimple123();
 
 // --- conversion.carbon
 
@@ -134,9 +143,6 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %pattern_type.8a6: type = pattern_type %TwoNonType [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.8a6 = ref_binding_pattern x [concrete]
@@ -147,12 +153,6 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_dependent.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {

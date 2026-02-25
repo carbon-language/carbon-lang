@@ -66,9 +66,6 @@ let never: Never = {};
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Never.decl: type = class_decl @Never [concrete = constants.%Never] {} {}
 // CHECK:STDOUT: }
@@ -92,9 +89,6 @@ let never: Never = {};
 // CHECK:STDOUT:   %struct: %struct_type.discriminant = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Always [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

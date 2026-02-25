@@ -240,9 +240,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type = fn_decl @Equal [concrete = constants.%Equal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
@@ -299,9 +296,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %pattern_type.725: type = pattern_type %A_where.type.321 [concrete]
 // CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [concrete]
 // CHECK:STDOUT:   %NestedRewrite: %NestedRewrite.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -373,9 +367,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %RepeatedRewrite: %RepeatedRewrite.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I: %E_where.type = symbolic_binding I, 0 [symbolic]
 // CHECK:STDOUT:   %OneRewrite.specific_fn.43f8b6.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -506,9 +497,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %N: %J_where.type = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %Reversed.type: type = fn_type @Reversed [concrete]
 // CHECK:STDOUT:   %Reversed: %Reversed.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

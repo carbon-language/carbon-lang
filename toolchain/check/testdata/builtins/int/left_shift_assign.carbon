@@ -64,9 +64,6 @@ fn NotRef(a: i32, b: i32) = "int.left_shift_assign";
 // CHECK:STDOUT:   %MixedTypes: %MixedTypes.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a.param: ref %i32, %b.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]

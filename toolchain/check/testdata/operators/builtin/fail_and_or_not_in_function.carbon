@@ -128,9 +128,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -171,9 +168,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
