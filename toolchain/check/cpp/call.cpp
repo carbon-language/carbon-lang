@@ -79,7 +79,7 @@ static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
 static auto ConvertArgToTemplateArg(
     Context& context, clang::TemplateDecl* template_decl,
     clang::NamedDecl* param_decl, SemIR::InstId arg_id,
-    clang::Sema::CheckTemplateArgumentInfo& ctai)
+    clang::SmallVector<clang::TemplateArgument>* template_args)
     -> std::optional<clang::TemplateArgumentLoc> {
   if (isa<clang::TemplateTypeParmDecl>(param_decl)) {
     auto type = ExprAsType(context, SemIR::LocId(arg_id), arg_id);
@@ -91,21 +91,10 @@ static auto ConvertArgToTemplateArg(
       context.TODO(arg_id, "unsupported type used as template argument");
       return std::nullopt;
     }
-
-    auto template_arg_loc = clang::TemplateArgumentLoc(
+    return clang::TemplateArgumentLoc(
         clang_type,
         context.ast_context().getTrivialTypeSourceInfo(
             clang_type, GetCppLocation(context, SemIR::LocId(arg_id))));
-
-    // Populate `ctai` for potential use in evaluating dependent
-    // non-type template parameters.
-    if (context.clang_sema().CheckTemplateTypeArgument(
-            dyn_cast<clang::TemplateTypeParmDecl>(param_decl), template_arg_loc,
-            ctai.SugaredConverted, ctai.CanonicalConverted)) {
-      return std::nullopt;
-    }
-
-    return template_arg_loc;
   }
 
   if (isa<clang::TemplateTemplateParmDecl>(param_decl)) {
@@ -140,12 +129,11 @@ static auto ConvertArgToTemplateArg(
     if (param_type->isInstantiationDependentType()) {
       clang::Sema::InstantiatingTemplate inst(
           context.clang_sema(), clang::SourceLocation(), param_decl, non_type,
-          ctai.SugaredConverted, clang::SourceRange());
+          *template_args, clang::SourceRange());
       if (inst.isInvalid()) {
         return std::nullopt;
       }
-      clang::MultiLevelTemplateArgumentList mltal(template_decl,
-                                                  ctai.SugaredConverted,
+      clang::MultiLevelTemplateArgumentList mltal(template_decl, *template_args,
                                                   /*Final=*/true);
 
       mltal.addOuterRetainedLevels(non_type->getDepth());
@@ -218,7 +206,7 @@ static auto ConvertArgsToTemplateArgs(Context& context,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids,
                                       clang::TemplateArgumentListInfo& arg_list)
     -> bool {
-  clang::Sema::CheckTemplateArgumentInfo ctai;
+  clang::SmallVector<clang::TemplateArgument> template_args;
   for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
     if (arg_ids.empty()) {
       return true;
@@ -233,8 +221,9 @@ static auto ConvertArgsToTemplateArgs(Context& context,
                                               : arg_ids.consume_front();
     for (auto arg_id : args_for_param) {
       if (auto arg = ConvertArgToTemplateArg(context, template_decl, param_decl,
-                                             arg_id, ctai)) {
+                                             arg_id, &template_args)) {
         arg_list.addArgument(*arg);
+        template_args.push_back(arg->getArgument());
       } else {
         return false;
       }
