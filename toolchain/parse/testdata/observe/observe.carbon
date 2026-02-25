@@ -80,7 +80,7 @@ interface I {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
@@ -91,7 +91,7 @@ interface I {
 // CHECK:STDOUT:       {kind: 'ObserveDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'I'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ObserveIntroducer', text: 'observe'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'A'},
