@@ -396,8 +396,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       WorkItem entry) -> void {
   // If this is a FormParamPattern, determine its form.
   std::optional<SemIR::InstKind> form_kind;
-  if (auto form_param_pattern =
-          SemIR::Inst(param_pattern).TryAs<SemIR::FormParamPattern>()) {
+  if (param_pattern.kind == SemIR::FormParamPattern::Kind) {
     if (param_pattern.subpattern_id == SemIR::ErrorInst::InstId) {
       form_kind = SemIR::ErrorInst::Kind;
     } else {
@@ -412,7 +411,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       // matching it as a parameter pattern.
       if (form_kind == SemIR::InitForm::Kind) {
         auto new_scrutinee_id = DoEmitVarPatternMatchImpl(
-            context, form_param_pattern->type_id, entry);
+            context, param_pattern.type_id, entry);
         entry.scrutinee_id = new_scrutinee_id;
       }
     }
