@@ -137,6 +137,8 @@ static auto ConvertArgToTemplateArg(
                                                   /*Final=*/true);
 
       mltal.addOuterRetainedLevels(non_type->getDepth());
+      // TODO: handle pack expansion by passing in the pack index from
+      // `ConvertArgsToTemplateArgs`.
       if (!param_type->getAs<clang::PackExpansionType>()) {
         param_type = context.clang_sema().SubstType(param_type, mltal,
                                                     non_type->getLocation(),
