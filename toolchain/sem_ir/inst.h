@@ -699,8 +699,6 @@ class InstBlockStore
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
-      // 4 reserved ids for the
-      // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
       : BaseType(allocator, check_ir_id, InstBlockId::ReservedIds.size()) {
     CARBON_CHECK(size() == 1, "Empty is added by `BlockValueStore`");
     for (auto reserved_id : InstBlockId::ReservedIds) {
