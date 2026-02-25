@@ -596,8 +596,7 @@ auto CheckUnit::FinishRun() -> void {
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
   context_.scope_stack().Pop(/*check_unused=*/true);
 
-  // Finalizes reserved InstBlockId values. This iterates on `ReservedIds` to
-  // try to keep them in sync.
+  // Finalizes reserved blocks, using `ReservedIds` to avoid missing values.
   for (const auto& reserved_id : SemIR::InstBlockId::ReservedIds) {
     if (reserved_id == SemIR::InstBlockId::Empty) {
       continue;
