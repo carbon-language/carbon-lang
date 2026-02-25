@@ -19,7 +19,7 @@ fn f() -> bool {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'f'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
@@ -31,7 +31,7 @@ fn f() -> bool {
 // CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:               {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},

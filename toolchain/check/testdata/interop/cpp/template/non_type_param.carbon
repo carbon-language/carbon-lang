@@ -16,6 +16,7 @@ struct A {};
 
 template<int N> struct Simple {};
 Simple<123> MakeSimple123() { return Simple<123>(); }
+constexpr int Constant123 = 123;
 
 template<int M, int N> struct TwoNonType {};
 template<typename T, T N> struct DependentNonType {};
@@ -50,6 +51,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 var s: Cpp.Simple(100 + 20 + 3) = Cpp.MakeSimple123();
+
+// --- constant.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+var s: Cpp.Simple(Cpp.Constant123) = Cpp.MakeSimple123();
 
 // --- conversion.carbon
 

@@ -164,8 +164,8 @@ an identifier doesn't necessarily mark the start of a full-pattern. We've solved
 that by having the parser mark identifier nodes that are followed by
 full-patterns (using lookahead). Rather than use additional storage for what is
 logically a single bit of data, we effectively smuggle that bit into the kind
-enum by having separate node kinds `IdentifierNameBeforeParams` and
-`IdentifierNameNotBeforeParams`.
+enum by having separate node kinds `IdentifierNameMaybeBeforeSignature` and
+`IdentifierNameNotBeforeSignature`.
 
 If the parameterized name is a name qualifier (such as the first part of
 `Foo(X:! i32).Bar(y: i32)`), the node immediately after it will be the qualifier

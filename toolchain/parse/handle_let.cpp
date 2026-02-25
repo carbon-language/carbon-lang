@@ -52,7 +52,7 @@ auto HandleAssociatedConstant(Context& context) -> void {
     return;
   }
 
-  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *identifier);
   state.token = *colon_exclaim;
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
   context.PushState(state, StateKind::LetAfterPatternAsAssociatedConstant);

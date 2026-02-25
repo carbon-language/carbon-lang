@@ -429,11 +429,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     return SemIR::ErrorInst::TypeInstId;
   }
 
-  // For now, if the class is empty, produce an empty struct as the object
-  // representation. This allows our tests to continue to pass while we don't
-  // properly support initializing imported C++ classes.
+  // For now, if the class is empty and an aggregate, produce an empty struct as
+  // the object representation. This allows our tests to continue to pass while
+  // we don't properly support initializing imported C++ classes. We only do
+  // this for aggregates so that non-aggregate classes are not incorrectly
+  // initializable from `{}`.
   // TODO: Remove this.
-  if (clang_def->isEmpty() && !clang_def->getNumBases()) {
+  if (clang_def->isEmpty() && !clang_def->getNumBases() &&
+      clang_def->isAggregate()) {
     return context.types().GetAsTypeInstId(AddInst(
         context,
         MakeImportedLocIdAndInst(

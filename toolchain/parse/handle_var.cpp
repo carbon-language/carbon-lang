@@ -74,7 +74,7 @@ auto HandleFieldDecl(Context& context) -> void {
     return;
   }
   context.PushState(state, StateKind::VarFinishAsField);
-  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+  context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *identifier);
   state.token = *colon;
   context.PushState(state, StateKind::VarAfterPatternAsField);
   context.PushState(StateKind::Expr);

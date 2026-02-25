@@ -8,6 +8,8 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/cpp/constant.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -122,10 +124,44 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::AcquireValue /*inst*/)
-    -> ConstantEvalResult {
-  // TODO: Handle this once we've decided how to represent constant values of
-  // reference expressions.
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::AcquireValue inst) -> ConstantEvalResult {
+  const auto& var_storage =
+      context.insts().TryGetAs<SemIR::VarStorage>(inst.value_id);
+  if (!var_storage) {
+    return ConstantEvalResult::NotConstant;
+  }
+
+  // Try to map from var storage to a C++ global.
+  auto var_name_id = SemIR::GetFirstBindingNameFromPatternId(
+      context.sem_ir(), var_storage->pattern_id);
+  if (auto cpp_global_var_id = context.sem_ir().cpp_global_vars().Lookup(
+          {.entity_name_id = var_name_id});
+      cpp_global_var_id.has_value()) {
+    SemIR::ClangDeclId clang_decl_id =
+        context.sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
+    const auto* var_decl =
+        cast<clang::VarDecl>(context.clang_decls().Get(clang_decl_id).key.decl);
+
+    // If the C++ global is constant, map it to a Carbon constant.
+    if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
+      if (const auto* ap_value = var_decl->getEvaluatedValue()) {
+        auto clang_type = MapToCppType(context, inst.type_id);
+        if (clang_type.isNull()) {
+          return ConstantEvalResult::TODO;
+        }
+
+        auto const_id = MapAPValueToConstant(context, SemIR::LocId(inst_id),
+                                             *ap_value, clang_type);
+        if (const_id.has_value() && const_id.is_constant()) {
+          return ConstantEvalResult::Existing(const_id);
+        }
+      }
+    }
+
+    return ConstantEvalResult::NotConstant;
+  }
+
   return ConstantEvalResult::TODO;
 }
 
