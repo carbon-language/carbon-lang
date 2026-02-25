@@ -105,6 +105,48 @@ fn G() {
   F(y);
 }
 
+// --- fail_todo_form_generic_param.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_form_generic_param.carbon:[[@LINE+4]]:26: error: semantics TODO: `Support symbolic form bindings` [SemanticsTodo]
+// CHECK:STDERR: fn F(Form:! Core.Form(), x:? Form);
+// CHECK:STDERR:                          ^~~~~~~~
+// CHECK:STDERR:
+fn F(Form:! Core.Form(), x:? Form);
+
+fn G() {
+  var x: i32;
+  F(form(var i32), x);
+}
+
+// --- fail_todo_local_init_form_binding.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+8]]:7: error: semantics TODO: `Support local initializing forms` [SemanticsTodo]
+  // CHECK:STDERR:   let x:? form(var i32) = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+4]]:27: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:   let x:? form(var i32) = 0;
+  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:
+  let x:? form(var i32) = 0;
+}
+
+// --- fail_todo_local_symbolic_form_binding.carbon
+library "[[@TEST_NAME]]";
+
+// TODO: this code should fail for a different reason, but right now we don't
+// have a way to write correct code that reaches the TODO we're exercising here.
+fn F(Form:! Core.Form()) {
+  // CHECK:STDERR: fail_todo_local_symbolic_form_binding.carbon:[[@LINE+4]]:7: error: semantics TODO: `Support symbolic form bindings` [SemanticsTodo]
+  // CHECK:STDERR:   let y:? Form = 0;
+  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR:
+  let y:? Form = 0;
+}
+
 // --- fail_todo_ref_return_form.carbon
 library "[[@TEST_NAME]]";
 
@@ -157,6 +199,7 @@ fn G() {
 }
 
 // --- fail_return_form_not_form.carbon
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
 // CHECK:STDERR: fn F() ->? i32;

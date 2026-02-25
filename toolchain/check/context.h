@@ -526,7 +526,7 @@ class Context {
   CoreIdentifierCache core_identifiers_;
 };
 
-inline const Context::FormExpr Context::FormExpr::Error = {
+inline constexpr Context::FormExpr Context::FormExpr::Error = {
     .form_inst_id = SemIR::ErrorInst::InstId,
     .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
     .type_component_id = SemIR::ErrorInst::TypeId};

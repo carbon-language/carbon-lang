@@ -143,6 +143,11 @@ static auto HandleAnyBindingPatternType(Context& context,
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     Parse::NodeKind node_kind) -> bool {
   auto type_expr = HandleAnyBindingPatternType(context, node_kind);
+  if (context.types()
+          .GetAsInst(type_expr.type_component_id)
+          .Is<SemIR::TypeComponentOf>()) {
+    return context.TODO(node_id, "Support symbolic form bindings");
+  }
 
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, type_expr.inst_id);

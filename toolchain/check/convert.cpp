@@ -2038,8 +2038,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 }
 
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
-                    SemIR::InstId value_id, bool diagnose)
-    -> Context::FormExpr {
+                    SemIR::InstId value_id) -> Context::FormExpr {
   auto form_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::FormType::TypeId);
   if (form_inst_id == SemIR::ErrorInst::InstId) {
@@ -2048,11 +2047,9 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
 
   auto form_const_id = context.constant_values().Get(form_inst_id);
   if (!form_const_id.is_constant()) {
-    if (diagnose) {
-      CARBON_DIAGNOSTIC(FormExprEvaluationFailure, Error,
-                        "cannot evaluate form expression");
-      context.emitter().Emit(loc_id, FormExprEvaluationFailure);
-    }
+    CARBON_DIAGNOSTIC(FormExprEvaluationFailure, Error,
+                      "cannot evaluate form expression");
+    context.emitter().Emit(loc_id, FormExprEvaluationFailure);
     return Context::FormExpr::Error;
   }
 

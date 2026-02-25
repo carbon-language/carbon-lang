@@ -1746,7 +1746,7 @@ struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
        // TODO: The expression category is in general dependent on
-       // instantiation. Add ExprCategory::Dependent to model this.
+       // instantiation. Use ExprCategory::Dependent to model this.
        .expr_category = ExprCategory::Value});
 
   TypeId type_id;
@@ -1981,8 +1981,8 @@ struct TypeComponentOf {
   static constexpr auto Kind =
       InstKind::TypeComponentOf.Define<Parse::NoneNodeId>(
           {.ir_name = "type_component_of",
-           .is_type = InstIsType::Never,
-           .constant_kind = InstConstantKind::Indirect,
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
   // Always TypeType.

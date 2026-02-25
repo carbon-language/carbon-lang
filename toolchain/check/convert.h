@@ -196,8 +196,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 //
 // `diagnose` has the same effect as in `ExprAsType`.
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
-                    SemIR::InstId value_id, bool diagnose = true)
-    -> Context::FormExpr;
+                    SemIR::InstId value_id) -> Context::FormExpr;
 
 // Evaluates an expression in the return-type position (following `->`, not
 // `->?`) for use as a form, following the special-case language rules for

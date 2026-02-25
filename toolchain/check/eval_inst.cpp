@@ -694,10 +694,12 @@ auto EvalConstantInst(Context& context, SemIR::TypeComponentOf inst)
     -> ConstantEvalResult {
   auto form_constant_inst_id =
       context.constant_values().GetConstantInstId(inst.form_inst_id);
-  auto primitive_form =
-      context.insts().GetAs<SemIR::AnyPrimitiveForm>(form_constant_inst_id);
-  return ConstantEvalResult::Existing(
-      context.constant_values().Get(primitive_form.type_component_id));
+  if (auto primitive_form = context.insts().TryGetAs<SemIR::AnyPrimitiveForm>(
+          form_constant_inst_id)) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(primitive_form->type_component_id));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::TypeOfInst inst)
