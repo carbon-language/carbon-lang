@@ -19,15 +19,11 @@ namespace Carbon::SemIR {
 // - Parent `Chunk`s, with children in a vector.
 // - Content `Chunk`s, with content in a string.
 //
-// Initially, `AddParent` is called one or more times. Then `StartContent` is
-// called once to switch modes. Once content is started, `out()` adds text to
-// content `Chunk`s. `FormatChildContent` may be used to create a content
-// `Chunk` which is a child of a parent.
-//
-// Content `Chunk`s that are created implicitly (not through
-// `FormatChildContent`) are automatically included in output. Other `Chunk`s
-// are included only when marked as a child of a `Chunk` that is included, using
-// `AppendChildToCurrentParent`.
+// The high level usage is:
+// 1. Calls to `AddParent` to prepare parent `Chunk`s.
+// 2. One call to `StartContent` to switch modes.
+// 3. Calls to `FormatChildContent`, `AppendChildToCurrentParent`, and `out`.
+// 4. Calls to `Write`.
 class FormatterChunks {
  public:
   // A type-safe index into `chunks_`.
@@ -45,14 +41,22 @@ class FormatterChunks {
 
   // Adds a parent `Chunk` and returns its `ChunkId`. If `child_chunk_id` isn't
   // `None`, it's added as a child. Must be called before `StartContent`.
+  //
+  // By default the parent `Chunk` will not be included in the output, and
+  // `AppendChildToCurrentParent` must be called to include it.
   auto AddParent(ChunkId child_chunk_id = None) -> ChunkId;
 
   // Switches from adding parents to adding content.
   auto StartContent() -> void;
 
-  // Adds a new content `Chunk`. If `parent_chunk_id` is included in
-  // output, it'll also include the new chunk. Calls `format` to support adding
-  // content to the new chunk. Must be called after `StartContent`.
+  // Calls `format` to add content conditionally included when `parent_chunk_id`
+  // is included. Must be called after `StartContent`.
+  //
+  // During a `FormatChildContent` call where the `parent_chunk_id` is not
+  // already included in output, a new content `Chunk` is created, marked as a
+  // child of `parent_chunk_id`, and `out` is temporarily directed to it during
+  // the duration of `format. Otherwise, `out` lazily creates a content `Chunk`
+  // which is always included in output.
   auto FormatChildContent(ChunkId parent_chunk_id,
                           llvm::function_ref<auto()->void> format) -> void;
 
@@ -64,11 +68,11 @@ class FormatterChunks {
   // Writes included chunks to the given stream.
   auto Write(llvm::raw_ostream& stream) -> void;
 
-  // Returns a stream to write to a content `Chunk`. The returned reference is only valid
-  // until the next `Chunk` starts. Must be called after `StartContent`.
+  // Returns a stream to write to a content `Chunk`. The returned reference is
+  // only valid until the next `Chunk` starts. Must be called after
+  // `StartContent`.
   //
-  // This adds a new, parentless content `Chunk` if there's not a ready content
-  // `Chunk` to write to.
+  // See `FormatChildContent` for details of the target content `Chunk`.
   auto out() -> llvm::raw_ostream& {
     CARBON_CHECK(content_start_id_ != None);
     if (!out_) {

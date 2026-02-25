@@ -39,14 +39,15 @@ auto FormatterChunks::FormatChildContent(
   CARBON_CHECK(content_start_id_ != None, "Must call StartContent first");
   CARBON_CHECK(current_parent_id_ == None, "Cannot nest FormatChildContent");
 
-  // If the parent is already included, we don't need to make a chunk.
+  // We only need to call `AddContent` for non-included content because `out()`
+  // is included by default.
   if (Get(parent_chunk_id).include_in_output) {
     format();
     return;
   }
 
-  // Otherwise, create a new chunk and include it only if the parent is later
-  // found to be used.
+  // Otherwise, create a content `Chunk` and include it only if the parent is
+  // later found to be used.
   AppendChildToParent(AddContent(/*include_in_output=*/false), parent_chunk_id);
 
   current_parent_id_ = parent_chunk_id;
@@ -67,19 +68,20 @@ auto FormatterChunks::AppendChildToParent(ChunkId child_chunk_id,
   children->push_back(child_chunk_id);
 }
 
-auto FormatterChunks::AppendChildToCurrentParent(ChunkId chunk_id) -> void {
+auto FormatterChunks::AppendChildToCurrentParent(ChunkId child_chunk_id)
+    -> void {
   if (current_parent_id_ != None) {
     // If the parent is not included, add the `chunk` to the parent's children
     // for conditional inclusion.
     if (!Get(current_parent_id_).include_in_output) {
-      AppendChildToParent(chunk_id, current_parent_id_);
+      AppendChildToParent(child_chunk_id, current_parent_id_);
       return;
     }
   }
 
   // If the parent is already included, or there is no parent (this is not
   // currently a tentative chunk), include the chunk and all of its children.
-  llvm::SmallVector<ChunkId> to_include = {chunk_id};
+  llvm::SmallVector<ChunkId> to_include = {child_chunk_id};
   while (!to_include.empty()) {
     auto& chunk_ref = Get(to_include.pop_back_val());
     if (chunk_ref.include_in_output) {
