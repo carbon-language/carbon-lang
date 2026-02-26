@@ -130,19 +130,17 @@ auto ImportCpp(Context& context,
       llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
         return import.package_id == package_id;
       }));
+
   auto name_scope_id = AddNamespace(context, package_id, imports);
-
-  bool ast_has_error =
-      !GenerateAst(context, imports, fs, llvm_context, std::move(invocation));
-
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
-  name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-      {.key =
-           SemIR::ClangDeclKey(context.ast_context().getTranslationUnitDecl()),
-       .inst_id = name_scope.inst_id()}));
 
-  if (ast_has_error) {
+  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
+    name_scope.set_clang_decl_context_id(context.clang_decls().Add(
+        {.key = SemIR::ClangDeclKey(
+             context.ast_context().getTranslationUnitDecl()),
+         .inst_id = name_scope.inst_id()}));
+  } else {
     name_scope.set_has_error();
   }
 }

@@ -130,6 +130,7 @@ class CheckUnit {
       llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
+  ~CheckUnit() { emitter_.Flush(); }
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;

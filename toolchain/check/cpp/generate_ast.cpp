@@ -374,10 +374,10 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     clang_instance.createSema(getTranslationUnitKind(),
                               /*CompletionConsumer=*/nullptr);
 
-    context_->cpp_context()->set_parser(std::make_unique<clang::Parser>(
+    auto parser_ptr = std::make_unique<clang::Parser>(
         clang_instance.getPreprocessor(), clang_instance.getSema(),
-        /*SkipFunctionBodies=*/false));
-    auto& parser = context_->cpp_context()->parser();
+        /*SkipFunctionBodies=*/false);
+    auto& parser = *parser_ptr;
 
     clang_instance.getPreprocessor().EnterMainSourceFile();
     if (auto* source = clang_instance.getASTContext().getExternalSource()) {
@@ -386,6 +386,9 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
     parser.Initialize();
     clang_instance.getSema().ActOnStartOfTranslationUnit();
+
+    context_->set_cpp_context(
+        std::make_unique<CppContext>(clang_instance, std::move(parser_ptr)));
 
     // Don't allow C++20 module declarations in inline Cpp code fragments.
     auto module_import_state = clang::Sema::ModuleImportState::NotACXX20Module;
@@ -448,8 +451,6 @@ auto GenerateAst(Context& context,
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
                                                     includes_buffer.release());
 
-  clang::DiagnosticErrorTrap trap(*diags);
-
   auto clang_instance_ptr =
       std::make_unique<clang::CompilerInstance>(invocation);
   auto& clang_instance = *clang_instance_ptr;
@@ -464,15 +465,12 @@ auto GenerateAst(Context& context,
     return false;
   }
 
-  context.set_cpp_context(std::make_unique<CppContext>(
-      std::make_unique<GenerateASTAction>(context)));
-
-  if (!context.cpp_context()->action().BeginSourceFile(clang_instance,
-                                                       inputs[0])) {
+  GenerateASTAction action(context);
+  if (!action.BeginSourceFile(clang_instance, inputs[0])) {
     return false;
   }
 
-  if (llvm::Error error = context.cpp_context()->action().Execute()) {
+  if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
     context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
                                          llvm::toString(std::move(error)));
@@ -483,7 +481,7 @@ auto GenerateAst(Context& context,
   // diagnostic now.
   context.emitter().Flush();
 
-  return !trap.hasErrorOccurred();
+  return true;
 }
 
 auto FinishAst(Context& context) -> void {
