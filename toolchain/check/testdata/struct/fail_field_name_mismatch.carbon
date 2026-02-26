@@ -62,8 +62,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
-// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = ref_binding x, %x.var [concrete = %x.var]
@@ -73,8 +72,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.0a3 = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc25: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.0a3] {
-// CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.0a3 = ref_binding y, %y.var [concrete = %y.var]

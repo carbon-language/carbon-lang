@@ -140,7 +140,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc2_33: Core.Form = init_form type, call_param1 [concrete = constants.%.b38]
+// CHECK:STDOUT:     %.loc2_33.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc2_33.2: Core.Form = init_form %.loc2_33.1, call_param1 [concrete = constants.%.b38]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc2_27.1: type = splice_block %.loc2_27.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -159,8 +160,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int.1, @Int.1(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_9.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc6_9.1 (constants.%N.5de)]
 // CHECK:STDOUT:   }

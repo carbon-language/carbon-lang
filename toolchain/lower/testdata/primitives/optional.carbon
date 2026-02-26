@@ -110,9 +110,7 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.bd3a79eb4ffd3025"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !56 {
-// CHECK:STDOUT:   %temp = alloca { i32, i1 }, align 8, !dbg !60
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !60
-// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.622e77b643a0d3a8"(ptr %temp, i32 %self), !dbg !60
+// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.622e77b643a0d3a8"(ptr %return, i32 %self), !dbg !60
 // CHECK:STDOUT:   ret void, !dbg !61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,9 +122,7 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.b37806f50d6ac6f2"(ptr sret({ i32, i1 }) %return, i32 %self) #0 !dbg !67 {
-// CHECK:STDOUT:   %temp = alloca { i32, i1 }, align 8, !dbg !70
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !70
-// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.a7b795aef3d7a0e5"(ptr %temp, i32 %self), !dbg !70
+// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.a7b795aef3d7a0e5"(ptr %return, i32 %self), !dbg !70
 // CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,8 +194,6 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.b930bfdac0979466"(i32 %self) #0 !dbg !121 {
-// CHECK:STDOUT:   %temp = alloca i32, align 4, !dbg !124
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !124
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e"(i32 %self), !dbg !124
 // CHECK:STDOUT:   ret i32 %1, !dbg !125
 // CHECK:STDOUT: }
@@ -241,7 +235,7 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.622e77b643a0d3a8", { 0, 1, 3, 2 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 3, 11, 10, 9, 8, 7, 6, 5, 4 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 8, 7, 6, 5, 4, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

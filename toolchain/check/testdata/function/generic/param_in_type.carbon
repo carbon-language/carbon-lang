@@ -74,14 +74,12 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_10: type = splice_block %i32.loc15_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %int_32.loc15_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.loc15_10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc15_6.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_6.1 (constants.%N.5de)]
 // CHECK:STDOUT:     %a.param: @F.%ptr.loc15_31.1 (%ptr) = value_param call_param0
 // CHECK:STDOUT:     %.loc15_31: type = splice_block %ptr.loc15_31.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)] {
-// CHECK:STDOUT:       %int_32.loc15_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.loc15_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_6.2 [symbolic = %N.loc15_6.1 (constants.%N.5de)]
 // CHECK:STDOUT:       %impl.elem0: %.0a7 = impl_witness_access constants.%ImplicitAs.impl_witness.640, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.dd4]
 // CHECK:STDOUT:       %bound_method.loc15_29.2: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]

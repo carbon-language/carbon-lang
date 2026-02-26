@@ -7,6 +7,7 @@
 
 #include "toolchain/base/index_base.h"
 #include "toolchain/lex/token_index.h"
+#include "toolchain/parse/node_category.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
@@ -110,6 +111,9 @@ using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
 using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
+using AnyObserveOperatorId = NodeIdInCategory<NodeCategory::ObserveOperator>;
+using AnyObserveOperandId =
+    NodeIdInCategory<NodeCategory::Expr | NodeCategory::ObserveOperator>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
 

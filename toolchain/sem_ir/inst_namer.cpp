@@ -1394,6 +1394,25 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
+    case CARBON_KIND(TypeLiteral inst): {
+      if (auto value_id =
+              sem_ir().constant_values().GetConstantInstId(inst.value_id);
+          value_id.has_value()) {
+        if (auto class_type = sem_ir().insts().TryGetAs<ClassType>(value_id)) {
+          if (auto type_info =
+                  RecognizedTypeInfo::ForType(sem_ir(), *class_type);
+              type_info.is_valid()) {
+            RawStringOstream out;
+            if (type_info.PrintLiteral(sem_ir(), out)) {
+              AddInstName(out.TakeStr());
+              return;
+            }
+          }
+        }
+      }
+      AddInstName("");
+      return;
+    }
     case CARBON_KIND(UnboundElementType inst): {
       if (auto class_ty =
               sem_ir().insts().TryGetAs<ClassType>(inst.class_type_inst_id)) {

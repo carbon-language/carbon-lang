@@ -396,6 +396,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. RequireAfterIntroducer
 //
+// observe ...
+// ^~~~~~~
+//   1. ObserveAfterIntroducer
+//
 // var ...        (variant is Regular)
 // ^~~
 //   1. VarAsRegular
@@ -1548,6 +1552,43 @@ CARBON_PARSE_STATE(RequireBeforeImpls)
 //                                                  ^
 //   (state done)
 CARBON_PARSE_STATE(RequireDecl)
+
+// Handles processing of an `observe` declaration after the introducer.
+//
+// observe TypeExpression ...
+//        ^
+//   1. Expr
+//   2. ObserveOperator
+CARBON_PARSE_STATE(ObserveAfterIntroducer)
+
+// Handles processing of an operator in an `observe` declaration.
+//
+// observe TypeExpression == TypeExpression ...
+//                        ^~
+//   1. Expr
+//   2. ObserveFinishOperator
+// observe TypeExpression impls ...
+//                        ^~~~~
+//   1. Expr
+//   2. ObserveFinishOperator
+CARBON_PARSE_STATE(ObserveOperator)
+
+// Finishes an operator in an `observe` declaration.
+//
+// observe TypeExpression == TypeExpression ...
+//                                         ^
+//   1. ObserveOperator
+// observe TypeExpression == TypeExpression ;
+//                                         ^
+//   1. ObserveDecl
+CARBON_PARSE_STATE(ObserveFinishOperator)
+
+// Handles processing of a completed `observe` declaration.
+//
+// observe ... ;
+//             ^
+//   (state done)
+CARBON_PARSE_STATE(ObserveDecl)
 
 // Handles the start of a `var` or `returned var` in a non-class context.
 //

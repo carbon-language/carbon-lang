@@ -129,8 +129,7 @@ let n: array(i32, G()) = (1, 2, 3);
 // CHECK:STDOUT:     %n.patt: %pattern_type.5d8 = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_23: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %impl.elem0.loc11_21: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]

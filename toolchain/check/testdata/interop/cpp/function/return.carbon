@@ -269,7 +269,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:       %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
+// CHECK:STDOUT:       %u8.1: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
+// CHECK:STDOUT:       %u8.2: type = type_literal %u8.1 [concrete = constants.%u8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %return: %ptr = value_binding r#return, %return.param
 // CHECK:STDOUT:   }
@@ -289,8 +290,7 @@ fn Var() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.8f3 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8f3 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
+// CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8, call_param0 [concrete = constants.%.0c8]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
@@ -350,7 +350,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4a9 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:     %u32.1: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:     %u32.2: type = type_literal %u32.1 [concrete = constants.%u32]
 // CHECK:STDOUT:     %return.param: ref %u32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -381,10 +382,7 @@ fn Var() {
 // CHECK:STDOUT:   %ReturnU32.ref: %ReturnU32.cpp_overload_set.type = name_ref ReturnU32, imports.%ReturnU32.cpp_overload_set.value [concrete = constants.%ReturnU32.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU32.call: init %u32 = call imports.%ReturnU32.decl()
 // CHECK:STDOUT:   assign %my_u32.var, %ReturnU32.call
-// CHECK:STDOUT:   %.loc9: type = splice_block %u32 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %my_u32: ref %u32 = ref_binding my_u32, %my_u32.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %my_u32.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%my_u32.var)

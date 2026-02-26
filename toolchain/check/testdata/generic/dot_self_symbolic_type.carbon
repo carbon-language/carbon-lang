@@ -365,7 +365,10 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %AA.ref.loc9_59: type = name_ref AA, %AA.loc9_14.1 [symbolic = %AA.loc9_14.2 (constants.%AA)]
 // CHECK:STDOUT:     %ptr.loc9_61.1: type = ptr_type %AA.ref.loc9_59 [symbolic = %ptr.loc9_61.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:     %B.type.loc9_62.1: type = facet_type <@B, @B(constants.%ptr.e8f8f9.1)> [symbolic = %B.type.loc9_62.2 (constants.%B.type.abcc5d.1)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc9_19.1: type = splice_block %.loc9_19.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc9_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %AA.loc9_14.1: type = symbolic_binding AA, 0 [symbolic = %AA.loc9_14.2 (constants.%AA)]
 // CHECK:STDOUT:     %.loc9_36.1: type = splice_block %.loc9_36.2 [symbolic = %A_where.type (constants.%A_where.type.29f165.1)] {
 // CHECK:STDOUT:       <elided>
@@ -373,7 +376,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:       %AA.ref.loc9_32: type = name_ref AA, %AA.loc9_14.1 [symbolic = %AA.loc9_14.2 (constants.%AA)]
 // CHECK:STDOUT:       %A.type.loc9_34.1: type = facet_type <@A, @A(constants.%AA)> [symbolic = %A.type.loc9_34.2 (constants.%A.type.ade3d9.1)]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: @BB.binding.as_type.as.B.impl.%A.type.loc9_34.2 (%A.type.ade3d9.1) = name_ref .Self, %.Self.3 [symbolic = %.Self.4 (constants.%.Self.660472.1)]
+// CHECK:STDOUT:       %.Self.ref: @BB.binding.as_type.as.B.impl.%A.type.loc9_34.2 (%A.type.ade3d9.1) = name_ref .Self, %.Self.2 [symbolic = %.Self.4 (constants.%.Self.660472.1)]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_42.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_42.2: @BB.binding.as_type.as.B.impl.%A.assoc_type (%A.assoc_type) = specific_constant @X.%assoc0, @A(constants.%AA, constants.%.Self.660472.1) [symbolic = %assoc0 (constants.%assoc0)]
@@ -381,7 +384,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:       %impl.elem0.loc9_42.1: type = impl_witness_access constants.%A.lookup_impl_witness.04abbb.1, element0 [symbolic = %impl.elem0.loc9_42.2 (constants.%impl.elem0.f51d29.1)]
 // CHECK:STDOUT:       %.loc9_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc9_48.2: type = converted %.loc9_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc9_36.2: type = where_expr %.Self.3 [symbolic = %A_where.type (constants.%A_where.type.29f165.1)] {
+// CHECK:STDOUT:       %.loc9_36.2: type = where_expr %.Self.2 [symbolic = %A_where.type (constants.%A_where.type.29f165.1)] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%A.type.ade3d9.1
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc9_42.1, %.loc9_48.2
 // CHECK:STDOUT:       }

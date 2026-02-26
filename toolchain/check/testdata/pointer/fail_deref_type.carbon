@@ -57,8 +57,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref <error> = var %p.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc22: ref <error> = deref %i32.loc22 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref <error> = ref_binding p, <error> [concrete = <error>]
@@ -68,8 +67,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var %p2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc27: ref <error> = deref %i32.loc27 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }

@@ -65,7 +65,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %T.ref.loc5_36: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %ptr.loc5_37: type = ptr_type %T.ref.loc5_36 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:     %.loc5_37.2: Core.Form = init_form %ptr.loc5_37, call_param1 [template = %.loc5_37.1 (constants.%.4fe7d1.1)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %x.param: @F.%ptr.loc5_30.1 (%ptr.125) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_30: type = splice_block %ptr.loc5_30.2 [template = %ptr.loc5_30.1 (constants.%ptr.125)] {
@@ -150,9 +153,15 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc5_43.3: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:     %.loc5_43.4: type = converted %.loc5_43.3, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:     %.loc5_43.5: Core.Form = init_form %.loc5_43.4, call_param0 [template = %.loc5_43.2 (constants.%.fbc)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc5_29.1: type = splice_block %.loc5_29.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc5_29.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc5_25.2: type = symbolic_binding U, 1 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref @F.%tuple.type (%tuple.type.a5e) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%tuple.type (%tuple.type.a5e) = return_slot %return.param

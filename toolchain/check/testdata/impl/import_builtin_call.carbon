@@ -138,7 +138,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8: Core.Form = init_form type, call_param0 [concrete = constants.%.824]
+// CHECK:STDOUT:     %.loc8_20.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc8_20.2: Core.Form = init_form %.loc8_20.1, call_param0 [concrete = constants.%.824]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -148,7 +149,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_28: Core.Form = init_form type, call_param1 [concrete = constants.%.b38]
+// CHECK:STDOUT:     %.loc9_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc9_28.2: Core.Form = init_form %.loc9_28.1, call_param1 [concrete = constants.%.b38]
 // CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc9_22.1: type = splice_block %.loc9_22.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
@@ -839,7 +841,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4: Core.Form = init_form type, call_param0 [concrete = constants.%.824]
+// CHECK:STDOUT:     %.loc4_20.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc4_20.2: Core.Form = init_form %.loc4_20.1, call_param0 [concrete = constants.%.824]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -849,7 +852,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_28: Core.Form = init_form type, call_param1 [concrete = constants.%.b38]
+// CHECK:STDOUT:     %.loc5_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc5_28.2: Core.Form = init_form %.loc5_28.1, call_param1 [concrete = constants.%.b38]
 // CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc5_22.1: type = splice_block %.loc5_22.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]

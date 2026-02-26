@@ -182,6 +182,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %t: type = value_binding t, @__global_init.%.loc5_24.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -190,6 +191,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc5_17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_21: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_22: %tuple.type.b6b = tuple_literal (%.loc5_17, %.loc5_21) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_27: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %.loc5_24.1: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.3: type = converted %.loc5_22, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]

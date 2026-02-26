@@ -52,7 +52,6 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type.6d5: type = fn_type @F.loc22 [concrete]
 // CHECK:STDOUT:   %F.e11: %F.type.6d5 = struct_value () [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
@@ -83,10 +82,13 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc22: %F.type.6d5 = fn_decl @F.loc22 [concrete = constants.%F.e11] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %.loc32: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:   %.loc38_17.1: type = splice_block %.loc38_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc38_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T.67db0b.1]
 // CHECK:STDOUT:   %x.param: %T.67db0b.1 = value_param call_param0
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.67db0b.1]
@@ -94,7 +96,10 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.117 = fn_decl @F.loc48 [concrete = constants.%F.d98] {} {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc48_17.1: type = splice_block %.loc48_17.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc48_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc48_13.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_13.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

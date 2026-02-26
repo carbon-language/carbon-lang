@@ -283,14 +283,11 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.615 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntRange.ref.loc26: %IntRange.type = name_ref IntRange, file.%IntRange.decl [concrete = constants.%IntRange.generic]
-// CHECK:STDOUT:     %int_32.loc26_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %IntRange.loc26: type = class_type @IntRange, @IntRange(constants.%int_32) [concrete = constants.%IntRange.a89]
 // CHECK:STDOUT:     %.loc26_34.2: Core.Form = init_form %IntRange.loc26, call_param1 [concrete = constants.%.235]
 // CHECK:STDOUT:     %end.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc26_15: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc26_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %end: %i32 = value_binding end, %end.param
 // CHECK:STDOUT:     %return.param: ref %IntRange.a89 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %IntRange.a89 = return_slot %return.param

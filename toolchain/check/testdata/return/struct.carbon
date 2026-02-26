@@ -73,8 +73,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:     %return.patt: %pattern_type.268 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.268 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %struct_type.a, call_param0 [concrete = constants.%.fcf]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param call_param0

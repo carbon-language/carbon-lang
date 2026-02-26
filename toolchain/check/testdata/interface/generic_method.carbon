@@ -238,7 +238,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.decl: %A.type.464 = interface_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc5_17.1: type = splice_block %.loc5_17.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc5_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
@@ -294,7 +297,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %.loc6_40.3: type = converted constants.%Self.362, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.7ec)]
 // CHECK:STDOUT:       %.loc6_40.4: type = converted %.loc6_40.2, constants.%tuple.type.762 [symbolic = %tuple.type.loc6_40.2 (constants.%tuple.type.762)]
 // CHECK:STDOUT:       %.loc6_40.5: Core.Form = init_form %.loc6_40.4, call_param1 [symbolic = %.loc6_40.1 (constants.%.de5)]
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
+// CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.loc6_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc6_8.2: type = symbolic_binding U, 2 [symbolic = %U.loc6_8.1 (constants.%U.4e7)]
 // CHECK:STDOUT:       %u.param: @A.WithSelf.F.%ptr.loc6_22.1 (%ptr.8f6) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_22: type = splice_block %ptr.loc6_22.2 [symbolic = %ptr.loc6_22.1 (constants.%ptr.8f6)] {
@@ -333,7 +339,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %.loc16_37.2: %tuple.type.ff9 = tuple_literal (%X.ref, %Y.ref, %ptr.loc16_36) [symbolic = %tuple (constants.%tuple.7ab)]
 // CHECK:STDOUT:     %.loc16_37.3: type = converted %.loc16_37.2, constants.%tuple.type.244 [symbolic = %tuple.type.loc16 (constants.%tuple.type.244)]
 // CHECK:STDOUT:     %.loc16_37.4: Core.Form = init_form %.loc16_37.3, call_param1 [symbolic = %.loc16_37.1 (constants.%.479)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc16_12.1: type = splice_block %.loc16_12.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc16_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc16_8.2: type = symbolic_binding U, 0 [symbolic = %U.loc16_8.1 (constants.%U.67d)]
 // CHECK:STDOUT:     %u.param: @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc16_22: type = splice_block %ptr.loc16_22.2 [symbolic = %ptr.loc16_22.1 (constants.%ptr.e8f8f9.1)] {
@@ -856,7 +865,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.decl: %A.type.464 = interface_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc5_17.1: type = splice_block %.loc5_17.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc5_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
@@ -875,11 +887,20 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %A.ref: %A.type.464 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:     %W.ref: type = name_ref W, %W.loc14_36.2 [symbolic = %W.loc14_36.1 (constants.%W)]
 // CHECK:STDOUT:     %A.type.loc14_61.2: type = facet_type <@A, @A(constants.%W)> [symbolic = %A.type.loc14_61.1 (constants.%A.type.fe7)]
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %.loc14_19.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.3: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc14_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V1.loc14_14.2: type = symbolic_binding V1, 0 [symbolic = %V1.loc14_14.1 (constants.%V1)]
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc14_30.1: type = splice_block %.loc14_30.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc14_30.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V2.loc14_25.2: type = symbolic_binding V2, 1 [symbolic = %V2.loc14_25.1 (constants.%V2)]
-// CHECK:STDOUT:     %.Self.3: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc14_40.1: type = splice_block %.loc14_40.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc14_40.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.loc14_36.2: type = symbolic_binding W, 2 [symbolic = %W.loc14_36.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {} {}
@@ -925,7 +946,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %.loc6_38.3: type = converted constants.%Self.362, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.7ec)]
 // CHECK:STDOUT:       %.loc6_38.4: type = converted %.loc6_38.2, constants.%tuple.type.7f3 [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.7f3)]
 // CHECK:STDOUT:       %.loc6_38.5: Core.Form = init_form %.loc6_38.4, call_param1 [symbolic = %.loc6_38.1 (constants.%.a0a)]
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
+// CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.loc6_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc6_8.2: type = symbolic_binding U, 2 [symbolic = %U.loc6_8.1 (constants.%U.4e7)]
 // CHECK:STDOUT:       %u.param: @A.WithSelf.F.%U.loc6_8.1 (%U.4e7) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc6_21: type = name_ref U, %U.loc6_8.2 [symbolic = %U.loc6_8.1 (constants.%U.4e7)]
@@ -977,7 +1001,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %.loc17_42.4: type = converted constants.%tuple.4b9, constants.%tuple.type.a5e [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:       %.loc17_42.5: type = converted %.loc17_42.3, constants.%tuple.type.897 [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.897)]
 // CHECK:STDOUT:       %.loc17_42.6: Core.Form = init_form %.loc17_42.5, call_param1 [symbolic = %.loc17_42.2 (constants.%.532)]
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc17_12.1: type = splice_block %.loc17_12.2 [concrete = type] {
+// CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.loc17_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc17_8.2: type = symbolic_binding U, 3 [symbolic = %U.loc17_8.1 (constants.%U.ce4)]
 // CHECK:STDOUT:       %u.param: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.ce4) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc17_21: type = name_ref U, %U.loc17_8.2 [symbolic = %U.loc17_8.1 (constants.%U.ce4)]
@@ -1083,6 +1110,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y1.ref: type = name_ref Y1, file.%Y1.decl [concrete = constants.%Y1]
 // CHECK:STDOUT:   %Y2.ref: type = name_ref Y2, file.%Y2.decl [concrete = constants.%Y2]
 // CHECK:STDOUT:   %.loc24_12: %tuple.type.24b = tuple_literal (%Y1.ref, %Y2.ref) [concrete = constants.%tuple.dd5]
+// CHECK:STDOUT:   %.loc24_17: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %.loc24_14: type = converted %.loc24_12, constants.%tuple.type.ab2 [concrete = constants.%tuple.type.ab2]
 // CHECK:STDOUT:   %A.ref: %A.type.464 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -1171,6 +1199,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y1.ref: type = name_ref Y1, file.%Y1.decl [concrete = constants.%Y1]
 // CHECK:STDOUT:   %Y2.ref: type = name_ref Y2, file.%Y2.decl [concrete = constants.%Y2]
 // CHECK:STDOUT:   %.loc33_22: %tuple.type.24b = tuple_literal (%Y1.ref, %Y2.ref) [concrete = constants.%tuple.dd5]
+// CHECK:STDOUT:   %.loc33_27: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %.loc33_24: type = converted %.loc33_22, constants.%tuple.type.ab2 [concrete = constants.%tuple.type.ab2]
 // CHECK:STDOUT:   %A.facet: %A.type.ab6 = facet_value %.loc33_24, (constants.%A.impl_witness.b3a) [concrete = constants.%A.facet.906]
 // CHECK:STDOUT:   %.loc33_31: %A.type.ab6 = converted %.loc33_24, %A.facet [concrete = constants.%A.facet.906]

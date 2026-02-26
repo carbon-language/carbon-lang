@@ -59,7 +59,10 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.21d = interface_decl @GenericInterface [concrete = constants.%GenericInterface.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc15_32.1: type = splice_block %.loc15_32.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc15_32.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_28.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
@@ -134,7 +137,10 @@ class C {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.21d = name_ref GenericInterface, file.%GenericInterface.decl [concrete = constants.%GenericInterface.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc24_23.2 [symbolic = %T.loc24_23.1 (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.type.loc24_54.2: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc24_54.1 (constants.%GenericInterface.type.8bc)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc24_27.1: type = splice_block %.loc24_27.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc24_27.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc24_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc24_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]

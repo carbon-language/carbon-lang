@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/dataflow/unused.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/patterns/unused.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/dataflow/unused.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/patterns/unused.carbon
 
 // --- todo_ensure_no_warning.carbon
 library "[[@TEST_NAME]]";
@@ -149,7 +149,6 @@ fn F(x: i32) {
   // CHECK:STDERR:   var unused y: i32 = x;
   // CHECK:STDERR:              ^
   var unused y: i32 = x;
-  // TODO: error, marked "unused", but used
   // CHECK:STDERR: fail_read_from_unused_local_var.carbon:[[@LINE+4]]:23: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:   var unused z: i32 = y;
   // CHECK:STDERR:                       ^
@@ -254,76 +253,67 @@ class C(T:! type);
 // CHECK:STDERR:
 class C(unused T:! type) {}
 
-// TODO: Multiple diagnostics on same line has non-deterministic order.
-// Uncomment after adding second sort key in diagnostics sorting.
-//
-// // --- fail_unused_let_multiple_uses.carbon
-// library "[[@TEST_NAME]]";
-//
-// fn F() {
-//   // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+3]]:14: error: variable `x` marked `unused` but used [UnusedButUsed]
-//   // CHECK:STDERR:   let unused x: i32 = 0;
-//   // CHECK:STDERR:              ^
-//   let unused x: i32 = 0;
-//   // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+8]]:16: note: usage here [UnusedButUsedHere]
-//   // CHECK:STDERR:   var y: i32 = x;
-//   // CHECK:STDERR:                ^
-//   // CHECK:STDERR:
-//   // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
-//   // CHECK:STDERR:   var y: i32 = x;
-//   // CHECK:STDERR:       ^
-//   // CHECK:STDERR:
-//   var y: i32 = x;
-//   // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `z` unused [UnusedBinding]
-//   // CHECK:STDERR:   var z: i32 = x;
-//   // CHECK:STDERR:       ^
-//   // CHECK:STDERR:
-//   var z: i32 = x;
-// }
+// --- fail_unused_let_multiple_uses.carbon
+library "[[@TEST_NAME]]";
 
-// TODO: Multiple diagnostics on same line has non-deterministic order.
-// Uncomment after adding second sort key in diagnostics sorting.
-//
-// // --- multiple_unused_bindings.carbon
-// library "[[@TEST_NAME]]";
-//
-// fn F() {
-//   // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
-//   // CHECK:STDERR:   var x: i32 = 0;
-//   // CHECK:STDERR:       ^
-//   // CHECK:STDERR:
-//   var x: i32 = 0;
-//   // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
-//   // CHECK:STDERR:   var y: i32 = 0;
-//   // CHECK:STDERR:       ^
-//   // CHECK:STDERR:
-//   var y: i32 = 0;
-// }
+fn F() {
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+3]]:14: error: variable `x` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR:   let unused x: i32 = 0;
+  // CHECK:STDERR:              ^
+  let unused x: i32 = 0;
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+8]]:16: note: usage here [UnusedButUsedHere]
+  // CHECK:STDERR:   var y: i32 = x;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
+  // CHECK:STDERR:   var y: i32 = x;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var y: i32 = x;
+  // CHECK:STDERR: fail_unused_let_multiple_uses.carbon:[[@LINE+4]]:7: warning: binding `z` unused [UnusedBinding]
+  // CHECK:STDERR:   var z: i32 = x;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var z: i32 = x;
+}
 
-// TODO: Multiple diagnostics on same line has non-deterministic order.
-// Uncomment after adding second sort key in diagnostics sorting.
-//
-// // --- fail_unused_tuple.carbon
-// library "[[@TEST_NAME]]";
-//
-// fn F() -> i32 {
-//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+3]]:15: error: variable `a` marked `unused` but used [UnusedButUsed]
-//  // CHECK:STDERR:   let unused (a: i32,
-//  // CHECK:STDERR:               ^
-//  let unused (a: i32,
-//              b: i32) = (1, 2);
-//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+7]]:16: note: usage here [UnusedButUsedHere]
-//  // CHECK:STDERR:   let i: i32 = a;
-//  // CHECK:STDERR:                ^
-//  // CHECK:STDERR:
-//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE-5]]:15: error: variable `b` marked `unused` but used [UnusedButUsed]
-//  // CHECK:STDERR:               b: i32) = (1, 2);
-//  // CHECK:STDERR:               ^
-//  let i: i32 = a;
-//  // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+4]]:23: note: usage here [UnusedButUsedHere]
-//  // CHECK:STDERR:   let unused j: i32 = b;
-//  // CHECK:STDERR:                       ^
-//  // CHECK:STDERR:
-//  let unused j: i32 = b;
-//  return i;
-// }
+// --- multiple_unused_bindings.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var x: i32 = 0;
+  // CHECK:STDERR: multiple_unused_bindings.carbon:[[@LINE+4]]:7: warning: binding `y` unused [UnusedBinding]
+  // CHECK:STDERR:   var y: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  var y: i32 = 0;
+}
+
+// --- fail_unused_tuple.carbon
+library "[[@TEST_NAME]]";
+
+fn F() -> i32 {
+ // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+3]]:14: error: variable `a` marked `unused` but used [UnusedButUsed]
+ // CHECK:STDERR:  let unused (a: i32,
+ // CHECK:STDERR:              ^
+ let unused (a: i32,
+             b: i32) = (1, 2);
+ // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+7]]:15: note: usage here [UnusedButUsedHere]
+ // CHECK:STDERR:  let i: i32 = a;
+ // CHECK:STDERR:               ^
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE-5]]:14: error: variable `b` marked `unused` but used [UnusedButUsed]
+ // CHECK:STDERR:              b: i32) = (1, 2);
+ // CHECK:STDERR:              ^
+ let i: i32 = a;
+ // CHECK:STDERR: fail_unused_tuple.carbon:[[@LINE+4]]:22: note: usage here [UnusedButUsedHere]
+ // CHECK:STDERR:  let unused j: i32 = b;
+ // CHECK:STDERR:                      ^
+ // CHECK:STDERR:
+ let unused j: i32 = b;
+ return i;
+}

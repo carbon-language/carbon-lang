@@ -320,10 +320,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_56.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_56 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc9_56.2: %i32 = converted %int_4.loc9, %.loc9_56.1 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %GlobalReturnInt.call: init %i32 = call imports.%GlobalReturnInt.decl(%.loc9_47.2, %.loc9_50.2, %.loc9_53.2, %.loc9_56.2)
-// CHECK:STDOUT:   %.loc9_21: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_57.1: %i32 = value_of_initializer %GlobalReturnInt.call
 // CHECK:STDOUT:   %.loc9_57.2: %i32 = converted %GlobalReturnInt.call, %.loc9_57.1
 // CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_57.2
@@ -503,15 +500,17 @@ fn Call() {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.2: type = splice_block %i32.1 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.2: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:   }
@@ -529,16 +528,19 @@ fn Call() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.1: type = splice_block %i32.3 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.6 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.2: type = splice_block %i32.2 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.2: type = splice_block %i32.4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
@@ -553,21 +555,24 @@ fn Call() {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.7ce = value_param_pattern %c.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.1: type = splice_block %i32.3 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.6 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.2: type = splice_block %i32.2 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.2: type = splice_block %i32.4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:     %c.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     %.3: type = splice_block %i32.1 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.3: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %i32 = value_binding c, %c.param
 // CHECK:STDOUT:   }
@@ -582,9 +587,10 @@ fn Call() {
 // CHECK:STDOUT:     %this.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %this: ref %X = ref_binding this, %this.param
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.1: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -594,9 +600,10 @@ fn Call() {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.1: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -610,9 +617,10 @@ fn Call() {
 // CHECK:STDOUT:     %_.param: %ptr.1f9 = value_param call_param0
 // CHECK:STDOUT:     %_: %ptr.1f9 = value_binding _, %_.param
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.1: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -687,10 +695,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_50.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc9_50.2: %i32 = converted %int_2.loc9, %.loc9_50.1 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.call: init %i32 = call imports.%GlobalReturnInt__carbon_thunk.decl(%.loc9_47.2, %.loc9_50.2)
-// CHECK:STDOUT:   %.loc9_21: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_51.1: %i32 = value_of_initializer %GlobalReturnInt__carbon_thunk.call
 // CHECK:STDOUT:   %.loc9_51.2: %i32 = converted %GlobalReturnInt__carbon_thunk.call, %.loc9_51.1
 // CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_51.2

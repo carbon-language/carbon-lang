@@ -13,9 +13,33 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/lex/token_info.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+// Adds a TypeLiteral instruction to represent a syntactic type literal.
+static auto MakeTypeLiteral(Context& context, SemIR::LocId loc_id,
+                            SemIR::InstId value_id) -> SemIR::TypeInstId {
+  auto type_inst_id = ExprAsType(context, loc_id, value_id).inst_id;
+  return AddTypeInst<SemIR::TypeLiteral>(
+      context, loc_id,
+      {.type_id = SemIR::TypeType::TypeId, .value_id = type_inst_id});
+}
+
+auto MakeTypeTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::TypeInstId {
+  return MakeTypeLiteral(context, node_id, SemIR::TypeType::TypeInstId);
+}
+
+auto MakeBoolTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::TypeInstId {
+  auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
+  auto inst_id =
+      LookupNameInCore(context, desugared_loc_id, CoreIdentifier::Bool);
+  inst_id = PerformCall(context, desugared_loc_id, inst_id, {});
+  return MakeTypeLiteral(context, node_id, inst_id);
+}
 
 auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
                      SemIR::BoolValue value) -> SemIR::InstId {
@@ -33,33 +57,58 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
        .int_id = int_id});
 }
 
+// Returns an instruction with the given constant integer value.
+static auto GetOrAddIntValue(Context& context, SemIR::LocId loc_id,
+                             IntId int_id) -> SemIR::InstId {
+  return GetOrAddInst<SemIR::IntValue>(
+      context, loc_id,
+      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
+       .int_id = int_id});
+}
+
 auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::TypeInstId {
+  auto inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Char);
+  return MakeTypeLiteral(context, node_id, inst_id);
+}
+
+// Returns an instruction representing the type `iN` or `uN`.
+static auto GetOrAddIntTypeInst(Context& context, SemIR::LocId loc_id,
+                                SemIR::IntKind int_kind, IntId size_id)
     -> SemIR::InstId {
-  return LookupNameInCore(context, node_id, CoreIdentifier::Char);
+  auto width_id = GetOrAddIntValue(context, loc_id, size_id);
+  auto fn_inst_id = LookupNameInCore(context, loc_id,
+                                     int_kind == SemIR::IntKind::Signed
+                                         ? CoreIdentifier::Int
+                                         : CoreIdentifier::UInt);
+  return PerformCall(context, loc_id, fn_inst_id, {width_id});
 }
 
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
                         SemIR::IntKind int_kind, IntId size_id)
-    -> SemIR::InstId {
-  auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = LookupNameInCore(context, node_id,
-                                     int_kind == SemIR::IntKind::Signed
-                                         ? CoreIdentifier::Int
-                                         : CoreIdentifier::UInt);
-  return PerformCall(context, node_id, fn_inst_id, {width_id});
+    -> SemIR::TypeInstId {
+  auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
+  auto type_inst_id =
+      GetOrAddIntTypeInst(context, desugared_loc_id, int_kind, size_id);
+  return MakeTypeLiteral(context, node_id, type_inst_id);
 }
 
 auto MakeIntType(Context& context, Parse::NodeId node_id,
                  SemIR::IntKind int_kind, IntId size_id) -> SemIR::TypeId {
-  auto type_inst_id = MakeIntTypeLiteral(context, node_id, int_kind, size_id);
+  auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
+  auto type_inst_id =
+      GetOrAddIntTypeInst(context, desugared_loc_id, int_kind, size_id);
   return ExprAsType(context, node_id, type_inst_id).type_id;
 }
 
 auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
-                          IntId size_id) -> SemIR::InstId {
-  auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Float);
-  return PerformCall(context, node_id, fn_inst_id, {width_id});
+                          IntId size_id) -> SemIR::TypeInstId {
+  auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
+  auto width_id = GetOrAddIntValue(context, desugared_loc_id, size_id);
+  auto fn_inst_id =
+      LookupNameInCore(context, desugared_loc_id, CoreIdentifier::Float);
+  auto call_id = PerformCall(context, desugared_loc_id, fn_inst_id, {width_id});
+  return MakeTypeLiteral(context, node_id, call_id);
 }
 
 namespace {
@@ -122,7 +171,7 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
 
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId {
-  auto str_type = MakeStringType(context, node_id);
+  auto str_type = MakeStringType(context, SemIR::LocId(node_id).AsDesugared());
   if (!RequireCompleteType(
           context, str_type.type_id, node_id, [&](auto& builder) {
             CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Context,
@@ -178,13 +227,20 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
       {.type_id = str_type.type_id, .elements_id = elements_id});
 }
 
-auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
+// Returns an instruction with the value `str`.
+static auto GetOrAddStringTypeInst(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId {
   return LookupNameInCore(context, loc_id, CoreIdentifier::String);
 }
 
+auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
+    -> SemIR::TypeInstId {
+  auto inst_id = GetOrAddStringTypeInst(context, node_id);
+  return MakeTypeLiteral(context, node_id, inst_id);
+}
+
 auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  auto type_inst_id = MakeStringTypeLiteral(context, loc_id);
+  auto type_inst_id = GetOrAddStringTypeInst(context, loc_id);
   return ExprAsType(context, loc_id, type_inst_id);
 }
 

@@ -467,6 +467,7 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
@@ -527,6 +528,8 @@ class NodeStack {
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
       case Parse::NodeKind::NamespaceStart:
+      case Parse::NodeKind::ObserveEqualEqual:
+      case Parse::NodeKind::ObserveImpls:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:

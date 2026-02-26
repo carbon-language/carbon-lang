@@ -231,8 +231,7 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.1da] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = ref_form %i32 [concrete = constants.%.1da]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc4_6.2: ref %i32 = form_binding x, %x.param
@@ -292,8 +291,7 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.324] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = init_form %i32, call_param<none> [concrete = constants.%.324]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc4_6.2: ref %i32 = form_binding x, %x.param
@@ -361,8 +359,7 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.754] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = value_form %i32 [concrete = constants.%.754]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc4_6.2: %i32 = form_binding x, %x.param

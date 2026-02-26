@@ -742,6 +742,12 @@ auto EvalConstantInst(Context& context, SemIR::TypeComponentOf inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& context, SemIR::TypeLiteral inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.value_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::TypeOfInst inst)
     -> ConstantEvalResult {
   // Grab the type from the instruction produced as our operand.

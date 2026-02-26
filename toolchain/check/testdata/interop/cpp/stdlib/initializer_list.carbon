@@ -198,7 +198,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.1: %tuple.type = tuple_literal (%int_1.loc8_43, %int_2.loc8_46, %int_3.loc8_49) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc8_50: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc8: type = array_type %int_3.loc8_50, %i32.1 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %array_type.loc8: type = array_type %int_3.loc8_50, %i32.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %.loc8_50.2: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_50.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc8_50.1: <bound method> = bound_method %int_1.loc8_43, %impl.elem0.loc8_50.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
@@ -245,7 +245,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.1: %tuple.type = tuple_literal (%int_1.loc10_16, %int_2.loc10_19, %int_3.loc10_22) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc10_23: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc10: type = array_type %int_3.loc10_23, %i32.2 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %array_type.loc10: type = array_type %int_3.loc10_23, %i32.4 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %.loc10_23.2: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc10_23.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_23.1: <bound method> = bound_method %int_1.loc10_16, %impl.elem0.loc10_23.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
@@ -300,7 +300,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.2: ref %InitListConstructor = temporary_storage
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc12_44: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc12: type = array_type %int_3.loc12_44, %i32.3 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %array_type.loc12: type = array_type %int_3.loc12_44, %i32.6 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %.loc12_44.3: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc12_44.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc12_44.1: <bound method> = bound_method %int_1.loc12_37, %impl.elem0.loc12_44.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]

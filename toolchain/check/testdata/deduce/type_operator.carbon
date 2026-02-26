@@ -121,7 +121,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_26: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_26.3: Core.Form = init_form %T.ref.loc6_26, call_param1 [symbolic = %.loc6_26.2 (constants.%.3cf)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_20: type = splice_block %ptr.loc6_20.2 [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)] {
@@ -274,7 +277,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_32: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_32.3: Core.Form = init_form %T.ref.loc6_32, call_param1 [symbolic = %.loc6_32.2 (constants.%.3cf)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc6_26.1 (%ptr.a15) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_26: type = splice_block %ptr.loc6_26.2 [symbolic = %ptr.loc6_26.1 (constants.%ptr.a15)] {
@@ -431,7 +437,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_26: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_26.3: Core.Form = init_form %T.ref.loc6_26, call_param1 [symbolic = %.loc6_26.2 (constants.%.3cf)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_20: type = splice_block %ptr.loc6_20.2 [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)] {
@@ -584,7 +593,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_32: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_32.3: Core.Form = init_form %T.ref.loc6_32, call_param1 [symbolic = %.loc6_32.2 (constants.%.3cf)]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc6_26.1 (%ptr.a15) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_26: type = splice_block %ptr.loc6_26.2 [symbolic = %ptr.loc6_26.1 (constants.%ptr.a15)] {

@@ -118,7 +118,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_28.1: type = splice_block %.loc17_28.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc17_28.2: %tuple.type = tuple_literal (type) [concrete = constants.%tuple.0d2]
+// CHECK:STDOUT:       %.loc17_22: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc17_28.2: %tuple.type = tuple_literal (%.loc17_22) [concrete = constants.%tuple.0d2]
 // CHECK:STDOUT:       %.loc17_28.3: type = converted %.loc17_28.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc17_17.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_17.1 (constants.%T)]
@@ -140,7 +141,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_17.1: type = splice_block %.loc27_17.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc27_17.2: %tuple.type = tuple_literal (type) [concrete = constants.%tuple.0d2]
+// CHECK:STDOUT:       %.loc27_11: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc27_17.2: %tuple.type = tuple_literal (%.loc27_11) [concrete = constants.%tuple.0d2]
 // CHECK:STDOUT:       %.loc27_17.3: type = converted %.loc27_17.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc27_6.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_6.1 (constants.%T)]

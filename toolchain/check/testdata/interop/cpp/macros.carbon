@@ -897,10 +897,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE.ref: %i32 = name_ref CONFIG_VALUE, imports.%int_42.c68 [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %CONFIG_VALUE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.95b = value_binding_pattern b [concrete]
@@ -908,10 +905,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE_LONG.ref: %i64 = name_ref CONFIG_VALUE_LONG, imports.%int_42.434 [concrete = constants.%int_42.434]
-// CHECK:STDOUT:   %.loc9: type = splice_block %i64.loc9 [concrete = constants.%i64] {
-// CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %i64.loc9: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i64.loc9: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %b: %i64 = value_binding b, %CONFIG_VALUE_LONG.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.4a9 = value_binding_pattern c [concrete]
@@ -919,10 +913,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE_UNSIGNED.ref: %u32 = name_ref CONFIG_VALUE_UNSIGNED, imports.%int_42.58b [concrete = constants.%int_42.58b]
-// CHECK:STDOUT:   %.loc10: type = splice_block %u32.loc10 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc10: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32.loc10: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %c: %u32 = value_binding c, %CONFIG_VALUE_UNSIGNED.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.7ce = value_binding_pattern d [concrete]
@@ -930,10 +921,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE_HEXA.ref: %i32 = name_ref CONFIG_VALUE_HEXA, imports.%int_255 [concrete = constants.%int_255]
-// CHECK:STDOUT:   %.loc11: type = splice_block %i32.loc11 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: %i32 = value_binding d, %CONFIG_VALUE_HEXA.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.7ce = value_binding_pattern e [concrete]
@@ -941,10 +929,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE_OCTAL.ref: %i32 = name_ref CONFIG_VALUE_OCTAL, imports.%int_8 [concrete = constants.%int_8]
-// CHECK:STDOUT:   %.loc12: type = splice_block %i32.loc12 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %e: %i32 = value_binding e, %CONFIG_VALUE_OCTAL.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.7ce = value_binding_pattern f [concrete]
@@ -952,10 +937,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CONFIG_VALUE_BINARY.ref: %i32 = name_ref CONFIG_VALUE_BINARY, imports.%int_5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc13: type = splice_block %i32.loc13 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %f: %i32 = value_binding f, %CONFIG_VALUE_BINARY.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1050,8 +1032,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_42.1, %.loc10_42.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc10_3
 // CHECK:STDOUT:   %.loc10_33: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %f32.loc10: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
+// CHECK:STDOUT:     %f32.loc10: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %n.ref.loc10: %i32 = name_ref n, imports.%int_1 [concrete = constants.%int_1.5d2]
@@ -1072,12 +1053,9 @@ fn F() {
 // CHECK:STDOUT:   %X.ref: <namespace> = name_ref X, imports.%X [concrete = imports.%X]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %n.ref.loc12: ref %f32.97e = name_ref n, imports.%n.var [concrete = imports.%n.var]
-// CHECK:STDOUT:   %.loc12_17: type = splice_block %f32.loc12 [concrete = constants.%f32.97e] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %f32.loc12: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_28: %f32.97e = acquire_value %n.ref.loc12
-// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc12_28
+// CHECK:STDOUT:   %f32.loc12: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   %.loc12: %f32.97e = acquire_value %n.ref.loc12
+// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc12
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -1110,10 +1088,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %NEGATIVE.ref: %i32 = name_ref NEGATIVE, imports.%int_-1 [concrete = constants.%int_-1]
-// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %NEGATIVE.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1143,10 +1118,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %ADDITION.ref: %i32 = name_ref ADDITION, imports.%int_3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %ADDITION.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1187,10 +1159,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CAST_UNSIGNED.ref: %u32 = name_ref CAST_UNSIGNED, imports.%int_1.c1d [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc8: type = splice_block %u32.loc8 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc8: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32.loc8: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %a: %u32 = value_binding a, %CAST_UNSIGNED.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
@@ -1198,10 +1167,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CAST_STATIC.ref: %i32 = name_ref CAST_STATIC, imports.%int_100 [concrete = constants.%int_100]
-// CHECK:STDOUT:   %.loc9: type = splice_block %i32.loc9 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: %i32 = value_binding b, %CAST_STATIC.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7ce = value_binding_pattern c [concrete]
@@ -1209,10 +1175,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CAST_FUNCTIONAL.ref: %i32 = name_ref CAST_FUNCTIONAL, imports.%int_99 [concrete = constants.%int_99]
-// CHECK:STDOUT:   %.loc10: type = splice_block %i32.loc10 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %c: %i32 = value_binding c, %CAST_FUNCTIONAL.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.7ce = value_binding_pattern d [concrete]
@@ -1220,10 +1183,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %CAST_BOOL_TO_INT.ref: %i32 = name_ref CAST_BOOL_TO_INT, imports.%int_1.5d2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11: type = splice_block %i32.loc11 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: %i32 = value_binding d, %CAST_BOOL_TO_INT.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1253,10 +1213,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %INDIRECT_ONE.ref: %i32 = name_ref INDIRECT_ONE, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1312,6 +1269,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SimpleString.ref: %str.ee0 = name_ref SimpleString, %String.val.1 [concrete = constants.%String.val.822]
+// CHECK:STDOUT:   %str.loc8: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %a: %str.ee0 = value_binding a, %SimpleString.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
@@ -1319,6 +1277,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %EmptyString.ref: %str.ee0 = name_ref EmptyString, %String.val.2 [concrete = constants.%String.val.cef]
+// CHECK:STDOUT:   %str.loc9: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %b: %str.ee0 = value_binding b, %EmptyString.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.461 = value_binding_pattern c [concrete]
@@ -1326,6 +1285,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %EscapeCharacter.ref: %str.ee0 = name_ref EscapeCharacter, %String.val.3 [concrete = constants.%String.val.446]
+// CHECK:STDOUT:   %str.loc10: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %c: %str.ee0 = value_binding c, %EscapeCharacter.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.461 = value_binding_pattern d [concrete]
@@ -1333,6 +1293,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Concatenated.ref: %str.ee0 = name_ref Concatenated, %String.val.4 [concrete = constants.%String.val.f11]
+// CHECK:STDOUT:   %str.loc11: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %d: %str.ee0 = value_binding d, %Concatenated.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.461 = value_binding_pattern e [concrete]
@@ -1340,6 +1301,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %RawString.ref: %str.ee0 = name_ref RawString, %String.val.5 [concrete = constants.%String.val.a83]
+// CHECK:STDOUT:   %str.loc12: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %e: %str.ee0 = value_binding e, %RawString.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.461 = value_binding_pattern f [concrete]
@@ -1347,6 +1309,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Utf8String.ref: %str.ee0 = name_ref Utf8String, %String.val.6 [concrete = constants.%String.val.2c7]
+// CHECK:STDOUT:   %str.loc13: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %f: %str.ee0 = value_binding f, %Utf8String.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: %pattern_type.461 = value_binding_pattern g [concrete]
@@ -1354,6 +1317,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Indirect.ref: %str.ee0 = name_ref Indirect, %String.val.7 [concrete = constants.%String.val.b8c]
+// CHECK:STDOUT:   %str.loc14: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %g: %str.ee0 = value_binding g, %Indirect.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1392,10 +1356,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %MyDouble.ref: %f64.d77 = name_ref MyDouble, imports.%float.d20 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc8: type = splice_block %f64.loc8 [concrete = constants.%f64.d77] {
-// CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64.loc8: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f64.loc8: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %MyDouble.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
@@ -1403,10 +1364,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %MyDoubleE.ref: %f64.d77 = name_ref MyDoubleE, imports.%float.e0c [concrete = constants.%float.e0c]
-// CHECK:STDOUT:   %.loc9: type = splice_block %f64.loc9 [concrete = constants.%f64.d77] {
-// CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64.loc9: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f64.loc9: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %MyDoubleE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.201 = value_binding_pattern c [concrete]
@@ -1414,10 +1372,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %MyFloat.ref: %f32.97e = name_ref MyFloat, imports.%float.e3b [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc10: type = splice_block %f32.loc10 [concrete = constants.%f32.97e] {
-// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %f32.loc10: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f32.loc10: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   %c: %f32.97e = value_binding c, %MyFloat.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1459,37 +1414,49 @@ fn F() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.b09 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_LOWERCASE.ref: %char = name_ref M_LOWERCASE, imports.%.b69 [concrete = constants.%.b69]
+// CHECK:STDOUT:   %char.loc8: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %a: %char = value_binding a, %M_LOWERCASE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.b09 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_UPPERCASE.ref: %char = name_ref M_UPPERCASE, imports.%.13f [concrete = constants.%.13f]
+// CHECK:STDOUT:   %char.loc9: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %b: %char = value_binding b, %M_UPPERCASE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.b09 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_DIGIT.ref: %char = name_ref M_DIGIT, imports.%.c50 [concrete = constants.%.c50]
+// CHECK:STDOUT:   %char.loc10: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %c: %char = value_binding c, %M_DIGIT.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.b09 = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_SPACE.ref: %char = name_ref M_SPACE, imports.%.e74 [concrete = constants.%.e74]
+// CHECK:STDOUT:   %char.loc11: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %d: %char = value_binding d, %M_SPACE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.b09 = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_TAB.ref: %char = name_ref M_TAB, imports.%.a7f [concrete = constants.%.a7f]
+// CHECK:STDOUT:   %char.loc12: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %e: %char = value_binding e, %M_TAB.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.b09 = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_UTF8_CHAR.ref: %char = name_ref M_UTF8_CHAR, imports.%.133 [concrete = constants.%.133]
+// CHECK:STDOUT:   %char.loc13: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %f: %char = value_binding f, %M_UTF8_CHAR.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1504,8 +1471,6 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_98: %i32 = int_value 98 [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT: }
@@ -1528,7 +1493,9 @@ fn F() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.b09 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_CONDITIONAL.ref: %char = name_ref M_CONDITIONAL, imports.%int_97 [concrete = constants.%int_97]
+// CHECK:STDOUT:   %char.loc8: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %a: %char = value_binding a, %M_CONDITIONAL.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
@@ -1536,21 +1503,14 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_A_PLUS_ONE.ref: %i32 = name_ref M_A_PLUS_ONE, imports.%int_98 [concrete = constants.%int_98]
-// CHECK:STDOUT:   %.loc9: type = splice_block %i32.loc9 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: %i32 = value_binding b, %M_A_PLUS_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_A_EQUAL.ref: bool = name_ref M_A_EQUAL, imports.%true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_17.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc10_17.3: type = converted %Bool.call, %.loc10_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %c: bool = value_binding c, %M_A_EQUAL.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1558,8 +1518,6 @@ fn F() {
 // CHECK:STDOUT: --- import_boolean_literal_macro.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
@@ -1605,99 +1563,63 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_TRUE.ref: bool = name_ref M_TRUE, imports.%true.d1048d.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc8: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_17.2: type = value_of_initializer %Bool.call.loc8 [concrete = bool]
-// CHECK:STDOUT:     %.loc8_17.3: type = converted %Bool.call.loc8, %.loc8_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %a: bool = value_binding a, %M_TRUE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_FALSE.ref: bool = name_ref M_FALSE, imports.%false.505718.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc9_17.2: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
-// CHECK:STDOUT:     %.loc9_17.3: type = converted %Bool.call.loc9, %.loc9_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: bool = value_binding b, %M_FALSE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_NOT_TRUE.ref: bool = name_ref M_NOT_TRUE, imports.%false.505718.2 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc10: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_17.2: type = value_of_initializer %Bool.call.loc10 [concrete = bool]
-// CHECK:STDOUT:     %.loc10_17.3: type = converted %Bool.call.loc10, %.loc10_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %c: bool = value_binding c, %M_NOT_TRUE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.831 = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_NOT_ZERO.ref: bool = name_ref M_NOT_ZERO, imports.%true.d1048d.2 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc11_17.1: type = splice_block %.loc11_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc11: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc11_17.2: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
-// CHECK:STDOUT:     %.loc11_17.3: type = converted %Bool.call.loc11, %.loc11_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %d: bool = value_binding d, %M_NOT_ZERO.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.831 = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_ONE_EQ_ONE.ref: bool = name_ref M_ONE_EQ_ONE, imports.%true.d1048d.3 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc12_17.1: type = splice_block %.loc12_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc12: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc12_17.2: type = value_of_initializer %Bool.call.loc12 [concrete = bool]
-// CHECK:STDOUT:     %.loc12_17.3: type = converted %Bool.call.loc12, %.loc12_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %e: bool = value_binding e, %M_ONE_EQ_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.831 = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_ONE_NEQ_ONE.ref: bool = name_ref M_ONE_NEQ_ONE, imports.%false.505718.3 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc13_17.1: type = splice_block %.loc13_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc13: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc13_17.2: type = value_of_initializer %Bool.call.loc13 [concrete = bool]
-// CHECK:STDOUT:     %.loc13_17.3: type = converted %Bool.call.loc13, %.loc13_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %f: bool = value_binding f, %M_ONE_NEQ_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: %pattern_type.831 = value_binding_pattern g [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_AND.ref: bool = name_ref M_AND, imports.%true.d1048d.4 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc14_17.1: type = splice_block %.loc14_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc14: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc14_17.2: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
-// CHECK:STDOUT:     %.loc14_17.3: type = converted %Bool.call.loc14, %.loc14_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %g: bool = value_binding g, %M_AND.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %h.patt: %pattern_type.831 = value_binding_pattern h [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_OR.ref: bool = name_ref M_OR, imports.%true.d1048d.5 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc15_17.1: type = splice_block %.loc15_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc15: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc15_17.2: type = value_of_initializer %Bool.call.loc15 [concrete = bool]
-// CHECK:STDOUT:     %.loc15_17.3: type = converted %Bool.call.loc15, %.loc15_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %h: bool = value_binding h, %M_OR.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.831 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_COMPLEX.ref: bool = name_ref M_COMPLEX, imports.%true.d1048d.6 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc16_17.1: type = splice_block %.loc16_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc16_17.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
-// CHECK:STDOUT:     %.loc16_17.3: type = converted %Bool.call.loc16, %.loc16_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %i: bool = value_binding i, %M_COMPLEX.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %j.patt: %pattern_type.7ce = value_binding_pattern j [concrete]
@@ -1705,10 +1627,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_ONE.ref: %i32 = name_ref M_ONE, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc18: type = splice_block %i32.loc18 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %j: %i32 = value_binding j, %M_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %k.patt: %pattern_type.7ce = value_binding_pattern k [concrete]
@@ -1716,10 +1635,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_ZERO.ref: %i32 = name_ref M_ZERO, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc19: type = splice_block %i32.loc19 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %k: %i32 = value_binding k, %M_ZERO.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1878,10 +1794,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_CONSTEXPR_INT.ref: %const = name_ref M_CONSTEXPR_INT, imports.%int_1 [concrete = constants.%int_1.22e]
-// CHECK:STDOUT:   %.loc11_17: type = splice_block %i32.loc11 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc11_26.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_26.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_26.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_26.2
@@ -1913,10 +1826,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %MyIntLambda.ref: %i32 = name_ref MyIntLambda, imports.%int_7 [concrete = constants.%int_7]
-// CHECK:STDOUT:   %.loc10: type = splice_block %i32.loc10 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %i: %i32 = value_binding i, %MyIntLambda.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1946,10 +1856,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %REDEF_NAME.ref: %i32 = name_ref REDEF_NAME, imports.%int_2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %REDEF_NAME.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1979,10 +1886,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %TWICE_DEF.ref: %i32 = name_ref TWICE_DEF, imports.%int_2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc17: type = splice_block %i32.loc17 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %TWICE_DEF.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

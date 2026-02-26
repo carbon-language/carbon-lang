@@ -56,10 +56,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.c36 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.6ad]
 // CHECK:STDOUT:   %ReadChar.call.loc8: init %i32 = call %ReadChar.ref.loc8()
-// CHECK:STDOUT:   %.loc8_17: type = splice_block %i32.loc8 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc8_32.1: %i32 = value_of_initializer %ReadChar.call.loc8
 // CHECK:STDOUT:   %.loc8_32.2: %i32 = converted %ReadChar.call.loc8, %.loc8_32.1
 // CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc8_32.2
@@ -69,10 +66,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc9: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
 // CHECK:STDOUT:   %ReadChar.call.loc9: init %i32 = call %ReadChar.ref.loc9()
-// CHECK:STDOUT:   %.loc9_17: type = splice_block %i32.loc9 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_37.1: %i32 = value_of_initializer %ReadChar.call.loc9
 // CHECK:STDOUT:   %.loc9_37.2: %i32 = converted %ReadChar.call.loc9, %.loc9_37.1
 // CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc9_37.2

@@ -144,21 +144,16 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc8: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.420]
-// CHECK:STDOUT:   %int_16.loc8_37: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc8_37: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   %i16.loc8_37: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %.loc8_34.1: %i16 = as_compatible %a.ref.loc8 [concrete = constants.%int_0.320]
 // CHECK:STDOUT:   %.loc8_34.2: %i16 = converted %a.ref.loc8, %.loc8_34.1 [concrete = constants.%int_0.320]
-// CHECK:STDOUT:   %.loc8_17: type = splice_block %i16.loc8_17 [concrete = constants.%i16] {
-// CHECK:STDOUT:     %int_16.loc8_17: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:     %i16.loc8_17: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i16.loc8_17: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %a: %i16 = value_binding a, %.loc8_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.ebf = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
-// CHECK:STDOUT:   %int_16.loc9: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc9: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   %i16.loc9: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %impl.elem0: %.70c = impl_witness_access constants.%As.impl_witness.b61, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.a42]
 // CHECK:STDOUT:   %bound_method.loc9_32.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]

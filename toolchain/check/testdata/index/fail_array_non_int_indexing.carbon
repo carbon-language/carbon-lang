@@ -98,8 +98,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc15 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
@@ -109,10 +108,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc23: type = splice_block %i32.loc23 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -134,8 +130,6 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 26e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23_16: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_19.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_19.2: %i32 = acquire_value %.loc23_19.1 [concrete = <error>]

@@ -73,11 +73,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc23_24.1: bool = converted %int_12, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_24.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc23_17.1: type = splice_block %.loc23_17.3 [concrete = bool] {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc23_17.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc23_17.3: type = converted %Bool.call, %.loc23_17.2 [concrete = bool]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23_17: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %x: ref bool = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
