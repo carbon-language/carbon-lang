@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.2ec: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.G.type.488: type = fn_type @I.WithSelf.G, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.G.type.488: type = fn_type @I.WithSelf.G, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G.6c4: %I.WithSelf.G.type.488 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.WithSelf.G.decl [concrete]
@@ -42,7 +42,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.type: type = fn_type @empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G: %empty_tuple.type.as.I.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.G.type.4f5: type = fn_type @I.WithSelf.G, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.type.4f5: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.G.5a3: %I.WithSelf.G.type.4f5 = struct_value () [concrete]
 // CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %I.WithSelf.G.type.4f5, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
@@ -131,7 +131,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc17 => constants.%Self
 // CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.488
@@ -144,7 +144,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc17 => constants.%I.facet
 // CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.4f5

@@ -97,7 +97,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Self.629: %WithAssocFn.type.d36 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %.22a: Core.Form = init_form %X, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.6c9: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%T.67d, %Self.629) [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.6c9: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%T.67d, %Self.629) [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.6d9: %WithAssocFn.WithSelf.F.type.6c9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.assoc_type.b93: type = assoc_entity_type @WithAssocFn, @WithAssocFn(%T.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.395: %WithAssocFn.assoc_type.b93 = assoc_entity element0, @WithAssocFn.%WithAssocFn.WithSelf.F.decl [symbolic]
@@ -109,14 +109,14 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.type.19d: type = facet_type <@WithAssocFn, @WithAssocFn(%C)> [concrete]
 // CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness @C.as.WithAssocFn.impl.%WithAssocFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.63e: %WithAssocFn.type.19d = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.836: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%C, %Self.629) [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.836: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%C, %Self.629) [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.a5a: %WithAssocFn.WithSelf.F.type.836 = struct_value () [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.assoc_type.cc0: type = assoc_entity_type @WithAssocFn, @WithAssocFn(%C) [concrete]
 // CHECK:STDOUT:   %assoc0.50d: %WithAssocFn.assoc_type.cc0 = assoc_entity element0, @WithAssocFn.%WithAssocFn.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F.type: type = fn_type @C.as.WithAssocFn.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F: %C.as.WithAssocFn.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.19d = facet_value %C, (%WithAssocFn.impl_witness) [concrete]
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.a47: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn(%C, %WithAssocFn.facet) [concrete]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.a47: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%C, %WithAssocFn.facet) [concrete]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.975: %WithAssocFn.WithSelf.F.type.a47 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
@@ -358,13 +358,13 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_18.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%T.67d, constants.%Self.862) {}
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%T.67d, constants.%Self.862) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc8_23.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(constants.%T.67d, constants.%Self.629) {}
+// CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.WithSelf.F(constants.%T.67d, constants.%Self.629) {}
 // CHECK:STDOUT:
@@ -376,11 +376,11 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Self.loc4_28.2 => constants.%Self.0b4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%C, constants.%Self.862) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%C, constants.%Self.862) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%C, constants.%Simple.facet) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%C, constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -392,7 +392,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Self.loc8_33.2 => constants.%Self.63e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(constants.%C, constants.%Self.629) {
+// CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%C, constants.%Self.629) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc10 => constants.%C
 // CHECK:STDOUT:   %WithAssocFn.type.loc10 => constants.%WithAssocFn.type.19d
@@ -403,7 +403,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %assoc0.loc10_14.2 => constants.%assoc0.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(constants.%C, constants.%WithAssocFn.facet) {
+// CHECK:STDOUT: specific @WithAssocFn.WithSelf(constants.%C, constants.%WithAssocFn.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc10 => constants.%C
 // CHECK:STDOUT:   %WithAssocFn.type.loc10 => constants.%WithAssocFn.type.19d
@@ -567,7 +567,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(constants.%T.67d, constants.%Self.15d) {}
+// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T.67d, constants.%Self.15d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%A
@@ -589,7 +589,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10_6.1 => constants.%T.3ee
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(constants.%B, constants.%Self.15d) {
+// CHECK:STDOUT: specific @Generic.WithSelf(constants.%B, constants.%Self.15d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,7 +666,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc3_19.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(constants.%T, constants.%Self) {}
+// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:

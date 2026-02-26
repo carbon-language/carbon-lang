@@ -30,7 +30,7 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [concrete]
 // CHECK:STDOUT:   %Self.af2: %Simple.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.75b: type = fn_type @Simple.WithSelf.F, @Simple(%Self.af2) [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.75b: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Self.af2) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.F.58c: %Simple.WithSelf.F.type.75b = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
@@ -40,7 +40,7 @@ class C {
 // CHECK:STDOUT:   %C.as.Simple.impl.F.type: type = fn_type @C.as.Simple.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.Simple.impl.F: %C.as.Simple.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.839: type = fn_type @Simple.WithSelf.F, @Simple(%Simple.facet) [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.839: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.F.79e: %Simple.WithSelf.F.type.839 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -137,7 +137,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%Self.af2) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%Self.af2) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self.af2
 // CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.75b
@@ -146,7 +146,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Self.af2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%Simple.facet) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Simple.facet
 // CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.839

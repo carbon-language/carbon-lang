@@ -37,7 +37,7 @@ fn Main() {
 // CHECK:STDOUT:   %ImplicitAs.type.d99: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.158: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.4bc [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d99 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness.158) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.95b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%char, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.95b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.734: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.95b, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]

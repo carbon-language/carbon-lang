@@ -143,7 +143,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_type_impl.carbon
 // CHECK:STDOUT:
@@ -213,11 +213,11 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +310,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,7 +320,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%U) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,7 +357,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_require_enclosing.carbon
 // CHECK:STDOUT:
@@ -400,7 +400,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.Self.binding.as_type.impls.A.type.require(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
@@ -479,7 +479,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%T, constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc3_13.1 => constants.%empty_struct_type

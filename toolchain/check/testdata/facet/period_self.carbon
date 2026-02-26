@@ -402,7 +402,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc8_6.2 [symbolic = %T.loc8_6.1 (constants.%T.706)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc8_39.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc8_39.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:     %.loc8_39.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %I1.ref.loc8_39: %I.assoc_type.c03 = name_ref I1, %.loc8_39.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %impl.elem0.loc8_39: type = impl_witness_access constants.%I.lookup_impl_witness.94d, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_39.3: Core.Form = init_form %impl.elem0.loc8_39, call_param0 [concrete = constants.%.842]
@@ -417,7 +417,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.ref.loc8_25: %I.type.bee = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.dad]
 // CHECK:STDOUT:       %.Self.as_type.loc8_25: type = facet_access_type %.Self.ref.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.b0b]
 // CHECK:STDOUT:       %.loc8_25.1: type = converted %.Self.ref.loc8_25, %.Self.as_type.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.b0b]
-// CHECK:STDOUT:       %.loc8_25.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:       %.loc8_25.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %I1.ref.loc8_25: %I.assoc_type.c03 = name_ref I1, %.loc8_25.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %impl.elem0.loc8_25: type = impl_witness_access constants.%I.lookup_impl_witness.3fc, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -439,7 +439,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc12_6.2 [symbolic = %T.loc12_6.1 (constants.%T.706)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc12_47.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc12_47.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:     %.loc12_47.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %I1.ref.loc12_47: %I.assoc_type.c03 = name_ref I1, %.loc12_47.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %impl.elem0.loc12_47: type = impl_witness_access constants.%I.lookup_impl_witness.94d, element0 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc12_47.3: Core.Form = init_form %impl.elem0.loc12_47, call_param0 [concrete = constants.%.842]
@@ -454,7 +454,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.ref.loc12_33: %I.type.bee = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.dad]
 // CHECK:STDOUT:       %.Self.as_type.loc12_33: type = facet_access_type %.Self.ref.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.b0b]
 // CHECK:STDOUT:       %.loc12_33.1: type = converted %.Self.ref.loc12_33, %.Self.as_type.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.b0b]
-// CHECK:STDOUT:       %.loc12_33.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:       %.loc12_33.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %I1.ref.loc12_33: %I.assoc_type.c03 = name_ref I1, %.loc12_33.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %impl.elem0.loc12_33: type = impl_witness_access constants.%I.lookup_impl_witness.3fc, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc12_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -531,7 +531,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%T.67d, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%T.67d, constants.%Self.fdb) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%.Self.binding.as_type.8db
@@ -541,28 +541,28 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %Self.loc4_23.2 => constants.%Self.fa8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db, constants.%Self.fdb) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%Self.fdb) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db, constants.%T.706) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db, constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03

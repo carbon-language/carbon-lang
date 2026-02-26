@@ -138,7 +138,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.A.impl: %.loc10_7.2 as %A.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -191,7 +191,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
 // CHECK:STDOUT:
@@ -247,7 +247,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: %.loc10_7.2 as %B.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
@@ -282,7 +282,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.9f2 [from "fail_decl_only_in_api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -318,7 +318,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.C.impl: %.loc10_7.2 as %C.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT: specific @C.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -361,7 +361,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.C.impl.2d264c.2: %.loc8_7.2 as %C.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT: specific @C.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
@@ -405,5 +405,5 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.D.impl: %.loc10_7.2 as %D.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @D(constants.%Self) {}
+// CHECK:STDOUT: specific @D.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

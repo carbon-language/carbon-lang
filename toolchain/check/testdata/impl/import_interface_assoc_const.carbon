@@ -293,11 +293,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I3(constants.%Self.70b) {}
+// CHECK:STDOUT: specific @I3.WithSelf(constants.%Self.70b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonType(constants.%Self.13f) {}
+// CHECK:STDOUT: specific @NonType.WithSelf(constants.%Self.13f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -383,15 +383,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -495,15 +495,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -597,15 +597,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -714,15 +714,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -871,11 +871,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I3(constants.%Self) {
+// CHECK:STDOUT: specific @I3.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I3(constants.%.Self) {
+// CHECK:STDOUT: specific @I3.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -968,15 +968,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1068,11 +1068,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1163,11 +1163,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1257,11 +1257,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%C9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1350,11 +1350,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%CA
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1451,15 +1451,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%CB
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1553,15 +1553,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%CC
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonType(constants.%Self) {
+// CHECK:STDOUT: specific @NonType.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonType(constants.%.Self) {
+// CHECK:STDOUT: specific @NonType.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonType(constants.%NonType.facet) {
+// CHECK:STDOUT: specific @NonType.WithSelf(constants.%NonType.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1570,7 +1570,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %IF.WithSelf.F.type: type = fn_type @IF.WithSelf.F, @IF(%Self) [symbolic]
+// CHECK:STDOUT:   %IF.WithSelf.F.type: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %IF.WithSelf.F: %IF.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
 // CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%IF.WithSelf.F.decl [concrete]
@@ -1603,7 +1603,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF(constants.%Self) {}
+// CHECK:STDOUT: specific @IF.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
@@ -1615,10 +1615,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %IF.WithSelf.F.type.1d1: type = fn_type @IF.WithSelf.F, @IF(%Self) [symbolic]
+// CHECK:STDOUT:   %IF.WithSelf.F.type.1d1: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %IF.WithSelf.F.d78: %IF.WithSelf.F.type.1d1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.Self: %IF.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %IF.WithSelf.F.type.923: type = fn_type @IF.WithSelf.F, @IF(%.Self) [symbolic_self]
+// CHECK:STDOUT:   %IF.WithSelf.F.type.923: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%.Self) [symbolic_self]
 // CHECK:STDOUT:   %IF.WithSelf.F.7ce: %IF.WithSelf.F.type.923 = struct_value () [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
@@ -1632,7 +1632,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %CD.as.IF.impl.F.type: type = fn_type @CD.as.IF.impl.F [concrete]
 // CHECK:STDOUT:   %CD.as.IF.impl.F: %CD.as.IF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IF.facet: %IF.type = facet_value %CD, (%IF.impl_witness) [concrete]
-// CHECK:STDOUT:   %IF.WithSelf.F.type.1b7: type = fn_type @IF.WithSelf.F, @IF(%IF.facet) [concrete]
+// CHECK:STDOUT:   %IF.WithSelf.F.type.1b7: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%IF.facet) [concrete]
 // CHECK:STDOUT:   %IF.WithSelf.F.0bc: %IF.WithSelf.F.type.1b7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1705,7 +1705,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF(constants.%Self) {
+// CHECK:STDOUT: specific @IF.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.1d1
@@ -1714,14 +1714,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF(constants.%.Self) {
+// CHECK:STDOUT: specific @IF.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%.Self
 // CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.923
 // CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.7ce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IF(constants.%IF.facet) {
+// CHECK:STDOUT: specific @IF.WithSelf(constants.%IF.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%IF.facet
 // CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.1b7

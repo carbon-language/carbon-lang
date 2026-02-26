@@ -47,7 +47,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.type.ed9: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.686: %const.as.Copy.impl.Op.type.ed9 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.7d9: %Copy.type = facet_value %const.20a, (%Copy.impl_witness.286) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ba7: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.7d9) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ba7: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7d9) [concrete]
 // CHECK:STDOUT:   %.2d3: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ba7, %Copy.facet.7d9 [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.686, @const.as.Copy.impl.Op(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT: }

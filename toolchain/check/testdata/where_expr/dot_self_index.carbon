@@ -81,7 +81,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_33.1 (%Empty.type.6f76f1.2) = name_ref .Self, %.Self.4 [symbolic = %.Self.1 (constants.%.Self.b4b)]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.b61)]
 // CHECK:STDOUT:       %.loc21_41.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.b61)]
-// CHECK:STDOUT:       %.loc21_41.2: @H.%Empty.assoc_type (%Empty.assoc_type.ce4b5a.2) = specific_constant @A.%assoc0, @Empty(constants.%T, constants.%.Self.b4b) [symbolic = %assoc0 (constants.%assoc0.beb632.2)]
+// CHECK:STDOUT:       %.loc21_41.2: @H.%Empty.assoc_type (%Empty.assoc_type.ce4b5a.2) = specific_constant @A.%assoc0, @Empty.WithSelf(constants.%T, constants.%.Self.b4b) [symbolic = %assoc0 (constants.%assoc0.beb632.2)]
 // CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.ce4b5a.2) = name_ref A, %.loc21_41.2 [symbolic = %assoc0 (constants.%assoc0.beb632.2)]
 // CHECK:STDOUT:       %impl.elem0.loc21_41.2: type = impl_witness_access constants.%Empty.lookup_impl_witness.177, element0 [symbolic = %impl.elem0.loc21_41.1 (constants.%impl.elem0.de5)]
 // CHECK:STDOUT:       %T.ref.loc21_46: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]

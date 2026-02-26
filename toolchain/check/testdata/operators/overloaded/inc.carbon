@@ -39,7 +39,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
-// CHECK:STDOUT:   %Inc.WithSelf.Op.type.700: type = fn_type @Inc.WithSelf.Op, @Inc(%Inc.facet) [concrete]
+// CHECK:STDOUT:   %Inc.WithSelf.Op.type.700: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%Inc.facet) [concrete]
 // CHECK:STDOUT:   %.38a: type = fn_type_with_self_type %Inc.WithSelf.Op.type.700, %Inc.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -38,7 +38,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.type.8bc: type = facet_type <@GenericInterface, @GenericInterface(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %GenericInterface.type.8bc = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %GenericInterface.WithSelf.F.type: type = fn_type @GenericInterface.WithSelf.F, @GenericInterface(%T, %Self) [symbolic]
+// CHECK:STDOUT:   %GenericInterface.WithSelf.F.type: type = fn_type @GenericInterface.WithSelf.F, @GenericInterface.WithSelf(%T, %Self) [symbolic]
 // CHECK:STDOUT:   %GenericInterface.WithSelf.F: %GenericInterface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface, @GenericInterface(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0: %GenericInterface.assoc_type = assoc_entity element0, @GenericInterface.%GenericInterface.WithSelf.F.decl [symbolic]
@@ -170,7 +170,7 @@ class C {
 // CHECK:STDOUT:   %T.loc15_28.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(constants.%T, constants.%Self) {}
+// CHECK:STDOUT: specific @GenericInterface.WithSelf(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface.WithSelf.F(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T

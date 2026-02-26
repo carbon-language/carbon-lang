@@ -99,7 +99,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %EqWith.type.863: type = facet_type <@EqWith, @EqWith(bool)> [concrete]
 // CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness imports.%EqWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %EqWith.facet: %EqWith.type.863 = facet_value bool, (%EqWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.8c0: type = fn_type @EqWith.WithSelf.Equal, @EqWith(bool, %EqWith.facet) [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.8c0: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(bool, %EqWith.facet) [concrete]
 // CHECK:STDOUT:   %.483: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.8c0, %EqWith.facet [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.Equal.type: type = fn_type @bool.as.EqWith.impl.Equal [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.Equal: %bool.as.EqWith.impl.Equal.type = struct_value () [concrete]

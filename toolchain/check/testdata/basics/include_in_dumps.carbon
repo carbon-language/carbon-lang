@@ -113,7 +113,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- exclude/included_with_range.carbon
 // CHECK:STDOUT:
@@ -122,7 +122,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.fa0: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.71c: type = fn_type @I.WithSelf.Op, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.71c: type = fn_type @I.WithSelf.Op, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.ae1: %I.WithSelf.Op.type.71c = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.WithSelf.Op.decl [concrete]
@@ -130,7 +130,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.c9a: type = fn_type @I.WithSelf.Op, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.c9a: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Op.b3e: %I.WithSelf.Op.type.c9a = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc8 => constants.%Self
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.71c
@@ -186,7 +186,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fa0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc8 => constants.%I.facet
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.c9a
@@ -211,7 +211,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.f73: type = fn_type @I.WithSelf.Op, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.f73: type = fn_type @I.WithSelf.Op, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.f53: %I.WithSelf.Op.type.f73 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.422: type = pattern_type %Self.binding.as_type [symbolic]
@@ -219,7 +219,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e26 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Op.a52: %I.WithSelf.Op.type.537 = struct_value () [concrete]
 // CHECK:STDOUT:   %.c12: type = fn_type_with_self_type %I.WithSelf.Op.type.537, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op.type: type = fn_type @C.as.I.impl.Op [concrete]
@@ -308,7 +308,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.Op [from "exclude/included_with_range.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.f73
@@ -321,7 +321,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.422
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.537
@@ -338,13 +338,13 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.f73: type = fn_type @I.WithSelf.Op, @I(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.f73: type = fn_type @I.WithSelf.Op, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.f53: %I.WithSelf.Op.type.f73 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e26 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Op.type.537: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %.c12: type = fn_type_with_self_type %I.WithSelf.Op.type.537, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op.type: type = fn_type @C.as.I.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.Op: %C.as.I.impl.Op.type = struct_value () [concrete]

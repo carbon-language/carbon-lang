@@ -30,11 +30,11 @@ interface Modifiers {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Modifiers.type: type = facet_type <@Modifiers> [concrete]
 // CHECK:STDOUT:   %Self: %Modifiers.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Modifiers.WithSelf.Final.type: type = fn_type @Modifiers.WithSelf.Final, @Modifiers(%Self) [symbolic]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Final.type: type = fn_type @Modifiers.WithSelf.Final, @Modifiers.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Modifiers.WithSelf.Final: %Modifiers.WithSelf.Final.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Modifiers.assoc_type: type = assoc_entity_type @Modifiers [concrete]
 // CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, @Modifiers.%Modifiers.WithSelf.Final.decl [concrete]
-// CHECK:STDOUT:   %Modifiers.WithSelf.Default.type: type = fn_type @Modifiers.WithSelf.Default, @Modifiers(%Self) [symbolic]
+// CHECK:STDOUT:   %Modifiers.WithSelf.Default.type: type = fn_type @Modifiers.WithSelf.Default, @Modifiers.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Modifiers.WithSelf.Default: %Modifiers.WithSelf.Default.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %Modifiers.assoc_type = assoc_entity element1, @Modifiers.%Modifiers.WithSelf.Default.decl [concrete]
 // CHECK:STDOUT: }
@@ -83,7 +83,7 @@ interface Modifiers {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Modifiers(constants.%Self) {
+// CHECK:STDOUT: specific @Modifiers.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc20 => constants.%Self
 // CHECK:STDOUT:   %Modifiers.WithSelf.Final.type => constants.%Modifiers.WithSelf.Final.type

@@ -24,7 +24,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %.52b: Core.Form = init_form %Self.binding.as_type, call_param1 [symbolic]
-// CHECK:STDOUT:   %UseSelf.WithSelf.F.type: type = fn_type @UseSelf.WithSelf.F, @UseSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %UseSelf.WithSelf.F.type: type = fn_type @UseSelf.WithSelf.F, @UseSelf.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %UseSelf.WithSelf.F: %UseSelf.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type @UseSelf [concrete]
 // CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, @UseSelf.%UseSelf.WithSelf.F.decl [concrete]
@@ -81,7 +81,7 @@ interface UseSelf {
 // CHECK:STDOUT:   fn(%self.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @UseSelf(constants.%Self) {}
+// CHECK:STDOUT: specific @UseSelf.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

@@ -308,13 +308,13 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self.f8c) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.f8c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.loc10_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(constants.%a, constants.%Self.0fc) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.0fc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
 // CHECK:STDOUT:
@@ -389,7 +389,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_21.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
 // CHECK:STDOUT:
@@ -476,7 +476,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc14_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc14(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc14(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
 // CHECK:STDOUT:
@@ -551,7 +551,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
 // CHECK:STDOUT:
@@ -756,7 +756,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc12_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc12(constants.%a, constants.%Self.f8c) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc12(constants.%a, constants.%Self.f8c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.1(constants.%a) {
 // CHECK:STDOUT:   %a => constants.%a
@@ -766,7 +766,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc21_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.loc21(constants.%a, constants.%Self.0fc) {}
+// CHECK:STDOUT: specific @Bar.WithSelf.loc21(constants.%a, constants.%Self.0fc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
 // CHECK:STDOUT:
@@ -857,7 +857,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %b.loc15_15.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%b, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc15(constants.%b, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
 // CHECK:STDOUT:
@@ -947,7 +947,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc15_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc15(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
 // CHECK:STDOUT:
@@ -1037,7 +1037,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc15_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc15(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
 // CHECK:STDOUT:
@@ -1175,7 +1175,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc17_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc17(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc17(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
 // CHECK:STDOUT:
@@ -1266,5 +1266,5 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc18_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc18(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf.loc18(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:

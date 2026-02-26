@@ -28,7 +28,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %Self.61e: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self.8e7: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared(%Self.8e7) [symbolic]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared.WithSelf(%Self.8e7) [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F: %ForwardDeclared.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%ForwardDeclared.WithSelf.F.decl [concrete]
@@ -75,9 +75,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {}
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.61e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self.8e7) {}
+// CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self.8e7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.8e7) {}
 // CHECK:STDOUT:

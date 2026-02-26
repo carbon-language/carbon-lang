@@ -175,13 +175,13 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.loc23_22.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGeneric.loc23(constants.%T.67d, constants.%Self.b1e) {}
+// CHECK:STDOUT: specific @NotGeneric.WithSelf.loc23(constants.%T.67d, constants.%Self.b1e) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.loc25(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc25_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.loc33(constants.%Self.863) {}
+// CHECK:STDOUT: specific @Generic.WithSelf.loc33(constants.%Self.863) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.loc35(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc35_27.1 => constants.%T.67d
@@ -191,5 +191,5 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.loc43_27.1 => constants.%T.d5f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DifferentParams.loc43(constants.%T.d5f, constants.%Self.afe) {}
+// CHECK:STDOUT: specific @DifferentParams.WithSelf.loc43(constants.%T.d5f, constants.%Self.afe) {}
 // CHECK:STDOUT:

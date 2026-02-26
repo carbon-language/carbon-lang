@@ -177,7 +177,7 @@ private interface Redecl {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Def(constants.%Self) {}
+// CHECK:STDOUT: specific @Def.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
@@ -205,7 +205,7 @@ private interface Redecl {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {}
+// CHECK:STDOUT: specific @ForwardWithDef.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward.carbon
 // CHECK:STDOUT:
@@ -258,7 +258,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Def(constants.%Self) {
+// CHECK:STDOUT: specific @Def.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -373,7 +373,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardWithDef(constants.%Self) {
+// CHECK:STDOUT: specific @ForwardWithDef.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -489,7 +489,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Forward(constants.%Self) {}
+// CHECK:STDOUT: specific @Forward.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_forward.carbon
 // CHECK:STDOUT:
@@ -586,5 +586,5 @@ private interface Redecl {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Redecl(constants.%Self) {}
+// CHECK:STDOUT: specific @Redecl.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

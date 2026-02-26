@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -85,7 +86,10 @@ class InstNamer {
   }
 
   // Returns the IR name for the specified scope.
-  auto GetScopeName(ScopeId scope) const -> std::string;
+  //
+  // Uses the `name_with_self` if `with_self` is true, for interfaces and named
+  // constraints.
+  auto GetScopeName(ScopeId scope, bool with_self = false) const -> std::string;
 
   // Returns the name for a parent NameScope. Does not return a name for
   // namespaces. Used as part of naming functions with their containing scope.
@@ -93,12 +97,25 @@ class InstNamer {
 
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
-    requires(ScopeIdTypeEnum::Contains<IdT> || std::same_as<IdT, GenericId>)
+    requires(ScopeIdTypeEnum::Contains<IdT>)
   auto GetNameFor(IdT id) const -> std::string {
     if (!id.has_value()) {
       return "invalid";
     }
     return GetScopeName(GetScopeFor(id));
+  }
+
+  // Returns the IR name to use for a generic.
+  auto GetNameFor(GenericId id) const -> std::string {
+    if (!id.has_value()) {
+      return "invalid";
+    }
+
+    const auto& generic = sem_ir_->generics().Get(id);
+    auto decl = sem_ir_->insts().Get(generic.decl_id);
+    bool with_self = decl.Is<SemIR::InterfaceWithSelfDecl>() ||
+                     decl.Is<SemIR::NamedConstraintWithSelfDecl>();
+    return GetScopeName(GetScopeFor(id), with_self);
   }
 
   // Returns the IR name to use for an instruction within its own scope, without

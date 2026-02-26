@@ -162,7 +162,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_function_scope.carbon
 // CHECK:STDOUT:
@@ -227,21 +227,21 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self) {}
+// CHECK:STDOUT: specific @J.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_self_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.c59: %Z.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Z.WithSelf.Zero.type.e4a: type = fn_type @Z.WithSelf.Zero, @Z(%Self.c59) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.e4a: type = fn_type @Z.WithSelf.Zero, @Z.WithSelf(%Self.c59) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Z.WithSelf.Zero.3f4: %Z.WithSelf.Zero.type.e4a = struct_value () [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0.cc0: %Z.assoc_type = assoc_entity element0, @Z.%Z.WithSelf.Zero.decl [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type.62d: type = symbolic_binding_type Self, 0, %Self.c59 [symbolic]
 // CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %Self.binding.as_type.62d [symbolic]
-// CHECK:STDOUT:   %Z.WithSelf.Method.type.dfd: type = fn_type @Z.WithSelf.Method, @Z(%Self.c59) [symbolic]
+// CHECK:STDOUT:   %Z.WithSelf.Method.type.dfd: type = fn_type @Z.WithSelf.Method, @Z.WithSelf(%Self.c59) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.Method.324: %Z.WithSelf.Method.type.dfd = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %Z.assoc_type = assoc_entity element1, @Z.%Z.WithSelf.Method.decl [concrete]
 // CHECK:STDOUT:   %<error>.as.Z.impl.Zero.type: type = fn_type @<error>.as.Z.impl.Zero, @<error>.as.Z.impl(%Self.c59) [symbolic]
@@ -257,9 +257,9 @@ class X {
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.type: type = fn_type @Point.as.Z.impl.Method [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method: %Point.as.Z.impl.Method.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Zero.type.949: type = fn_type @Z.WithSelf.Zero, @Z(%Z.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.949: type = fn_type @Z.WithSelf.Zero, @Z.WithSelf(%Z.facet) [concrete]
 // CHECK:STDOUT:   %Z.WithSelf.Zero.3ae: %Z.WithSelf.Zero.type.949 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Method.type.707: type = fn_type @Z.WithSelf.Method, @Z(%Z.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Method.type.707: type = fn_type @Z.WithSelf.Method, @Z.WithSelf(%Z.facet) [concrete]
 // CHECK:STDOUT:   %Z.WithSelf.Method.74d: %Z.WithSelf.Method.type.707 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -466,7 +466,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Point) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Self.c59
 // CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.e4a
@@ -500,7 +500,7 @@ class X {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.84b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Z.facet) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Z.facet
 // CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.949
@@ -522,7 +522,7 @@ class X {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self.c51: %A.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %A.WithSelf.B.type.386: type = fn_type @A.WithSelf.B, @A(%Self.c51) [symbolic]
+// CHECK:STDOUT:   %A.WithSelf.B.type.386: type = fn_type @A.WithSelf.B, @A.WithSelf(%Self.c51) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A.WithSelf.B.b88: %A.WithSelf.B.type.386 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
@@ -536,7 +536,7 @@ class X {
 // CHECK:STDOUT:   %X.as.A.impl.B.type: type = fn_type @X.as.A.impl.B [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B: %X.as.A.impl.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.type.c6b: type = fn_type @A.WithSelf.B, @A(%A.facet) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.c6b: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
 // CHECK:STDOUT:   %A.WithSelf.B.f2a: %A.WithSelf.B.type.c6b = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -642,7 +642,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self.c51) {
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self.c51) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc5 => constants.%Self.c51
 // CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.386
@@ -651,9 +651,9 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.B(constants.%Self.c51) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Self.b7c) {}
+// CHECK:STDOUT: specific @C.WithSelf(constants.%Self.b7c) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%A.facet) {
+// CHECK:STDOUT: specific @A.WithSelf(constants.%A.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc5 => constants.%A.facet
 // CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.c6b

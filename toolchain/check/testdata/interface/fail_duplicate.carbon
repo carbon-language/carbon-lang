@@ -81,7 +81,7 @@ interface Class { }
 // CHECK:STDOUT:   %Self.8875a4.1: %Interface.type.6f2e43.1 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.6f2e43.2: type = facet_type <@Interface.loc13> [concrete]
 // CHECK:STDOUT:   %Self.8875a4.2: %Interface.type.6f2e43.2 = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.loc13(%Self.8875a4.2) [symbolic]
+// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf.loc13(%Self.8875a4.2) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.loc13 [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%Interface.WithSelf.F.decl [concrete]
@@ -126,9 +126,9 @@ interface Class { }
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.loc4(constants.%Self.8875a4.1) {}
+// CHECK:STDOUT: specific @Interface.WithSelf.loc4(constants.%Self.8875a4.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.loc13(constants.%Self.8875a4.2) {}
+// CHECK:STDOUT: specific @Interface.WithSelf.loc13(constants.%Self.8875a4.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.8875a4.2) {}
 // CHECK:STDOUT:
@@ -141,7 +141,7 @@ interface Class { }
 // CHECK:STDOUT:   %Self.8875a4.2: %Interface.type.6f2e43.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.8875a4.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.loc13(%Self.8875a4.2) [symbolic]
+// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf.loc13(%Self.8875a4.2) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.loc13 [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%Interface.WithSelf.F.decl [concrete]
@@ -201,9 +201,9 @@ interface Class { }
 // CHECK:STDOUT:   fn(%self.param: @Interface.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.loc4(constants.%Self.8875a4.1) {}
+// CHECK:STDOUT: specific @Interface.WithSelf.loc4(constants.%Self.8875a4.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.loc13(constants.%Self.8875a4.2) {}
+// CHECK:STDOUT: specific @Interface.WithSelf.loc13(constants.%Self.8875a4.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.8875a4.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.8875a4.2
@@ -260,5 +260,5 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class.loc2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class.loc11(constants.%Self) {}
+// CHECK:STDOUT: specific @Class.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

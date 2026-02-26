@@ -41,15 +41,15 @@ interface Outer {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.887: %Interface.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface(%Self.887) [symbolic]
+// CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf(%Self.887) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [concrete]
 // CHECK:STDOUT:   %Self.672: %Outer.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.672)> [symbolic]
 // CHECK:STDOUT:   %Self.920: %Inner.type = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Inner.WithSelf.F.type.fc250e.1: type = fn_type @Inner.WithSelf.F.loc30, @Inner(%Self.672, %Self.920) [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.fc250e.1: type = fn_type @Inner.WithSelf.F.loc30, @Inner.WithSelf(%Self.672, %Self.920) [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.cf79c3.1: %Inner.WithSelf.F.type.fc250e.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Inner.WithSelf.F.type.fc250e.2: type = fn_type @Inner.WithSelf.F.loc36, @Inner(%Self.672, %Self.920) [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.fc250e.2: type = fn_type @Inner.WithSelf.F.loc36, @Inner.WithSelf(%Self.672, %Self.920) [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.cf79c3.2: %Inner.WithSelf.F.type.fc250e.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,11 +130,11 @@ interface Outer {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Self.887) {}
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Self.887) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.887) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(constants.%Self.672) {}
+// CHECK:STDOUT: specific @Outer.WithSelf(constants.%Self.672) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.672) {
 // CHECK:STDOUT: !definition:
@@ -143,7 +143,7 @@ interface Outer {
 // CHECK:STDOUT:   %Self.loc25_19.3 => constants.%Self.920
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%Self.672, constants.%Self.920) {}
+// CHECK:STDOUT: specific @Inner.WithSelf(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.WithSelf.F.loc30(constants.%Self.672, constants.%Self.920) {}
 // CHECK:STDOUT:

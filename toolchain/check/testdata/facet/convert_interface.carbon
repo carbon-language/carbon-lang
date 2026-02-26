@@ -117,13 +117,13 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.247) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {}
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Eats.facet) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Eats.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

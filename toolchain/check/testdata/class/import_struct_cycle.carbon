@@ -111,7 +111,7 @@ fn Run() {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.6f4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Cycle) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.7c8: %ptr.as.Copy.impl.Op.type.6f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e6c, (%Copy.impl_witness.b7e) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.706: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.706: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.e5b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.706, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.7c8, @ptr.as.Copy.impl.Op(%Cycle) [concrete]
 // CHECK:STDOUT: }

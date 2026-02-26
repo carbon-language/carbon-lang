@@ -206,5 +206,5 @@ impl () as B(1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(<error>, <error>) {}
+// CHECK:STDOUT: specific @B.WithSelf(<error>, <error>) {}
 // CHECK:STDOUT:

@@ -443,15 +443,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc35_17(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Edible(constants.%Self.461) {
+// CHECK:STDOUT: specific @Edible.WithSelf(constants.%Self.461) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Edible(constants.%Edible.facet) {
+// CHECK:STDOUT: specific @Edible.WithSelf(constants.%Edible.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,7 +459,7 @@ fn F() {
 // CHECK:STDOUT:   %Food.loc21_16.1 => constants.%Food.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Food.67d, constants.%Self.857) {}
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Food.67d, constants.%Self.857) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%U.binding.as_type) {
 // CHECK:STDOUT:   %Food.loc21_16.1 => constants.%U.binding.as_type
@@ -478,15 +478,15 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness.loc26_51.2 => constants.%Eats.impl_witness.0150b7.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%U.binding.as_type, constants.%Self.857) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%U.binding.as_type, constants.%Self.857) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%U.binding.as_type, constants.%Eats.facet.31f) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%U.binding.as_type, constants.%Eats.facet.31f) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Animal.facet) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Animal.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -498,7 +498,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.loc21_29.2 => constants.%Self.a66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Food.binding.as_type.8cc, constants.%Self.857) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Food.binding.as_type.8cc, constants.%Self.857) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -591,7 +591,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.loc21_29.2 => constants.%Self.ebd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Grass, constants.%Self.857) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Grass, constants.%Self.857) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

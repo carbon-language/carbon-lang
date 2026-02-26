@@ -334,11 +334,11 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGenericNoParams(constants.%Self.9fc) {
+// CHECK:STDOUT: specific @NotGenericNoParams.WithSelf(constants.%Self.9fc) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGenericButParams(constants.%Self.290) {
+// CHECK:STDOUT: specific @NotGenericButParams.WithSelf(constants.%Self.290) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -346,7 +346,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %T.loc6_28.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc6(constants.%T, constants.%Self.268) {}
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc6(constants.%T, constants.%Self.268) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
@@ -354,19 +354,19 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(constants.%T, constants.%Self.d3a) {}
+// CHECK:STDOUT: specific @GenericNoParams.WithSelf(constants.%T, constants.%Self.d3a) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc10_30.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%T, constants.%U, constants.%Self.c75) {}
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc10(constants.%T, constants.%U, constants.%Self.c75) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGenericNoParams(constants.%NotGenericNoParams.facet) {
+// CHECK:STDOUT: specific @NotGenericNoParams.WithSelf(constants.%NotGenericNoParams.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGenericButParams(constants.%NotGenericButParams.facet) {
+// CHECK:STDOUT: specific @NotGenericButParams.WithSelf(constants.%NotGenericButParams.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,11 +378,11 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %Self.loc6_38.2 => constants.%Self.fec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc6(constants.%X, constants.%Self.268) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc6(constants.%X, constants.%Self.268) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc6(constants.%X, constants.%GenericAndParams.facet.109) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc6(constants.%X, constants.%GenericAndParams.facet.109) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,11 +402,11 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %Self.loc9_29.2 => constants.%Self.b86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(constants.%X, constants.%Self.d3a) {
+// CHECK:STDOUT: specific @GenericNoParams.WithSelf(constants.%X, constants.%Self.d3a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(constants.%X, constants.%GenericNoParams.facet) {
+// CHECK:STDOUT: specific @GenericNoParams.WithSelf(constants.%X, constants.%GenericNoParams.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -419,11 +419,11 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %Self.loc10_40.2 => constants.%Self.292
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%X, constants.%X, constants.%Self.c75) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc10(constants.%X, constants.%X, constants.%Self.c75) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%X, constants.%X, constants.%GenericAndParams.facet.ac4) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc10(constants.%X, constants.%X, constants.%GenericAndParams.facet.ac4) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,7 +454,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_generic_params.carbon
 // CHECK:STDOUT:
@@ -483,7 +483,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {}
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
 // CHECK:STDOUT:
@@ -512,7 +512,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(constants.%Self) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only.carbon
 // CHECK:STDOUT:
@@ -562,5 +562,5 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(constants.%T, constants.%Self) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:

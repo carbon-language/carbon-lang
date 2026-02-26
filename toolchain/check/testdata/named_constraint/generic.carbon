@@ -206,19 +206,19 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_24.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericType(constants.%T, constants.%Self.31c17c.1) {}
+// CHECK:STDOUT: specific @GenericType.WithSelf(constants.%T, constants.%Self.31c17c.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_21.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericZ(constants.%U, constants.%Self.31c17c.2) {}
+// CHECK:STDOUT: specific @GenericZ.WithSelf(constants.%U, constants.%Self.31c17c.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_35.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T, constants.%Self.31c17c.3) {}
+// CHECK:STDOUT: specific @ForwardDeclaredGeneric.WithSelf(constants.%T, constants.%Self.31c17c.3) {}
 // CHECK:STDOUT:

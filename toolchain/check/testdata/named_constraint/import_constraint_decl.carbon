@@ -157,9 +157,9 @@ impl C as B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self.f45) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self.f45) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.651) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.651) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

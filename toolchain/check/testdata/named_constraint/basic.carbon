@@ -76,7 +76,7 @@ constraint Declared {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Declared(constants.%Self) {}
+// CHECK:STDOUT: specific @Declared.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_declaration.carbon
 // CHECK:STDOUT:
@@ -103,5 +103,5 @@ constraint Declared {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclared(constants.%Self) {}
+// CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

@@ -34,7 +34,7 @@ class A {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %.0ab: Core.Form = init_form %Self.binding.as_type, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.b09: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.17e: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible(%Self) [symbolic]
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.17e: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.cfb: %DefaultConstructible.WithSelf.Make.type.17e = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultConstructible.assoc_type: type = assoc_entity_type @DefaultConstructible [concrete]
 // CHECK:STDOUT:   %assoc0: %DefaultConstructible.assoc_type = assoc_entity element0, @DefaultConstructible.%DefaultConstructible.WithSelf.Make.decl [concrete]
@@ -48,7 +48,7 @@ class A {
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make.type: type = fn_type @C.as.DefaultConstructible.impl.Make [concrete]
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make: %C.as.DefaultConstructible.impl.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%DefaultConstructible.impl_witness) [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.0cb: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible(%DefaultConstructible.facet) [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.0cb: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible.WithSelf(%DefaultConstructible.facet) [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.49d: %DefaultConstructible.WithSelf.Make.type.0cb = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
@@ -148,7 +148,7 @@ class A {
 // CHECK:STDOUT:   return %.loc25_34 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DefaultConstructible(constants.%Self) {
+// CHECK:STDOUT: specific @DefaultConstructible.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type => constants.%DefaultConstructible.WithSelf.Make.type.17e
@@ -162,7 +162,7 @@ class A {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b09
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DefaultConstructible(constants.%DefaultConstructible.facet) {
+// CHECK:STDOUT: specific @DefaultConstructible.WithSelf(constants.%DefaultConstructible.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%DefaultConstructible.facet
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type => constants.%DefaultConstructible.WithSelf.Make.type.0cb

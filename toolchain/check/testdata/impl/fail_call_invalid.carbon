@@ -35,7 +35,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self: %Simple.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.5e9: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.G.type.d78: type = fn_type @Simple.WithSelf.G, @Simple(%Self) [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.G.type.d78: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.G.41d: %Simple.WithSelf.G.type.d78 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
@@ -48,7 +48,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.1: type = fn_type @i32.as.Simple.impl.G.loc24_27.1 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.4f6260.1: %i32.as.Simple.impl.G.type.32ad7a.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.G.type.9d9: type = fn_type @Simple.WithSelf.G, @Simple(%Simple.facet) [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.G.type.9d9: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Simple.facet) [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.G.26c: %Simple.WithSelf.G.type.9d9 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.2: type = fn_type @i32.as.Simple.impl.G.loc24_27.2 [concrete]
@@ -178,7 +178,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%Self) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Self
 // CHECK:STDOUT:   %Simple.WithSelf.G.type => constants.%Simple.WithSelf.G.type.d78
@@ -191,7 +191,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(constants.%Simple.facet) {
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc16 => constants.%Simple.facet
 // CHECK:STDOUT:   %Simple.WithSelf.G.type => constants.%Simple.WithSelf.G.type.9d9

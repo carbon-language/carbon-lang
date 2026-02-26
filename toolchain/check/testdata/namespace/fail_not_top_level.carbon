@@ -53,7 +53,7 @@ interface I {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type.c78: type = facet_type <@I.loc33> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.c78 = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type.4dd: type = fn_type @I.loc39, @I.loc33(%Self) [symbolic]
+// CHECK:STDOUT:   %I.type.4dd: type = fn_type @I.loc39, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I: %I.type.4dd = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,7 +136,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.loc33(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc39 => constants.%Self
 // CHECK:STDOUT:   %I.type => constants.%I.type.4dd

@@ -60,11 +60,11 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [concrete]
 // CHECK:STDOUT:   %Self: %BeingDefined.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %BeingDefined.WithSelf.H.type: type = fn_type @BeingDefined.WithSelf.H, @BeingDefined(%Self) [symbolic]
+// CHECK:STDOUT:   %BeingDefined.WithSelf.H.type: type = fn_type @BeingDefined.WithSelf.H, @BeingDefined.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %BeingDefined.WithSelf.H: %BeingDefined.WithSelf.H.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %BeingDefined.assoc_type: type = assoc_entity_type @BeingDefined [concrete]
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, @BeingDefined.%BeingDefined.WithSelf.H.decl [concrete]
-// CHECK:STDOUT:   %BeingDefined.WithSelf.I.type: type = fn_type @BeingDefined.WithSelf.I, @BeingDefined(%Self) [symbolic]
+// CHECK:STDOUT:   %BeingDefined.WithSelf.I.type: type = fn_type @BeingDefined.WithSelf.I, @BeingDefined.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %BeingDefined.WithSelf.I: %BeingDefined.WithSelf.I.type = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -121,7 +121,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @BeingDefined(constants.%Self) {}
+// CHECK:STDOUT: specific @BeingDefined.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BeingDefined.WithSelf.H(constants.%Self) {}
 // CHECK:STDOUT:

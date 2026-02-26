@@ -202,7 +202,8 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
   }
 }
 
-auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
+auto InstNamer::GetScopeName(ScopeId scope, bool with_self) const
+    -> std::string {
   switch (scope) {
     case ScopeId::None:
       return "<no scope>";
@@ -218,8 +219,11 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
       return "constants";
 
     // For everything else, use an @ prefix.
-    default:
-      return ("@" + GetScopeInfo(scope).name.GetFullName()).str();
+    default: {
+      const auto& info = GetScopeInfo(scope);
+      const auto& name = with_self ? info.name_with_self : info.name;
+      return ("@" + name.GetFullName()).str();
+    }
   }
 }
 

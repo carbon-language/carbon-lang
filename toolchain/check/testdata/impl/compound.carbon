@@ -135,7 +135,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type.8de: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%Dest, %Self) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert: %ImplicitAs.WithSelf.Convert.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %assoc0: %ImplicitAs.assoc_type = assoc_entity element0, @ImplicitAs.%ImplicitAs.WithSelf.Convert.decl [symbolic]
@@ -213,7 +213,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest.loc3_22.1 => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest, constants.%Self) {}
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%Dest, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -230,7 +230,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
 // CHECK:STDOUT:   %Self: %NonInstance1.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.3a6: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1(%Self) [symbolic]
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.3a6: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.898: %NonInstance1.WithSelf.F1.type.3a6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %NonInstance1.assoc_type: type = assoc_entity_type @NonInstance1 [concrete]
@@ -241,7 +241,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %struct_type.a.as.NonInstance1.impl.F1.type: type = fn_type @struct_type.a.as.NonInstance1.impl.F1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.as.NonInstance1.impl.F1: %struct_type.a.as.NonInstance1.impl.F1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value %struct_type.a, (%NonInstance1.impl_witness) [concrete]
-// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.a2c: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1(%NonInstance1.facet) [concrete]
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.a2c: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1.WithSelf(%NonInstance1.facet) [concrete]
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.e33: %NonInstance1.WithSelf.F1.type.a2c = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1.type: type = fn_type @NonInstanceCall1 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1: %NonInstanceCall1.type = struct_value () [concrete]
@@ -312,7 +312,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance1(constants.%Self) {
+// CHECK:STDOUT: specific @NonInstance1.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Self
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type => constants.%NonInstance1.WithSelf.F1.type.3a6
@@ -321,7 +321,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance1.WithSelf.F1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance1(constants.%NonInstance1.facet) {
+// CHECK:STDOUT: specific @NonInstance1.WithSelf(constants.%NonInstance1.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%NonInstance1.facet
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type => constants.%NonInstance1.WithSelf.F1.type.a2c
@@ -335,7 +335,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance2.type: type = facet_type <@NonInstance2> [concrete]
 // CHECK:STDOUT:   %Self.e6c: %NonInstance2.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.824: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2(%Self.e6c) [symbolic]
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.824: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2.WithSelf(%Self.e6c) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance2.WithSelf.F2.9da: %NonInstance2.WithSelf.F2.type.824 = struct_value () [symbolic]
 // CHECK:STDOUT:   %NonInstance2.assoc_type: type = assoc_entity_type @NonInstance2 [concrete]
@@ -346,7 +346,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %struct_type.b.as.NonInstance2.impl.F2.type: type = fn_type @struct_type.b.as.NonInstance2.impl.F2 [concrete]
 // CHECK:STDOUT:   %struct_type.b.as.NonInstance2.impl.F2: %struct_type.b.as.NonInstance2.impl.F2.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance2.facet: %NonInstance2.type = facet_value %struct_type.b, (%NonInstance2.impl_witness) [concrete]
-// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.041: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2(%NonInstance2.facet) [concrete]
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.041: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2.WithSelf(%NonInstance2.facet) [concrete]
 // CHECK:STDOUT:   %NonInstance2.WithSelf.F2.fc4: %NonInstance2.WithSelf.F2.type.041 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.d5c: type = pattern_type %struct_type.b [concrete]
 // CHECK:STDOUT:   %NonInstanceCall2.type: type = fn_type @NonInstanceCall2 [concrete]
@@ -357,7 +357,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.type.031: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.738: %ImplicitAs.type.031 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ff3: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b3a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b3a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self.738) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.1de: %ImplicitAs.WithSelf.Convert.type.b3a = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.738 [symbolic]
@@ -365,7 +365,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.282: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance2.type)> [concrete]
 // CHECK:STDOUT:   %Self.df1: %ImplicitAs.type.282 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.03b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%NonInstance2.type, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.03b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%NonInstance2.type, %Self.738) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.4fe: %ImplicitAs.WithSelf.Convert.type.03b = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.cd6: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance2.type) [concrete]
 // CHECK:STDOUT:   %assoc0.af4: %ImplicitAs.assoc_type.cd6 = assoc_entity element0, imports.%Core.import_ref.201 [concrete]
@@ -489,7 +489,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance2(constants.%Self.e6c) {
+// CHECK:STDOUT: specific @NonInstance2.WithSelf(constants.%Self.e6c) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc6 => constants.%Self.e6c
 // CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type => constants.%NonInstance2.WithSelf.F2.type.824
@@ -498,7 +498,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance2.WithSelf.F2(constants.%Self.e6c) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance2(constants.%NonInstance2.facet) {
+// CHECK:STDOUT: specific @NonInstance2.WithSelf(constants.%NonInstance2.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc6 => constants.%NonInstance2.facet
 // CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type => constants.%NonInstance2.WithSelf.F2.type.041
@@ -511,7 +511,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest.1 => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest, constants.%Self.738) {}
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%Dest, constants.%Self.738) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%Dest, constants.%Self.738) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -531,7 +531,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self.1 => constants.%Self.df1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance2.type, constants.%Self.738) {
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%NonInstance2.type, constants.%Self.738) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Dest.2 => constants.%NonInstance2.type
 // CHECK:STDOUT:   %ImplicitAs.type.2 => constants.%ImplicitAs.type.282
@@ -547,7 +547,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance3.type: type = facet_type <@NonInstance3> [concrete]
 // CHECK:STDOUT:   %Self.0da: %NonInstance3.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.c21: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3(%Self.0da) [symbolic]
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.c21: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3.WithSelf(%Self.0da) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance3.WithSelf.F3.b62: %NonInstance3.WithSelf.F3.type.c21 = struct_value () [symbolic]
 // CHECK:STDOUT:   %NonInstance3.assoc_type: type = assoc_entity_type @NonInstance3 [concrete]
@@ -558,7 +558,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %struct_type.c.as.NonInstance3.impl.F3.type: type = fn_type @struct_type.c.as.NonInstance3.impl.F3 [concrete]
 // CHECK:STDOUT:   %struct_type.c.as.NonInstance3.impl.F3: %struct_type.c.as.NonInstance3.impl.F3.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance3.facet: %NonInstance3.type = facet_value %struct_type.c, (%NonInstance3.impl_witness) [concrete]
-// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.a3f: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3(%NonInstance3.facet) [concrete]
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.a3f: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3.WithSelf(%NonInstance3.facet) [concrete]
 // CHECK:STDOUT:   %NonInstance3.WithSelf.F3.04b: %NonInstance3.WithSelf.F3.type.a3f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.c [concrete]
 // CHECK:STDOUT:   %pattern_type.5f5: type = pattern_type %ptr [concrete]
@@ -570,7 +570,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.type.031: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.738: %ImplicitAs.type.031 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ff3: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b3a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%Dest, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b3a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self.738) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.1de: %ImplicitAs.WithSelf.Convert.type.b3a = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.738 [symbolic]
@@ -578,7 +578,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %.3cf: Core.Form = init_form %Dest, call_param1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.deb: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance3.type)> [concrete]
 // CHECK:STDOUT:   %Self.9cf: %ImplicitAs.type.deb = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.8ec: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%NonInstance3.type, %Self.738) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.8ec: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%NonInstance3.type, %Self.738) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.0e4: %ImplicitAs.WithSelf.Convert.type.8ec = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.eea: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance3.type) [concrete]
 // CHECK:STDOUT:   %assoc0.605: %ImplicitAs.assoc_type.eea = assoc_entity element0, imports.%Core.import_ref.201 [concrete]
@@ -704,7 +704,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance3(constants.%Self.0da) {
+// CHECK:STDOUT: specific @NonInstance3.WithSelf(constants.%Self.0da) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc6 => constants.%Self.0da
 // CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type => constants.%NonInstance3.WithSelf.F3.type.c21
@@ -713,7 +713,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance3.WithSelf.F3(constants.%Self.0da) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance3(constants.%NonInstance3.facet) {
+// CHECK:STDOUT: specific @NonInstance3.WithSelf(constants.%NonInstance3.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc6 => constants.%NonInstance3.facet
 // CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type => constants.%NonInstance3.WithSelf.F3.type.a3f
@@ -726,7 +726,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest.1 => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest, constants.%Self.738) {}
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%Dest, constants.%Self.738) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%Dest, constants.%Self.738) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -746,7 +746,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self.1 => constants.%Self.9cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance3.type, constants.%Self.738) {
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%NonInstance3.type, constants.%Self.738) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Dest.2 => constants.%NonInstance3.type
 // CHECK:STDOUT:   %ImplicitAs.type.2 => constants.%ImplicitAs.type.deb
@@ -764,7 +764,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.97b: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %Instance1.WithSelf.G1.type.291: type = fn_type @Instance1.WithSelf.G1, @Instance1(%Self) [symbolic]
+// CHECK:STDOUT:   %Instance1.WithSelf.G1.type.291: type = fn_type @Instance1.WithSelf.G1, @Instance1.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.db7: %Instance1.WithSelf.G1.type.291 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Instance1.assoc_type: type = assoc_entity_type @Instance1 [concrete]
@@ -776,7 +776,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %struct_type.d.as.Instance1.impl.G1.type: type = fn_type @struct_type.d.as.Instance1.impl.G1 [concrete]
 // CHECK:STDOUT:   %struct_type.d.as.Instance1.impl.G1: %struct_type.d.as.Instance1.impl.G1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance1.facet: %Instance1.type = facet_value %struct_type.d, (%Instance1.impl_witness) [concrete]
-// CHECK:STDOUT:   %Instance1.WithSelf.G1.type.ba6: type = fn_type @Instance1.WithSelf.G1, @Instance1(%Instance1.facet) [concrete]
+// CHECK:STDOUT:   %Instance1.WithSelf.G1.type.ba6: type = fn_type @Instance1.WithSelf.G1, @Instance1.WithSelf(%Instance1.facet) [concrete]
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.ceb: %Instance1.WithSelf.G1.type.ba6 = struct_value () [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
@@ -913,7 +913,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Instance1(constants.%Self) {
+// CHECK:STDOUT: specific @Instance1.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Self
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.type => constants.%Instance1.WithSelf.G1.type.291
@@ -926,7 +926,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.97b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Instance1(constants.%Instance1.facet) {
+// CHECK:STDOUT: specific @Instance1.WithSelf(constants.%Instance1.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Instance1.facet
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.type => constants.%Instance1.WithSelf.G1.type.ba6
@@ -946,7 +946,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.a35: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %Instance2.WithSelf.G2.type.e15: type = fn_type @Instance2.WithSelf.G2, @Instance2(%Self) [symbolic]
+// CHECK:STDOUT:   %Instance2.WithSelf.G2.type.e15: type = fn_type @Instance2.WithSelf.G2, @Instance2.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.6c8: %Instance2.WithSelf.G2.type.e15 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Instance2.assoc_type: type = assoc_entity_type @Instance2 [concrete]
@@ -958,7 +958,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %struct_type.e.as.Instance2.impl.G2.type: type = fn_type @struct_type.e.as.Instance2.impl.G2 [concrete]
 // CHECK:STDOUT:   %struct_type.e.as.Instance2.impl.G2: %struct_type.e.as.Instance2.impl.G2.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance2.facet: %Instance2.type = facet_value %struct_type.e, (%Instance2.impl_witness) [concrete]
-// CHECK:STDOUT:   %Instance2.WithSelf.G2.type.008: type = fn_type @Instance2.WithSelf.G2, @Instance2(%Instance2.facet) [concrete]
+// CHECK:STDOUT:   %Instance2.WithSelf.G2.type.008: type = fn_type @Instance2.WithSelf.G2, @Instance2.WithSelf(%Instance2.facet) [concrete]
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.f23: %Instance2.WithSelf.G2.type.008 = struct_value () [concrete]
 // CHECK:STDOUT:   %InstanceCallFail.type: type = fn_type @InstanceCallFail [concrete]
 // CHECK:STDOUT:   %InstanceCallFail: %InstanceCallFail.type = struct_value () [concrete]
@@ -1046,7 +1046,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Instance2(constants.%Self) {
+// CHECK:STDOUT: specific @Instance2.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Self
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.type => constants.%Instance2.WithSelf.G2.type.e15
@@ -1059,7 +1059,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Instance2(constants.%Instance2.facet) {
+// CHECK:STDOUT: specific @Instance2.WithSelf(constants.%Instance2.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.loc4 => constants.%Instance2.facet
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.type => constants.%Instance2.WithSelf.G2.type.008
