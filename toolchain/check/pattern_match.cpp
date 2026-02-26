@@ -410,8 +410,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       // If the form is initializing, match this as a `VarPattern` before
       // matching it as a parameter pattern.
       if (form_kind == SemIR::InitForm::Kind) {
-        auto new_scrutinee_id = DoEmitVarPatternMatchImpl(
-            context, param_pattern.type_id, entry);
+        auto new_scrutinee_id =
+            DoEmitVarPatternMatchImpl(context, param_pattern.type_id, entry);
         entry.scrutinee_id = new_scrutinee_id;
       }
     }
