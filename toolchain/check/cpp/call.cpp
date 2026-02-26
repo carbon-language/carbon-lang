@@ -189,6 +189,14 @@ static auto ConvertArgToTemplateArg(
                                                param_type);
           return clang::TemplateArgumentLoc(template_arg, template_loc);
         }
+      } else if (param_type->isFloatingType()) {
+        if (auto float_value =
+                context.insts().TryGetAs<SemIR::FloatValue>(const_inst_id)) {
+          const auto& ap_float = context.floats().Get(float_value->float_id);
+          clang::TemplateArgument template_arg(
+              context.ast_context(), param_type, clang::APValue(ap_float));
+          return clang::TemplateArgumentLoc(template_arg, template_loc);
+        }
       }
     }
 

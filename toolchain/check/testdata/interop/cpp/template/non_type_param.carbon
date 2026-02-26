@@ -84,10 +84,6 @@ import Cpp inline '''
 template<float N> struct Struct {};
 Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
 ''';
-// CHECK:STDERR: float.carbon:[[@LINE+4]]:19: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
-// CHECK:STDERR:                   ^~~~~
-// CHECK:STDERR:
 let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
 
 // --- valid.carbon
