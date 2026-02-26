@@ -129,7 +129,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.cd9 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.cd9 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.cd9 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.56b = value_param call_param0
 // CHECK:STDOUT:     %.loc45: type = splice_block %ptr.loc45 [concrete = constants.%ptr.56b] {

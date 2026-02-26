@@ -135,7 +135,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.fa6 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.fa6 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.fa6 = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %A.764 = value_param call_param0
 // CHECK:STDOUT:     %.loc27: type = splice_block %A [concrete = constants.%A.764] {

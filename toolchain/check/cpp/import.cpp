@@ -1330,8 +1330,7 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
         MakeImportedLocIdAndInst(
             context, return_type_import_ir_inst_id,
             SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                    .subpattern_id = return_slot_pattern_id,
-                                    .index = init_form->index})));
+                                    .subpattern_id = return_slot_pattern_id})));
     return_patterns_id = context.inst_blocks().Add({param_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,

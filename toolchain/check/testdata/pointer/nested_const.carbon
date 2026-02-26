@@ -75,9 +75,9 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %p.patt: %pattern_type.800 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.800 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.800 = value_param_pattern %p.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc16_47: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc16_41: type = const_type %i32.loc16_47 [concrete = constants.%const.20a]

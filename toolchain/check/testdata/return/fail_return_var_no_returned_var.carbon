@@ -37,7 +37,7 @@ fn Procedure() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [concrete = constants.%Procedure] {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

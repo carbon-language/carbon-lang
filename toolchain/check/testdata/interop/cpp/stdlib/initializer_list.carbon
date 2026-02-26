@@ -147,9 +147,9 @@ fn F() {
 // CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.1: %initializer_list.initializer_list.type.9fcb7f.1 = fn_decl @initializer_list.initializer_list.loc8 [concrete = constants.%initializer_list.initializer_list.643507.1] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
@@ -159,9 +159,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.2: %initializer_list.initializer_list.type.9fcb7f.2 = fn_decl @initializer_list.initializer_list.loc10 [concrete = constants.%initializer_list.initializer_list.643507.2] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
@@ -171,9 +171,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.3: %initializer_list.initializer_list.type.9fcb7f.3 = fn_decl @initializer_list.initializer_list.loc12 [concrete = constants.%initializer_list.initializer_list.643507.3] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0

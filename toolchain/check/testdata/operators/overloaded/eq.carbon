@@ -140,11 +140,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [concrete = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.476 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_29.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc11_29.2: Core.Form = init_form %.loc11_29.1, call_param2 [concrete = constants.%.d29]
@@ -159,11 +159,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [concrete = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.476 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_32.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_32.2: Core.Form = init_form %.loc15_32.1, call_param2 [concrete = constants.%.d29]
@@ -181,11 +181,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: impl @C.as.EqWith.impl: %C.ref.loc6_6 as %EqWith.type {
 // CHECK:STDOUT:   %C.as.EqWith.impl.Equal.decl: %C.as.EqWith.impl.Equal.type = fn_decl @C.as.EqWith.impl.Equal [concrete = constants.%C.as.EqWith.impl.Equal] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.476 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.476 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1, call_param2 [concrete = constants.%.d29]
@@ -200,11 +200,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual.decl: %C.as.EqWith.impl.NotEqual.type = fn_decl @C.as.EqWith.impl.NotEqual [concrete = constants.%C.as.EqWith.impl.NotEqual] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.476 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.476 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.476 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.476 = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_37.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc8_37.2: Core.Form = init_form %.loc8_37.1, call_param2 [concrete = constants.%.d29]
@@ -300,11 +300,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [concrete = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.54d = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54d = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54d = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.54d = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.54d = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.54d = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_29.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc6_29.2: Core.Form = init_form %.loc6_29.1, call_param2 [concrete = constants.%.d29]
@@ -319,11 +319,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [concrete = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.54d = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54d = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54d = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.54d = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.54d = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.54d = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_32.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc14_32.2: Core.Form = init_form %.loc14_32.1, call_param2 [concrete = constants.%.d29]
@@ -418,11 +418,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [concrete = constants.%TestRhsBad] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.224 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.224 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.224 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.07d = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.07d = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.07d = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_30.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc12_30.2: Core.Form = init_form %.loc12_30.1, call_param2 [concrete = constants.%.d29]
@@ -437,11 +437,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLhsBad.decl: %TestLhsBad.type = fn_decl @TestLhsBad [concrete = constants.%TestLhsBad] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.07d = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.07d = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.07d = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.224 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.224 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.224 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20_30.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc20_30.2: Core.Form = init_form %.loc20_30.1, call_param2 [concrete = constants.%.d29]
@@ -459,11 +459,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: impl @C.as.EqWith.impl: %C.ref.loc7_6 as %EqWith.type {
 // CHECK:STDOUT:   %C.as.EqWith.impl.Equal.decl: %C.as.EqWith.impl.Equal.type = fn_decl @C.as.EqWith.impl.Equal [concrete = constants.%C.as.EqWith.impl.Equal] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.224 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.224 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.224 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.224 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.224 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.224 = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc8_34.2: Core.Form = init_form %.loc8_34.1, call_param2 [concrete = constants.%.d29]
@@ -478,11 +478,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual.decl: %C.as.EqWith.impl.NotEqual.type = fn_decl @C.as.EqWith.impl.NotEqual [concrete = constants.%C.as.EqWith.impl.NotEqual] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.224 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.224 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.224 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.224 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.224 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.224 = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_37.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc9_37.2: Core.Form = init_form %.loc9_37.1, call_param2 [concrete = constants.%.d29]

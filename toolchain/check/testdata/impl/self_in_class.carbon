@@ -72,7 +72,7 @@ class A {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.decl: @DefaultConstructible.WithSelf.%DefaultConstructible.WithSelf.Make.type (%DefaultConstructible.WithSelf.Make.type.17e) = fn_decl @DefaultConstructible.WithSelf.Make [symbolic = @DefaultConstructible.WithSelf.%DefaultConstructible.WithSelf.Make (constants.%DefaultConstructible.WithSelf.Make.cfb)] {
 // CHECK:STDOUT:     %return.patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -94,7 +94,7 @@ class A {
 // CHECK:STDOUT: impl @C.as.DefaultConstructible.impl: %C.ref as %DefaultConstructible.ref {
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make.decl: %C.as.DefaultConstructible.impl.Make.type = fn_decl @C.as.DefaultConstructible.impl.Make [concrete = constants.%C.as.DefaultConstructible.impl.Make] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.DefaultConstructible.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc25_18: Core.Form = init_form %Self.ref, call_param0 [concrete = constants.%.768]

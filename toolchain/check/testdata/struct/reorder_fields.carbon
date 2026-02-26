@@ -96,7 +96,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %MakeI32.decl: %MakeI32.type = fn_decl @MakeI32 [concrete = constants.%MakeI32] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
@@ -105,7 +105,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [concrete = constants.%MakeF64] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %f64, call_param0 [concrete = constants.%.833]
@@ -114,7 +114,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.a5c = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a5c = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a5c = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %f64.loc18: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]

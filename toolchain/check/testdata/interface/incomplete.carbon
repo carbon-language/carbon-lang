@@ -253,7 +253,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.9d9 = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.422) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.422) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.422) = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_10: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

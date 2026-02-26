@@ -1561,8 +1561,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
       resolver, import_inst_id,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-       .subpattern_id = subpattern_id,
-       .index = inst.index});
+       .subpattern_id = subpattern_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

@@ -91,7 +91,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %s.patt: %pattern_type.851 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.851 = value_param_pattern %s.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.851 = value_param_pattern %s.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
@@ -103,7 +103,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %cond.patt: %pattern_type.831 = value_binding_pattern cond [concrete]
-// CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = type_literal bool [concrete = bool]

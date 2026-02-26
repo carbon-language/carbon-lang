@@ -170,9 +170,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.decl: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type) = fn_decl @ImplicitAs.WithSelf.Convert [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert)] {
 // CHECK:STDOUT:       %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.2 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:       %.loc4_31.2: Core.Form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
@@ -407,7 +407,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCall2.decl: %NonInstanceCall2.type = fn_decl @NonInstanceCall2 [concrete = constants.%NonInstanceCall2] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d5c = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.d5c = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.d5c = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %struct_type.b = value_param call_param0
 // CHECK:STDOUT:     %.loc13_31: type = splice_block %struct_type.b [concrete = constants.%struct_type.b] {
@@ -620,7 +620,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [concrete = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %pattern_type.5f5 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.5f5 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.5f5 = value_param_pattern %p.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc13_39: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -806,7 +806,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.515 = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.515 = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.515 = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %struct_type.d = value_param call_param0
 // CHECK:STDOUT:     %.loc11_27: type = splice_block %struct_type.d [concrete = constants.%struct_type.d] {
@@ -818,7 +818,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [concrete = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %pattern_type.8d6 = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.8d6 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.8d6 = value_param_pattern %p.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc15_36: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -838,7 +838,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.decl: @Instance1.WithSelf.%Instance1.WithSelf.G1.type (%Instance1.WithSelf.G1.type.291) = fn_decl @Instance1.WithSelf.G1 [symbolic = @Instance1.WithSelf.%Instance1.WithSelf.G1 (constants.%Instance1.WithSelf.G1.db7)] {
 // CHECK:STDOUT:     %self.patt: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.97b) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.97b) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.97b) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Instance1.WithSelf.G1.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -861,7 +861,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: impl @struct_type.d.as.Instance1.impl: %struct_type.d as %Instance1.ref {
 // CHECK:STDOUT:   %struct_type.d.as.Instance1.impl.G1.decl: %struct_type.d.as.Instance1.impl.G1.type = fn_decl @struct_type.d.as.Instance1.impl.G1 [concrete = constants.%struct_type.d.as.Instance1.impl.G1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.515 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.515 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.515 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.d = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @struct_type.d.as.Instance1.impl.%struct_type.d [concrete = constants.%struct_type.d]
@@ -989,7 +989,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.decl: @Instance2.WithSelf.%Instance2.WithSelf.G2.type (%Instance2.WithSelf.G2.type.e15) = fn_decl @Instance2.WithSelf.G2 [symbolic = @Instance2.WithSelf.%Instance2.WithSelf.G2 (constants.%Instance2.WithSelf.G2.6c8)] {
 // CHECK:STDOUT:     %self.patt: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.a35) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.a35) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.a35) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Instance2.WithSelf.G2.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -1012,7 +1012,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: impl @struct_type.e.as.Instance2.impl: %struct_type.e as %Instance2.ref {
 // CHECK:STDOUT:   %struct_type.e.as.Instance2.impl.G2.decl: %struct_type.e.as.Instance2.impl.G2.type = fn_decl @struct_type.e.as.Instance2.impl.G2 [concrete = constants.%struct_type.e.as.Instance2.impl.G2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.efd = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.efd = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.efd = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.e = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @struct_type.e.as.Instance2.impl.%struct_type.e [concrete = constants.%struct_type.e]

@@ -94,7 +94,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_11.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.2: Core.Form = init_form %.loc15_11.1, call_param0 [concrete = constants.%.77a]
@@ -103,7 +103,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_11.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.2: Core.Form = init_form %.loc16_11.1, call_param0 [concrete = constants.%.77a]
@@ -112,7 +112,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Or.decl: %Or.type = fn_decl @Or [concrete = constants.%Or] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_12.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc18_12.2: Core.Form = init_form %.loc18_12.1, call_param0 [concrete = constants.%.77a]
@@ -122,7 +122,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc29: type = type_literal bool [concrete = bool]

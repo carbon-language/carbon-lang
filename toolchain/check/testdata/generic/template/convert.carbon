@@ -158,9 +158,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_34: Core.Form = init_form %i32.loc4, call_param1 [concrete = constants.%.e54]
@@ -177,9 +177,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test1.decl: %Test1.type = fn_decl @Test1 [concrete = constants.%Test1] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc9_21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc9: Core.Form = init_form %i32.loc9_21, call_param1 [concrete = constants.%.e54]
@@ -192,9 +192,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Test2.decl: %Test2.type = fn_decl @Test2 [concrete = constants.%Test2] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc20: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
@@ -209,9 +209,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: impl @C.as.ImplicitAs.impl: %Self.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.decl: %C.as.ImplicitAs.impl.Convert.type = fn_decl @C.as.ImplicitAs.impl.Convert [concrete = constants.%C.as.ImplicitAs.impl.Convert] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c7 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc16_33: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
@@ -406,9 +406,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_34: Core.Form = init_form %i32.loc4, call_param1 [concrete = constants.%.e54]
@@ -426,9 +426,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {
 // CHECK:STDOUT:     %d.patt: %pattern_type.9c8 = value_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.9c8 = value_param_pattern %d.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.9c8 = value_param_pattern %d.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc11: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]

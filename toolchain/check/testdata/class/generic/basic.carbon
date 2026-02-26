@@ -123,9 +123,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.GetAddr.decl: @Class.%Class.GetAddr.type (%Class.GetAddr.type) = fn_decl @Class.GetAddr [symbolic = @Class.%Class.GetAddr (constants.%Class.GetAddr)] {
 // CHECK:STDOUT:       %self.patt: @Class.GetAddr.%pattern_type.loc6_18 (%pattern_type.893) = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Class.GetAddr.%pattern_type.loc6_18 (%pattern_type.893) = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.GetAddr.%pattern_type.loc6_18 (%pattern_type.893) = ref_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.GetAddr.%pattern_type.loc6_32 (%pattern_type.65a) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.GetAddr.%pattern_type.loc6_32 (%pattern_type.65a) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.GetAddr.%pattern_type.loc6_32 (%pattern_type.65a) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
@@ -143,9 +143,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.GetValue.decl: @Class.%Class.GetValue.type (%Class.GetValue.type) = fn_decl @Class.GetValue [symbolic = @Class.%Class.GetValue (constants.%Class.GetValue)] {
 // CHECK:STDOUT:       %self.patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.893) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.893) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.893) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.GetValue.%pattern_type.loc10_29 (%pattern_type.9b9f0c.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.GetValue.%pattern_type.loc10_29 (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.GetValue.%pattern_type.loc10_29 (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_13.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]

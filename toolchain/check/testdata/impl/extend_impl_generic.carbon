@@ -181,7 +181,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -203,7 +203,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %HasF.WithSelf.F.decl: @HasF.WithSelf.%HasF.WithSelf.F.type (%HasF.WithSelf.F.type.246) = fn_decl @HasF.WithSelf.F [symbolic = @HasF.WithSelf.%HasF.WithSelf.F (constants.%HasF.WithSelf.F.58b)] {
 // CHECK:STDOUT:       %return.patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @HasF.%T.loc4_16.2 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %.loc5_13.2: Core.Form = init_form %T.ref, call_param0 [symbolic = %.loc5_13.1 (constants.%.41b)]
@@ -227,7 +227,7 @@ class X(U:! type) {
 // CHECK:STDOUT: impl @C.as.HasF.impl: %Self.ref as %HasF.type {
 // CHECK:STDOUT:   %C.as.HasF.impl.F.decl: %C.as.HasF.impl.F.type = fn_decl @C.as.HasF.impl.F [concrete = constants.%C.as.HasF.impl.F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.9ea = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9ea = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9ea = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Param.ref: type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:     %.loc14: Core.Form = init_form %Param.ref, call_param0 [concrete = constants.%.e8f]
@@ -500,9 +500,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.1d69d8.1) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cd4fc9.1)] {
 // CHECK:STDOUT:       %self.patt: @I.WithSelf.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @I.WithSelf.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @I.WithSelf.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %t.patt: @I.WithSelf.F.%pattern_type.loc5_20 (%pattern_type.51d1c4.1) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @I.WithSelf.F.%pattern_type.loc5_20 (%pattern_type.51d1c4.1) = value_param_pattern %t.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %t.param_patt: @I.WithSelf.F.%pattern_type.loc5_20 (%pattern_type.51d1c4.1) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -544,9 +544,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   impl: %Self.ref as %I.type.loc9_21.2 {
 // CHECK:STDOUT:     %X.as.I.impl.F.decl: @X.as.I.impl.%X.as.I.impl.F.type (%X.as.I.impl.F.type) = fn_decl @X.as.I.impl.F [symbolic = @X.as.I.impl.%X.as.I.impl.F (constants.%X.as.I.impl.F)] {
 // CHECK:STDOUT:       %self.patt: @X.as.I.impl.F.%pattern_type.loc10_17 (%pattern_type.e07) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @X.as.I.impl.F.%pattern_type.loc10_17 (%pattern_type.e07) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @X.as.I.impl.F.%pattern_type.loc10_17 (%pattern_type.e07) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %t.patt: @X.as.I.impl.F.%pattern_type.loc10_36 (%pattern_type.51d1c4.2) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @X.as.I.impl.F.%pattern_type.loc10_36 (%pattern_type.51d1c4.2) = value_param_pattern %t.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %t.param_patt: @X.as.I.impl.F.%pattern_type.loc10_36 (%pattern_type.51d1c4.2) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @X.as.I.impl.F.%X (%X) = value_param call_param0
 // CHECK:STDOUT:       %.loc10_23.1: type = splice_block %Self.ref [symbolic = %X (constants.%X)] {

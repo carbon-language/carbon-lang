@@ -76,7 +76,7 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.e10 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.892) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.892) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.892) = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

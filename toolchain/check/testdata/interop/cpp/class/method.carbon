@@ -278,7 +278,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.value: %HasQualifiers.plain.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.plain.cpp_overload_set [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
 // CHECK:STDOUT:   %HasQualifiers.plain.decl: %HasQualifiers.plain.type = fn_decl @HasQualifiers.plain [concrete = constants.%HasQualifiers.plain] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.e15 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %HasQualifiers = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %HasQualifiers = ref_binding self, %self.param
@@ -286,7 +286,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.ref_this.cpp_overload_set.value: %HasQualifiers.ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %HasQualifiers.ref_this.decl: %HasQualifiers.ref_this.type = fn_decl @HasQualifiers.ref_this [concrete = constants.%HasQualifiers.ref_this] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.e15 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %HasQualifiers = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %HasQualifiers = ref_binding self, %self.param
@@ -361,7 +361,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.F.decl.f862ea.2: %HasQualifiers.F.type.d208f0.2 = fn_decl @HasQualifiers.F.2 [concrete = constants.%HasQualifiers.F.efd4e4.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.e15 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.e15 = ref_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -454,7 +454,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %ExplicitObjectParam.G.cpp_overload_set.value: %ExplicitObjectParam.G.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.G.cpp_overload_set [concrete = constants.%ExplicitObjectParam.G.cpp_overload_set.value]
 // CHECK:STDOUT:   %ExplicitObjectParam.G.decl: %ExplicitObjectParam.G.type = fn_decl @ExplicitObjectParam.G [concrete = constants.%ExplicitObjectParam.G] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
@@ -530,7 +530,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ExplicitObjectParam.F.decl.28f5af.2: %ExplicitObjectParam.F.type.5d25a8.2 = fn_decl @ExplicitObjectParam.F.2 [concrete = constants.%ExplicitObjectParam.F.28cf2e.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>

@@ -133,9 +133,9 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [concrete = constants.%Function] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.ce2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5_37: %Copy.type = name_ref T, %T.loc5_13.2 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc5_37: type = facet_access_type %T.ref.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
@@ -374,9 +374,9 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [concrete = constants.%Function] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.ce2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5_37: %Copy.type = name_ref T, %T.loc5_13.2 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc5_37: type = facet_access_type %T.ref.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]

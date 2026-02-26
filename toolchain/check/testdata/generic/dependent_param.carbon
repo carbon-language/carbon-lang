@@ -141,7 +141,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.Get.decl: @Inner.%Inner.Get.type (%Inner.Get.type.6ef) = fn_decl @Inner.Get [symbolic = @Inner.%Inner.Get (constants.%Inner.Get.ba5)] {
 // CHECK:STDOUT:       %return.patt: @Inner.Get.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.Get.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.Get.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]

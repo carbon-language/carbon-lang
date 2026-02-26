@@ -47,9 +47,9 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc19_9: type = type_literal constants.%i32 [concrete = constants.%i32]

@@ -283,9 +283,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %A.WithSelf.F.decl: @A.WithSelf.%A.WithSelf.F.type (%A.WithSelf.F.type.0ed) = fn_decl @A.WithSelf.F [symbolic = @A.WithSelf.%A.WithSelf.F (constants.%A.WithSelf.F.33a)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %u.patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.986) = value_binding_pattern u [concrete]
-// CHECK:STDOUT:       %u.param_patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.986) = value_param_pattern %u.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %u.param_patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.986) = value_param_pattern %u.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @A.WithSelf.F.%pattern_type.loc6_25 (%pattern_type.f66) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @A.WithSelf.F.%pattern_type.loc6_25 (%pattern_type.f66) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @A.WithSelf.F.%pattern_type.loc6_25 (%pattern_type.f66) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @A.%T.loc5_13.2 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %.loc6_32: @A.WithSelf.F.%A.type (%A.type.ade) = specific_constant @A.%Self.loc5_23.1, @A(constants.%T.67d) [symbolic = %Self (constants.%Self.362)]
@@ -328,9 +328,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y.as.A.impl.F.decl: %Y.as.A.impl.F.type = fn_decl @Y.as.A.impl.F [concrete = constants.%Y.as.A.impl.F] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:     %u.patt: @Y.as.A.impl.F.%pattern_type.loc16_18 (%pattern_type.4f4b84.1) = value_binding_pattern u [concrete]
-// CHECK:STDOUT:     %u.param_patt: @Y.as.A.impl.F.%pattern_type.loc16_18 (%pattern_type.4f4b84.1) = value_param_pattern %u.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %u.param_patt: @Y.as.A.impl.F.%pattern_type.loc16_18 (%pattern_type.4f4b84.1) = value_param_pattern %u.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @Y.as.A.impl.F.%pattern_type.loc16_25 (%pattern_type.06d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Y.as.A.impl.F.%pattern_type.loc16_25 (%pattern_type.06d) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Y.as.A.impl.F.%pattern_type.loc16_25 (%pattern_type.06d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
@@ -933,9 +933,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %A.WithSelf.F.decl: @A.WithSelf.%A.WithSelf.F.type (%A.WithSelf.F.type.0ed) = fn_decl @A.WithSelf.F [symbolic = @A.WithSelf.%A.WithSelf.F (constants.%A.WithSelf.F.33a)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %u.patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.62e) = value_binding_pattern u [concrete]
-// CHECK:STDOUT:       %u.param_patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.62e) = value_param_pattern %u.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %u.param_patt: @A.WithSelf.F.%pattern_type.loc6_18 (%pattern_type.62e) = value_param_pattern %u.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @A.WithSelf.F.%pattern_type.loc6_24 (%pattern_type.22d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @A.WithSelf.F.%pattern_type.loc6_24 (%pattern_type.22d) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @A.WithSelf.F.%pattern_type.loc6_24 (%pattern_type.22d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @A.%T.loc5_13.2 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %.loc6_31: @A.WithSelf.F.%A.type (%A.type.ade) = specific_constant @A.%Self.loc5_23.1, @A(constants.%T.67d) [symbolic = %Self (constants.%Self.362)]
@@ -988,9 +988,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %tuple.type.as.A.impl.F.decl: @tuple.type.as.A.impl.%tuple.type.as.A.impl.F.type (%tuple.type.as.A.impl.F.type.ce6) = fn_decl @tuple.type.as.A.impl.F [symbolic = @tuple.type.as.A.impl.%tuple.type.as.A.impl.F (constants.%tuple.type.as.A.impl.F.74d)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 3 [concrete]
 // CHECK:STDOUT:       %u.patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_18 (%pattern_type.e4a) = value_binding_pattern u [concrete]
-// CHECK:STDOUT:       %u.param_patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_18 (%pattern_type.e4a) = value_param_pattern %u.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %u.param_patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_18 (%pattern_type.e4a) = value_param_pattern %u.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_24 (%pattern_type.5cc) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_24 (%pattern_type.5cc) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @tuple.type.as.A.impl.F.%pattern_type.loc17_24 (%pattern_type.5cc) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %W.ref: type = name_ref W, @tuple.type.as.A.impl.%W.loc14_36.2 [symbolic = %W (constants.%W)]
 // CHECK:STDOUT:       %V1.ref: type = name_ref V1, @tuple.type.as.A.impl.%V1.loc14_14.2 [symbolic = %V1 (constants.%V1)]

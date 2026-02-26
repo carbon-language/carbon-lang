@@ -236,7 +236,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.53f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type (%pattern_type.bb9) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type (%pattern_type.bb9) = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type (%pattern_type.bb9) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_13: type = splice_block %Z.type [concrete = constants.%Z.type.be4] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -633,7 +633,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.53f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc14 (%pattern_type.bb9) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc14 (%pattern_type.bb9) = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc14 (%pattern_type.bb9) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13: type = splice_block %Z.type [concrete = constants.%Z.type.be4] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -967,10 +967,10 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_20 (%pattern_type.51d) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_20 (%pattern_type.51d) = var_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_20 (%pattern_type.51d) = var_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_20 (%pattern_type.51d) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_26 (%pattern_type.4f4) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_26 (%pattern_type.4f4) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_26 (%pattern_type.4f4) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc9_29: type = name_ref T, %T.loc9_6.2 [symbolic = %T.loc9_6.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %Ptr.ref: type = name_ref Ptr, file.%Ptr.decl [concrete = constants.%Ptr.type]
@@ -1194,10 +1194,10 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.6d2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc9_28: %Ptr.type = name_ref T, %T.loc9_6.2 [symbolic = %T.loc9_6.1 (constants.%T.ffa)]
 // CHECK:STDOUT:     %T.as_type.loc9_29: type = facet_access_type %T.ref.loc9_28 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3dc)]
@@ -1424,10 +1424,10 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.6d2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_19 (%pattern_type.82a) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.804) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc9_28: %Ptr.type = name_ref T, %T.loc9_6.2 [symbolic = %T.loc9_6.1 (constants.%T.ffa)]
 // CHECK:STDOUT:     %Ptr.ref.loc9_31: type = name_ref Ptr, file.%Ptr.decl [concrete = constants.%Ptr.type]

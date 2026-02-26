@@ -145,7 +145,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.Op.decl: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.71c) = fn_decl @I.WithSelf.Op [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.ae1)] {
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.Op.%pattern_type (%pattern_type.fa0) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.Op.%pattern_type (%pattern_type.fa0) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @I.WithSelf.Op.%pattern_type (%pattern_type.fa0) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -258,7 +258,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -374,7 +374,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]

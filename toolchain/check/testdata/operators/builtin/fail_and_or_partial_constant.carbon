@@ -82,7 +82,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
@@ -200,7 +200,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [concrete = constants.%KnownValueButNonConstantCondition] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]

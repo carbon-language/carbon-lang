@@ -155,7 +155,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst60000017:    {kind: ValueBinding, arg0: entity_name60000000, arg1: inst6000001B, type: type(inst60000015)}
 // CHECK:STDOUT:     inst60000018:    {kind: PatternType, arg0: inst60000015, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000019:    {kind: ValueBindingPattern, arg0: entity_name60000000, type: type(inst60000018)}
-// CHECK:STDOUT:     inst6000001A:    {kind: ValueParamPattern, arg0: inst60000019, arg1: call_param0, type: type(inst60000018)}
+// CHECK:STDOUT:     inst6000001A:    {kind: ValueParamPattern, arg0: inst60000019, type: type(inst60000018)}
 // CHECK:STDOUT:     inst6000001B:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst60000015)}
 // CHECK:STDOUT:     inst6000001C:    {kind: SpliceBlock, arg0: inst_block60000005, arg1: inst60000016, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001D:    {kind: FunctionDecl, arg0: function60000000, arg1: inst_block6000000A, type: type(inst6000001E)}
@@ -186,7 +186,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst60000036:    {kind: NameRef, arg0: name1, arg1: inst60000017, type: type(inst60000015)}
 // CHECK:STDOUT:     inst60000037:    {kind: ValueBinding, arg0: entity_name60000001, arg1: inst6000003A, type: type(inst60000015)}
 // CHECK:STDOUT:     inst60000038:    {kind: ValueBindingPattern, arg0: entity_name60000001, type: type(inst60000018)}
-// CHECK:STDOUT:     inst60000039:    {kind: ValueParamPattern, arg0: inst60000038, arg1: call_param0, type: type(inst60000018)}
+// CHECK:STDOUT:     inst60000039:    {kind: ValueParamPattern, arg0: inst60000038, type: type(inst60000018)}
 // CHECK:STDOUT:     inst6000003A:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst60000015)}
 // CHECK:STDOUT:     inst6000003B:    {kind: FunctionDecl, arg0: function60000003, arg1: inst_block60000012, type: type(inst6000003C)}
 // CHECK:STDOUT:     inst6000003C:    {kind: FunctionType, arg0: function60000003, arg1: specific<none>, type: type(TypeType)}
@@ -194,7 +194,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst6000003E:    {kind: ValueBinding, arg0: entity_name60000002, arg1: inst60000042, type: type(inst60000020)}
 // CHECK:STDOUT:     inst6000003F:    {kind: PatternType, arg0: inst60000020, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000040:    {kind: ValueBindingPattern, arg0: entity_name60000002, type: type(inst6000003F)}
-// CHECK:STDOUT:     inst60000041:    {kind: ValueParamPattern, arg0: inst60000040, arg1: call_param0, type: type(inst6000003F)}
+// CHECK:STDOUT:     inst60000041:    {kind: ValueParamPattern, arg0: inst60000040, type: type(inst6000003F)}
 // CHECK:STDOUT:     inst60000042:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst60000020)}
 // CHECK:STDOUT:     inst60000043:    {kind: FunctionDecl, arg0: function60000004, arg1: inst_block60000018, type: type(inst60000044)}
 // CHECK:STDOUT:     inst60000044:    {kind: FunctionType, arg0: function60000004, arg1: specific<none>, type: type(TypeType)}

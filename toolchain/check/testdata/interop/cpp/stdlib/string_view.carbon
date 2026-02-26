@@ -126,7 +126,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:     %.loc13_11.2: Core.Form = init_form %str, call_param0 [concrete = constants.%.2ff]
@@ -195,11 +195,11 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %StarstWith.decl: %StarstWith.type = fn_decl @StarstWith [concrete = constants.%StarstWith] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.461 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.461 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.461 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.461 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.461 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_34.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1, call_param2 [concrete = constants.%.d29]

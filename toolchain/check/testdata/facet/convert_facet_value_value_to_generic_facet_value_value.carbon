@@ -194,9 +194,9 @@ fn F() {
 // CHECK:STDOUT:     %Food.patt: %pattern_type.b51 = symbolic_binding_pattern Food, 0 [concrete]
 // CHECK:STDOUT:     %T.patt: @Feed.%pattern_type.loc31_24 (%pattern_type.350) = symbolic_binding_pattern T, 1 [concrete]
 // CHECK:STDOUT:     %e.patt: @Feed.%pattern_type.loc31_47 (%pattern_type.2b9) = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type.loc31_47 (%pattern_type.2b9) = value_param_pattern %e.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type.loc31_47 (%pattern_type.2b9) = value_param_pattern %e.patt [concrete]
 // CHECK:STDOUT:     %food.patt: @Feed.%pattern_type.loc31_60 (%pattern_type.12a) = value_binding_pattern food [concrete]
-// CHECK:STDOUT:     %food.param_patt: @Feed.%pattern_type.loc31_60 (%pattern_type.12a) = value_param_pattern %food.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %food.param_patt: @Feed.%pattern_type.loc31_60 (%pattern_type.12a) = value_param_pattern %food.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc31_16: type = splice_block %Edible.ref [concrete = constants.%Edible.type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -231,9 +231,9 @@ fn F() {
 // CHECK:STDOUT:     %A.patt: %pattern_type.e10 = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:     %Food.patt: %pattern_type.b51 = symbolic_binding_pattern Food, 1 [concrete]
 // CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type.loc32_44 (%pattern_type.892) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type.loc32_44 (%pattern_type.892) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type.loc32_44 (%pattern_type.892) = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %food.patt: @HandleAnimal.%pattern_type.loc32_50 (%pattern_type.9ed) = value_binding_pattern food [concrete]
-// CHECK:STDOUT:     %food.param_patt: @HandleAnimal.%pattern_type.loc32_50 (%pattern_type.9ed) = value_param_pattern %food.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %food.param_patt: @HandleAnimal.%pattern_type.loc32_50 (%pattern_type.9ed) = value_param_pattern %food.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc32_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

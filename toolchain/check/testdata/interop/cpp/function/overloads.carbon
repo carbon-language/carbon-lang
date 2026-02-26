@@ -861,7 +861,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %bar__carbon_thunk.decl: %bar__carbon_thunk.type = fn_decl @bar__carbon_thunk [concrete = constants.%bar__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.251 [concrete = constants.%ptr.251] {
@@ -975,7 +975,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1106,7 +1106,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl.bd967b.1: %foo.type.a5abd1.1 = fn_decl @foo.1 [concrete = constants.%foo.23ea43.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1118,7 +1118,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.251 [concrete = constants.%ptr.251] {
@@ -1251,7 +1251,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1264,7 +1264,7 @@ fn F() {
 // CHECK:STDOUT:   %bar.cpp_overload_set.value: %bar.cpp_overload_set.type = cpp_overload_set_value @bar.cpp_overload_set [concrete = constants.%bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %bar.decl: %bar.type = fn_decl @bar [concrete = constants.%bar] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1447,9 +1447,9 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl.bd967b.1: %foo.type.a5abd1.1 = fn_decl @foo.1 [concrete = constants.%foo.23ea43.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1469,9 +1469,9 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %foo.decl.bd967b.2: %foo.type.a5abd1.2 = fn_decl @foo.2 [concrete = constants.%foo.23ea43.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.95b = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.95b = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.95b = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.95b = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.95b = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.95b = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.1: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.1: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
@@ -1488,9 +1488,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.662 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.662 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.662 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.662 = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.662 = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.662 = value_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.974 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.974 [concrete = constants.%ptr.974] {
@@ -1881,7 +1881,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -1995,7 +1995,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/parts/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.4a9 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a9 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a9 = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %u32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %u32.2 [concrete = constants.%u32] {
@@ -2115,9 +2115,9 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.0ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.0ce = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.bcc = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.bcc [concrete = constants.%ptr.bcc] {
@@ -2265,9 +2265,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.0ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.0ce = value_binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.bcc = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.bcc [concrete = constants.%ptr.bcc] {
@@ -2385,7 +2385,7 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.value: %PassNoFields.cpp_overload_set.type = cpp_overload_set_value @PassNoFields.cpp_overload_set [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.decl: %PassNoFields__carbon_thunk.type = fn_decl @PassNoFields__carbon_thunk [concrete = constants.%PassNoFields__carbon_thunk] {
 // CHECK:STDOUT:     %s.patt: %pattern_type.a92 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
@@ -2406,7 +2406,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeEmpty.decl: %MakeEmpty.type = fn_decl @MakeEmpty [concrete = constants.%MakeEmpty] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_20.2: type = converted %.loc6_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -2416,9 +2416,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: %Empty.type = fn_decl @Empty [concrete = constants.%Empty] {
 // CHECK:STDOUT:     %value.patt: %pattern_type.a96 = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.a96 = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.a96 = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     %reference.patt: %pattern_type.a96 = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.a96 = ref_param_pattern %reference.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.a96 = ref_param_pattern %reference.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.3 [concrete = constants.%empty_struct_type] {
@@ -2567,7 +2567,7 @@ fn F() {
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
 // CHECK:STDOUT:     %t.patt: %pattern_type.7bb = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: %ptr.f81 = value_param call_param0
 // CHECK:STDOUT:     %t: %ptr.f81 = value_binding t, %t.param
@@ -2588,7 +2588,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeThreeFields.decl: %MakeThreeFields.type = fn_decl @MakeThreeFields [concrete = constants.%MakeThreeFields] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.8ae = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ae = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_30: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc6_39: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -2600,9 +2600,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc8 [concrete = constants.%ThreeFields.c3a] {
 // CHECK:STDOUT:     %value.patt: %pattern_type.8ae = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.8ae = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.8ae = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     %reference.patt: %pattern_type.8ae = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.8ae = ref_param_pattern %reference.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.8ae = ref_param_pattern %reference.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %struct_type.a.b.c.0b6 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_49: type = splice_block %struct_type.a.b.c.loc8_49 [concrete = constants.%struct_type.a.b.c.0b6] {
@@ -2866,7 +2866,7 @@ fn F() {
 // CHECK:STDOUT:   %PassNoFields.cpp_overload_set.value: %PassNoFields.cpp_overload_set.type = cpp_overload_set_value @PassNoFields.cpp_overload_set [concrete = constants.%PassNoFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.decl: %PassNoFields__carbon_thunk.type = fn_decl @PassNoFields__carbon_thunk [concrete = constants.%PassNoFields__carbon_thunk] {
 // CHECK:STDOUT:     %s.patt: %pattern_type.a92 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.a92 = value_param_pattern %s.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %ptr.dd0 = value_param call_param0
 // CHECK:STDOUT:     %s: %ptr.dd0 = value_binding s, %s.param
@@ -2876,7 +2876,7 @@ fn F() {
 // CHECK:STDOUT:   %PassThreeFields.cpp_overload_set.value: %PassThreeFields.cpp_overload_set.type = cpp_overload_set_value @PassThreeFields.cpp_overload_set [concrete = constants.%PassThreeFields.cpp_overload_set.value]
 // CHECK:STDOUT:   %PassThreeFields__carbon_thunk.decl: %PassThreeFields__carbon_thunk.type = fn_decl @PassThreeFields__carbon_thunk [concrete = constants.%PassThreeFields__carbon_thunk] {
 // CHECK:STDOUT:     %t.patt: %pattern_type.7bb = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.7bb = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: %ptr.f81 = value_param call_param0
 // CHECK:STDOUT:     %t: %ptr.f81 = value_binding t, %t.param
@@ -2898,7 +2898,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeEmpty.decl: %MakeEmpty.type = fn_decl @MakeEmpty [concrete = constants.%MakeEmpty] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_20.2: type = converted %.loc9_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -2908,9 +2908,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: %Empty.type = fn_decl @Empty [concrete = constants.%Empty] {
 // CHECK:STDOUT:     %value.patt: %pattern_type.cb1 = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.cb1 = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.cb1 = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     %reference.patt: %pattern_type.cb1 = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.cb1 = ref_param_pattern %reference.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.cb1 = ref_param_pattern %reference.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc11_18.1: type = splice_block %.loc11_18.3 [concrete = constants.%empty_tuple.type] {
@@ -2927,7 +2927,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeThreeFields.decl: %MakeThreeFields.type = fn_decl @MakeThreeFields [concrete = constants.%MakeThreeFields] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.b5a = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.b5a = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc65_26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc65_31: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -2940,9 +2940,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ThreeFields.decl: %ThreeFields.type = fn_decl @ThreeFields.loc67 [concrete = constants.%ThreeFields.c3a] {
 // CHECK:STDOUT:     %value.patt: %pattern_type.b5a = value_binding_pattern value [concrete]
-// CHECK:STDOUT:     %value.param_patt: %pattern_type.b5a = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %value.param_patt: %pattern_type.b5a = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     %reference.patt: %pattern_type.b5a = ref_binding_pattern reference [concrete]
-// CHECK:STDOUT:     %reference.param_patt: %pattern_type.b5a = ref_param_pattern %reference.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %reference.param_patt: %pattern_type.b5a = ref_param_pattern %reference.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %value.param: %tuple.type.189 = value_param call_param0
 // CHECK:STDOUT:     %.loc67_37.1: type = splice_block %.loc67_37.3 [concrete = constants.%tuple.type.189] {
@@ -3108,7 +3108,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassInt.decl: %PassInt.type = fn_decl @PassInt [concrete = constants.%PassInt] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3188,7 +3188,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %PassOverloaded.decl: %PassOverloaded.type = fn_decl @PassOverloaded [concrete = constants.%PassOverloaded] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3334,7 +3334,7 @@ fn F() {
 // CHECK:STDOUT:   %TakeB.cpp_overload_set.value: %TakeB.cpp_overload_set.type = cpp_overload_set_value @TakeB.cpp_overload_set [concrete = constants.%TakeB.cpp_overload_set.value]
 // CHECK:STDOUT:   %TakeB__carbon_thunk.decl: %TakeB__carbon_thunk.type = fn_decl @TakeB__carbon_thunk [concrete = constants.%TakeB__carbon_thunk] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.837 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.837 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.837 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %ptr.a04 = value_param call_param0
 // CHECK:STDOUT:     %_: %ptr.a04 = value_binding _, %_.param
@@ -3463,7 +3463,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -3567,7 +3567,7 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.54c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {

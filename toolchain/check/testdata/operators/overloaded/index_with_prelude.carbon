@@ -197,11 +197,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c7 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %subscript.patt: %pattern_type.541 = value_binding_pattern subscript [concrete]
-// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.541 = value_param_pattern %subscript.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.541 = value_param_pattern %subscript.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fde = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %.loc9: Core.Form = init_form %ElementType.ref, call_param2 [concrete = constants.%.31b]
@@ -388,11 +388,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_50 {
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.decl: %tuple.type.as.IndexWith.impl.At.type = fn_decl @tuple.type.as.IndexWith.impl.At [concrete = constants.%tuple.type.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c3b = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c3b = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c3b = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %subscript.patt: %pattern_type.dc0 = value_binding_pattern subscript [concrete]
-// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.dc0 = value_param_pattern %subscript.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.dc0 = value_param_pattern %subscript.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc9_61: Core.Form = init_form %C.ref, call_param2 [concrete = constants.%.92f]
@@ -564,11 +564,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c7 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %subscript.patt: %pattern_type.541 = value_binding_pattern subscript [concrete]
-// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.541 = value_param_pattern %subscript.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.541 = value_param_pattern %subscript.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fde = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fde = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %.loc9: Core.Form = init_form %ElementType.ref, call_param2 [concrete = constants.%.31b]

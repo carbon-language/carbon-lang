@@ -185,9 +185,9 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc8_27 (%pattern_type.17d) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc8_27 (%pattern_type.17d) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc8_27 (%pattern_type.17d) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %a.patt: @F.%pattern_type.loc8_51 (%pattern_type.e66) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_51 (%pattern_type.e66) = value_param_pattern %a.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_51 (%pattern_type.e66) = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -390,9 +390,9 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.7f2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc8_29 (%pattern_type.2de) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc8_29 (%pattern_type.2de) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc8_29 (%pattern_type.2de) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %a.patt: @F.%pattern_type.loc8_53 (%pattern_type.92c) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_53 (%pattern_type.92c) = value_param_pattern %a.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_53 (%pattern_type.92c) = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_19: type = splice_block %struct_type.t [concrete = constants.%struct_type.t] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -613,9 +613,9 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.904 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.3b8c03.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.3b8c03.1) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.3b8c03.1) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_10: type = splice_block %Class.ref [concrete = constants.%Class] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -881,9 +881,9 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.dcb = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.342) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.342) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.342) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

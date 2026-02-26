@@ -107,11 +107,12 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ExplicitParamList:
     case FullPatternStack::Kind::ImplicitParamList:
+      // Allocate a dummy index to preserve index of subsequent `InitForm`s.
+      // TODO: Remove this once we remove `InitForm::index`.
+      context.full_pattern_stack().NextCallParamIndex();
       subpattern_id = AddPatternInst<SemIR::VarParamPattern>(
           context, node_id,
-          {.type_id = type_id,
-           .subpattern_id = subpattern_id,
-           .index = context.full_pattern_stack().NextCallParamIndex()});
+          {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;

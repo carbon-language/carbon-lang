@@ -137,7 +137,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %A.patt: @F.%pattern_type.loc27_27 (%pattern_type.e66) = symbolic_binding_pattern A, 1 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc27_43 (%pattern_type.17d) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc27_43 (%pattern_type.17d) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc27_43 (%pattern_type.17d) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_17.1: type = splice_block %.loc27_17.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -163,7 +163,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %holds_to.patt: %pattern_type.c6f = value_binding_pattern holds_to [concrete]
-// CHECK:STDOUT:     %holds_to.param_patt: %pattern_type.c6f = value_param_pattern %holds_to.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %holds_to.param_patt: %pattern_type.c6f = value_param_pattern %holds_to.patt [concrete]
 // CHECK:STDOUT:     %from.patt: %pattern_type.6bd = symbolic_binding_pattern from, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %holds_to.param: %HoldsType.0ca = value_param call_param0
@@ -187,9 +187,9 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT: impl @RuntimeConvertFrom.as.ImplicitAs.impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = fn_decl @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.6bd = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.6bd = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.6bd = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c89 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.c89 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c89 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %.loc24_38: Core.Form = init_form %RuntimeConvertTo.ref, call_param1 [concrete = constants.%.382]

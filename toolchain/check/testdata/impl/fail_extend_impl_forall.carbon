@@ -82,7 +82,7 @@ class C {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %GenericInterface.WithSelf.F.decl: @GenericInterface.WithSelf.%GenericInterface.WithSelf.F.type (%GenericInterface.WithSelf.F.type) = fn_decl @GenericInterface.WithSelf.F [symbolic = @GenericInterface.WithSelf.%GenericInterface.WithSelf.F (constants.%GenericInterface.WithSelf.F)] {
 // CHECK:STDOUT:       %x.patt: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:       %x.param_patt: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %x.param_patt: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @GenericInterface.WithSelf.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc15_28.2 [symbolic = %T (constants.%T)]
@@ -113,7 +113,7 @@ class C {
 // CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc24_54.2 {
 // CHECK:STDOUT:     %C.as.GenericInterface.impl.F.decl: @C.as.GenericInterface.impl.%C.as.GenericInterface.impl.F.type (%C.as.GenericInterface.impl.F.type) = fn_decl @C.as.GenericInterface.impl.F [symbolic = @C.as.GenericInterface.impl.%C.as.GenericInterface.impl.F (constants.%C.as.GenericInterface.impl.F)] {
 // CHECK:STDOUT:       %x.patt: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:       %x.param_patt: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %x.param_patt: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.GenericInterface.impl.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_23.2 [symbolic = %T (constants.%T)]

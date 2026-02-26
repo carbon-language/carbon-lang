@@ -73,11 +73,11 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Add.WithSelf.Op.decl: @Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type) = fn_decl @Add.WithSelf.Op [symbolic = @Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op)] {
 // CHECK:STDOUT:     %self.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -187,11 +187,11 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7c7 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.7c7 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.7c7 = value_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.7c7 = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.7c7 = value_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.7c7 = value_param_pattern %y.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc12_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %C.ref.loc12_21, call_param2 [concrete = constants.%.92f]
@@ -218,11 +218,11 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: impl @C.as.Add.impl: %C.ref as %Add.ref {
 // CHECK:STDOUT:   %C.as.Add.impl.Op.decl: %C.as.Add.impl.Op.type = fn_decl @C.as.Add.impl.Op [concrete = constants.%C.as.Add.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c7 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.7c7 = value_binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.7c7 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.7c7 = value_param_pattern %other.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc9_51: type = name_ref Self, @C.as.Add.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc9_51: Core.Form = init_form %Self.ref.loc9_51, call_param2 [concrete = constants.%.92f]

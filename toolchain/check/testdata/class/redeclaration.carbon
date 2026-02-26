@@ -51,9 +51,9 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT:   %Class.decl.loc17: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.904 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
@@ -70,9 +70,9 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.904 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.904 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.cb1 = value_param_pattern %b.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc18: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]

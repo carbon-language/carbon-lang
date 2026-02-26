@@ -502,7 +502,7 @@ fn G() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: @CallGenericMethod.%pattern_type.loc15_39 (%pattern_type.c49) = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:     %t.patt: @CallGenericMethod.%pattern_type.loc15_62 (%pattern_type.51d) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @CallGenericMethod.%pattern_type.loc15_62 (%pattern_type.51d) = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @CallGenericMethod.%pattern_type.loc15_62 (%pattern_type.51d) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_26.1: type = splice_block %.loc15_26.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

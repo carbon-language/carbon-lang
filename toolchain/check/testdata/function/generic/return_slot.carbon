@@ -128,7 +128,7 @@ fn G() {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Wrap.Make.decl: @Wrap.%Wrap.Make.type (%Wrap.Make.type.6e9) = fn_decl @Wrap.Make [symbolic = @Wrap.%Wrap.Make (constants.%Wrap.Make.e25)] {
 // CHECK:STDOUT:       %return.patt: @Wrap.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Wrap.Make.%pattern_type (%pattern_type.51d) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Wrap.Make.%pattern_type (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc15_12.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %.loc16_16.3: Core.Form = init_form %T.ref, call_param0 [symbolic = %.loc16_16.2 (constants.%.41b)]

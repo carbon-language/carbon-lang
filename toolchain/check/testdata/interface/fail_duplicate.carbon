@@ -173,7 +173,7 @@ interface Class { }
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Interface.WithSelf.F.decl: @Interface.WithSelf.loc13.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.loc13.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {
 // CHECK:STDOUT:     %self.patt: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Interface.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {

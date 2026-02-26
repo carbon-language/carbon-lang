@@ -461,7 +461,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %pattern_type = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -501,7 +501,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: <error> = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -539,7 +539,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.patt: <error> = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {

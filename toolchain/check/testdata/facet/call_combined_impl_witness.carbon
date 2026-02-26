@@ -177,7 +177,7 @@ fn F() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.773 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @G.%pattern_type (%pattern_type.2ee) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @G.%pattern_type (%pattern_type.2ee) = value_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @G.%pattern_type (%pattern_type.2ee) = value_param_pattern %t.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc33_20.1: type = splice_block %.loc33_20.3 [concrete = constants.%facet_type.dc7] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]

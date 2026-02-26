@@ -169,7 +169,6 @@ struct AnyParamPattern {
   // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // An inst that represents a primitive form.

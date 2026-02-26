@@ -152,7 +152,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %I.patt: @AccessGeneric.%pattern_type.loc8_28 (%pattern_type.cbe) = symbolic_binding_pattern I, 1 [concrete]
 // CHECK:STDOUT:     %return.patt: @AccessGeneric.%pattern_type.loc8_46 (%pattern_type.4f4) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @AccessGeneric.%pattern_type.loc8_46 (%pattern_type.4f4) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessGeneric.%pattern_type.loc8_46 (%pattern_type.4f4) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_49: type = name_ref T, %T.loc8_18.2 [symbolic = %T.loc8_18.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %ptr.loc8_50.2: type = ptr_type %T.ref.loc8_49 [symbolic = %ptr.loc8_50.1 (constants.%ptr.e8f)]
@@ -175,7 +175,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessConcrete.decl: %AccessConcrete.type = fn_decl @AccessConcrete [concrete = constants.%AccessConcrete] {
 // CHECK:STDOUT:     %I.patt: %pattern_type.e2d = symbolic_binding_pattern I, 0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc12_42: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc12_42 [concrete = constants.%ptr.235]
@@ -423,7 +423,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %I.patt: @AccessMissingGeneric.%pattern_type.loc8_35 (%pattern_type.cbe) = symbolic_binding_pattern I, 1 [concrete]
 // CHECK:STDOUT:     %return.patt: @AccessMissingGeneric.%pattern_type.loc8_53 (%pattern_type.51d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @AccessMissingGeneric.%pattern_type.loc8_53 (%pattern_type.51d) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessMissingGeneric.%pattern_type.loc8_53 (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_56: type = name_ref T, %T.loc8_25.2 [symbolic = %T.loc8_25.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_56.2: Core.Form = init_form %T.ref.loc8_56, call_param0 [symbolic = %.loc8_56.1 (constants.%.41b)]
@@ -445,7 +445,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessMissingConcrete.decl: %AccessMissingConcrete.type = fn_decl @AccessMissingConcrete [concrete = constants.%AccessMissingConcrete] {
 // CHECK:STDOUT:     %I.patt: %pattern_type.e2d = symbolic_binding_pattern I, 0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc16_49: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc16_49: Core.Form = init_form %i32.loc16_49, call_param0 [concrete = constants.%.437]

@@ -136,9 +136,9 @@ interface C {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.decl: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type) = fn_decl @ImplicitAs.WithSelf.Convert [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert)] {
 // CHECK:STDOUT:       %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.8de) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_28 (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.2 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:       %.loc4_31.2: Core.Form = init_form %Dest.ref, call_param1 [symbolic = %.loc4_31.1 (constants.%.3cf)]
@@ -394,7 +394,7 @@ interface C {
 // CHECK:STDOUT:   %U2: %I2.assoc_type = alias_binding U2, @T2.%assoc0 [concrete = constants.%assoc0.7c1]
 // CHECK:STDOUT:   %J2.WithSelf.F2.decl: @J2.WithSelf.%J2.WithSelf.F2.type (%J2.WithSelf.F2.type) = fn_decl @J2.WithSelf.F2 [symbolic = @J2.WithSelf.%J2.WithSelf.F2 (constants.%J2.WithSelf.F2)] {
 // CHECK:STDOUT:     %return.patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @J2.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %Self.as_type, (constants.%I2.lookup_impl_witness.d97) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet.7a5)]
@@ -537,9 +537,9 @@ interface C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %A.WithSelf.F.decl: @A.WithSelf.%A.WithSelf.F.type (%A.WithSelf.F.type) = fn_decl @A.WithSelf.F [symbolic = @A.WithSelf.%A.WithSelf.F (constants.%A.WithSelf.F)] {
 // CHECK:STDOUT:     %self.patt: @A.WithSelf.F.%pattern_type (%pattern_type.df1) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @A.WithSelf.F.%pattern_type (%pattern_type.df1) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @A.WithSelf.F.%pattern_type (%pattern_type.df1) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_25.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc6_25.2: Core.Form = init_form %.loc6_25.1, call_param1 [concrete = constants.%.b38]
@@ -667,7 +667,7 @@ interface C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %C.WithSelf.F.decl: @C.WithSelf.%C.WithSelf.F.type (%C.WithSelf.F.type) = fn_decl @C.WithSelf.F [symbolic = @C.WithSelf.%C.WithSelf.F (constants.%C.WithSelf.F)] {
 // CHECK:STDOUT:     %self.patt: @C.WithSelf.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @C.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @C.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @C.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -680,7 +680,7 @@ interface C {
 // CHECK:STDOUT:   %assoc0: %C.assoc_type = assoc_entity element0, %C.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %C.WithSelf.G.decl: @C.WithSelf.%C.WithSelf.G.type (%C.WithSelf.G.type) = fn_decl @C.WithSelf.G [symbolic = @C.WithSelf.%C.WithSelf.G (constants.%C.WithSelf.G)] {
 // CHECK:STDOUT:     %self.patt: @C.WithSelf.G.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @C.WithSelf.G.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: @C.WithSelf.G.%pattern_type (%pattern_type) = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {

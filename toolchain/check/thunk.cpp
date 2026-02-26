@@ -133,8 +133,7 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
         context, param_id,
         {.kind = param->kind,
          .type_id = get_type(param_id),
-         .subpattern_id = new_pattern_id,
-         .index = param->index});
+         .subpattern_id = new_pattern_id});
   }
 
   return new_pattern_id;
@@ -248,41 +247,39 @@ static auto HasDeclaredReturnType(Context& context,
   return context.functions().Get(function_id).return_type_inst_id.has_value();
 }
 
-// Build an expression that names the value matched by a pattern.
-static auto BuildPatternRef(Context& context,
-                            llvm::ArrayRef<SemIR::InstId> arg_ids,
-                            SemIR::InstId pattern_id) -> SemIR::InstId {
-  auto pattern = context.insts().Get(pattern_id);
-
-  auto pattern_ref_id = SemIR::InstId::None;
-  if (auto value_param = pattern.TryAs<SemIR::AnyParamPattern>();
-      value_param.has_value() &&
-      value_param->kind != SemIR::OutParamPattern::Kind) {
-    pattern_ref_id = arg_ids[value_param->index.index];
-  } else {
-    if (pattern_id != SemIR::ErrorInst::InstId) {
-      context.TODO(
-          pattern_id,
-          "don't know how to build reference to this pattern in thunk");
-    }
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return pattern_ref_id;
-}
-
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
+  Map<SemIR::InstId, int> param_pattern_to_index;
+  for (auto [index, param_pattern_id] : llvm::enumerate(
+           context.inst_blocks().Get(function.call_param_patterns_id))) {
+    param_pattern_to_index.Insert(param_pattern_id, index);
+  }
+
+  // Given that `call_arg_ids` is a list of the _`Call`_ arguments for a call to
+  // `function_id`, this returns the _syntactic_ argument that was passed for
+  // param_pattern_id in that call.
+  auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
+    if (auto result = param_pattern_to_index.Lookup(param_pattern_id)) {
+      return call_arg_ids[result.value()];
+    } else {
+      if (param_pattern_id != SemIR::ErrorInst::InstId) {
+        context.TODO(param_pattern_id,
+                     "don't know how to reconstruct the syntactic argument for "
+                     "this pattern in thunk");
+      }
+      return SemIR::ErrorInst::InstId;
+    }
+  };
+
   llvm::SmallVector<SemIR::InstId> args;
 
   // If we have a self parameter, form `self.<callee_id>`.
   if (function.self_param_id.has_value()) {
-    auto self_arg_id =
-        BuildPatternRef(context, call_arg_ids, function.self_param_id);
+    auto self_arg_id = build_syntactic_arg(function.self_param_id);
     if (IsCppConstructorOrNonMethodOperator(context, callee_id)) {
       // When calling a C++ constructor to implement `Copy`, or calling a C++
       // non-method operator to implement a Carbon operator, the interface has a
@@ -298,7 +295,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // Form an argument list.
   for (auto pattern_id :
        context.inst_blocks().Get(function.param_patterns_id)) {
-    args.push_back(BuildPatternRef(context, call_arg_ids, pattern_id));
+    args.push_back(build_syntactic_arg(pattern_id));
   }
 
   return PerformCall(context, loc_id, callee_id, args);
