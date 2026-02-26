@@ -168,7 +168,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def {
 // CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @Def [concrete]
+// CHECK:STDOUT:   %Def.WithSelf.decl = interface_with_self_decl @Def [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -196,7 +196,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef {
 // CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @ForwardWithDef [concrete]
+// CHECK:STDOUT:   %ForwardWithDef.WithSelf.decl = interface_with_self_decl @ForwardWithDef [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -475,7 +475,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Forward {
 // CHECK:STDOUT:   %Self: %Forward.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @Forward [concrete]
+// CHECK:STDOUT:   %Forward.WithSelf.decl = interface_with_self_decl @Forward [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -577,7 +577,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Redecl {
 // CHECK:STDOUT:   %Self: %Redecl.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @Redecl [concrete]
+// CHECK:STDOUT:   %Redecl.WithSelf.decl = interface_with_self_decl @Redecl [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

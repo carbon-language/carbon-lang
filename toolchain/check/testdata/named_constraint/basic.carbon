@@ -68,7 +68,7 @@ constraint Declared {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Declared {
 // CHECK:STDOUT:   %Self: %Declared.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   constraint_with_self_decl @Declared [concrete]
+// CHECK:STDOUT:   %Declared.WithSelf.decl = constraint_with_self_decl @Declared [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -95,7 +95,7 @@ constraint Declared {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @ForwardDeclared {
 // CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   constraint_with_self_decl @ForwardDeclared [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.decl = constraint_with_self_decl @ForwardDeclared [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

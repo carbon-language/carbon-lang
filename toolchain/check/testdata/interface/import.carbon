@@ -60,17 +60,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [concrete]
 // CHECK:STDOUT:   %Self.3e6: %Basic.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Basic.assoc_type: type = assoc_entity_type @Basic [concrete]
-// CHECK:STDOUT:   %assoc0.590: %Basic.assoc_type = assoc_entity element0, @Basic.%T [concrete]
+// CHECK:STDOUT:   %assoc0.590: %Basic.assoc_type = assoc_entity element0, @Basic.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %Basic.WithSelf.F.type: type = fn_type @Basic.WithSelf.F, @Basic.WithSelf(%Self.3e6) [symbolic]
 // CHECK:STDOUT:   %Basic.WithSelf.F: %Basic.WithSelf.F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %assoc1.6a5: %Basic.assoc_type = assoc_entity element1, @Basic.%Basic.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc1.6a5: %Basic.assoc_type = assoc_entity element1, @Basic.WithSelf.%Basic.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self.8e7: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
-// CHECK:STDOUT:   %assoc0.e70: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%T [concrete]
+// CHECK:STDOUT:   %assoc0.e70: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared.WithSelf(%Self.8e7) [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F: %ForwardDeclared.WithSelf.F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %assoc1.91f: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.%ForwardDeclared.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc1.91f: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.f [concrete]
 // CHECK:STDOUT: }
@@ -108,7 +108,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
-// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
+// CHECK:STDOUT:   %Empty.WithSelf.decl = interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -118,50 +118,50 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
-// CHECK:STDOUT:   %Self.loc7: %Basic.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3e6]
-// CHECK:STDOUT:   interface_with_self_decl @Basic [concrete]
+// CHECK:STDOUT:   %Self: %Basic.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3e6]
+// CHECK:STDOUT:   %Basic.WithSelf.decl = interface_with_self_decl @Basic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc8 [concrete] {
-// CHECK:STDOUT:     %assoc0: %Basic.assoc_type = assoc_entity element0, @Basic.%T [concrete = constants.%assoc0.590]
+// CHECK:STDOUT:     %assoc0: %Basic.assoc_type = assoc_entity element0, @Basic.WithSelf.%T [concrete = constants.%assoc0.590]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Basic.WithSelf.F.decl: @Basic.%Basic.WithSelf.F.type (%Basic.WithSelf.F.type) = fn_decl @Basic.WithSelf.F [symbolic = @Basic.%Basic.WithSelf.F (constants.%Basic.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %Basic.WithSelf.F.decl: @Basic.WithSelf.%Basic.WithSelf.F.type (%Basic.WithSelf.F.type) = fn_decl @Basic.WithSelf.F [symbolic = @Basic.WithSelf.%Basic.WithSelf.F (constants.%Basic.WithSelf.F)] {} {}
 // CHECK:STDOUT:   %assoc1: %Basic.assoc_type = assoc_entity element1, %Basic.WithSelf.F.decl [concrete = constants.%assoc1.6a5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc7
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.loc8.%assoc0
-// CHECK:STDOUT:   .F = %assoc1
-// CHECK:STDOUT:   witness = (%T, %Basic.WithSelf.F.decl)
+// CHECK:STDOUT:   .F = @Basic.WithSelf.%assoc1
+// CHECK:STDOUT:   witness = (@Basic.WithSelf.%T, @Basic.WithSelf.%Basic.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %Self.loc15: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
-// CHECK:STDOUT:   interface_with_self_decl @ForwardDeclared [concrete]
+// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8e7]
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.decl = interface_with_self_decl @ForwardDeclared [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc16 [concrete] {
-// CHECK:STDOUT:     %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%T [concrete = constants.%assoc0.e70]
+// CHECK:STDOUT:     %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.WithSelf.%T [concrete = constants.%assoc0.e70]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.decl: @ForwardDeclared.%ForwardDeclared.WithSelf.F.type (%ForwardDeclared.WithSelf.F.type) = fn_decl @ForwardDeclared.WithSelf.F [symbolic = @ForwardDeclared.%ForwardDeclared.WithSelf.F (constants.%ForwardDeclared.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.decl: @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.type (%ForwardDeclared.WithSelf.F.type) = fn_decl @ForwardDeclared.WithSelf.F [symbolic = @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F (constants.%ForwardDeclared.WithSelf.F)] {} {}
 // CHECK:STDOUT:   %assoc1: %ForwardDeclared.assoc_type = assoc_entity element1, %ForwardDeclared.WithSelf.F.decl [concrete = constants.%assoc1.91f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc15
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.loc16.%assoc0
-// CHECK:STDOUT:   .F = %assoc1
-// CHECK:STDOUT:   witness = (%T, %ForwardDeclared.WithSelf.F.decl)
+// CHECK:STDOUT:   .F = @ForwardDeclared.WithSelf.%assoc1
+// CHECK:STDOUT:   witness = (@ForwardDeclared.WithSelf.%T, @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Basic.WithSelf.F(@Basic.%Self.loc7: %Basic.type) {
+// CHECK:STDOUT: generic fn @Basic.WithSelf.F(@Basic.%Self: %Basic.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ForwardDeclared.WithSelf.F(@ForwardDeclared.%Self.loc15: %ForwardDeclared.type) {
+// CHECK:STDOUT: generic fn @ForwardDeclared.WithSelf.F(@ForwardDeclared.%Self: %ForwardDeclared.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self.8e7) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc17 => constants.%Self.8e7
+// CHECK:STDOUT:   %Self => constants.%Self.8e7
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type => constants.%ForwardDeclared.WithSelf.F.type
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F => constants.%ForwardDeclared.WithSelf.F
 // CHECK:STDOUT: }

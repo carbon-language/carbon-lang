@@ -241,8 +241,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Core.Optional: %Optional.type = import_ref Core//prelude/types/optional, Optional, loaded [concrete = constants.%Optional.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.270 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.7e9: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.2b3) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.666)]
-// CHECK:STDOUT:   %Core.import_ref.255: @OrderedWith.%OrderedWith.WithSelf.Less.type (%OrderedWith.WithSelf.Less.type.df2) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.%OrderedWith.WithSelf.Less (constants.%OrderedWith.WithSelf.Less.1a4)]
+// CHECK:STDOUT:   %Core.import_ref.7e9: @OrderedWith.WithSelf.%OrderedWith.assoc_type (%OrderedWith.assoc_type.2b3) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%assoc0 (constants.%assoc0.666)]
+// CHECK:STDOUT:   %Core.import_ref.255: @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less.type (%OrderedWith.WithSelf.Less.type.df2) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less (constants.%OrderedWith.WithSelf.Less.1a4)]
 // CHECK:STDOUT:   %Core.import_ref.e2b = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.12b: @Int.as.OrderedWith.impl.2e6.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.5f1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.OrderedWith.impl.2e6.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.a9b)]
 // CHECK:STDOUT:   %Core.import_ref.d3d = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded

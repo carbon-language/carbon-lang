@@ -107,7 +107,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.822: %Z.type.0ed = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.0bf: type = assoc_entity_type @Z, @Z(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.f33: %Z.assoc_type.0bf = assoc_entity element0, @Z.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.f33: %Z.assoc_type.0bf = assoc_entity element0, @Z.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -116,7 +116,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.90f: %Z.type.4d0 = symbolic_binding .Self [symbolic]
 // CHECK:STDOUT:   %Self.427: %Z.type.4d0 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.5b2: type = assoc_entity_type @Z, @Z(%S) [symbolic]
-// CHECK:STDOUT:   %assoc0.8bc: %Z.assoc_type.5b2 = assoc_entity element0, @Z.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.8bc: %Z.assoc_type.5b2 = assoc_entity element0, @Z.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %require_complete.72d: <witness> = require_complete_type %Z.type.4d0 [symbolic]
 // CHECK:STDOUT:   %.Self.binding.as_type.097: type = symbolic_binding_type .Self, %.Self.90f [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.7d6: <witness> = lookup_impl_witness %.Self.90f, @Z, @Z(%S) [symbolic]
@@ -130,7 +130,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.bf2: %Z.type.be4 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Self.af9: %Z.type.be4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.553: type = assoc_entity_type @Z, @Z(%C) [concrete]
-// CHECK:STDOUT:   %assoc0.1e0: %Z.assoc_type.553 = assoc_entity element0, @Z.%X [concrete]
+// CHECK:STDOUT:   %assoc0.1e0: %Z.assoc_type.553 = assoc_entity element0, @Z.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type.8c6: type = symbolic_binding_type .Self, %.Self.bf2 [symbolic_self]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.c06: <witness> = lookup_impl_witness %.Self.bf2, @Z, @Z(%C) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.2cd: type = impl_witness_access %Z.lookup_impl_witness.c06, element0 [symbolic_self]
@@ -252,17 +252,17 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.822)]
-// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:     %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.f33)]
+// CHECK:STDOUT:       %assoc0: @Z.WithSelf.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.WithSelf.%X [symbolic = @Z.WithSelf.%assoc0 (constants.%assoc0.f33)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
-// CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:     witness = (@Z.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -276,7 +276,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %require_complete.loc9_50: <witness> = require_complete_type %Z.type.loc9_42.2 [symbolic = %require_complete.loc9_50 (constants.%require_complete.72d)]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.4 [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.097)]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%S.loc9_24.2) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.5b2)]
-// CHECK:STDOUT:   %assoc0: @T.as.Z.impl.34a.%Z.assoc_type (%Z.assoc_type.5b2) = assoc_entity element0, @Z.%X [symbolic = %assoc0 (constants.%assoc0.8bc)]
+// CHECK:STDOUT:   %assoc0: @T.as.Z.impl.34a.%Z.assoc_type (%Z.assoc_type.5b2) = assoc_entity element0, @Z.WithSelf.%X [symbolic = %assoc0 (constants.%assoc0.8bc)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.4, @Z, @Z(%S.loc9_24.2) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.7d6)]
 // CHECK:STDOUT:   %impl.elem0.loc9_50.2: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_50.2 (constants.%impl.elem0.e5e)]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z, @Z(%S.loc9_24.2) where %impl.elem0.loc9_50.2 = constants.%empty_tuple.type> [symbolic = %Z_where.type (constants.%Z_where.type.a76)]
@@ -366,14 +366,14 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%Self.822) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%.Self.90f) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
@@ -395,7 +395,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%Z.facet.100) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
@@ -410,14 +410,14 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%Self.822) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%.Self.bf2) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -430,7 +430,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%Z.facet.738) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -443,7 +443,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%T.fe5) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -470,7 +470,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.822: %Z.type.0ed = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.0bf: type = assoc_entity_type @Z, @Z(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.f33: %Z.assoc_type.0bf = assoc_entity element0, @Z.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.f33: %Z.assoc_type.0bf = assoc_entity element0, @Z.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self.162: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -481,7 +481,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.90f: %Z.type.4d0 = symbolic_binding .Self [symbolic]
 // CHECK:STDOUT:   %Self.427: %Z.type.4d0 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.5b2: type = assoc_entity_type @Z, @Z(%S) [symbolic]
-// CHECK:STDOUT:   %assoc0.8bc: %Z.assoc_type.5b2 = assoc_entity element0, @Z.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.8bc: %Z.assoc_type.5b2 = assoc_entity element0, @Z.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %require_complete.72d: <witness> = require_complete_type %Z.type.4d0 [symbolic]
 // CHECK:STDOUT:   %.Self.binding.as_type.097: type = symbolic_binding_type .Self, %.Self.90f [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.7d6: <witness> = lookup_impl_witness %.Self.90f, @Z, @Z(%S) [symbolic]
@@ -495,7 +495,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.bf2: %Z.type.be4 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Self.af9: %Z.type.be4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.553: type = assoc_entity_type @Z, @Z(%C) [concrete]
-// CHECK:STDOUT:   %assoc0.1e0: %Z.assoc_type.553 = assoc_entity element0, @Z.%X [concrete]
+// CHECK:STDOUT:   %assoc0.1e0: %Z.assoc_type.553 = assoc_entity element0, @Z.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type.8c6: type = symbolic_binding_type .Self, %.Self.bf2 [symbolic_self]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.c06: <witness> = lookup_impl_witness %.Self.bf2, @Z, @Z(%C) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.2cd: type = impl_witness_access %Z.lookup_impl_witness.c06, element0 [symbolic_self]
@@ -536,8 +536,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.178: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ff3) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.843)]
-// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert.1de)]
+// CHECK:STDOUT:   %Core.import_ref.178: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ff3) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%assoc0 (constants.%assoc0.843)]
+// CHECK:STDOUT:   %Core.import_ref.201: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type.b3a) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert.1de)]
 // CHECK:STDOUT:   %Core.import_ref.cc1 = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -637,17 +637,17 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.0ed) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.822)]
-// CHECK:STDOUT:     interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:     %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.f33)]
+// CHECK:STDOUT:       %assoc0: @Z.WithSelf.%Z.assoc_type (%Z.assoc_type.0bf) = assoc_entity element0, @Z.WithSelf.%X [symbolic = @Z.WithSelf.%assoc0 (constants.%assoc0.f33)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
-// CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:     witness = (@Z.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -655,7 +655,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.162]
-// CHECK:STDOUT:   interface_with_self_decl @Y [concrete]
+// CHECK:STDOUT:   %Y.WithSelf.decl = interface_with_self_decl @Y [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -672,7 +672,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %require_complete.loc10_50: <witness> = require_complete_type %Z.type.loc10_42.2 [symbolic = %require_complete.loc10_50 (constants.%require_complete.72d)]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.4 [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.097)]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%S.loc10_24.2) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.5b2)]
-// CHECK:STDOUT:   %assoc0: @T.as.Z.impl.34a.%Z.assoc_type (%Z.assoc_type.5b2) = assoc_entity element0, @Z.%X [symbolic = %assoc0 (constants.%assoc0.8bc)]
+// CHECK:STDOUT:   %assoc0: @T.as.Z.impl.34a.%Z.assoc_type (%Z.assoc_type.5b2) = assoc_entity element0, @Z.WithSelf.%X [symbolic = %assoc0 (constants.%assoc0.8bc)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.4, @Z, @Z(%S.loc10_24.2) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.7d6)]
 // CHECK:STDOUT:   %impl.elem0.loc10_50.2: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_50.2 (constants.%impl.elem0.e5e)]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z, @Z(%S.loc10_24.2) where %impl.elem0.loc10_50.2 = constants.%empty_tuple.type> [symbolic = %Z_where.type (constants.%Z_where.type.a76)]
@@ -774,14 +774,14 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%Self.822) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%.Self.90f) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
@@ -803,7 +803,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%S, constants.%Z.facet.100) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%S
+// CHECK:STDOUT:   %T => constants.%S
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.5b2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8bc
 // CHECK:STDOUT: }
@@ -818,14 +818,14 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%Self.822) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%.Self.bf2) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -838,7 +838,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%Z.facet.738) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -851,7 +851,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%C, constants.%T.fe5) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc4 => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.553
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1e0
 // CHECK:STDOUT: }
@@ -862,7 +862,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self.0e0: %Ptr.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
-// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
@@ -964,17 +964,17 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
-// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:   %Ptr.WithSelf.decl = interface_with_self_decl @Ptr [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
-// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.6bc]
+// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete = constants.%assoc0.6bc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
-// CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:   witness = (@Ptr.WithSelf.%Type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -1082,7 +1082,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self.0e0: %Ptr.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
-// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
@@ -1191,17 +1191,17 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
-// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:   %Ptr.WithSelf.decl = interface_with_self_decl @Ptr [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
-// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.6bc]
+// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete = constants.%assoc0.6bc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
-// CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:   witness = (@Ptr.WithSelf.%Type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -1309,7 +1309,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self.0e0: %Ptr.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
-// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %assoc0.6bc: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
@@ -1417,17 +1417,17 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ptr {
 // CHECK:STDOUT:   %Self: %Ptr.type = symbolic_binding Self, 0 [symbolic = constants.%Self.0e0]
-// CHECK:STDOUT:   interface_with_self_decl @Ptr [concrete]
+// CHECK:STDOUT:   %Ptr.WithSelf.decl = interface_with_self_decl @Ptr [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Type: type = assoc_const_decl @Type [concrete] {
-// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete = constants.%assoc0.6bc]
+// CHECK:STDOUT:     %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.WithSelf.%Type [concrete = constants.%assoc0.6bc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
-// CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:   witness = (@Ptr.WithSelf.%Type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }

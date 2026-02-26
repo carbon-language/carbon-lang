@@ -208,19 +208,19 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.ab9: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.2e7: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
+// CHECK:STDOUT:   %assoc0.2e7: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %I3.type: type = facet_type <@I3> [concrete]
 // CHECK:STDOUT:   %Self.70b: %I3.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I3.assoc_type: type = assoc_entity_type @I3 [concrete]
-// CHECK:STDOUT:   %assoc0.0d5: %I3.assoc_type = assoc_entity element0, @I3.%T1 [concrete]
-// CHECK:STDOUT:   %assoc1: %I3.assoc_type = assoc_entity element1, @I3.%T2 [concrete]
-// CHECK:STDOUT:   %assoc2: %I3.assoc_type = assoc_entity element2, @I3.%T3 [concrete]
+// CHECK:STDOUT:   %assoc0.0d5: %I3.assoc_type = assoc_entity element0, @I3.WithSelf.%T1 [concrete]
+// CHECK:STDOUT:   %assoc1: %I3.assoc_type = assoc_entity element1, @I3.WithSelf.%T2 [concrete]
+// CHECK:STDOUT:   %assoc2: %I3.assoc_type = assoc_entity element2, @I3.WithSelf.%T3 [concrete]
 // CHECK:STDOUT:   %NonType.type: type = facet_type <@NonType> [concrete]
 // CHECK:STDOUT:   %Self.13f: %NonType.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %NonType.assoc_type: type = assoc_entity_type @NonType [concrete]
-// CHECK:STDOUT:   %assoc0.0f3: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete]
+// CHECK:STDOUT:   %assoc0.0f3: %NonType.assoc_type = assoc_entity element0, @NonType.WithSelf.%Y [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,34 +236,34 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0.2e7]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0.2e7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
-// CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 {
 // CHECK:STDOUT:   %Self: %I3.type = symbolic_binding Self, 0 [symbolic = constants.%Self.70b]
-// CHECK:STDOUT:   interface_with_self_decl @I3 [concrete]
+// CHECK:STDOUT:   %I3.WithSelf.decl = interface_with_self_decl @I3 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T1: type = assoc_const_decl @T1 [concrete] {
-// CHECK:STDOUT:     %assoc0: %I3.assoc_type = assoc_entity element0, @I3.%T1 [concrete = constants.%assoc0.0d5]
+// CHECK:STDOUT:     %assoc0: %I3.assoc_type = assoc_entity element0, @I3.WithSelf.%T1 [concrete = constants.%assoc0.0d5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T2: type = assoc_const_decl @T2 [concrete] {
-// CHECK:STDOUT:     %assoc1: %I3.assoc_type = assoc_entity element1, @I3.%T2 [concrete = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %I3.assoc_type = assoc_entity element1, @I3.WithSelf.%T2 [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T3: type = assoc_const_decl @T3 [concrete] {
-// CHECK:STDOUT:     %assoc2: %I3.assoc_type = assoc_entity element2, @I3.%T3 [concrete = constants.%assoc2]
+// CHECK:STDOUT:     %assoc2: %I3.assoc_type = assoc_entity element2, @I3.WithSelf.%T3 [concrete = constants.%assoc2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -271,24 +271,24 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .T1 = @T1.%assoc0
 // CHECK:STDOUT:   .T2 = @T2.%assoc1
 // CHECK:STDOUT:   .T3 = @T3.%assoc2
-// CHECK:STDOUT:   witness = (%T1, %T2, %T3)
+// CHECK:STDOUT:   witness = (@I3.WithSelf.%T1, @I3.WithSelf.%T2, @I3.WithSelf.%T3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType {
 // CHECK:STDOUT:   %Self: %NonType.type = symbolic_binding Self, 0 [symbolic = constants.%Self.13f]
-// CHECK:STDOUT:   interface_with_self_decl @NonType [concrete]
+// CHECK:STDOUT:   %NonType.WithSelf.decl = interface_with_self_decl @NonType [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Y: %struct_type.a = assoc_const_decl @Y [concrete] {
-// CHECK:STDOUT:     %assoc0: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete = constants.%assoc0.0f3]
+// CHECK:STDOUT:     %assoc0: %NonType.assoc_type = assoc_entity element0, @NonType.WithSelf.%Y [concrete = constants.%assoc0.0f3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = @Y.%assoc0
-// CHECK:STDOUT:   witness = (%Y)
+// CHECK:STDOUT:   witness = (@NonType.WithSelf.%Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -1573,7 +1573,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %IF.WithSelf.F.type: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %IF.WithSelf.F: %IF.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
-// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%IF.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.WithSelf.%IF.WithSelf.F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1584,22 +1584,22 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @IF {
-// CHECK:STDOUT:   %Self.loc3_14: %IF.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @IF [concrete]
+// CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %IF.WithSelf.decl = interface_with_self_decl @IF [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %IF.WithSelf.F.decl: @IF.%IF.WithSelf.F.type (%IF.WithSelf.F.type) = fn_decl @IF.WithSelf.F [symbolic = @IF.%IF.WithSelf.F (constants.%IF.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %IF.WithSelf.F.decl: @IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type) = fn_decl @IF.WithSelf.F [symbolic = @IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F)] {} {}
 // CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, %IF.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc3_14
-// CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%IF.WithSelf.F.decl)
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .F = @IF.WithSelf.%assoc0
+// CHECK:STDOUT:   witness = (@IF.WithSelf.%IF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IF.WithSelf.F(@IF.%Self.loc3_14: %IF.type) {
+// CHECK:STDOUT: generic fn @IF.WithSelf.F(@IF.%Self: %IF.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1639,10 +1639,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.IF: type = import_ref Main//interface_with_function, IF, loaded [concrete = constants.%IF.type]
 // CHECK:STDOUT:   %Main.import_ref.82a: %IF.assoc_type = import_ref Main//interface_with_function, loc3_22, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: @IF.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1d1) = import_ref Main//interface_with_function, F, loaded [symbolic = @IF.%IF.WithSelf.F (constants.%IF.WithSelf.F.d78)]
+// CHECK:STDOUT:   %Main.F: @IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1d1) = import_ref Main//interface_with_function, F, loaded [symbolic = @IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.d78)]
 // CHECK:STDOUT:   %Main.import_ref.e88a3c.2: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.b9e = import_ref Main//interface_with_function, loc3_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ae5: @IF.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1d1) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = @IF.%IF.WithSelf.F (constants.%IF.WithSelf.F.d78)]
+// CHECK:STDOUT:   %Main.import_ref.ae5: @IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1d1) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = @IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.d78)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

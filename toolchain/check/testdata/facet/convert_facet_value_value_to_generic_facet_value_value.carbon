@@ -262,7 +262,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Edible {
 // CHECK:STDOUT:   %Self: %Edible.type = symbolic_binding Self, 0 [symbolic = constants.%Self.461]
-// CHECK:STDOUT:   interface_with_self_decl @Edible [concrete]
+// CHECK:STDOUT:   %Edible.WithSelf.decl = interface_with_self_decl @Edible [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -273,7 +273,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
-// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
+// CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -291,7 +291,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc21_29.1: @Eats.%Eats.type (%Eats.type.394) = symbolic_binding Self, 1 [symbolic = %Self.loc21_29.2 (constants.%Self.857)]
-// CHECK:STDOUT:     interface_with_self_decl @Eats [concrete]
+// CHECK:STDOUT:     %Eats.WithSelf.decl = interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc21_29.1

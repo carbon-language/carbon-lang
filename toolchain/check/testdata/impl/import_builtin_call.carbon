@@ -85,7 +85,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.WithSelf.Op.type.f48: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Add.WithSelf.Op.060: %Add.WithSelf.Op.type.f48 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
-// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.%Add.WithSelf.Op.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.WithSelf.%Add.WithSelf.Op.decl [concrete]
 // CHECK:STDOUT:   %.824: Core.Form = init_form type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
@@ -220,11 +220,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self.loc4: %Add.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @Add [concrete]
+// CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Add.WithSelf.decl = interface_with_self_decl @Add [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %Add.WithSelf.Op.decl: @Add.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.f48) = fn_decl @Add.WithSelf.Op [symbolic = @Add.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.060)] {
+// CHECK:STDOUT:   %Add.WithSelf.Op.decl: @Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.f48) = fn_decl @Add.WithSelf.Op [symbolic = @Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.060)] {
 // CHECK:STDOUT:     %self.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.f75) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.f75) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.f75) = value_binding_pattern other [concrete]
@@ -232,20 +232,20 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %return.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.f75) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.f75) = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self.loc4 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %.loc5_37.3: Core.Form = init_form %.loc5_37.2, call_param2 [symbolic = %.loc5_37.1 (constants.%.0ec)]
 // CHECK:STDOUT:     %self.param: @Add.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:       %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self.loc4 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_15: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref.loc5_15, %Self.as_type.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Add.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: @Add.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param1
 // CHECK:STDOUT:     %.loc5_28.1: type = splice_block %.loc5_28.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:       %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self.loc4 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_28.2: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
@@ -256,9 +256,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, %Add.WithSelf.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc4
-// CHECK:STDOUT:   .Op = %assoc0
-// CHECK:STDOUT:   witness = (%Add.WithSelf.Op.decl)
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Op = @Add.WithSelf.%assoc0
+// CHECK:STDOUT:   witness = (@Add.WithSelf.%Add.WithSelf.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -327,7 +327,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Add.WithSelf.Op(@Add.%Self.loc4: %Add.type) {
+// CHECK:STDOUT: generic fn @Add.WithSelf.Op(@Add.%Self: %Add.type) {
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.f75)]
@@ -371,7 +371,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref.loc20_10: @Double.%MyInt.loc19_39.1 (%MyInt) = name_ref x, %x
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [concrete = constants.%Add.type]
-// CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc20_11.1: @Double.%.loc20_11.2 (%.d02) = impl_witness_access constants.%Add.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc20_11: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0.loc20_11.1
 // CHECK:STDOUT:     %x.ref.loc20_21: @Double.%MyInt.loc19_39.1 (%MyInt) = name_ref x, %x
@@ -388,7 +388,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc5 => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.f48
 // CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.060
 // CHECK:STDOUT: }
@@ -429,7 +429,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Add.facet.fbb) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc5 => constants.%Add.facet.fbb
+// CHECK:STDOUT:   %Self => constants.%Add.facet.fbb
 // CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.6d2
 // CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.935
 // CHECK:STDOUT: }
@@ -450,7 +450,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Add.facet.9ab) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc5 => constants.%Add.facet.9ab
+// CHECK:STDOUT:   %Self => constants.%Add.facet.9ab
 // CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.3e8
 // CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.451
 // CHECK:STDOUT: }

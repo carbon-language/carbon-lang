@@ -122,7 +122,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc16_28.1: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_28.2 (constants.%Self.31c17c.1)]
-// CHECK:STDOUT:     constraint_with_self_decl @Empty [concrete]
+// CHECK:STDOUT:     %Empty.WithSelf.decl = constraint_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc16_28.1

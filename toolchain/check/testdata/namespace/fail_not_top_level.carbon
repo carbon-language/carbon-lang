@@ -78,18 +78,18 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc33 {
-// CHECK:STDOUT:   %Self.loc33: %I.type.c78 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I.loc33 [concrete]
+// CHECK:STDOUT:   %Self: %I.type.c78 = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc33 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: @I.loc33.%I.type (%I.type.4dd) = fn_decl @I.loc39 [symbolic = @I.loc33.%I (constants.%I)] {} {}
+// CHECK:STDOUT:   %I.decl: @I.WithSelf.%I.type (%I.type.4dd) = fn_decl @I.loc39 [symbolic = @I.WithSelf.%I (constants.%I)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc33
-// CHECK:STDOUT:   .N = %N
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .N = @I.WithSelf.%N
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -127,7 +127,7 @@ interface I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.loc39(@I.loc33.%Self.loc33: %I.type.c78) {
+// CHECK:STDOUT: generic fn @I.loc39(@I.loc33.%Self: %I.type.c78) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -138,7 +138,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc39 => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %I.type => constants.%I.type.4dd
 // CHECK:STDOUT:   %I => constants.%I
 // CHECK:STDOUT: }

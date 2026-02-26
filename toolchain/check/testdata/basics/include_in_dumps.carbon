@@ -104,7 +104,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -125,7 +125,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %I.WithSelf.Op.type.71c: type = fn_type @I.WithSelf.Op, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.ae1: %I.WithSelf.Op.type.71c = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.WithSelf.Op.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Op.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
@@ -139,17 +139,17 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self.loc7: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %I.WithSelf.Op.decl: @I.%I.WithSelf.Op.type (%I.WithSelf.Op.type.71c) = fn_decl @I.WithSelf.Op [symbolic = @I.%I.WithSelf.Op (constants.%I.WithSelf.Op.ae1)] {
+// CHECK:STDOUT:   %I.WithSelf.Op.decl: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.71c) = fn_decl @I.WithSelf.Op [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.ae1)] {
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.Op.%pattern_type (%pattern_type.fa0) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.WithSelf.Op.%pattern_type (%pattern_type.fa0) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self.loc7 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc8_22.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
@@ -158,14 +158,14 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc7
-// CHECK:STDOUT:   .Op = %assoc0
-// CHECK:STDOUT:   witness = (%I.WithSelf.Op.decl)
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Op = @I.WithSelf.%assoc0
+// CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.WithSelf.Op(@I.%Self.loc7: %I.type) {
+// CHECK:STDOUT: generic fn @I.WithSelf.Op(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.fa0)]
@@ -175,7 +175,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc8 => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.71c
 // CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.ae1
 // CHECK:STDOUT: }
@@ -188,7 +188,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc8 => constants.%I.facet
+// CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.c9a
 // CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.b3e
 // CHECK:STDOUT: }
@@ -239,7 +239,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2362f8.2: %I.type = import_ref Main//included_with_range, loc7_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//included_with_range, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e26: @I.%I.WithSelf.Op.type (%I.WithSelf.Op.type.f73) = import_ref Main//included_with_range, loc8_29, loaded [symbolic = @I.%I.WithSelf.Op (constants.%I.WithSelf.Op.f53)]
+// CHECK:STDOUT:   %Main.import_ref.e26: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.f73) = import_ref Main//included_with_range, loc8_29, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.f53)]
 // CHECK:STDOUT:   %Main.import_ref.f72: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.61c: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
@@ -358,7 +358,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.d09: %I.assoc_type = import_ref Main//excluded_with_range, loc6_29, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.import_ref.e26: @I.%I.WithSelf.Op.type (%I.WithSelf.Op.type.f73) = import_ref Main//excluded_with_range, loc6_29, loaded [symbolic = @I.%I.WithSelf.Op (constants.%I.WithSelf.Op.f53)]
+// CHECK:STDOUT:   %Main.import_ref.e26: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.f73) = import_ref Main//excluded_with_range, loc6_29, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.f53)]
 // CHECK:STDOUT:   %Main.import_ref.4bc: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_32, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.4bc), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }

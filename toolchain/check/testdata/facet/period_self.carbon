@@ -362,13 +362,13 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %I.type.1ab: type = facet_type <@I, @I(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.fdb: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.76c: type = assoc_entity_type @I, @I(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.99e: %I.assoc_type.76c = assoc_entity element0, @I.%I1 [symbolic]
+// CHECK:STDOUT:   %assoc0.99e: %I.assoc_type.76c = assoc_entity element0, @I.WithSelf.%I1 [symbolic]
 // CHECK:STDOUT:   %.Self.binding.as_type.8db: type = symbolic_binding_type .Self, %.Self.c39 [symbolic_self]
 // CHECK:STDOUT:   %I.type.bee: type = facet_type <@I, @I(%.Self.binding.as_type.8db)> [symbolic_self]
 // CHECK:STDOUT:   %.Self.dad: %I.type.bee = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Self.fa8: %I.type.bee = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.c03: type = assoc_entity_type @I, @I(%.Self.binding.as_type.8db) [symbolic_self]
-// CHECK:STDOUT:   %assoc0.fe4: %I.assoc_type.c03 = assoc_entity element0, @I.%I1 [symbolic_self]
+// CHECK:STDOUT:   %assoc0.fe4: %I.assoc_type.c03 = assoc_entity element0, @I.WithSelf.%I1 [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type.b0b: type = symbolic_binding_type .Self, %.Self.dad [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.3fc: <witness> = lookup_impl_witness %.Self.dad, @I, @I(%.Self.binding.as_type.8db) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness.3fc, element0 [symbolic_self]
@@ -479,17 +479,17 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.1ab) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.fdb)]
-// CHECK:STDOUT:     interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I1: type = assoc_const_decl @I1 [concrete] {
-// CHECK:STDOUT:       %assoc0: @I.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.%I1 [symbolic = @I.%assoc0 (constants.%assoc0.99e)]
+// CHECK:STDOUT:       %assoc0: @I.WithSelf.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.WithSelf.%I1 [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.99e)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_23.1
 // CHECK:STDOUT:     .I1 = @I1.%assoc0
-// CHECK:STDOUT:     witness = (%I1)
+// CHECK:STDOUT:     witness = (@I.WithSelf.%I1)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -543,28 +543,28 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%Self.fdb) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%I.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
 // CHECK:STDOUT: }

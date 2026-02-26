@@ -293,7 +293,7 @@ auto Formatter::FormatTopLevelScope(InstNamer::ScopeId scope_id,
   chunks_.FormatChildContent(scope_chunk, [&] {
     // Note, we don't use OpenBrace() / CloseBrace() here because we always want
     // a newline to avoid misformatting if the first instruction is omitted.
-    out() << "\n" << inst_namer_.GetScopeName(scope_id, false) << " {\n";
+    out() << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   });
 
   indent_ += 2;
@@ -397,6 +397,9 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     if (!body_block_empty) {
       IndentLabel();
       out() << "!with Self:\n";
+
+      llvm::SaveAndRestore with_self_scope(
+          scope_, inst_namer_.GetScopeFor(InstNamer::InterfaceWithSelfId{id}));
       FormatCodeBlock(interface_info.body_block_with_self_id);
     }
 
@@ -448,6 +451,10 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
     if (!body_block_empty) {
       IndentLabel();
       out() << "!with Self:\n";
+
+      llvm::SaveAndRestore with_self_scope(
+          scope_,
+          inst_namer_.GetScopeFor(InstNamer::NamedConstraintWithSelfId{id}));
       FormatCodeBlock(constraint_info.body_block_with_self_id);
     }
 
