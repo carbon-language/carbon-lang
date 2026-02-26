@@ -129,7 +129,7 @@ fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   InterfaceParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   InterfaceParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-10]]:26: note: initializing generic parameter `U` declared here [InitializingGenericParam]
@@ -140,7 +140,7 @@ fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `N` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   ConstraintParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(N)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+7]]:3: note: type `{.a: ()}` does not implement interface `Core.ImplicitAs(N)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   ConstraintParam({.a = ()});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE-20]]:27: note: initializing generic parameter `U` declared here [InitializingGenericParam]

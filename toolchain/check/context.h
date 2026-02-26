@@ -180,6 +180,8 @@ class Context {
 
   auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
+  auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
+
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
@@ -475,6 +477,14 @@ class Context {
   //
   // This becomes `InstBlockId::Imports`.
   llvm::SmallVector<SemIR::InstId> imports_;
+
+  // Entities which are generated internally to the toolchain, to represent
+  // builtin concepts which should be dumped as part of `SemIR`. For example,
+  // when doing destruction, the `Destroy.Op` function is generated, and will be
+  // found here.
+  //
+  // This becomes `InstBlockId::Generated`.
+  llvm::SmallVector<SemIR::InstId> generated_;
 
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.

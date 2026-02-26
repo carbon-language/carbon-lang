@@ -123,12 +123,13 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId {
   auto str_type = MakeStringType(context, node_id);
-  if (!RequireCompleteType(context, str_type.type_id, node_id, [&] {
-        CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Error,
-                          "type {0} is incomplete", InstIdAsType);
-        return context.emitter().Build(node_id, StringLiteralTypeIncomplete,
-                                       str_type.inst_id);
-      })) {
+  if (!RequireCompleteType(
+          context, str_type.type_id, node_id, [&](auto& builder) {
+            CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Context,
+                              "type {0} is incomplete", InstIdAsType);
+            builder.Context(node_id, StringLiteralTypeIncomplete,
+                            str_type.inst_id);
+          })) {
     return SemIR::ErrorInst::InstId;
   }
 

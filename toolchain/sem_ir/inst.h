@@ -699,15 +699,16 @@ class InstBlockStore
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
-      // 4 reserved ids for the
-      // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
-      : BaseType(allocator, check_ir_id, 4) {
-    auto exports_id = AddPlaceholder();
-    CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto imports_id = AddPlaceholder();
-    CARBON_CHECK(imports_id == InstBlockId::Imports);
-    auto global_init_id = AddPlaceholder();
-    CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
+      : BaseType(allocator, check_ir_id, InstBlockId::ReservedIds.size()) {
+    CARBON_CHECK(size() == 1, "Empty is added by `BlockValueStore`");
+    for (auto reserved_id : InstBlockId::ReservedIds) {
+      if (reserved_id == InstBlockId::Empty) {
+        continue;
+      }
+      auto id = AddPlaceholder();
+      CARBON_CHECK(id == reserved_id);
+    }
+    CARBON_CHECK(size() == InstBlockId::ReservedIds.size());
   }
 
   // Adds an uninitialized block of the given size. The caller is expected to

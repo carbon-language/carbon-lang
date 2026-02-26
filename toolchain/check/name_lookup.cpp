@@ -362,12 +362,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     // are not complete.
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-        loc_id, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
+        loc_id, [&](auto& builder) {
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
                             "member access into incomplete class {0}",
                             InstIdAsType);
-          return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteClassScope, lookup_inst_id);
+          builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
+                          lookup_inst_id);
         });
     auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
@@ -382,13 +382,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     if (RequireCompleteType(
             context,
             context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
-            [&] {
-              CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
-                                "member access into incomplete facet type {0}",
-                                InstIdAsType);
-              return context.emitter().Build(
-                  loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                  lookup_inst_id);
+            [&](auto& builder) {
+              CARBON_DIAGNOSTIC(
+                  QualifiedExprInIncompleteFacetTypeScope, Context,
+                  "member access into incomplete facet type {0}", InstIdAsType);
+              builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                              lookup_inst_id);
             })) {
       auto facet_type_info =
           context.facet_types().Get(facet_type->facet_type_id);

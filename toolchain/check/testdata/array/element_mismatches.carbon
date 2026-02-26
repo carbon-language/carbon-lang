@@ -19,7 +19,7 @@ class C {}
 // CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `()` to `C` [ConversionFailure]
 // CHECK:STDERR: var a: array(C, 3) = ({}, (), true);
 // CHECK:STDERR:                      ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+4]]:22: note: type `()` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+4]]:22: note: type `()` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var a: array(C, 3) = ({}, (), true);
 // CHECK:STDERR:                      ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -36,7 +36,7 @@ var a: (D, C, D);
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `D` to `C` [ConversionFailure]
 // CHECK:STDERR: var b: array(C, 3) = a;
 // CHECK:STDERR:                      ^
-// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var b: array(C, 3) = a;
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
@@ -46,7 +46,7 @@ var c: (C, D, D);
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+7]]:22: error: cannot copy value of type `C` [CopyOfUncopyableType]
 // CHECK:STDERR: var d: array(C, 3) = c;
 // CHECK:STDERR:                      ^
-// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: note: type `C` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: note: type `C` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var d: array(C, 3) = c;
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:

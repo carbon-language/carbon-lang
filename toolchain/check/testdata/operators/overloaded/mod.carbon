@@ -61,9 +61,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.5a7: type = fn_type_with_self_type %ModAssignWith.WithSelf.Op.type.12e, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a

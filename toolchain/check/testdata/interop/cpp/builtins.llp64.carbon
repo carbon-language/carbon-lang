@@ -82,7 +82,7 @@ fn F() {
   // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+7]]:32: error: cannot implicitly convert expression of type `Cpp.long` to `i32` [ConversionFailure]
   // CHECK:STDERR:   let unused carbon_i32: i32 = cpp_long;
   // CHECK:STDERR:                                ^~~~~~~~
-  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+4]]:32: note: type `Cpp.long` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+4]]:32: note: type `Cpp.long` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused carbon_i32: i32 = cpp_long;
   // CHECK:STDERR:                                ^~~~~~~~
   // CHECK:STDERR:

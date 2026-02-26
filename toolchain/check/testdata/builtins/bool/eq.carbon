@@ -58,9 +58,6 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %True: %True.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a06 = ref_binding_pattern a [concrete]

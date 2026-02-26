@@ -102,28 +102,28 @@ fn DestroyClassWithPrivateBaseDestructor() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+16]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./types.h:13:7: error: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
-// CHECK:STDERR:    13 | class AmbiguousDestructorT {
-// CHECK:STDERR:       |       ^
-// CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
-// CHECK:STDERR:    13 | class AmbiguousDestructorT {
-// CHECK:STDERR:       |       ^
-// CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
-// CHECK:STDERR:    15 |   ~AmbiguousDestructorT() requires (N != 1);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
-// CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
-// CHECK:STDERR:       |   ^
 import Cpp library "types.h";
 
 fn AmbiguousDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:17: note: while completing C++ type `Cpp.AmbiguousDestructorT` [InCppTypeCompletion]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+20]]:17: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var unused a: Cpp.AmbiguousDestructor = {};
   // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:13:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
+  // CHECK:STDERR:       |       ^
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
+  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
+  // CHECK:STDERR:       |       ^
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:    15 |   ~AmbiguousDestructorT() requires (N != 1);
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-18]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
+  // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.AmbiguousDestructor = {};
 }
@@ -132,7 +132,7 @@ fn DeletedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR:    39 |   var unused a: Cpp.DeletedDestructor = {};
   // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
   // CHECK:STDERR:       |   ^
@@ -144,7 +144,7 @@ fn PrivateDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var unused a: Cpp.PrivateDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-26]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-42]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~PrivateDestructor();
   // CHECK:STDERR:   ^
@@ -156,7 +156,7 @@ fn ProtectedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   var unused a: Cpp.ProtectedDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-38]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-54]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~ProtectedDestructor();
   // CHECK:STDERR:   ^
@@ -320,9 +320,6 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -362,9 +359,6 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%PrivateDestructor.val) [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {

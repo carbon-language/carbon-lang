@@ -87,9 +87,6 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.b12: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.9a3, %Destroy.facet.565 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc4_6.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:

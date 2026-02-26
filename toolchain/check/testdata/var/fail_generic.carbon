@@ -26,8 +26,5 @@ fn Main() {
 
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main();
 // CHECK:STDOUT:

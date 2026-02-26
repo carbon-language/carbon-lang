@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/call.h"
 
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/Template.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/cpp/import.h"
@@ -75,9 +76,10 @@ static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
 // Converts an argument in a call to a C++ template name into a corresponding
 // clang template argument, given the template parameter it will be matched
 // against.
-static auto ConvertArgToTemplateArg(Context& context,
-                                    const clang::NamedDecl* param_decl,
-                                    SemIR::InstId arg_id)
+static auto ConvertArgToTemplateArg(
+    Context& context, clang::TemplateDecl* template_decl,
+    clang::NamedDecl* param_decl, SemIR::InstId arg_id,
+    clang::SmallVector<clang::TemplateArgument>* template_args)
     -> std::optional<clang::TemplateArgumentLoc> {
   if (isa<clang::TemplateTypeParmDecl>(param_decl)) {
     auto type = ExprAsType(context, SemIR::LocId(arg_id), arg_id);
@@ -114,9 +116,43 @@ static auto ConvertArgToTemplateArg(Context& context,
     return MakePlaceholderTemplateArg(context, arg_id);
   }
 
-  if (const auto* non_type =
-          dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
+  if (auto* non_type = dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
     auto param_type = non_type->getType();
+
+    // Handle non-type parameters with a dependent type. For example:
+    //
+    // C++:    template<typename T, T N> struct S{};
+    // Carbon: Cpp.S(i32, 42)
+    //
+    // When evaluating the second template argument, the generic type of
+    // `T` should be substituted with `i32`.
+    if (param_type->isInstantiationDependentType()) {
+      clang::Sema::InstantiatingTemplate inst(
+          context.clang_sema(), clang::SourceLocation(), param_decl, non_type,
+          *template_args, clang::SourceRange());
+      if (inst.isInvalid()) {
+        return std::nullopt;
+      }
+      clang::MultiLevelTemplateArgumentList mltal(template_decl, *template_args,
+                                                  /*Final=*/true);
+
+      mltal.addOuterRetainedLevels(non_type->getDepth());
+      // TODO: handle pack expansion by passing in the pack index from
+      // `ConvertArgsToTemplateArgs`.
+      if (!param_type->getAs<clang::PackExpansionType>()) {
+        param_type = context.clang_sema().SubstType(param_type, mltal,
+                                                    non_type->getLocation(),
+                                                    non_type->getDeclName());
+      }
+
+      if (!param_type.isNull()) {
+        param_type = context.clang_sema().CheckNonTypeTemplateParameterType(
+            param_type, non_type->getLocation());
+      }
+      if (param_type.isNull()) {
+        return std::nullopt;
+      }
+    }
 
     // Handle integer parameters.
     if (param_type->isIntegerType()) {
@@ -172,6 +208,7 @@ static auto ConvertArgsToTemplateArgs(Context& context,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids,
                                       clang::TemplateArgumentListInfo& arg_list)
     -> bool {
+  clang::SmallVector<clang::TemplateArgument> template_args;
   for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
     if (arg_ids.empty()) {
       return true;
@@ -185,8 +222,10 @@ static auto ConvertArgsToTemplateArgs(Context& context,
         param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
                                               : arg_ids.consume_front();
     for (auto arg_id : args_for_param) {
-      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
+      if (auto arg = ConvertArgToTemplateArg(context, template_decl, param_decl,
+                                             arg_id, &template_args)) {
         arg_list.addArgument(*arg);
+        template_args.push_back(arg->getArgument());
       } else {
         return false;
       }

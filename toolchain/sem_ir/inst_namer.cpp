@@ -130,6 +130,9 @@ InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
   PushBlockId(ScopeId::Imports, InstBlockId::Imports);
   process_stack();
 
+  PushBlockId(ScopeId::Generated, InstBlockId::Generated);
+  process_stack();
+
   PushBlockId(ScopeId::File, sem_ir->top_inst_block_id());
   process_stack();
 
@@ -207,6 +210,8 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
     // These are treated as SemIR keywords.
     case ScopeId::File:
       return "file";
+    case ScopeId::Generated:
+      return "generated";
     case ScopeId::Imports:
       return "imports";
     case ScopeId::Constants:
@@ -785,7 +790,8 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
   ScopeId old_scope_id = inst_namer_->insts_[index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
-    if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::Imports) {
+    if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::Generated ||
+        scope_id_ == ScopeId::Imports) {
       loc_id_or_fingerprint =
           inst_namer_->fingerprinter_.GetOrCompute(&sem_ir(), inst_id_);
     } else {

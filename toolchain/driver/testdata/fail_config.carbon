@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/config.carbon
 
 // We don't include the digest in `file_test` to avoid unnecessary dependencies.
-// CHECK:STDERR: error: unable to read the installation's digest file: {{.*}}
+// CHECK:STDERR: error: unable to read the installation's digest file: {{.+}}
 // CHECK:STDERR:
 
 // The rest of the config should still be displayed.
@@ -21,9 +21,9 @@
 // tests.
 //
 // CHECK:STDOUT: CLANG_INCLUDE_DIRS:
-// CHECK:STDOUT:     {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/23/include
-// CHECK:STDOUT: CLANG_RESOURCE_DIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/23
+// CHECK:STDOUT:     {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/{{[^/]+}}/include
+// CHECK:STDOUT: CLANG_RESOURCE_DIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/lib/clang/{{[^/]+}}
 // CHECK:STDOUT: CLANG_SYSROOT: /
 // CHECK:STDOUT: INSTALL_ROOT: {{.*}}/toolchain/install/prefix/lib/carbon/
 // CHECK:STDOUT: LLVM_BINDIR: {{.*}}/toolchain/install/prefix/lib/carbon/llvm/bin
-// CHECK:STDOUT: VERSION: {{[0-9]+}}.{{[0-9]+}}.{{[0-9]+}}-{{.*}}
+// CHECK:STDOUT: VERSION: {{[0-9]+}}.{{[0-9]+}}.{{[0-9]+}}-{{.+}}

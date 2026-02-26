@@ -41,12 +41,6 @@ fn Test2(c: C) -> i32 {
 library "[[@TEST_NAME]]";
 
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE+6]]:16: error: cannot implicitly convert expression of type `D` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   let n: i32 = x;
-  // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE+3]]:16: note: type `D` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let n: i32 = x;
-  // CHECK:STDERR:                ^
   let n: i32 = x;
   return n;
 }
@@ -54,9 +48,15 @@ fn F[template T:! type](x: T) -> i32 {
 class D {}
 
 fn Test(d: D) -> i32 {
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE+4]]:10: note: in `F(D)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE+10]]:10: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
   // CHECK:STDERR:   return F(d);
   // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-10]]:16: note: cannot implicitly convert expression of type `D` to `i32` [ConversionFailure]
+  // CHECK:STDERR:   let n: i32 = x;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-13]]:16: note: type `D` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let n: i32 = x;
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   return F(d);
 }
@@ -439,7 +439,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc17: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc11: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %d: %D = value_binding d, %d.param
@@ -462,8 +462,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.1 [template = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %.loc11_16.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
-// CHECK:STDOUT:   %.loc11_16.4: <instruction> = convert_to_value_action %.loc11_16.1, constants.%i32 [template]
+// CHECK:STDOUT:   %.loc5_16.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
+// CHECK:STDOUT:   %.loc5_16.4: <instruction> = convert_to_value_action %.loc5_16.1, constants.%i32 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
@@ -471,19 +471,19 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.1 (%T.67db0b.1) = name_ref x, %x
-// CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc5_10: type = splice_block %i32.loc5 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc11_16.1: @F.%T.loc4_15.1 (%T.67db0b.1) = splice_inst %.loc11_16.3
-// CHECK:STDOUT:     %.loc11_16.2: %i32 = splice_inst %.loc11_16.4
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %.loc11_16.2
+// CHECK:STDOUT:     %.loc5_16.1: @F.%T.loc4_15.1 (%T.67db0b.1) = splice_inst %.loc5_16.3
+// CHECK:STDOUT:     %.loc5_16.2: %i32 = splice_inst %.loc5_16.4
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %.loc5_16.2
 // CHECK:STDOUT:     %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:     %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:     %bound_method.loc12_10.1: <bound method> = bound_method %n.ref, %impl.elem0
+// CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_fn
-// CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_10.2(%n.ref)
+// CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
+// CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -508,7 +508,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %.loc11_16.3 => constants.%inst.as_compatible
-// CHECK:STDOUT:   %.loc11_16.4 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc5_16.3 => constants.%inst.as_compatible
+// CHECK:STDOUT:   %.loc5_16.4 => constants.%inst.splice_block
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

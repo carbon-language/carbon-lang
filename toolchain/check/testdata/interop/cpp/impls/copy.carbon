@@ -123,7 +123,7 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.NonConstCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.NonConstCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.NonConstCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR:
@@ -135,7 +135,7 @@ fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.AmbiguousCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.AmbiguousCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.AmbiguousCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR:

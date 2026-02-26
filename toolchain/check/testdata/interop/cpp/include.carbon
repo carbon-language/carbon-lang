@@ -28,9 +28,6 @@ import Cpp library "including_file.h";
 
 // CHECK:STDOUT: --- import_function_decl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "including_file.h"

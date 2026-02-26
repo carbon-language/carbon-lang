@@ -35,7 +35,7 @@ interface I {
 // CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `Core.IntLiteral` to `{}` [ConversionFailure]
 // CHECK:STDERR: impl {} as I where .V = 0 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+4]]:12: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+4]]:12: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: impl {} as I where .V = 0 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -66,18 +66,15 @@ impl C as I where .V = () {}
 library "[[@TEST_NAME]]";
 
 interface I(N:! Core.IntLiteral()) {
-  // CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+3]]:17: error: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   let V:! array(Self, N);
-  // CHECK:STDERR:                 ^~~~
   let V:! array(Self, N);
 }
 
-// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+7]]:24: note: in `I(-1)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+7]]:24: error: member access into facet of incomplete type `I(-1)` [IncompleteTypeInMemberAccessOfFacet]
 // CHECK:STDERR: impl {} as I(-1) where .V = () {}
 // CHECK:STDERR:                        ^~
-// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+4]]:24: note: checking for complete facet type `I(-1)` here [RequiringCompleteFacetTypeHere]
-// CHECK:STDERR: impl {} as I(-1) where .V = () {}
-// CHECK:STDERR:                        ^~
+// CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE-6]]:17: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:   let V:! array(Self, N);
+// CHECK:STDERR:                 ^~~~
 // CHECK:STDERR:
 impl {} as I(-1) where .V = () {}
 
@@ -649,23 +646,23 @@ fn CallF() {
 // CHECK:STDOUT:     %N.loc4_13.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_13.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @empty_struct_type.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc18_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc18_7.2: type = converted %.loc18_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc15_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc15_7.2: type = converted %.loc15_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %impl.elem1: %.b42 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %int_1, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method(%int_1) [concrete = constants.%int_-1]
-// CHECK:STDOUT:     %.loc18_16.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1]
-// CHECK:STDOUT:     %.loc18_16.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc18_16.1 [concrete = constants.%int_-1]
+// CHECK:STDOUT:     %.loc15_16.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1]
+// CHECK:STDOUT:     %.loc15_16.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc15_16.1 [concrete = constants.%int_-1]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%int_-1)> [concrete = constants.%I.type.54b]
 // CHECK:STDOUT:     %.Self: %I.type.54b = symbolic_binding .Self [symbolic_self = constants.%.Self.6e0]
 // CHECK:STDOUT:     %.Self.ref: %I.type.54b = name_ref .Self, %.Self [symbolic_self = constants.%.Self.6e0]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %.loc18_24: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:     %.loc15_24: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %V.ref: <error> = name_ref V, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc18_30: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc18_18: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc15_30: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_18: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type.54b
 // CHECK:STDOUT:       requirement_rewrite %V.ref, <error>
 // CHECK:STDOUT:     }
@@ -699,7 +696,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc18_7.2 as %.loc18_18 {
+// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc15_7.2 as %.loc15_18 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -720,9 +717,9 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1, constants.%Self.cad) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %N.loc8 => constants.%int_-1
-// CHECK:STDOUT:   %I.type.loc8 => constants.%I.type.54b
-// CHECK:STDOUT:   %Self.loc8 => constants.%Self.cad
+// CHECK:STDOUT:   %N.loc5 => constants.%int_-1
+// CHECK:STDOUT:   %I.type.loc5 => constants.%I.type.54b
+// CHECK:STDOUT:   %Self.loc5 => constants.%Self.cad
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.6f3
 // CHECK:STDOUT:   %array_type => <error>
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.e1a
