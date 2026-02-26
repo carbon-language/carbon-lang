@@ -56,13 +56,12 @@ class Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %Make.ref: %Base.Make.type = name_ref Make, @Base.%Base.Make.decl [concrete = constants.%Base.Make]
-// CHECK:STDOUT:   %.loc14_32.1: ref %Base = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc14_32.1: ref %.7a5 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %Base.Make.call: init %.7a5 to %.loc14_32.1 = call %Make.ref()
 // CHECK:STDOUT:   %.loc14_32.2: %struct_type.base.cad = struct_literal (%Base.Make.call)
 // CHECK:STDOUT:   %.loc14_32.3: init %Base = as_compatible %Base.Make.call
-// CHECK:STDOUT:   %.loc14_32.4: init %Base = converted %Base.Make.call, %.loc14_32.3
-// CHECK:STDOUT:   %.loc14_32.5: init %Derived to %return.param = class_init (%.loc14_32.4)
-// CHECK:STDOUT:   %.loc14_33: init %Derived = converted %.loc14_32.2, %.loc14_32.5
+// CHECK:STDOUT:   %.loc14_32.4: init %Derived to %return.param = class_init (%.loc14_32.3)
+// CHECK:STDOUT:   %.loc14_33: init %Derived = converted %.loc14_32.2, %.loc14_32.4
 // CHECK:STDOUT:   return %.loc14_33 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

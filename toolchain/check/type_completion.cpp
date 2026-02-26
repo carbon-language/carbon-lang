@@ -741,8 +741,13 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::PartialType inst) const
     -> SemIR::CompleteTypeInfo {
   // The value representation of `partial T` is the same as that of `T`.
-  // Objects are not modifiable through their value representations.
-  return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+  // Objects are not modifiable through their value representations. However,
+  // `partial T` is never abstract.
+  return {
+      .value_repr =
+          GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id))
+              .value_repr,
+      .abstract_class_id = SemIR::ClassId::None};
 }
 
 auto TypeCompleter::BuildInfoForInst(

@@ -732,17 +732,43 @@ static auto ConvertStructToStructOrClass(
     }
     auto src_field = src_elem_fields[src_field_index];
 
+    // When initializing the `.base` field of a class, the destination type is
+    // `partial Base`, not `Base`.
+    // TODO: Skip this if the source field is an initializing expression of the
+    // non-partial type in order to produce smaller IR.
+    auto dest_field_type_inst_id = dest_field.type_inst_id;
+    if (dest_field.name_id == SemIR::NameId::Base) {
+      auto partial_type_id = GetQualifiedType(
+          context,
+          context.types().GetTypeIdForTypeInstId(dest_field.type_inst_id),
+          SemIR::TypeQualifiers::Partial);
+      dest_field_type_inst_id = context.types().GetTypeInstId(partial_type_id);
+    }
+
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_inst_id,
             literal_elems, inner_kind, target.storage_id,
-            dest_field.type_inst_id, target.storage_access_block,
+            dest_field_type_inst_id, target.storage_access_block,
             src_field_index, src_field_index + dest_vptr_offset);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
+
+    // When initializing the base, adjust the type of the initializer from
+    // `partial Base` to `Base`. This isn't strictly correct, since we haven't
+    // finished initializing a `Base` until we store to the vptr, but is better
+    // than having an inconsistent type for the struct field initializer.
+    if (dest_field_type_inst_id != dest_field.type_inst_id) {
+      init_id = AddInst<SemIR::AsCompatible>(
+          context, value_loc_id,
+          {.type_id =
+               context.types().GetTypeIdForTypeInstId(dest_field.type_inst_id),
+           .source_id = init_id});
+    }
+
     new_block.Set(i, init_id);
   }
 
@@ -794,7 +820,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  bool is_partial = false) -> SemIR::InstId {
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
-  CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
+  CARBON_CHECK(is_partial ||
+               dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::ErrorInst::TypeId) {
