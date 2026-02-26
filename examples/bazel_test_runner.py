@@ -65,7 +65,7 @@ class BazelExampleTest(test_base.TestBase):
         self.AssertExitCode(exit_code, 0, stderr)
 
     def test_compile_lib(self) -> None:
-        # TODO: Can remove this in favor of always running`test_run` if we can
+        # TODO: Can remove this in favor of always running `test_run` if we can
         # make linking a binary sufficiently efficient.
         self._run_bazel(["build", "//:example_lib"])
 
