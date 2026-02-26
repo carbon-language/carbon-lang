@@ -293,7 +293,7 @@ auto Formatter::FormatTopLevelScope(InstNamer::ScopeId scope_id,
   chunks_.FormatChildContent(scope_chunk, [&] {
     // Note, we don't use OpenBrace() / CloseBrace() here because we always want
     // a newline to avoid misformatting if the first instruction is omitted.
-    out() << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
+    out() << "\n" << inst_namer_.GetScopeName(scope_id, false) << " {\n";
   });
 
   indent_ += 2;

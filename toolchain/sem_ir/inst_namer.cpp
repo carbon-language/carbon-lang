@@ -273,7 +273,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (inst_scope == scope_id) {
     return ("%" + inst_name.GetFullName()).str();
   }
-  return (GetScopeName(inst_scope) + ".%" + inst_name.GetFullName()).str();
+  return (GetScopeName(inst_scope, false) + ".%" + inst_name.GetFullName())
+      .str();
 }
 
 auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
@@ -304,7 +305,8 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
   if (label_scope == scope_id) {
     return ("!" + label_name.GetFullName()).str();
   }
-  return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
+  return (GetScopeName(label_scope, false) + ".!" + label_name.GetFullName())
+      .str();
 }
 
 auto InstNamer::Namespace::Name::GetFullName() const -> llvm::StringRef {

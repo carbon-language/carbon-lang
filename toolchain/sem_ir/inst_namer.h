@@ -89,7 +89,7 @@ class InstNamer {
   //
   // Uses the `name_with_self` if `with_self` is true, for interfaces and named
   // constraints.
-  auto GetScopeName(ScopeId scope, bool with_self = false) const -> std::string;
+  auto GetScopeName(ScopeId scope, bool with_self) const -> std::string;
 
   // Returns the name for a parent NameScope. Does not return a name for
   // namespaces. Used as part of naming functions with their containing scope.
@@ -113,8 +113,8 @@ class InstNamer {
 
     const auto& generic = sem_ir_->generics().Get(id);
     auto decl = sem_ir_->insts().Get(generic.decl_id);
-    bool with_self = decl.Is<SemIR::InterfaceWithSelfDecl>() ||
-                     decl.Is<SemIR::NamedConstraintWithSelfDecl>();
+    bool with_self =
+        decl.IsOneOf<InterfaceWithSelfDecl, NamedConstraintWithSelfDecl>();
     return GetScopeName(GetScopeFor(id), with_self);
   }
 
