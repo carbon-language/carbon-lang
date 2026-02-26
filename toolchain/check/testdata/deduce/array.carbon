@@ -65,7 +65,7 @@ fn G() -> C {
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(C, 3)` to `array(C, 2)` [ConversionFailure]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note: initializing function parameter [InCallToFunctionParam]
@@ -90,7 +90,7 @@ fn G() -> i32 {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(D, 3)` to `array(C, 3)` [ConversionFailure]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-11]]:36: note: initializing function parameter [InCallToFunctionParam]

@@ -596,14 +596,28 @@ auto CheckUnit::FinishRun() -> void {
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
   context_.scope_stack().Pop(/*check_unused=*/true);
 
-  // Finalizes the list of exports on the IR.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
-                                            context_.exports());
-  // Finalizes the ImportRef inst block.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Imports,
-                                            context_.imports());
-  // Finalizes __global_init.
-  context_.global_init().Finalize();
+  // Finalizes reserved blocks, using `ReservedIds` to avoid missing values.
+  for (auto reserved_id : SemIR::InstBlockId::ReservedIds) {
+    if (reserved_id == SemIR::InstBlockId::Empty) {
+      continue;
+    }
+    if (reserved_id == SemIR::InstBlockId::GlobalInit) {
+      context_.global_init().Finalize();
+      continue;
+    }
+
+    llvm::ArrayRef<SemIR::InstId> block;
+    if (reserved_id == SemIR::InstBlockId::Exports) {
+      block = context_.exports();
+    } else if (reserved_id == SemIR::InstBlockId::Generated) {
+      block = context_.generated();
+    } else if (reserved_id == SemIR::InstBlockId::Imports) {
+      block = context_.imports();
+    } else {
+      CARBON_FATAL("Unexpected reserved InstBlockId: {0}", reserved_id);
+    }
+    context_.inst_blocks().ReplacePlaceholder(reserved_id, block);
+  }
 
   context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
 

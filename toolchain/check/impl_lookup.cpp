@@ -217,12 +217,14 @@ static auto GetRequiredImplsFromConstraint(
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
+
   auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id, facet_type_inst, [&] {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Error,
+      context, loc_id, query_self_const_id, facet_type_inst,
+      [&](auto& builder) {
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
                           "facet type {0} can not be identified", InstIdAsType);
-        return context.emitter().Build(
-            loc_id, ImplLookupInUnidentifiedFacetType, facet_type_inst_id);
+        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
+                        facet_type_inst_id);
       });
   if (!identified_id.has_value()) {
     return std::nullopt;
@@ -349,12 +351,17 @@ static auto LookupImplWitnessInSelfFacetValue(
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
   auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, self_facet_value_const_id, *facet_type, nullptr);
-  // This should not be possible as FacetValue is constructed by a conversion
-  // to a facet type, which performs impl lookup for that facet type, and
-  // lookup only succeeds for identified facet types.
-  CARBON_CHECK(identified_id.has_value(),
-               "FacetValue was constructed with an unidentified facet type");
+      context, loc_id, self_facet_value_const_id, *facet_type,
+      [&](auto& builder) {
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetTypeOfQuerySelf, Context,
+                          "facet type of value {0} can not be identified",
+                          InstIdAsType);
+        builder.Context(loc_id, ImplLookupInUnidentifiedFacetTypeOfQuerySelf,
+                        self_facet_value_inst_id);
+      });
+  if (!identified_id.has_value()) {
+    return EvalImplLookupResult::MakeNone();
+  }
   auto facet_type_req_impls = llvm::enumerate(
       context.identified_facet_types().Get(identified_id).required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {

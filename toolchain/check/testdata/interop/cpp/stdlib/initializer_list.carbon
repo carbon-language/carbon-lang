@@ -128,6 +128,23 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.template: %initializer_list.type = struct_value () [concrete = constants.%initializer_list.template]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete = constants.%Consume.cpp_overload_set.value]
+// CHECK:STDOUT:   %Consume__carbon_thunk.decl: %Consume__carbon_thunk.type = fn_decl @Consume__carbon_thunk [concrete = constants.%Consume__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %InitListConstructor.decl: type = class_decl @InitListConstructor [concrete = constants.%InitListConstructor] {} {}
+// CHECK:STDOUT:   %InitListConstructor__carbon_thunk.decl: %InitListConstructor__carbon_thunk.type = fn_decl @InitListConstructor__carbon_thunk [concrete = constants.%InitListConstructor__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.1: %initializer_list.initializer_list.type.9fcb7f.1 = fn_decl @initializer_list.initializer_list.loc8 [concrete = constants.%initializer_list.initializer_list.643507.1] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
@@ -140,14 +157,6 @@ fn F() {
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete = constants.%Consume.cpp_overload_set.value]
-// CHECK:STDOUT:   %Consume__carbon_thunk.decl: %Consume__carbon_thunk.type = fn_decl @Consume__carbon_thunk [concrete = constants.%Consume__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.2: %initializer_list.initializer_list.type.9fcb7f.2 = fn_decl @initializer_list.initializer_list.loc10 [concrete = constants.%initializer_list.initializer_list.643507.2] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
@@ -159,12 +168,6 @@ fn F() {
 // CHECK:STDOUT:     %_: %array_type = value_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %InitListConstructor.decl: type = class_decl @InitListConstructor [concrete = constants.%InitListConstructor] {} {}
-// CHECK:STDOUT:   %InitListConstructor__carbon_thunk.decl: %InitListConstructor__carbon_thunk.type = fn_decl @InitListConstructor__carbon_thunk [concrete = constants.%InitListConstructor__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.3: %initializer_list.initializer_list.type.9fcb7f.3 = fn_decl @initializer_list.initializer_list.loc12 [concrete = constants.%initializer_list.initializer_list.643507.3] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
@@ -229,7 +232,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.14: init %array_type = converted %.loc8_50.1, %.loc8_50.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc8_50.15: ref %array_type = temporary %.loc8_50.4, %.loc8_50.14
 // CHECK:STDOUT:   %.loc8_50.16: %array_type = acquire_value %.loc8_50.15
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc8: init %initializer_list to %.loc8_50.2 = call imports.%initializer_list.initializer_list.decl.2bdc3e.1(%.loc8_50.16)
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc8: init %initializer_list to %.loc8_50.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.1(%.loc8_50.16)
 // CHECK:STDOUT:   %.loc8_50.17: init %initializer_list = converted %.loc8_50.1, %initializer_list.initializer_list.call.loc8
 // CHECK:STDOUT:   %.loc8_50.18: ref %initializer_list = temporary %.loc8_50.2, %.loc8_50.17
 // CHECK:STDOUT:   %.loc8_50.19: %initializer_list = acquire_value %.loc8_50.18
@@ -276,7 +279,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.14: init %array_type = converted %.loc10_23.1, %.loc10_23.13 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_23.15: ref %array_type = temporary %.loc10_23.4, %.loc10_23.14
 // CHECK:STDOUT:   %.loc10_23.16: %array_type = acquire_value %.loc10_23.15
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc10: init %initializer_list to %.loc10_23.2 = call imports.%initializer_list.initializer_list.decl.2bdc3e.2(%.loc10_23.16)
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc10: init %initializer_list to %.loc10_23.2 = call generated.%initializer_list.initializer_list.decl.2bdc3e.2(%.loc10_23.16)
 // CHECK:STDOUT:   %.loc10_23.17: init %initializer_list = converted %.loc10_23.1, %initializer_list.initializer_list.call.loc10
 // CHECK:STDOUT:   %.loc10_23.18: ref %initializer_list = temporary %.loc10_23.2, %.loc10_23.17
 // CHECK:STDOUT:   %.loc10_23.19: %initializer_list = acquire_value %.loc10_23.18
@@ -331,7 +334,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.15: init %array_type = converted %.loc12_44.1, %.loc12_44.14 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc12_44.16: ref %array_type = temporary %.loc12_44.5, %.loc12_44.15
 // CHECK:STDOUT:   %.loc12_44.17: %array_type = acquire_value %.loc12_44.16
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc12: init %initializer_list to %.loc12_44.3 = call imports.%initializer_list.initializer_list.decl.2bdc3e.3(%.loc12_44.17)
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.loc12: init %initializer_list to %.loc12_44.3 = call generated.%initializer_list.initializer_list.decl.2bdc3e.3(%.loc12_44.17)
 // CHECK:STDOUT:   %.loc12_44.18: init %initializer_list = converted %.loc12_44.1, %initializer_list.initializer_list.call.loc12
 // CHECK:STDOUT:   %.loc12_44.19: ref %initializer_list = temporary %.loc12_44.3, %.loc12_44.18
 // CHECK:STDOUT:   %.loc12_44.20: %initializer_list = acquire_value %.loc12_44.19

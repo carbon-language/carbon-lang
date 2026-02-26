@@ -29,24 +29,28 @@ class Formatter {
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // We first print top-level scopes (constants, imports, and file) then
-  // entities (types and functions). The ordering is based on references:
+  // We first print top-level scopes (`constants`, `imports`, `generated`, and
+  // `file`) then entities (types and functions). The ordering is based on
+  // references:
   //
-  // - constants can have internal references.
-  // - imports can refer to constants.
-  // - file can refer to constants and imports, and also entities.
+  // - `constants` is self-contained.
+  // - `imports` can refer to `constants`.
+  // - `generated` can refer to both of the above.
+  // - `file` can refer to any of the above, and also entities.
   // - Entities are difficult to order (forward declarations may lead to
   //   circular references), and so are simply grouped by type.
   //
-  // When formatting constants and imports, we use `FormatterChunks` to only
-  // print entities which are referenced. For example, imports speculatively
+  // When formatting scopes other than `file`, we use `FormatterChunks` to only
+  // print entities which are referenced. For example, `imports` speculatively
   // create constants which may never be referenced, or for which the
-  // referencing instruction may be hidden and we normally hide those. See
-  // `FormatterChunks` for additional information.
+  // referencing instruction may be hidden and we normally hide those; those are
+  // excluded from the `constants` scope output. See `FormatterChunks` for
+  // additional information.
   //
-  // Beyond `FormatterChunks`, `ShouldFormatEntity` and `ShouldFormatInst` can
-  // also hide instructions. These interact because an hidden instruction means
-  // its references are unused for `FormatterChunks` visibility.
+  // Beyond the reference-based printing, `ShouldFormatEntity` and
+  // `ShouldFormatInst` can also hide instructions. These interact because an
+  // hidden instruction means its references are unused for `FormatterChunks`
+  // visibility.
   auto Format() -> void;
 
   // Write buffered output to the given stream. `Format` must be called first.
@@ -93,9 +97,8 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
-                                 llvm::ArrayRef<InstId> block,
-                                 bool use_tentative_output_scopes) -> void;
+  auto FormatTopLevelScope(InstNamer::ScopeId scope_id,
+                           llvm::ArrayRef<InstId> block) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id, const Class& class_info) -> void;
@@ -352,8 +355,16 @@ class Formatter {
   // first open brace or the semicolon in the entity declaration.
   llvm::StringRef pending_imported_from_;
 
-  // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index.
+  // Chunks for each scope's labels, including `File` scope. These are parents
+  // of chunks containing a scope's `<label> {` and `}` output, and children of
+  // the scope's instructions in `tentative_inst_chunks_`.
+  std::array<FormatterChunks::ChunkId,
+             static_cast<size_t>(InstNamer::ScopeId::FirstEntityScope)>
+      scope_label_chunks_;
+
+  // Chunks for each instruction in a tentative top-level scope. These don't
+  // directly contain content, and are instead parents of the instruction's
+  // output to help indirect inclusion.
   FixedSizeValueStore<InstId, FormatterChunks::ChunkId, Tag<CheckIRId>>
       tentative_inst_chunks_;
 

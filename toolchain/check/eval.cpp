@@ -2552,11 +2552,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                                .values = result,
                            });
 
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
+                          "unable to monomorphize specific {0}",
                           SemIR::SpecificId);
-        builder.Note(loc_id, ResolvingSpecificHere, specific_id);
+        builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {

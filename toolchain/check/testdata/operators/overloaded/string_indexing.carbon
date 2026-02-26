@@ -91,9 +91,6 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.0a6, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestWrongType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

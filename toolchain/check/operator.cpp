@@ -62,8 +62,8 @@ static auto HasCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                        SemIR::InstId operand_id,
-                        MakeDiagnosticBuilderFn missing_impl_diagnoser)
+                        SemIR::InstId operand_id, bool diagnose,
+                        DiagnosticContextFn missing_impl_diagnostic_context)
     -> SemIR::InstId {
   if (operand_id == SemIR::ErrorInst::InstId) {
     // Exit early for errors, which prevent forming an `Op` function.
@@ -96,8 +96,9 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   // Form `operand.(Op)`.
-  auto bound_op_id = PerformCompoundMemberAccess(
-      context, loc_id, operand_id, op_fn_id, missing_impl_diagnoser);
+  auto bound_op_id =
+      PerformCompoundMemberAccess(context, loc_id, operand_id, op_fn_id,
+                                  diagnose, missing_impl_diagnostic_context);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
@@ -109,7 +110,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
+                         bool diagnose,
+                         DiagnosticContextFn missing_impl_diagnostic_context)
     -> SemIR::InstId {
   if (lhs_id == SemIR::ErrorInst::InstId) {
     // Exit early for errors, which prevent forming an `Op` function.
@@ -147,8 +149,9 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   // Form `lhs.(Op)`.
-  auto bound_op_id = PerformCompoundMemberAccess(
-      context, loc_id, lhs_id, op_fn_id, missing_impl_diagnoser);
+  auto bound_op_id =
+      PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn_id, diagnose,
+                                  missing_impl_diagnostic_context);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }

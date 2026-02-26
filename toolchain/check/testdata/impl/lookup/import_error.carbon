@@ -35,7 +35,7 @@ fn F[unused U:! type](T:! Z) {
   // CHECK:STDERR: fail_import_error.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `T.(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let unused a: T.X = ();
   // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let unused a: T.X = ();
   // CHECK:STDERR:                       ^~
   // CHECK:STDERR:

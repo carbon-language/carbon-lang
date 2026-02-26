@@ -147,14 +147,14 @@ class E {
     // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+14]]:13: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:             ^
-    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+11]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+11]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:             ^
     // CHECK:STDERR:
     // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+7]]:19: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:                   ^
-    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+4]]:19: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+    // CHECK:STDERR: fail_todo_use_associated_constant_in_impl.carbon:[[@LINE+4]]:19: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
     // CHECK:STDERR:     fn F(u: U) -> U {
     // CHECK:STDERR:                   ^
     // CHECK:STDERR:
@@ -212,7 +212,7 @@ class E {
   // CHECK:STDERR: fail_todo_use_extend_constant.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `<associated entity in J>` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn G() -> X { return (); }
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_todo_use_extend_constant.carbon:[[@LINE+4]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_use_extend_constant.carbon:[[@LINE+4]]:13: note: type `<associated entity in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   fn G() -> X { return (); }
   // CHECK:STDERR:             ^
   // CHECK:STDERR:

@@ -115,7 +115,7 @@ fn ConstructorExplicit(s: Cpp.Source) {
   // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+7]]:42: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
   // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
   // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
   // CHECK:STDERR:                                          ^
   // CHECK:STDERR:

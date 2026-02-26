@@ -43,9 +43,6 @@ fn TestOp() {
 // CHECK:STDOUT:   %.4d8: type = fn_type_with_self_type %Dec.WithSelf.Op.type.874, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

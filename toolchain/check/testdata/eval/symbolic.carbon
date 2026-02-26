@@ -29,7 +29,6 @@ fn H() {
 
 
 // --- fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon
-// CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon: error: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
 // TODO: Provide a location for the error message.
 
 library "[[@TEST_NAME]]";
@@ -44,9 +43,10 @@ fn G(B:! bool) {
 }
 
 fn H() {
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+4]]:3: note: in `G(true)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+5]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
   // CHECK:STDERR:   G(true);
   // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
   // CHECK:STDERR:
   G(true);
 }

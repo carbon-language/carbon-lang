@@ -46,7 +46,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+7]]:28: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var x: Cpp.TwoTypes(Cpp.A, true);
 // CHECK:STDERR:                            ^~~~
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+4]]:28: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+4]]:28: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: Cpp.TwoTypes(Cpp.A, true);
 // CHECK:STDERR:                            ^~~~
 // CHECK:STDERR:
@@ -71,9 +71,6 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %TwoTypes [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
@@ -88,9 +85,6 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.2da: type = pattern_type %TwoTypes [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -35,9 +35,6 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.092 = value_binding_pattern U [concrete]

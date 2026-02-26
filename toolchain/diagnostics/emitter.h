@@ -81,9 +81,9 @@ class Emitter {
     // behavior of printing the original source line.
     auto OverrideSnippet(llvm::StringRef snippet) -> Builder&;
 
-    // Adds a note diagnostic attached to the main diagnostic being built.
-    // The API mirrors the main emission API: `Emitter::Emit`.
-    // For the expected usage see the builder API: `Emitter::Build`.
+    // Adds a Note about the diagnostic, attached to the main diagnostic being
+    // built. The API mirrors the main emission API: `Emitter::Emit`. For the
+    // expected usage see the builder API: `Emitter::Build`.
     template <typename... Args>
     auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> Builder&;
@@ -104,15 +104,12 @@ class Emitter {
 
    private:
     friend class Emitter<LocT>;
+    friend class ContextBuilder;
 
     template <typename... Args>
     explicit Builder(Emitter<LocT>* emitter, LocT loc,
                      const DiagnosticBase<Args...>& diagnostic_base,
                      llvm::SmallVector<llvm::Any> args);
-
-    // Create a null `Builder` that will not emit anything. Notes will
-    // be silently ignored.
-    Builder() : emitter_(nullptr) {}
 
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
@@ -136,8 +133,32 @@ class Emitter {
     static auto FormatFn(const Message& message,
                          std::index_sequence<N...> /*indices*/) -> std::string;
 
+    // Whether a Context or SoftContext message has been added to the Builder.
+    auto has_context_message() const -> bool { return has_context_message_; }
+
     Emitter<LocT>* emitter_;
     Diagnostic diagnostic_;
+    bool has_context_message_ = false;
+  };
+
+  class ContextBuilder {
+   public:
+    // Adds a Context describing a higher level operation that failed due to the
+    // diagnostic being built. The API mirrors the main emission API:
+    // `Emitter::Emit`. For the expected usage see the builder API:
+    // `Emitter::Build`.
+    template <typename... Args>
+    auto Context(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+                 Internal::NoTypeDeduction<Args>... args) -> ContextBuilder&;
+
+   private:
+    friend class Emitter<LocT>;
+
+    explicit ContextBuilder(Emitter<LocT>* emitter, Builder* builder)
+        : emitter_(emitter), builder_(builder) {}
+
+    Emitter<LocT>* emitter_;
+    Builder* builder_;
   };
 
   // `consumer` is required to outlive the diagnostic emitter.
@@ -162,10 +183,6 @@ class Emitter {
   template <typename... Args>
   auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> Builder;
-
-  // Create a null `Builder` that will not emit anything. Notes will
-  // be silently ignored.
-  auto BuildSuppressed() -> Builder { return Builder(); }
 
   // Adds a flush function to flush pending diagnostics that might be enqueued
   // and not yet emitted. The flush function will be called whenever `Flush` is
@@ -193,6 +210,14 @@ class Emitter {
     }
   }
 
+  // Verifies that a callback is registered to provide context if a diagnostic
+  // is emitted. Allows a code path to require context, which then means its
+  // diagnostics to be framed as Notes.
+  //
+  // This is best effort as the registered callback can in practice do nothing,
+  // but that would be highly unusual.
+  auto CheckHasContext() -> void { CARBON_CHECK(!context_fns_.empty()); }
+
  protected:
   // Callback type used to report context messages from ConvertLoc.
   // Note that the first parameter type is Loc rather than
@@ -216,12 +241,16 @@ class Emitter {
   template <typename Arg>
   auto MakeAny(Arg arg) -> llvm::Any;
 
-  template <typename OtherLocT, typename AnnotateFn>
+  template <typename OtherLocT, typename ContextFn>
+  friend class ContextScope;
+  template <typename OtherLocT, typename ContextFn>
   friend class AnnotationScope;
   friend class NoLocEmitter;
 
   Consumer* consumer_;
   llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
+  llvm::SmallVector<llvm::function_ref<auto(ContextBuilder& builder)->void>>
+      context_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
@@ -257,6 +286,41 @@ class NoLocEmitter : public Emitter<void*> {
 };
 
 // An RAII object that denotes a scope in which any diagnostic produced should
+// become a note attached to the higher-level operation failure described by a
+// Context message.
+//
+// This object is given a function `context` that will be called with a
+// `ContextBuilder& builder` for any diagnostic that is emitted through the
+// given emitter. That function can provide a context message that explains the
+// higher level failure caused by the diagnostic by calling `builder.Context`.
+template <typename LocT, typename ContextFn>
+class ContextScope {
+ public:
+  ContextScope(Emitter<LocT>* emitter, ContextFn context)
+    requires requires(ContextFn context,
+                      Emitter<LocT>::ContextBuilder& builder) {
+      { context(builder) } -> std::same_as<void>;
+    }
+      : emitter_(emitter), context_(std::move(context)) {
+    emitter_->Flush();
+    emitter_->context_fns_.push_back(context_);
+  }
+  ~ContextScope() {
+    emitter_->Flush();
+    emitter_->context_fns_.pop_back();
+  }
+
+ private:
+  Emitter<LocT>* emitter_;
+  // Make a copy of the context function to ensure that it lives long enough.
+  ContextFn context_;
+};
+
+template <typename LocT, typename ContextFn>
+ContextScope(Emitter<LocT>* emitter, ContextFn context)
+    -> ContextScope<LocT, ContextFn>;
+
+// An RAII object that denotes a scope in which any diagnostic produced should
 // be annotated in some way.
 //
 // This object is given a function `annotate` that will be called with a
@@ -267,6 +331,9 @@ template <typename LocT, typename AnnotateFn>
 class AnnotationScope {
  public:
   AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
+    requires requires(AnnotateFn annotate, Emitter<LocT>::Builder& builder) {
+      { annotate(builder) } -> std::same_as<void>;
+    }
       : emitter_(emitter), annotate_(std::move(annotate)) {
     emitter_->Flush();
     emitter_->annotate_fns_.push_back(annotate_);
@@ -311,9 +378,6 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 template <typename LocT>
 auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
     -> Builder& {
-  if (!emitter_) {
-    return *this;
-  }
   diagnostic_.messages.back().loc.snippet = snippet;
   return *this;
 }
@@ -323,9 +387,6 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::Note(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> Builder& {
-  if (!emitter_) {
-    return *this;
-  }
   CARBON_CHECK(diagnostic_base.Level == Level::Note ||
                    diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
@@ -336,26 +397,16 @@ auto Emitter<LocT>::Builder::Note(
 template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Emit() & -> void {
-  if (!emitter_) {
-    return;
-  }
   for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
     annotate_fn(*this);
   }
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
 }
 
-namespace Internal {
-template <typename LocT>
-concept AlwaysFalse = false;
-}  // namespace Internal
-
 template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Emit() && -> void {
-  // TODO: This is required by clang-16, but `false` may work in newer clang
-  // versions. Replace when possible.
-  static_assert(Internal::AlwaysFalse<LocT>,
+  static_assert(false,
                 "Use `emitter.Emit(...)` or "
                 "`emitter.Build(...).Note(...).Emit(...)` "
                 "instead of `emitter.Build(...).Emit(...)`");
@@ -369,6 +420,13 @@ Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
     : emitter_(emitter),
       diagnostic_({.level = diagnostic_base.Level,
                    .is_on_scope = diagnostic_base.IsOnScope}) {
+  CARBON_CHECK(diagnostic_.level >= Level::Warning,
+               "building diagnostic with level {0}; expected Warning or Error",
+               diagnostic_.level);
+  ContextBuilder context_builder(emitter, this);
+  for (auto context_fn : emitter_->context_fns_) {
+    context_fn(context_builder);
+  }
   AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }
@@ -378,9 +436,6 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::AddMessage(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
-  if (!emitter_) {
-    return;
-  }
   auto converted = emitter_->ConvertLoc(
       loc,
       [&](Loc context_loc, const DiagnosticBase<>& context_diagnostic_base) {
@@ -398,10 +453,15 @@ template <typename... Args>
 auto Emitter<LocT>::Builder::AddMessageWithLoc(
     Loc loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
-  if (!emitter_) {
-    return;
+  CARBON_CHECK(
+      diagnostic_base.Level <= diagnostic_.level,
+      "message with level {0} is higher than the diagnostic's level {1}",
+      diagnostic_base.Level, diagnostic_.level);
+  if (diagnostic_base.Level == Level::SoftContext ||
+      diagnostic_base.Level == Level::Context) {
+    has_context_message_ = true;
   }
-  diagnostic_.messages.emplace_back(
+  diagnostic_.messages.push_back(
       Message{.kind = diagnostic_base.Kind,
               .level = diagnostic_base.Level,
               .loc = loc,
@@ -436,6 +496,23 @@ auto Emitter<LocT>::Emit(LocT loc,
                          Internal::NoTypeDeduction<Args>... args) -> void {
   Builder builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
   builder.Emit();
+}
+
+template <typename LocT>
+template <typename... Args>
+auto Emitter<LocT>::ContextBuilder::Context(
+    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    Internal::NoTypeDeduction<Args>... args) -> ContextBuilder& {
+  CARBON_CHECK(diagnostic_base.Level == Level::SoftContext ||
+                   diagnostic_base.Level == Level::Context,
+               "{0}", static_cast<int>(diagnostic_base.Level));
+  if (builder_->has_context_message() &&
+      diagnostic_base.Level == Level::SoftContext) {
+    return *this;
+  }
+  builder_->AddMessage(LocT(loc), diagnostic_base,
+                       {emitter_->template MakeAny<Args>(args)...});
+  return *this;
 }
 
 template <typename LocT>

@@ -60,14 +60,14 @@ import Core library "prelude_fake_int";
 // CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+14]]:17: error: cannot implicitly convert non-type value of type `Core.X` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: let n: Core.X = i32;
 // CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+11]]:17: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+11]]:17: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: let n: Core.X = i32;
 // CHECK:STDERR:                 ^~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
 // CHECK:STDERR: let n: Core.X = i32;
 // CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: let n: Core.X = i32;
 // CHECK:STDERR:                 ^~~
 // CHECK:STDERR:
@@ -126,9 +126,6 @@ let n: type = i32;
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .n = %n
@@ -149,9 +146,6 @@ let n: type = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_missing_prelude_member.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {

@@ -379,14 +379,15 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                                                         SemIR::LocId loc_id,
                                                         SemIR::ClassId class_id)
     -> void {
-  CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
-                    "cannot declare a member of incomplete class {0}",
-                    SemIR::TypeId);
-  auto builder =
-      context.emitter().Build(loc_id, QualifiedDeclInIncompleteClassScope,
-                              context.classes().Get(class_id).self_type_id);
-  NoteIncompleteClass(context, class_id, builder);
-  builder.Emit();
+  Diagnostics::ContextScope diagnostic_context(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Context,
+                          "cannot declare a member of incomplete class {0}",
+                          SemIR::TypeId);
+        builder.Context(loc_id, QualifiedDeclInIncompleteClassScope,
+                        context.classes().Get(class_id).self_type_id);
+      });
+  DiagnoseIncompleteClass(context, class_id);
 }
 
 // Diagnose that a qualified declaration name specifies an undefined interface
@@ -394,13 +395,15 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
 static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
-  CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
-                    "cannot declare a member of undefined interface {0}",
-                    InstIdAsType);
-  auto builder = context.emitter().Build(
-      loc_id, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
-  NoteIncompleteInterface(context, interface_id, builder);
-  builder.Emit();
+  Diagnostics::ContextScope diagnostic_context(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Context,
+                          "cannot declare a member of undefined interface {0}",
+                          InstIdAsType);
+        builder.Context(loc_id, QualifiedDeclInUndefinedInterfaceScope,
+                        interface_inst_id);
+      });
+  DiagnoseIncompleteInterface(context, interface_id);
 }
 
 // Diagnose that a qualified declaration name specifies a different package as

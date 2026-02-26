@@ -154,9 +154,6 @@ fn F() {
 
 // CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.MyStructAlias: type = import_ref Main//struct_api, MyStructAlias, loaded [concrete = <error>]
 // CHECK:STDOUT: }

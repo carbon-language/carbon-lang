@@ -16,9 +16,15 @@ auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
     printed_diagnostic_ = true;
   }
 
+  auto message_level = [&, first = true](const Message& m) mutable {
+    if (m.level >= Level::SoftContext && std::exchange(first, false)) {
+      return diagnostic.level;
+    }
+    return std::min(Level::Note, m.level);
+  };
   for (const auto& message : diagnostic.messages) {
     message.loc.FormatLocation(*stream_);
-    switch (message.level) {
+    switch (message_level(message)) {
       case Level::Error:
         *stream_ << "error: ";
         break;
@@ -30,6 +36,9 @@ auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
         break;
       case Level::LocationInfo:
         break;
+      case Level::SoftContext:
+      case Level::Context:
+        CARBON_FATAL("Context messages are presented as a different level");
     }
     *stream_ << message.Format();
     if (include_diagnostic_kind_) {

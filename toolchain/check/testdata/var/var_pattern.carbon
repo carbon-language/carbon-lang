@@ -780,15 +780,9 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compile_time.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @f();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

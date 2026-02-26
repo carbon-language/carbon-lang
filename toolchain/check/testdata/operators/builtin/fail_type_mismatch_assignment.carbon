@@ -17,7 +17,7 @@ fn Main() {
   // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+4]]:3: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+4]]:3: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:

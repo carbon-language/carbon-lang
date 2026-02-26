@@ -58,9 +58,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

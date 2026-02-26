@@ -547,18 +547,22 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   auto complete_type_id =
       context.types().GetTypeIdForTypeInstId(inst.complete_type_inst_id);
   if (complete_type_id.is_concrete()) {
-    if (!TryToCompleteType(
-            context, complete_type_id, SemIR::LocId(inst_id), [&] {
-              CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
-                                "{0} evaluates to incomplete type {1}",
-                                InstIdAsType, InstIdAsType);
-              return context.emitter().Build(
-                  inst_id, IncompleteTypeInMonomorphization,
-                  context.insts()
-                      .GetAs<SemIR::RequireCompleteType>(inst_id)
-                      .complete_type_inst_id,
-                  inst.complete_type_inst_id);
-            })) {
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Context,
+                            "{0} evaluates to incomplete type {1}",
+                            InstIdAsType, InstIdAsType);
+          builder.Context(inst_id, IncompleteTypeInMonomorphization,
+                          context.insts()
+                              .GetAs<SemIR::RequireCompleteType>(inst_id)
+                              .complete_type_inst_id,
+                          inst.complete_type_inst_id);
+        });
+    // We use TryToCompleteType() instead of RequireCompleteType() because we
+    // are currently evaluating a RequireCompleteType instruction, and calling
+    // RequireCompleteType() would insert another copy of the same instruction.
+    if (!TryToCompleteType(context, complete_type_id, SemIR::LocId(inst_id),
+                           true)) {
       return ConstantEvalResult::Error;
     }
     return ConstantEvalResult::NewSamePhase(SemIR::CompleteTypeWitness{

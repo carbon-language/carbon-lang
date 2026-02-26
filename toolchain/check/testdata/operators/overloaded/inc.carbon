@@ -43,9 +43,6 @@ fn TestOp() {
 // CHECK:STDOUT:   %.38a: type = fn_type_with_self_type %Inc.WithSelf.Op.type.700, %Inc.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>

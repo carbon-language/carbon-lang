@@ -32,7 +32,7 @@ fn Make() {
   // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `Cpp.X` [ConversionFailure]
   // CHECK:STDERR:   var _: Cpp.X = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_non_aggregate_init.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var _: Cpp.X = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:

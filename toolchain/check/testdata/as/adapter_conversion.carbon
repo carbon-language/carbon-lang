@@ -103,7 +103,7 @@ class B {
 // CHECK:STDERR: fail_init_class_variable.carbon:[[@LINE+7]]:17: error: cannot copy value of type `B` [CopyOfUncopyableType]
 // CHECK:STDERR: var b_init: B = ({.x = 1, .y = 2} as A) as B;
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_init_class_variable.carbon:[[@LINE+4]]:17: note: type `B` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_init_class_variable.carbon:[[@LINE+4]]:17: note: type `B` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var b_init: B = ({.x = 1, .y = 2} as A) as B;
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -148,7 +148,7 @@ fn F(a: A) {
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+10]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+7]]:3: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+7]]:3: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:26: note: in copy of `A` [InCopy]
@@ -176,7 +176,7 @@ class B {
 // CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+7]]:12: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
 // CHECK:STDERR: var b: B = {.x = ()} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+4]]:12: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+4]]:12: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var b: B = {.x = ()} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -194,9 +194,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %pattern_type.191: type = pattern_type %ptr.27c [concrete]
 // CHECK:STDOUT:   %a_ref.var: ref %B = var file.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.27c = addr_of %a_ref.var [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -320,9 +317,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
@@ -430,9 +424,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %tuple: %tuple.type.c8c = tuple_value (%empty_struct, %Noncopyable) [concrete]
 // CHECK:STDOUT:   %tuple.type.037: type = tuple_type (%empty_struct_type, %Noncopyable) [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %A [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %A) {

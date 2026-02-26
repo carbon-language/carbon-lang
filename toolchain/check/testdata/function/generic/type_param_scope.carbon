@@ -38,9 +38,6 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   %specific_impl_fn.366: <specific function> = specific_impl_function %impl.elem0.1c7, @Copy.WithSelf.Op(%Copy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_6.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
