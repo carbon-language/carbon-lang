@@ -99,20 +99,13 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc18_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18_35: Core.Form = init_form %i32.loc18_35, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %i32.loc18_35: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_35, call_param2 [concrete = constants.%.8ef]
 // CHECK:STDOUT:     %a.param.loc18: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc18_19: type = splice_block %i32.loc18_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc18_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc18_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.loc18: %i32 = value_binding a, %a.param.loc18
 // CHECK:STDOUT:     %b.param.loc18: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc18_27: type = splice_block %i32.loc18_27 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc18_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc18_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc18_27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.loc18: %i32 = value_binding b, %b.param.loc18
 // CHECK:STDOUT:     %return.param.loc18: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return.loc18: ref %i32 = return_slot %return.param.loc18
@@ -134,20 +127,13 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc13_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc13_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13_35: Core.Form = init_form %i32.loc13_35, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %i32.loc13_35: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_35, call_param2 [concrete = constants.%.8ef]
 // CHECK:STDOUT:     %a.param.loc13: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc13_19: type = splice_block %i32.loc13_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc13_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc13_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc13_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.loc13: %i32 = value_binding a, %a.param.loc13
 // CHECK:STDOUT:     %b.param.loc13: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc13_27: type = splice_block %i32.loc13_27 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc13_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc13_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc13_27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.loc13: %i32 = value_binding b, %b.param.loc13
 // CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
@@ -248,7 +234,10 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_31.2 [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: @C.F.%C (%C) = value_binding self, %self.param.loc20
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc20_41.1: type = splice_block %.loc20_41.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc20_41.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc20: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
 // CHECK:STDOUT:     %u.param.loc20: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_param call_param1
 // CHECK:STDOUT:     %.loc20_51: type = splice_block %ptr.loc20_51 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)] {
@@ -301,7 +290,10 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.2 [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc14: @C.F.%C (%C) = value_binding self, %self.param.loc14
-// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc14_26.1: type = splice_block %.loc14_26.2 [concrete = type] {
+// CHECK:STDOUT:         %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.loc14_26.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc14_22.2: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
 // CHECK:STDOUT:       %u.param.loc14: @C.F.%ptr.loc14_36.1 (%ptr.18e) = value_param call_param1
 // CHECK:STDOUT:       %.loc14_36: type = splice_block %ptr.loc14_36.2 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)] {

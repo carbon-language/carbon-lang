@@ -117,8 +117,6 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
@@ -130,11 +128,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:       %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -168,8 +162,6 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
@@ -181,11 +173,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc7_10.1: type = splice_block %.loc7_10.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc7_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:       %.loc7_10.3: type = converted %Bool.call, %.loc7_10.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc7: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -209,8 +197,6 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: --- unreachable_fallthrough.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %.fff: Core.Form = init_form bool, call_param1 [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
@@ -240,16 +226,10 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call.loc4_19: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %Bool.call.loc4_19 [concrete = bool]
-// CHECK:STDOUT:     %.loc4_19.2: type = converted %Bool.call.loc4_19, %.loc4_19.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc4_19.3: Core.Form = init_form %.loc4_19.2, call_param1 [concrete = constants.%.fff]
+// CHECK:STDOUT:     %.loc4_19.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc4_19.2: Core.Form = init_form %.loc4_19.1, call_param1 [concrete = constants.%.fff]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc4_10: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_10.2: type = value_of_initializer %Bool.call.loc4_10 [concrete = bool]
-// CHECK:STDOUT:       %.loc4_10.3: type = converted %Bool.call.loc4_10, %.loc4_10.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc4_10: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param

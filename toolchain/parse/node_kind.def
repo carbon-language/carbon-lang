@@ -393,6 +393,11 @@ CARBON_PARSE_NODE_KIND(RequireTypeImpls)
 CARBON_PARSE_NODE_KIND(RequireDefaultSelfImpls)
 CARBON_PARSE_NODE_KIND(RequireDecl)
 
+CARBON_PARSE_NODE_KIND(ObserveIntroducer)
+CARBON_PARSE_NODE_KIND(ObserveEqualEqual)
+CARBON_PARSE_NODE_KIND(ObserveImpls)
+CARBON_PARSE_NODE_KIND(ObserveDecl)
+
 CARBON_PARSE_NODE_KIND(NamedConstraintIntroducer)
 CARBON_PARSE_NODE_KIND(NamedConstraintDefinitionStart)
 CARBON_PARSE_NODE_KIND(NamedConstraintDefinition)

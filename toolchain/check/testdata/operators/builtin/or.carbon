@@ -96,10 +96,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc15_11.2: type = converted %Bool.call, %.loc15_11.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc15_11.3: Core.Form = init_form %.loc15_11.2, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc15_11.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc15_11.2: Core.Form = init_form %.loc15_11.1, call_param0 [concrete = constants.%.77a]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -107,10 +105,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc16_11.2: type = converted %Bool.call, %.loc16_11.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc16_11.3: Core.Form = init_form %.loc16_11.2, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc16_11.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc16_11.2: Core.Form = init_form %.loc16_11.1, call_param0 [concrete = constants.%.77a]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -118,10 +114,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc18_12.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc18_12.2: type = converted %Bool.call, %.loc18_12.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc18_12.3: Core.Form = init_form %.loc18_12.2, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc18_12.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc18_12.2: Core.Form = init_form %.loc18_12.1, call_param0 [concrete = constants.%.77a]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -131,11 +125,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc29_23.1: type = splice_block %.loc29_23.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc29: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc29_23.2: type = value_of_initializer %Bool.call.loc29 [concrete = bool]
-// CHECK:STDOUT:       %.loc29_23.3: type = converted %Bool.call.loc29, %.loc29_23.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc29: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -212,10 +202,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc23_25.2 br !if.expr.then.loc23 else br !if.expr.else.loc23
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc23:
-// CHECK:STDOUT:   %Bool.call.loc23: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc23_38.1: type = value_of_initializer %Bool.call.loc23 [concrete = bool]
-// CHECK:STDOUT:   %.loc23_38.2: type = converted %Bool.call.loc23, %.loc23_38.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_38.2)
+// CHECK:STDOUT:   %.loc23_38: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_38)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc23:
 // CHECK:STDOUT:   %.loc23_49: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -255,10 +243,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc24_25.2 br !if.expr.then.loc24 else br !if.expr.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc24:
-// CHECK:STDOUT:   %Bool.call.loc24: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc24_39.1: type = value_of_initializer %Bool.call.loc24 [concrete = bool]
-// CHECK:STDOUT:   %.loc24_39.2: type = converted %Bool.call.loc24, %.loc24_39.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_39.2)
+// CHECK:STDOUT:   %.loc24_39: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_39)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc24:
 // CHECK:STDOUT:   %.loc24_50: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -298,10 +284,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc25_26.2 br !if.expr.then.loc25 else br !if.expr.else.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc25:
-// CHECK:STDOUT:   %Bool.call.loc25: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc25_39.1: type = value_of_initializer %Bool.call.loc25 [concrete = bool]
-// CHECK:STDOUT:   %.loc25_39.2: type = converted %Bool.call.loc25, %.loc25_39.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc25(%.loc25_39.2)
+// CHECK:STDOUT:   %.loc25_39: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc25(%.loc25_39)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc25:
 // CHECK:STDOUT:   %.loc25_50: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -340,10 +324,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc26_26.2 br !if.expr.then.loc26 else br !if.expr.else.loc26
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc26:
-// CHECK:STDOUT:   %Bool.call.loc26: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc26_40.1: type = value_of_initializer %Bool.call.loc26 [concrete = bool]
-// CHECK:STDOUT:   %.loc26_40.2: type = converted %Bool.call.loc26, %.loc26_40.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc26(%.loc26_40.2)
+// CHECK:STDOUT:   %.loc26_40: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc26(%.loc26_40)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc26:
 // CHECK:STDOUT:   %.loc26_51: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -400,10 +382,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc30_25.2 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %Bool.call.loc30: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc30_35.1: type = value_of_initializer %Bool.call.loc30 [concrete = bool]
-// CHECK:STDOUT:   %.loc30_35.2: type = converted %Bool.call.loc30, %.loc30_35.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result(%.loc30_35.2)
+// CHECK:STDOUT:   %.loc30_35: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result(%.loc30_35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc30_46: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

@@ -82,7 +82,10 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc25_6.2: %Z.type = symbolic_binding T, 0 [symbolic = %T.loc25_6.1 (constants.%T.ea3)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc25_17.1: type = splice_block %.loc25_17.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc25_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc25_13.2: type = symbolic_binding U, 1 [symbolic = %U.loc25_13.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc25_27: type = splice_block %Empty.ref [concrete = constants.%Empty.type] {
 // CHECK:STDOUT:       <elided>
@@ -125,8 +128,9 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:     %F.specific_fn.loc26: <specific function> = specific_function %F.ref.loc26, @F(constants.%Empty.facet.76f) [concrete = constants.%F.specific_fn.da7]
 // CHECK:STDOUT:     %F.call.loc26: init %empty_tuple.type = call %F.specific_fn.loc26()
 // CHECK:STDOUT:     %F.ref.loc27: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %Empty.facet.loc27: %Empty.type = facet_value type, () [concrete = constants.%Empty.facet.2cb]
-// CHECK:STDOUT:     %.loc27: %Empty.type = converted type, %Empty.facet.loc27 [concrete = constants.%Empty.facet.2cb]
+// CHECK:STDOUT:     %.loc27_5: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %Empty.facet.loc27: %Empty.type = facet_value %.loc27_5, () [concrete = constants.%Empty.facet.2cb]
+// CHECK:STDOUT:     %.loc27_9: %Empty.type = converted %.loc27_5, %Empty.facet.loc27 [concrete = constants.%Empty.facet.2cb]
 // CHECK:STDOUT:     %F.specific_fn.loc27: <specific function> = specific_function %F.ref.loc27, @F(constants.%Empty.facet.2cb) [concrete = constants.%F.specific_fn.9dd]
 // CHECK:STDOUT:     %F.call.loc27: init %empty_tuple.type = call %F.specific_fn.loc27()
 // CHECK:STDOUT:     %F.ref.loc28: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]

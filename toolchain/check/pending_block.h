@@ -77,6 +77,8 @@ class PendingBlock {
   // block, but that would be costlier to enforce.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
       -> SemIR::InstId {
+    CARBON_CHECK(target_id != value_id);
+
     // TODO: consider adding an end-of-phase check that the SemIR::File is in
     // SSA form, and dropping this check and the ordering preconditions here and
     // on Initialize.

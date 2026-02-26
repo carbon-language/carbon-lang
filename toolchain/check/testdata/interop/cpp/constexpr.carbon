@@ -33,3 +33,15 @@ constexpr int i = 123;
 class C(I:! i32) {}
 fn F() -> C(Cpp.i);
 let x: C(123) = F();
+
+// --- float.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr float flt = 123.5;
+''';
+
+class C(V:! f32) {}
+fn F() -> C(Cpp.flt);
+let x: C(123.5) = F();

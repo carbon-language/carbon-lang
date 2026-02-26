@@ -155,6 +155,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
+// CHECK:STDOUT:     %.loc40: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:     %x: <error> = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc42: %I.type.f30c8e.1 = fn_decl @I.loc42 [concrete = constants.%I.73832e.1] {} {}

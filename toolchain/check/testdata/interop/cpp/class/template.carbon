@@ -212,7 +212,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:     %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %XY.ref: type = name_ref XY, imports.%X.decl.dec4cb.1 [concrete = constants.%X.32d59e.1]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %type.ref.loc7: type = name_ref r#type, %i32.2 [concrete = constants.%i32]
+// CHECK:STDOUT:     %type.ref.loc7: type = name_ref r#type, %i32.4 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -224,7 +224,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Xint.ref: type = name_ref Xint, imports.%X.decl.dec4cb.2 [concrete = constants.%X.32d59e.2]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %type.ref.loc21: type = name_ref r#type, %i32.1 [concrete = constants.%i32]
+// CHECK:STDOUT:     %type.ref.loc21: type = name_ref r#type, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }

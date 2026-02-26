@@ -1955,6 +1955,19 @@ struct TupleValue {
   InstBlockId elements_id;
 };
 
+// A type literal, such as `bool` or `type` or `i32`. The constant value of this
+// instruction will be the type value that the type literal evaluates to, which
+// is typically either a builtin type or a class defined in the prelude.
+struct TypeLiteral {
+  static constexpr auto Kind = InstKind::TypeLiteral.Define<Parse::NodeId>(
+      {.ir_name = "type_literal", .expr_category = ExprCategory::Value});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The type value that the type literal evaluates to.
+  TypeInstId value_id;
+};
+
 // Returns the type of the instruction produced by an action. For example, given
 //
 //   %inst: <instruction> = some_action

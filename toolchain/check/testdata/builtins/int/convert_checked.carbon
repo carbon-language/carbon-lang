@@ -313,30 +313,21 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SizePreserving.patt: %pattern_type.4a9 = value_binding_pattern SizePreserving [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6_21: type = splice_block %u32 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer @__global_init.%Int32ToUint32.call [concrete = constants.%int_1.c1d]
 // CHECK:STDOUT:   %.loc6_42.2: %u32 = converted @__global_init.%Int32ToUint32.call, %.loc6_42.1 [concrete = constants.%int_1.c1d]
 // CHECK:STDOUT:   %SizePreserving: %u32 = value_binding SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Narrowing.patt: %pattern_type.88f = value_binding_pattern Narrowing [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_16: type = splice_block %i16 [concrete = constants.%i16] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer @__global_init.%Int32ToInt16.call [concrete = constants.%int_1.c22]
 // CHECK:STDOUT:   %.loc7_36.2: %i16 = converted @__global_init.%Int32ToInt16.call, %.loc7_36.1 [concrete = constants.%int_1.c22]
 // CHECK:STDOUT:   %Narrowing: %i16 = value_binding Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Widening.patt: %pattern_type.a10 = value_binding_pattern Widening [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_15: type = splice_block %i64 [concrete = constants.%i64] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer @__global_init.%Int32ToInt64.call [concrete = constants.%int_1.a95]
 // CHECK:STDOUT:   %.loc8_35.2: %i64 = converted @__global_init.%Int32ToInt64.call, %.loc8_35.1 [concrete = constants.%int_1.a95]
 // CHECK:STDOUT:   %Widening: %i64 = value_binding Widening, %.loc8_35.2

@@ -48,15 +48,13 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto alias_type_id = SemIR::TypeId::None;
   auto alias_value_id = SemIR::InstId::None;
-  if (SemIR::IsSingletonInstId(expr_id)) {
-    // Type (`bool`) and value (`false`) literals provided by the builtin
-    // structure should be turned into name references.
-    // TODO: Look into handling `false`, this doesn't do it right now because it
-    // sees a value instruction instead of a builtin.
-    alias_type_id = context.insts().Get(expr_id).type_id();
-    alias_value_id = expr_id;
-  } else if (auto inst = context.insts().TryGetAs<SemIR::NameRef>(expr_id)) {
+  if (auto inst = context.insts().TryGetAs<SemIR::NameRef>(expr_id)) {
     // Pass through name references, albeit changing the name in use.
+    alias_type_id = inst->type_id;
+    alias_value_id = inst->value_id;
+  } else if (auto inst =
+                 context.insts().TryGetAs<SemIR::TypeLiteral>(expr_id)) {
+    // Treat type literals such as `type` or `bool` like name references.
     alias_type_id = inst->type_id;
     alias_value_id = inst->value_id;
   } else {

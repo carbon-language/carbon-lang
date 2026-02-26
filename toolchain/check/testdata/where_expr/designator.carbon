@@ -203,6 +203,8 @@ fn G(unused T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_27.1: type = splice_block %.loc13_27.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc13_22: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.16f]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.loc13_27.2: type = where_expr %.Self.2 [concrete = constants.%type_where] {

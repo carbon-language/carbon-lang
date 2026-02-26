@@ -130,6 +130,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %x: %str.ee0 = value_binding x, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,6 +157,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %x: %str.ee0 = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

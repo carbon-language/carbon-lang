@@ -43,28 +43,28 @@
 
 namespace Carbon::Check {
 
-// Overwrites the contents of the storage arg of the initializing expression
-// `init_id` with the inst at `target.storage_id`, and returns the ID that
-// should now be used to refer to `init_id`'s storage. Has no effect and returns
-// `target.storage_id` unchanged if `target.storage_id` is None or `init_id`
-// doesn't have a storage arg.
-static auto OverwriteStorageArg(SemIR::File& sem_ir, SemIR::InstId init_id,
-                                const ConversionTarget& target)
+// If the initializing expression `init_id` has a storage argument that refers
+// to a temporary, overwrites it with the inst at `target.storage_id`, and
+// returns the ID that should now be used to refer to `init_id`'s storage. Has
+// no effect and returns `target.storage_id` unchanged if `target.storage_id` is
+// None, if `init_id` doesn't have a storage arg, or if the storage argument
+// doesn't point to a temporary. In the latter case, we assume it was set
+// correctly when the instruction was created.
+static auto OverwriteTemporaryStorageArg(SemIR::File& sem_ir,
+                                         SemIR::InstId init_id,
+                                         const ConversionTarget& target)
     -> SemIR::InstId {
   CARBON_CHECK(target.is_initializer());
   if (!target.storage_id.has_value()) {
     return SemIR::InstId::None;
   }
   auto storage_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
-  if (!storage_arg_id.has_value()) {
+  if (!storage_arg_id.has_value() || storage_arg_id == target.storage_id ||
+      !sem_ir.insts().Is<SemIR::TemporaryStorage>(storage_arg_id)) {
     return target.storage_id;
   }
-  // Replace the temporary in the return slot with a reference to our target.
-  CARBON_CHECK(sem_ir.insts().Get(storage_arg_id).kind() ==
-                   SemIR::TemporaryStorage::Kind,
-               "Return slot for initializer does not contain a temporary; "
-               "initialized multiple times? Have {0}",
-               sem_ir.insts().Get(storage_arg_id));
+  // Replace the temporary in the storage argument with a reference to our
+  // target.
   return target.storage_access_block->MergeReplacing(storage_arg_id,
                                                      target.storage_id);
 }
@@ -1454,15 +1454,13 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 class CategoryConverter {
  public:
   // Constructs a converter which converts an expression at the given location
-  // to the given conversion target. performed_builtin_conversion indicates
-  // whether builtin conversions were performed prior to this.
+  // to the given conversion target.
   CategoryConverter(Context& context, SemIR::LocId loc_id,
-                    ConversionTarget& target, bool performed_builtin_conversion)
+                    ConversionTarget& target)
       : context_(context),
         sem_ir_(context.sem_ir()),
         loc_id_(loc_id),
-        target_(target),
-        performed_builtin_conversion_(performed_builtin_conversion) {}
+        target_(target) {}
 
   // Converts expr_id to the target specified in the constructor, and returns
   // the converted inst.
@@ -1515,7 +1513,6 @@ class CategoryConverter {
   SemIR::File& sem_ir_;
   SemIR::LocId loc_id_;
   const ConversionTarget& target_;
-  bool performed_builtin_conversion_;
 };
 
 auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
@@ -1543,16 +1540,14 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
     case SemIR::ExprCategory::ReprInitializing:
       if (target_.is_initializer()) {
         // Overwrite the initializer's storage argument with the inst currently
-        // at target_.storage_id, if both are present. However, we skip this
-        // in certain cases:
-        // - If we created the expression through a builtin conversion, we
-        //   will have created it with the target already set.
-        // - If the type is a C++ enum, we don't actually have an initializing
-        //   expression, we're just pretending we do.
+        // at target_.storage_id, if both are present and the storage argument
+        // hasn't already been set. However, we skip this if the type is a C++
+        // enum: in that case, we don't actually have an initializing
+        // expression, we're just pretending we do.
         auto new_storage_id = target_.storage_id;
-        if (!performed_builtin_conversion_ &&
-            !IsCppEnum(context_, target_.type_id)) {
-          new_storage_id = OverwriteStorageArg(sem_ir_, expr_id, target_);
+        if (!IsCppEnum(context_, target_.type_id)) {
+          new_storage_id =
+              OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
         }
 
         // If in-place initialization was requested, and it hasn't already
@@ -1802,7 +1797,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }
-  bool performed_builtin_conversion = expr_id != orig_expr_id;
 
   // Defer the action if it's dependent. We do this now rather than before
   // attempting any conversion so that we can still perform builtin conversions
@@ -1888,9 +1882,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  expr_id =
-      CategoryConverter(context, loc_id, target, performed_builtin_conversion)
-          .Convert(expr_id);
+  expr_id = CategoryConverter(context, loc_id, target).Convert(expr_id);
 
   return expr_id;
 }

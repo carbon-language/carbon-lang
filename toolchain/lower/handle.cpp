@@ -335,6 +335,11 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TypeLiteral inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::UnaryOperatorNot inst) -> void {
   context.SetLocal(
       inst_id, context.builder().CreateNot(context.GetValue(inst.operand_id)));

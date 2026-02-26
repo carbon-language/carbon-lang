@@ -147,7 +147,10 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %V.ref.loc12_34: type = name_ref V, %V.loc12_14.2 [symbolic = %V.loc12_14.1 (constants.%V.67d)]
 // CHECK:STDOUT:     %I.type.loc12_35.2: type = facet_type <@I, @I(constants.%V.67d)> [symbolic = %I.type.loc12_35.1 (constants.%I.type.1ab3e4.2)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc12_18.1: type = splice_block %.loc12_18.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc12_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc12_14.2: type = symbolic_binding V, 0 [symbolic = %V.loc12_14.1 (constants.%V.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

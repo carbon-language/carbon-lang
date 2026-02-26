@@ -97,7 +97,8 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4: Core.Form = init_form type, call_param0 [concrete = constants.%.824]
+// CHECK:STDOUT:     %.loc4_20.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc4_20.2: Core.Form = init_form %.loc4_20.1, call_param0 [concrete = constants.%.824]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -108,7 +109,8 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10: Core.Form = init_form type, call_param1 [concrete = constants.%.b38]
+// CHECK:STDOUT:     %.loc10_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc10_28.2: Core.Form = init_form %.loc10_28.1, call_param1 [concrete = constants.%.b38]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
@@ -267,7 +269,8 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form type, call_param1 [concrete = constants.%.b38]
+// CHECK:STDOUT:     %.loc12_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc12_28.2: Core.Form = init_form %.loc12_28.1, call_param1 [concrete = constants.%.b38]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param

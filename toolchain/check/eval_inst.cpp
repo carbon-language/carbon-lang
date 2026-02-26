@@ -730,6 +730,12 @@ auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::TypeLiteral inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.value_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::TypeOfInst inst)
     -> ConstantEvalResult {
   // Grab the type from the instruction produced as our operand.
