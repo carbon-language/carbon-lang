@@ -27,12 +27,13 @@ class InstNamer {
   // int32_t matches the input value size.
   enum class ScopeId : int32_t {
     None = -1,
-    // The three top-level scopes.
+    // The top-level scopes.
     File = 0,
-    Imports = 1,
-    Constants = 2,
+    Generated = 1,
+    Imports = 2,
+    Constants = 3,
     // The first entity scope; see entities in `ScopeIdTypeEnum`.
-    FirstEntityScope = 3,
+    FirstEntityScope = 4,
   };
   static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 
@@ -171,6 +172,8 @@ class InstNamer {
   // A named scope that contains named entities.
   struct Scope {
     Namespace::Name name;
+    // The name of the entity's inner entity-with-self, if it has one.
+    Namespace::Name name_with_self;
     Namespace insts;
     Namespace labels;
   };
@@ -232,13 +235,18 @@ class InstNamer {
   // Always returns the name of the entity. May push it if it has not yet been
   // pushed.
   template <typename EntityIdT>
-  auto MaybePushEntity(EntityIdT entity_id) -> llvm::StringRef {
+  auto MaybePushEntity(EntityIdT entity_id, bool with_self = false)
+      -> llvm::StringRef {
     auto scope_id = GetScopeFor(entity_id);
     auto& scope = GetScopeInfo(scope_id);
     if (!scope.name) {
       PushEntity(entity_id, scope_id, scope);
     }
-    return scope.name.GetBaseName();
+    if (with_self) {
+      return scope.name_with_self.GetBaseName();
+    } else {
+      return scope.name.GetBaseName();
+    }
   }
 
   const File* sem_ir_;

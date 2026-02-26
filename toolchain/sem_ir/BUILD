@@ -211,12 +211,23 @@ cc_library(
 )
 
 cc_library(
+    name = "formatter_chunks",
+    srcs = ["formatter_chunks.cpp"],
+    hdrs = ["formatter_chunks.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "formatter",
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
         ":expr_info",
         ":file",
+        ":formatter_chunks",
         ":inst_namer",
         ":typed_insts",
         "//common:concepts",
@@ -236,6 +247,7 @@ cc_library(
     hdrs = ["entry_point.h"],
     deps = [
         ":file",
+        ":typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )

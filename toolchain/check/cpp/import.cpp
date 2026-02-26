@@ -53,6 +53,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
@@ -428,11 +429,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     return SemIR::ErrorInst::TypeInstId;
   }
 
-  // For now, if the class is empty, produce an empty struct as the object
-  // representation. This allows our tests to continue to pass while we don't
-  // properly support initializing imported C++ classes.
+  // For now, if the class is empty and an aggregate, produce an empty struct as
+  // the object representation. This allows our tests to continue to pass while
+  // we don't properly support initializing imported C++ classes. We only do
+  // this for aggregates so that non-aggregate classes are not incorrectly
+  // initializable from `{}`.
   // TODO: Remove this.
-  if (clang_def->isEmpty() && !clang_def->getNumBases()) {
+  if (clang_def->isEmpty() && !clang_def->getNumBases() &&
+      clang_def->isAggregate()) {
     return context.types().GetAsTypeInstId(AddInst(
         context,
         MakeImportedLocIdAndInst(
@@ -1446,7 +1450,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   auto function_params_insts =
       CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
 
-  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
+  auto [pattern_block_id, decl_block_id] =
+      FinishFunctionSignature(context, /*check_unused=*/false);
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;
@@ -1671,6 +1676,8 @@ static auto AddDependentUnimportedDecls(Context& context,
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
     }
+  } else if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    AddDependentUnimportedTypeDecls(context, var_decl->getType(), worklist);
   }
   auto* parent = GetParentDecl(clang_decl);
   if (llvm::isa_and_nonnull<clang::TagDecl, clang::NamespaceDecl,
@@ -1701,7 +1708,8 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // Create an entity name to identify this variable.
   SemIR::EntityNameId entity_name_id = context.entity_names().Add(
       {.name_id = var_name_id,
-       .parent_scope_id = GetParentNameScopeId(context, var_decl)});
+       .parent_scope_id = GetParentNameScopeId(context, var_decl),
+       .is_unused = false});
 
   // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
   // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
@@ -2267,7 +2275,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  MapCppAccess(lookup->begin().getPair()));
 }
 
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool {
@@ -2279,18 +2287,7 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
 
-  // TODO: Map loc_id into a clang location and use it for diagnostics if
-  // instantiation fails, instead of annotating the diagnostic with another
-  // location.
   clang::SourceLocation loc = clang_decl->getLocation();
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ type {0}", SemIR::TypeId);
-        builder.Note(loc_id, InCppTypeCompletion,
-                     context.classes().Get(class_id).self_type_id);
-      });
-
   // Ask Clang whether the type is complete. This triggers template
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(cpp_file->diagnostics());

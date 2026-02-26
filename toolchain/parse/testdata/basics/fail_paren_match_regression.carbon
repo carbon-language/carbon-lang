@@ -26,7 +26,7 @@ var = (foo {})
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: '=', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: '=', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: '=', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},

@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: f64) -> f64 = "float.negate";
 
-fn RuntimeCallIsValid(a: f64, b: f64) -> f64 {
+fn RuntimeCallIsValid(a: f64, unused b: f64) -> f64 {
   //@dump-sem-ir-begin
   return Negate(a);
   //@dump-sem-ir-end
@@ -73,9 +73,6 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {

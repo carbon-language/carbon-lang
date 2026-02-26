@@ -235,6 +235,7 @@ struct Worklist {
     // `decl_id`, because fingerprinting the `NameId` is sufficient to identify
     // the template, but this won't necessarily be true for other
     // `ClangDeclId`s.
+    // See also: https://github.com/carbon-language/carbon-lang/issues/6728
   }
 
   auto Add(ClassId class_id) -> void {

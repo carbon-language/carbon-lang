@@ -14,13 +14,13 @@
 
 fn F();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: fn F(x: ()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fn F(unused x: ()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-fn F(x: ()) {}
+fn F(unused x: ()) {}
 
 fn G(x: ());
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 0 [RedeclParamCountDiffers]
@@ -33,11 +33,11 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: fn H(x: bool) {}
-// CHECK:STDERR:         ^~~~
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:16: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fn H(unused x: bool) {}
+// CHECK:STDERR:                ^~~~
 // CHECK:STDERR:
-fn H(x: bool) {}
+fn H(unused x: bool) {}
 
 fn I();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `()` [FunctionRedeclReturnTypeDiffers]
@@ -121,9 +121,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc23_10.1: type = splice_block %.loc23_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc23_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc23_10.3: type = converted %.loc23_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc23_17.1: type = splice_block %.loc23_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc23_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc23_17.3: type = converted %.loc23_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }

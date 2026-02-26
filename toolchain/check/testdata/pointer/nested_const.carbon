@@ -36,7 +36,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.9b9: %Int.as.Copy.impl.Op.type.824 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
@@ -48,7 +47,8 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.type.ed9: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.686: %const.as.Copy.impl.Op.type.ed9 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.7d9: %Copy.type = facet_value %const.20a, (%Copy.impl_witness.286) [concrete]
-// CHECK:STDOUT:   %.0cd: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.7d9 [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ba7: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.7d9) [concrete]
+// CHECK:STDOUT:   %.2d3: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ba7, %Copy.facet.7d9 [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.686, @const.as.Copy.impl.Op(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +106,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc17_11.2: %const.58f = acquire_value %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_10.1: ref %const.20a = deref %.loc17_11.2
 // CHECK:STDOUT:   %.loc17_10.2: %const.20a = acquire_value %.loc17_10.1
-// CHECK:STDOUT:   %impl.elem0: %.0cd = impl_witness_access constants.%Copy.impl_witness.286, element0 [concrete = constants.%const.as.Copy.impl.Op.686]
+// CHECK:STDOUT:   %impl.elem0: %.2d3 = impl_witness_access constants.%Copy.impl_witness.286, element0 [concrete = constants.%const.as.Copy.impl.Op.686]
 // CHECK:STDOUT:   %bound_method.loc17_10.1: <bound method> = bound_method %.loc17_10.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.de4) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn

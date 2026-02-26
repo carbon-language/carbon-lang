@@ -34,7 +34,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -66,7 +66,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -95,7 +95,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 fn G() {
   // This impl lookup resolves to a final witness, which poisons any future
@@ -291,9 +291,6 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst{{[0-9A-F]+}}.loc9_11;
 // CHECK:STDOUT:

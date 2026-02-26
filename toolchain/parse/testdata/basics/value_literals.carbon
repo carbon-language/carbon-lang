@@ -49,7 +49,7 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'ints'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'ints'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
@@ -78,7 +78,7 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'reals'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'reals'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f64'},
@@ -111,7 +111,7 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'f'},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
@@ -119,7 +119,7 @@ var test_str: str = "Test";
 // CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 't'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 't'},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
@@ -132,9 +132,9 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'c'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
 // CHECK:STDOUT:             {kind: 'CoreNameExpr', text: 'Core'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'Char'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Char'},
 // CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
@@ -147,7 +147,7 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'test_str'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'test_str'},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},

@@ -17,7 +17,7 @@ interface I {}
 // CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+7]]:6: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+4]]:6: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+4]]:6: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
 // CHECK:STDERR:
@@ -58,6 +58,7 @@ impl true as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -70,4 +71,6 @@ impl true as I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
 // CHECK:STDOUT:

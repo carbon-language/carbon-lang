@@ -20,10 +20,10 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-fn Foo(a: C) {}
+fn Foo(unused a: C) {}
 
 fn Bar(a: D);
-fn Bar(a: D) {}
+fn Bar(unused a: D) {}
 
 // --- spacing.carbon
 
@@ -32,7 +32,7 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo [ ] ( a : C );
-fn Foo[](a: C) {}
+fn Foo[](unused a: C) {}
 
 // --- fail_parens.carbon
 
@@ -41,14 +41,14 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(a: (C)) {}
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo(unused a: (C)) {}
+// CHECK:STDERR:                  ^
 // CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
-fn Foo(a: (C)) {}
+fn Foo(unused a: (C)) {}
 
 // --- fail_only_implicit_params.carbon
 
@@ -82,7 +82,7 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: C);
-fn Foo(a: r#C) {}
+fn Foo(unused a: r#C) {}
 
 // --- two_file.carbon
 
@@ -98,8 +98,8 @@ fn Bar(a: D);
 
 impl library "[[@TEST_NAME]]";
 
-fn Foo(a: C) {}
-fn Bar(a: D) {}
+fn Foo(unused a: C) {}
+fn Bar(unused a: D) {}
 
 // --- fail_name_mismatch.carbon
 
@@ -109,14 +109,14 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: fn Foo(b: D) {}
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fn Foo(unused b: D) {}
+// CHECK:STDERR:               ^~~~
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
-fn Foo(b: D) {}
+fn Foo(unused b: D) {}
 
 // --- fail_alias.carbon
 
@@ -126,14 +126,14 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(a: D) {}
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo(unused a: D) {}
+// CHECK:STDERR:                  ^
 // CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
-fn Foo(a: D) {}
+fn Foo(unused a: D) {}
 
 // --- fail_deduced_alias.carbon
 
@@ -143,14 +143,14 @@ class C {}
 alias D = C;
 
 fn Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:12: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo[a:! D]() {}
-// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo[unused a:! D]() {}
+// CHECK:STDERR:                   ^
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo[a:! C]();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-fn Foo[a:! D]() {}
+fn Foo[unused a:! D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 
@@ -176,7 +176,7 @@ impl library "[[@TEST_NAME]]";
 
 alias D = C;
 
-fn Foo(a: D) {}
+fn Foo(unused a: D) {}
 
 // --- fail_repeat_const.carbon
 
@@ -185,18 +185,18 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:11: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: fn Foo(a: const (const C)) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:18: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: fn Foo(unused a: const (const C)) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:17: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(a: const (const C)) {}
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:24: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo(unused a: const (const C)) {}
+// CHECK:STDERR:                        ^
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo(a: const C);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
-fn Foo(a: const (const C)) {}
+fn Foo(unused a: const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -693,10 +693,11 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
+// CHECK:STDOUT:   %a.9daf47.1: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.47530a.1: type = fn_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.9ec12f.1: %Foo.type.47530a.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %a.9daf47.2: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.47530a.2: type = fn_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.9ec12f.2: %Foo.type.47530a.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -717,7 +718,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc7_8.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_8.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a.9daf47.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.47530a.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.9ec12f.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
@@ -726,7 +727,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15_8.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_8.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_15.3: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.2 (constants.%a.9daf47.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -739,13 +740,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Foo.loc7(%a.loc7_8.2: %C) {
-// CHECK:STDOUT:   %a.loc7_8.1: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a)]
+// CHECK:STDOUT:   %a.loc7_8.1: %C = symbolic_binding a, 0 [symbolic = %a.loc7_8.1 (constants.%a.9daf47.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_8.2: %C) {
-// CHECK:STDOUT:   %a.loc15_8.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_8.1 (constants.%a)]
+// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_15.3: %C) {
+// CHECK:STDOUT:   %a.loc15_15.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.1 (constants.%a.9daf47.1)]
+// CHECK:STDOUT:   %a.loc15_15.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_15.2 (constants.%a.9daf47.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -755,12 +757,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
-// CHECK:STDOUT:   %a.loc7_8.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc7(constants.%a.9daf47.1) {
+// CHECK:STDOUT:   %a.loc7_8.1 => constants.%a.9daf47.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
-// CHECK:STDOUT:   %a.loc15_8.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc15(constants.%a.9daf47.2) {
+// CHECK:STDOUT:   %a.loc15_15.1 => constants.%a.9daf47.2
+// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a.9daf47.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon
@@ -944,10 +947,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_11 [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_18 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_18: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_11: type = const_type %const.loc18_18 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_25: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_18: type = const_type %const.loc18_25 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = value_binding a, %a.param
 // CHECK:STDOUT:   }

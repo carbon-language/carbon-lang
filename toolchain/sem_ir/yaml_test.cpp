@@ -46,9 +46,10 @@ TEST(SemIRTest, Yaml) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
   auto inst_block_id =
       Yaml::Scalar(MatchesRegex(R"(inst_block([0-9A-F]+|_empty))"));
-  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
+  auto inst_block = Pair(inst_block_id, Yaml::Mapping(Each(Pair(_, inst_id))));
   auto constant_id =
       Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst[0-9A-F]+\))"));
   auto type_id =
@@ -74,43 +75,41 @@ TEST(SemIRTest, Yaml) {
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
       Pair("facet_types", Yaml::Mapping(SizeIs(0))),
-      Pair("insts", Yaml::Mapping(AllOf(
-                        Each(Key(inst_id)),
-                        // kind is required, other parts are optional.
-                        Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
-                        // A 0-arg instruction.
-                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
-                                             Pair("kind", "Return"))))),
-                        // A 1-arg instruction.
-                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
-                                             Pair("kind", "TupleType"),
-                                             Pair("arg0", inst_block_id),
-                                             Pair("type", "type(TypeType)"))))),
-                        // A 2-arg instruction.
-                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
+      Pair("insts",
+           Yaml::Mapping(AllOf(
+               Each(Key(inst_id)),
+               // kind is required, other parts are optional.
+               Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
+               // A 0-arg instruction.
+               Contains(
+                   Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "Return"))))),
+               // A 1-arg instruction.
+               Contains(Pair(_, Yaml::Mapping(ElementsAre(
+                                    Pair("kind", "TupleType"),
+                                    Pair("arg0", inst_block_id),
+                                    Pair("type", "type(TypeType)"))))),
+               // A 2-arg instruction.
+               Contains(Pair(_, Yaml::Mapping(ElementsAre(
 
-                                             Pair("kind", "FunctionDecl"),
-                                             Pair("arg0", "function60000000"),
-                                             Pair("arg1", "inst_block_empty"),
-                                             Pair("type", type_id)))))))),
+                                    Pair("kind", "FunctionDecl"),
+                                    Pair("arg0", Yaml::Scalar(MatchesRegex(
+                                                     "function[0-9A-F]+"))),
+                                    Pair("arg1", "inst_block_empty"),
+                                    Pair("type", type_id)))))))),
       Pair("constant_values",
            Yaml::Mapping(ElementsAre(
                Pair("values",
                     Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
                Pair("symbolic_constants", Yaml::Mapping(SizeIs(0)))))),
-      Pair(
-          "inst_blocks",
-          Yaml::Mapping(ElementsAre(
-              Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
-              Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("imports", Yaml::Mapping(IsEmpty())),
-              Pair("global_init", Yaml::Mapping(IsEmpty())),
-              Pair("inst_block60000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block60000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block60000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block60000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block60000008",
-                   Yaml::Mapping(Each(Pair(_, inst_id))))))),
+      Pair("inst_blocks",
+           Yaml::Mapping(ElementsAre(
+               Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
+               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("generated", Yaml::Mapping(IsEmpty())),
+               Pair("imports", Yaml::Mapping(IsEmpty())),
+               Pair("global_init", Yaml::Mapping(IsEmpty())),
+               // There are 5 non-reserved inst blocks.
+               inst_block, inst_block, inst_block, inst_block, inst_block))),
       Pair("value_stores",
            Yaml::Mapping(ElementsAre(
                Pair("shared_values",

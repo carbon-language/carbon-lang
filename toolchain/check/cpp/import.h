@@ -71,7 +71,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 // declaration, such as a class or enum, attempt to import a corresponding class
 // definition. Returns true if nothing went wrong (whether or not a definition
 // could be imported), false if a diagnostic was produced.
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;

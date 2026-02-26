@@ -712,18 +712,31 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // the 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Empty until the File is fully checked; intermediate
-  // state is in the Check::Context.
+  // Exported instructions.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
   static const InstBlockId Exports;
 
-  // Instructions produced through import logic. Empty until the File is fully
-  // checked; intermediate state is in the Check::Context.
+  // Generated entities.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
+  static const InstBlockId Generated;
+
+  // Instructions produced through import logic.
+  //
+  // Empty until the File is fully checked; intermediate state is in the
+  // Check::Context.
   static const InstBlockId Imports;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
   // be inserted into it.
   static const InstBlockId GlobalInit;
+
+  // A convenience list of reserved IDs.
+  static const std::array<InstBlockId, 5> ReservedIds;
 
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
@@ -734,10 +747,13 @@ struct InstBlockId : public IdBase<InstBlockId> {
 
 inline constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
-inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::Generated = InstBlockId(2);
+inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(4);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
+inline constexpr std::array<InstBlockId, 5> InstBlockId::ReservedIds = {
+    Empty, Exports, Generated, Imports, GlobalInit};
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.

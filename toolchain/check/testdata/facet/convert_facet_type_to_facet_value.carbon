@@ -20,8 +20,7 @@ interface Animal {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(e:! Eats) {}
-
+fn Feed(unused e:! Eats) {}
 fn F() {
   Feed(Animal);
 }
@@ -36,8 +35,7 @@ interface Animal {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(e:! Eats) {}
-
+fn Feed(unused e:! Eats) {}
 class Goat {}
 impl Goat as Animal {}
 
@@ -45,9 +43,9 @@ fn F() {
   // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE+7]]:3: error: cannot convert type `Goat as Animal` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   Feed(Goat as Animal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE-9]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Feed(e:! Eats) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE-8]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn Feed(unused e:! Eats) {}
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Feed(Goat as Animal);
 }
@@ -63,8 +61,7 @@ interface Climbs {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(e:! Eats) {}
-
+fn Feed(unused e:! Eats) {}
 class Goat {}
 impl Goat as Animal {}
 impl Goat as Climbs {}
@@ -75,18 +72,18 @@ fn F() {
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+7]]:3: error: cannot convert type `Goat as Animal & Climbs` that implements `Animal & Climbs` into type implementing `Eats` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   Feed(Goat as (Animal & Climbs));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-12]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Feed(e:! Eats) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-11]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn Feed(unused e:! Eats) {}
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Feed(Goat as (Animal & Climbs));
 
   // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+7]]:3: error: cannot convert type `Animal & Climbs` into type implementing `Eats` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Feed(Animal & Climbs);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-21]]:9: note: initializing generic parameter `e` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Feed(e:! Eats) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-20]]:16: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn Feed(unused e:! Eats) {}
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Feed(Animal & Climbs);
 }

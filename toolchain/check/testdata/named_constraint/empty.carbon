@@ -16,7 +16,7 @@ constraint Empty {}
 // Like `type`.
 //
 //@dump-sem-ir-begin
-fn F(T:! Empty) {}
+fn F(unused T:! Empty) {}
 //@dump-sem-ir-end
 
 interface Z {}
@@ -70,7 +70,7 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc19_6.2: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc19_6.1 (constants.%T.f45)]
+// CHECK:STDOUT:     %T.loc19_13.2: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc19_13.1 (constants.%T.f45)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.22b = symbolic_binding_pattern T, 0 [concrete]
@@ -92,8 +92,8 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc19_6.2: %Empty.type) {
-// CHECK:STDOUT:   %T.loc19_6.1: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc19_6.1 (constants.%T.f45)]
+// CHECK:STDOUT: generic fn @F(%T.loc19_13.2: %Empty.type) {
+// CHECK:STDOUT:   %T.loc19_13.1: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc19_13.1 (constants.%T.f45)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -151,7 +151,7 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.f45) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%T.f45
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%T.f45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.ea3, constants.%U, constants.%V) {
@@ -161,31 +161,31 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Empty.facet.76f) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%Empty.facet.76f
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%Empty.facet.76f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Empty.facet.2cb) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%Empty.facet.2cb
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%Empty.facet.2cb
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Empty.facet.4f8) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%Empty.facet.4f8
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%Empty.facet.4f8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Empty.facet.380) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%Empty.facet.380
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%Empty.facet.380
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%V) {
-// CHECK:STDOUT:   %T.loc19_6.1 => constants.%V
+// CHECK:STDOUT:   %T.loc19_13.1 => constants.%V
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

@@ -35,15 +35,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var bar: Cpp.Bar;
-  // CHECK:STDERR:            ^~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:19: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var unused bar: Cpp.Bar;
+  // CHECK:STDERR:                   ^~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Bar;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  var bar: Cpp.Bar;
+  var unused bar: Cpp.Bar;
 }
 
 // ============================================================================
@@ -125,7 +125,7 @@ import Cpp library "static_data_member.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  let bar: Cpp.Bar* = Cpp.Bar.foo;
+  let unused bar: Cpp.Bar* = Cpp.Bar.foo;
   //@dump-sem-ir-end
 }
 
@@ -148,7 +148,7 @@ import Cpp library "data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
-  let foo_bar: Cpp.Bar* = bar->foo;
+  let unused foo_bar: Cpp.Bar* = bar->foo;
 }
 //@dump-sem-ir-end
 
@@ -383,16 +383,16 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref.loc8_26: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: ref %ptr.f68 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
-// CHECK:STDOUT:   %.loc8_19: type = splice_block %ptr [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Bar.ref.loc8_15: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_15 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30: %ptr.f68 = acquire_value %foo.ref
-// CHECK:STDOUT:   %bar: %ptr.f68 = value_binding bar, %.loc8_30
+// CHECK:STDOUT:   %.loc8_37: %ptr.f68 = acquire_value %foo.ref
+// CHECK:STDOUT:   %bar: %ptr.f68 = value_binding bar, %.loc8_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -436,16 +436,16 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc8_30.1: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
-// CHECK:STDOUT:   %.loc8_30.2: ref %ptr.f68 = class_element_access %.loc8_30.1, element0
-// CHECK:STDOUT:   %.loc8_23: type = splice_block %ptr.loc8 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:   %.loc8_37.2: ref %ptr.f68 = class_element_access %.loc8_37.1, element0
+// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: %ptr.f68 = acquire_value %.loc8_30.2
-// CHECK:STDOUT:   %foo_bar: %ptr.f68 = value_binding foo_bar, %.loc8_30.3
+// CHECK:STDOUT:   %.loc8_37.3: %ptr.f68 = acquire_value %.loc8_37.2
+// CHECK:STDOUT:   %foo_bar: %ptr.f68 = value_binding foo_bar, %.loc8_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

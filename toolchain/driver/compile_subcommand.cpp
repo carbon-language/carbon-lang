@@ -492,7 +492,7 @@ class CompilationUnit {
   auto RunLower() -> void;
 
   // Runs the optimization pipeline.
-  auto RunOptimize() -> void;
+  auto RunOptimize(const clang::CompilerInvocation& clang_invocation) -> void;
 
   // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
   // lowering work, after we've finished building the IR in RunLower() and,
@@ -538,7 +538,8 @@ class CompilationUnit {
   auto IncludeInDumps() -> bool;
 
   // Builds the LLVM target machine.
-  auto MakeTargetMachine() -> void;
+  auto MakeTargetMachine(const clang::CompilerInvocation& clang_invocation)
+      -> void;
 
   // The index of the unit amongst all units.
   SemIR::CheckIRId check_ir_id_;
@@ -814,7 +815,8 @@ auto CompilationUnit::RunLower() -> void {
   });
 }
 
-auto CompilationUnit::MakeTargetMachine() -> void {
+auto CompilationUnit::MakeTargetMachine(
+    const clang::CompilerInvocation& clang_invocation) -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
   CARBON_CHECK(!target_machine_, "Should not call this multiple times");
 
@@ -828,7 +830,16 @@ auto CompilationUnit::MakeTargetMachine() -> void {
   constexpr llvm::StringLiteral CPU = "generic";
   constexpr llvm::StringLiteral Features = "";
 
+  const auto& codegen_opts = clang_invocation.getCodeGenOpts();
+
+  // TODO: Make the code in Clang's BackendUtil.cpp externally accessible and
+  // call it from here. This is doing a subset of the same work to translate
+  // Clang code generation options into target options.
   llvm::TargetOptions target_opts;
+  target_opts.UseInitArray = codegen_opts.UseInitArray;
+  target_opts.FunctionSections = codegen_opts.FunctionSections;
+  target_opts.DataSections = codegen_opts.DataSections;
+  target_opts.UniqueSectionNames = codegen_opts.UniqueSectionNames;
   target_machine_.reset(target_->createTargetMachine(
       target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
 }
@@ -863,7 +874,8 @@ static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
   }
 }
 
-auto CompilationUnit::RunOptimize() -> void {
+auto CompilationUnit::RunOptimize(
+    const clang::CompilerInvocation& clang_invocation) -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
 
   // TODO: A lot of the work done here duplicates work done by Clang setting up
@@ -873,7 +885,7 @@ auto CompilationUnit::RunOptimize() -> void {
   // pipeline rather than building one of our own, or factoring out enough of
   // Clang's pipeline builder that we can reuse and further customize it.
 
-  MakeTargetMachine();
+  MakeTargetMachine(clang_invocation);
 
   // TODO: There's no way to set these automatically from an
   // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
@@ -1094,7 +1106,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Build a clang invocation. We do this regardless of whether we're running
   // check, because this is essentially performing further option validation,
   // and we generally validate all options even if we're not using them for the
-  // selected phases of compilation.
+  // selected phases of compilation. We also use Clang's target option handling
+  // to configure our target, to ensure that we are using the same ABI for both
+  // the C++ and Carbon parts of the compilation.
   // TODO: Share any arguments we specify here with the `carbon clang`
   // subcommand.
   {
@@ -1283,7 +1297,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->RunLower();
 
     if (options_.phase != CompileOptions::Phase::Lower) {
-      unit->RunOptimize();
+      unit->RunOptimize(*clang_invocation);
     }
 
     unit->PostLower();

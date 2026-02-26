@@ -18,7 +18,7 @@ let a = 4;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'LetBindingPattern', text: 'a', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

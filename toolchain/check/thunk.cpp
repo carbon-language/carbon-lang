@@ -83,7 +83,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   return AddBindingPattern(
              context, SemIR::LocId(pattern_id), entity_name.name_id, type_id,
              /*form_id=*/SemIR::ConstantId::None, type_expr_region_id,
-             pattern.kind, entity_name.is_template)
+             pattern.kind, entity_name.is_template,
+             /*is_unused=*/false)
       .pattern_id;
 }
 

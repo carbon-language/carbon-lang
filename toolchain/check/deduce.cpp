@@ -160,8 +160,7 @@ class DeductionContext {
   // not be deduced. `context` must not be null.
   DeductionContext(Context* context, SemIR::LocId loc_id,
                    SemIR::GenericId generic_id,
-                   SemIR::SpecificId enclosing_specific_id,
-                   SemIR::InstId self_type_id, bool diagnose);
+                   SemIR::SpecificId enclosing_specific_id, bool diagnose);
 
   auto context() const -> Context& { return *context_; }
 
@@ -231,7 +230,7 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
 DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
                                    SemIR::GenericId generic_id,
                                    SemIR::SpecificId enclosing_specific_id,
-                                   SemIR::InstId self_type_id, bool diagnose)
+                                   bool diagnose)
     : context_(context),
       loc_id_(loc_id),
       generic_id_(generic_id),
@@ -264,16 +263,6 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
            .replacement_id = context->constant_values().Get(subst_inst_id)});
     }
     first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
-  }
-
-  if (self_type_id.has_value()) {
-    // Copy the provided `Self` type as the value of the next binding.
-    auto self_index = first_deduced_index_;
-    result_arg_ids_[self_index.index] = self_type_id;
-    substitutions_.push_back(
-        {.bind_id = SemIR::CompileTimeBindIndex(self_index),
-         .replacement_id = context->constant_values().Get(self_type_id)});
-    first_deduced_index_ = SemIR::CompileTimeBindIndex(self_index.index + 1);
   }
 
   non_deduced_indexes_.resize(result_arg_ids_.size() -
@@ -578,13 +567,13 @@ auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
 
 auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::InstId self_type_id,
+    SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
     SemIR::InstBlockId param_patterns_id,
     [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
-                             enclosing_specific_id, self_type_id,
+                             enclosing_specific_id,
                              /*diagnose=*/true);
 
   // Prepare to perform deduction of the explicit parameters against their
@@ -605,7 +594,6 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
-                             /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface. Use the canonical

@@ -28,7 +28,7 @@ let :! bool = true;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: ':', has_error: yes},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
@@ -40,7 +40,7 @@ let :! bool = true;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: ':!', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: ':!', has_error: yes},
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':!', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 4},

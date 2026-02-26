@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 
 constraint E {}
 
-fn F(T:! E) {}
+fn F(unused T:! E) {}
 
 //@dump-sem-ir-begin
 fn G(T:! E & E) {
@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 constraint E1 {}
 constraint E2 {}
 
-fn F(T:! E1) {}
+fn F(unused T:! E1) {}
 
 //@dump-sem-ir-begin
 fn G(T:! E2) {
@@ -46,7 +46,7 @@ constraint E {
   require impls Z;
 }
 
-fn F(T:! E) {}
+fn F(unused T:! E) {}
 
 class C {}
 impl C as Z {}
@@ -63,22 +63,22 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [concrete]
-// CHECK:STDOUT:   %T: %E.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %E.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
-// CHECK:STDOUT:   %BitAndWith.Op.type.9a3: type = fn_type @BitAndWith.Op, @BitAndWith(type) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.890: type = fn_type_with_self_type %BitAndWith.Op.type.9a3, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %E.type, %type.as.BitAndWith.impl.Op [concrete]
+// CHECK:STDOUT:   %T.f45530.2: %E.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T.f45530.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -94,18 +94,18 @@ fn G(T:! Z) {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %E.ref.loc8_10: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
 // CHECK:STDOUT:       %E.ref.loc8_14: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
-// CHECK:STDOUT:       %impl.elem0: %.890 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:       %impl.elem0: %.d15 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %E.ref.loc8_10, %impl.elem0 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:       %type.as.BitAndWith.impl.Op.call: init type = call %bound_method(%E.ref.loc8_10, %E.ref.loc8_14) [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.loc8_12.2: type = value_of_initializer %type.as.BitAndWith.impl.Op.call [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.loc8_12.3: type = converted %type.as.BitAndWith.impl.Op.call, %.loc8_12.2 [concrete = constants.%E.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_6.2: %E.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_6.2: %E.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T.f45530.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc8_6.2: %E.type) {
-// CHECK:STDOUT:   %T.loc8_6.1: %E.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc8_6.1: %E.type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T.f45530.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc9_3.2: <specific function> = specific_function constants.%F, @F(%T.loc8_6.1) [symbolic = %F.specific_fn.loc9_3.2 (constants.%F.specific_fn)]
@@ -113,15 +113,15 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: %E.type = name_ref T, %T.loc8_6.2 [symbolic = %T.loc8_6.1 (constants.%T)]
-// CHECK:STDOUT:     %F.specific_fn.loc9_3.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc9_3.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %T.ref: %E.type = name_ref T, %T.loc8_6.2 [symbolic = %T.loc8_6.1 (constants.%T.f45530.2)]
+// CHECK:STDOUT:     %F.specific_fn.loc9_3.1: <specific function> = specific_function %F.ref, @F(constants.%T.f45530.2) [symbolic = %F.specific_fn.loc9_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc9_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_6.1 => constants.%T
+// CHECK:STDOUT: specific @G(constants.%T.f45530.2) {
+// CHECK:STDOUT:   %T.loc8_6.1 => constants.%T.f45530.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- compatible_constraints.carbon
@@ -139,9 +139,6 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.f45530.2 [symbolic]
 // CHECK:STDOUT:   %E1.facet: %E1.type = facet_value %T.binding.as_type, () [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%E1.facet) [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

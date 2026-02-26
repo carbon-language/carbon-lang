@@ -63,8 +63,8 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.416a86e385b6ba35(i32 %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %SomeInterface.F.call = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.b88d1103f417c6d4.Main"(i32 %x), !dbg !20
-// CHECK:STDOUT:   ret i32 %SomeInterface.F.call, !dbg !21
+// CHECK:STDOUT:   %SomeInterface.WithSelf.F.call = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.b88d1103f417c6d4.Main"(i32 %x), !dbg !20
+// CHECK:STDOUT:   ret i32 %SomeInterface.WithSelf.F.call, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

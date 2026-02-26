@@ -197,7 +197,7 @@ fn F() {
 // CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !12, type: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 39, scope: !12)
+// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 46, scope: !12)
 // CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Next", linkageName: "_CNext.7711e6f0e1563534:Iterate.Core.a4ad391f91521d70", scope: null, file: !13, line: 24, type: !22, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !24)
 // CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
 // CHECK:STDOUT: !23 = !{!17, !17, !17}
