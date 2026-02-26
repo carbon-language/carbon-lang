@@ -30,6 +30,10 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
       return TryEvalInst(context,
                          SemIR::IntValue{.type_id = type_id, .int_id = int_id});
     }
+  } else if (ap_value.isFloat()) {
+    FloatId float_id = context.floats().Add(ap_value.getFloat());
+    return TryEvalInst(
+        context, SemIR::FloatValue{.type_id = type_id, .float_id = float_id});
   } else {
     // TODO: support other types.
     return SemIR::ConstantId::NotConstant;
