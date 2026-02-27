@@ -251,9 +251,9 @@ TEST_F(EmitterTest, Flush) {
     flushed = false;
   }
 
-  // Destroying the emitter should flush.
-  EXPECT_TRUE(flushed);
-  flushed = false;
+  // Destroying the emitter should not flush, as that could call back into the
+  // base class emitter after the derived-class emitter has been destroyed.
+  EXPECT_FALSE(flushed);
 }
 
 }  // namespace

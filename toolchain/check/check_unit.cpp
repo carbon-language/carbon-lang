@@ -619,6 +619,8 @@ auto CheckUnit::FinishRun() -> void {
     context_.inst_blocks().ReplacePlaceholder(reserved_id, block);
   }
 
+  emitter_.Flush();
+
   context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
 
   // Verify that Context cleanly finished.
