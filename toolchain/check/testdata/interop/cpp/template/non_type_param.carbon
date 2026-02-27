@@ -121,7 +121,7 @@ import Cpp library "templates.h";
 var x: Cpp.TwoNonType(1, 2);
 //@dump-sem-ir-end
 
-// --- fail_todo_dependent.carbon
+// --- dependent.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -180,7 +180,7 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_dependent.carbon
+// CHECK:STDOUT: --- dependent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
