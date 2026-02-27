@@ -118,8 +118,8 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
 
 // Converts `expr_id` to a value expression of type `type_id`.
 auto ConvertToValueOfType(Context& context, SemIR::LocId loc_id,
-                          SemIR::InstId expr_id, SemIR::TypeId type_id)
-    -> SemIR::InstId;
+                          SemIR::InstId expr_id, SemIR::TypeId type_id,
+                          bool diagnose = true) -> SemIR::InstId;
 
 // Convert the given expression to a value or reference expression of the given
 // type.

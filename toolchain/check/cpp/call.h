@@ -10,6 +10,16 @@
 
 namespace Carbon::Check {
 
+// Converts a call argument list into a Clang template argument list for a given
+// template. Returns true on success, or false if an error was diagnosed.
+//
+// If `diagnose` is false, errors will be suppressed.
+auto ConvertArgsToTemplateArgs(Context& context,
+                               clang::TemplateDecl* template_decl,
+                               llvm::ArrayRef<SemIR::InstId> arg_ids,
+                               clang::TemplateArgumentListInfo& arg_list,
+                               bool diagnose = true) -> bool;
+
 // Checks and builds SemIR for a call to a C++ function in the given overload
 // set with self `self_id` and arguments `arg_ids`. `is_operator_syntax`
 // indicates that this call was generated from an operator rather than from
