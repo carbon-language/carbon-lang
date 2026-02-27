@@ -639,8 +639,8 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   PushBlockId(scope_id, fn.call_params_id);
 }
 
-auto InstNamer::PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope)
-    -> void {
+auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
+                           Scope& scope) -> void {
   const auto& observe = sem_ir_->observes().Get(observe_id);
   LocId observe_loc(observe.decl_id);
 
@@ -650,9 +650,6 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope)
       globals_.AllocateName(*this, observe_loc,
                             llvm::formatv("{0}{1}observe", scope_prefix,
                                           scope_prefix.empty() ? "" : "."));
-
-  auto decl = sem_ir_->insts().GetAs<SemIR::ObserveDecl>(observe.decl_id);
-  AddBlockLabel(scope_id, decl.operations_id, "observe", observe_loc);
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
@@ -1312,8 +1309,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(ObserveDecl inst): {
       AddEntityNameAndMaybePush(inst.observe_id, ".decl");
-      auto observe_scope_id = inst_namer_->GetScopeFor(inst.observe_id);
-      PushBlockId(observe_scope_id, inst.operations_id);
       return;
     }
     case ObserveEquivalent::Kind: {

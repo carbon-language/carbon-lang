@@ -1702,7 +1702,7 @@ struct ObserveEquivalent {
   static constexpr auto Kind =
       InstKind::ObserveEquivalent.Define<Parse::ObserveEqualEqualId>(
           {.ir_name = "observe_equivalent",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1714,7 +1714,7 @@ struct ObserveImpls {
   static constexpr auto Kind =
       InstKind::ObserveImpls.Define<Parse::ObserveImplsId>(
           {.ir_name = "observe_impls",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1727,12 +1727,11 @@ struct ObserveDecl {
   static constexpr auto Kind =
       InstKind::ObserveDecl.Define<Parse::ObserveDeclId>(
           {.ir_name = "observe_decl",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // No type since not an expression
   ObserveId observe_id;
-  InstBlockId operations_id;
 };
 
 struct Return {

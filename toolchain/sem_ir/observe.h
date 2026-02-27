@@ -20,6 +20,9 @@ namespace Carbon::SemIR {
 struct Observe : Printable<Observe> {
   // The location of the `observe` declaration.
   InstId decl_id;
+  // The block which contains the `ObserveEquivalent` and `ObserveImpls`
+  // operators.
+  InstBlockId operations_id;
   // The interface which contains the `observe` declaration.
   NameScopeId parent_scope_id;
   // The function which contains the `observe` declaration.
@@ -31,7 +34,8 @@ struct Observe : Printable<Observe> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << '{';
-    out << "decl_id: " << decl_id << ", parent_scope: " << parent_scope_id;
+    out << "operations_id: " << operations_id << "decl_id: " << decl_id
+        << ", parent_scope: " << parent_scope_id;
     out << '}';
   }
 };

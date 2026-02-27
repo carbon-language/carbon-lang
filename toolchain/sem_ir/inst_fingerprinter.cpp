@@ -481,8 +481,12 @@ struct Worklist {
   auto Add(ObserveId observe_id) -> void {
     CARBON_CHECK(observe_id.has_value());
     const auto& observe = sem_ir->observes().Get(observe_id);
-    Add(observe.parent_scope_id);
-    Add(sem_ir->constant_values().Get(observe.parent_scope_inst_id));
+    Add(observe.operations_id);
+    if (observe.IsInFunction()) {
+      Add(sem_ir->constant_values().Get(observe.parent_scope_inst_id));
+    } else {
+      Add(observe.parent_scope_id);
+    }
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {
