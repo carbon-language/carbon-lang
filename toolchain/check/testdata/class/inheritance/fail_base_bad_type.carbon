@@ -136,7 +136,7 @@ class DeriveFromIncomplete {
   // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:16: error: base `Incomplete` is an incomplete type [IncompleteTypeInBaseDecl]
   // CHECK:STDERR:   extend base: Incomplete;
   // CHECK:STDERR:                ^~~~~~~~~~
-  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE-6]]:1: note: class is not defined [ClassIncomplete]
   // CHECK:STDERR: base class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

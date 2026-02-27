@@ -22,7 +22,7 @@ fn F() {
   // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE+10]]:3: error: facet type `Z` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   AsZ(());
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-9]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-9]]:1: note: constraint is not defined [NamedConstraintIncomplete]
   // CHECK:STDERR: constraint Z;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_lookup_incomplete.carbon:[[@LINE-10]]:15: note: initializing generic parameter `T` declared here [InitializingGenericParam]

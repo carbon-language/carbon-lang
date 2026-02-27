@@ -248,7 +248,7 @@ fn F() {
    // CHECK:STDERR:    Cpp.C.C();
    // CHECK:STDERR:    ^~~~~~~
    // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+   // CHECK:STDERR: ./incomplete.h:2:7: note: class is not defined [ClassIncomplete]
    // CHECK:STDERR: class C;
    // CHECK:STDERR:       ^
    // CHECK:STDERR:

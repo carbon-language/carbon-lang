@@ -24,7 +24,7 @@ fn F(T:! N) {
   // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+11]]:3: error: facet type of value `T` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
   // CHECK:STDERR:   T as Z;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE-9]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE-9]]:1: note: constraint is not defined [NamedConstraintIncomplete]
   // CHECK:STDERR: constraint N;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -55,7 +55,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+11]]:3: error: facet type `N` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE-17]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE-17]]:1: note: constraint is not defined [NamedConstraintIncomplete]
   // CHECK:STDERR: constraint N;
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -28,14 +28,14 @@ class A(T:! type) {
 // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
 // CHECK:STDERR:   var v: T;
 // CHECK:STDERR:          ^
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-12]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
 // CHECK:STDERR: fn F(unused x: A(B)) {}
 // CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-19]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-19]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -76,7 +76,7 @@ fn F(T:! type) {
 // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-6]]:3: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
 // CHECK:STDERR:   *v;
 // CHECK:STDERR:   ^~
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-13]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-13]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:

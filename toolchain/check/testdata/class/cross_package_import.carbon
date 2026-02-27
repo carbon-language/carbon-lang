@@ -56,7 +56,7 @@ import Other library "other_extern";
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: other_extern.carbon:4:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

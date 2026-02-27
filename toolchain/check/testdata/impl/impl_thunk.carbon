@@ -253,7 +253,7 @@ interface I(T:! type) {
   fn F(a: T);
 }
 
-// CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+3]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+3]]:1: note: class is not defined [ClassIncomplete]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 class B;
