@@ -109,10 +109,6 @@ static int i = 123;
 Struct<&i> MakeStruct() { return Struct<&i>(); }
 ''';
 
-// CHECK:STDERR: pointer.carbon:[[@LINE+4]]:21: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
-// CHECK:STDERR:                     ^~~~~~
-// CHECK:STDERR:
 let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
 
 // --- valid.carbon
@@ -133,10 +129,6 @@ import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
 var x: Cpp.DependentNonType(i32, 123) = Cpp.MakeDependentNonType123();
-// CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:35: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt);
-// CHECK:STDERR:                                   ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt);
 //@dump-sem-ir-end
 
@@ -197,13 +189,15 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %DependentNonType: type = class_type @DependentNonType [concrete]
-// CHECK:STDOUT:   %pattern_type.b95: type = pattern_type %DependentNonType [concrete]
+// CHECK:STDOUT:   %DependentNonType.794fcf.1: type = class_type @DependentNonType.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.b95a71.1: type = pattern_type %DependentNonType.794fcf.1 [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.type: type = cpp_overload_set_type @MakeDependentNonType123.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.value: %MakeDependentNonType123.cpp_overload_set.type = cpp_overload_set_value @MakeDependentNonType123.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.5b4: type = ptr_type %DependentNonType [concrete]
+// CHECK:STDOUT:   %ptr.5b4: type = ptr_type %DependentNonType.794fcf.1 [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.type: type = fn_type @MakeDependentNonType123__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DependentNonType.794fcf.2: type = class_type @DependentNonType.2 [concrete]
+// CHECK:STDOUT:   %pattern_type.b95a71.2: type = pattern_type %DependentNonType.794fcf.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -227,27 +221,27 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.b95 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.b95 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.b95a71.1 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.b95a71.1 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %DependentNonType = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %DependentNonType = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x.var: ref %DependentNonType.794fcf.1 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %DependentNonType.794fcf.1 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: <error> = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: <error> = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.b95a71.2 = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.b95a71.2 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref <error> = var %y.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %y: ref <error> = ref_binding y, <error> [concrete = <error>]
+// CHECK:STDOUT:   %y.var: ref %DependentNonType.794fcf.2 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %y: ref %DependentNonType.794fcf.2 = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MakeDependentNonType123.ref: %MakeDependentNonType123.cpp_overload_set.type = name_ref MakeDependentNonType123, imports.%MakeDependentNonType123.cpp_overload_set.value [concrete = constants.%MakeDependentNonType123.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType.794fcf.1 = splice_block file.%x.var [concrete = file.%x.var] {}
 // CHECK:STDOUT:   %addr: %ptr.5b4 = addr_of %.loc7_1
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeDependentNonType123__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc7_69: init %DependentNonType to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
+// CHECK:STDOUT:   %.loc7_69: init %DependentNonType.794fcf.1 to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_69
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
