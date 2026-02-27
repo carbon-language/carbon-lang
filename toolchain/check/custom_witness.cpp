@@ -118,9 +118,6 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterfaceId query_specific_interface_id,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId {
-  CARBON_DCHECK(llvm::all_of(values, [](const SemIR::InstId id) {
-    return id != SemIR::InstId::None && id != SemIR::ErrorInst::InstId;
-  }));
   const auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
   const auto& interface =
@@ -143,6 +140,9 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
+    CARBON_DCHECK(value_id != SemIR::InstId::None);
+    CARBON_DCHECK(value_id != SemIR::ErrorInst::InstId);
+
     LoadImportRef(context, assoc_entity_id);
 
     // Build a witness with the current contents of the witness table. This will
