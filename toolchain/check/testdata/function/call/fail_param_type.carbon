@@ -12,18 +12,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/fail_param_type.carbon
 
-fn G(a: i32) {}
+fn G(unused a: i32) {}
 
 fn F() {
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+7]]:5: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+7]]:5: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:6: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn G(a: i32) {}
-  // CHECK:STDERR:      ^~~~~~
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:13: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn G(unused a: i32) {}
+  // CHECK:STDERR:             ^~~~~~
   // CHECK:STDERR:
   G(1.0);
 }
@@ -69,10 +69,7 @@ fn F() {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}

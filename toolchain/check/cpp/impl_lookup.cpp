@@ -102,7 +102,8 @@ static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
                                       AssociatedFunction associated_function,
                                       clang::CXXRecordDecl* class_decl)
     -> SemIR::InstId {
-  // TODO: Handle other interfaces
+  // TODO: This should provide `Destroy` for enums and other trivially
+  // destructible types.
   auto decl_info = GetDeclForCoreInterface(context.clang_sema(),
                                            associated_function, class_decl);
   if (!decl_info.decl) {

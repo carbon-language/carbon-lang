@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 interface I {}
 interface J {}
 
-fn F1[T:! I & J](t: T) {}
-fn F2[T:! I & I](t: T) {}
+fn F1[T:! I & J](unused t: T) {}
+fn F2[T:! I & I](unused t: T) {}
 
 // --- fail_bit_and_non_facet_types.carbon
 library "[[@TEST_NAME]]";
@@ -27,31 +27,31 @@ class J {}
 class K {}
 
 // CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F1[T:! I & J](t: T) {}
+// CHECK:STDERR: fn F1[T:! I & J](unused t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
-fn F1[T:! I & J](t: T) {}
+fn F1[T:! I & J](unused t: T) {}
 // CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F2[T:! J & I](t: T) {}
+// CHECK:STDERR: fn F2[T:! J & I](unused t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
-fn F2[T:! J & I](t: T) {}
+fn F2[T:! J & I](unused t: T) {}
 // CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+8]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](t: T) {}
+// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](t: T) {}
+// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
-fn F3[T:! J & K](t: T) {}
+fn F3[T:! J & K](unused t: T) {}
 
 // --- bit_and_values_with_impl.carbon
 library "[[@TEST_NAME]]";
 
 class J { adapt {}; }
 impl J as Core.BitAndWith(J) where .Result = J {
-  fn Op[self: Self](other: Self) -> Self { return {} as J; }
+  fn Op[unused self: Self](unused other: Self) -> Self { return {} as J; }
 }
 
 fn F() {

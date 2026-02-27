@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 fn Run() {
-  var a: Cycle*;
+  var unused a: Cycle*;
 }
 
 // CHECK:STDOUT: --- a.carbon
@@ -134,5 +134,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:

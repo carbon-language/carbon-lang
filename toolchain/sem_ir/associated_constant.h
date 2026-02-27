@@ -23,7 +23,7 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{"
         << "name: " << name_id << ", parent_scope: " << parent_scope_id
-        << ", decl_id: " << decl_id << ", generic_id: " << generic_id
+        << ", decl_id: " << decl_id
         << ", default_value_id: " << default_value_id << "}";
   }
 
@@ -38,12 +38,6 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
 
   // The declaration of this associated constant.
   InstId decl_id;
-
-  // The following fields are set at the `=` or `;`.
-
-  // Information about the generic. An associated constant is always
-  // parameterized by `Self`, so this is always present.
-  GenericId generic_id;
 
   // The following fields are set at the `;`.
 

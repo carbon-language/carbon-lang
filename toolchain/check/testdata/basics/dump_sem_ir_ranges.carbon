@@ -20,7 +20,7 @@
 library "[[@TEST_NAME]]";
 
 fn A() {
-  var a: ();
+  var unused a: ();
 }
 
 fn B() -> () {
@@ -107,14 +107,11 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
+// CHECK:STDOUT:   %.842: Core.Form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,7 +121,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc17_12.2: type = converted %.loc17_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc17_12.3: form = init_form %.loc17_12.2, call_param0 [concrete = constants.%.62c]
+// CHECK:STDOUT:     %.loc17_12.3: Core.Form = init_form %.loc17_12.2, call_param0 [concrete = constants.%.842]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -175,9 +172,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %C.I: %C.I.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
@@ -222,9 +216,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
@@ -251,7 +242,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- file_without_ranges.carbon
 // CHECK:STDOUT:

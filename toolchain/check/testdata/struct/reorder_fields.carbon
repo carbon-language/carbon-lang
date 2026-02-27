@@ -29,7 +29,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [concrete]
 // CHECK:STDOUT:   %MakeI32: %MakeI32.type = struct_value () [concrete]
@@ -37,26 +37,26 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %.08f: form = init_form %f64.d77, call_param0 [concrete]
+// CHECK:STDOUT:   %.833: Core.Form = init_form %f64.d77, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %MakeF64.type: type = fn_type @MakeF64 [concrete]
 // CHECK:STDOUT:   %MakeF64: %MakeF64.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %f64.d77} [concrete]
-// CHECK:STDOUT:   %.fd1: form = init_form %struct_type.a.b, call_param0 [concrete]
+// CHECK:STDOUT:   %.45a: Core.Form = init_form %struct_type.a.b, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.a5c: type = pattern_type %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: %f64.d77, .a: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.b43: type = pattern_type %struct_type.b.a [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.9b9: %Int.as.Copy.impl.Op.type.824 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.f17: <witness> = impl_witness imports.%Copy.impl_witness_table.e76, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.546: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.664: %Int.as.Copy.impl.Op.type.546 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.de4: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
-// CHECK:STDOUT:   %.f79: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.de4 [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.081: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.de4) [concrete]
+// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet.de4 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.2fe: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.240: %Float.as.Copy.impl.Op.type.2fe = struct_value () [symbolic]
@@ -64,7 +64,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.07e: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.f05: %Float.as.Copy.impl.Op.type.07e = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.cba: %Copy.type = facet_value %f64.d77, (%Copy.impl_witness.1e3) [concrete]
-// CHECK:STDOUT:   %.c41: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.cba [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.fb6: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.cba) [concrete]
+// CHECK:STDOUT:   %.59b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.fb6, %Copy.facet.cba [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.f05, @Float.as.Copy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,9 +98,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15: form = init_form %i32, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -107,9 +107,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:     %.loc16: form = init_form %f64, call_param0 [concrete = constants.%.08f]
+// CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %f64, call_param0 [concrete = constants.%.833]
 // CHECK:STDOUT:     %return.param: ref %f64.d77 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %f64.d77 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -117,12 +116,10 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: %pattern_type.a5c = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a5c = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_64.loc18: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64.loc18: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %f64.loc18: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: %f64.d77} [concrete = constants.%struct_type.a.b]
-// CHECK:STDOUT:     %.loc18: form = init_form %struct_type.a.b.loc18, call_param0 [concrete = constants.%.fd1]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %struct_type.a.b.loc18, call_param0 [concrete = constants.%.45a]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.b = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -143,10 +140,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %MakeI32.call: init %i32 = call %MakeI32.ref()
 // CHECK:STDOUT:   %.loc19_62.1: %struct_type.b.a = struct_literal (%MakeF64.call, %MakeI32.call)
 // CHECK:STDOUT:   %.loc19_27: type = splice_block %struct_type.a.b.loc19 [concrete = constants.%struct_type.a.b] {
-// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_64.loc19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64.loc19: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %f64.loc19: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %struct_type.a.b.loc19: type = struct_type {.a: %i32, .b: %f64.d77} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_62.2: %i32 = value_of_initializer %MakeI32.call
@@ -161,10 +156,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
 // CHECK:STDOUT:   %.loc20_27: type = splice_block %struct_type.b.a [concrete = constants.%struct_type.b.a] {
-// CHECK:STDOUT:     %int_64.loc20: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64.loc20: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %f64.loc20: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: %f64.d77, .a: %i32} [concrete = constants.%struct_type.b.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_31.1: %f64.d77 = struct_access %x.ref, element1
@@ -174,7 +167,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %y: %struct_type.b.a = value_binding y, %.loc20_31.3
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
-// CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc21_10.1: <bound method> = bound_method %.loc21_10.1, %impl.elem0.loc21_10.1
 // CHECK:STDOUT:   %specific_fn.loc21_10.1: <specific function> = specific_function %impl.elem0.loc21_10.1, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21_10.1, %specific_fn.loc21_10.1
@@ -182,7 +175,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc21_10.2: ref %i32 = struct_access %return.param, element1
 // CHECK:STDOUT:   %.loc21_10.3: init %i32 to %.loc21_10.2 = in_place_init %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc21_10.4: %f64.d77 = struct_access %y.ref, element0
-// CHECK:STDOUT:   %impl.elem0.loc21_10.2: %.c41 = impl_witness_access constants.%Copy.impl_witness.1e3, element0 [concrete = constants.%Float.as.Copy.impl.Op.f05]
+// CHECK:STDOUT:   %impl.elem0.loc21_10.2: %.59b = impl_witness_access constants.%Copy.impl_witness.1e3, element0 [concrete = constants.%Float.as.Copy.impl.Op.f05]
 // CHECK:STDOUT:   %bound_method.loc21_10.3: <bound method> = bound_method %.loc21_10.4, %impl.elem0.loc21_10.2
 // CHECK:STDOUT:   %specific_fn.loc21_10.2: <specific function> = specific_function %impl.elem0.loc21_10.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_10.4: <bound method> = bound_method %.loc21_10.4, %specific_fn.loc21_10.2

@@ -65,8 +65,8 @@ struct AnyAggregateValue {
 // Common representation for various `*binding_pattern` nodes.
 struct AnyBindingPattern {
   // TODO: Also handle TemplateBindingPattern once it exists.
-  using CategoryInfo = CategoryOf<RefBindingPattern, SymbolicBindingPattern,
-                                  ValueBindingPattern>;
+  using CategoryInfo = CategoryOf<FormBindingPattern, RefBindingPattern,
+                                  SymbolicBindingPattern, ValueBindingPattern>;
 
   InstKind kind;
 
@@ -83,8 +83,8 @@ struct AnyBindingPattern {
 // Common representation for various `bind*` nodes.
 struct AnyBinding {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo =
-      CategoryOf<AliasBinding, RefBinding, SymbolicBinding, ValueBinding>;
+  using CategoryInfo = CategoryOf<AliasBinding, FormBinding, RefBinding,
+                                  SymbolicBinding, ValueBinding>;
 
   InstKind kind;
   TypeId type_id;
@@ -98,8 +98,8 @@ struct AnyBinding {
 // Common representation for various `bind*` nodes, and `export name`.
 struct AnyBindingOrExportDecl {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo = CategoryOf<AliasBinding, RefBinding, SymbolicBinding,
-                                  ValueBinding, ExportDecl>;
+  using CategoryInfo = CategoryOf<AliasBinding, FormBinding, RefBinding,
+                                  SymbolicBinding, ValueBinding, ExportDecl>;
 
   InstKind kind;
   TypeId type_id;
@@ -159,8 +159,9 @@ struct AnyParam {
 // A pattern that represents a `Call` parameter. It delegates to subpattern_id
 // in pattern matching.
 struct AnyParamPattern {
-  using CategoryInfo = CategoryOf<OutParamPattern, RefParamPattern,
-                                  ValueParamPattern, VarParamPattern>;
+  using CategoryInfo =
+      CategoryOf<FormParamPattern, OutParamPattern, RefParamPattern,
+                 ValueParamPattern, VarParamPattern>;
 
   InstKind kind;
 
@@ -169,6 +170,21 @@ struct AnyParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// An inst that represents a primitive form.
+struct AnyPrimitiveForm {
+  using CategoryInfo = CategoryOf<InitForm, RefForm, ValueForm>;
+
+  InstKind kind;
+
+  // Always FormType.
+  TypeId type_id;
+
+  // The type component of the form.
+  TypeInstId type_component_id;
+
+  AnyRawId arg1;
 };
 
 // A type qualifier that wraps another type and has the same object

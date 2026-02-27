@@ -126,7 +126,8 @@ auto FileContext::LowerDefinitions() -> void {
           const_id.is_constant()) {
         llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
       } else {
-        llvm_var = BuildGlobalVariableDecl(*var);
+        // We should never be emitting a definition for a C++ global variable.
+        llvm_var = BuildNonCppGlobalVariableDecl(*var);
       }
 
       // Convert the declaration of this variable into a definition by adding an
@@ -199,6 +200,7 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
     case SemIR::ExprCategory::Pattern:
     case SemIR::ExprCategory::Mixed:
     case SemIR::ExprCategory::RefTagged:
+    case SemIR::ExprCategory::Dependent:
       CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
                    sem_ir().insts().Get(const_inst_id));
   };
@@ -634,6 +636,70 @@ auto FileContext::HandleReferencedSpecificFunction(
   coalescer_.CreateTypeFingerprint(specific_id, llvm_type);
 }
 
+auto FileContext::GetOrCreateLLVMFunction(
+    const FunctionTypeInfo& function_type_info, SemIR::FunctionId function_id,
+    SemIR::SpecificId specific_id) -> llvm::Function* {
+  // If this is a C++ function, tell Clang that we referenced it.
+  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
+      clang_decl_id.has_value()) {
+    CARBON_CHECK(!specific_id.has_value(),
+                 "Specific functions cannot have C++ definitions");
+    return HandleReferencedCppFunction(
+        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
+  }
+
+  Mangler m(*this);
+  std::string mangled_name = m.Mangle(function_id, specific_id);
+  if (auto* existing = llvm_module().getFunction(mangled_name)) {
+    // We might have already lowered this function while lowering a different
+    // file. That's OK.
+    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // produced by declarations of the same Carbon function. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will
+    // always be able to see this problem. In theory, name collisions could
+    // also occur due to fingerprint collision.
+    return existing;
+  }
+
+  // If this is a specific function, we may need to do additional work to
+  // emit its definition.
+  if (specific_id.has_value()) {
+    HandleReferencedSpecificFunction(function_id, specific_id,
+                                     function_type_info.type);
+  }
+
+  // TODO: For an imported inline function, consider generating an
+  // `available_externally` definition.
+  auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
+                                         : llvm::Function::ExternalLinkage;
+  if (function_id == sem_ir().global_ctor_id()) {
+    // The global constructor name would collide with global constructors for
+    // other files in the same package, so use an internal linkage symbol.
+    linkage = llvm::Function::InternalLinkage;
+  }
+
+  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
+                                               mangled_name, llvm_module());
+  CARBON_CHECK(llvm_function->getName() == mangled_name,
+               "Mangled name collision: {0}", mangled_name);
+
+  // Set up parameters and the return slot.
+  for (auto [inst_id, arg] :
+       llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
+                       llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(
+        SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
+  }
+  if (function_type_info.sret_type != nullptr) {
+    auto& return_arg = *llvm_function->args().begin();
+    return_arg.addAttr(llvm::Attribute::getWithStructRetType(
+        llvm_context(), function_type_info.sret_type));
+  }
+
+  return llvm_function;
+}
+
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id)
     -> std::optional<FunctionInfo> {
@@ -663,72 +729,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info =
       FunctionTypeInfoBuilder(this, specific_id).Build(function);
-
-  // TODO: For an imported inline function, consider generating an
-  // `available_externally` definition.
-  auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
-                                         : llvm::Function::ExternalLinkage;
-  if (function_id == sem_ir().global_ctor_id()) {
-    // The global constructor name would collide with global constructors for
-    // other files in the same package, so use an internal linkage symbol.
-    linkage = llvm::Function::InternalLinkage;
-  }
-
-  Mangler m(*this);
-  std::string mangled_name = m.Mangle(function_id, specific_id);
-  if (auto* existing = llvm_module().getFunction(mangled_name)) {
-    // We might have already lowered this function while lowering a different
-    // file. That's OK.
-    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
-    // produced by declarations of the same Carbon function. Name collisions
-    // between non-private members of the same library should have been
-    // diagnosed by check if detected, but it's not clear that check will always
-    // be able to see this problem. In theory, name collisions could also occur
-    // due to fingerprint collision.
-    return {{.type = function_type_info.type,
-             .di_type = function_type_info.di_type,
-             .lowered_param_pattern_ids =
-                 std::move(function_type_info.lowered_param_pattern_ids),
-             .unused_param_pattern_ids =
-                 std::move(function_type_info.unused_param_pattern_ids),
-             .llvm_function = existing}};
-  }
-
-  llvm::Function* llvm_function;
-  // If this is a C++ function, tell Clang that we referenced it.
-  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-      clang_decl_id.has_value()) {
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Specific functions cannot have C++ definitions");
-    llvm_function = HandleReferencedCppFunction(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
-  } else {
-    // If this is a specific function, we may need to do additional work to emit
-    // its definition.
-    if (specific_id.has_value()) {
-      HandleReferencedSpecificFunction(function_id, specific_id,
-                                       function_type_info.type);
-    }
-
-    llvm_function = llvm::Function::Create(function_type_info.type, linkage,
-                                           mangled_name, llvm_module());
-
-    CARBON_CHECK(llvm_function->getName() == mangled_name,
-                 "Mangled name collision: {0}", mangled_name);
-
-    // Set up parameters and the return slot.
-    for (auto [inst_id, arg] :
-         llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
-                         llvm_function->args())) {
-      arg.setName(sem_ir().names().GetIRBaseName(
-          SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
-    }
-    if (function_type_info.sret_type != nullptr) {
-      auto& return_arg = *llvm_function->args().begin();
-      return_arg.addAttr(llvm::Attribute::getWithStructRetType(
-          llvm_context(), function_type_info.sret_type));
-    }
-  }
+  auto* llvm_function =
+      GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,
@@ -1168,6 +1170,26 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> LoweredTypes {
 }
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+    -> llvm::Constant* {
+  auto var_name_id =
+      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
+  if (auto cpp_global_var_id =
+          sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
+      cpp_global_var_id.has_value()) {
+    SemIR::ClangDeclId clang_decl_id =
+        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
+    CARBON_CHECK(clang_decl_id.has_value(),
+                 "CppGlobalVar should have a clang_decl_id");
+    return cpp_code_generator_->GetAddrOfGlobal(
+        cast<clang::VarDecl>(
+            sem_ir().clang_decls().Get(clang_decl_id).key.decl),
+        /*isForDefinition=*/false);
+  }
+
+  return BuildNonCppGlobalVariableDecl(var_storage);
+}
+
+auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
   Mangler m(*this);
   auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);

@@ -180,6 +180,8 @@ class Context {
 
   auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
+  auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
+
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
@@ -254,15 +256,19 @@ class Context {
   }
 
   // Data about a form expression.
+  //
+  // TODO: consider moving this out of Context.
   struct FormExpr {
+    static const FormExpr Error;
+
     // The inst ID of the form expression itself. This is always a form inst,
     // such as InitForm or RefForm.
     // TODO: Consider creating an AnyForm inst category to refer to those insts.
     SemIR::InstId form_inst_id;
     // The inst ID of the form expression's type component.
-    SemIR::TypeInstId type_component_id;
+    SemIR::TypeInstId type_component_inst_id;
     // The type ID corresponding to type_component_id.
-    SemIR::TypeId type_id;
+    SemIR::TypeId type_component_id;
   };
 
   // Pushes form_expr onto the stack of return form declarations for in-progress
@@ -476,6 +482,14 @@ class Context {
   // This becomes `InstBlockId::Imports`.
   llvm::SmallVector<SemIR::InstId> imports_;
 
+  // Entities which are generated internally to the toolchain, to represent
+  // builtin concepts which should be dumped as part of `SemIR`. For example,
+  // when doing destruction, the `Destroy.Op` function is generated, and will be
+  // found here.
+  //
+  // This becomes `InstBlockId::Generated`.
+  llvm::SmallVector<SemIR::InstId> generated_;
+
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
@@ -521,6 +535,11 @@ class Context {
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;
 };
+
+inline constexpr Context::FormExpr Context::FormExpr::Error = {
+    .form_inst_id = SemIR::ErrorInst::InstId,
+    .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+    .type_component_id = SemIR::ErrorInst::TypeId};
 
 }  // namespace Carbon::Check
 

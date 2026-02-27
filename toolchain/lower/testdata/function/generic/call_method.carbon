@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_method.carbon
 
 class C {
-  fn F[self: Self, T:! Core.Copy](x: T) -> T {
+  fn F[unused self: Self, T:! Core.Copy](x: T) -> T {
     return x;
   }
 }

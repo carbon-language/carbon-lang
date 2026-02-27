@@ -47,7 +47,7 @@ interface I(T:! .Self) {
   // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `.Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn G() -> T;
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:13: note: type `.Self` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:13: note: type `.Self` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   fn G() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -103,7 +103,7 @@ interface J(T:! type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self)](T: U*) {}
+fn F2[U:! I(.Self)](unused T: U*) {}
 
 fn F(U:! I(.Self)) {
   // Caller sees the returned `.Self` type from `F()` as the full `U`.
@@ -139,7 +139,7 @@ interface J(T:! type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self) & J(.Self)](T: U*) {}
+fn F2[U:! I(.Self) & J(.Self)](unused T: U*) {}
 
 fn F(U:! I(.Self) & J(.Self)) {
   // TODO: The returned value of `I1` and `J1` has type `U` which has access to
@@ -185,7 +185,7 @@ fn G(U:! I(.Self) where .Self impls J(.Self)) {
   // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let u: U = U.I1();
   // CHECK:STDERR:              ^~~~~~
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let u: U = U.I1();
   // CHECK:STDERR:              ^~~~~~
   // CHECK:STDERR:
@@ -218,14 +218,14 @@ interface I(T:! type) {
 }
 
 fn F(U:! I(.Self)) {
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let a: U = U.G();
+  let unused a: U = U.G();
 }
 
 // --- fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon
@@ -237,14 +237,14 @@ interface I {
 }
 
 fn F(U:! I where .X = .Self) {
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let a: U = U.G();
+  let unused a: U = U.G();
 }
 
 // --- fail_todo_nested_period_self.carbon
@@ -261,23 +261,23 @@ interface I(T:! type) {
 // constraining the binding.
 fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {}, U:! T.A) {
   // T.G() has type T.
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
-  // CHECK:STDERR:   let t: T = T.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let t: T = T.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
+  // CHECK:STDERR:   let unused t: T = T.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let unused t: T = T.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let t: T = T.G();
+  let unused t: T = T.G();
     // U.G() has type T.
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
-  // CHECK:STDERR:   let u: T = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let u: T = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
+  // CHECK:STDERR:   let unused u: T = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let unused u: T = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let u: T = U.G();
+  let unused u: T = U.G();
 
   // Shows both `I(.Self)` are `I(T)`.
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(I(T).A)` [FacetTypeConstraintCycle]
@@ -302,7 +302,7 @@ interface I(T:! type) {
 // TODO: This should be an error: The third `.Self` becomes is not able to be
 // bound to anything unambiguous here, as it could refer to `T` or to something
 // later being constrained by `T.A`.
-fn F(T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
+fn F(unused T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
 
 // --- period_self_parameter_sees_lhs_of_where_expr.carbon
@@ -311,7 +311,7 @@ library "[[@TEST_NAME]]";
 interface I(T:! Core.Destroy) {}
 
 // The `.Self` can see the LHS of the `where` to know `U` impls Core.Destroy.
-fn F(U:! Core.Destroy where .Self impls I(.Self)) {}
+fn F(unused U:! Core.Destroy where .Self impls I(.Self)) {}
 
 // --- fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon
 library "[[@TEST_NAME]]";
@@ -321,14 +321,14 @@ interface I(T:! Core.Destroy) {}
 // TODO: Implied constraints that `.Self` impls `Core.Destroy` are satisfied by
 // the `&` expression.
 //
-// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:25: error: cannot convert type `.Self` that implements `type` into type implementing `Core.Destroy` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(U:! Core.Destroy & I(.Self)) {}
-// CHECK:STDERR:                         ^~~~~~~~
+// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:32: error: cannot convert type `.Self` that implements `type` into type implementing `Core.Destroy` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(unused U:! Core.Destroy & I(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~
 // CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface I(T:! Core.Destroy) {}
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-fn F(U:! Core.Destroy & I(.Self)) {}
+fn F(unused U:! Core.Destroy & I(.Self)) {}
 
 // --- fail_todo_compound_lookup_on_returned_period_self_parameter.carbon
 library "[[@TEST_NAME]]";
@@ -362,13 +362,13 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %I.type.1ab: type = facet_type <@I, @I(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.fdb: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.76c: type = assoc_entity_type @I, @I(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.963: %I.assoc_type.76c = assoc_entity element0, @I.%I1 [symbolic]
+// CHECK:STDOUT:   %assoc0.99e: %I.assoc_type.76c = assoc_entity element0, @I.WithSelf.%I1 [symbolic]
 // CHECK:STDOUT:   %.Self.binding.as_type.8db: type = symbolic_binding_type .Self, %.Self.c39 [symbolic_self]
 // CHECK:STDOUT:   %I.type.bee: type = facet_type <@I, @I(%.Self.binding.as_type.8db)> [symbolic_self]
 // CHECK:STDOUT:   %.Self.dad: %I.type.bee = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Self.fa8: %I.type.bee = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.c03: type = assoc_entity_type @I, @I(%.Self.binding.as_type.8db) [symbolic_self]
-// CHECK:STDOUT:   %assoc0.2f7: %I.assoc_type.c03 = assoc_entity element0, @I.%I1 [symbolic_self]
+// CHECK:STDOUT:   %assoc0.fe4: %I.assoc_type.c03 = assoc_entity element0, @I.WithSelf.%I1 [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type.b0b: type = symbolic_binding_type .Self, %.Self.dad [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.3fc: <witness> = lookup_impl_witness %.Self.dad, @I, @I(%.Self.binding.as_type.8db) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness.3fc, element0 [symbolic_self]
@@ -379,7 +379,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.706 [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness.94d: <witness> = lookup_impl_witness %T.706, @I, @I(%.Self.binding.as_type.8db) [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type.bee = facet_value %T.binding.as_type, (%I.lookup_impl_witness.94d) [symbolic]
-// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
+// CHECK:STDOUT:   %.842: Core.Form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -387,14 +387,14 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %I.decl: %I.type.609 = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -405,10 +405,10 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc8_6.2 [symbolic = %T.loc8_6.1 (constants.%T.706)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc8_39.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc8_39.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db) [symbolic_self = constants.%assoc0.2f7]
-// CHECK:STDOUT:     %I1.ref.loc8_39: %I.assoc_type.c03 = name_ref I1, %.loc8_39.2 [symbolic_self = constants.%assoc0.2f7]
+// CHECK:STDOUT:     %.loc8_39.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:     %I1.ref.loc8_39: %I.assoc_type.c03 = name_ref I1, %.loc8_39.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %impl.elem0.loc8_39: type = impl_witness_access constants.%I.lookup_impl_witness.94d, element0 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc8_39.3: form = init_form %impl.elem0.loc8_39, call_param0 [concrete = constants.%.62c]
+// CHECK:STDOUT:     %.loc8_39.3: Core.Form = init_form %impl.elem0.loc8_39, call_param0 [concrete = constants.%.842]
 // CHECK:STDOUT:     %.loc8_19.1: type = splice_block %.loc8_19.2 [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -420,8 +420,8 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.ref.loc8_25: %I.type.bee = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.dad]
 // CHECK:STDOUT:       %.Self.as_type.loc8_25: type = facet_access_type %.Self.ref.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.b0b]
 // CHECK:STDOUT:       %.loc8_25.1: type = converted %.Self.ref.loc8_25, %.Self.as_type.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.b0b]
-// CHECK:STDOUT:       %.loc8_25.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db) [symbolic_self = constants.%assoc0.2f7]
-// CHECK:STDOUT:       %I1.ref.loc8_25: %I.assoc_type.c03 = name_ref I1, %.loc8_25.2 [symbolic_self = constants.%assoc0.2f7]
+// CHECK:STDOUT:       %.loc8_25.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:       %I1.ref.loc8_25: %I.assoc_type.c03 = name_ref I1, %.loc8_25.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %impl.elem0.loc8_25: type = impl_witness_access constants.%I.lookup_impl_witness.3fc, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc8_32.2: type = converted %.loc8_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -442,14 +442,15 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc12_6.2 [symbolic = %T.loc12_6.1 (constants.%T.706)]
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc12_47.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc12_47.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db) [symbolic_self = constants.%assoc0.2f7]
-// CHECK:STDOUT:     %I1.ref.loc12_47: %I.assoc_type.c03 = name_ref I1, %.loc12_47.2 [symbolic_self = constants.%assoc0.2f7]
+// CHECK:STDOUT:     %.loc12_47.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:     %I1.ref.loc12_47: %I.assoc_type.c03 = name_ref I1, %.loc12_47.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:     %impl.elem0.loc12_47: type = impl_witness_access constants.%I.lookup_impl_witness.94d, element0 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc12_47.3: form = init_form %impl.elem0.loc12_47, call_param0 [concrete = constants.%.62c]
+// CHECK:STDOUT:     %.loc12_47.3: Core.Form = init_form %impl.elem0.loc12_47, call_param0 [concrete = constants.%.842]
 // CHECK:STDOUT:     %.loc12_27.1: type = splice_block %.loc12_27.2 [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:       %.Self.ref.loc12_12: %type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:       %.loc12_21: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       %.Self.as_type.loc12_18: type = facet_access_type %.Self.ref.loc12_12 [symbolic_self = constants.%.Self.binding.as_type.8db]
 // CHECK:STDOUT:       %.loc12_18: type = converted %.Self.ref.loc12_12, %.Self.as_type.loc12_18 [symbolic_self = constants.%.Self.binding.as_type.8db]
 // CHECK:STDOUT:       %I.type: type = facet_type <@I, @I(constants.%.Self.binding.as_type.8db)> [symbolic_self = constants.%I.type.bee]
@@ -457,8 +458,8 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.ref.loc12_33: %I.type.bee = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.dad]
 // CHECK:STDOUT:       %.Self.as_type.loc12_33: type = facet_access_type %.Self.ref.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.b0b]
 // CHECK:STDOUT:       %.loc12_33.1: type = converted %.Self.ref.loc12_33, %.Self.as_type.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.b0b]
-// CHECK:STDOUT:       %.loc12_33.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I(constants.%.Self.binding.as_type.8db) [symbolic_self = constants.%assoc0.2f7]
-// CHECK:STDOUT:       %I1.ref.loc12_33: %I.assoc_type.c03 = name_ref I1, %.loc12_33.2 [symbolic_self = constants.%assoc0.2f7]
+// CHECK:STDOUT:       %.loc12_33.2: %I.assoc_type.c03 = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) [symbolic_self = constants.%assoc0.fe4]
+// CHECK:STDOUT:       %I1.ref.loc12_33: %I.assoc_type.c03 = name_ref I1, %.loc12_33.2 [symbolic_self = constants.%assoc0.fe4]
 // CHECK:STDOUT:       %impl.elem0.loc12_33: type = impl_witness_access constants.%I.lookup_impl_witness.3fc, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc12_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc12_40.2: type = converted %.loc12_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -479,26 +480,23 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_13.1)> [symbolic = %I.type (constants.%I.type.1ab)]
 // CHECK:STDOUT:   %Self.loc4_23.2: @I.%I.type (%I.type.1ab) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.fdb)]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc4_13.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.76c)]
-// CHECK:STDOUT:   %assoc0: @I.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, %I1 [symbolic = %assoc0 (constants.%assoc0.963)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.1ab) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.fdb)]
+// CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I1: type = assoc_const_decl @I1 [concrete] {
-// CHECK:STDOUT:       %assoc0: @I.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.%I1 [symbolic = @I.%assoc0 (constants.%assoc0.963)]
+// CHECK:STDOUT:       %assoc0: @I.WithSelf.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.WithSelf.%I1 [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.99e)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_23.1
 // CHECK:STDOUT:     .I1 = @I1.%assoc0
-// CHECK:STDOUT:     witness = (%I1)
+// CHECK:STDOUT:     witness = (@I.WithSelf.%I1)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @I1(@I.%T.loc4_13.2: type, @I.%Self.loc4_23.1: @I.%I.type (%I.type.1ab)) {
-// CHECK:STDOUT:   assoc_const I1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_6.2: %I_where.type) {
@@ -537,7 +535,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%T.67d, constants.%Self.fdb) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%T.67d, constants.%Self.fdb) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.Self.binding.as_type.8db) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%.Self.binding.as_type.8db
@@ -545,13 +543,35 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.bee
 // CHECK:STDOUT:   %Self.loc4_23.2 => constants.%Self.fa8
-// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.2f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%Self.fdb) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I1(constants.%.Self.binding.as_type.8db, constants.%I.facet) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%.Self.dad) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%T.706) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.binding.as_type.8db, constants.%I.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%.Self.binding.as_type.8db
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.c03
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.fe4
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.706) {
 // CHECK:STDOUT:   %T.loc8_6.1 => constants.%T.706

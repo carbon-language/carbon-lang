@@ -16,13 +16,13 @@ fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
   // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:   var unused x: i32 = Foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   var unused x: i32 = Foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var x: i32 = Foo();
+  var unused x: i32 = Foo();
 }
 
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
@@ -33,7 +33,7 @@ fn Run() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %.08f: form = init_form %f64.d77, call_param0 [concrete]
+// CHECK:STDOUT:   %.833: Core.Form = init_form %f64.d77, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
@@ -41,7 +41,6 @@ fn Run() {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.4a8: type = facet_type <@ImplicitAs, @ImplicitAs(%f64.d77)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.726: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%f64.d77) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.02f: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.1f0: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.02f = struct_value () [symbolic]
@@ -49,7 +48,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.2c7: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.239: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.2c7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.4a8 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.cb2) [concrete]
-// CHECK:STDOUT:   %.b13: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a33: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%f64.d77, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.6c5: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.a33, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.239 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.239, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -94,9 +94,8 @@ fn Run() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:     %.loc15_13: form = init_form %f64, call_param0 [concrete = constants.%.08f]
+// CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %.loc15_13: Core.Form = init_form %f64, call_param0 [concrete = constants.%.833]
 // CHECK:STDOUT:     %return.param: ref %f64.d77 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %f64.d77 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -106,7 +105,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Foo() -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %impl.elem0: %.b13 = impl_witness_access constants.%ImplicitAs.impl_witness.cb2, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.239]
+// CHECK:STDOUT:   %impl.elem0: %.6c5 = impl_witness_access constants.%ImplicitAs.impl_witness.cb2, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.239]
 // CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
@@ -124,17 +123,14 @@ fn Run() {
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init %f64.d77 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc25_3: %i32 = converted %Foo.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %i32 = converted %Foo.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc25_10: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

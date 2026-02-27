@@ -53,6 +53,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/unused.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
@@ -129,19 +130,17 @@ auto ImportCpp(Context& context,
       llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
         return import.package_id == package_id;
       }));
+
   auto name_scope_id = AddNamespace(context, package_id, imports);
-
-  bool ast_has_error =
-      !GenerateAst(context, imports, fs, llvm_context, std::move(invocation));
-
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
-  name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-      {.key =
-           SemIR::ClangDeclKey(context.ast_context().getTranslationUnitDecl()),
-       .inst_id = name_scope.inst_id()}));
 
-  if (ast_has_error) {
+  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
+    name_scope.set_clang_decl_context_id(context.clang_decls().Add(
+        {.key = SemIR::ClangDeclKey(
+             context.ast_context().getTranslationUnitDecl()),
+         .inst_id = name_scope.inst_id()}));
+  } else {
     name_scope.set_has_error();
   }
 }
@@ -428,11 +427,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     return SemIR::ErrorInst::TypeInstId;
   }
 
-  // For now, if the class is empty, produce an empty struct as the object
-  // representation. This allows our tests to continue to pass while we don't
-  // properly support initializing imported C++ classes.
+  // For now, if the class is empty and an aggregate, produce an empty struct as
+  // the object representation. This allows our tests to continue to pass while
+  // we don't properly support initializing imported C++ classes. We only do
+  // this for aggregates so that non-aggregate classes are not incorrectly
+  // initializable from `{}`.
   // TODO: Remove this.
-  if (clang_def->isEmpty() && !clang_def->getNumBases()) {
+  if (clang_def->isEmpty() && !clang_def->getNumBases() &&
+      clang_def->isAggregate()) {
     return context.types().GetAsTypeInstId(AddInst(
         context,
         MakeImportedLocIdAndInst(
@@ -1248,15 +1250,13 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                          orig_ret_type.getAsString()));
-      return {.form_inst_id = SemIR::ErrorInst::InstId,
-              .type_component_id = SemIR::ErrorInst::TypeInstId,
-              .type_id = SemIR::ErrorInst::TypeId};
+      return Context::FormExpr::Error;
     }
     Context::FormExpr result = {
         .form_inst_id = is_reference ? make_ref_form(orig_type_inst_id)
                                      : make_init_form(orig_type_inst_id),
-        .type_component_id = orig_type_inst_id,
-        .type_id = type_id};
+        .type_component_inst_id = orig_type_inst_id,
+        .type_component_id = type_id};
 
     return result;
   }
@@ -1265,17 +1265,17 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ctor) {
     // void.
     return {.form_inst_id = SemIR::InstId::None,
-            .type_component_id = SemIR::TypeInstId::None,
-            .type_id = SemIR::TypeId::None};
+            .type_component_inst_id = SemIR::TypeInstId::None,
+            .type_component_id = SemIR::TypeId::None};
   }
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
       LookupClangDeclInstId(context, SemIR::ClangDeclKey(ctor->getParent())));
-  return {
-      .form_inst_id = make_init_form(record_type_inst_id),
-      .type_component_id = record_type_inst_id,
-      .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
+  return {.form_inst_id = make_init_form(record_type_inst_id),
+          .type_component_inst_id = record_type_inst_id,
+          .type_component_id =
+              context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
 // Information about a function's declared return type, corresponding to the
@@ -1448,7 +1448,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   auto function_params_insts =
       CreateFunctionSignatureInsts(context, loc_id, clang_decl, signature);
 
-  auto [pattern_block_id, decl_block_id] = FinishFunctionSignature(context);
+  auto [pattern_block_id, decl_block_id] =
+      FinishFunctionSignature(context, /*check_unused=*/false);
 
   if (!function_params_insts.has_value()) {
     return std::nullopt;
@@ -1673,6 +1674,8 @@ static auto AddDependentUnimportedDecls(Context& context,
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
     }
+  } else if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    AddDependentUnimportedTypeDecls(context, var_decl->getType(), worklist);
   }
   auto* parent = GetParentDecl(clang_decl);
   if (llvm::isa_and_nonnull<clang::TagDecl, clang::NamespaceDecl,
@@ -1701,10 +1704,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
 
   // Create an entity name to identify this variable.
-  SemIR::EntityNameId entity_name_id =
-      context.entity_names().AddSymbolicBindingName(
-          var_name_id, GetParentNameScopeId(context, var_decl),
-          SemIR::CompileTimeBindIndex::None, false);
+  SemIR::EntityNameId entity_name_id = context.entity_names().Add(
+      {.name_id = var_name_id,
+       .parent_scope_id = GetParentNameScopeId(context, var_decl),
+       .is_unused = false});
 
   // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
   // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
@@ -2270,7 +2273,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  MapCppAccess(lookup->begin().getPair()));
 }
 
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool {
@@ -2282,18 +2285,7 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
 
-  // TODO: Map loc_id into a clang location and use it for diagnostics if
-  // instantiation fails, instead of annotating the diagnostic with another
-  // location.
   clang::SourceLocation loc = clang_decl->getLocation();
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ type {0}", SemIR::TypeId);
-        builder.Note(loc_id, InCppTypeCompletion,
-                     context.classes().Get(class_id).self_type_id);
-      });
-
   // Ask Clang whether the type is complete. This triggers template
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(cpp_file->diagnostics());

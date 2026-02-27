@@ -22,7 +22,7 @@ constraint E {
 constraint F {
   // TODO: Any fn in a non-template constraint is an error.
   fn DefinedFunction() {}
-  fn DefinedMethod[self: Self](b: Self) {}
+  fn DefinedMethod[unused self: Self](unused b: Self) {}
 }
 
 // --- todo_fail_invalid_var.carbon

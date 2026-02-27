@@ -22,6 +22,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/JSON.h"
+#include "testing/base/capture_std_streams.h"
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/testing/yaml_test_helpers.h"
@@ -30,6 +31,7 @@ namespace Carbon {
 namespace {
 
 using ::testing::_;
+using Testing::CallWithCapturedOutput;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
 using Testing::IsSuccess;
@@ -248,10 +250,11 @@ TEST_F(DriverTest, Link) {
       << test_error_stream_.TakeStr();
 
   // Now link this into a binary. Note that we suppress building runtimes on
-  // demand here as no runtimes should be needed for the empty program.
+  // demand here as no runtimes should be needed for the empty program. We also
+  // pass some system library link flags through to the underlying Clang layer.
   EXPECT_TRUE(driver_
                   .RunCommand({"--no-build-runtimes", "link", "--output=test",
-                               "test.o"})
+                               "test.o", "--", "-lc", "-lm"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
 
@@ -264,6 +267,46 @@ TEST_F(DriverTest, Link) {
   }
   // Executables are also classified as object files.
   EXPECT_TRUE(result->getBinary()->isObject());
+}
+
+TEST_F(DriverTest, LinkWithFlagLikeFiles) {
+  auto scope = ScopedTempWorkingDir();
+
+  // First compile a file to get a linkable object.
+  MakeTestFile("fn Run() {}", "test.carbon");
+  ASSERT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success)
+      << test_error_stream_.TakeStr();
+
+  // Rename it to a flag-like name.
+  Filesystem::Cwd().Rename("test.o", Filesystem::Cwd(), "--test.o").Check();
+
+  // Link this into a binary and pass flags to the Clang link invocation even
+  // though we use `--` before the object file input list to handle weirdly
+  // named objects.
+  //
+  // TODO: This works correctly in the Carbon link subcommand, but Clang itself
+  // fails to pass object files to LLD in a way that supports flag-shaped object
+  // file names. The last flag being `-Wl,--` tries to work around this by
+  // passing a `--` to the linker before the object files. However, LLD in turn
+  // appears to have bugs parsing command lines in this shape. We should get
+  // these fixed and then can remove the `-Wl,--` hack and the test should
+  // actually pass.
+  std::string out;
+  std::string err;
+  EXPECT_FALSE(CallWithCapturedOutput(out, err, [&] {
+                 return driver_.RunCommand({"--no-build-runtimes", "link",
+                                            "--output=test", "--", "--test.o",
+                                            "--", "-lc", "-lm", "-Wl,--"});
+               }).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(out, StrEq(""));
+  // This error seems to stem from incorrectly handling `--` in the LLD command
+  // line. See above; this should go away when the underlying bugs are fixed.
+  EXPECT_THAT(err,
+              HasSubstr("error: completed parsing all 1 configured positional "
+                        "arguments, but found a subsequent `--`"));
 }
 
 TEST_F(DriverTest, ConfigJson) {

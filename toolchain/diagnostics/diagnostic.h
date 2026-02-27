@@ -25,6 +25,16 @@ enum class Level : int8_t {
   // A note, not indicating an error on its own, but possibly providing
   // additional information for an error or warning.
   Note,
+  // A Context that will be discarded if another Context precedes it in the
+  // diagnostic, as the Context is assumed to provide better information. Used
+  // as a fallback for when no better Context is provided.
+  SoftContext,
+  // Describes the high level operation being performed. If a diagnostic is
+  // issued, the first Context message will steal its level and be displayed as
+  // if it is the top-level diagnostic, and the rest are treated as Note
+  // messages. The diagnostic message also becomes a Note of the first Context
+  // message.
+  Context,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
   // An error diagnostic, indicating that the program is not valid.
@@ -50,6 +60,12 @@ enum class Level : int8_t {
 // Similar to `CARBON_DIAGNOSTIC`, but for diagnostics that are generated on a
 // scope; see `Diagnostic::is_on_scope` for details.
 #define CARBON_DIAGNOSTIC_ON_SCOPE(DiagnosticName, LevelValue, Format, ...) \
+  static_assert(::Carbon::Diagnostics::Level::LevelValue ==                 \
+                        ::Carbon::Diagnostics::Level::Warning ||            \
+                    ::Carbon::Diagnostics::Level::LevelValue ==             \
+                        ::Carbon::Diagnostics::Level::Error,                \
+                "Only use CARBON_DIAGNOSTIC_ON_SCOPE for the main "         \
+                "diagnostic, not notes");                                   \
   static constexpr auto DiagnosticName =                                    \
       ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(                   \
           ::Carbon::Diagnostics::Kind::DiagnosticName,                      \
@@ -99,7 +115,8 @@ struct Message {
   // The diagnostic's kind.
   Kind kind;
 
-  // The diagnostic's level.
+  // The message's level. This may be different from, but should not be more
+  // severe than, the diagnostic's level.
   Level level;
 
   // The calculated location of the diagnostic.

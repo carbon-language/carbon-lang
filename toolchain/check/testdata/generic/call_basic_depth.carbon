@@ -11,12 +11,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/call_basic_depth.carbon
 
 class C {
-  fn Cfn[self: Self, T:! type](x: T) {
+  fn Cfn[unused self: Self, T:! type](unused x: T) {
   }
 }
 
 //@dump-sem-ir-begin
-fn F[T:! type](x: T) {
+fn F[T:! type](unused x: T) {
 }
 //@dump-sem-ir-end
 
@@ -73,16 +73,16 @@ fn M() {
 // CHECK:STDOUT:   %C.Cfn.specific_fn.f5e: <specific function> = specific_function %C.Cfn, @C.Cfn(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.51d) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.51d) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc19_10.1: type = splice_block %.loc19_10.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc19_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc19_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc19_6.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc19_6.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_6.2 [symbolic = %T.loc19_6.1 (constants.%T)]

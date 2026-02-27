@@ -66,14 +66,14 @@ library "[[@TEST_NAME]]";
 
 constraint Generic(T:! type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:10: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(T:! Generic((), ())) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:17: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(unused T:! Generic((), ())) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic constraint declared here [InCallToEntity]
 // CHECK:STDERR: constraint Generic(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! Generic((), ())) {}
+fn F(unused T:! Generic((), ())) {}
 
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
@@ -110,7 +110,10 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %GenericType.decl: %GenericType.type.744 = constraint_decl @GenericType [concrete = constants.%empty_struct.2f3] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc4_28.1: type = splice_block %.loc4_28.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc4_28.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_24.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
@@ -126,19 +129,26 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type.21f = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.463] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc9_39.1: type = splice_block %.loc9_39.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc9_39.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_35.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type.21f = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.463] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc10_39.1: type = splice_block %.loc10_39.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc10_39.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc10: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
+// CHECK:STDOUT:   %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -156,6 +166,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc4_34.1: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.31c17c.1)]
+// CHECK:STDOUT:     %GenericType.WithSelf.decl = constraint_with_self_decl @GenericType [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_34.1
@@ -173,6 +184,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc7_28.1: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.31c17c.2)]
+// CHECK:STDOUT:     %GenericZ.WithSelf.decl = constraint_with_self_decl @GenericZ [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_28.1
@@ -190,6 +202,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc10_45.1: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.31c17c.3)]
+// CHECK:STDOUT:     %ForwardDeclaredGeneric.WithSelf.decl = constraint_with_self_decl @ForwardDeclaredGeneric [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc10_45.1
@@ -202,11 +215,19 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_24.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericType.WithSelf(constants.%T, constants.%Self.31c17c.1) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_21.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericZ.WithSelf(constants.%U, constants.%Self.31c17c.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_35.1 => constants.%T
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclaredGeneric.WithSelf(constants.%T, constants.%Self.31c17c.3) {}
 // CHECK:STDOUT:

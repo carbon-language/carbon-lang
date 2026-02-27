@@ -42,7 +42,7 @@ fn F(T:! Z) -> T.X {
 fn G() {
   // Check which impl is selected for struct literals with different field
   // names.
-  let c1: C = F({.a: (), .b: ()});
-  let d1: D = F({.aa: (), .bb: ()});
-  let d2: D = F({.b: (), .a: ()});
+  let unused c1: C = F({.a: (), .b: ()});
+  let unused d1: D = F({.aa: (), .bb: ()});
+  let unused d2: D = F({.b: (), .a: ()});
 }

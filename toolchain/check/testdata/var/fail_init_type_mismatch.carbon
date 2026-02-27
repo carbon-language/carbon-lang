@@ -15,7 +15,7 @@
 // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
 // CHECK:STDERR: var x: {} = ();
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: {} = ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/function.h"
 
 #include <optional>
+#include <variant>
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
@@ -33,25 +34,32 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
                  "Invalid callee id in a specific context");
   }
 
-  if (auto specific_function =
-          sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
-    fn.resolved_specific_id = specific_function->specific_id;
-    callee_id = specific_function->callee_id;
-  } else if (auto specific_impl_function =
-                 sem_ir.insts().TryGetAs<SpecificImplFunction>(callee_id)) {
-    fn.resolved_specific_id = specific_impl_function->specific_id;
-    callee_id = specific_impl_function->callee_id;
-  }
-
-  // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
     return CalleeNonFunction();
   }
-  auto fn_type_inst =
-      sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
-  if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
+  if (auto specific_function =
+          sem_ir.insts().TryGetAs<SpecificFunction>(val_id)) {
+    fn.resolved_specific_id = specific_function->specific_id;
+    val_id = sem_ir.constant_values().GetConstantInstId(
+        specific_function->callee_id);
+  } else if (auto specific_impl_function =
+                 sem_ir.insts().TryGetAs<SpecificImplFunction>(val_id)) {
+    fn.resolved_specific_id = specific_impl_function->specific_id;
+    val_id = sem_ir.constant_values().GetConstantInstId(
+        specific_impl_function->callee_id);
+  }
+  if (!val_id.has_value()) {
+    return CalleeNonFunction();
+  }
+
+  // Identify the function we're calling by its type.
+  auto fn_type_inst_id =
+      sem_ir.types().GetTypeInstId(sem_ir.insts().Get(val_id).type_id());
+
+  if (auto cpp_overload_set_type =
+          sem_ir.insts().TryGetAs<CppOverloadSetType>(fn_type_inst_id)) {
     CARBON_CHECK(!fn.resolved_specific_id.has_value(),
                  "Only `SpecificFunction` will be resolved, not C++ overloads");
     return CalleeCppOverloadSet{
@@ -59,18 +67,21 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
         .self_id = fn.self_id};
   }
 
-  if (auto impl_fn_type = fn_type_inst.TryAs<FunctionTypeWithSelfType>()) {
+  if (auto impl_fn_type =
+          sem_ir.insts().TryGetAs<FunctionTypeWithSelfType>(fn_type_inst_id)) {
     // Combine the associated function's `Self` with the interface function
     // data.
     fn.self_type_id = impl_fn_type->self_id;
-    fn_type_inst = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
+    fn_type_inst_id = impl_fn_type->interface_function_type_id;
   }
 
-  auto fn_type = fn_type_inst.TryAs<FunctionType>();
+  auto fn_type_val_id =
+      sem_ir.constant_values().GetConstantInstId(fn_type_inst_id);
+  if (fn_type_val_id == ErrorInst::InstId) {
+    return CalleeError();
+  }
+  auto fn_type = sem_ir.insts().TryGetAs<FunctionType>(fn_type_val_id);
   if (!fn_type) {
-    if (fn_type_inst.Is<ErrorInst>()) {
-      return CalleeError();
-    }
     return CalleeNonFunction();
   }
 
@@ -81,8 +92,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
 
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
                          SpecificId caller_specific_id) -> CalleeFunction {
-  return std::get<CalleeFunction>(
-      GetCallee(sem_ir, callee_id, caller_specific_id));
+  auto callee = GetCallee(sem_ir, callee_id, caller_specific_id);
+  CARBON_CHECK(std::holds_alternative<CalleeFunction>(callee));
+  return std::get<CalleeFunction>(callee);
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,

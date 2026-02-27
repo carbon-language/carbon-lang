@@ -162,7 +162,6 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: %class.C = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @global = dso_local global %class.C zeroinitializer, align 1
-// CHECK:STDOUT: @global.1 = external global {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
@@ -204,7 +203,6 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: @inline_global = linkonce_odr dso_local global %struct.C zeroinitializer, comdat, align 1
 // CHECK:STDOUT: @_ZGV13inline_global = linkonce_odr dso_local global i64 0, comdat($inline_global), align 8
 // CHECK:STDOUT: @__dso_handle = external hidden global i8
-// CHECK:STDOUT: @inline_global.1 = external global {}
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @__cxx_global_var_init, ptr @inline_global }]
 // CHECK:STDOUT: @llvm.used = appending global [1 x ptr] [ptr @inline_global], section "llvm.metadata"
 // CHECK:STDOUT:
@@ -274,14 +272,14 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1C1fEv(ptr @inline_global.1), !dbg !15
+// CHECK:STDOUT:   call void @_ZN1C1fEv(ptr @inline_global), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1C1fEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @inline_global, { 2, 3, 0, 1 }
+// CHECK:STDOUT: uselistorder ptr @inline_global, { 2, 3, 4, 0, 1 }
 // CHECK:STDOUT: uselistorder ptr @_ZGV13inline_global, { 1, 0, 2, 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -321,8 +319,6 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @thread_local_global = dso_local thread_local global i32 0, align 4
 // CHECK:STDOUT: @thread_local_global_with_init = dso_local thread_local global i32 0, align 4
-// CHECK:STDOUT: @thread_local_global.1 = external global i32
-// CHECK:STDOUT: @thread_local_global_with_init.2 = external global i32
 // CHECK:STDOUT: @__tls_guard = internal thread_local global i8 0, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTH29thread_local_global_with_init = dso_local alias void (), ptr @__tls_init
@@ -344,14 +340,14 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CThreadLocalStore.Main() #3 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 42, ptr @thread_local_global.1, align 4, !dbg !15
+// CHECK:STDOUT:   store i32 42, ptr @thread_local_global, align 4, !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CThreadLocalTriggerInit.Main() #3 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14 = load i32, ptr @thread_local_global_with_init.2, align 4, !dbg !21
+// CHECK:STDOUT:   %.loc14 = load i32, ptr @thread_local_global_with_init, align 4, !dbg !21
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,7 +424,9 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZN1X1nE = external global i32
+// CHECK:STDOUT: $_ZN1X1nE = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: @_ZN1X1nE = linkonce_odr dso_local global i32 42, comdat, align 4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadStatic.Main() #0 !dbg !12 {
@@ -466,10 +464,10 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %opaque = type opaque
+// CHECK:STDOUT: %struct.Y = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_Z4tmplIiE = external global i32
-// CHECK:STDOUT: @_Z4tmplI1YE = external global %opaque
+// CHECK:STDOUT: @_Z4tmplIiE = external global i32, align 4
+// CHECK:STDOUT: @_Z4tmplI1YE = external global %struct.Y, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadVarTemplate.Main() #0 !dbg !12 {
@@ -518,10 +516,10 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %opaque = type opaque
+// CHECK:STDOUT: %struct.Y = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZN1X11static_tmplIiEE = external global i32
-// CHECK:STDOUT: @_ZN1X11static_tmplI1YEE = external global %opaque
+// CHECK:STDOUT: @_ZN1X11static_tmplIiEE = external global i32, align 4
+// CHECK:STDOUT: @_ZN1X11static_tmplI1YEE = external global %struct.Y, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadStaticVarTemplate.Main() #0 !dbg !12 {

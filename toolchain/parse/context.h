@@ -196,13 +196,12 @@ class Context {
                               NodeKind start_kind)
       -> std::optional<Lex::TokenIndex>;
 
-  // Parses a closing symbol corresponding to the opening symbol
-  // `expected_open`, possibly skipping forward and diagnosing if necessary.
-  // Creates a parse node of the specified close kind. If `expected_open` is not
-  // an opening symbol, the parse node will be associated with `state.token`,
-  // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open, State state,
-                                NodeKind close_kind) -> void;
+  // Parses a closing symbol corresponding to the opening symbol `state.token`,
+  // possibly skipping forward and diagnosing if necessary. Creates a parse node
+  // of the specified close kind. If `state.token` is not an opening symbol,
+  // no input will be consumed, and no diagnostic will be emitted, but the parse
+  // node will still be marked as having an error.
+  auto ConsumeAndAddCloseSymbol(State state, NodeKind close_kind) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.

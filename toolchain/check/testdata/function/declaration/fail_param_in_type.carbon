@@ -52,15 +52,11 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc19_9: type = splice_block %i32.loc19_9 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc19_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc19_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32.loc19_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
-// CHECK:STDOUT:     %.loc19_30: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:       %int_32.loc19_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc19_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc19: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:       %i32.loc19_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }

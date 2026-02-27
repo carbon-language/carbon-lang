@@ -338,6 +338,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "fix_it_hints.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   Cpp.foo();
 }
 
@@ -441,9 +445,6 @@ void f(const int n) {
 
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "one_warning.h"
@@ -451,9 +452,6 @@ void f(const int n) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -463,9 +461,6 @@ void f(const int n) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "one_warning.h"
@@ -474,9 +469,6 @@ void f(const int n) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_indirect_warning.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {

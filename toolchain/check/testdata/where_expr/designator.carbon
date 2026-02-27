@@ -34,7 +34,7 @@ interface J {
   let Member:! type;
 }
 
-// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
 // CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
 // CHECK:STDERR:                               ^~~~~~~~~
 // CHECK:STDERR:
@@ -45,7 +45,7 @@ fn PeriodMismatch(W:! J where .Mismatch = {});
 library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
-  var x: ();
+  var unused x: ();
   // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error: name `.Self` not found [NameNotFound]
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~
@@ -98,7 +98,7 @@ interface I {}
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! type, T:! type where U impls I) {}
+fn F(U:! type, unused T:! type where U impls I) {}
 
 // --- todo_fail_equality_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -109,7 +109,7 @@ interface I {
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! I, T:! type where U.X == ()) {}
+fn F(U:! I, unused T:! type where U.X == ()) {}
 
 // --- todo_fail_combined_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -120,7 +120,7 @@ interface I {
 
 // TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
-fn F(U:! I, T:! type where U impls I and U.X == ()) {}
+fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
 
 // --- impls_constraint_does_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -129,16 +129,16 @@ interface I(T:! type) {}
 
 class C(T:! type);
 
-fn F(T:! type where C(.Self) impls I(())) {}
+fn F(unused T:! type where C(.Self) impls I(())) {}
 
-fn G(T:! type where C(()) impls I(.Self)) {}
+fn G(unused T:! type where C(()) impls I(.Self)) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%Member [concrete]
 // CHECK:STDOUT:   %.Self.1dc: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -159,9 +159,6 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %pattern_type.17f: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %TypeSelfImpls.type: type = fn_type @TypeSelfImpls [concrete]
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -205,6 +202,8 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:     %V.patt: %pattern_type.17f = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_27.1: type = splice_block %.loc13_27.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc13_22: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.16f]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]

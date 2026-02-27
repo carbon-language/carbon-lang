@@ -20,9 +20,9 @@ class C {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var a: A;
-  var b: B;
-  var c: C;
+  var unused a: A;
+  var unused b: B;
+  var unused c: C;
 }
 //@dump-sem-ir-end
 
@@ -36,10 +36,10 @@ class C {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var a: A;
-  var b: B;
+  var unused a: A;
+  var unused b: B;
   if (true) {
-    var c: C;
+    var unused c: C;
   }
 }
 //@dump-sem-ir-end
@@ -71,7 +71,7 @@ class D(template T:! type) {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var a: D(C);
+  var unused a: D(C);
 }
 //@dump-sem-ir-end
 
@@ -82,7 +82,7 @@ class C(template T:! type) {}
 
 //@dump-sem-ir-begin
 fn F(template T:! type) {
-  var v: C(T);
+  var unused v: C(T);
 }
 //@dump-sem-ir-end
 
@@ -106,9 +106,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %DestroyOp.type.3e79c2.3: type = fn_type @DestroyOp.loc10 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.3: %DestroyOp.type.3e79c2.3 = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,11 +144,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %A) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_scope.carbon
 // CHECK:STDOUT:
@@ -172,9 +169,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %DestroyOp.type.3e79c2.3: type = fn_type @DestroyOp.loc10 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.3: %DestroyOp.type.3e79c2.3 = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -220,11 +214,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %A) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- temp.carbon
 // CHECK:STDOUT:
@@ -247,9 +241,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %DestroyOp.type.3e79c2.3: type = fn_type @DestroyOp.loc12 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.3: %DestroyOp.type.3e79c2.3 = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -282,11 +273,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %A) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_class.carbon
 // CHECK:STDOUT:
@@ -301,9 +292,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %pattern_type.002: type = pattern_type %D.213 [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -328,7 +316,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %D.213) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %D.213) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_use_inside_generic.carbon
 // CHECK:STDOUT:
@@ -346,26 +334,30 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.5a3 [template]
 // CHECK:STDOUT:   %pattern_type.3d5: type = pattern_type %C.5a3 [template]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.5a3, @Destroy [template]
+// CHECK:STDOUT:   %Destroy.facet.472: %Destroy.type = facet_value %C.5a3, (%Destroy.lookup_impl_witness) [template]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.7d1: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.472) [template]
+// CHECK:STDOUT:   %.306: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.7d1, %Destroy.facet.472 [template]
+// CHECK:STDOUT:   %impl.elem0: %.306 = impl_witness_access %Destroy.lookup_impl_witness, element0 [template]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(%Destroy.facet.472) [template]
+// CHECK:STDOUT:   %C.850: type = class_type @C, @C(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %pattern_type.526: type = pattern_type %C.850 [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.45b: %Destroy.type = facet_value %C.5a3, (%custom_witness.809) [template]
-// CHECK:STDOUT:   %.3c0: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.45b [template]
-// CHECK:STDOUT:   %C.850: type = class_type @C, @C(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %pattern_type.526: type = pattern_type %C.850 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.bc0: %Destroy.type = facet_value %C.850, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %.cb1: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.bc0 [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.379: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.bc0) [concrete]
+// CHECK:STDOUT:   %.ea5: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.379, %Destroy.facet.bc0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc6_19.1: type = splice_block %.loc6_19.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc6_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_15.2: type = symbolic_binding T, 0, template [template = %T.loc6_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -374,11 +366,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %T.loc6_15.1: type = symbolic_binding T, 0, template [template = %T.loc6_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C.loc7_13.2: type = class_type @C, @C(%T.loc6_15.1) [template = %C.loc7_13.2 (constants.%C.5a3)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_13.2 [template = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc7_13.2 [template = %pattern_type (constants.%pattern_type.3d5)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.loc7_13.2, (constants.%custom_witness.809) [template = %Destroy.facet (constants.%Destroy.facet.45b)]
-// CHECK:STDOUT:   %.loc7_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [template = %.loc7_3 (constants.%.3c0)]
+// CHECK:STDOUT:   %C.loc7_20.2: type = class_type @C, @C(%T.loc6_15.1) [template = %C.loc7_20.2 (constants.%C.5a3)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_20.2 [template = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc7_20.2 [template = %pattern_type (constants.%pattern_type.3d5)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.loc7_20.2, @Destroy [template = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.loc7_20.2, (%Destroy.lookup_impl_witness) [template = %Destroy.facet (constants.%Destroy.facet.472)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [template = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.7d1)]
+// CHECK:STDOUT:   %.loc7_3: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [template = %.loc7_3 (constants.%.306)]
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @F.%.loc7_3 (%.306) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2: <specific function> = specific_impl_function %impl.elem0.loc7_3.2, @Destroy.WithSelf.Op(%Destroy.facet) [template = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -386,20 +382,23 @@ fn G() { F({}); }
 // CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.3d5) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.3d5) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%C.loc7_13.2 (%C.5a3) = var %v.var_patt
-// CHECK:STDOUT:     %.loc7_13: type = splice_block %C.loc7_13.1 [template = %C.loc7_13.2 (constants.%C.5a3)] {
+// CHECK:STDOUT:     %v.var: ref @F.%C.loc7_20.2 (%C.5a3) = var %v.var_patt
+// CHECK:STDOUT:     %.loc7_20: type = splice_block %C.loc7_20.1 [template = %C.loc7_20.2 (constants.%C.5a3)] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_15.2 [template = %T.loc6_15.1 (constants.%T)]
-// CHECK:STDOUT:       %C.loc7_13.1: type = class_type @C, @C(constants.%T) [template = %C.loc7_13.2 (constants.%C.5a3)]
+// CHECK:STDOUT:       %C.loc7_20.1: type = class_type @C, @C(constants.%T) [template = %C.loc7_20.2 (constants.%C.5a3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%C.loc7_13.2 (%C.5a3) = ref_binding v, %v.var
-// CHECK:STDOUT:     %DestroyOp.bound: <bound method> = bound_method %v.var, constants.%DestroyOp
-// CHECK:STDOUT:     %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%v.var)
+// CHECK:STDOUT:     %v: ref @F.%C.loc7_20.2 (%C.5a3) = ref_binding v, %v.var
+// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @F.%.loc7_3 (%.306) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc7_3.1
+// CHECK:STDOUT:     %specific_impl_fn.loc7_3.1: <specific function> = specific_impl_function %impl.elem0.loc7_3.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.472) [template = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc7_3.1
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc7_3.2(%v.var)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @F.%C.loc7_13.2 (%C.5a3)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C.850) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_15.1 => constants.%T
@@ -409,10 +408,14 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %T.loc6_15.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C.loc7_13.2 => constants.%C.850
+// CHECK:STDOUT:   %C.loc7_20.2 => constants.%C.850
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.526
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.809
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.bc0
-// CHECK:STDOUT:   %.loc7_3 => constants.%.cb1
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.379
+// CHECK:STDOUT:   %.loc7_3 => constants.%.ea5
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%DestroyOp
+// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%DestroyOp
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

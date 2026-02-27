@@ -30,14 +30,14 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var x: () = ();
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:15: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   let y: () = ref x;
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:22: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:   let unused y: () = ref x;
+  // CHECK:STDERR:                      ^~~~~
   // CHECK:STDERR:
-  let y: () = ref x;
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:16: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   let z: () = (ref x);
-  // CHECK:STDERR:                ^~~~~
+  let unused y: () = ref x;
+  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:23: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:   let unused z: () = (ref x);
+  // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR:
-  let z: () = (ref x);
+  let unused z: () = (ref x);
 }

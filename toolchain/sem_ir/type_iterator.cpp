@@ -98,6 +98,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case FacetType::Kind:
     case FloatLiteralType::Kind:
     case FloatType::Kind:
+    case FormType::Kind:
     case FunctionType::Kind:
     case FunctionTypeWithSelfType::Kind:
     case GenericClassType::Kind:

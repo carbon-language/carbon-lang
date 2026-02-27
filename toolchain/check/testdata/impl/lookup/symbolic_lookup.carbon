@@ -50,7 +50,7 @@ class C(T:! X) {}
 // with a `FacetAccessType` when evaluating the instruction.
 class D(T:! Y) { adapt C(T); }
 
-fn Test(T:! Y & Z, d: D(T)) {}
+fn Test(T:! Y & Z, unused d: D(T)) {}
 
 // --- final_symbolic_rewrite.carbon
 library "[[@TEST_NAME]]";
@@ -67,5 +67,5 @@ class C {}
 
 fn F(T:! Z(C), t: T) {
   // This should typecheck, the `final impl` should give the same `T`.
-  let a: T.X = t;
+  let unused a: T.X = t;
 }

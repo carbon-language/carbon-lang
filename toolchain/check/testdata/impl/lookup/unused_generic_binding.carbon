@@ -35,7 +35,7 @@ fn F() {
   // second is more specific. But since it has an unused generic parameter, it
   // will never match. If the second was matched, this line would not type
   // check.
-  let x: C.(I.T) = ();
+  let unused x: C.(I.T) = ();
 }
 
 // --- fail_one_binding_unused.carbon
@@ -63,7 +63,7 @@ fn F() {
   // This shows that the first impl declaration was matched even though the
   // second is more specific. If the second was matched, it would not type
   // check.
-  let x: C.(I.T) = ();
+  let unused x: C.(I.T) = ();
 }
 
 // --- fail_inherited_binding_unused.carbon
@@ -89,7 +89,7 @@ class C(U:! type) {
 }
 
 fn F() {
-  let x: C(()).(I.T) = ();
+  let unused x: C(()).(I.T) = ();
 }
 
 // --- fail_inherited_binding_in_forall_unused.carbon
@@ -115,7 +115,7 @@ class C(U:! type) {
 }
 
 fn F() {
-  let x: C(()).(I.T) = ();
+  let unused x: C(()).(I.T) = ();
 }
 
 // --- inherited_binding_used.carbon
@@ -134,7 +134,7 @@ class C(U:! type) {
 
 fn F() {
   // The `impl` inside C is matched here.
-  let x: C(()).(I.T) = ();
+  let unused x: C(()).(I.T) = ();
 }
 
 // --- inherited_binding_in_forall_used.carbon
@@ -153,5 +153,5 @@ class C(U:! type) {
 
 fn F() {
   // The `impl` inside C is matched here.
-  let x: C(()).(I({}).T) = ();
+  let unused x: C(()).(I({}).T) = ();
 }

@@ -95,8 +95,8 @@ CARBON_PARSE_NODE_KIND(Placeholder)
 
 CARBON_PARSE_NODE_KIND(EmptyDecl)
 
-CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeParams)
-CARBON_PARSE_NODE_KIND(IdentifierNameBeforeParams)
+CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeSignature)
+CARBON_PARSE_NODE_KIND(IdentifierNameMaybeBeforeSignature)
 
 CARBON_PARSE_NODE_KIND(IdentifierNameExpr)
 
@@ -392,6 +392,11 @@ CARBON_PARSE_NODE_KIND(RequireIntroducer)
 CARBON_PARSE_NODE_KIND(RequireTypeImpls)
 CARBON_PARSE_NODE_KIND(RequireDefaultSelfImpls)
 CARBON_PARSE_NODE_KIND(RequireDecl)
+
+CARBON_PARSE_NODE_KIND(ObserveIntroducer)
+CARBON_PARSE_NODE_KIND(ObserveEqualEqual)
+CARBON_PARSE_NODE_KIND(ObserveImpls)
+CARBON_PARSE_NODE_KIND(ObserveDecl)
 
 CARBON_PARSE_NODE_KIND(NamedConstraintIntroducer)
 CARBON_PARSE_NODE_KIND(NamedConstraintDefinitionStart)

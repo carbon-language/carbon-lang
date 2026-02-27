@@ -108,11 +108,13 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: type = converted @__global_init.%.loc7, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %t: type = value_binding t, %.loc7
+// CHECK:STDOUT:   %.loc7_8: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc7_16: type = converted @__global_init.%.loc7, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %t: type = value_binding t, %.loc7_16
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type = value_binding_pattern u [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_8: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer @__global_init.%Make.call
 // CHECK:STDOUT:   %.loc8_21.2: type = converted @__global_init.%Make.call, %.loc8_21.1
 // CHECK:STDOUT:   %u: type = value_binding u, %.loc8_21.2

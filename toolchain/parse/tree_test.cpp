@@ -103,8 +103,9 @@ TEST_F(TreeTest, PrintPostorderAsYaml) {
       Yaml::Mapping(ElementsAre(Pair("kind", "FileStart"), Pair("text", ""))),
       Yaml::Mapping(
           ElementsAre(Pair("kind", "FunctionIntroducer"), Pair("text", "fn"))),
-      Yaml::Mapping(ElementsAre(Pair("kind", "IdentifierNameBeforeParams"),
-                                Pair("text", "F"))),
+      Yaml::Mapping(
+          ElementsAre(Pair("kind", "IdentifierNameMaybeBeforeSignature"),
+                      Pair("text", "F"))),
       Yaml::Mapping(ElementsAre(Pair("kind", "ExplicitParamListStart"),
                                 Pair("text", "("))),
       Yaml::Mapping(ElementsAre(Pair("kind", "ExplicitParamList"),
@@ -136,9 +137,10 @@ TEST_F(TreeTest, PrintPreorderAsYaml) {
       Yaml::Mapping(ElementsAre(Pair("node_index", "1"),
                                 Pair("kind", "FunctionIntroducer"),
                                 Pair("text", "fn"))),
-      Yaml::Mapping(ElementsAre(Pair("node_index", "2"),
-                                Pair("kind", "IdentifierNameBeforeParams"),
-                                Pair("text", "F"))),
+      Yaml::Mapping(
+          ElementsAre(Pair("node_index", "2"),
+                      Pair("kind", "IdentifierNameMaybeBeforeSignature"),
+                      Pair("text", "F"))),
       Yaml::Mapping(ElementsAre(Pair("node_index", "4"),
                                 Pair("kind", "ExplicitParamList"),
                                 Pair("text", ")"), Pair("subtree_size", "2"),

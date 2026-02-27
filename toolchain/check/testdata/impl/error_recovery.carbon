@@ -34,7 +34,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -66,7 +66,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 //@dump-sem-ir-begin
 fn G(T:! type) {
@@ -95,7 +95,7 @@ interface Z {}
 // CHECK:STDERR:
 impl forall [T:! type] T as Z;
 
-fn F(U:! Z) {}
+fn F(unused U:! Z) {}
 
 fn G() {
   // This impl lookup resolves to a final witness, which poisons any future
@@ -174,7 +174,10 @@ impl C as I {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc13_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -226,7 +229,10 @@ impl C as I {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc13_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -291,9 +297,6 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst{{[0-9A-F]+}}.loc9_11;
 // CHECK:STDOUT:

@@ -23,24 +23,13 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(std::unique_ptr<clang::FrontendAction> action);
+  explicit CppContext(clang::CompilerInstance& instance,
+                      std::unique_ptr<clang::Parser> parser);
   ~CppContext();
 
-  auto action() -> clang::FrontendAction& { return *action_; }
-
-  auto ast_context() -> clang::ASTContext& {
-    return action_->getCompilerInstance().getASTContext();
-  }
-
-  auto sema() -> clang::Sema& {
-    return action_->getCompilerInstance().getSema();
-  }
-
+  auto ast_context() -> clang::ASTContext& { return *ast_context_; }
+  auto sema() -> clang::Sema& { return *sema_; }
   auto parser() -> clang::Parser& { return *parser_; }
-  auto set_parser(std::unique_ptr<clang::Parser> parser) {
-    CARBON_CHECK(!parser_);
-    parser_ = std::move(parser);
-  }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -49,8 +38,14 @@ class CppContext {
   }
 
  private:
-  // The clang action that is generating the C++ AST.
-  std::unique_ptr<clang::FrontendAction> action_;
+  // The Clang AST context.
+  clang::ASTContext* ast_context_;
+
+  // The Clang semantic analysis engine.
+  clang::Sema* sema_;
+
+  // The Clang parser.
+  std::unique_ptr<clang::Parser> parser_;
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.
@@ -58,9 +53,6 @@ class CppContext {
 
   // The Clang mangle context for the target in the ASTContext.
   std::unique_ptr<clang::MangleContext> clang_mangle_context_;
-
-  // The Clang parser.
-  std::unique_ptr<clang::Parser> parser_;
 };
 
 }  // namespace Carbon::Check

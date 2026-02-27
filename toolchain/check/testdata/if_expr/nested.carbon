@@ -27,7 +27,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.e68: form = init_form %i32, call_param3 [concrete]
+// CHECK:STDOUT:   %.591: Core.Form = init_form %i32, call_param3 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -35,7 +35,6 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
@@ -43,7 +42,8 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
-// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b37: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.b37, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.38b: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -61,14 +61,14 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %bound_method.6d7: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.9b9: %Int.as.Copy.impl.Op.type.824 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.f17: <witness> = impl_witness imports.%Copy.impl_witness_table.e76, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.546: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.664: %Int.as.Copy.impl.Op.type.546 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
-// CHECK:STDOUT:   %.f79: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.081: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,29 +107,16 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param3 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15_36: form = init_form %i32.loc15, call_param3 [concrete = constants.%.e68]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_36: Core.Form = init_form %i32, call_param3 [concrete = constants.%.591]
 // CHECK:STDOUT:     %a.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc15_9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc15_9.2: type = value_of_initializer %Bool.call.loc15_9 [concrete = bool]
-// CHECK:STDOUT:       %.loc15_9.3: type = converted %Bool.call.loc15_9, %.loc15_9.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc15_9: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %a: bool = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %.loc15_18.1: type = splice_block %.loc15_18.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc15_18: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc15_18.2: type = value_of_initializer %Bool.call.loc15_18 [concrete = bool]
-// CHECK:STDOUT:       %.loc15_18.3: type = converted %Bool.call.loc15_18, %.loc15_18.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc15_18: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %c.param: bool = value_param call_param2
-// CHECK:STDOUT:     %.loc15_27.1: type = splice_block %.loc15_27.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call.loc15_27: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc15_27.2: type = value_of_initializer %Bool.call.loc15_27 [concrete = bool]
-// CHECK:STDOUT:       %.loc15_27.3: type = converted %Bool.call.loc15_27, %.loc15_27.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc15_27: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %c: bool = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -147,9 +134,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16_20:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_32.loc16_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc16_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc16_25: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc16_25: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc16_25.1: <bound method> = bound_method %int_1, %impl.elem0.loc16_25 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc16_25: <specific function> = specific_function %impl.elem0.loc16_25, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_25.2: <bound method> = bound_method %int_1, %specific_fn.loc16_25 [concrete = constants.%bound_method.38b]
@@ -160,7 +145,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16_20:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc16_32: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc16_32: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc16_32.1: <bound method> = bound_method %int_2, %impl.elem0.loc16_32 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc16_32: <specific function> = specific_function %impl.elem0.loc16_32, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_32.2: <bound method> = bound_method %int_2, %specific_fn.loc16_32 [concrete = constants.%bound_method.646]
@@ -179,9 +164,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16_44:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %int_32.loc16_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc16_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc16_49: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc16_49: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc16_49.1: <bound method> = bound_method %int_3, %impl.elem0.loc16_49 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc16_49: <specific function> = specific_function %impl.elem0.loc16_49, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_49.2: <bound method> = bound_method %int_3, %specific_fn.loc16_49 [concrete = constants.%bound_method.fa7]
@@ -192,7 +175,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16_44:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %impl.elem0.loc16_56: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc16_56: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc16_56.1: <bound method> = bound_method %int_4, %impl.elem0.loc16_56 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f0c]
 // CHECK:STDOUT:   %specific_fn.loc16_56: <specific function> = specific_function %impl.elem0.loc16_56, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_56.2: <bound method> = bound_method %int_4, %specific_fn.loc16_56 [concrete = constants.%bound_method.6d7]
@@ -207,7 +190,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc16_10:
 // CHECK:STDOUT:   %.loc16_10: %i32 = block_arg !if.expr.result.loc16_10
-// CHECK:STDOUT:   %impl.elem0.loc16_10: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %impl.elem0.loc16_10: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc16_10.1: <bound method> = bound_method %.loc16_10, %impl.elem0.loc16_10
 // CHECK:STDOUT:   %specific_fn.loc16_10: <specific function> = specific_function %impl.elem0.loc16_10, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_10.2: <bound method> = bound_method %.loc16_10, %specific_fn.loc16_10

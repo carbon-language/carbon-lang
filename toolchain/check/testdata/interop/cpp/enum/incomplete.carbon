@@ -46,15 +46,15 @@ import Cpp library "declaration.h";
 fn MyF() {
   // TODO: It's a bit surprising to refer to this type as a class, even though
   // we model it as a class in Carbon. Consider customizing the diagnostic.
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:10: error: binding pattern has incomplete type `UnsizedEnum` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var e: Cpp.UnsizedEnum;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:17: error: binding pattern has incomplete type `UnsizedEnum` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var unused e: Cpp.UnsizedEnum;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./declaration.h:4:6: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: enum UnsizedEnum;
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  var e: Cpp.UnsizedEnum;
+  var unused e: Cpp.UnsizedEnum;
 }
 
 // CHECK:STDOUT: --- import_declaration.carbon

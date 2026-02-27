@@ -93,7 +93,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %ptr.85f: type = ptr_type %str.ee0 [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk: %Consume__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.a70: form = init_form %str.ee0, call_param0 [concrete]
+// CHECK:STDOUT:   %.2ff: Core.Form = init_form %str.ee0, call_param0 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Produce.cpp_overload_set.type: type = cpp_overload_set_type @Produce.cpp_overload_set [concrete]
@@ -128,7 +128,8 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_11.2: form = init_form constants.%str.ee0, call_param0 [concrete = constants.%.a70]
+// CHECK:STDOUT:     %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
+// CHECK:STDOUT:     %.loc13_11.2: Core.Form = init_form %str, call_param0 [concrete = constants.%.2ff]
 // CHECK:STDOUT:     %return.param: ref %str.ee0 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %str.ee0 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -164,9 +165,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %str: type = class_type @String [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.650: form = init_form bool, call_param2 [concrete]
+// CHECK:STDOUT:   %.d29: Core.Form = init_form bool, call_param2 [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %StarstWith.type: type = fn_type @StarstWith [concrete]
 // CHECK:STDOUT:   %StarstWith: %StarstWith.type = struct_value () [concrete]
@@ -202,13 +201,13 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.2: type = converted %Bool.call, %.loc7_34.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc7_34.3: form = init_form %.loc7_34.2, call_param2 [concrete = constants.%.650]
+// CHECK:STDOUT:     %.loc7_34.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1, call_param2 [concrete = constants.%.d29]
 // CHECK:STDOUT:     %a.param: %str = value_param call_param0
+// CHECK:STDOUT:     %str.loc7_18: type = type_literal constants.%str [concrete = constants.%str]
 // CHECK:STDOUT:     %a: %str = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %str = value_param call_param1
+// CHECK:STDOUT:     %str.loc7_26: type = type_literal constants.%str [concrete = constants.%str]
 // CHECK:STDOUT:     %b: %str = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param

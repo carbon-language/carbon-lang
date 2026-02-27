@@ -54,7 +54,7 @@ fn G(p: const (const C)**) -> C** {
   // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -66,8 +66,8 @@ library "[[@TEST_NAME]]";
 
 class X {}
 
-fn TakeValue(x: X) {}
-fn TakeConstValue(x: const X) {}
+fn TakeValue(unused x: X) {}
+fn TakeConstValue(unused x: const X) {}
 
 fn PassConstValueToValue(a: const X) {
   TakeValue(a);
@@ -94,7 +94,7 @@ class X {}
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:40: error: cannot copy value of type `X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR:                                        ^~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR:                                        ^~~~~~~
 // CHECK:STDERR:
@@ -102,7 +102,7 @@ var init_non_const_from_non_const: X = {} as X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ var init_non_const_from_const: X = ({} as X) as const X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `const X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -118,7 +118,7 @@ var init_const_from_non_const: const X = {} as X;
 // CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:38: error: cannot copy value of type `const X` [CopyOfUncopyableType]
 // CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
 // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
 // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -146,7 +146,7 @@ fn PassConstReferenceToReference(p: const X*) {
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
   // CHECK:STDERR:   p->(X.TakeSelf)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   p->(X.TakeSelf)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
@@ -164,11 +164,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.c45: type = ptr_type %const.0e5 [concrete]
 // CHECK:STDOUT:   %ptr.728: type = ptr_type %ptr.c45 [concrete]
 // CHECK:STDOUT:   %pattern_type.559: type = pattern_type %ptr.728 [concrete]
-// CHECK:STDOUT:   %.c2e: form = init_form %ptr.728, call_param1 [concrete]
+// CHECK:STDOUT:   %.2b6: Core.Form = init_form %ptr.728, call_param1 [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.type.5eb: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%T.035) [symbolic]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.cc6: %const.as.Copy.impl.Op.type.5eb = struct_value () [symbolic]
@@ -179,12 +178,13 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f8c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f64: %ptr.as.Copy.impl.Op.type.f8c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.d1d: %Copy.type = facet_value %ptr.728, (%Copy.impl_witness.795) [concrete]
-// CHECK:STDOUT:   %.de7: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.d1d [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b3a: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.d1d) [concrete]
+// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b3a, %Copy.facet.d1d [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.6a7: <specific function> = specific_function %ptr.as.Copy.impl.Op.f64, @ptr.as.Copy.impl.Op(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %const.8ce: type = const_type %ptr.31e [concrete]
 // CHECK:STDOUT:   %pattern_type.665: type = pattern_type %const.8ce [concrete]
-// CHECK:STDOUT:   %.395: form = init_form %const.8ce, call_param1 [concrete]
+// CHECK:STDOUT:   %.8cf: Core.Form = init_form %const.8ce, call_param1 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.2c7: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%C) [concrete]
@@ -193,7 +193,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.type.368: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.a7f) [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.c19: %const.as.Copy.impl.Op.type.368 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.5cc: %Copy.type = facet_value %const.8ce, (%Copy.impl_witness.e93) [concrete]
-// CHECK:STDOUT:   %.62c: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.5cc [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b95: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.5cc) [concrete]
+// CHECK:STDOUT:   %.21b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b95, %Copy.facet.5cc [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.c19, @const.as.Copy.impl.Op(%Copy.facet.a7f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,7 +216,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:     %const.loc6_23: type = const_type %C.ref.loc6_29 [concrete = constants.%const.0e5]
 // CHECK:STDOUT:     %ptr.loc6_30: type = ptr_type %const.loc6_23 [concrete = constants.%ptr.c45]
 // CHECK:STDOUT:     %ptr.loc6_31: type = ptr_type %ptr.loc6_30 [concrete = constants.%ptr.728]
-// CHECK:STDOUT:     %.loc6_31: form = init_form %ptr.loc6_31, call_param1 [concrete = constants.%.c2e]
+// CHECK:STDOUT:     %.loc6_31: Core.Form = init_form %ptr.loc6_31, call_param1 [concrete = constants.%.2b6]
 // CHECK:STDOUT:     %p.param: %ptr.728 = value_param call_param0
 // CHECK:STDOUT:     %.loc6_17: type = splice_block %ptr.loc6_17 [concrete = constants.%ptr.728] {
 // CHECK:STDOUT:       %C.ref.loc6_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -236,7 +237,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:     %C.ref.loc10_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10_32: type = ptr_type %C.ref.loc10_31 [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:     %const.loc10_24: type = const_type %ptr.loc10_32 [concrete = constants.%const.8ce]
-// CHECK:STDOUT:     %.loc10_24: form = init_form %const.loc10_24, call_param1 [concrete = constants.%.395]
+// CHECK:STDOUT:     %.loc10_24: Core.Form = init_form %const.loc10_24, call_param1 [concrete = constants.%.8cf]
 // CHECK:STDOUT:     %p.param: %const.8ce = value_param call_param0
 // CHECK:STDOUT:     %.loc10_9: type = splice_block %const.loc10_9 [concrete = constants.%const.8ce] {
 // CHECK:STDOUT:       %C.ref.loc10_16: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -252,7 +253,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @A(%p.param: %ptr.728) -> out %return.param: %ptr.728 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.728 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.de7 = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]
+// CHECK:STDOUT:   %impl.elem0: %.53f = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.c45) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.6a7]
 // CHECK:STDOUT:   %bound_method.loc7_10.2: <bound method> = bound_method %p.ref, %specific_fn
@@ -263,7 +264,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @B(%p.param: %const.8ce) -> out %return.param: %const.8ce {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.8ce = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.62c = impl_witness_access constants.%Copy.impl_witness.e93, element0 [concrete = constants.%const.as.Copy.impl.Op.c19]
+// CHECK:STDOUT:   %impl.elem0: %.21b = impl_witness_access constants.%Copy.impl_witness.e93, element0 [concrete = constants.%const.as.Copy.impl.Op.c19]
 // CHECK:STDOUT:   %bound_method.loc11_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.a7f) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_10.2: <bound method> = bound_method %p.ref, %specific_fn
@@ -279,11 +280,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.c45: type = ptr_type %const.0e5 [concrete]
 // CHECK:STDOUT:   %ptr.728: type = ptr_type %ptr.c45 [concrete]
 // CHECK:STDOUT:   %pattern_type.559: type = pattern_type %ptr.728 [concrete]
-// CHECK:STDOUT:   %.c2e: form = init_form %ptr.728, call_param1 [concrete]
+// CHECK:STDOUT:   %.2b6: Core.Form = init_form %ptr.728, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
@@ -291,7 +291,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f8c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.c45) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f64: %ptr.as.Copy.impl.Op.type.f8c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.728, (%Copy.impl_witness.795) [concrete]
-// CHECK:STDOUT:   %.de7: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b3a: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.53f: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b3a, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.f64, @ptr.as.Copy.impl.Op(%ptr.c45) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,7 +313,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:     %const.loc11_23: type = const_type %const.loc11_30 [concrete = constants.%const.0e5]
 // CHECK:STDOUT:     %ptr.loc11_38: type = ptr_type %const.loc11_23 [concrete = constants.%ptr.c45]
 // CHECK:STDOUT:     %ptr.loc11_39: type = ptr_type %ptr.loc11_38 [concrete = constants.%ptr.728]
-// CHECK:STDOUT:     %.loc11_39: form = init_form %ptr.loc11_39, call_param1 [concrete = constants.%.c2e]
+// CHECK:STDOUT:     %.loc11_39: Core.Form = init_form %ptr.loc11_39, call_param1 [concrete = constants.%.2b6]
 // CHECK:STDOUT:     %p.param: %ptr.728 = value_param call_param0
 // CHECK:STDOUT:     %.loc11_17: type = splice_block %ptr.loc11_17 [concrete = constants.%ptr.728] {
 // CHECK:STDOUT:       %C.ref.loc11_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -329,7 +330,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @F(%p.param: %ptr.728) -> out %return.param: %ptr.728 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.728 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.de7 = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]
+// CHECK:STDOUT:   %impl.elem0: %.53f = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]
 // CHECK:STDOUT:   %bound_method.loc12_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.c45) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_10.2: <bound method> = bound_method %p.ref, %specific_fn

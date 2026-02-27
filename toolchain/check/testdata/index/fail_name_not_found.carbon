@@ -13,11 +13,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_name_not_found.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+4]]:16: error: name `a` not found [NameNotFound]
-  // CHECK:STDERR:   var b: i32 = a[0];
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+4]]:23: error: name `a` not found [NameNotFound]
+  // CHECK:STDERR:   var unused b: i32 = a[0];
+  // CHECK:STDERR:                       ^
   // CHECK:STDERR:
-  var b: i32 = a[0];
+  var unused b: i32 = a[0];
 }
 
 // CHECK:STDOUT: --- fail_name_not_found.carbon
@@ -68,15 +68,12 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign %b.var, <error>
-// CHECK:STDOUT:   %.loc20: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %b.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%b.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

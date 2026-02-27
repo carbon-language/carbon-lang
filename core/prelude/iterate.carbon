@@ -20,7 +20,7 @@ interface Iterate {
 impl forall [T:! Copy & Destroy, N:! IntLiteral()]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
-  fn NewCursor[self: Self]() -> i32 { return 0; }
+  fn NewCursor[unused self: Self]() -> i32 { return 0; }
   fn Next[self: Self](cursor: i32*) -> Optional(T) {
     if (*cursor < N) {
       ++*cursor;

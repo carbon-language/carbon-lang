@@ -82,12 +82,12 @@ var test_i1: i1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_i15: i15;
-// CHECK:STDERR: min_prelude/parts/int.carbon:11:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
-// CHECK:STDERR:   adapt MakeInt(N);
-// CHECK:STDERR:         ^~~~~~~~~~
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `i1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: min_prelude/parts/int.carbon:11:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR:   adapt MakeInt(N);
+// CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:
 var test_i1000000000: i1000000000;
 // TODO: This diagnostic is not very good.
@@ -119,12 +119,12 @@ var test_u1: u1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_u15: u15;
-// CHECK:STDERR: min_prelude/parts/uint.carbon:11:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
-// CHECK:STDERR:   adapt MakeUInt(N);
-// CHECK:STDERR:         ^~~~~~~~~~~
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `u1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: min_prelude/parts/uint.carbon:11:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR:   adapt MakeUInt(N);
+// CHECK:STDERR:         ^~~~~~~~~~~
 // CHECK:STDERR:
 var test_u1000000000: u1000000000;
 // TODO: This diagnostic is not very good.
@@ -146,53 +146,53 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_f0: f0;
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 1 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: note: in `f1` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:14: error: binding pattern has incomplete type `f1` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1: f1;
 // CHECK:STDERR:              ^~
-// CHECK:STDERR:
-var test_f1: f1;
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 15 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:15: note: in `f15` used here [ResolvingSpecificHere]
+// CHECK:STDERR:
+var test_f1: f1;
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:15: error: binding pattern has incomplete type `f15` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f15: f15;
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 15 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
 var test_f15: f15;
 // TODO: Decide if we want to expose the x87 80-bit floating point type this way.
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 80 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:15: note: in `f80` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:15: error: binding pattern has incomplete type `f80` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f80: f80;
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 80 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
 var test_f80: f80;
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 100 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:16: note: in `f100` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:16: error: binding pattern has incomplete type `f100` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f100: f100;
 // CHECK:STDERR:                ^~~~
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 100 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
 var test_f100: f100;
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 1000000000 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:23: note: in `f1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `f1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1000000000: f1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR:
-var test_f1000000000: f1000000000;
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: error: unsupported floating-point bit width 1000000000000 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1000000000 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:26: note: in `f1000000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR:
+var test_f1000000000: f1000000000;
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:26: error: binding pattern has incomplete type `f1000000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1000000000000: f1000000000000;
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~
+// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1000000000000 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
 var test_f1000000000000: f1000000000000;
 
@@ -203,7 +203,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+7]]:1: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR: ^~~~~~~~~~~
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+4]]:1: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+4]]:1: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -218,7 +218,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
 // CHECK:STDERR: var test_i32: i32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_i32: i32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -227,7 +227,7 @@ var test_i32: i32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `f32` [ConversionFailure]
 // CHECK:STDERR: var test_f32: f32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_f32: f32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -236,7 +236,7 @@ var test_f32: f32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `u32` [ConversionFailure]
 // CHECK:STDERR: var test_u32: u32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_u32: u32 = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -245,7 +245,7 @@ var test_u32: u32 = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `bool` [ConversionFailure]
 // CHECK:STDERR: var test_bool: bool = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_bool: bool = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -254,7 +254,7 @@ var test_bool: bool = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `char` [ConversionFailure]
 // CHECK:STDERR: var test_char: char = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_char: char = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -263,7 +263,7 @@ var test_char: char = ();
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `str` [ConversionFailure]
 // CHECK:STDERR: var test_str: str = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: var test_str: str = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -286,49 +286,34 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.95b: type = pattern_type %i64 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i8.patt: %pattern_type.e3f = ref_binding_pattern test_i8 [concrete]
 // CHECK:STDOUT:     %test_i8.var_patt: %pattern_type.e3f = var_pattern %test_i8.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var %test_i8.var_patt [concrete]
-// CHECK:STDOUT:   %.loc4: type = splice_block %i8 [concrete = constants.%i8] {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %i8: type = class_type @Int, @Int(constants.%int_8) [concrete = constants.%i8]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i8: type = type_literal constants.%i8 [concrete = constants.%i8]
 // CHECK:STDOUT:   %test_i8: ref %i8 = ref_binding test_i8, %test_i8.var [concrete = %test_i8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i16.patt: %pattern_type.2f8 = ref_binding_pattern test_i16 [concrete]
 // CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.2f8 = var_pattern %test_i16.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var %test_i16.var_patt [concrete]
-// CHECK:STDOUT:   %.loc5: type = splice_block %i16 [concrete = constants.%i16] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %test_i16: ref %i16 = ref_binding test_i16, %test_i16.var [concrete = %test_i16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i32.patt: %pattern_type.7ce = ref_binding_pattern test_i32 [concrete]
 // CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.7ce = var_pattern %test_i32.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var %test_i32.var_patt [concrete]
-// CHECK:STDOUT:   %.loc6: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %test_i32: ref %i32 = ref_binding test_i32, %test_i32.var [concrete = %test_i32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i64.patt: %pattern_type.95b = ref_binding_pattern test_i64 [concrete]
 // CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.95b = var_pattern %test_i64.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var %test_i64.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7: type = splice_block %i64 [concrete = constants.%i64] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %test_i64: ref %i64 = ref_binding test_i64, %test_i64.var [concrete = %test_i64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,49 +334,34 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.157: type = pattern_type %u64 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u8.patt: %pattern_type.8f3 = ref_binding_pattern test_u8 [concrete]
 // CHECK:STDOUT:     %test_u8.var_patt: %pattern_type.8f3 = var_pattern %test_u8.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var %test_u8.var_patt [concrete]
-// CHECK:STDOUT:   %.loc4: type = splice_block %u8 [concrete = constants.%u8] {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:   %test_u8: ref %u8 = ref_binding test_u8, %test_u8.var [concrete = %test_u8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u16.patt: %pattern_type.9db = ref_binding_pattern test_u16 [concrete]
 // CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.9db = var_pattern %test_u16.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var %test_u16.var_patt [concrete]
-// CHECK:STDOUT:   %.loc5: type = splice_block %u16 [concrete = constants.%u16] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [concrete = constants.%u16]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u16: type = type_literal constants.%u16 [concrete = constants.%u16]
 // CHECK:STDOUT:   %test_u16: ref %u16 = ref_binding test_u16, %test_u16.var [concrete = %test_u16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u32.patt: %pattern_type.4a9 = ref_binding_pattern test_u32 [concrete]
 // CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.4a9 = var_pattern %test_u32.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u32.var: ref %u32 = var %test_u32.var_patt [concrete]
-// CHECK:STDOUT:   %.loc6: type = splice_block %u32 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %test_u32: ref %u32 = ref_binding test_u32, %test_u32.var [concrete = %test_u32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u64.patt: %pattern_type.157 = ref_binding_pattern test_u64 [concrete]
 // CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.157 = var_pattern %test_u64.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var %test_u64.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7: type = splice_block %u64 [concrete = constants.%u64] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
 // CHECK:STDOUT:   %test_u64: ref %u64 = ref_binding test_u64, %test_u64.var [concrete = %test_u64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -412,49 +382,34 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.22c: type = pattern_type %f128.b8c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f16.patt: %pattern_type.cd1 = ref_binding_pattern test_f16 [concrete]
 // CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.cd1 = var_pattern %test_f16.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f16.var: ref %f16.a6a = var %test_f16.var_patt [concrete]
-// CHECK:STDOUT:   %.loc4: type = splice_block %f16 [concrete = constants.%f16.a6a] {
-// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
-// CHECK:STDOUT:     %f16: type = class_type @Float, @Float(constants.%int_16) [concrete = constants.%f16.a6a]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f16: type = type_literal constants.%f16.a6a [concrete = constants.%f16.a6a]
 // CHECK:STDOUT:   %test_f16: ref %f16.a6a = ref_binding test_f16, %test_f16.var [concrete = %test_f16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f32.patt: %pattern_type.201 = ref_binding_pattern test_f32 [concrete]
 // CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.201 = var_pattern %test_f32.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f32.var: ref %f32.97e = var %test_f32.var_patt [concrete]
-// CHECK:STDOUT:   %.loc5: type = splice_block %f32 [concrete = constants.%f32.97e] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %f32: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   %test_f32: ref %f32.97e = ref_binding test_f32, %test_f32.var [concrete = %test_f32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f64.patt: %pattern_type.0ae = ref_binding_pattern test_f64 [concrete]
 // CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.0ae = var_pattern %test_f64.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref %f64.d77 = var %test_f64.var_patt [concrete]
-// CHECK:STDOUT:   %.loc6: type = splice_block %f64 [concrete = constants.%f64.d77] {
-// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %test_f64: ref %f64.d77 = ref_binding test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f128.patt: %pattern_type.22c = ref_binding_pattern test_f128 [concrete]
 // CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.22c = var_pattern %test_f128.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f128.var: ref %f128.b8c = var %test_f128.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7: type = splice_block %f128 [concrete = constants.%f128.b8c] {
-// CHECK:STDOUT:     %int_128: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
-// CHECK:STDOUT:     %f128: type = class_type @Float, @Float(constants.%int_128) [concrete = constants.%f128.b8c]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f128: type = type_literal constants.%f128.b8c [concrete = constants.%f128.b8c]
 // CHECK:STDOUT:   %test_f128: ref %f128.b8c = ref_binding test_f128, %test_f128.var [concrete = %test_f128.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -465,10 +420,10 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.b09: type = pattern_type %char [concrete]
 // CHECK:STDOUT:   %.b9b: Core.CharLiteral = char_value U+0063 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d99: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.f57: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%char) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d99 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %.93b: type = fn_type_with_self_type %ImplicitAs.Convert.type.f57, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.95b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.734: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.95b, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.b9b, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
@@ -484,7 +439,8 @@ var test_str: str = ();
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_char.patt: %pattern_type.b09 = value_binding_pattern test_char [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0: %.93b = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
+// CHECK:STDOUT:   %impl.elem0: %.734 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
@@ -513,13 +469,11 @@ var test_str: str = ();
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.c1c, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.461 = value_binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %test_str: %str.ee0 = value_binding test_str, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,10 +492,10 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.b47: <witness> = impl_witness imports.%Copy.impl_witness_table.b1c [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.b47) [concrete]
-// CHECK:STDOUT:   %.436: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.a4f: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.070: type = fn_type_with_self_type %Copy.WithSelf.Op.type.a4f, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %i32, %type.as.Copy.impl.Op [concrete]
@@ -558,14 +512,14 @@ var test_str: str = ();
 // CHECK:STDOUT:     %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var %test_type.var_patt [concrete]
+// CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %test_type: ref type = ref_binding test_type, %test_type.var [concrete = %test_type.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.436 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0: %.070 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i32, %impl.elem0 [concrete = constants.%type.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%i32) [concrete = constants.%i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %type.as.Copy.impl.Op.call

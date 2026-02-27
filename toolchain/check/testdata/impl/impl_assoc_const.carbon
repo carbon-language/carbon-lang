@@ -379,11 +379,11 @@ impl C as Z where .Z1 = C {}
 // Implied constraint: .Self impls Y. Should be verified against the type of the
 // facet value replacing T when calling F.
 //
-// CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:24: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(T:! Z where .Z1 = .Self) {}
-// CHECK:STDERR:                        ^~~~~
+// CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:31: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(unused T:! Z where .Z1 = .Self) {}
+// CHECK:STDERR:                               ^~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .Z1 = .Self) {}
+fn F(unused T:! Z where .Z1 = .Self) {}
 fn G() {
   F(C);
 
@@ -402,7 +402,7 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [concrete]
 // CHECK:STDOUT:   %L.assoc_type: type = assoc_entity_type @L [concrete]
-// CHECK:STDOUT:   %assoc0: %L.assoc_type = assoc_entity element0, @L.%W [concrete]
+// CHECK:STDOUT:   %assoc0: %L.assoc_type = assoc_entity element0, @L.WithSelf.%W [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.Self: %L.type = symbolic_binding .Self [symbolic_self]
@@ -502,9 +502,9 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type @M [concrete]
-// CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.%X [concrete]
-// CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.%Y [concrete]
-// CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.%Z [concrete]
+// CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.WithSelf.%X [concrete]
+// CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.WithSelf.%Y [concrete]
+// CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.WithSelf.%Z [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.Self: %M.type = symbolic_binding .Self [symbolic_self]

@@ -115,7 +115,7 @@ fn ConstructorExplicit(s: Cpp.Source) {
   // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+7]]:42: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
   // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
   // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
   // CHECK:STDERR:                                          ^
   // CHECK:STDERR:
@@ -239,8 +239,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Dest) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source2 = name_ref s, %s
@@ -259,8 +257,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: %Dest2) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
@@ -278,8 +274,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConstructor.cpp_destructor.call: init %empty_tuple.type = call %ExplicitConstructor.cpp_destructor.bound(%.loc20_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc20(%self.param: %ExplicitConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
@@ -404,8 +398,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %ConditionallyExplicit.c52b91.1) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
@@ -423,8 +415,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.cpp_destructor.call: init %empty_tuple.type = call %ConditionallyExplicit.cpp_destructor.bound(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc15(%self.param: %ConditionallyExplicit.c52b91.2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -461,8 +451,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call.loc21: init %empty_tuple.type = call %Dest.cpp_destructor.bound.loc21(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.c52b91.1) {
 // CHECK:STDOUT: !entry:
@@ -567,6 +555,4 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Dest.5e7) = "no_op";
 // CHECK:STDOUT:

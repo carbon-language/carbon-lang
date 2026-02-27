@@ -103,6 +103,7 @@ cc_library(
         ":context",
         ":dump",
         ":node_kind",
+        ":precedence",
         ":state",
         ":tree",
         "//common:check",

@@ -117,34 +117,76 @@ auto HandleParseNode(Context& context,
   CARBON_CHECK(!interface_info.has_definition_started(),
                "Can't merge with defined interfaces.");
   interface_info.definition_id = decl_inst_id;
-  interface_info.scope_id = context.name_scopes().Add(
+  interface_info.scope_without_self_id = context.name_scopes().Add(
       decl_inst_id, SemIR::NameId::None, interface_info.parent_scope_id);
+
+  // Start the definition of interface-without-self.
+  StartGenericDefinition(context, interface_info.generic_id);
+
+  context.inst_block_stack().Push();
+
+  // Enter the interface-without-self scope, which is used for the Self
+  // instruction, since it needs to reference the interface (without-self)
+  // generic. Self can't reference the interface-with-self generic since it's a
+  // parameter to the generic.
+  context.scope_stack().PushForEntity(
+      decl_inst_id, interface_info.scope_without_self_id,
+      context.generics().GetSelfSpecific(interface_info.generic_id));
+
+  // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
+  // type is the interface, excluding any other interfaces mentioned by
+  // `require` declarations.
+  //
+  // This is an instruction in the interface-without-self so that we can apply a
+  // SpecificInterface to it, and get the inner `Self` as modified by any
+  // enclosing specific.
+  SemIR::TypeId self_type_id = GetInterfaceType(
+      context, interface_id,
+      context.generics().GetSelfSpecific(interface_info.generic_id));
+  interface_info.self_param_id = AddSelfSymbolicBindingToScope(
+      context, node_id, self_type_id, interface_info.scope_without_self_id,
+      /*is_template=*/false);
+
+  // Start the declaration of interface-with-self.
+  StartGenericDecl(context);
+
+  // Push `Self` as a parameter of the interface-with-self.
+  context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
+
+  // Add the interface-with-self declaration and build the generic for it. This
+  // captures the `interface_info.self_param_id` as a parameter of the generic.
+  auto interface_with_self_decl =
+      SemIR::InterfaceWithSelfDecl{.interface_id = interface_id};
+  auto decl_with_self_inst_id =
+      AddPlaceholderInst(context, node_id, interface_with_self_decl);
+  auto generic_with_self_id = BuildGenericDecl(context, decl_with_self_inst_id);
+  interface_info.generic_with_self_id = generic_with_self_id;
+  ReplaceInstBeforeConstantUse(context, decl_with_self_inst_id,
+                               interface_with_self_decl);
+
+  interface_info.scope_with_self_id =
+      context.name_scopes().Add(decl_with_self_inst_id, SemIR::NameId::None,
+                                interface_info.scope_without_self_id);
+  // Set on the name scope that `M` is replaced by `Self.M`.
   context.name_scopes()
-      .Get(interface_info.scope_id)
+      .Get(interface_info.scope_with_self_id)
       .set_is_interface_definition();
 
-  auto self_specific_id =
-      context.generics().GetSelfSpecific(interface_info.generic_id);
+  // Start the definition of interface-with-self.
+  StartGenericDefinition(context, interface_info.generic_with_self_id);
 
-  StartGenericDefinition(context, interface_info.generic_id);
+  // Enter a scope for the interace-with-self.
+  context.scope_stack().PushForEntity(
+      decl_with_self_inst_id, interface_info.scope_with_self_id,
+      context.generics().GetSelfSpecific(interface_info.generic_with_self_id));
+
+  interface_info.body_block_without_self_id =
+      context.inst_block_stack().PeekOrAdd();
 
   context.inst_block_stack().Push();
   context.require_impls_stack().PushArray();
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
-
-  // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
-  // type is the interface, excluding any other interfaces mentioned by
-  // `require` declarations.
-  SemIR::TypeId self_type_id =
-      GetInterfaceType(context, interface_id, self_specific_id);
-  interface_info.self_param_id =
-      AddSelfGenericParameter(context, node_id, self_type_id,
-                              interface_info.scope_id, /*is_template=*/false);
-
-  // Enter the interface scope.
-  context.scope_stack().PushForEntity(decl_inst_id, interface_info.scope_id,
-                                      self_specific_id);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:
@@ -155,7 +197,8 @@ auto HandleParseNode(Context& context,
   //
   // We may need to track a list of instruction blocks here, as we do for a
   // function.
-  interface_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  interface_info.body_block_with_self_id =
+      context.inst_block_stack().PeekOrAdd();
 
   context.node_stack().Push(node_id, interface_id);
   return true;
@@ -165,6 +208,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
+  // Pop the body_block_with_self.
   context.inst_block_stack().Pop();
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
@@ -179,6 +223,13 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     interface_info.associated_entities_id = associated_entities_id;
   }
 
+  // Finish the definition of interface-with-self.
+  FinishGenericDefinition(context, interface_info.generic_with_self_id);
+
+  // Pop the body_block_without_self.
+  context.inst_block_stack().Pop();
+
+  // Finish the definition of interface-without-self.
   FinishGenericDefinition(context, interface_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.

@@ -126,13 +126,11 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.3b1, %int_5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %x: %str.ee0 = value_binding x, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,13 +153,11 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %str.294: %ptr.3e8 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.ee0 [concrete = constants.%str.ee0]
 // CHECK:STDOUT:   %x: %str.ee0 = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

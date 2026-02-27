@@ -125,9 +125,6 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %TwoTypes [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
@@ -148,9 +145,6 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   %pattern_type.9db866.3: type = pattern_type %TypePack.49edc4.3 [concrete]
 // CHECK:STDOUT:   %TypePack.49edc4.4: type = class_type @TypePack.4 [concrete]
 // CHECK:STDOUT:   %pattern_type.9db866.4: type = pattern_type %TypePack.49edc4.4 [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

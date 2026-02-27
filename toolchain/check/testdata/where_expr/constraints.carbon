@@ -84,7 +84,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -97,7 +97,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -180,7 +180,7 @@ import library "error_in_constraint";
 
 fn F() {
 //@dump-sem-ir-begin
-  let x: () = WithError(());
+  let unused x: () = WithError(());
 //@dump-sem-ir-end
 }
 
@@ -198,9 +198,6 @@ fn F() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
@@ -210,11 +207,12 @@ fn F() {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.1dc]
+// CHECK:STDOUT:       %.loc7_30: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc7_18: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc7_12.2: type = where_expr %.Self.2 [concrete = constants.%I.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
-// CHECK:STDOUT:         requirement_impls %.loc7_18, type
+// CHECK:STDOUT:         requirement_impls %.loc7_18, %.loc7_30
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_6.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
@@ -269,9 +267,6 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
@@ -305,7 +300,7 @@ fn F() {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%Member [concrete]
 // CHECK:STDOUT:   %.Self.1dc: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -329,9 +324,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.409: type = pattern_type %I_where.type.ac1 [concrete]
 // CHECK:STDOUT:   %And.type: type = fn_type @And [concrete]
 // CHECK:STDOUT:   %And: %And.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -433,7 +425,7 @@ fn F() {
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
 // CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
-// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%Associated [concrete]
+// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%Associated [concrete]
 // CHECK:STDOUT:   %.Self.2ca: %K.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.2ca [symbolic_self]
 // CHECK:STDOUT:   %K.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2ca, @K [symbolic_self]
@@ -444,9 +436,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %K_where.type [concrete]
 // CHECK:STDOUT:   %AssociatedTypeImpls.type: type = fn_type @AssociatedTypeImpls [concrete]
 // CHECK:STDOUT:   %AssociatedTypeImpls: %AssociatedTypeImpls.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -492,14 +481,13 @@ fn F() {
 // CHECK:STDOUT:   %WithError: %WithError.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %WithError.decl: %WithError.type = fn_decl @WithError [concrete = constants.%WithError] {
 // CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.2 [concrete = <error>] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.loc9_18: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.16f]
 // CHECK:STDOUT:       %I.ref: <error> = name_ref I, <error> [concrete = <error>]
@@ -538,10 +526,10 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithError.ref: %WithError.type = name_ref WithError, imports.%Main.WithError [concrete = constants.%WithError]
-// CHECK:STDOUT:   %.loc8_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_33: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_18.1: type = splice_block %.loc8_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_18.3: type = converted %.loc8_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>

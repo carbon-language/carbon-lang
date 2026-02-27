@@ -27,6 +27,12 @@ auto PrintTo(Level level, std::ostream* os) -> void {
     case Level::Note:
       *os << "Note";
       break;
+    case Level::SoftContext:
+      *os << "SoftContext";
+      break;
+    case Level::Context:
+      *os << "Context";
+      break;
     case Level::Warning:
       *os << "Warning";
       break;

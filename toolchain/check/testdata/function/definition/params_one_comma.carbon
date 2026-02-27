@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/params_one_comma.carbon
 
-fn Foo(a: i32,) {}
+fn Foo(unused a: i32,) {}
 
 // CHECK:STDOUT: --- params_one_comma.carbon
 // CHECK:STDOUT:
@@ -46,10 +46,7 @@ fn Foo(a: i32,) {}
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

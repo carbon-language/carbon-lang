@@ -29,8 +29,15 @@ library "[[@TEST_NAME]]";
 
 fn G() {
   var a: i32 = 0;
-  let n: i32 = a;
-  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  let unused n: i32 = a;
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+11]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   n = 1;
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE-5]]:14: error: variable `n` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR:   let unused n: i32 = a;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:   n = 1;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -48,9 +55,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.b5a: type = pattern_type %tuple.type.189 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
@@ -59,12 +63,9 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.189 = name_ref v, %v
 // CHECK:STDOUT:   %.loc8_24.1: type = splice_block %.loc8_24.3 [concrete = constants.%tuple.type.189] {
-// CHECK:STDOUT:     %int_32.loc8_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc8_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc8_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc8_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_11: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21) [concrete = constants.%tuple.e64]
 // CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:   }

@@ -43,7 +43,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6 = struct_value () [symbolic]
@@ -51,7 +50,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e0d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e8c = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.6bc) [concrete]
-// CHECK:STDOUT:   %.863: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b37: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.b37, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.38b: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -95,10 +95,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
-// CHECK:STDOUT:       %int_32.loc15_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc15_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.loc15_14: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.loc15_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %struct_type.a.b.501 = value_binding s, %s.param
@@ -108,11 +106,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc17_12.1: type = splice_block %.loc17_12.3 [concrete = bool] {
-// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc17_12.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:       %.loc17_12.3: type = converted %Bool.call, %.loc17_12.2 [concrete = bool]
-// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc17: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %cond: bool = value_binding cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -129,7 +123,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc18_46.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2) [concrete = constants.%struct.4aa]
-// CHECK:STDOUT:   %impl.elem0.loc18_46.1: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc18_46.1: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc18_46.1: <bound method> = bound_method %int_1, %impl.elem0.loc18_46.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc18_46.1: <specific function> = specific_function %impl.elem0.loc18_46.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_46.2: <bound method> = bound_method %int_1, %specific_fn.loc18_46.1 [concrete = constants.%bound_method.38b]
@@ -137,7 +131,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc18_46.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_46.3: ref %i32 = struct_access %a.var, element0
 // CHECK:STDOUT:   %.loc18_46.4: init %i32 to %.loc18_46.3 = in_place_init %.loc18_46.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %impl.elem0.loc18_46.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %impl.elem0.loc18_46.2: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc18_46.3: <bound method> = bound_method %int_2, %impl.elem0.loc18_46.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc18_46.2: <specific function> = specific_function %impl.elem0.loc18_46.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_46.4: <bound method> = bound_method %int_2, %specific_fn.loc18_46.2 [concrete = constants.%bound_method.646]
@@ -149,10 +143,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.501 = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign %a.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
-// CHECK:STDOUT:     %int_32.loc18_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_15: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = ref_binding a, %a.var
@@ -188,5 +180,5 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.a.b.501) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.a.b.501) = "no_op";
 // CHECK:STDOUT:

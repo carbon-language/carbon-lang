@@ -4,6 +4,7 @@
 
 #include <optional>
 
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -64,6 +65,7 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Let:
     case Lex::TokenKind::Library:
     case Lex::TokenKind::Namespace:
+    case Lex::TokenKind::Observe:
     // We intentionally don't handle Package here, because `package.` can be
     // used at the start of an expression, and it's not worth disambiguating it.
     case Lex::TokenKind::Var: {
@@ -156,7 +158,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
 auto HandleStatementForHeaderFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(state, NodeKind::ForHeader);
 
   context.PushState(StateKind::CodeBlock);
 }

@@ -46,6 +46,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %T: <error> = value_binding T, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,11 +73,13 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     %U.patt: <error> = value_binding_pattern U [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [concrete = constants.%type] {
+// CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc8_14: type = where_expr %.Self [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_base_facet_type type
-// CHECK:STDOUT:       requirement_impls %.Self.ref, type
+// CHECK:STDOUT:       requirement_impls %.Self.ref, %.loc8_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }

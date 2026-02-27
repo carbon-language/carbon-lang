@@ -112,7 +112,8 @@ struct FinishFunctionSignatureResult {
 };
 
 // Finishes signatures started by `StartFunctionSignature`.
-auto FinishFunctionSignature(Context& context) -> FinishFunctionSignatureResult;
+auto FinishFunctionSignature(Context& context, bool check_unused = true)
+    -> FinishFunctionSignatureResult;
 
 // Creates a function object for the given function declaration. The caller must
 // add the returned `decl_id` to a block (typically the current block or

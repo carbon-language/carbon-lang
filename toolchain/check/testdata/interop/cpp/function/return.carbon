@@ -70,7 +70,7 @@ auto ReturnNullPtr() -> nullptr_t;
 
 fn InitializeFromReturn() {
   //@dump-sem-ir-begin
-  var c: Cpp.nullptr_t = Cpp.ReturnNullPtr();
+  var unused c: Cpp.nullptr_t = Cpp.ReturnNullPtr();
   //@dump-sem-ir-end
 }
 
@@ -101,7 +101,7 @@ unsigned int ReturnU32();
 ''';
 
 fn Var() {
-  var my_u32: u32 = Cpp.ReturnU32();
+  var unused my_u32: u32 = Cpp.ReturnU32();
 }
 
 // CHECK:STDOUT: --- import_multiple.carbon
@@ -173,7 +173,7 @@ fn Var() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_from_thunk_param.carbon
 // CHECK:STDOUT:
@@ -211,15 +211,15 @@ fn Var() {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.f05 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Cpp.nullptr_t = var %c.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc11_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc11_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnNullPtr.ref: %ReturnNullPtr.cpp_overload_set.type = name_ref ReturnNullPtr, imports.%ReturnNullPtr.cpp_overload_set.value [concrete = constants.%ReturnNullPtr.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc11_3: ref %Cpp.nullptr_t = splice_block %c.var {}
 // CHECK:STDOUT:   %addr: %ptr.142 = addr_of %.loc11_3
 // CHECK:STDOUT:   %ReturnNullPtr__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnNullPtr__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc11_44: init %Cpp.nullptr_t to %.loc11_3 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
-// CHECK:STDOUT:   assign %c.var, %.loc11_44
-// CHECK:STDOUT:   %.loc11_13: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
-// CHECK:STDOUT:     %Cpp.ref.loc11_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc11_51: init %Cpp.nullptr_t to %.loc11_3 = mark_in_place_init %ReturnNullPtr__carbon_thunk.call
+// CHECK:STDOUT:   assign %c.var, %.loc11_51
+// CHECK:STDOUT:   %.loc11_20: type = splice_block %nullptr_t.ref [concrete = constants.%Cpp.nullptr_t] {
+// CHECK:STDOUT:     %Cpp.ref.loc11_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %nullptr_t.ref: type = name_ref nullptr_t, constants.%Cpp.nullptr_t [concrete = constants.%Cpp.nullptr_t]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = ref_binding c, %c.var
@@ -228,7 +228,7 @@ fn Var() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %Cpp.nullptr_t) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_from_thunk_param.carbon
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ fn Var() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %.98d: form = init_form %u8, call_param0 [concrete]
+// CHECK:STDOUT:   %.0c8: Core.Form = init_form %u8, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %u8 [concrete]
 // CHECK:STDOUT:   %GetU8.type: type = fn_type @GetU8 [concrete]
 // CHECK:STDOUT:   %GetU8: %GetU8.type = struct_value () [concrete]
@@ -269,7 +269,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:       %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
+// CHECK:STDOUT:       %u8.1: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
+// CHECK:STDOUT:       %u8.2: type = type_literal %u8.1 [concrete = constants.%u8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %return: %ptr = value_binding r#return, %return.param
 // CHECK:STDOUT:   }
@@ -289,9 +290,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.8f3 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8f3 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
-// CHECK:STDOUT:     %.loc8_15: form = init_form %u8, call_param0 [concrete = constants.%.98d]
+// CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
+// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8, call_param0 [concrete = constants.%.0c8]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -350,7 +350,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4a9 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:     %u32.1: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:     %u32.2: type = type_literal %u32.1 [concrete = constants.%u32]
 // CHECK:STDOUT:     %return.param: ref %u32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -381,10 +382,7 @@ fn Var() {
 // CHECK:STDOUT:   %ReturnU32.ref: %ReturnU32.cpp_overload_set.type = name_ref ReturnU32, imports.%ReturnU32.cpp_overload_set.value [concrete = constants.%ReturnU32.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU32.call: init %u32 = call imports.%ReturnU32.decl()
 // CHECK:STDOUT:   assign %my_u32.var, %ReturnU32.call
-// CHECK:STDOUT:   %.loc9: type = splice_block %u32 [concrete = constants.%u32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %my_u32: ref %u32 = ref_binding my_u32, %my_u32.var
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %my_u32.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%my_u32.var)
@@ -393,5 +391,5 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU32() -> out %return.param: %u32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %u32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %u32) = "no_op";
 // CHECK:STDOUT:

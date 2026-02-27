@@ -8,6 +8,7 @@
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/state.h"
 
 namespace Carbon::Parse {
 
@@ -130,6 +131,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
+  set(Lex::TokenKind::Observe, NodeKind::ObserveIntroducer,
+      StateKind::ObserveAfterIntroducer);
   set(Lex::TokenKind::Require, NodeKind::RequireIntroducer,
       StateKind::RequireAfterIntroducer);
   set_contextual(Lex::TokenKind::Let, RegularContext, NodeKind::LetIntroducer,
