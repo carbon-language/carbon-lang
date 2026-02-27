@@ -97,6 +97,22 @@ Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
 ''';
 let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
 
+// --- pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+template<const int* _Nonnull P> struct Struct {};
+static int i = 123;
+Struct<&i> MakeStruct() { return Struct<&i>(); }
+''';
+
+// CHECK:STDERR: pointer.carbon:[[@LINE+4]]:21: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
+// CHECK:STDERR:                     ^~~~~~
+// CHECK:STDERR:
+let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
+
 // --- valid.carbon
 
 library "[[@TEST_NAME]]";
