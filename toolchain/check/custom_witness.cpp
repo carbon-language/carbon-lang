@@ -98,7 +98,7 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
                                   SemIR::NameScopeId parent_scope_id)
     -> SemIR::InstId {
-  auto name_id = SemIR::NameId::ForIdentifier(context.identifiers().Add("Op"));
+  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
   auto [decl_id, function_id] =
       MakeGeneratedFunctionDecl(context, loc_id,
