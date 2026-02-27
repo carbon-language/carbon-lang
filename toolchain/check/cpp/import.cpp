@@ -63,6 +63,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -2310,6 +2311,27 @@ auto ImportClassDefinitionForClangDecl(Context& context,
                         enum_decl);
   }
   return true;
+}
+
+auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
+    -> clang::VarDecl* {
+  if (const auto& var_storage =
+          context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+    auto var_name_id = SemIR::GetFirstBindingNameFromPatternId(
+        context.sem_ir(), var_storage->pattern_id);
+    if (auto cpp_global_var_id = context.sem_ir().cpp_global_vars().Lookup(
+            {.entity_name_id = var_name_id});
+        cpp_global_var_id.has_value()) {
+      SemIR::ClangDeclId clang_decl_id = context.sem_ir()
+                                             .cpp_global_vars()
+                                             .Get(cpp_global_var_id)
+                                             .clang_decl_id;
+      return cast<clang::VarDecl>(
+          context.clang_decls().Get(clang_decl_id).key.decl);
+    }
+  }
+
+  return nullptr;
 }
 
 }  // namespace Carbon::Check

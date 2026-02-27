@@ -81,6 +81,12 @@ auto ImportClassDefinitionForClangDecl(Context& context,
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo*;
 
+// Maps from a `VarStorage` instruction to a `clang::VarDecl`. Returns
+// null if the instruction is not a `VarStorage`, or if its contents
+// cannot be mapped to a `clang::VarDecl`.
+auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
+    -> clang::VarDecl*;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_

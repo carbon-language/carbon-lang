@@ -16,7 +16,6 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -211,25 +210,7 @@ static auto ConvertArgToTemplateArg(
       } else if (param_type->isPointerType()) {
         if (auto addr_of =
                 context.insts().TryGetAs<SemIR::AddrOf>(const_inst_id)) {
-          const auto& var_storage =
-              context.insts().TryGetAs<SemIR::VarStorage>(addr_of->lvalue_id);
-          if (!var_storage) {
-            return std::nullopt;
-          }
-
-          auto var_name_id = SemIR::GetFirstBindingNameFromPatternId(
-              context.sem_ir(), var_storage->pattern_id);
-          if (auto cpp_global_var_id =
-                  context.sem_ir().cpp_global_vars().Lookup(
-                      {.entity_name_id = var_name_id});
-              cpp_global_var_id.has_value()) {
-            SemIR::ClangDeclId clang_decl_id = context.sem_ir()
-                                                   .cpp_global_vars()
-                                                   .Get(cpp_global_var_id)
-                                                   .clang_decl_id;
-            auto* var_decl = cast<clang::VarDecl>(
-                context.clang_decls().Get(clang_decl_id).key.decl);
-
+          if (auto* var_decl = GetAsClangVarDecl(context, addr_of->lvalue_id)) {
             clang::TemplateArgument template_arg(var_decl, param_type);
             return clang::TemplateArgumentLoc(template_arg, template_loc);
           }
