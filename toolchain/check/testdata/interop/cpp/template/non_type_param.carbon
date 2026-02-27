@@ -25,6 +25,8 @@ DependentNonType<int, 123> MakeDependentNonType123() {
   return DependentNonType<int, 123>();
 }
 
+static int StaticInt = 789;
+
 // --- valid_int_param.carbon
 
 library "[[@TEST_NAME]]";
@@ -129,16 +131,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-var n: i32;
-
 //@dump-sem-ir-begin
 var x: Cpp.DependentNonType(i32, 123) = Cpp.MakeDependentNonType123();
-
 // CHECK:STDERR: fail_todo_dependent.carbon:[[@LINE+4]]:35: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var y: Cpp.DependentNonType(i32*, &n);
-// CHECK:STDERR:                                   ^~
+// CHECK:STDERR: var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt);
+// CHECK:STDERR:                                   ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-var y: Cpp.DependentNonType(i32*, &n);
+var y: Cpp.DependentNonType(i32*, &Cpp.StaticInt);
 //@dump-sem-ir-end
 
 // --- fail_type_argument.carbon
@@ -195,6 +194,9 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DependentNonType.type: type = cpp_type_template_type DependentNonType [concrete]
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DependentNonType: type = class_type @DependentNonType [concrete]
 // CHECK:STDOUT:   %pattern_type.b95: type = pattern_type %DependentNonType [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.type: type = cpp_overload_set_type @MakeDependentNonType123.cpp_overload_set [concrete]
@@ -208,6 +210,7 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .DependentNonType = %DependentNonType.template
 // CHECK:STDOUT:     .MakeDependentNonType123 = %MakeDependentNonType123.cpp_overload_set.value
+// CHECK:STDOUT:     .StaticInt = %StaticInt.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete = constants.%DependentNonType.template]
@@ -217,6 +220,9 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.7ce = ref_binding_pattern StaticInt [concrete]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.7ce = var_pattern %StaticInt.patt [concrete]
+// CHECK:STDOUT:   %StaticInt.var: ref %i32 = var %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,11 +244,11 @@ var x: Cpp.TwoNonType(1, &n);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MakeDependentNonType123.ref: %MakeDependentNonType123.cpp_overload_set.type = name_ref MakeDependentNonType123, imports.%MakeDependentNonType123.cpp_overload_set.value [concrete = constants.%MakeDependentNonType123.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc9_1: ref %DependentNonType = splice_block file.%x.var [concrete = file.%x.var] {}
-// CHECK:STDOUT:   %addr: %ptr.5b4 = addr_of %.loc9_1
+// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %addr: %ptr.5b4 = addr_of %.loc7_1
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeDependentNonType123__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc9_69: init %DependentNonType to %.loc9_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
-// CHECK:STDOUT:   assign file.%x.var, %.loc9_69
+// CHECK:STDOUT:   %.loc7_69: init %DependentNonType to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_69
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
