@@ -57,39 +57,54 @@ struct DeclInfo {
 };
 }  // namespace
 
-// Retrieves a `core_interface`'s corresponding `NamedDecl`, also with the
-// expected number of parameters. May return a null decl.
-auto GetDeclForCoreInterface(clang::Sema& clang_sema,
-                             CoreInterface core_interface,
-                             clang::CXXRecordDecl* class_decl) -> DeclInfo {
-  // TODO: Handle other interfaces.
+// Describes the function that needs to be looked up.
+enum AssociatedFunction {
+  // CoreInterface::Copy
+  CopyConstructor,
 
+  // CoreInterface::Destroy
+  Destructor,
+};
+
+// Maps a `CoreInterface` to its corresponding set of `CppCoreFunction`s.
+static auto GetCppAssociatedFunctions(CoreInterface const core_interface)
+    -> llvm::SmallVector<AssociatedFunction, 2> {
   switch (core_interface) {
     case CoreInterface::Copy:
-      return {.decl = clang_sema.LookupCopyingConstructor(
-                  class_decl, clang::Qualifiers::Const),
-              .signature = {.num_params = 1}};
+      return {AssociatedFunction::CopyConstructor};
     case CoreInterface::Destroy:
-      return {.decl = clang_sema.LookupDestructor(class_decl),
-              .signature = {.num_params = 0}};
+      return {AssociatedFunction::Destructor};
     case CoreInterface::Unknown:
-      CARBON_FATAL("shouldn't be called with `Unknown`");
+      CARBON_FATAL(
+          "`CoreInterface::Unknown` doesn't have a `CppCoreFunction` mapping");
   }
 }
 
-auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   CoreInterface core_interface,
-                   SemIR::ConstantId query_self_const_id,
-                   SemIR::SpecificInterfaceId query_specific_interface_id,
-                   const TypeStructure* best_impl_type_structure,
-                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
-    return SemIR::InstId::None;
-  }
+// Retrieves a `core_interface`'s corresponding `NamedDecl`, also with the
+// expected number of parameters. May return a null decl.
+auto GetDeclForCoreInterface(clang::Sema& clang_sema,
+                             AssociatedFunction associated_function,
+                             clang::CXXRecordDecl* class_decl) -> DeclInfo {
+  // TODO: Handle other interfaces.
 
-  auto decl_info =
-      GetDeclForCoreInterface(context.clang_sema(), core_interface, class_decl);
+  switch (associated_function) {
+    case AssociatedFunction::CopyConstructor:
+      return {.decl = clang_sema.LookupCopyingConstructor(
+                  class_decl, clang::Qualifiers::Const),
+              .signature = {.num_params = 1}};
+    case AssociatedFunction::Destructor:
+      return {.decl = clang_sema.LookupDestructor(class_decl),
+              .signature = {.num_params = 0}};
+  }
+}
+
+static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
+                                      AssociatedFunction associated_function,
+                                      clang::CXXRecordDecl* class_decl)
+    -> SemIR::InstId {
+  // TODO: Handle other interfaces
+  auto decl_info = GetDeclForCoreInterface(context.clang_sema(),
+                                           associated_function, class_decl);
   if (!decl_info.decl) {
     // TODO: If the impl lookup failure is an error, we should produce a
     // diagnostic explaining why the class is not copyable/destructible.
@@ -111,13 +126,45 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       context, loc_id, clang::DeclAccessPair::make(cpp_fn, cpp_fn->getAccess()),
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
+  return fn_id;
+}
+auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
+                   CoreInterface core_interface,
+                   SemIR::ConstantId query_self_const_id,
+                   SemIR::SpecificInterfaceId query_specific_interface_id,
+                   const TypeStructure* best_impl_type_structure,
+                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
+  }
+
+  auto associated_functions = GetCppAssociatedFunctions(core_interface);
+  auto witness_id = SemIR::ErrorInst::InstId;
+
+  switch (core_interface) {
+    case CoreInterface::Copy:
+    case CoreInterface::Destroy: {
+      CARBON_CHECK(associated_functions.size() == 1);
+      witness_id = FindCppAssociatedFunction(
+          context, loc_id, associated_functions[0], class_decl);
+    } break;
+    case CoreInterface::Unknown:
+      CARBON_FATAL("shouldn't be called with `Unknown`");
+  }
+
+  if (witness_id == SemIR::InstId::None ||
+      witness_id == SemIR::ErrorInst::InstId) {
+    return witness_id;
+  }
+
   // TODO: Infer a C++ type structure and check whether it's less strict than
   // the best Carbon type structure.
   static_cast<void>(best_impl_type_structure);
   static_cast<void>(best_impl_loc_id);
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface_id, {witness_id});
 }
 
 }  // namespace Carbon::Check

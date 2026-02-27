@@ -51,6 +51,9 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterfaceId query_specific_interface_id,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId {
+  CARBON_DCHECK(llvm::all_of(values, [](const SemIR::InstId id) {
+    return id != SemIR::InstId::None && id != SemIR::ErrorInst::InstId;
+  }));
   const auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
   const auto& interface =
