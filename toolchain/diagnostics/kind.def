@@ -298,10 +298,10 @@ CARBON_DIAGNOSTIC_KIND(BaseDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(BaseIsFinal)
 CARBON_DIAGNOSTIC_KIND(BaseMissingExtend)
 CARBON_DIAGNOSTIC_KIND(BaseDeclAfterFieldDecl)
-CARBON_DIAGNOSTIC_KIND(ClassAbstractHere)
+CARBON_DIAGNOSTIC_KIND(ClassAbstract)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
-CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(ClassIncomplete)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutBase)
@@ -323,11 +323,11 @@ CARBON_DIAGNOSTIC_KIND(ExportRedundant)
 CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
-CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(InterfaceIncomplete)
 CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 
 // Named constraint checking.
-CARBON_DIAGNOSTIC_KIND(NamedConstraintForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(NamedConstraintIncomplete)
 CARBON_DIAGNOSTIC_KIND(NamedConstraintIncompleteWithinDefinition)
 
 // Impl checking.

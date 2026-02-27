@@ -39,10 +39,8 @@ auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id)
     context.emitter().Emit(class_info.definition_id,
                            ClassIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Error,
-                      "class was forward declared here");
-    context.emitter().Emit(class_info.latest_decl_id(),
-                           ClassForwardDeclaredHere);
+    CARBON_DIAGNOSTIC(ClassIncomplete, Error, "class is not defined");
+    context.emitter().Emit(class_info.latest_decl_id(), ClassIncomplete);
   }
 }
 
@@ -59,10 +57,9 @@ auto DiagnoseIncompleteInterface(Context& context,
     context.emitter().Emit(interface_info.definition_id,
                            InterfaceIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Error,
-                      "interface was forward declared here");
+    CARBON_DIAGNOSTIC(InterfaceIncomplete, Error, "interface is not defined");
     context.emitter().Emit(interface_info.latest_decl_id(),
-                           InterfaceForwardDeclaredHere);
+                           InterfaceIncomplete);
   }
 }
 
@@ -75,11 +72,10 @@ auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
   CARBON_CHECK(
       class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
       "Class is not abstract");
-  CARBON_DIAGNOSTIC(
-      ClassAbstractHere, Error,
-      "{0:=0:uses class that|=1:class} was declared abstract here",
-      Diagnostics::IntAsSelect);
-  context.emitter().Emit(class_info.definition_id, ClassAbstractHere,
+  CARBON_DIAGNOSTIC(ClassAbstract, Error,
+                    "{0:=0:uses class that|=1:class} is declared abstract",
+                    Diagnostics::IntAsSelect);
+  context.emitter().Emit(class_info.definition_id, ClassAbstract,
                          static_cast<int>(direct_use));
 }
 
@@ -96,10 +92,10 @@ static auto DiagnoseIncompleteNamedConstraint(
     context.emitter().Emit(constraint.definition_id,
                            NamedConstraintIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Error,
-                      "constraint was forward declared here");
+    CARBON_DIAGNOSTIC(NamedConstraintIncomplete, Error,
+                      "constraint is not defined");
     context.emitter().Emit(constraint.latest_decl_id(),
-                           NamedConstraintForwardDeclaredHere);
+                           NamedConstraintIncomplete);
   }
 }
 
