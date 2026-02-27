@@ -140,4 +140,3 @@ let x: Cpp.NonTemplate = Cpp.f(1 as u8, 2 as u8);
 // Calls the template; the non-template is not considered due to the template
 // argument `i32`.
 let y: Cpp.Template = Cpp.f(i32, 1 as u8);
-
