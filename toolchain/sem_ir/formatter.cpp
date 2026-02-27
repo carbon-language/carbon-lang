@@ -740,7 +740,9 @@ auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
       out() << "invalid";
       continue;
     }
-    CARBON_CHECK(!sem_ir_->insts().Is<OutParam>(param_id));
+    if (sem_ir_->insts().Is<OutParam>(param_id)) {
+      out() << "<unexpected out> ";
+    }
     FormatNameAndForm(param_id, sem_ir_->insts().Get(param_id));
   }
 

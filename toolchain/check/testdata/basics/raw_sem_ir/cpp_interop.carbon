@@ -66,10 +66,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     name_scope60000001: {inst: inst60000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name2: inst60000014, name3: inst6000002A, name4: inst6000004E}}
 // CHECK:STDOUT:     name_scope60000002: {inst: inst60000014, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name60000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0}
-// CHECK:STDOUT:     entity_name60000001: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0}
-// CHECK:STDOUT:     entity_name60000002: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0}
-// CHECK:STDOUT:     entity_name60000003: {name: name4, parent_scope: name_scope60000001, index: -1, is_template: 0, is_unused: 0}
+// CHECK:STDOUT:     entity_name60000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000001: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000002: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: constant<none>}
+// CHECK:STDOUT:     entity_name60000003: {name: name4, parent_scope: name_scope60000001, index: -1, is_template: 0, is_unused: 0, form: constant<none>}
 // CHECK:STDOUT:   cpp_global_vars:
 // CHECK:STDOUT:     cpp_global_var60000000: {key: {entity_name_id: entity_name60000003}, clang_decl_id: clang_decl_id60000007}
 // CHECK:STDOUT:   functions:

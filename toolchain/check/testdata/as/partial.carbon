@@ -31,7 +31,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_remove_partial_in_init.carbon
+// --- remove_partial_in_init.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -41,30 +41,8 @@ fn Init() -> partial X;
 
 fn Use() {
   //@dump-sem-ir-begin
-  // TODO: This should be valid, and should initialize the vptr. The explicit `as` should probably not be necessary.
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `partial X` to `X` [ConversionFailure]
-  // CHECK:STDERR:   var unused i: X = Init();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:3: note: type `partial X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused i: X = Init();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var unused i: X = Init();
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR:   var unused j: X = Init() as X;
-  // CHECK:STDERR:                     ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused j: X = Init() as X;
-  // CHECK:STDERR:                     ^~~~~~~~~~~
-  // CHECK:STDERR:
   var unused j: X = Init() as X;
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+7]]:21: error: cannot convert expression of type `partial X` to `X` with `unsafe as` [ConversionFailure]
-  // CHECK:STDERR:   var unused k: X = Init() unsafe as X;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_partial_in_init.carbon:[[@LINE+4]]:21: note: type `partial X` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused k: X = Init() unsafe as X;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var unused k: X = Init() unsafe as X;
   //@dump-sem-ir-end
 }
@@ -221,7 +199,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_remove_partial_in_init.carbon
+// CHECK:STDOUT: --- remove_partial_in_init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
@@ -241,45 +219,48 @@ fn Use() {
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.05f = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
-// CHECK:STDOUT:   %Init.ref.loc18: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc18_26: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc18: init %.4b5 to %.loc18_26 = call %Init.ref.loc18()
-// CHECK:STDOUT:   %.loc18_3: %X = converted %Init.call.loc18, <error> [concrete = <error>]
-// CHECK:STDOUT:   assign %i.var, <error>
-// CHECK:STDOUT:   %X.ref.loc18: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %Init.ref.loc10: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
+// CHECK:STDOUT:   %.loc10_3.1: ref %X = splice_block %i.var {}
+// CHECK:STDOUT:   %Init.call.loc10: init %.4b5 to %.loc10_3.1 = call %Init.ref.loc10()
+// CHECK:STDOUT:   %.loc10_3.2: init %X = as_compatible %Init.call.loc10
+// CHECK:STDOUT:   %.loc10_3.3: init %X = converted %Init.call.loc10, %.loc10_3.2
+// CHECK:STDOUT:   assign %i.var, %.loc10_3.3
+// CHECK:STDOUT:   %X.ref.loc10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %i: ref %X = ref_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %j.patt: %pattern_type.05f = ref_binding_pattern j [concrete]
 // CHECK:STDOUT:     %j.var_patt: %pattern_type.05f = var_pattern %j.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %j.var: ref %X = var %j.var_patt
-// CHECK:STDOUT:   %Init.ref.loc26: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc26_26: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc26: init %.4b5 to %.loc26_26 = call %Init.ref.loc26()
-// CHECK:STDOUT:   %X.ref.loc26_31: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc26_28: %X = converted %Init.call.loc26, <error> [concrete = <error>]
-// CHECK:STDOUT:   assign %j.var, <error>
-// CHECK:STDOUT:   %X.ref.loc26_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %Init.ref.loc11: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
+// CHECK:STDOUT:   %.loc11_3: ref %X = splice_block %j.var {}
+// CHECK:STDOUT:   %Init.call.loc11: init %.4b5 to %.loc11_3 = call %Init.ref.loc11()
+// CHECK:STDOUT:   %X.ref.loc11_31: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc11_28.1: init %X = as_compatible %Init.call.loc11
+// CHECK:STDOUT:   %.loc11_28.2: init %X = converted %Init.call.loc11, %.loc11_28.1
+// CHECK:STDOUT:   assign %j.var, %.loc11_28.2
+// CHECK:STDOUT:   %X.ref.loc11_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %j: ref %X = ref_binding j, %j.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %k.patt: %pattern_type.05f = ref_binding_pattern k [concrete]
 // CHECK:STDOUT:     %k.var_patt: %pattern_type.05f = var_pattern %k.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %k.var: ref %X = var %k.var_patt
-// CHECK:STDOUT:   %Init.ref.loc34: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc34_26: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc34: init %.4b5 to %.loc34_26 = call %Init.ref.loc34()
-// CHECK:STDOUT:   %X.ref.loc34_38: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc34_35: %X = converted %Init.call.loc34, <error> [concrete = <error>]
-// CHECK:STDOUT:   assign %k.var, <error>
-// CHECK:STDOUT:   %X.ref.loc34_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %Init.ref.loc12: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
+// CHECK:STDOUT:   %.loc12_3: ref %X = splice_block %k.var {}
+// CHECK:STDOUT:   %Init.call.loc12: init %.4b5 to %.loc12_3 = call %Init.ref.loc12()
+// CHECK:STDOUT:   %X.ref.loc12_38: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc12_35.1: init %X = as_compatible %Init.call.loc12
+// CHECK:STDOUT:   %.loc12_35.2: init %X = converted %Init.call.loc12, %.loc12_35.1
+// CHECK:STDOUT:   assign %k.var, %.loc12_35.2
+// CHECK:STDOUT:   %X.ref.loc12_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %k: ref %X = ref_binding k, %k.var
-// CHECK:STDOUT:   %DestroyOp.bound.loc34: <bound method> = bound_method %k.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%k.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc26: <bound method> = bound_method %j.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc26: init %empty_tuple.type = call %DestroyOp.bound.loc26(%j.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc18: <bound method> = bound_method %i.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc18: init %empty_tuple.type = call %DestroyOp.bound.loc18(%i.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc12: <bound method> = bound_method %k.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc12: init %empty_tuple.type = call %DestroyOp.bound.loc12(%k.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc11: <bound method> = bound_method %j.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc11: init %empty_tuple.type = call %DestroyOp.bound.loc11(%j.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %i.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

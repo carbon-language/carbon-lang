@@ -640,10 +640,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
-// CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct) [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
-// CHECK:STDOUT:   %Base.val: %Base = struct_value (%Derived.vtable_ptr) [concrete]
+// CHECK:STDOUT:   %struct.6b1: %struct_type.base.f5e = struct_value (%empty_struct) [concrete]
+// CHECK:STDOUT:   %.a5d: type = partial_type %Base [concrete]
+// CHECK:STDOUT:   %uninit: %ptr.454 = uninitialized_value [concrete]
+// CHECK:STDOUT:   %struct.4dc: %.a5d = struct_value (%uninit) [concrete]
+// CHECK:STDOUT:   %Base.val: %Base = struct_value (%uninit) [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val) [concrete]
+// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
@@ -734,15 +737,21 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %Derived = var %d.var_patt
 // CHECK:STDOUT:   %.loc12_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc12_38.1: %struct_type.base.f5e = struct_literal (%.loc12_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc12_38.2: ref %Base = class_element_access %d.var, element0
+// CHECK:STDOUT:   %.loc12_38.1: %struct_type.base.f5e = struct_literal (%.loc12_37.1) [concrete = constants.%struct.6b1]
+// CHECK:STDOUT:   %.loc12_38.2: ref %.a5d = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc12_37.2: ref %ptr.454 = class_element_access %.loc12_38.2, element0
+// CHECK:STDOUT:   %uninit: %ptr.454 = uninitialized_value [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc12_37.3: init %ptr.454 to %.loc12_37.2 = in_place_init %uninit [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc12_37.4: init %.a5d to %.loc12_38.2 = class_init (%.loc12_37.3) [concrete = constants.%struct.4dc]
+// CHECK:STDOUT:   %.loc12_38.3: init %.a5d = converted %.loc12_37.1, %.loc12_37.4 [concrete = constants.%struct.4dc]
+// CHECK:STDOUT:   %.loc12_38.4: init %Base = as_compatible %.loc12_38.3 [concrete = constants.%Base.val]
+// CHECK:STDOUT:   %.loc12_38.5: init %Derived to %d.var = class_init (%.loc12_38.4) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
-// CHECK:STDOUT:   %.loc12_37.3: init %ptr.454 to %.loc12_37.2 = in_place_init %Derived.vtable_ptr [concrete = constants.%Derived.vtable_ptr]
-// CHECK:STDOUT:   %.loc12_37.4: init %Base to %.loc12_38.2 = class_init (%.loc12_37.3) [concrete = constants.%Base.val]
-// CHECK:STDOUT:   %.loc12_38.3: init %Base = converted %.loc12_37.1, %.loc12_37.4 [concrete = constants.%Base.val]
-// CHECK:STDOUT:   %.loc12_38.4: init %Derived to %d.var = class_init (%.loc12_38.3) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc12_3: init %Derived = converted %.loc12_38.1, %.loc12_38.4 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc12_38.6: ref %Base = class_element_access %d.var, element0
+// CHECK:STDOUT:   %.loc12_38.7: ref %ptr.454 = class_element_access %.loc12_38.6, element0
+// CHECK:STDOUT:   %.loc12_38.8: init %ptr.454 to %.loc12_38.7 = in_place_init %Derived.vtable_ptr [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %.loc12_38.9: init %Derived = update_init %.loc12_38.5, %.loc12_38.8
+// CHECK:STDOUT:   %.loc12_3: init %Derived = converted %.loc12_38.1, %.loc12_38.9
 // CHECK:STDOUT:   assign %d.var, %.loc12_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %d: ref %Derived = ref_binding d, %d.var
@@ -1070,15 +1079,18 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %B1.val.d17: %B1 = struct_value (%B1.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %struct.6b1: %struct_type.base.f5e = struct_value (%empty_struct) [concrete]
+// CHECK:STDOUT:   %.5b3: type = partial_type %B1 [concrete]
+// CHECK:STDOUT:   %uninit: %ptr.454 = uninitialized_value [concrete]
+// CHECK:STDOUT:   %struct.571: %.5b3 = struct_value (%uninit) [concrete]
+// CHECK:STDOUT:   %B1.val.fd5: %B1 = struct_value (%uninit) [concrete]
+// CHECK:STDOUT:   %B2.val: %B2 = struct_value (%B1.val.fd5) [concrete]
 // CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete]
-// CHECK:STDOUT:   %B1.val.f0b: %B1 = struct_value (%B2.vtable_ptr) [concrete]
-// CHECK:STDOUT:   %B2.val.e28: %B2 = struct_value (%B1.val.f0b) [concrete]
 // CHECK:STDOUT:   %struct_type.base.a0c: type = struct_type {.base: %struct_type.base.f5e} [concrete]
 // CHECK:STDOUT:   %struct.83e: %struct_type.base.a0c = struct_value (%struct.6b1) [concrete]
+// CHECK:STDOUT:   %.312: type = partial_type %B2 [concrete]
+// CHECK:STDOUT:   %struct.0cd: %.312 = struct_value (%B1.val.fd5) [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val) [concrete]
 // CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete]
-// CHECK:STDOUT:   %B1.val.dd4: %B1 = struct_value (%C.vtable_ptr) [concrete]
-// CHECK:STDOUT:   %B2.val.b52: %B2 = struct_value (%B1.val.dd4) [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val.b52) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc21 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
@@ -1220,14 +1232,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %b2.var: ref %B2 = var %b2.var_patt
 // CHECK:STDOUT:   %.loc20_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc20_34.1: %struct_type.base.f5e = struct_literal (%.loc20_33.1) [concrete = constants.%struct.6b1]
-// CHECK:STDOUT:   %.loc20_34.2: ref %B1 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc20_34.2: ref %.5b3 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc20_33.2: ref %ptr.454 = class_element_access %.loc20_34.2, element0
+// CHECK:STDOUT:   %uninit.loc20: %ptr.454 = uninitialized_value [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc20_33.3: init %ptr.454 to %.loc20_33.2 = in_place_init %uninit.loc20 [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc20_33.4: init %.5b3 to %.loc20_34.2 = class_init (%.loc20_33.3) [concrete = constants.%struct.571]
+// CHECK:STDOUT:   %.loc20_34.3: init %.5b3 = converted %.loc20_33.1, %.loc20_33.4 [concrete = constants.%struct.571]
+// CHECK:STDOUT:   %.loc20_34.4: init %B1 = as_compatible %.loc20_34.3 [concrete = constants.%B1.val.fd5]
+// CHECK:STDOUT:   %.loc20_34.5: init %B2 to %b2.var = class_init (%.loc20_34.4) [concrete = constants.%B2.val]
 // CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete = constants.%B2.vtable_ptr]
-// CHECK:STDOUT:   %.loc20_33.3: init %ptr.454 to %.loc20_33.2 = in_place_init %B2.vtable_ptr [concrete = constants.%B2.vtable_ptr]
-// CHECK:STDOUT:   %.loc20_33.4: init %B1 to %.loc20_34.2 = class_init (%.loc20_33.3) [concrete = constants.%B1.val.f0b]
-// CHECK:STDOUT:   %.loc20_34.3: init %B1 = converted %.loc20_33.1, %.loc20_33.4 [concrete = constants.%B1.val.f0b]
-// CHECK:STDOUT:   %.loc20_34.4: init %B2 to %b2.var = class_init (%.loc20_34.3) [concrete = constants.%B2.val.e28]
-// CHECK:STDOUT:   %.loc20_3: init %B2 = converted %.loc20_34.1, %.loc20_34.4 [concrete = constants.%B2.val.e28]
+// CHECK:STDOUT:   %.loc20_34.6: ref %B1 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc20_34.7: ref %ptr.454 = class_element_access %.loc20_34.6, element0
+// CHECK:STDOUT:   %.loc20_34.8: init %ptr.454 to %.loc20_34.7 = in_place_init %B2.vtable_ptr [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %.loc20_34.9: init %B2 = update_init %.loc20_34.5, %.loc20_34.8
+// CHECK:STDOUT:   %.loc20_3: init %B2 = converted %.loc20_34.1, %.loc20_34.9
 // CHECK:STDOUT:   assign %b2.var, %.loc20_3
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %b2: ref %B2 = ref_binding b2, %b2.var
@@ -1239,17 +1257,25 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc21_40.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc21_41.1: %struct_type.base.f5e = struct_literal (%.loc21_40.1) [concrete = constants.%struct.6b1]
 // CHECK:STDOUT:   %.loc21_42.1: %struct_type.base.a0c = struct_literal (%.loc21_41.1) [concrete = constants.%struct.83e]
-// CHECK:STDOUT:   %.loc21_42.2: ref %B2 = class_element_access %c.var, element0
-// CHECK:STDOUT:   %.loc21_41.2: ref %B1 = class_element_access %.loc21_42.2, element0
+// CHECK:STDOUT:   %.loc21_42.2: ref %.312 = class_element_access %c.var, element0
+// CHECK:STDOUT:   %.loc21_41.2: ref %.5b3 = class_element_access %.loc21_42.2, element0
 // CHECK:STDOUT:   %.loc21_40.2: ref %ptr.454 = class_element_access %.loc21_41.2, element0
+// CHECK:STDOUT:   %uninit.loc21: %ptr.454 = uninitialized_value [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc21_40.3: init %ptr.454 to %.loc21_40.2 = in_place_init %uninit.loc21 [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc21_40.4: init %.5b3 to %.loc21_41.2 = class_init (%.loc21_40.3) [concrete = constants.%struct.571]
+// CHECK:STDOUT:   %.loc21_41.3: init %.5b3 = converted %.loc21_40.1, %.loc21_40.4 [concrete = constants.%struct.571]
+// CHECK:STDOUT:   %.loc21_41.4: init %B1 = as_compatible %.loc21_41.3 [concrete = constants.%B1.val.fd5]
+// CHECK:STDOUT:   %.loc21_41.5: init %.312 to %.loc21_42.2 = class_init (%.loc21_41.4) [concrete = constants.%struct.0cd]
+// CHECK:STDOUT:   %.loc21_42.3: init %.312 = converted %.loc21_41.1, %.loc21_41.5 [concrete = constants.%struct.0cd]
+// CHECK:STDOUT:   %.loc21_42.4: init %B2 = as_compatible %.loc21_42.3 [concrete = constants.%B2.val]
+// CHECK:STDOUT:   %.loc21_42.5: init %C to %c.var = class_init (%.loc21_42.4) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
-// CHECK:STDOUT:   %.loc21_40.3: init %ptr.454 to %.loc21_40.2 = in_place_init %C.vtable_ptr [concrete = constants.%C.vtable_ptr]
-// CHECK:STDOUT:   %.loc21_40.4: init %B1 to %.loc21_41.2 = class_init (%.loc21_40.3) [concrete = constants.%B1.val.dd4]
-// CHECK:STDOUT:   %.loc21_41.3: init %B1 = converted %.loc21_40.1, %.loc21_40.4 [concrete = constants.%B1.val.dd4]
-// CHECK:STDOUT:   %.loc21_41.4: init %B2 to %.loc21_42.2 = class_init (%.loc21_41.3) [concrete = constants.%B2.val.b52]
-// CHECK:STDOUT:   %.loc21_42.3: init %B2 = converted %.loc21_41.1, %.loc21_41.4 [concrete = constants.%B2.val.b52]
-// CHECK:STDOUT:   %.loc21_42.4: init %C to %c.var = class_init (%.loc21_42.3) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc21_3: init %C = converted %.loc21_42.1, %.loc21_42.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc21_42.6: ref %B2 = class_element_access %c.var, element0
+// CHECK:STDOUT:   %.loc21_42.7: ref %B1 = class_element_access %.loc21_42.6, element0
+// CHECK:STDOUT:   %.loc21_42.8: ref %ptr.454 = class_element_access %.loc21_42.7, element0
+// CHECK:STDOUT:   %.loc21_42.9: init %ptr.454 to %.loc21_42.8 = in_place_init %C.vtable_ptr [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %.loc21_42.10: init %C = update_init %.loc21_42.5, %.loc21_42.9
+// CHECK:STDOUT:   %.loc21_3: init %C = converted %.loc21_42.1, %.loc21_42.10
 // CHECK:STDOUT:   assign %c.var, %.loc21_3
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var

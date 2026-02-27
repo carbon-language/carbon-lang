@@ -125,6 +125,10 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
     -> SemIR::TypeId;
 
+// Returns the type component of the given form value.
+auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
+    -> SemIR::TypeId;
+
 // Returns an unbound element type.
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;

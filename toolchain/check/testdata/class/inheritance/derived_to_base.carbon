@@ -174,6 +174,8 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c.136: type = struct_type {.base: %struct_type.base.b.bf0, .c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.2aa: %struct_type.base.c.136 = struct_value (%struct.ff9, %int_3.1ba) [concrete]
+// CHECK:STDOUT:   %.eaa: type = partial_type %B [concrete]
+// CHECK:STDOUT:   %.157: type = partial_type %A [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
@@ -188,10 +190,12 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.38b: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %struct.e01: %.157 = struct_value (%int_1.5d2) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.5d2) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %bound_method.646: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %struct.bc2: %.eaa = struct_value (%A.val, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%A.val, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
 // CHECK:STDOUT:   %bound_method.fa7: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -389,41 +393,43 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_46: init %i32 = call %bound_method.loc32_46.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc32_46.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_46 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc32_64.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc32_64.3: ref %B = class_element_access %.loc32_64.2, element0
-// CHECK:STDOUT:   %.loc32_55.2: ref %A = class_element_access %.loc32_64.3, element0
+// CHECK:STDOUT:   %.loc32_64.3: ref %.eaa = class_element_access %.loc32_64.2, element0
+// CHECK:STDOUT:   %.loc32_55.2: ref %.157 = class_element_access %.loc32_64.3, element0
 // CHECK:STDOUT:   %.loc32_46.3: ref %i32 = class_element_access %.loc32_55.2, element0
 // CHECK:STDOUT:   %.loc32_46.4: init %i32 to %.loc32_46.3 = in_place_init %.loc32_46.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc32_46.5: init %A to %.loc32_55.2 = class_init (%.loc32_46.4) [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc32_55.3: init %A = converted %.loc32_46.1, %.loc32_46.5 [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc32_46.5: init %.157 to %.loc32_55.2 = class_init (%.loc32_46.4) [concrete = constants.%struct.e01]
+// CHECK:STDOUT:   %.loc32_55.3: init %.157 = converted %.loc32_46.1, %.loc32_46.5 [concrete = constants.%struct.e01]
+// CHECK:STDOUT:   %.loc32_55.4: init %A = as_compatible %.loc32_55.3 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %impl.elem0.loc32_55: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc32_55.1: <bound method> = bound_method %int_2, %impl.elem0.loc32_55 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc32_55: <specific function> = specific_function %impl.elem0.loc32_55, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc32_55.2: <bound method> = bound_method %int_2, %specific_fn.loc32_55 [concrete = constants.%bound_method.646]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_55: init %i32 = call %bound_method.loc32_55.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc32_55.4: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_55 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc32_55.5: ref %i32 = class_element_access %.loc32_64.3, element1
-// CHECK:STDOUT:   %.loc32_55.6: init %i32 to %.loc32_55.5 = in_place_init %.loc32_55.4 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc32_55.7: init %B to %.loc32_64.3 = class_init (%.loc32_55.3, %.loc32_55.6) [concrete = constants.%B.val]
-// CHECK:STDOUT:   %.loc32_64.4: init %B = converted %.loc32_55.1, %.loc32_55.7 [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc32_55.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_55 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc32_55.6: ref %i32 = class_element_access %.loc32_64.3, element1
+// CHECK:STDOUT:   %.loc32_55.7: init %i32 to %.loc32_55.6 = in_place_init %.loc32_55.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc32_55.8: init %.eaa to %.loc32_64.3 = class_init (%.loc32_55.4, %.loc32_55.7) [concrete = constants.%struct.bc2]
+// CHECK:STDOUT:   %.loc32_64.4: init %.eaa = converted %.loc32_55.1, %.loc32_55.8 [concrete = constants.%struct.bc2]
+// CHECK:STDOUT:   %.loc32_64.5: init %B = as_compatible %.loc32_64.4 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %impl.elem0.loc32_64: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc32_64.1: <bound method> = bound_method %int_3, %impl.elem0.loc32_64 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc32_64: <specific function> = specific_function %impl.elem0.loc32_64, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc32_64.2: <bound method> = bound_method %int_3, %specific_fn.loc32_64 [concrete = constants.%bound_method.fa7]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_64: init %i32 = call %bound_method.loc32_64.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc32_64.5: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_64 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc32_64.6: ref %i32 = class_element_access %.loc32_64.2, element1
-// CHECK:STDOUT:   %.loc32_64.7: init %i32 to %.loc32_64.6 = in_place_init %.loc32_64.5 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc32_64.8: init %C to %.loc32_64.2 = class_init (%.loc32_64.4, %.loc32_64.7) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_64.9: ref %C = temporary %.loc32_64.2, %.loc32_64.8
-// CHECK:STDOUT:   %.loc32_66.1: ref %C = converted %.loc32_64.1, %.loc32_64.9
+// CHECK:STDOUT:   %.loc32_64.6: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_64 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc32_64.7: ref %i32 = class_element_access %.loc32_64.2, element1
+// CHECK:STDOUT:   %.loc32_64.8: init %i32 to %.loc32_64.7 = in_place_init %.loc32_64.6 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc32_64.9: init %C to %.loc32_64.2 = class_init (%.loc32_64.5, %.loc32_64.8) [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc32_64.10: ref %C = temporary %.loc32_64.2, %.loc32_64.9
+// CHECK:STDOUT:   %.loc32_66.1: ref %C = converted %.loc32_64.1, %.loc32_64.10
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc32_66.2: ref %B = class_element_access %.loc32_66.1, element0
 // CHECK:STDOUT:   %.loc32_66.3: ref %A = class_element_access %.loc32_66.2, element0
 // CHECK:STDOUT:   %.loc32_66.4: ref %A = converted %.loc32_66.1, %.loc32_66.3
 // CHECK:STDOUT:   %.loc32_66.5: %A = acquire_value %.loc32_66.4
 // CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.5
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc32_64.9, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc32_64.9)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc32_64.10, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc32_64.10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

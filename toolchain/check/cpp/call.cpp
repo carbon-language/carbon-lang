@@ -154,27 +154,29 @@ static auto ConvertArgToTemplateArg(
       }
     }
 
-    // Handle integer parameters.
-    if (param_type->isIntegerType()) {
-      // Get the Carbon type corresponding to the parameter's Clang type.
-      const auto type_expr =
-          ImportCppType(context, SemIR::LocId(arg_id), param_type);
+    // Get the Carbon type corresponding to the parameter's Clang type.
+    const auto type_expr =
+        ImportCppType(context, SemIR::LocId(arg_id), param_type);
 
-      // Try to convert the argument to the parameter type.
-      const auto converted_inst_id =
-          Convert(context, SemIR::LocId(arg_id), arg_id,
-                  {
-                      .kind = ConversionTarget::Value,
-                      .type_id = type_expr.type_id,
-                  });
+    // Try to convert the argument to the parameter type.
+    const auto converted_inst_id =
+        Convert(context, SemIR::LocId(arg_id), arg_id,
+                {
+                    .kind = ConversionTarget::Value,
+                    .type_id = type_expr.type_id,
+                });
 
-      if (converted_inst_id == SemIR::ErrorInst::InstId) {
-        return std::nullopt;
-      }
+    if (converted_inst_id == SemIR::ErrorInst::InstId) {
+      return std::nullopt;
+    }
 
-      auto const_inst_id =
-          context.constant_values().GetConstantInstId(converted_inst_id);
-      if (const_inst_id.has_value()) {
+    // TODO: provide a better location.
+    auto template_loc = clang::TemplateArgumentLocInfo();
+
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(converted_inst_id);
+    if (const_inst_id.has_value()) {
+      if (param_type->isIntegerType()) {
         if (auto int_value =
                 context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
           const auto& ap_int = context.ints().Get(int_value->int_id);
@@ -183,11 +185,17 @@ static auto ConvertArgToTemplateArg(
           auto aps_int =
               llvm::APSInt(ap_int, is_unsigned)
                   .extOrTrunc(context.ast_context().getIntWidth(param_type));
-          auto template_arg = clang::TemplateArgument(context.ast_context(),
-                                                      aps_int, param_type);
-          // TODO: provide a better location.
-          auto loc = clang::TemplateArgumentLocInfo();
-          return clang::TemplateArgumentLoc(template_arg, loc);
+          clang::TemplateArgument template_arg(context.ast_context(), aps_int,
+                                               param_type);
+          return clang::TemplateArgumentLoc(template_arg, template_loc);
+        }
+      } else if (param_type->isFloatingType()) {
+        if (auto float_value =
+                context.insts().TryGetAs<SemIR::FloatValue>(const_inst_id)) {
+          const auto& ap_float = context.floats().Get(float_value->float_id);
+          clang::TemplateArgument template_arg(
+              context.ast_context(), param_type, clang::APValue(ap_float));
+          return clang::TemplateArgumentLoc(template_arg, template_loc);
         }
       }
     }

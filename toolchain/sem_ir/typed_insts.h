@@ -746,6 +746,51 @@ struct FloatValue {
   FloatId float_id;
 };
 
+// A form binding, such as the `x` declared by `x:? F`. See `AnyBinding` for
+// member documentation.
+struct FormBinding {
+  static constexpr auto Kind =
+      InstKind::FormBinding.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_binding",
+           .expr_category = ComputedExprCategory::DependsOnOperands,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
+// A form binding pattern, such as `x:? F`. See `AnyBindingPattern` for member
+// documentation.
+struct FormBindingPattern {
+  static constexpr auto Kind =
+      InstKind::FormBindingPattern.Define<Parse::FormBindingPatternId>(
+          {.ir_name = "form_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // Note that the EntityName's `form_id` represents the scrutinee form, so it
+  // doesn't directly correspond to `type_id` (which is a pattern type).
+  EntityNameId entity_name_id;
+};
+
+// A pattern that represents a form-parameterized parameter, such as `x:? F`.
+// See `AnyParamPattern` for member documentation.
+struct FormParamPattern {
+  // TODO: Replace `Parse::NodeId` with `Parse::FormBindingPattern`.
+  static constexpr auto Kind = InstKind::FormParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "form_param_pattern",
+       .expr_category = ExprCategory::Pattern,
+       .constant_kind = InstConstantKind::AlwaysUnique,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
 // The type `Core.Form`.
 struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
   // `FormType` is always set complete in file.cpp.
@@ -1395,7 +1440,8 @@ struct RefBindingPattern {
 
 struct RefForm {
   static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
+                                                  Parse::RefPrimitiveFormId>>(
           {.ir_name = "ref_form",
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
@@ -1726,7 +1772,7 @@ struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
        // TODO: The expression category is in general dependent on
-       // instantiation. Add ExprCategory::Dependent to model this.
+       // instantiation. Use ExprCategory::Dependent to model this.
        .expr_category = ExprCategory::Value});
 
   TypeId type_id;
@@ -1955,6 +2001,21 @@ struct TupleValue {
   InstBlockId elements_id;
 };
 
+// Extracts the type component of `form_inst_id`, which must have type
+// `Core.Form`.
+struct TypeComponentOf {
+  static constexpr auto Kind =
+      InstKind::TypeComponentOf.Define<Parse::NoneNodeId>(
+          {.ir_name = "type_component_of",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always TypeType.
+  TypeId type_id;
+  InstId form_inst_id;
+};
+
 // A type literal, such as `bool` or `type` or `i32`. The constant value of this
 // instruction will be the type value that the type literal evaluates to, which
 // is typically either a builtin type or a class defined in the prelude.
@@ -2031,6 +2092,20 @@ struct UninitializedValue {
   TypeId type_id;
 };
 
+// Initializes an object by performing a base initialization followed by an
+// update step.
+struct UpdateInit {
+  static constexpr auto Kind = InstKind::UpdateInit.Define<Parse::NodeId>(
+      {.ir_name = "update_init",
+       .expr_category = ExprCategory::InPlaceInitializing});
+
+  TypeId type_id;
+  // The base initializer. Always an in-place initializer.
+  InstId base_init_id;
+  // The update expression. Always an in-place initializer.
+  InstId update_init_id;
+};
+
 // Converts from a value expression to an ephemeral reference expression, in
 // the case where the value representation of the type is a pointer. For
 // example, when indexing a value expression of array type, this is used to
@@ -2070,6 +2145,18 @@ struct ValueBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// A primitive value form.
+struct ValueForm {
+  static constexpr auto Kind =
+      InstKind::ValueForm.Define<Parse::ValPrimitiveFormId>(
+          {.ir_name = "value_form",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
 };
 
 // Converts an initializing expression to a value expression, in the case

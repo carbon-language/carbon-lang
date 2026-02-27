@@ -256,7 +256,11 @@ class Context {
   }
 
   // Data about a form expression.
+  //
+  // TODO: consider moving this out of Context.
   struct FormExpr {
+    static const FormExpr Error;
+
     // The inst ID of the form expression itself. This is always a form inst,
     // such as InitForm or RefForm.
     // TODO: Consider creating an AnyForm inst category to refer to those insts.
@@ -531,6 +535,11 @@ class Context {
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;
 };
+
+inline constexpr Context::FormExpr Context::FormExpr::Error = {
+    .form_inst_id = SemIR::ErrorInst::InstId,
+    .type_component_inst_id = SemIR::ErrorInst::TypeInstId,
+    .type_component_id = SemIR::ErrorInst::TypeId};
 
 }  // namespace Carbon::Check
 

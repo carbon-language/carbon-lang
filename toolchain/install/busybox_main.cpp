@@ -44,7 +44,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // for symbolization.
   setenv(
       "LLVM_SYMBOLIZER_PATH",
-      (install_paths.llvm_install_bin().native() + "llvm-symbolizer").c_str(),
+      (install_paths.llvm_install_bin() / "llvm-symbolizer").native().c_str(),
       /*overwrite=*/0);
 
   auto fs = llvm::vfs::getRealFileSystem();

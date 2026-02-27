@@ -62,7 +62,12 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
   CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
                entity_name.bind_index().has_value());
-
+  CARBON_CHECK((pattern.kind == SemIR::FormBindingPattern::Kind) ==
+               entity_name.form_id.has_value());
+  if (pattern.kind == SemIR::FormBindingPattern::Kind) {
+    context.TODO(pattern_id, "Support for cloning form bindings");
+    return SemIR::ErrorInst::InstId;
+  }
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
@@ -75,10 +80,11 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
       {.block_ids = {SemIR::InstBlockId::Empty}, .result_id = type_inst_id});
 
   // Rebuild the binding pattern.
-  return AddBindingPattern(context, SemIR::LocId(pattern_id),
-                           entity_name.name_id, type_id, type_expr_region_id,
-                           pattern.kind, entity_name.is_template,
-                           /*is_unused=*/false)
+  return AddBindingPattern(
+             context, SemIR::LocId(pattern_id), entity_name.name_id, type_id,
+             /*form_id=*/SemIR::ConstantId::None, type_expr_region_id,
+             pattern.kind, entity_name.is_template,
+             /*is_unused=*/false)
       .pattern_id;
 }
 

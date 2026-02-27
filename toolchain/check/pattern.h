@@ -44,6 +44,7 @@ struct BindingPatternInfo {
 // bindings.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
+                       SemIR::ConstantId form_id,
                        SemIR::ExprRegionId type_region_id,
                        SemIR::InstKind pattern_kind, bool is_template,
                        bool is_unused) -> BindingPatternInfo;

@@ -17,7 +17,7 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << ", is_unused: " << is_unused << "}";
+        << ", is_unused: " << is_unused << ", form: " << form_id << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -58,6 +58,13 @@ struct EntityName : public Printable<EntityName> {
   bool is_template : 1 = false;
   // Whether this binding is marked unused.
   bool is_unused : 1 = false;
+
+  // The declared form of the binding. This is guaranteed to be set for
+  // `:?` bindings, and may be set for other binding kinds as well.
+  //
+  // TODO: Unify this with the previous three fields, which also represent form
+  // information.
+  ConstantId form_id = ConstantId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore

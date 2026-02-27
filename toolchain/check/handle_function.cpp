@@ -53,7 +53,7 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
 
   // Propagate the type expression.
-  auto form_expr = ExprAsReturnForm(context, type_node_id, type_inst_id);
+  auto form_expr = ReturnExprAsForm(context, type_node_id, type_inst_id);
   context.PushReturnForm(form_expr);
   auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
   context.node_stack().Push(node_id, return_patterns_id);

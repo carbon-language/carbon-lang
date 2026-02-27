@@ -667,6 +667,11 @@ class Stringifier {
     }
   }
 
+  auto StringifyInst(InstId /*inst_id*/, TypeComponentOf inst) -> void {
+    *out_ << "<type component of form ";
+    step_stack_->Push(inst.form_inst_id, ">");
+  }
+
   auto StringifyInst(InstId inst_id, TypeOfInst /*inst*/) -> void {
     // Print the constant value if we've already computed the inst.
     auto const_inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);

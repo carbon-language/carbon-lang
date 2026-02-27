@@ -164,7 +164,7 @@ class Emitter {
   // `consumer` is required to outlive the diagnostic emitter.
   explicit Emitter(Consumer* consumer) : consumer_(consumer) {}
 
-  virtual ~Emitter() { Flush(); }
+  virtual ~Emitter() = default;
 
   // Emits an error.
   //

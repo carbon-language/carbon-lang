@@ -15,6 +15,9 @@ namespace Carbon::Check {
 // Description of the target of a conversion.
 struct ConversionTarget {
   enum Kind : int8_t {
+    // Perform no conversion. The source expression must already have type
+    // `type_id`.
+    NoOp,
     // Convert to a value of type `type_id`.
     Value,
     // Convert to either a value or a reference of type `type_id`.
@@ -82,14 +85,8 @@ struct ConversionTarget {
 };
 
 // Convert a value to another type and expression category.
-// TODO: The `vtable_id` parameter is too much of a special case here, and
-// should be removed - once partial classes are implemented, the vtable pointer
-// initialization will be done not in this conversion, but during initialization
-// of the object of non-partial class type from the object of partial class
-// type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target,
-             SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
+             ConversionTarget target) -> SemIR::InstId;
 
 // Converts `value_id` to an initializing expression of the type of
 // `storage_id`, and returns the possibly-converted initializing expression.
@@ -187,9 +184,20 @@ inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose = true) -> TypeExpr;
 
-// Converts an expression for use as a form. If the expression is a type
-// expression, it is interpreted as an initializing form.
-auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
+// Converts an expression in a form position for use as a form.
+//
+// Note that the right-hand side of a `->` return type declaration is not
+// a form position for this purpose, because it uses a special syntax to specify
+// forms. `ReturnExprAsForm` should be used instead in that case.
+//
+// `diagnose` has the same effect as in `ExprAsType`.
+auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
+                    SemIR::InstId value_id) -> Context::FormExpr;
+
+// Evaluates an expression in the return-type position (following `->`, not
+// `->?`) for use as a form, following the special-case language rules for
+// evaluating an expression in that position.
+auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr;
 
 // Handles an expression whose result value is unused.

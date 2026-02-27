@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+// EXTRA-ARGS: --clang-arg=-std=c++20
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -74,6 +75,16 @@ impl C as Core.ImplicitAs(i32) {
   eval fn Convert[unused self: Self]() -> i32 { return 123; }
 }
 var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
+
+// --- float.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+template<float N> struct Struct {};
+Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
+''';
+let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
 
 // --- valid.carbon
 

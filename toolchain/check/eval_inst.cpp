@@ -730,6 +730,18 @@ auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::TypeComponentOf inst)
+    -> ConstantEvalResult {
+  auto form_constant_inst_id =
+      context.constant_values().GetConstantInstId(inst.form_inst_id);
+  if (auto primitive_form = context.insts().TryGetAs<SemIR::AnyPrimitiveForm>(
+          form_constant_inst_id)) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(primitive_form->type_component_id));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::TypeLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::Existing(
@@ -759,6 +771,13 @@ auto EvalConstantInst(Context& context, SemIR::UnaryOperatorNot inst)
     return ConstantEvalResult::NewSamePhase(value);
   }
   return ConstantEvalResult::NotConstant;
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::UpdateInit /*inst*/)
+    -> ConstantEvalResult {
+  // TODO: Support folding together a ClassInit with an update that sets the
+  // vptr.
+  return ConstantEvalResult::TODO;
 }
 
 auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)

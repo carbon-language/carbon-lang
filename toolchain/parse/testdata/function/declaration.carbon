@@ -167,6 +167,14 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 fn FormParam(x:? Form);
 fn ComplexFormParam(x:? X.Y(Z));
 
+// --- fail_ref_on_form_parameter.carbon
+
+// CHECK:STDERR: fail_ref_on_form_parameter.carbon:[[@LINE+4]]:6: error: expected `:` binding after `ref` [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR: fn F(ref x:? Form);
+// CHECK:STDERR:      ^~~
+// CHECK:STDERR:
+fn F(ref x:? Form);
+
 // --- return_form.carbon
 
 fn SimpleReturnForm() ->? Form;
@@ -455,6 +463,20 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_ref_on_form_parameter.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Form'},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: return_form.carbon

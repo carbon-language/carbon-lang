@@ -249,6 +249,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
 
     switch (new_param_pattern.kind()) {
+      case SemIR::FormParamPattern::Kind:
       case SemIR::OutParamPattern::Kind:
       case SemIR::RefParamPattern::Kind:
       case SemIR::ValueParamPattern::Kind:
@@ -267,6 +268,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
              .new_id =
                  new_param_pattern.As<SemIR::VarPattern>().subpattern_id});
         break;
+      case SemIR::FormBindingPattern::Kind:
       case SemIR::RefBindingPattern::Kind:
       case SemIR::SymbolicBindingPattern::Kind:
       case SemIR::ValueBindingPattern::Kind: {
