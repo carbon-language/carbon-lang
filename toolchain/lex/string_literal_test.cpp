@@ -35,6 +35,13 @@ class StringLiteralTest : public ::testing::Test {
     return token.ComputeStringValue(allocator_, emitter);
   }
 
+  auto ParseCharacterLiteral(llvm::StringRef text)
+      -> std::optional<CharLiteralValue> {
+    StringLiteral token = Lex(text);
+    Testing::SingleTokenDiagnosticEmitter emitter(&error_tracker_, text);
+    return token.ComputeCharLiteralValue(emitter);
+  }
+
   llvm::BumpPtrAllocator allocator_;
   Diagnostics::ErrorTrackingConsumer error_tracker_;
 };
@@ -245,6 +252,37 @@ TEST_F(StringLiteralTest, DoubleQuotedMultiLineLiteral) {
     auto value = Parse(test.trim());
     EXPECT_TRUE(error_tracker_.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
+  }
+}
+
+TEST_F(StringLiteralTest, RawCharacterLiteral) {
+  // For error recovery, #-prefixed character literals are lexed, but rejected.
+  std::pair<llvm::StringLiteral, CharLiteralValue> valid[] = {
+      {R"(#'a'#)", {static_cast<int32_t>(U'a')}},
+      {R"(#'\'#)", {static_cast<int32_t>(U'\\')}},
+  };
+
+  for (auto [test, expected_value] : valid) {
+    SCOPED_TRACE(test);
+    error_tracker_.Reset();
+    std::optional<CharLiteralValue> result = ParseCharacterLiteral(test);
+    EXPECT_TRUE(error_tracker_.seen_error());
+    EXPECT_TRUE(result.has_value());
+    if (result) {
+      EXPECT_EQ(result->value, expected_value.value);
+    }
+  }
+
+  llvm::StringLiteral invalid[] = {
+      R"(##''##)",
+      R"(#'foo\'#)",
+      R"(##'#\'##)",
+  };
+
+  for (auto test : invalid) {
+    error_tracker_.Reset();
+    ParseCharacterLiteral(test);
+    EXPECT_TRUE(error_tracker_.seen_error()) << "`" << test << "`";
   }
 }
 
