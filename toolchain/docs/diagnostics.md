@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Diagnostic context](#diagnostic-context)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
+-   [ErrorContext](#errorcontext)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -317,6 +318,29 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     only allowed for types?
 
 -   TODO: Lots more things to decide, give examples.
+
+## ErrorContext
+
+Some operations in the toolchain can fail due to errors in a smaller operation.
+For example, requiring an identified facet type can fail in which a diagnostic
+is emitted saying what was wrong, such as
+`"error: named constraint is not defined"`.
+
+When this happens, the higher level operation can provide a more contextual
+error that supersedes the specific one. This is done with a `ContextScope` that
+takes a lambda that is called if a diagnostic is emitted. The callback can
+introduce an `ErrorContext` that modifies a `Error` diagnostic. The
+`ErrorContext` message becomes the main diagnostic message, and the `Error`
+diagnostic message becomes a `Note` annotation. Given our example above, this
+can convert `"error: named constraint is not defined"` into
+`"error: failed to identify facet type for impl definition" / "note: named constraint is not defined"`.
+
+If multiple `ErrorContext` are introduced, the first one becomes the diagnostic
+message, and the others are converted to `Note` annotations that come before the
+`Error` diagnostic message.
+
+The message in an `ErrorContext` should be formulated as an error, in the same
+way as an `Error` message, as that is what it becomes.
 
 ## Alternatives considered
 
