@@ -509,6 +509,16 @@ static auto IsInPlaceInitializing(Context& context, SemIR::InstId result_id) {
          category == SemIR::ExprCategory::Error;
 }
 
+// Returns the index of the vptr field in the given struct type fields, or
+// None if there is no vptr field.
+static auto GetVptrFieldIndex(llvm::ArrayRef<SemIR::StructTypeField> fields)
+    -> SemIR::ElementIndex {
+  // If the type introduces a vptr, it will always be the first field.
+  bool has_vptr =
+      !fields.empty() && fields.front().name_id == SemIR::NameId::Vptr;
+  return has_vptr ? SemIR::ElementIndex(0) : SemIR::ElementIndex::None;
+}
+
 // Builds a member access expression naming the vptr field of the given class
 // object. This is analogous to what `PerformMemberAccess` for `NameId::Vptr`
 // would return if the vptr could be found by name lookup.
@@ -534,19 +544,19 @@ static auto PerformVptrAccess(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
 
-    // If the type introduces a vptr, it will always be the first field.
+    // Check to see if this class introduces the vptr.
     auto repr_struct_type =
         context.types().GetAs<SemIR::StructType>(object_repr_id);
     auto repr_fields =
         context.struct_type_fields().Get(repr_struct_type.fields_id);
-    if (!repr_fields.empty() &&
-        repr_fields.front().name_id == SemIR::NameId::Vptr) {
+    if (auto vptr_field_index = GetVptrFieldIndex(repr_fields);
+        vptr_field_index.has_value()) {
       return AddInst<SemIR::ClassElementAccess>(
           context, loc_id,
           {.type_id = context.types().GetTypeIdForTypeInstId(
-               repr_fields.front().type_inst_id),
+               repr_fields[vptr_field_index.index].type_inst_id),
            .base_id = class_ref_id,
-           .index = SemIR::ElementIndex(0)});
+           .index = vptr_field_index});
     }
 
     // Otherwise, step through to the base class and try again.
@@ -608,10 +618,9 @@ static auto ConvertStructToStructOrClass(
   auto& sem_ir = context.sem_ir();
   auto src_elem_fields = sem_ir.struct_type_fields().Get(src_type.fields_id);
   auto dest_elem_fields = sem_ir.struct_type_fields().Get(dest_type.fields_id);
-  bool dest_has_vptr = !dest_elem_fields.empty() &&
-                       dest_elem_fields.front().name_id == SemIR::NameId::Vptr;
-  int dest_vptr_offset = (dest_has_vptr ? 1 : 0);
-  auto dest_elem_fields_size = dest_elem_fields.size() - dest_vptr_offset;
+  auto dest_vptr_index = GetVptrFieldIndex(dest_elem_fields);
+  auto dest_elem_fields_size =
+      dest_elem_fields.size() - (dest_vptr_index.has_value() ? 1 : 0);
 
   auto value = sem_ir.insts().Get(value_id);
   SemIR::LocId value_loc_id(value_id);
@@ -662,7 +671,7 @@ static auto ConvertStructToStructOrClass(
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.has_value() && !dest_has_vptr
+      literal_elems_id.has_value() && !dest_vptr_index.has_value()
           ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
@@ -747,12 +756,17 @@ static auto ConvertStructToStructOrClass(
 
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
+    auto dest_field_index = src_field_index;
+    if (dest_vptr_index.has_value() &&
+        static_cast<int32_t>(src_field_index) >= dest_vptr_index.index) {
+      dest_field_index += 1;
+    }
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_inst_id,
             literal_elems, inner_kind, target.storage_id,
             dest_field_type_inst_id, target.storage_access_block,
-            src_field_index, src_field_index + dest_vptr_offset);
+            src_field_index, dest_field_index);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
