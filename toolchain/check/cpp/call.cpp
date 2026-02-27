@@ -187,6 +187,17 @@ static auto ConvertArgToTemplateArg(
           clang::TemplateArgument template_arg(context.ast_context(), aps_int,
                                                param_type);
           return clang::TemplateArgumentLoc(template_arg, template_loc);
+        } else if (auto bool_value =
+                       context.insts().TryGetAs<SemIR::BoolLiteral>(
+                           const_inst_id)) {
+          llvm::APInt ap_int(context.ast_context().getIntWidth(param_type),
+                             bool_value->value.ToBool(), is_signed);
+          auto aps_int =
+              llvm::APSInt(ap_int, !is_signed)
+                  .extOrTrunc(context.ast_context().getIntWidth(param_type));
+          auto template_arg = clang::TemplateArgument(context.ast_context(),
+                                                      aps_int, param_type);
+          return clang::TemplateArgumentLoc(template_arg, template_loc);
         }
       } else if (param_type->isFloatingType()) {
         if (auto float_value =

@@ -85,10 +85,6 @@ template<bool B> struct Struct {};
 Struct<true> MakeStruct() { return Struct<true>(); }
 ''';
 
-// CHECK:STDERR: bool.carbon:[[@LINE+4]]:19: error: semantics TODO: `unsupported argument type for non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: var s: Cpp.Struct(true) = Cpp.MakeStruct();
-// CHECK:STDERR:                   ^~~~
-// CHECK:STDERR:
 var s: Cpp.Struct(true) = Cpp.MakeStruct();
 
 // --- float.carbon
