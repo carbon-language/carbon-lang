@@ -25,16 +25,17 @@ enum class Level : int8_t {
   // A note, not indicating an error on its own, but possibly providing
   // additional information for an error or warning.
   Note,
-  // A Context that will be discarded if another Context precedes it in the
-  // diagnostic, as the Context is assumed to provide better information. Used
-  // as a fallback for when no better Context is provided.
-  SoftContext,
-  // Describes the high level operation being performed. If a diagnostic is
-  // issued, the first Context message will steal its level and be displayed as
-  // if it is the top-level diagnostic, and the rest are treated as Note
-  // messages. The diagnostic message also becomes a Note of the first Context
-  // message.
-  Context,
+  // An ErrorContext that will be discarded if another ErrorContext precedes it
+  // in the diagnostic, as the ErrorContext is assumed to provide better
+  // information. Used as a fallback for when no better ErrorContext is
+  // provided.
+  SoftErrorContext,
+  // Describes the high level operation being performed. If an Error diagnostic
+  // is issued, the first ErrorContext message will steal its level and be
+  // displayed as if it is the top-level diagnostic, and the rest are treated as
+  // Note messages. The original Error diagnostic message also becomes a Note of
+  // the first ErrorContext message.
+  ErrorContext,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
   // An error diagnostic, indicating that the program is not valid.

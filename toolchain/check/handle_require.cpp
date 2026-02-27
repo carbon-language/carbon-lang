@@ -213,7 +213,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
       context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
       *constraint_facet_type, [&](auto& builder) {
         CARBON_DIAGNOSTIC(
-            RequireImplsUnidentifiedFacetType, Context,
+            RequireImplsUnidentifiedFacetType, ErrorContext,
             "facet type {0} cannot be identified in `require` declaration",
             InstIdAsType);
         builder.Context(constraint_inst_id, RequireImplsUnidentifiedFacetType,
@@ -300,7 +300,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     if (!RequireCompleteType(
             context, constraint_type_id, SemIR::LocId(constraint_inst_id),
             [&](auto& builder) {
-              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Context,
+              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, ErrorContext,
                                 "`extend require` of incomplete facet type {0}",
                                 InstIdAsType);
               builder.Context(constraint_inst_id,

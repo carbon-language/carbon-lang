@@ -363,7 +363,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
         loc_id, [&](auto& builder) {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, ErrorContext,
                             "member access into incomplete class {0}",
                             InstIdAsType);
           builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
@@ -384,7 +384,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
             context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
             [&](auto& builder) {
               CARBON_DIAGNOSTIC(
-                  QualifiedExprInIncompleteFacetTypeScope, Context,
+                  QualifiedExprInIncompleteFacetTypeScope, ErrorContext,
                   "member access into incomplete facet type {0}", InstIdAsType);
               builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
                               lookup_inst_id);

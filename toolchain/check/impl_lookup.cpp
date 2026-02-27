@@ -221,7 +221,7 @@ static auto GetRequiredImplsFromConstraint(
   auto identified_id = RequireIdentifiedFacetType(
       context, loc_id, query_self_const_id, facet_type_inst,
       [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, ErrorContext,
                           "facet type {0} can not be identified", InstIdAsType);
         builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
                         facet_type_inst_id);
@@ -353,9 +353,9 @@ static auto LookupImplWitnessInSelfFacetValue(
   auto identified_id = RequireIdentifiedFacetType(
       context, loc_id, self_facet_value_const_id, *facet_type,
       [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetTypeOfQuerySelf, Context,
-                          "facet type of value {0} can not be identified",
-                          InstIdAsType);
+        CARBON_DIAGNOSTIC(
+            ImplLookupInUnidentifiedFacetTypeOfQuerySelf, ErrorContext,
+            "facet type of value {0} can not be identified", InstIdAsType);
         builder.Context(loc_id, ImplLookupInUnidentifiedFacetTypeOfQuerySelf,
                         self_facet_value_inst_id);
       });

@@ -174,7 +174,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   auto str_type = MakeStringType(context, SemIR::LocId(node_id).AsDesugared());
   if (!RequireCompleteType(
           context, str_type.type_id, node_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Context,
+            CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, ErrorContext,
                               "type {0} is incomplete", InstIdAsType);
             builder.Context(node_id, StringLiteralTypeIncomplete,
                             str_type.inst_id);

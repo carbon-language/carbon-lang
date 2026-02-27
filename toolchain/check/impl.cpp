@@ -222,7 +222,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   if (!RequireCompleteType(
           context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
           SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Context,
+            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, ErrorContext,
                               "`extend impl as` incomplete facet type {0}",
                               InstIdAsType);
             builder.Context(impl.latest_decl_id(), ExtendImplAsIncomplete,
@@ -517,7 +517,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
             SemIR::LocId(impl.constraint_id), [&](auto& builder) {
               CARBON_DIAGNOSTIC(
-                  ImplAsIncompleteFacetTypeDefinition, Context,
+                  ImplAsIncompleteFacetTypeDefinition, ErrorContext,
                   "definition of impl as incomplete facet type {0}",
                   InstIdAsType);
               builder.Context(SemIR::LocId(impl.latest_decl_id()),
@@ -798,7 +798,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(constraint_id),
       context.constant_values().Get(self_id), *facet_type, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
+        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, ErrorContext,
                           "facet type {0} cannot be identified in `impl as`",
                           InstIdAsType);
         builder.Context(impl_decl_id, ImplOfUnidentifiedFacetType,

@@ -1585,7 +1585,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
   auto copy_id = BuildUnaryOperator(
       context, SemIR::LocId(expr_id), {.interface_name = CoreIdentifier::Copy},
       expr_id, target.diagnose, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(CopyOfUncopyableType, Context,
+        CARBON_DIAGNOSTIC(CopyOfUncopyableType, ErrorContext,
                           "cannot copy value of type {0}", TypeOfInstId);
         builder.Context(expr_id, CopyOfUncopyableType, expr_id);
       });
@@ -1941,10 +1941,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                     !target.is_initializer(),
                     "Initialization of incomplete types is expected to be "
                     "caught elsewhere.");
-                CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Context,
+                CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, ErrorContext,
                                   "forming value of incomplete type {0}",
                                   SemIR::TypeId);
-                CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Context,
+                CARBON_DIAGNOSTIC(IncompleteTypeInConversion, ErrorContext,
                                   "invalid use of incomplete type {0}",
                                   SemIR::TypeId);
                 builder.Context(loc_id,
@@ -1954,7 +1954,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                 target.type_id);
               },
               [&](auto& builder) {
-                CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
+                CARBON_DIAGNOSTIC(AbstractTypeInInit, ErrorContext,
                                   "initialization of abstract type {0}",
                                   SemIR::TypeId);
                 builder.Context(loc_id, AbstractTypeInInit, target.type_id);
@@ -2030,7 +2030,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           if (target.type_id == SemIR::TypeType::TypeId ||
               sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
             CARBON_DIAGNOSTIC(
-                ConversionFailureNonTypeToFacet, Context,
+                ConversionFailureNonTypeToFacet, ErrorContext,
                 "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
                 "{2:to|into type implementing} {3}"
                 "{0:=1: with `as`|=2: with `unsafe as`|:}",
@@ -2042,7 +2042,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                             target.type_id);
           } else {
             CARBON_DIAGNOSTIC(
-                ConversionFailure, Context,
+                ConversionFailure, ErrorContext,
                 "cannot{0:=0: implicitly|:} convert expression of type "
                 "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
                 Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);

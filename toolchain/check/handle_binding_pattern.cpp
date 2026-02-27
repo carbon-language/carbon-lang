@@ -206,7 +206,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   };
 
   auto abstract_diagnostic_context = [&](auto& builder) {
-    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Context,
+    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, ErrorContext,
                       "binding pattern has abstract type {0} in `var` "
                       "pattern",
                       SemIR::TypeId);
@@ -306,7 +306,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
     case FullPatternStack::Kind::NameBindingDecl: {
       auto incomplete_diagnostic_context = [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Context,
+        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, ErrorContext,
                           "binding pattern has incomplete type {0} in name "
                           "binding declaration",
                           InstIdAsType);
@@ -464,12 +464,12 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   if (!RequireConcreteType(
           context, cast_type_id, type_node,
           [&](auto& builder) {
-            CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Context,
+            CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, ErrorContext,
                               "field has incomplete type {0}", SemIR::TypeId);
             builder.Context(type_node, IncompleteTypeInFieldDecl, cast_type_id);
           },
           [&](auto& builder) {
-            CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Context,
+            CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, ErrorContext,
                               "field has abstract type {0}", SemIR::TypeId);
             builder.Context(type_node, AbstractTypeInFieldDecl, cast_type_id);
           })) {

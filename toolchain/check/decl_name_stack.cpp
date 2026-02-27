@@ -381,7 +381,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
     -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Context,
+        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, ErrorContext,
                           "cannot declare a member of incomplete class {0}",
                           SemIR::TypeId);
         builder.Context(loc_id, QualifiedDeclInIncompleteClassScope,
@@ -397,7 +397,7 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     SemIR::InstId interface_inst_id) -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Context,
+        CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, ErrorContext,
                           "cannot declare a member of undefined interface {0}",
                           InstIdAsType);
         builder.Context(loc_id, QualifiedDeclInUndefinedInterfaceScope,

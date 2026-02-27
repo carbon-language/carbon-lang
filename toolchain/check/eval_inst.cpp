@@ -549,7 +549,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   if (complete_type_id.is_concrete()) {
     Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Context,
+          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, ErrorContext,
                             "{0} evaluates to incomplete type {1}",
                             InstIdAsType, InstIdAsType);
           builder.Context(inst_id, IncompleteTypeInMonomorphization,

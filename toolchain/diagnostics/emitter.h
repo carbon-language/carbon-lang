@@ -133,19 +133,22 @@ class Emitter {
     static auto FormatFn(const Message& message,
                          std::index_sequence<N...> /*indices*/) -> std::string;
 
-    // Whether a Context or SoftContext message has been added to the Builder.
-    auto has_context_message() const -> bool { return has_context_message_; }
+    // Whether an ErrorContext or ErrorSoftContext message has been added to the
+    // Builder.
+    auto has_error_context_message() const -> bool {
+      return has_error_context_message_;
+    }
 
     Emitter<LocT>* emitter_;
     Diagnostic diagnostic_;
-    bool has_context_message_ = false;
+    bool has_error_context_message_ = false;
   };
 
   class ContextBuilder {
    public:
-    // Adds a Context describing a higher level operation that failed due to the
-    // diagnostic being built. The API mirrors the main emission API:
-    // `Emitter::Emit`. For the expected usage see the builder API:
+    // Adds a context message describing a higher level operation that has
+    // encountered the diagnostic being built. The API mirrors the main emission
+    // API: `Emitter::Emit`. For the expected usage see the builder API:
     // `Emitter::Build`.
     template <typename... Args>
     auto Context(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
@@ -457,9 +460,9 @@ auto Emitter<LocT>::Builder::AddMessageWithLoc(
       diagnostic_base.Level <= diagnostic_.level,
       "message with level {0} is higher than the diagnostic's level {1}",
       diagnostic_base.Level, diagnostic_.level);
-  if (diagnostic_base.Level == Level::SoftContext ||
-      diagnostic_base.Level == Level::Context) {
-    has_context_message_ = true;
+  if (diagnostic_base.Level == Level::SoftErrorContext ||
+      diagnostic_base.Level == Level::ErrorContext) {
+    has_error_context_message_ = true;
   }
   diagnostic_.messages.push_back(
       Message{.kind = diagnostic_base.Kind,
@@ -503,11 +506,15 @@ template <typename... Args>
 auto Emitter<LocT>::ContextBuilder::Context(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> ContextBuilder& {
-  CARBON_CHECK(diagnostic_base.Level == Level::SoftContext ||
-                   diagnostic_base.Level == Level::Context,
+  CARBON_CHECK(diagnostic_base.Level == Level::SoftErrorContext ||
+                   diagnostic_base.Level == Level::ErrorContext,
                "{0}", static_cast<int>(diagnostic_base.Level));
-  if (builder_->has_context_message() &&
-      diagnostic_base.Level == Level::SoftContext) {
+  if (builder_->diagnostic_.level != Level::Error) {
+    // ErrorContext and SoftErrorContext messages are only for errors.
+    return *this;
+  }
+  if (builder_->has_error_context_message() &&
+      diagnostic_base.Level == Level::SoftErrorContext) {
     return *this;
   }
   builder_->AddMessage(LocT(loc), diagnostic_base,

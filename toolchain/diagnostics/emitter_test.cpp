@@ -81,7 +81,7 @@ TEST_F(EmitterTest, EmitNote) {
 }
 
 TEST_F(EmitterTest, EmitContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -100,7 +100,8 @@ TEST_F(EmitterTest, EmitContext) {
 }
 
 TEST_F(EmitterTest, EmitSoftContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
+                    "soft context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -120,8 +121,9 @@ TEST_F(EmitterTest, EmitSoftContext) {
 }
 
 TEST_F(EmitterTest, EmitSoftContextAndContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
-  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
+                    "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -146,8 +148,9 @@ TEST_F(EmitterTest, EmitSoftContextAndContext) {
 }
 
 TEST_F(EmitterTest, EmitContextAndSoftContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
+                    "soft context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -171,8 +174,8 @@ TEST_F(EmitterTest, EmitContextAndSoftContext) {
 }
 
 TEST_F(EmitterTest, EmitTwoContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticContext, Context, "context");
-  CARBON_DIAGNOSTIC(TestDiagnosticContext2, Context, "context 2");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
+  CARBON_DIAGNOSTIC(TestDiagnosticContext2, ErrorContext, "context 2");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,
@@ -197,8 +200,10 @@ TEST_F(EmitterTest, EmitTwoContext) {
 }
 
 TEST_F(EmitterTest, EmitTwoSoftContext) {
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftContext, "soft context");
-  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext2, SoftContext, "soft context 2");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
+                    "soft context");
+  CARBON_DIAGNOSTIC(TestDiagnosticSoftContext2, SoftErrorContext,
+                    "soft context 2");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(
       consumer_,

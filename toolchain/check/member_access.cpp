@@ -517,7 +517,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       if (!RequireCompleteType(
               context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
                 CARBON_DIAGNOSTIC(
-                    IncompleteTypeInMemberAccessOfFacet, Context,
+                    IncompleteTypeInMemberAccessOfFacet, ErrorContext,
                     "member access into facet of incomplete type {0}",
                     SemIR::TypeId);
                 builder.Context(base_id, IncompleteTypeInMemberAccessOfFacet,
@@ -560,7 +560,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   if (!RequireCompleteType(
           context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
             CARBON_DIAGNOSTIC(
-                IncompleteTypeInMemberAccess, Context,
+                IncompleteTypeInMemberAccess, ErrorContext,
                 "member access into object of incomplete type {0}",
                 TypeOfInstId);
             builder.Context(base_id, IncompleteTypeInMemberAccess, base_id);

@@ -2554,7 +2554,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftErrorContext,
                           "unable to monomorphize specific {0}",
                           SemIR::SpecificId);
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
