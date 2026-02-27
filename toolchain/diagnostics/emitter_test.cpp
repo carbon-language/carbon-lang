@@ -80,64 +80,64 @@ TEST_F(EmitterTest, EmitNote) {
   emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
 }
 
-TEST_F(EmitterTest, EmitContext) {
+TEST_F(EmitterTest, EmitErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
-                                  Diagnostics::Level::Context, 1, 2, "context"),
+                                  Diagnostics::Level::ErrorContext, 1, 2, "context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
     builder.Context(2, TestDiagnosticContext);
   });
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(EmitterTest, EmitSoftContext) {
+TEST_F(EmitterTest, EmitSoftErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
                     "soft context");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
-                                  Diagnostics::Level::SoftContext, 1, 2,
+                                  Diagnostics::Level::SoftErrorContext, 1, 2,
                                   "soft context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
     builder.Context(2, TestDiagnosticSoftContext);
   });
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(EmitterTest, EmitSoftContextAndContext) {
+TEST_F(EmitterTest, EmitSoftErrorContextAndErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
                     "soft context");
   CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
-                                  Diagnostics::Level::SoftContext, 1, 3,
+                                  Diagnostics::Level::SoftErrorContext, 1, 3,
                                   "soft context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
-                                  Diagnostics::Level::Context, 1, 2, "context"),
+                                  Diagnostics::Level::ErrorContext, 1, 2, "context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope soft_scope(&emitter_, [&](auto& builder) {
     builder.Context(3, TestDiagnosticSoftContext);
   });
@@ -147,21 +147,21 @@ TEST_F(EmitterTest, EmitSoftContextAndContext) {
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(EmitterTest, EmitContextAndSoftContext) {
+TEST_F(EmitterTest, EmitErrorContextAndSoftErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
   CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
                     "soft context");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
-                                  Diagnostics::Level::Context, 1, 3, "context"),
+                                  Diagnostics::Level::ErrorContext, 1, 3, "context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
     builder.Context(3, TestDiagnosticContext);
   });
@@ -173,23 +173,23 @@ TEST_F(EmitterTest, EmitContextAndSoftContext) {
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(EmitterTest, EmitTwoContext) {
+TEST_F(EmitterTest, EmitTwoErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticContext, ErrorContext, "context");
   CARBON_DIAGNOSTIC(TestDiagnosticContext2, ErrorContext, "context 2");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext,
-                                  Diagnostics::Level::Context, 1, 3, "context"),
+                                  Diagnostics::Level::ErrorContext, 1, 3, "context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticContext2,
-                                  Diagnostics::Level::Context, 1, 2,
+                                  Diagnostics::Level::ErrorContext, 1, 2,
                                   "context 2"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
     builder.Context(3, TestDiagnosticContext);
   });
@@ -199,23 +199,23 @@ TEST_F(EmitterTest, EmitTwoContext) {
   emitter_.Emit(1, TestDiagnostic);
 }
 
-TEST_F(EmitterTest, EmitTwoSoftContext) {
+TEST_F(EmitterTest, EmitTwoSoftErrorContext) {
   CARBON_DIAGNOSTIC(TestDiagnosticSoftContext, SoftErrorContext,
                     "soft context");
   CARBON_DIAGNOSTIC(TestDiagnosticSoftContext2, SoftErrorContext,
                     "soft context 2");
-  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(
       consumer_,
       HandleDiagnostic(IsDiagnostic(
-          Diagnostics::Level::Warning,
+          Diagnostics::Level::Error,
           ElementsAre(
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnosticSoftContext,
-                                  Diagnostics::Level::SoftContext, 1, 3,
+                                  Diagnostics::Level::SoftErrorContext, 1, 3,
                                   "soft context"),
               IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
-                                  Diagnostics::Level::Warning, 1, 1,
-                                  "simple warning")))));
+                                  Diagnostics::Level::Error, 1, 1,
+                                  "simple error")))));
   Diagnostics::ContextScope scope(&emitter_, [&](auto& builder) {
     builder.Context(3, TestDiagnosticSoftContext);
   });
