@@ -159,11 +159,12 @@ class Formatter {
 
   // Formats parameters, eliding them completely if they're empty. Wraps input
   // parameters in parentheses. If `return_form_id` is not None, this also
-  // formats the return form, and parameters in the return form are omitted
-  // from the parenthesized parameter list.
-  auto FormatParamList(InstBlockId params_id,
-                       SemIR::InstId return_form_id = SemIR::InstId::None)
-      -> void;
+  // formats the return form, and the parameters starting at `return_begin`
+  // are interpreted as the output parameters associated with it.
+  auto FormatParamList(
+      InstBlockId params_id,
+      SemIR::CallParamIndex return_begin = SemIR::CallParamIndex::None,
+      SemIR::InstId return_form_id = SemIR::InstId::None) -> void;
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void;

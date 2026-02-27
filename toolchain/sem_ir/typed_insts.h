@@ -1085,9 +1085,6 @@ struct InitForm {
   TypeId type_id;
   // The type component of the form.
   TypeInstId type_component_inst_id;
-  // If this is a function's return form, the index of the corresponding
-  // `OutParam` in the function's `Call` parameter list.
-  CallParamIndex index;
 };
 
 // Consumes the repr-initializing expression `src_id` and forms an in-place

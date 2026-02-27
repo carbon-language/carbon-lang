@@ -63,7 +63,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %HasF.generic: %HasF.type.ee1 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.type.8a4: type = facet_type <@HasF, @HasF(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.c1f: %HasF.type.8a4 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %.41b: Core.Form = init_form %T.67d, call_param0 [symbolic]
+// CHECK:STDOUT:   %.184347.1: Core.Form = init_form %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.1: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.246: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%T.67d, %Self.c1f) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.58b: %HasF.WithSelf.F.type.246 = struct_value () [symbolic]
@@ -86,7 +86,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %HasF.WithSelf.F.1c0: %HasF.WithSelf.F.type.a94 = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type.078: type = assoc_entity_type @HasF, @HasF(%Param) [concrete]
 // CHECK:STDOUT:   %assoc0.22c: %HasF.assoc_type.078 = assoc_entity element0, @HasF.WithSelf.%HasF.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %.e8f: Core.Form = init_form %Param, call_param0 [concrete]
+// CHECK:STDOUT:   %.436: Core.Form = init_form %Param [concrete]
 // CHECK:STDOUT:   %pattern_type.9ea: type = pattern_type %Param [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.type: type = fn_type @C.as.HasF.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F: %C.as.HasF.impl.F.type = struct_value () [concrete]
@@ -206,7 +206,7 @@ class X(U:! type) {
 // CHECK:STDOUT:       %return.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @HasF.%T.loc4_16.2 [symbolic = %T (constants.%T.67d)]
-// CHECK:STDOUT:       %.loc5_13.2: Core.Form = init_form %T.ref, call_param0 [symbolic = %.loc5_13.1 (constants.%.41b)]
+// CHECK:STDOUT:       %.loc5_13.2: Core.Form = init_form %T.ref [symbolic = %.loc5_13.1 (constants.%.184347.1)]
 // CHECK:STDOUT:       %return.param: ref @HasF.WithSelf.F.%T (%T.67d) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @HasF.WithSelf.F.%T (%T.67d) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -230,7 +230,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9ea = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Param.ref: type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
-// CHECK:STDOUT:     %.loc14: Core.Form = init_form %Param.ref, call_param0 [concrete = constants.%.e8f]
+// CHECK:STDOUT:     %.loc14: Core.Form = init_form %Param.ref [concrete = constants.%.436]
 // CHECK:STDOUT:     %return.param: ref %Param = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Param = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -274,7 +274,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(@HasF.%T.loc4_16.2: type, @HasF.%Self.loc4_26.1: @HasF.%HasF.type (%HasF.type.8a4)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
-// CHECK:STDOUT:   %.loc5_13.1: Core.Form = init_form %T, call_param0 [symbolic = %.loc5_13.1 (constants.%.41b)]
+// CHECK:STDOUT:   %.loc5_13.1: Core.Form = init_form %T [symbolic = %.loc5_13.1 (constants.%.184347.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @HasF.WithSelf.F.%T (%T.67d);
@@ -358,7 +358,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%T.67d, constants.%Self.c1f) {
 // CHECK:STDOUT:   %T => constants.%T.67d
-// CHECK:STDOUT:   %.loc5_13.1 => constants.%.41b
+// CHECK:STDOUT:   %.loc5_13.1 => constants.%.184347.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -394,7 +394,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Param, constants.%HasF.facet) {
 // CHECK:STDOUT:   %T => constants.%Param
-// CHECK:STDOUT:   %.loc5_13.1 => constants.%.e8f
+// CHECK:STDOUT:   %.loc5_13.1 => constants.%.436
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ea
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -102,7 +102,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %.8e9: Core.Form = init_form %ptr, call_param0 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -130,7 +130,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_20.2: type = ptr_type %T.ref.loc4 [symbolic = %ptr.loc4_20.1 (constants.%ptr)]
-// CHECK:STDOUT:     %.loc4_20.2: Core.Form = init_form %ptr.loc4_20.2, call_param0 [symbolic = %.loc4_20.1 (constants.%.8e9)]
+// CHECK:STDOUT:     %.loc4_20.2: Core.Form = init_form %ptr.loc4_20.2 [symbolic = %.loc4_20.1 (constants.%.cb6)]
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
@@ -146,7 +146,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T.ref.loc6 [symbolic = %ptr.loc4_20.1 (constants.%ptr)]
-// CHECK:STDOUT:     %.loc6_20: Core.Form = init_form %ptr.loc6, call_param0 [symbolic = %.loc4_20.1 (constants.%.8e9)]
+// CHECK:STDOUT:     %.loc6_20: Core.Form = init_form %ptr.loc6 [symbolic = %.loc4_20.1 (constants.%.cb6)]
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
@@ -160,7 +160,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: generic fn @F(%T.loc4_6.2: type) {
 // CHECK:STDOUT:   %T.loc4_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:   %ptr.loc4_20.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_20.1 (constants.%ptr)]
-// CHECK:STDOUT:   %.loc4_20.1: Core.Form = init_form %ptr.loc4_20.1, call_param0 [symbolic = %.loc4_20.1 (constants.%.8e9)]
+// CHECK:STDOUT:   %.loc4_20.1: Core.Form = init_form %ptr.loc4_20.1 [symbolic = %.loc4_20.1 (constants.%.cb6)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_20.1 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -180,7 +180,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr
-// CHECK:STDOUT:   %.loc4_20.1 => constants.%.8e9
+// CHECK:STDOUT:   %.loc4_20.1 => constants.%.cb6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -197,12 +197,12 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %.8e9: Core.Form = init_form %ptr.e8f, call_param0 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.1: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.1: %F.type.117dbc.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.18e: type = ptr_type %U [symbolic]
-// CHECK:STDOUT:   %.a9f: Core.Form = init_form %ptr.18e, call_param0 [symbolic]
+// CHECK:STDOUT:   %.6d8: Core.Form = init_form %ptr.18e [symbolic]
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.2: type = fn_type @F.loc13 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.2: %F.type.117dbc.2 = struct_value () [concrete]
@@ -230,7 +230,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_30.2: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9)]
+// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2 [symbolic = %.loc4_30.1 (constants.%.cb6)]
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
@@ -252,7 +252,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.2 [symbolic = %U.loc13_16.1 (constants.%U)]
 // CHECK:STDOUT:     %ptr.loc13_30.2: type = ptr_type %U.ref [symbolic = %ptr.loc13_30.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:     %.loc13_30.2: Core.Form = init_form %ptr.loc13_30.2, call_param0 [symbolic = %.loc13_30.1 (constants.%.a9f)]
+// CHECK:STDOUT:     %.loc13_30.2: Core.Form = init_form %ptr.loc13_30.2 [symbolic = %.loc13_30.1 (constants.%.6d8)]
 // CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
@@ -272,7 +272,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:   %U.loc4_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc4_16.1 (constants.%U)]
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9)]
+// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1 [symbolic = %.loc4_30.1 (constants.%.cb6)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @F.loc4.%ptr.loc4_30.1 (%ptr.e8f);
@@ -282,7 +282,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc13_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:   %U.loc13_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc13_16.1 (constants.%U)]
 // CHECK:STDOUT:   %ptr.loc13_30.1: type = ptr_type %U.loc13_16.1 [symbolic = %ptr.loc13_30.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:   %.loc13_30.1: Core.Form = init_form %ptr.loc13_30.1, call_param0 [symbolic = %.loc13_30.1 (constants.%.a9f)]
+// CHECK:STDOUT:   %.loc13_30.1: Core.Form = init_form %ptr.loc13_30.1 [symbolic = %.loc13_30.1 (constants.%.6d8)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc13_30.1 [symbolic = %pattern_type (constants.%pattern_type.423)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -300,7 +300,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
 // CHECK:STDOUT:   %U.loc4_16.1 => constants.%U
 // CHECK:STDOUT:   %ptr.loc4_30.1 => constants.%ptr.e8f
-// CHECK:STDOUT:   %.loc4_30.1 => constants.%.8e9
+// CHECK:STDOUT:   %.loc4_30.1 => constants.%.cb6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -308,7 +308,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc13_6.1 => constants.%T
 // CHECK:STDOUT:   %U.loc13_16.1 => constants.%U
 // CHECK:STDOUT:   %ptr.loc13_30.1 => constants.%ptr.18e
-// CHECK:STDOUT:   %.loc13_30.1 => constants.%.a9f
+// CHECK:STDOUT:   %.loc13_30.1 => constants.%.6d8
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.423
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,14 +321,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
-// CHECK:STDOUT:   %.8e9: Core.Form = init_form %ptr.e8f, call_param0 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.1: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.1: %F.type.117dbc.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %T.091: type = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.18e: type = ptr_type %T.091 [symbolic]
-// CHECK:STDOUT:   %.a9f: Core.Form = init_form %ptr.18e, call_param0 [symbolic]
+// CHECK:STDOUT:   %.6d8: Core.Form = init_form %ptr.18e [symbolic]
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.2: type = fn_type @F.loc13 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.2: %F.type.117dbc.2 = struct_value () [concrete]
@@ -356,7 +356,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %ptr.loc4_30.2: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9)]
+// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2 [symbolic = %.loc4_30.1 (constants.%.cb6)]
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
@@ -378,7 +378,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc13_23.2 [symbolic = %T.loc13_23.1 (constants.%T.091)]
 // CHECK:STDOUT:     %ptr.loc13_37.2: type = ptr_type %T.ref.loc13 [symbolic = %ptr.loc13_37.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:     %.loc13_37.2: Core.Form = init_form %ptr.loc13_37.2, call_param0 [symbolic = %.loc13_37.1 (constants.%.a9f)]
+// CHECK:STDOUT:     %.loc13_37.2: Core.Form = init_form %ptr.loc13_37.2 [symbolic = %.loc13_37.1 (constants.%.6d8)]
 // CHECK:STDOUT:     %.loc13_17.1: type = splice_block %.loc13_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc13_17.2: type = type_literal type [concrete = type]
@@ -398,7 +398,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_6.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %U.loc4_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc4_16.1 (constants.%U.091)]
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9)]
+// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1 [symbolic = %.loc4_30.1 (constants.%.cb6)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @F.loc4.%ptr.loc4_30.1 (%ptr.e8f);
@@ -408,7 +408,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.loc13_13.1: type = symbolic_binding U, 0 [symbolic = %U.loc13_13.1 (constants.%U.67d)]
 // CHECK:STDOUT:   %T.loc13_23.1: type = symbolic_binding T, 1 [symbolic = %T.loc13_23.1 (constants.%T.091)]
 // CHECK:STDOUT:   %ptr.loc13_37.1: type = ptr_type %T.loc13_23.1 [symbolic = %ptr.loc13_37.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:   %.loc13_37.1: Core.Form = init_form %ptr.loc13_37.1, call_param0 [symbolic = %.loc13_37.1 (constants.%.a9f)]
+// CHECK:STDOUT:   %.loc13_37.1: Core.Form = init_form %ptr.loc13_37.1 [symbolic = %.loc13_37.1 (constants.%.6d8)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc13_37.1 [symbolic = %pattern_type (constants.%pattern_type.423)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -426,7 +426,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T.67d
 // CHECK:STDOUT:   %U.loc4_16.1 => constants.%U.091
 // CHECK:STDOUT:   %ptr.loc4_30.1 => constants.%ptr.e8f
-// CHECK:STDOUT:   %.loc4_30.1 => constants.%.8e9
+// CHECK:STDOUT:   %.loc4_30.1 => constants.%.cb6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -434,7 +434,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.loc13_13.1 => constants.%U.67d
 // CHECK:STDOUT:   %T.loc13_23.1 => constants.%T.091
 // CHECK:STDOUT:   %ptr.loc13_37.1 => constants.%ptr.18e
-// CHECK:STDOUT:   %.loc13_37.1 => constants.%.a9f
+// CHECK:STDOUT:   %.loc13_37.1 => constants.%.6d8
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.423
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -447,14 +447,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %T.67d [symbolic]
-// CHECK:STDOUT:   %.8e9764.1: Core.Form = init_form %ptr.e8f8f9.1, call_param0 [symbolic]
+// CHECK:STDOUT:   %.cb6cb9.1: Core.Form = init_form %ptr.e8f8f9.1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.1: type = pattern_type %ptr.e8f8f9.1 [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.1: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.1: %F.type.117dbc.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %T.091: type = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.2: type = ptr_type %U.67d [symbolic]
-// CHECK:STDOUT:   %.8e9764.2: Core.Form = init_form %ptr.e8f8f9.2, call_param0 [symbolic]
+// CHECK:STDOUT:   %.cb6cb9.2: Core.Form = init_form %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.2: type = pattern_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %F.type.117dbc.2: type = fn_type @F.loc13 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.2: %F.type.117dbc.2 = struct_value () [concrete]
@@ -482,7 +482,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %ptr.loc4_30.2: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f8f9.1)]
-// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9764.1)]
+// CHECK:STDOUT:     %.loc4_30.2: Core.Form = init_form %ptr.loc4_30.2 [symbolic = %.loc4_30.1 (constants.%.cb6cb9.1)]
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
@@ -504,7 +504,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_6.2 [symbolic = %U.loc13_6.1 (constants.%U.67d)]
 // CHECK:STDOUT:     %ptr.loc13_30.2: type = ptr_type %U.ref [symbolic = %ptr.loc13_30.1 (constants.%ptr.e8f8f9.2)]
-// CHECK:STDOUT:     %.loc13_30.2: Core.Form = init_form %ptr.loc13_30.2, call_param0 [symbolic = %.loc13_30.1 (constants.%.8e9764.2)]
+// CHECK:STDOUT:     %.loc13_30.2: Core.Form = init_form %ptr.loc13_30.2 [symbolic = %.loc13_30.1 (constants.%.cb6cb9.2)]
 // CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
@@ -524,7 +524,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_6.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %U.loc4_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc4_16.1 (constants.%U.091)]
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f8f9.1)]
-// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1, call_param0 [symbolic = %.loc4_30.1 (constants.%.8e9764.1)]
+// CHECK:STDOUT:   %.loc4_30.1: Core.Form = init_form %ptr.loc4_30.1 [symbolic = %.loc4_30.1 (constants.%.cb6cb9.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @F.loc4.%ptr.loc4_30.1 (%ptr.e8f8f9.1);
@@ -534,7 +534,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.loc13_6.1: type = symbolic_binding U, 0 [symbolic = %U.loc13_6.1 (constants.%U.67d)]
 // CHECK:STDOUT:   %T.loc13_16.1: type = symbolic_binding T, 1 [symbolic = %T.loc13_16.1 (constants.%T.091)]
 // CHECK:STDOUT:   %ptr.loc13_30.1: type = ptr_type %U.loc13_6.1 [symbolic = %ptr.loc13_30.1 (constants.%ptr.e8f8f9.2)]
-// CHECK:STDOUT:   %.loc13_30.1: Core.Form = init_form %ptr.loc13_30.1, call_param0 [symbolic = %.loc13_30.1 (constants.%.8e9764.2)]
+// CHECK:STDOUT:   %.loc13_30.1: Core.Form = init_form %ptr.loc13_30.1 [symbolic = %.loc13_30.1 (constants.%.cb6cb9.2)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc13_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4b84.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -552,7 +552,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T.67d
 // CHECK:STDOUT:   %U.loc4_16.1 => constants.%U.091
 // CHECK:STDOUT:   %ptr.loc4_30.1 => constants.%ptr.e8f8f9.1
-// CHECK:STDOUT:   %.loc4_30.1 => constants.%.8e9764.1
+// CHECK:STDOUT:   %.loc4_30.1 => constants.%.cb6cb9.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4b84.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,7 +560,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.loc13_6.1 => constants.%U.67d
 // CHECK:STDOUT:   %T.loc13_16.1 => constants.%T.091
 // CHECK:STDOUT:   %ptr.loc13_30.1 => constants.%ptr.e8f8f9.2
-// CHECK:STDOUT:   %.loc13_30.1 => constants.%.8e9764.2
+// CHECK:STDOUT:   %.loc13_30.1 => constants.%.cb6cb9.2
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4b84.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

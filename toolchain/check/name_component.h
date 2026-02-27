@@ -39,6 +39,9 @@ struct NameComponent {
   // SemIR::EntityWithParamsBase).
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
+  SemIR::CallParamIndex implicit_end;
+  SemIR::CallParamIndex explicit_end;
+  SemIR::CallParamIndex return_end;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;

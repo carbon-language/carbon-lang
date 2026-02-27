@@ -228,8 +228,11 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
               return InstId::None;
             }
 
+            CARBON_CHECK(
+                function.return_end.index - function.explicit_end.index == 1,
+                "Unexpected number of output parameters on function");
             return sem_ir.inst_blocks().Get(
-                call.args_id)[init_form.index.index];
+                call.args_id)[function.explicit_end.index];
           }
           case CARBON_KIND(RefForm _): {
             return InstId::None;

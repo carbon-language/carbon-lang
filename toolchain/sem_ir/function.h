@@ -50,6 +50,12 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
+  // The past-the-end indices of the implicit parameter, explicit parameter,
+  // and return portions of the call parameter list.
+  CallParamIndex implicit_end;
+  CallParamIndex explicit_end;
+  CallParamIndex return_end;
+
   // The inst representing the type component of return_form_inst_id.
   // TODO: remove this in favor of return_form_inst_id.
   TypeInstId return_type_inst_id;
@@ -58,7 +64,7 @@ struct FunctionFields {
   // any.
   InstId return_form_inst_id;
 
-  // The call parameter pattern insts that are declared by the function's return
+  // The parameter pattern insts that are declared by the function's return
   // form declaration. They will all be OutParamPatterns, and there will be one
   // for each primitive initializing form in the return form, but they may or
   // may not be used, depending on whether the type has an in-place initializing

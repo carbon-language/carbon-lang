@@ -128,7 +128,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
 // CHECK:STDOUT:   %ptr.27c: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %.35c: Core.Form = init_form %ptr.27c, call_param1 [concrete]
+// CHECK:STDOUT:   %.d19: Core.Form = init_form %ptr.27c [concrete]
 // CHECK:STDOUT:   %pattern_type.191: type = pattern_type %ptr.27c [concrete]
 // CHECK:STDOUT:   %ConvertCToB.type: type = fn_type @ConvertCToB [concrete]
 // CHECK:STDOUT:   %ConvertCToB: %ConvertCToB.type = struct_value () [concrete]
@@ -144,7 +144,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.cc8: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d34, %Copy.facet.069 [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.695: <specific function> = specific_function %ptr.as.Copy.impl.Op.20b, @ptr.as.Copy.impl.Op(%B) [concrete]
 // CHECK:STDOUT:   %ptr.643: type = ptr_type %A [concrete]
-// CHECK:STDOUT:   %.6ec: Core.Form = init_form %ptr.643, call_param1 [concrete]
+// CHECK:STDOUT:   %.ebf: Core.Form = init_form %ptr.643 [concrete]
 // CHECK:STDOUT:   %pattern_type.f29: type = pattern_type %ptr.643 [concrete]
 // CHECK:STDOUT:   %ConvertBToA.type: type = fn_type @ConvertBToA [concrete]
 // CHECK:STDOUT:   %ConvertBToA: %ConvertBToA.type = struct_value () [concrete]
@@ -221,7 +221,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc19_27: type = ptr_type %B.ref [concrete = constants.%ptr.27c]
-// CHECK:STDOUT:     %.loc19_27: Core.Form = init_form %ptr.loc19_27, call_param1 [concrete = constants.%.35c]
+// CHECK:STDOUT:     %.loc19_27: Core.Form = init_form %ptr.loc19_27 [concrete = constants.%.d19]
 // CHECK:STDOUT:     %p.param: %ptr.31e = value_param call_param0
 // CHECK:STDOUT:     %.loc19_20: type = splice_block %ptr.loc19_20 [concrete = constants.%ptr.31e] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -239,7 +239,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc20_27: type = ptr_type %A.ref [concrete = constants.%ptr.643]
-// CHECK:STDOUT:     %.loc20_27: Core.Form = init_form %ptr.loc20_27, call_param1 [concrete = constants.%.6ec]
+// CHECK:STDOUT:     %.loc20_27: Core.Form = init_form %ptr.loc20_27 [concrete = constants.%.ebf]
 // CHECK:STDOUT:     %p.param: %ptr.27c = value_param call_param0
 // CHECK:STDOUT:     %.loc20_20: type = splice_block %ptr.loc20_20 [concrete = constants.%ptr.27c] {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
@@ -257,7 +257,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc21_27: type = ptr_type %A.ref [concrete = constants.%ptr.643]
-// CHECK:STDOUT:     %.loc21_27: Core.Form = init_form %ptr.loc21_27, call_param1 [concrete = constants.%.6ec]
+// CHECK:STDOUT:     %.loc21_27: Core.Form = init_form %ptr.loc21_27 [concrete = constants.%.ebf]
 // CHECK:STDOUT:     %p.param: %ptr.31e = value_param call_param0
 // CHECK:STDOUT:     %.loc21_20: type = splice_block %ptr.loc21_20 [concrete = constants.%ptr.31e] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -283,7 +283,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc27: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc27_26: type = ptr_type %A.ref.loc27 [concrete = constants.%ptr.643]
-// CHECK:STDOUT:     %.loc27_26: Core.Form = init_form %ptr.loc27_26, call_param1 [concrete = constants.%.6ec]
+// CHECK:STDOUT:     %.loc27_26: Core.Form = init_form %ptr.loc27_26 [concrete = constants.%.ebf]
 // CHECK:STDOUT:     %c.param: %ptr.31e = value_param call_param0
 // CHECK:STDOUT:     %.loc27_19: type = splice_block %ptr.loc27_19 [concrete = constants.%ptr.31e] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]

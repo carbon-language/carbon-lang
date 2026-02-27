@@ -157,11 +157,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto [call_param_patterns_id, call_params_id] =
+    auto match_results =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::None, SemIR::InstBlockId::None);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
-    CARBON_CHECK(call_param_patterns_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(match_results.call_params_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(match_results.call_param_patterns_id ==
+                 SemIR::InstBlockId::Empty);
   }
 
   Parse::NodeId first_param_node_id =
@@ -187,6 +188,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
+          .implicit_end = SemIR::CallParamIndex::None,
+          .explicit_end = SemIR::CallParamIndex::None,
+          .return_end = SemIR::CallParamIndex::None,
           .pattern_block_id = pattern_block_id};
 }
 

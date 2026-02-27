@@ -447,6 +447,11 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
   param_types_.reserve(call_param_pattern_ids_.size());
   param_di_types_.reserve(call_param_pattern_ids_.size());
 
+  if (function.return_end.index > function.explicit_end.index) {
+    CARBON_CHECK(function.return_end.index - function.explicit_end.index == 1,
+                 "TODO: support multiple return forms");
+    semir_return_param_index_ = function.explicit_end.index;
+  }
   if (!HandleReturnForm(function.return_form_inst_id)) {
     return Finalize();
   }
@@ -483,9 +488,6 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
       context_.sem_ir().constant_values().GetInstId(return_form_const_id));
   CARBON_KIND_SWITCH(return_form_inst) {
     case CARBON_KIND(SemIR::InitForm init_form): {
-      CARBON_CHECK(
-          std::exchange(semir_return_param_index_, init_form.index.index) == -1,
-          "TODO: Generalize this to support compound return forms");
       auto return_type_id =
           context_.sem_ir().types().GetTypeIdForTypeConstantId(
               SemIR::GetConstantValueInSpecific(

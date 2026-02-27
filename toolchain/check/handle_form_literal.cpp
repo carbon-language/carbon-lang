@@ -41,8 +41,7 @@ auto HandleParseNode(Context& context, Parse::VarPrimitiveFormId node_id)
   auto inst_id =
       AddInst<SemIR::InitForm>(context, node_id,
                                {.type_id = SemIR::FormType::TypeId,
-                                .type_component_inst_id = type_expr.inst_id,
-                                .index = SemIR::CallParamIndex::None});
+                                .type_component_inst_id = type_expr.inst_id});
   context.node_stack().Push(node_id, inst_id);
   return true;
 }

@@ -25,10 +25,16 @@ namespace Carbon::Check {
 // matching them against the corresponding `Call` parameters (see
 // entity_with_params_base.h for the definition of that term).
 // Returns the IDs of inst blocks consisting of references to the `Call`
-// parameter patterns and `Call` parameters of the function.
+// parameter patterns and `Call` parameters of the function, as well as
+// the past-the-end indices for the implicit, explicit, and return portions
+// of those blocks.
 struct CalleePatternMatchResults {
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
+
+  SemIR::CallParamIndex implicit_end;
+  SemIR::CallParamIndex explicit_end;
+  SemIR::CallParamIndex return_end;
 };
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,

@@ -48,7 +48,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %ptr.f74: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.0dd: type = pattern_type %ptr.f74 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %.85d: Core.Form = init_form %ptr.235, call_param1 [concrete]
+// CHECK:STDOUT:   %.605: Core.Form = init_form %ptr.235 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
@@ -96,7 +96,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc28_30: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %.loc28_30: Core.Form = init_form %ptr.loc28_30, call_param1 [concrete = constants.%.85d]
+// CHECK:STDOUT:     %.loc28_30: Core.Form = init_form %ptr.loc28_30 [concrete = constants.%.605]
 // CHECK:STDOUT:     %p.param: %ptr.f74 = value_param call_param0
 // CHECK:STDOUT:     %.loc28_21: type = splice_block %ptr.loc28_21 [concrete = constants.%ptr.f74] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
