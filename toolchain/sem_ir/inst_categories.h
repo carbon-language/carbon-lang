@@ -182,8 +182,6 @@ struct AnyPrimitiveForm {
 
   // The type component of the form.
   TypeInstId type_component_id;
-
-  AnyRawId arg1;
 };
 
 // A type qualifier that wraps another type and has the same object
