@@ -24,14 +24,14 @@ interface I {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete]
-// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.%Empty [concrete]
+// CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%N [concrete]
+// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.WithSelf.%Empty [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,17 +54,17 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
-// CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete = constants.%assoc1]
+// CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%N [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty: %empty_tuple.type = assoc_const_decl @Empty [concrete] {
-// CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.%Empty [concrete = constants.%assoc2]
+// CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.WithSelf.%Empty [concrete = constants.%assoc2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -72,10 +72,10 @@ interface I {
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   .N = @N.%assoc1
 // CHECK:STDOUT:   .Empty = @Empty.%assoc2
-// CHECK:STDOUT:   witness = (%T, %N, %Empty)
+// CHECK:STDOUT:   witness = (@I.WithSelf.%T, @I.WithSelf.%N, @I.WithSelf.%Empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

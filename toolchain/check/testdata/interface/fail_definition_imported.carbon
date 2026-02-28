@@ -72,7 +72,7 @@ interface I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc13 {
 // CHECK:STDOUT:   %Self: %I.type.c787dc.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I.loc13 [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc13 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -81,5 +81,5 @@ interface I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.loc13(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

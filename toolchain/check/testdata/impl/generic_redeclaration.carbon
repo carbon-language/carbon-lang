@@ -285,7 +285,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self.887]
-// CHECK:STDOUT:   interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:   %Interface.WithSelf.decl = interface_with_self_decl @Interface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -296,7 +296,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -307,7 +307,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
-// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:   %J.WithSelf.decl = interface_with_self_decl @J [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -318,7 +318,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
 // CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self.44d]
-// CHECK:STDOUT:   interface_with_self_decl @K [concrete]
+// CHECK:STDOUT:   %K.WithSelf.decl = interface_with_self_decl @K [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -329,7 +329,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L {
 // CHECK:STDOUT:   %Self: %L.type = symbolic_binding Self, 0 [symbolic = constants.%Self.cbc]
-// CHECK:STDOUT:   interface_with_self_decl @L [concrete]
+// CHECK:STDOUT:   %L.WithSelf.decl = interface_with_self_decl @L [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -402,23 +402,23 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Self.887) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Self.887) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self.8a1) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%Self.8a1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K(constants.%Self.44d) {
+// CHECK:STDOUT: specific @K.WithSelf(constants.%Self.44d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @L(constants.%Self.cbc) {
+// CHECK:STDOUT: specific @L.WithSelf(constants.%Self.cbc) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,19 +446,19 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Interface.impl_witness.loc15_35.2 => constants.%Interface.impl_witness.8e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.9bb) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Interface.facet.9bb) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.08d) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Interface.facet.08d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.842) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Interface.facet.842) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%Interface.facet.f9d) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%Interface.facet.f9d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -524,7 +524,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -535,7 +535,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8a1]
-// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:   %J.WithSelf.decl = interface_with_self_decl @J [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -572,11 +572,11 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self.8a1) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%Self.8a1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -586,7 +586,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %J.impl_witness.loc7_28.2 => constants.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%J.facet) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -644,7 +644,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -671,15 +671,15 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet.f94759.1) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.f94759.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet.f94759.2) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.f94759.2) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -749,7 +749,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -866,7 +866,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -881,7 +881,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl.A(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -177,16 +177,26 @@ static auto ConvertArgToTemplateArg(
         context.constant_values().GetConstantInstId(converted_inst_id);
     if (const_inst_id.has_value()) {
       if (param_type->isIntegerType()) {
+        const bool is_signed = param_type->isSignedIntegerOrEnumerationType();
         if (auto int_value =
                 context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
           const auto& ap_int = context.ints().Get(int_value->int_id);
-          const bool is_unsigned =
-              !param_type->isSignedIntegerOrEnumerationType();
           auto aps_int =
-              llvm::APSInt(ap_int, is_unsigned)
+              llvm::APSInt(ap_int, !is_signed)
                   .extOrTrunc(context.ast_context().getIntWidth(param_type));
           clang::TemplateArgument template_arg(context.ast_context(), aps_int,
                                                param_type);
+          return clang::TemplateArgumentLoc(template_arg, template_loc);
+        } else if (auto bool_value =
+                       context.insts().TryGetAs<SemIR::BoolLiteral>(
+                           const_inst_id)) {
+          llvm::APInt ap_int(context.ast_context().getIntWidth(param_type),
+                             bool_value->value.ToBool(), is_signed);
+          auto aps_int =
+              llvm::APSInt(ap_int, !is_signed)
+                  .extOrTrunc(context.ast_context().getIntWidth(param_type));
+          auto template_arg = clang::TemplateArgument(context.ast_context(),
+                                                      aps_int, param_type);
           return clang::TemplateArgumentLoc(template_arg, template_loc);
         }
       } else if (param_type->isFloatingType()) {

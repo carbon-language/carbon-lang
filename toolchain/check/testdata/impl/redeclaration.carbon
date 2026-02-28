@@ -68,7 +68,7 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -98,11 +98,11 @@ impl i32 as I {}
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

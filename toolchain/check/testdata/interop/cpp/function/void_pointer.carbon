@@ -229,7 +229,7 @@ fn F() {
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.type.4b4: type = fn_type @U.binding.as_type.as.ImplicitAs.impl.Convert.2, @U.binding.as_type.as.ImplicitAs.impl.71c(%OptionalStorage.facet.92c, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.d74: %U.binding.as_type.as.ImplicitAs.impl.Convert.type.4b4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.d14: %ImplicitAs.type.3c0 = facet_value %ptr.874, (%ImplicitAs.impl_witness.a7d) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.baa: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%Optional.804, %ImplicitAs.facet.d14) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.baa: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.804, %ImplicitAs.facet.d14) [concrete]
 // CHECK:STDOUT:   %.73c: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.baa, %ImplicitAs.facet.d14 [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.binding.as_type.as.ImplicitAs.impl.Convert.d74, @U.binding.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.92c, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc10 [concrete]

@@ -226,7 +226,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [concrete]
 // CHECK:STDOUT:   %N.assoc_type: type = assoc_entity_type @N [concrete]
-// CHECK:STDOUT:   %assoc0: %N.assoc_type = assoc_entity element0, @N.%P [concrete]
+// CHECK:STDOUT:   %assoc0: %N.assoc_type = assoc_entity element0, @N.WithSelf.%P [concrete]
 // CHECK:STDOUT:   %.Self.245: %N.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.245 [symbolic_self]
 // CHECK:STDOUT:   %N.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.245, @N [symbolic_self]
@@ -279,8 +279,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B [concrete]
-// CHECK:STDOUT:   %assoc1: %A.assoc_type = assoc_entity element1, @A.%C [concrete]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.WithSelf.%B [concrete]
+// CHECK:STDOUT:   %assoc1: %A.assoc_type = assoc_entity element1, @A.WithSelf.%C [concrete]
 // CHECK:STDOUT:   %.Self.091: %A.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.091 [symbolic_self]
@@ -346,7 +346,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [concrete]
 // CHECK:STDOUT:   %E.assoc_type: type = assoc_entity_type @E [concrete]
-// CHECK:STDOUT:   %assoc0: %E.assoc_type = assoc_entity element0, @E.%F [concrete]
+// CHECK:STDOUT:   %assoc0: %E.assoc_type = assoc_entity element0, @E.WithSelf.%F [concrete]
 // CHECK:STDOUT:   %.Self.7f5: %E.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.7f5 [symbolic_self]
 // CHECK:STDOUT:   %E.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.7f5, @E [symbolic_self]
@@ -471,8 +471,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
-// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%K [concrete]
-// CHECK:STDOUT:   %assoc1: %J.assoc_type = assoc_entity element1, @J.%L [concrete]
+// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.WithSelf.%K [concrete]
+// CHECK:STDOUT:   %assoc1: %J.assoc_type = assoc_entity element1, @J.WithSelf.%L [concrete]
 // CHECK:STDOUT:   %.Self.2fa: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.2fa [symbolic_self]

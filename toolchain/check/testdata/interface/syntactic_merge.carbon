@@ -267,7 +267,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc8_22.1: @Foo.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc8_22.2 (constants.%Self.f8c)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_22.1
@@ -286,7 +286,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc11_22.1: @Bar.%Bar.type (%Bar.type.c4b) = symbolic_binding Self, 1 [symbolic = %Self.loc11_22.2 (constants.%Self.0fc)]
-// CHECK:STDOUT:     interface_with_self_decl @Bar [concrete]
+// CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc11_22.1
@@ -308,13 +308,13 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self.f8c) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.f8c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.loc10_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(constants.%a, constants.%Self.0fc) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.0fc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
 // CHECK:STDOUT:
@@ -367,7 +367,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc7_24.1: @Foo.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc7_24.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_24.1
@@ -389,7 +389,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_21.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
 // CHECK:STDOUT:
@@ -450,7 +450,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc14_24.1: @Foo.loc14.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc14_24.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc14 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc14 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc14_24.1
@@ -476,7 +476,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc14_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc14(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
 // CHECK:STDOUT:
@@ -529,7 +529,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc7_24.1: @Foo.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc7_24.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_24.1
@@ -551,7 +551,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
 // CHECK:STDOUT:
@@ -706,7 +706,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc12_22.1: @Foo.loc12.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc12_22.2 (constants.%Self.f8c)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc12 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc12 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc12_22.1
@@ -731,7 +731,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc21_22.1: @Bar.loc21.%Bar.type (%Bar.type.c4b) = symbolic_binding Self, 1 [symbolic = %Self.loc21_22.2 (constants.%Self.0fc)]
-// CHECK:STDOUT:     interface_with_self_decl @Bar.loc21 [concrete]
+// CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar.loc21 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc21_22.1
@@ -756,7 +756,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc12_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc12(constants.%a, constants.%Self.f8c) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.f8c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.1(constants.%a) {
 // CHECK:STDOUT:   %a => constants.%a
@@ -766,7 +766,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc21_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.loc21(constants.%a, constants.%Self.0fc) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.0fc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
 // CHECK:STDOUT:
@@ -831,7 +831,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_22.1: @Foo.loc15.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc15_22.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc15_22.1
@@ -857,7 +857,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %b.loc15_15.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%b, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%b, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
 // CHECK:STDOUT:
@@ -921,7 +921,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_22.1: @Foo.loc15.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc15_22.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc15_22.1
@@ -947,7 +947,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc15_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
 // CHECK:STDOUT:
@@ -1011,7 +1011,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc15_24.1: @Foo.loc15.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc15_24.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc15_24.1
@@ -1037,7 +1037,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc15_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
 // CHECK:STDOUT:
@@ -1150,7 +1150,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc17_22.1: @Foo.loc17.%Foo.type (%Foo.type.6f9) = symbolic_binding Self, 1 [symbolic = %Self.loc17_22.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc17 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc17 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc17_22.1
@@ -1175,7 +1175,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc17_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc17(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
 // CHECK:STDOUT:
@@ -1240,7 +1240,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc18_36.1: @Foo.loc18.%Foo.type (%Foo.type.442) = symbolic_binding Self, 1 [symbolic = %Self.loc18_36.2 (constants.%Self)]
-// CHECK:STDOUT:     interface_with_self_decl @Foo.loc18 [concrete]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc18 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc18_36.1
@@ -1266,5 +1266,5 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc18_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc18(constants.%a, constants.%Self) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:

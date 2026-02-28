@@ -54,7 +54,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.02e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.120: %ptr.as.Copy.impl.Op.type.02e = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.8e5, (%Copy.impl_witness.9d3) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.130: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.130: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.370: type = fn_type_with_self_type %Copy.WithSelf.Op.type.130, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.120, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT: }

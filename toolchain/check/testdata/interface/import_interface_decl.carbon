@@ -78,5 +78,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.9f2 [from "fail_b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

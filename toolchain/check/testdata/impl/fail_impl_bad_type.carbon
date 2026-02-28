@@ -58,7 +58,7 @@ impl true as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -72,5 +72,5 @@ impl true as I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self.ab9) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {}
 // CHECK:STDOUT:

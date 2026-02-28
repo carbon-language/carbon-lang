@@ -65,7 +65,7 @@ fn F() {
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
 // CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
@@ -157,7 +157,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.162]
-// CHECK:STDOUT:   interface_with_self_decl @Y [concrete]
+// CHECK:STDOUT:   %Y.WithSelf.decl = interface_with_self_decl @Y [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -168,7 +168,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @W {
 // CHECK:STDOUT:   %Self: %W.type = symbolic_binding Self, 0 [symbolic = constants.%Self.62a]
-// CHECK:STDOUT:   interface_with_self_decl @W [concrete]
+// CHECK:STDOUT:   %W.WithSelf.decl = interface_with_self_decl @W [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -179,7 +179,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -258,19 +258,19 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self.162) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.162) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @W(constants.%Self.62a) {
+// CHECK:STDOUT: specific @W.WithSelf(constants.%Self.62a) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Y.facet.215) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet.215) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @W(constants.%W.facet) {
+// CHECK:STDOUT: specific @W.WithSelf(constants.%W.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,7 +278,7 @@ fn F() {
 // CHECK:STDOUT:   %D.loc12_10.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.c59) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,7 +295,7 @@ fn F() {
 // CHECK:STDOUT:   %Z.impl_witness.loc19_36.2 => constants.%Z.impl_witness.506
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Z.facet.8c4) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet.8c4) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

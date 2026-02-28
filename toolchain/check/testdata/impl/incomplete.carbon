@@ -406,7 +406,7 @@ interface B {
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
 // CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
-// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete]
+// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -416,17 +416,17 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
 // CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @K [concrete]
+// CHECK:STDOUT:   %K.WithSelf.decl = interface_with_self_decl @K [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .X = @X.%assoc0
-// CHECK:STDOUT:   witness = (%X)
+// CHECK:STDOUT:   witness = (@K.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -439,7 +439,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K(constants.%Self) {}
+// CHECK:STDOUT: specific @K.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
@@ -483,7 +483,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -510,11 +510,11 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +527,7 @@ interface B {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
-// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%T [concrete]
+// CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %Incomplete.type: type = facet_type <@Incomplete> [concrete]
 // CHECK:STDOUT:   %.Self: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
@@ -595,17 +595,17 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @J [concrete]
+// CHECK:STDOUT:   %J.WithSelf.decl = interface_with_self_decl @J [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
-// CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.%T [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %J.assoc_type = assoc_entity element0, @J.WithSelf.%T [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
-// CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:   witness = (@J.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -629,15 +629,15 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%Self) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%.Self) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%.Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(constants.%J.facet) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -685,7 +685,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -721,11 +721,11 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.F() -> <error>;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%I.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -773,7 +773,7 @@ interface B {
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
 // CHECK:STDOUT:   %Self.e52: %X.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %X.assoc_type: type = assoc_entity_type @X [concrete]
-// CHECK:STDOUT:   %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete]
+// CHECK:STDOUT:   %assoc0: %X.assoc_type = assoc_entity element0, @X.WithSelf.%X1 [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type.806: type = symbolic_binding_type Self, 0, %Self.e52 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
@@ -827,11 +827,11 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @X {
 // CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = constants.%Self.e52]
-// CHECK:STDOUT:   interface_with_self_decl @X [concrete]
+// CHECK:STDOUT:   %X.WithSelf.decl = interface_with_self_decl @X [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %X1: type = assoc_const_decl @X1 [concrete] {
-// CHECK:STDOUT:     %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %assoc0: %X.assoc_type = assoc_entity element0, @X.WithSelf.%X1 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.WithSelf.Self.binding.as_type.impls.Y.type.require.decl = require_decl @X.WithSelf.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
@@ -845,7 +845,7 @@ interface B {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .X1 = @X1.%assoc0
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = (%X1)
+// CHECK:STDOUT:   witness = (@X.WithSelf.%X1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @X.WithSelf.Self.binding.as_type.impls.Y.type.require {
@@ -855,7 +855,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.550]
-// CHECK:STDOUT:   constraint_with_self_decl @Y [concrete]
+// CHECK:STDOUT:   %Y.WithSelf.decl = constraint_with_self_decl @Y [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Y.WithSelf.Self.binding.as_type.impls.Z.type.require.decl = require_decl @Y.WithSelf.Self.binding.as_type.impls.Z.type.require [concrete] {
@@ -897,7 +897,7 @@ interface B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self.550) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.550) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -906,11 +906,11 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5cb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.e52) {
+// CHECK:STDOUT: specific @X.WithSelf(constants.%Self.e52) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self.e52) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.e52) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -924,7 +924,7 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%.Self.637) {
+// CHECK:STDOUT: specific @X.WithSelf(constants.%.Self.637) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -951,7 +951,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @B [concrete]
+// CHECK:STDOUT:   %B.WithSelf.decl = interface_with_self_decl @B [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -964,5 +964,5 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

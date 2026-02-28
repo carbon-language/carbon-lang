@@ -39,7 +39,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.as.Dec.impl.Op.type: type = fn_type @C.as.Dec.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Dec.impl.Op: %C.as.Dec.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%Dec.impl_witness) [concrete]
-// CHECK:STDOUT:   %Dec.WithSelf.Op.type.874: type = fn_type @Dec.WithSelf.Op, @Dec(%Dec.facet) [concrete]
+// CHECK:STDOUT:   %Dec.WithSelf.Op.type.874: type = fn_type @Dec.WithSelf.Op, @Dec.WithSelf(%Dec.facet) [concrete]
 // CHECK:STDOUT:   %.4d8: type = fn_type_with_self_type %Dec.WithSelf.Op.type.874, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

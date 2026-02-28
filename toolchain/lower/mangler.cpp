@@ -44,14 +44,15 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                              .prefix = '.'});
   while (!names_to_render.empty()) {
     auto [name_scope_id, specific_id, prefix] = names_to_render.pop_back_val();
-    if (prefix) {
-      os << prefix;
-    }
     if (!name_scope_id.has_value()) {
       // TODO: Include something in the mangling to identify the scope for a
       // function-local class, function, or similar. We may need to number
       // these within the enclosing function, as their name need not be unique.
+      os << ":enclosed";
       continue;
+    }
+    if (prefix) {
+      os << prefix;
     }
     if (name_scope_id == SemIR::NameScopeId::Package) {
       auto package_id = sem_ir().package_id();

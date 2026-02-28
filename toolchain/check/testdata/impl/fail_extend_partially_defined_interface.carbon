@@ -44,23 +44,23 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self.loc15: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @I [concrete]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [symbolic = @I.%C (constants.%C)] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [symbolic = @I.WithSelf.%C (constants.%C)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc15
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT:   .C = @I.WithSelf.%C.decl
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self.loc15: %I.type) {
+// CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %I.impl_witness.loc24_21.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc24_21.2 (constants.%I.impl_witness)]
@@ -68,7 +68,7 @@ interface I {
 // CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(@I.%Self.loc15: %I.type) {
+// CHECK:STDOUT: generic class @C(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -86,7 +86,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%Self) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:

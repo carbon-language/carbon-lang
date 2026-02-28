@@ -40,7 +40,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.c3c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.011: %ptr.as.Copy.impl.Op.type.c3c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.a7b: %Copy.type = facet_value %ptr.235, (%Copy.impl_witness.843) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.e01: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.a7b) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.e01: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.a7b) [concrete]
 // CHECK:STDOUT:   %.a62: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e01, %Copy.facet.a7b [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.101: <specific function> = specific_function %ptr.as.Copy.impl.Op.011, @ptr.as.Copy.impl.Op(%i32) [concrete]
 // CHECK:STDOUT:   %const.20a: type = const_type %i32 [concrete]
@@ -53,7 +53,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.25e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%const.20a) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.efa: %ptr.as.Copy.impl.Op.type.25e = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.bca: %Copy.type = facet_value %ptr.36b, (%Copy.impl_witness.ce1) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f98: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.bca) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f98: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.bca) [concrete]
 // CHECK:STDOUT:   %.767: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f98, %Copy.facet.bca [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.bcd: <specific function> = specific_function %ptr.as.Copy.impl.Op.efa, @ptr.as.Copy.impl.Op(%const.20a) [concrete]
 // CHECK:STDOUT: }

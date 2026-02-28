@@ -65,7 +65,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Self.ade: %Interface.type.442 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type.5a2: type = assoc_entity_type @Interface, @Interface(%T.67d) [symbolic]
-// CHECK:STDOUT:   %assoc0.b59: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.b59: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %I.682: %Interface.type.442 = symbolic_binding I, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cbe: type = pattern_type %Interface.type.442 [symbolic]
 // CHECK:STDOUT:   %.8e9: Core.Form = init_form %ptr.e8f, call_param0 [symbolic]
@@ -83,7 +83,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet.c25: %Copy.type = facet_value %ptr.e8f, (%Copy.lookup_impl_witness.2e6) [symbolic]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d82: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.c25) [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d82: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c25) [symbolic]
 // CHECK:STDOUT:   %.299: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d82, %Copy.facet.c25 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.1c7: %.299 = impl_witness_access %Copy.lookup_impl_witness.2e6, element0 [symbolic]
 // CHECK:STDOUT:   %bound_method.28a: <bound method> = bound_method %impl.elem0.117, %impl.elem0.1c7 [symbolic]
@@ -103,7 +103,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessConcrete: %AccessConcrete.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.b54: %Interface.type.389 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type.77f: type = assoc_entity_type @Interface, @Interface(%i32) [concrete]
-// CHECK:STDOUT:   %assoc0.dcc: %Interface.assoc_type.77f = assoc_entity element0, @Interface.%X [concrete]
+// CHECK:STDOUT:   %assoc0.dcc: %Interface.assoc_type.77f = assoc_entity element0, @Interface.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %I.binding.as_type.78a: type = symbolic_binding_type I, 0, %I.50d [symbolic]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness.4be: <witness> = lookup_impl_witness %I.50d, @Interface, @Interface(%i32) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.322: %ptr.235 = impl_witness_access %Interface.lookup_impl_witness.4be, element0 [symbolic]
@@ -111,7 +111,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.c3c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.011: %ptr.as.Copy.impl.Op.type.c3c = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.a7b: %Copy.type = facet_value %ptr.235, (%Copy.impl_witness.843) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.e01: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet.a7b) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.e01: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.a7b) [concrete]
 // CHECK:STDOUT:   %.a62: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e01, %Copy.facet.a7b [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %impl.elem0.322, %ptr.as.Copy.impl.Op.011 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.011, @ptr.as.Copy.impl.Op(%i32) [concrete]
@@ -201,11 +201,11 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_31.1: @Interface.%Interface.type (%Interface.type.442) = symbolic_binding Self, 1 [symbolic = %Self.loc4_31.2 (constants.%Self.ade)]
-// CHECK:STDOUT:     interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:     %Interface.WithSelf.decl = interface_with_self_decl @Interface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %X: @Interface.%ptr (%ptr.e8f) = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.b59)]
+// CHECK:STDOUT:     %X: @Interface.WithSelf.%ptr (%ptr.e8f) = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:       %assoc0: @Interface.WithSelf.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.WithSelf.%X [symbolic = @Interface.WithSelf.%assoc0 (constants.%assoc0.b59)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -213,7 +213,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .X = @X.%assoc0
-// CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:     witness = (@Interface.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -233,13 +233,13 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Interface.type.loc8_43.1 [symbolic = %require_complete.loc9 (constants.%require_complete.46e)]
 // CHECK:STDOUT:   %I.binding.as_type: type = symbolic_binding_type I, 1, %I.loc8_28.1 [symbolic = %I.binding.as_type (constants.%I.binding.as_type.24f)]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface, @Interface(%T.loc8_18.1) [symbolic = %Interface.assoc_type (constants.%Interface.assoc_type.5a2)]
-// CHECK:STDOUT:   %assoc0: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = %assoc0 (constants.%assoc0.b59)]
+// CHECK:STDOUT:   %assoc0: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.WithSelf.%X [symbolic = %assoc0 (constants.%assoc0.b59)]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %I.loc8_28.1, @Interface, @Interface(%T.loc8_18.1) [symbolic = %Interface.lookup_impl_witness (constants.%Interface.lookup_impl_witness.9f1)]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.3: @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = impl_witness_access %Interface.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_11.3 (constants.%impl.elem0.117)]
 // CHECK:STDOUT:   %.loc9_11.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc8_18.1) [symbolic = %.loc9_11.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc8_50.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc8_50.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.c25)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
 // CHECK:STDOUT:   %.loc9_11.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc9_11.4 (constants.%.299)]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.4: @AccessGeneric.%.loc9_11.4 (%.299) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_11.4 (constants.%impl.elem0.1c7)]
 // CHECK:STDOUT:   %bound_method.loc9_11.3: <bound method> = bound_method %impl.elem0.loc9_11.3, %impl.elem0.loc9_11.4 [symbolic = %bound_method.loc9_11.3 (constants.%bound_method.28a)]
@@ -251,7 +251,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %I.ref: @AccessGeneric.%Interface.type.loc8_43.1 (%Interface.type.442) = name_ref I, %I.loc8_28.2 [symbolic = %I.loc8_28.1 (constants.%I.682)]
 // CHECK:STDOUT:     %I.as_type: type = facet_access_type %I.ref [symbolic = %I.binding.as_type (constants.%I.binding.as_type.24f)]
 // CHECK:STDOUT:     %.loc9_11.1: type = converted %I.ref, %I.as_type [symbolic = %I.binding.as_type (constants.%I.binding.as_type.24f)]
-// CHECK:STDOUT:     %.loc9_11.2: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = specific_constant @X.%assoc0, @Interface(constants.%T.67d, constants.%I.682) [symbolic = %assoc0 (constants.%assoc0.b59)]
+// CHECK:STDOUT:     %.loc9_11.2: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = specific_constant @X.%assoc0, @Interface.WithSelf(constants.%T.67d, constants.%I.682) [symbolic = %assoc0 (constants.%assoc0.b59)]
 // CHECK:STDOUT:     %X.ref: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = name_ref X, %.loc9_11.2 [symbolic = %assoc0 (constants.%assoc0.b59)]
 // CHECK:STDOUT:     %impl.elem0.loc9_11.1: @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = impl_witness_access constants.%Interface.lookup_impl_witness.9f1, element0 [symbolic = %impl.elem0.loc9_11.3 (constants.%impl.elem0.117)]
 // CHECK:STDOUT:     %impl.elem0.loc9_11.2: @AccessGeneric.%.loc9_11.4 (%.299) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [symbolic = %impl.elem0.loc9_11.4 (constants.%impl.elem0.1c7)]
@@ -278,7 +278,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %I.ref: %Interface.type.389 = name_ref I, %I.loc12_19.2 [symbolic = %I.loc12_19.1 (constants.%I.50d)]
 // CHECK:STDOUT:     %I.as_type: type = facet_access_type %I.ref [symbolic = %I.binding.as_type (constants.%I.binding.as_type.78a)]
 // CHECK:STDOUT:     %.loc13_11.1: type = converted %I.ref, %I.as_type [symbolic = %I.binding.as_type (constants.%I.binding.as_type.78a)]
-// CHECK:STDOUT:     %.loc13_11.2: %Interface.assoc_type.77f = specific_constant @X.%assoc0, @Interface(constants.%i32, constants.%I.50d) [concrete = constants.%assoc0.dcc]
+// CHECK:STDOUT:     %.loc13_11.2: %Interface.assoc_type.77f = specific_constant @X.%assoc0, @Interface.WithSelf(constants.%i32, constants.%I.50d) [concrete = constants.%assoc0.dcc]
 // CHECK:STDOUT:     %X.ref: %Interface.assoc_type.77f = name_ref X, %.loc13_11.2 [concrete = constants.%assoc0.dcc]
 // CHECK:STDOUT:     %impl.elem0.loc13_11.1: %ptr.235 = impl_witness_access constants.%Interface.lookup_impl_witness.4be, element0 [symbolic = %impl.elem0.loc13_11.3 (constants.%impl.elem0.322)]
 // CHECK:STDOUT:     %impl.elem0.loc13_11.2: %.a62 = impl_witness_access constants.%Copy.impl_witness.843, element0 [concrete = constants.%ptr.as.Copy.impl.Op.011]
@@ -298,9 +298,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Self.loc4_31.2 => constants.%Self.ade
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%T.67d, constants.%Self.ade) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%T.67d, constants.%Self.ade) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%T.67d
+// CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b59
@@ -316,9 +316,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc8_46 => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%T.67d, constants.%I.682) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%T.67d, constants.%I.682) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%T.67d
+// CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b59
@@ -336,17 +336,17 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.loc12_19.1 => constants.%I.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%i32, constants.%Self.ade) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%i32, constants.%Self.ade) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%i32
+// CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %ptr => constants.%ptr.235
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.77f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.dcc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%i32, constants.%I.50d) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%i32, constants.%I.50d) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%i32
+// CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %ptr => constants.%ptr.235
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.77f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.dcc
@@ -365,7 +365,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Self.ade: %Interface.type.442 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type.5a2: type = assoc_entity_type @Interface, @Interface(%T) [symbolic]
-// CHECK:STDOUT:   %assoc0.b59: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.%X [symbolic]
+// CHECK:STDOUT:   %assoc0.b59: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.WithSelf.%X [symbolic]
 // CHECK:STDOUT:   %I.682: %Interface.type.442 = symbolic_binding I, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cbe: type = pattern_type %Interface.type.442 [symbolic]
 // CHECK:STDOUT:   %.41b: Core.Form = init_form %T, call_param0 [symbolic]
@@ -389,7 +389,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Self.b54: %Interface.type.389 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type.77f: type = assoc_entity_type @Interface, @Interface(%i32) [concrete]
-// CHECK:STDOUT:   %assoc0.dcc: %Interface.assoc_type.77f = assoc_entity element0, @Interface.%X [concrete]
+// CHECK:STDOUT:   %assoc0.dcc: %Interface.assoc_type.77f = assoc_entity element0, @Interface.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %I.binding.as_type.78a: type = symbolic_binding_type I, 0, %I.50d [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -470,11 +470,11 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc4_31.1: @Interface.%Interface.type (%Interface.type.442) = symbolic_binding Self, 1 [symbolic = %Self.loc4_31.2 (constants.%Self.ade)]
-// CHECK:STDOUT:     interface_with_self_decl @Interface [concrete]
+// CHECK:STDOUT:     %Interface.WithSelf.decl = interface_with_self_decl @Interface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %X: @Interface.%ptr (%ptr.e8f) = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.b59)]
+// CHECK:STDOUT:     %X: @Interface.WithSelf.%ptr (%ptr.e8f) = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:       %assoc0: @Interface.WithSelf.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.WithSelf.%X [symbolic = @Interface.WithSelf.%assoc0 (constants.%assoc0.b59)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -483,7 +483,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     .nonesuch = <poisoned>
-// CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:     witness = (@Interface.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -536,9 +536,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Self.loc4_31.2 => constants.%Self.ade
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%T, constants.%Self.ade) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%T, constants.%Self.ade) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b59
@@ -553,9 +553,9 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc8_53 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%T, constants.%I.682) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%T, constants.%I.682) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.5a2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b59
@@ -573,17 +573,17 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.loc16_26.1 => constants.%I.50d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%i32, constants.%Self.ade) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%i32, constants.%Self.ade) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%i32
+// CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %ptr => constants.%ptr.235
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.77f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.dcc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface(constants.%i32, constants.%I.50d) {
+// CHECK:STDOUT: specific @Interface.WithSelf(constants.%i32, constants.%I.50d) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.loc5 => constants.%i32
+// CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %ptr => constants.%ptr.235
 // CHECK:STDOUT:   %Interface.assoc_type => constants.%Interface.assoc_type.77f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.dcc

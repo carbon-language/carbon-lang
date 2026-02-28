@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -37,11 +38,25 @@ class InstNamer {
   };
   static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 
+  // A wrapper around InterfaceId for dealing with the interface-with-self scope
+  // nested within the interface entity's scope.
+  struct InterfaceWithSelfId {
+    static constexpr llvm::StringLiteral Label = "interface_with_self";
+    InterfaceId id;
+  };
+  // A wrapper around NamedConstraintId for dealing with the
+  // constraint-with-self scope nested within the constraint entity's scope.
+  struct NamedConstraintWithSelfId {
+    static constexpr llvm::StringLiteral Label = "constraint_with_self";
+    NamedConstraintId id;
+  };
+
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
       TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
-               ImplId, InterfaceId, NamedConstraintId, RequireImplsId,
-               SpecificInterfaceId, VtableId>;
+               ImplId, InterfaceId, InterfaceWithSelfId, NamedConstraintId,
+               NamedConstraintWithSelfId, RequireImplsId, SpecificInterfaceId,
+               VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
@@ -52,7 +67,7 @@ class InstNamer {
   template <typename IdT>
     requires ScopeIdTypeEnum::Contains<IdT>
   auto GetScopeFor(IdT id) const -> ScopeId {
-    auto index = id.index;
+    int32_t index;
     if constexpr (std::is_same_v<IdT, ClassId>) {
       index = sem_ir_->classes().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, CppOverloadSetId>) {
@@ -65,14 +80,20 @@ class InstNamer {
       index = sem_ir_->impls().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, InterfaceId>) {
       index = sem_ir_->interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, InterfaceWithSelfId>) {
+      index = sem_ir_->interfaces().GetRawIndex(id.id);
     } else if constexpr (std::is_same_v<IdT, NamedConstraintId>) {
       index = sem_ir_->named_constraints().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, NamedConstraintWithSelfId>) {
+      index = sem_ir_->named_constraints().GetRawIndex(id.id);
     } else if constexpr (std::is_same_v<IdT, RequireImplsId>) {
       index = sem_ir_->require_impls().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
       index = sem_ir_->specific_interfaces().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, VtableId>) {
       index = sem_ir_->vtables().GetRawIndex(id);
+    } else {
+      index = id.index;
     }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
                                 index);
@@ -91,7 +112,7 @@ class InstNamer {
   // namespaces. Used as part of naming functions with their containing scope.
   auto GetNameForParentNameScope(NameScopeId name_scope_id) -> llvm::StringRef;
 
-  // Returns the IR name to use for a function, class, or interface.
+  // Returns the IR name to use for a function, class, interface, etc.
   template <typename IdT>
     requires(ScopeIdTypeEnum::Contains<IdT> || std::same_as<IdT, GenericId>)
   auto GetNameFor(IdT id) const -> std::string {
@@ -172,8 +193,6 @@ class InstNamer {
   // A named scope that contains named entities.
   struct Scope {
     Namespace::Name name;
-    // The name of the entity's inner entity-with-self, if it has one.
-    Namespace::Name name_with_self;
     Namespace insts;
     Namespace labels;
   };
@@ -226,8 +245,12 @@ class InstNamer {
   auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(InterfaceWithSelfId interface_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(NamedConstraintId named_constraint_id, ScopeId scope_id,
                   Scope& scope) -> void;
+  auto PushEntity(NamedConstraintWithSelfId named_constraint_id,
+                  ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
                   Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
@@ -235,18 +258,13 @@ class InstNamer {
   // Always returns the name of the entity. May push it if it has not yet been
   // pushed.
   template <typename EntityIdT>
-  auto MaybePushEntity(EntityIdT entity_id, bool with_self = false)
-      -> llvm::StringRef {
+  auto MaybePushEntity(EntityIdT entity_id) -> llvm::StringRef {
     auto scope_id = GetScopeFor(entity_id);
     auto& scope = GetScopeInfo(scope_id);
     if (!scope.name) {
       PushEntity(entity_id, scope_id, scope);
     }
-    if (with_self) {
-      return scope.name_with_self.GetBaseName();
-    } else {
-      return scope.name.GetBaseName();
-    }
+    return scope.name.GetBaseName();
   }
 
   const File* sem_ir_;

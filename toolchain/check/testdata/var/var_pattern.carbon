@@ -616,7 +616,7 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self: %Destroy.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.cb2: type = fn_type @Destroy.WithSelf.Op, @Destroy(%Self) [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.cb2: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.9f1: %Destroy.WithSelf.Op.type.cb2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.assoc_type: type = assoc_entity_type @Destroy [concrete]
 // CHECK:STDOUT:   %assoc0: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.8bb [concrete]
@@ -624,7 +624,7 @@ fn G() {
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.f34: %Destroy.type = facet_value %empty_tuple.type, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.b8c: type = fn_type @Destroy.WithSelf.Op, @Destroy(%Destroy.facet.f34) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.b8c: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.f34) [concrete]
 // CHECK:STDOUT:   %.fef: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.b8c, %Destroy.facet.f34 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -641,7 +641,7 @@ fn G() {
 // CHECK:STDOUT:   %P.F: %F.type = import_ref P//default, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.06b: %Destroy.assoc_type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Core.import_ref.8bb: @Destroy.%Destroy.WithSelf.Op.type (%Destroy.WithSelf.Op.type.cb2) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @Destroy.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.9f1)]
+// CHECK:STDOUT:   %Core.import_ref.8bb: @Destroy.WithSelf.%Destroy.WithSelf.Op.type (%Destroy.WithSelf.Op.type.cb2) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.9f1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

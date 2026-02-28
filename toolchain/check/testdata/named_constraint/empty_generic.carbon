@@ -131,7 +131,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc16_28.1: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_28.2 (constants.%Self.31c17c.1)]
-// CHECK:STDOUT:     constraint_with_self_decl @Empty [concrete]
+// CHECK:STDOUT:     %Empty.WithSelf.decl = constraint_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc16_28.1
@@ -229,7 +229,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %T.loc16_18.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.67d, constants.%Self.31c17c.1) {}
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.67d, constants.%Self.31c17c.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d, constants.%U.e1f642.1) {
 // CHECK:STDOUT:   %T.loc18_6.1 => constants.%T.67d
@@ -255,11 +255,11 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:   %V.loc20_27.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%Self.31c17c.1) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.binding.as_type, constants.%Self.31c17c.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%empty_struct.type.facet) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.binding.as_type, constants.%empty_struct.type.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -272,7 +272,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%facet_value.2cb) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.binding.as_type, constants.%facet_value.2cb) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,7 +285,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%T.ea3) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.binding.as_type, constants.%T.ea3) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -307,7 +307,7 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%T.binding.as_type, constants.%facet_value.ed5) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.binding.as_type, constants.%facet_value.ed5) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

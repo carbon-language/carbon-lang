@@ -60,11 +60,11 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [concrete]
 // CHECK:STDOUT:   %Self: %BeingDefined.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %BeingDefined.WithSelf.H.type: type = fn_type @BeingDefined.WithSelf.H, @BeingDefined(%Self) [symbolic]
+// CHECK:STDOUT:   %BeingDefined.WithSelf.H.type: type = fn_type @BeingDefined.WithSelf.H, @BeingDefined.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %BeingDefined.WithSelf.H: %BeingDefined.WithSelf.H.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %BeingDefined.assoc_type: type = assoc_entity_type @BeingDefined [concrete]
-// CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, @BeingDefined.%BeingDefined.WithSelf.H.decl [concrete]
-// CHECK:STDOUT:   %BeingDefined.WithSelf.I.type: type = fn_type @BeingDefined.WithSelf.I, @BeingDefined(%Self) [symbolic]
+// CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, @BeingDefined.WithSelf.%BeingDefined.WithSelf.H.decl [concrete]
+// CHECK:STDOUT:   %BeingDefined.WithSelf.I.type: type = fn_type @BeingDefined.WithSelf.I, @BeingDefined.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %BeingDefined.WithSelf.I: %BeingDefined.WithSelf.I.type = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,23 +83,23 @@ interface BeingDefined {
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
-// CHECK:STDOUT:   %Self.loc37: %BeingDefined.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @BeingDefined [concrete]
+// CHECK:STDOUT:   %Self: %BeingDefined.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %BeingDefined.WithSelf.decl = interface_with_self_decl @BeingDefined [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %BeingDefined.WithSelf.H.decl: @BeingDefined.%BeingDefined.WithSelf.H.type (%BeingDefined.WithSelf.H.type) = fn_decl @BeingDefined.WithSelf.H [symbolic = @BeingDefined.%BeingDefined.WithSelf.H (constants.%BeingDefined.WithSelf.H)] {} {
+// CHECK:STDOUT:   %BeingDefined.WithSelf.H.decl: @BeingDefined.WithSelf.%BeingDefined.WithSelf.H.type (%BeingDefined.WithSelf.H.type) = fn_decl @BeingDefined.WithSelf.H [symbolic = @BeingDefined.WithSelf.%BeingDefined.WithSelf.H (constants.%BeingDefined.WithSelf.H)] {} {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [concrete = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, %BeingDefined.WithSelf.H.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %BeingDefined.WithSelf.I.decl: @BeingDefined.%BeingDefined.WithSelf.I.type (%BeingDefined.WithSelf.I.type) = fn_decl @BeingDefined.WithSelf.I [symbolic = @BeingDefined.%BeingDefined.WithSelf.I (constants.%BeingDefined.WithSelf.I)] {} {}
+// CHECK:STDOUT:   %BeingDefined.WithSelf.I.decl: @BeingDefined.WithSelf.%BeingDefined.WithSelf.I.type (%BeingDefined.WithSelf.I.type) = fn_decl @BeingDefined.WithSelf.I [symbolic = @BeingDefined.WithSelf.%BeingDefined.WithSelf.I (constants.%BeingDefined.WithSelf.I)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.loc37
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .BeingDefined = <poisoned>
 // CHECK:STDOUT:   .BeingDefined = <poisoned>
-// CHECK:STDOUT:   .H = %assoc0
-// CHECK:STDOUT:   witness = (%BeingDefined.WithSelf.H.decl)
+// CHECK:STDOUT:   .H = @BeingDefined.WithSelf.%assoc0
+// CHECK:STDOUT:   witness = (@BeingDefined.WithSelf.%BeingDefined.WithSelf.H.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -113,15 +113,15 @@ interface BeingDefined {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @BeingDefined.WithSelf.H(@BeingDefined.%Self.loc37: %BeingDefined.type) {
+// CHECK:STDOUT: generic fn @BeingDefined.WithSelf.H(@BeingDefined.%Self: %BeingDefined.type) {
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @BeingDefined.WithSelf.I(@BeingDefined.%Self.loc37: %BeingDefined.type) {
+// CHECK:STDOUT: generic fn @BeingDefined.WithSelf.I(@BeingDefined.%Self: %BeingDefined.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @BeingDefined(constants.%Self) {}
+// CHECK:STDOUT: specific @BeingDefined.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BeingDefined.WithSelf.H(constants.%Self) {}
 // CHECK:STDOUT:

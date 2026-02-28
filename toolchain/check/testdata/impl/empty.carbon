@@ -55,7 +55,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
+// CHECK:STDOUT:   %Empty.WithSelf.decl = interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -72,11 +72,11 @@ impl i32 as Empty {
 // CHECK:STDOUT:   witness = %Empty.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Self) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Empty.facet) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Empty.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

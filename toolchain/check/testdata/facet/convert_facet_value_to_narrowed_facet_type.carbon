@@ -111,7 +111,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
 // CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
@@ -197,7 +197,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
-// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
+// CHECK:STDOUT:   %Eats.WithSelf.decl = interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -208,7 +208,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
-// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
+// CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -256,11 +256,11 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.247) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,7 +302,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
 // CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
@@ -414,7 +414,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
-// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
+// CHECK:STDOUT:   %Eats.WithSelf.decl = interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -425,7 +425,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
-// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
+// CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -436,7 +436,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Tame {
 // CHECK:STDOUT:   %Self: %Tame.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab8]
-// CHECK:STDOUT:   interface_with_self_decl @Tame [concrete]
+// CHECK:STDOUT:   %Tame.WithSelf.decl = interface_with_self_decl @Tame [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -485,15 +485,15 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.247) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame(constants.%Self.ab8) {
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.ab8) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -540,7 +540,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %BitAndWith.type.b10: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.b10 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.4bd: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
 // CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.4bd, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
@@ -661,7 +661,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.247]
-// CHECK:STDOUT:   interface_with_self_decl @Eats [concrete]
+// CHECK:STDOUT:   %Eats.WithSelf.decl = interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -672,7 +672,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
-// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
+// CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -683,7 +683,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Tame {
 // CHECK:STDOUT:   %Self: %Tame.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab8]
-// CHECK:STDOUT:   interface_with_self_decl @Tame [concrete]
+// CHECK:STDOUT:   %Tame.WithSelf.decl = interface_with_self_decl @Tame [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -751,15 +751,15 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Self.247) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.247) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame(constants.%Self.ab8) {
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.ab8) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -769,7 +769,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Eats.impl_witness.loc7_36.2 => constants.%Eats.impl_witness.760
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(constants.%Eats.facet) {
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Eats.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -893,7 +893,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   interface_with_self_decl @A [concrete]
+// CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -937,7 +937,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%Self) {
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

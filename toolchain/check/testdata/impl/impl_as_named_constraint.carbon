@@ -190,7 +190,7 @@ impl () as B(1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self: <error> = symbolic_binding Self, 1 [concrete = <error>]
-// CHECK:STDOUT:     constraint_with_self_decl @B [concrete]
+// CHECK:STDOUT:     %B.WithSelf.decl = constraint_with_self_decl @B [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self
@@ -206,5 +206,5 @@ impl () as B(1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(<error>, <error>) {}
+// CHECK:STDOUT: specific @B.WithSelf(<error>, <error>) {}
 // CHECK:STDOUT:

@@ -126,7 +126,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.595: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.a70: %str.as.IndexWith.impl.At.type.595 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.d54 = facet_value %str.ee0, (%IndexWith.impl_witness.8d4) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.0ac: type = fn_type @IndexWith.WithSelf.At, @IndexWith(Core.IntLiteral, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.0ac: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %.b7b: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.0ac, %IndexWith.facet [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.bound: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.a70 [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %str.as.IndexWith.impl.At.a70, @str.as.IndexWith.impl.At(%ImplicitAs.facet) [concrete]

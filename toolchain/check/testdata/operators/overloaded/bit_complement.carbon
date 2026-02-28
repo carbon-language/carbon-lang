@@ -39,7 +39,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.type: type = fn_type @C.as.BitComplement.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op: %C.as.BitComplement.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitComplement.WithSelf.Op.type.568: type = fn_type @BitComplement.WithSelf.Op, @BitComplement(%BitComplement.facet) [concrete]
+// CHECK:STDOUT:   %BitComplement.WithSelf.Op.type.568: type = fn_type @BitComplement.WithSelf.Op, @BitComplement.WithSelf(%BitComplement.facet) [concrete]
 // CHECK:STDOUT:   %.0d9: type = fn_type_with_self_type %BitComplement.WithSelf.Op.type.568, %BitComplement.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

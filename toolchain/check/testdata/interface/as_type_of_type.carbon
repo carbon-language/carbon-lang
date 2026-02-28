@@ -46,7 +46,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr, (%Destroy.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.4bc: type = fn_type @Destroy.WithSelf.Op, @Destroy(%Destroy.facet) [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.4bc: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic]
 // CHECK:STDOUT:   %.40e: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.4bc, %Destroy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.40e = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic]
@@ -88,7 +88,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic = constants.%Self.61e]
-// CHECK:STDOUT:   interface_with_self_decl @Empty [concrete]
+// CHECK:STDOUT:   %Empty.WithSelf.decl = interface_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -123,7 +123,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc22_18.2 [symbolic = %pattern_type (constants.%pattern_type.fd9)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc22_18.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc22_18.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.4bc)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.4bc)]
 // CHECK:STDOUT:   %.loc22_3: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc22_3 (constants.%.40e)]
 // CHECK:STDOUT:   %impl.elem0.loc22_3.2: @F.%.loc22_3 (%.40e) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc22_3.2: <specific function> = specific_impl_function %impl.elem0.loc22_3.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc22_3.2 (constants.%specific_impl_fn)]
@@ -151,11 +151,11 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Self.61e) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.61e) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(constants.%Empty.facet) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%Empty.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

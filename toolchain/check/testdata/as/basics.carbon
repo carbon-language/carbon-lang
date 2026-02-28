@@ -368,7 +368,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.as.As.impl.Convert.type: type = fn_type @X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert: %X.as.As.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.c03: %As.type.d1e = facet_value %X, (%As.impl_witness.e92) [concrete]
-// CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As(%Y, %As.facet.c03) [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.c03) [concrete]
 // CHECK:STDOUT:   %.84a: type = fn_type_with_self_type %As.WithSelf.Convert.type.edc, %As.facet.c03 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

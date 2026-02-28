@@ -126,7 +126,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
-// CHECK:STDOUT:   interface_with_self_decl @Animal [concrete]
+// CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -209,7 +209,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Self.c49) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.c49) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,7 +228,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.892
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal(constants.%Animal.facet) {
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Animal.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

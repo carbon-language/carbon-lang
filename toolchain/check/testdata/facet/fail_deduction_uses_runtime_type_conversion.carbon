@@ -67,7 +67,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type: type = fn_type @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.5cd = facet_value %RuntimeConvertFrom, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.3a2: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs(%RuntimeConvertTo, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.3a2: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%RuntimeConvertTo, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]

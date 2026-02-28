@@ -644,9 +644,9 @@ fn F(unused T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type @M [concrete]
-// CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.%X [concrete]
-// CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.%Y [concrete]
-// CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.%Z [concrete]
+// CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.WithSelf.%X [concrete]
+// CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.WithSelf.%Y [concrete]
+// CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.WithSelf.%Z [concrete]
 // CHECK:STDOUT:   %.Self.b4d: %M.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.b4d [symbolic_self]

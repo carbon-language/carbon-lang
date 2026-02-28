@@ -148,7 +148,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c59]
-// CHECK:STDOUT:   interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -166,7 +166,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc4_34.1: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.31c17c.1)]
-// CHECK:STDOUT:     constraint_with_self_decl @GenericType [concrete]
+// CHECK:STDOUT:     %GenericType.WithSelf.decl = constraint_with_self_decl @GenericType [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_34.1
@@ -184,7 +184,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc7_28.1: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.31c17c.2)]
-// CHECK:STDOUT:     constraint_with_self_decl @GenericZ [concrete]
+// CHECK:STDOUT:     %GenericZ.WithSelf.decl = constraint_with_self_decl @GenericZ [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_28.1
@@ -202,7 +202,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
 // CHECK:STDOUT:     %Self.loc10_45.1: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.31c17c.3)]
-// CHECK:STDOUT:     constraint_with_self_decl @ForwardDeclaredGeneric [concrete]
+// CHECK:STDOUT:     %ForwardDeclaredGeneric.WithSelf.decl = constraint_with_self_decl @ForwardDeclaredGeneric [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc10_45.1
@@ -215,19 +215,19 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_24.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericType(constants.%T, constants.%Self.31c17c.1) {}
+// CHECK:STDOUT: specific @GenericType.WithSelf(constants.%T, constants.%Self.31c17c.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.c59) {}
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_21.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericZ(constants.%U, constants.%Self.31c17c.2) {}
+// CHECK:STDOUT: specific @GenericZ.WithSelf(constants.%U, constants.%Self.31c17c.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_35.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T, constants.%Self.31c17c.3) {}
+// CHECK:STDOUT: specific @ForwardDeclaredGeneric.WithSelf(constants.%T, constants.%Self.31c17c.3) {}
 // CHECK:STDOUT:
