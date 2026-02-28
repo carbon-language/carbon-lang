@@ -67,7 +67,7 @@ enum AssociatedFunction {
 };
 
 // Maps a `CoreInterface` to its corresponding set of `CppCoreFunction`s.
-static auto GetCppAssociatedFunctions(CoreInterface const core_interface)
+static auto GetCppAssociatedFunctions(const CoreInterface core_interface)
     -> llvm::SmallVector<AssociatedFunction, 2> {
   switch (core_interface) {
     case CoreInterface::Copy:
