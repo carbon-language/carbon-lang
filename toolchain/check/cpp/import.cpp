@@ -2103,54 +2103,10 @@ auto MapConstant(Context& context, SemIR::LocId loc_id, clang::Expr* expr)
                                                    {.type_id = type_id});
   }
 
-  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
-  if (!type_id.has_value()) {
-    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
-                                       "could not be mapped to a Carbon type",
-                                       expr->getType().getAsString()));
-    return SemIR::ErrorInst::InstId;
-  }
-
-  SemIR::InstId inst_id = SemIR::InstId::None;
-  SemIR::ImportIRInstId imported_loc_id =
-      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
-
-  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
-    IntId int_id =
-        context.ints().Add(integer_literal->getValue().getSExtValue());
-    inst_id = AddInstInNoBlock(
-        context,
-        MakeImportedLocIdAndInst<SemIR::IntValue>(
-            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
-  } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
-    inst_id = AddInstInNoBlock(
-        context,
-        MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
-            context, imported_loc_id,
-            {.type_id = type_id,
-             .value = SemIR::BoolValue::From(bool_literal->getValue())}));
-  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
-    FloatId float_id = context.floats().Add(float_literal->getValue());
-    inst_id = AddInstInNoBlock(context,
-                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
-                                   context, imported_loc_id,
-                                   {.type_id = type_id, .float_id = float_id}));
-  } else if (auto* character_literal =
-                 dyn_cast<clang::CharacterLiteral>(expr)) {
-    inst_id = AddInstInNoBlock(
-        context, MakeImportedLocIdAndInst<SemIR::CharLiteralValue>(
-                     context, imported_loc_id,
-                     {.type_id = type_id,
-                      .value = SemIR::CharId(character_literal->getValue())}));
-  } else {
-    context.TODO(loc_id, llvm::formatv(
-                             "Unsupported: C++ constant expression type: '{0}'",
+  context.TODO(loc_id,
+               llvm::formatv("Unsupported: C++ constant expression type: '{0}'",
                              expr->getType().getAsString()));
-    return SemIR::ErrorInst::InstId;
-  }
-
-  context.imports().push_back(inst_id);
-  return inst_id;
+  return SemIR::ErrorInst::InstId;
 }
 
 // Imports a macro definition into the scope. Currently supports only simple
