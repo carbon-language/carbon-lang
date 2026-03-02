@@ -9,6 +9,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 
 namespace Carbon::Check {
@@ -86,32 +87,16 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     ap_value = evaluated_result.Val;
   }
 
-  switch (ap_value.getKind()) {
-    case clang::APValue::Int:
-      if (result_expr->getType()->isBooleanType()) {
-        return MapConstant(
-            context, loc_id,
-            clang::CXXBoolLiteralExpr::Create(
-                sema.getASTContext(), ap_value.getInt().getBoolValue(),
-                result_expr->getType(), result_expr->getExprLoc()));
-      }
-      return MapConstant(
-          context, loc_id,
-          clang::IntegerLiteral::Create(sema.getASTContext(), ap_value.getInt(),
-                                        result_expr->getType(),
-                                        result_expr->getExprLoc()));
-    case clang::APValue::Float:
-      return MapConstant(context, loc_id,
-                         clang::FloatingLiteral::Create(
-                             sema.getASTContext(), ap_value.getFloat(),
-                             /*isExact=*/true, result_expr->getType(),
-                             result_expr->getExprLoc()));
-    default:
-      context.TODO(loc_id,
-                   "Unsupported: macro evaluated to a constant of type: " +
-                       result_expr->getType().getAsString());
-      return SemIR::ErrorInst::InstId;
+  auto const_id =
+      MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());
+  if (const_id == SemIR::ConstantId::NotConstant) {
+    context.TODO(loc_id,
+                 "Unsupported: macro evaluated to a constant of type: " +
+                     result_expr->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
   }
+
+  return context.constant_values().GetInstId(const_id);
 }
 
 }  // namespace Carbon::Check
