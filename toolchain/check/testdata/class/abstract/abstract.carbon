@@ -900,8 +900,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Abstract.val: %Abstract = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Abstract.val) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -965,12 +965,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %.loc22_41: ref %Derived = converted %.loc22_39.1, %.loc22_39.7
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc22_39.7, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc22_39.7)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc22_39.7, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc22_39.7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Derived) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Derived) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_abstract_return.carbon
 // CHECK:STDOUT:

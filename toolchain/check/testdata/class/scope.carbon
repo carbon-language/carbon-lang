@@ -74,8 +74,8 @@ fn Run() {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -196,12 +196,12 @@ fn Run() {
 // CHECK:STDOUT:   assign %b.var, %Class.F.call
 // CHECK:STDOUT:   %i32.loc31: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
-// CHECK:STDOUT:   %DestroyOp.bound.loc31: <bound method> = bound_method %b.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc31: init %empty_tuple.type = call %DestroyOp.bound.loc31(%b.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc30: <bound method> = bound_method %a.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc30: init %empty_tuple.type = call %DestroyOp.bound.loc30(%a.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc31: <bound method> = bound_method %b.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc31: init %empty_tuple.type = call %Destroy.Op.bound.loc31(%b.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

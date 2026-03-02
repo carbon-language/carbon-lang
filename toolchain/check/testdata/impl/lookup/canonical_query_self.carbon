@@ -128,8 +128,8 @@ fn G() {
 // CHECK:STDOUT:   %facet_value: %facet_type = facet_value %C, (%I.impl_witness, %J.impl_witness) [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -419,10 +419,10 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc46_11.2: %C = acquire_value %.loc46_11.1
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc46_11.2)
-// CHECK:STDOUT:   %DestroyOp.bound.loc46: <bound method> = bound_method %.loc46_9.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc46: init %empty_tuple.type = call %DestroyOp.bound.loc46(%.loc46_9.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc40: <bound method> = bound_method %.loc40_6.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc40: init %empty_tuple.type = call %DestroyOp.bound.loc40(%.loc40_6.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc46: <bound method> = bound_method %.loc46_9.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc46: init %empty_tuple.type = call %Destroy.Op.bound.loc46(%.loc46_9.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc40: <bound method> = bound_method %.loc40_6.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc40: init %empty_tuple.type = call %Destroy.Op.bound.loc40(%.loc40_6.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -436,7 +436,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {
 // CHECK:STDOUT: !definition:

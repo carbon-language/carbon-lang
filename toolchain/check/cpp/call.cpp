@@ -207,6 +207,16 @@ static auto ConvertArgToTemplateArg(
               context.ast_context(), param_type, clang::APValue(ap_float));
           return clang::TemplateArgumentLoc(template_arg, template_loc);
         }
+      } else if (param_type->isPointerType()) {
+        if (auto addr_of =
+                context.insts().TryGetAs<SemIR::AddrOf>(const_inst_id)) {
+          if (auto* var_decl = GetAsClangVarDecl(context, addr_of->lvalue_id)) {
+            clang::TemplateArgument template_arg(var_decl, param_type);
+            return clang::TemplateArgumentLoc(template_arg, template_loc);
+          }
+
+          // TODO: support pointers to variables declared in Carbon.
+        }
       }
     }
 

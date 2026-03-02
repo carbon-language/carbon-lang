@@ -64,15 +64,15 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @main() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.504f892e0db74da2(), !dbg !19
-// CHECK:STDOUT:   call void @_CG.Main.7fea82a824f066aa(), !dbg !20
+// CHECK:STDOUT:   call void @_CG.Main.27a852a6bab6ed2e(), !dbg !19
+// CHECK:STDOUT:   call void @_CG.Main.2de7c972fe093485(), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.504f892e0db74da2() #0 !dbg !22 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.27a852a6bab6ed2e() #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i1, align 1, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !23
@@ -85,7 +85,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.7fea82a824f066aa() #0 !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.2de7c972fe093485() #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !26
@@ -130,9 +130,9 @@ fn Run() {
 // CHECK:STDOUT: !19 = !DILocation(line: 41, column: 3, scope: !16)
 // CHECK:STDOUT: !20 = !DILocation(line: 42, column: 3, scope: !16)
 // CHECK:STDOUT: !21 = !DILocation(line: 40, column: 1, scope: !16)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.504f892e0db74da2", scope: null, file: !3, line: 36, type: !17, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.27a852a6bab6ed2e", scope: null, file: !3, line: 36, type: !17, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !23 = !DILocation(line: 37, column: 16, scope: !22)
 // CHECK:STDOUT: !24 = !DILocation(line: 36, column: 1, scope: !22)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.7fea82a824f066aa", scope: null, file: !3, line: 36, type: !17, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.2de7c972fe093485", scope: null, file: !3, line: 36, type: !17, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !26 = !DILocation(line: 37, column: 16, scope: !25)
 // CHECK:STDOUT: !27 = !DILocation(line: 36, column: 1, scope: !25)

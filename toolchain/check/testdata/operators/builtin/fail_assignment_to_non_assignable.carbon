@@ -137,8 +137,8 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.409: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_10.265: %i32 = int_value 10 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -359,12 +359,12 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc61: init %i32 = call %bound_method.loc61_27.2(%int_10) [concrete = constants.%int_10.265]
 // CHECK:STDOUT:   %.loc61_27: init %i32 = converted %int_10, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc61 [concrete = constants.%int_10.265]
 // CHECK:STDOUT:   assign %.loc61_4, %.loc61_27
-// CHECK:STDOUT:   %DestroyOp.bound.loc56: <bound method> = bound_method %a.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc56: init %empty_tuple.type = call %DestroyOp.bound.loc56(%a.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc33: <bound method> = bound_method %n.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc33: init %empty_tuple.type = call %DestroyOp.bound.loc33(%n.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc56: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc56: init %empty_tuple.type = call %Destroy.Op.bound.loc56(%a.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %n.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%n.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

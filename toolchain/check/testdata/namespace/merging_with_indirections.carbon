@@ -171,8 +171,8 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.272: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -242,14 +242,14 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13: ref %A = splice_block %a.ref {}
 // CHECK:STDOUT:   %F.call.loc13: init %A to %.loc13 = call %F.ref.loc13()
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13
-// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %a.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%a.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc7: <bound method> = bound_method %.loc7_11.2, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc7: init %empty_tuple.type = call %DestroyOp.bound.loc7(%.loc7_11.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %a.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%a.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %.loc7_11.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%.loc7_11.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:

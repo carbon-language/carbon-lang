@@ -1326,8 +1326,8 @@ fn Works() {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1466,16 +1466,16 @@ fn Works() {
 // CHECK:STDOUT:   %A.ref.loc38_34: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.eb1]
 // CHECK:STDOUT:   %.loc38_32: %A.type = converted %.loc38_8, <error> [concrete = <error>]
-// CHECK:STDOUT:   %DestroyOp.bound.loc38: <bound method> = bound_method %.loc38_6.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc38: init %empty_tuple.type = call %DestroyOp.bound.loc38(%.loc38_6.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc30: <bound method> = bound_method %.loc30_6.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc30: init %empty_tuple.type = call %DestroyOp.bound.loc30(%.loc30_6.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc22: <bound method> = bound_method %.loc22_5.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc22: init %empty_tuple.type = call %DestroyOp.bound.loc22(%.loc22_5.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc38: <bound method> = bound_method %.loc38_6.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc38: init %empty_tuple.type = call %Destroy.Op.bound.loc38(%.loc38_6.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %.loc30_6.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%.loc30_6.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %.loc22_5.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%.loc22_5.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.c51) {
 // CHECK:STDOUT: !definition:

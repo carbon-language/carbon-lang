@@ -134,10 +134,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.1: type = fn_type @DestroyOp.loc22_27 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.1: %DestroyOp.type.3e79c2.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc22_3 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc22_27 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc22_3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -337,18 +337,18 @@ class X(U:! type) {
 // CHECK:STDOUT:   assign %b.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
-// CHECK:STDOUT:   %DestroyOp.bound.loc22_27: <bound method> = bound_method %.loc22_27.2, constants.%DestroyOp.b0ebf8.1
-// CHECK:STDOUT:   %DestroyOp.call.loc22_27: init %empty_tuple.type = call %DestroyOp.bound.loc22_27(%.loc22_27.2)
-// CHECK:STDOUT:   %DestroyOp.bound.loc22_3: <bound method> = bound_method %b.var, constants.%DestroyOp.b0ebf8.2
-// CHECK:STDOUT:   %DestroyOp.call.loc22_3: init %empty_tuple.type = call %DestroyOp.bound.loc22_3(%b.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc21: <bound method> = bound_method %.loc21_27.2, constants.%DestroyOp.b0ebf8.1
-// CHECK:STDOUT:   %DestroyOp.call.loc21: init %empty_tuple.type = call %DestroyOp.bound.loc21(%.loc21_27.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22_27: <bound method> = bound_method %.loc22_27.2, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc22_27: init %empty_tuple.type = call %Destroy.Op.bound.loc22_27(%.loc22_27.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22_3: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc22_3: init %empty_tuple.type = call %Destroy.Op.bound.loc22_3(%b.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc21: <bound method> = bound_method %.loc21_27.2, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc21: init %empty_tuple.type = call %Destroy.Op.bound.loc21(%.loc21_27.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22_27(%self.param: ref %Param) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc22_27(%self.param: ref %Param) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22_3(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc22_3(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67d

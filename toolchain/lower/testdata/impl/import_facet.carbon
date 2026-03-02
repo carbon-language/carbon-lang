@@ -85,7 +85,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: ; ModuleID = 'd.carbon'
 // CHECK:STDOUT: source_filename = "d.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.02c.anon = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.9f9.anon = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !4 {
@@ -93,7 +93,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:   %.loc5_21.1.temp = alloca {}, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr %.loc5_21.1.temp, ptr %d), !dbg !10
-// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.8ef080b43913f36e(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.acef76c949f320af(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   ret ptr %C.GetC.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,12 +102,12 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.b88d1103f417c6d4"(ptr sret({}) %return, ptr %self) #0 !dbg !12 {
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.02c.anon, i64 0, i1 false), !dbg !16
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.9f9.anon, i64 0, i1 false), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.8ef080b43913f36e(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.acef76c949f320af(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !21
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !22
@@ -141,7 +141,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 7, column: 7, scope: !12)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.8ef080b43913f36e", scope: null, file: !18, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.acef76c949f320af", scope: null, file: !18, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
 // CHECK:STDOUT: !18 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !17, type: !7)

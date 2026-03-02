@@ -77,8 +77,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -162,8 +162,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_12.2: <bound method> = bound_method %.loc29, %specific_fn.loc29
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc29_12.2(%.loc29)
-// CHECK:STDOUT:   %DestroyOp.bound.loc26_5.1: <bound method> = bound_method %A.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc26_5.1: init %empty_tuple.type = call %DestroyOp.bound.loc26_5.1(%A.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc26_5.1: <bound method> = bound_method %A.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc26_5.1: init %empty_tuple.type = call %Destroy.Op.bound.loc26_5.1(%A.var)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -174,10 +174,10 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc31_11.2: <bound method> = bound_method %int_0.loc31, %specific_fn.loc31 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc31: init %i32 = call %bound_method.loc31_11.2(%int_0.loc31) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc31: init %i32 = converted %int_0.loc31, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc31 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %DestroyOp.bound.loc26_5.2: <bound method> = bound_method %A.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc26_5.2: init %empty_tuple.type = call %DestroyOp.bound.loc26_5.2(%A.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc26_5.2: <bound method> = bound_method %A.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc26_5.2: init %empty_tuple.type = call %Destroy.Op.bound.loc26_5.2(%A.var)
 // CHECK:STDOUT:   return %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

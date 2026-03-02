@@ -409,11 +409,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
+    case SemIR::BuiltinFunctionKind::FormMakeType:
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
     case SemIR::BuiltinFunctionKind::MaybeUnformedMakeType:
-    case SemIR::BuiltinFunctionKind::FormMakeType:
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 

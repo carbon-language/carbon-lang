@@ -3189,7 +3189,7 @@ fn G[T:! Transitive](t: T) {
 
   // ❌ Illegal: only the current type is
   // searched for interface implementations.
-  a.(Q.InQ());
+  a.(Q.InQ)();
 
   // ✅ Allowed: values of type `T.A` may be cast
   // to `T.B`, which extends and implements `Q`.
@@ -3197,7 +3197,7 @@ fn G[T:! Transitive](t: T) {
 
   // ✅ Allowed: `T.A` == `T.B` that implements `Q`.
   observe T.A == T.B impls Q;
-  a.(Q.InQ());
+  a.(Q.InQ)();
 
   // ❌ Illegal: `T.A` still does not extend `Q`.
   a.InQ();
@@ -5913,10 +5913,10 @@ impl forall [T:! A] T as B { }
 impl forall [T:! B] T as C { }
 impl forall [T:! C] T as D { }
 
-fn RequiresD(T:! D)(x: T);
-fn RequiresB(T:! B)(x: T);
+fn RequiresD[T:! D](x: T);
+fn RequiresB[T:! B](x: T);
 
-fn RequiresA(T:! A)(x: T) {
+fn RequiresA[T:! A](x: T) {
   // ✅ Allowed: There is a blanket implementation
   //             of `B` for types implementing `A`.
   RequiresB(x);

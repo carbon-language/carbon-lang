@@ -917,8 +917,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method(%y) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1027,8 +1027,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:       %IntRange: type = class_type @IntRange, @IntRange(constants.%int_32) [concrete = constants.%IntRange.a89]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: ref %IntRange.a89 = ref_binding x, %x.var
-// CHECK:STDOUT:     %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
-// CHECK:STDOUT:     %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
+// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1058,7 +1058,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Range [from "lib.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %IntRange.a89) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %IntRange.a89) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Read(constants.%y) {
 // CHECK:STDOUT:   %y.loc4_9.1 => constants.%y

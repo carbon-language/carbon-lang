@@ -9,10 +9,12 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -36,18 +38,85 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
-// Returns a manufactured no-op function with `self_const_id` as parameter.
-// TODO: This is somewhat temporary, but we may want to keep something similar
-// long-term where names are based on type structure (potentially also for
-// copy/move).
-static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
-                             SemIR::NameScopeId name_scope_id,
-                             SemIR::NameId name_id,
-                             SemIR::ConstantId self_const_id) -> SemIR::InstId {
-  auto self_type_id = GetFacetAsType(context, self_const_id);
-  return MakeBuiltinFunction(context, loc_id, SemIR::BuiltinFunctionKind::NoOp,
-                             name_scope_id, name_id,
-                             {.self_type_id = self_type_id});
+// Returns the body for `Destroy.Op`. This will return `None` if using the
+// builtin `NoOp` is appropriate.
+//
+// TODO: This is a placeholder still not actually destroying things, intended to
+// maintain mostly-consistent behavior with current logic while working. That
+// also means using `self`.
+// TODO: This mirrors `TypeCanDestroy` below, think about ways to share what's
+// handled.
+static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id)
+    -> SemIR::InstBlockId {
+  context.inst_block_stack().Push();
+  auto inst = context.types().GetAsInst(self_type_id);
+
+  while (auto class_type = inst.TryAs<SemIR::ClassType>()) {
+    // Switch to looking at the object representation.
+    auto class_info = context.classes().Get(class_type->class_id);
+    CARBON_CHECK(class_info.is_complete());
+    inst = context.types().GetAsInst(
+        class_info.GetObjectRepr(context.sem_ir(), class_type->specific_id));
+  }
+
+  CARBON_KIND_SWITCH(inst) {
+    case SemIR::ArrayType::Kind:
+    case SemIR::ConstType::Kind:
+    case SemIR::MaybeUnformedType::Kind:
+    case SemIR::PartialType::Kind:
+    case SemIR::StructType::Kind:
+    case SemIR::TupleType::Kind:
+      // TODO: Implement iterative destruction of types.
+      break;
+    case SemIR::BoolType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::PointerType::Kind:
+      // For trivially destructible types, we don't generate anything, so that
+      // this can collapse to a noop implementation when possible.
+      break;
+    case SemIR::ErrorInst::Kind:
+      // Errors can't be destroyed, but we'll still try to generate calls for
+      // other members.
+      break;
+    default:
+      CARBON_FATAL("Unexpected type for destroy: {0}", inst);
+  }
+
+  if (context.inst_block_stack().PeekCurrentBlockContents().empty()) {
+    context.inst_block_stack().PopAndDiscard();
+    return SemIR::InstBlockId::None;
+  }
+  AddInst(context, loc_id, SemIR::Return{});
+  return context.inst_block_stack().Pop();
+}
+
+// Returns a manufactured `Destroy.Op` function with the `self` parameter typed
+// to `self_type_id`.
+static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
+                                  SemIR::TypeId self_type_id,
+                                  SemIR::NameScopeId parent_scope_id)
+    -> SemIR::InstId {
+  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+
+  auto [decl_id, function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = parent_scope_id,
+                                 .name_id = name_id,
+                                 .self_type_id = self_type_id});
+
+  auto& function = context.functions().Get(function_id);
+
+  auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id);
+  if (body_id.has_value()) {
+    function.SetCoreWitness();
+    function.body_block_ids.push_back(body_id);
+  } else {
+    function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
+  }
+
+  return decl_id;
 }
 
 static auto MakeCustomWitnessConstantInst(
@@ -266,6 +335,8 @@ static auto TypeCanDestroy(Context& context,
       // doesn't impl `Destroy`.
       return true;
     case SemIR::BoolType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
       // Trivially destructible.
       return true;
@@ -296,15 +367,17 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  // TODO: This needs more complex logic to apply the correct behavior. Also, we
-  // should avoid building a new function on each lookup since a similar query
-  // could result in identical functions.
-  auto noop_id = MakeNoOpFunction(
-      context, loc_id, SemIR::NameScopeId::None,
-      SemIR::NameId::ForIdentifier(context.identifiers().Add("DestroyOp")),
-      query_self_const_id);
+  // Mark functions with the interface's scope as a hint to mangling. This does
+  // not add them to the scope.
+  auto parent_scope_id = context.interfaces()
+                             .Get(query_specific_interface.interface_id)
+                             .scope_without_self_id;
+
+  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto op_id =
+      MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {noop_id});
+                            query_specific_interface_id, {op_id});
 }
 
 }  // namespace Carbon::Check

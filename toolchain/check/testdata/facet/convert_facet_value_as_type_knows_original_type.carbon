@@ -147,8 +147,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
 // CHECK:STDOUT:   %.35f: type = fn_type_with_self_type %Eats.WithSelf.Eat.type.b4d, %Eats.facet [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -208,16 +208,16 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.083]
 // CHECK:STDOUT:   %impl.elem0.loc27: %.35f = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
 // CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
-// CHECK:STDOUT:   %DestroyOp.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc27: init %empty_tuple.type = call %DestroyOp.bound.loc27(%.loc27_6.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc26: init %empty_tuple.type = call %DestroyOp.bound.loc26(%.loc26_6.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc22: init %empty_tuple.type = call %DestroyOp.bound.loc22(%.loc22_28.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc27: init %empty_tuple.type = call %Destroy.Op.bound.loc27(%.loc27_6.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%.loc26_6.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%.loc22_28.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Goat) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- facet_access_type_converts_back_to_original_facet_value.carbon
 // CHECK:STDOUT:
