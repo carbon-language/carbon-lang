@@ -366,11 +366,9 @@ static auto LookupImplWitnessInSelfFacetValue(
       context.identified_facet_types().Get(identified_id).required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {
     auto [req_self, req_specific_interface] = e.value();
-    // The `self_facet_value_inst_id` in eval is a canonicalized facet value, so
-    // we need to do the same to `req_self` that comes from the
-    // IdentifiedFacetType in order to compare them.
-    auto canonical_req_self = GetCanonicalFacetOrTypeValue(context, req_self);
-    return canonical_req_self == self_facet_value_const_id &&
+    // The `self_facet_value_inst_id` in eval is a canonicalized facet value, as
+    // is the self in the identified facet type.
+    return req_self == self_facet_value_const_id &&
            req_specific_interface == query_specific_interface;
   });
   if (it == facet_type_req_impls.end()) {
@@ -406,7 +404,8 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
       llvm::ArrayRef<SemIR::InstId> witness_inst_ids)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
-        query_self_const_id_(query_self_const_id),
+        canonical_query_self_const_id_(
+            GetCanonicalFacetOrTypeValue(*context, query_self_const_id)),
         req_impls_(req_impls),
         witness_inst_ids_(witness_inst_ids) {}
 
@@ -501,7 +500,7 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
       auto [req_self, req_interface] = req_impl;
       // The `LookupImplWitness` is for `.Self`, so if the witness is for some
       // type other than the query self, we can't use it for `.Self`.
-      if (req_self != query_self_const_id_) {
+      if (req_self != canonical_query_self_const_id_) {
         continue;
       }
       // If the `LookupImplWitness` for `.Self` is not looking for the same
@@ -516,7 +515,7 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
   }
 
   SemIR::LocId loc_id_;
-  SemIR::ConstantId query_self_const_id_;
+  SemIR::ConstantId canonical_query_self_const_id_;
   llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls_;
   llvm::ArrayRef<SemIR::InstId> witness_inst_ids_;
   int facet_type_depth_ = 0;

@@ -28,8 +28,4 @@ interface Y {}
 // identified facet type. Instead we should only get a single interface with the
 // canonical `T` facet value as the self value.
 
-// CHECK:STDERR: identify_self_canonicalized.carbon:[[@LINE+4]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl forall [T:! Y] T as W & Z {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! Y] T as W & Z {}
