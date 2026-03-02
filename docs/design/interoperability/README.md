@@ -104,8 +104,10 @@ C++ type in any of the following ways:
 2.  A pointer to a C++ interop type (for example, `Cpp.Widget*`).
 3.  A Carbon generic type parameterized with a C++ interop type (for example,
     `MyCarbonVector(Cpp.Widget)`).
-4.  A Carbon class extending a C++ interop type (for example,
-    `class MyCarbonClass { extend base: Cpp.Widget; }`).
+
+More generally, a C++ interop type is any type for which Carbon's
+[orphan rule](https://docs.carbon-lang.dev/docs/design/generics/details.html#orphan-rule) 
+would allow an impl to be provided by a library in `package Cpp`.
 
 This "pervasive" model of C++-awareness is a fundamental design choice. The C++
 semantics are not confined to a specific `unsafe` or `extern "C++"` block; they
