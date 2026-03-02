@@ -107,24 +107,24 @@ struct FunctionSignatureInsts {
 
 // Handles construction of the signature's parameter and return types.
 static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
-                                  const FunctionSignatureArgs& signature)
+                                  const FunctionDeclArgs& args)
     -> FunctionSignatureInsts {
   FunctionSignatureInsts insts;
 
   StartFunctionSignature(context);
 
   // Build and add a `[ref self: Self]` parameter if needed.
-  if (signature.self_type_id.has_value()) {
+  if (args.self_type_id.has_value()) {
     context.full_pattern_stack().PushFullPattern(
         FullPatternStack::Kind::ImplicitParamList);
 
     BeginSubpattern(context);
     auto self_type_region_id = EndSubpatternAsExpr(
-        context, context.types().GetTypeInstId(signature.self_type_id));
+        context, context.types().GetTypeInstId(args.self_type_id));
 
     insts.self_param_id = AddParamPattern(
         context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
-        signature.self_type_id, signature.self_is_ref);
+        args.self_type_id, args.self_is_ref);
     insts.implicit_param_patterns_id =
         context.inst_blocks().Add({insts.self_param_id});
 
@@ -136,11 +136,11 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   // Build and add any explicit parameters. We always use value parameters for
   // now.
-  if (signature.param_type_ids.empty()) {
+  if (args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
     context.inst_block_stack().Push();
-    for (auto param_type_id : signature.param_type_ids) {
+    for (auto param_type_id : args.param_type_ids) {
       BeginSubpattern(context);
       auto param_type_region_id = EndSubpatternAsExpr(
           context, context.types().GetTypeInstId(param_type_id));
@@ -153,10 +153,9 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   }
 
   // Build and add the return type. We always use an initializing form for now.
-  if (signature.return_type_id.has_value()) {
+  if (args.return_type_id.has_value()) {
     auto return_form = ReturnExprAsForm(
-        context, loc_id,
-        context.types().GetTypeInstId(signature.return_type_id));
+        context, loc_id, context.types().GetTypeInstId(args.return_type_id));
     insts.return_type_inst_id = return_form.type_component_inst_id;
     insts.return_form_inst_id = return_form.form_inst_id;
     insts.return_patterns_id = AddReturnPatterns(context, loc_id, return_form);
@@ -178,9 +177,9 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 }
 
 auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
-                               const FunctionSignatureArgs& signature)
+                               const FunctionDeclArgs& args)
     -> std::pair<SemIR::InstId, SemIR::FunctionId> {
-  auto insts = MakeFunctionSignature(context, loc_id, signature);
+  auto insts = MakeFunctionSignature(context, loc_id, args);
 
   // Add the function declaration.
   auto [decl_id, function_id] = MakeFunctionDecl(
@@ -188,8 +187,8 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
       /*is_definition=*/true,
       SemIR::Function{
           {
-              .name_id = signature.name_id,
-              .parent_scope_id = signature.parent_scope_id,
+              .name_id = args.name_id,
+              .parent_scope_id = args.parent_scope_id,
               .generic_id = SemIR::GenericId::None,
               .first_param_node_id = Parse::NodeId::None,
               .last_param_node_id = Parse::NodeId::None,

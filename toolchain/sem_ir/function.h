@@ -196,13 +196,6 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(kind.AsInt());
   }
 
-  // Sets that this function is a thunk.
-  auto SetThunk(InstId decl_id) -> void {
-    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::Thunk;
-    special_function_kind_data = AnyRawId(decl_id.index);
-  }
-
   // Sets that this function is generated for a `Core` witness. These will
   // typically have a custom implementation, but may use builtin functions, such
   // as `NoOp`. We still track them differently in order to support mangling.
@@ -211,6 +204,13 @@ struct Function : public EntityWithParamsBase,
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CoreWitness;
     special_function_kind_data = AnyRawId(kind.AsInt());
+  }
+
+  // Sets that this function is a thunk.
+  auto SetThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_data = AnyRawId(decl_id.index);
   }
 
   // Sets that this function is a C++ function that should be called using a C++

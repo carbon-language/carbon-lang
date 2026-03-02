@@ -67,7 +67,7 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
     case SemIR::PartialType::Kind:
     case SemIR::StructType::Kind:
     case SemIR::TupleType::Kind:
-      // Implement iterative destruction of types.
+      // TODO: Implement iterative destruction of types.
       break;
     case SemIR::BoolType::Kind:
     case SemIR::FloatType::Kind:
@@ -92,8 +92,8 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
   return context.inst_block_stack().Pop();
 }
 
-// Returns a manufactured `Destroy.Op` function with `self_const_id` as
-// parameter.
+// Returns a manufactured `Destroy.Op` function with the `self` parameter typed
+// to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
                                   SemIR::NameScopeId parent_scope_id)

@@ -198,25 +198,6 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Creates and returns a new builtin function declaration for
-// `std::initializer_list` construction.
-//
-// TODO: Find a better way to handle this. Ideally we should stop using this
-// function entirely and declare the necessary builtin in the prelude.
-static auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
-                                SemIR::BuiltinFunctionKind builtin_kind,
-                                const FunctionSignatureArgs& signature)
-    -> SemIR::InstId {
-  auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id, signature);
-
-  auto& function = context.functions().Get(function_id);
-  CARBON_CHECK(IsValidBuiltinDeclaration(context, function, builtin_kind));
-  function.SetBuiltinFunction(builtin_kind);
-
-  return decl_id;
-}
-
 // Creates and returns a function that can be used to construct a
 // std::initializer_list from an array.
 //
@@ -277,12 +258,23 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
   // Create a builtin function to perform the conversion from array type to
   // initializer list type. We name the synthesized function as if it were a
   // constructor of std::initializer_list.
-  return MakeBuiltinFunction(
-      context, loc_id, SemIR::BuiltinFunctionKind::CppStdInitializerListMake,
-      {.parent_scope_id = init_list_class.scope_id,
-       .name_id = init_list_class.name_id,
-       .param_type_ids = {array_type_id},
-       .return_type_id = init_list_type_id});
+  // TODO: Find a better way to handle this. Ideally we should stop using this
+  // function entirely and declare the necessary builtin in the prelude.
+  auto [decl_id, function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = init_list_class.scope_id,
+                                 .name_id = init_list_class.name_id,
+                                 .param_type_ids = {array_type_id},
+                                 .return_type_id = init_list_type_id});
+
+  auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(IsValidBuiltinDeclaration(
+      context, function,
+      SemIR::BuiltinFunctionKind::CppStdInitializerListMake));
+  function.SetBuiltinFunction(
+      SemIR::BuiltinFunctionKind::CppStdInitializerListMake);
+
+  return decl_id;
 }
 
 // Returns information about the Carbon signature to import when importing a C++

@@ -30,8 +30,8 @@ auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
                                SemIR::BuiltinFunctionKind builtin_kind) -> bool;
 
-// Common function signature arguments.
-struct FunctionSignatureArgs {
+// Arguments for making a function declaration.
+struct FunctionDeclArgs {
   SemIR::NameScopeId parent_scope_id;
   SemIR::NameId name_id;
   // The type of the implicit `[self: Self]` parameter, or `None` if there is
@@ -49,7 +49,7 @@ struct FunctionSignatureArgs {
 // function object to add a definition. The caller is responsible for ensuring
 // that the signature is non-generic.
 auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
-                               const FunctionSignatureArgs& signature)
+                               const FunctionDeclArgs& args)
     -> std::pair<SemIR::InstId, SemIR::FunctionId>;
 
 // Checks that `new_function` has the same return type as `prev_function`, or if
