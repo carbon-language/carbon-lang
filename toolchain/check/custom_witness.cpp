@@ -47,10 +47,10 @@ static auto GetFacetAsType(Context& context,
 // TODO: This mirrors `TypeCanDestroy` below, think about ways to share what's
 // handled.
 static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                              SemIR::TypeId self_type_id)
+                              SemIR::TypeInstId self_type_inst_id)
     -> SemIR::InstBlockId {
   context.inst_block_stack().Push();
-  auto inst = context.types().GetAsInst(self_type_id);
+  auto inst = context.insts().Get(self_type_inst_id);
 
   while (auto class_type = inst.TryAs<SemIR::ClassType>()) {
     // Switch to looking at the object representation.
@@ -95,20 +95,21 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
 // Returns a manufactured `Destroy.Op` function with the `self` parameter typed
 // to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
-                                  SemIR::TypeId self_type_id,
+                                  SemIR::TypeInstId self_type_inst_id,
                                   SemIR::NameScopeId parent_scope_id)
     -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
-  auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id,
-                                {.parent_scope_id = parent_scope_id,
-                                 .name_id = name_id,
-                                 .self_type_id = self_type_id});
+  auto [decl_id, function_id] = MakeGeneratedFunctionDecl(
+      context, loc_id,
+      {.parent_scope_id = parent_scope_id,
+       .name_id = name_id,
+       .self_type_id =
+           context.types().GetTypeIdForTypeInstId(self_type_inst_id)});
 
   auto& function = context.functions().Get(function_id);
 
-  auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id);
+  auto body_id = MakeDestroyOpBody(context, loc_id, self_type_inst_id);
   if (body_id.has_value()) {
     function.SetCoreWitness();
     function.body_block_ids.push_back(body_id);
@@ -291,21 +292,8 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 
 // Returns true if the `Self` should impl `Destroy`.
 static auto TypeCanDestroy(Context& context,
-                           SemIR::ConstantId query_self_const_id,
-                           SemIR::InterfaceId destroy_interface_id) -> bool {
-  auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
-
-  // For facet values, look if the FacetType provides the same.
-  if (auto facet_type =
-          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : info.extend_constraints) {
-      if (interface.interface_id == destroy_interface_id) {
-        return true;
-      }
-    }
-  }
+                           SemIR::TypeInstId self_type_inst_id) -> bool {
+  auto inst = context.insts().Get(self_type_inst_id);
 
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ClassType class_type): {
@@ -355,27 +343,27 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-
-  if (!TypeCanDestroy(context, query_self_const_id,
-                      query_specific_interface.interface_id)) {
-    return std::nullopt;
-  }
-
+  // Give a non-final answer for destroying symbolic types.
   if (query_self_const_id.is_symbolic()) {
     return SemIR::InstId::None;
   }
 
+  auto self_type_inst_id = context.types().GetAsTypeInstId(
+      context.constant_values().GetInstId(query_self_const_id));
+  if (!TypeCanDestroy(context, self_type_inst_id)) {
+    return std::nullopt;
+  }
+
   // Mark functions with the interface's scope as a hint to mangling. This does
   // not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
   auto parent_scope_id = context.interfaces()
                              .Get(query_specific_interface.interface_id)
                              .scope_without_self_id;
 
-  auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id =
-      MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_inst_id,
+                                     parent_scope_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }

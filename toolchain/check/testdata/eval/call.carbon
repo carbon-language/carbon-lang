@@ -91,15 +91,11 @@ eval fn F(_: i32) -> type {
 }
 
 fn UseFGenerically(X:! i32) {
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+12]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+8]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+8]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Destroy` in type `<cannot stringify inst7800018B: {kind: Call, arg0: inst7800003E, arg1: inst_block78000091, type: type(TypeType)}>` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
