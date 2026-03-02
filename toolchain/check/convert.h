@@ -70,8 +70,9 @@ struct ConversionTarget {
   // If this is not null or empty, its last element must be storage_id.
   PendingBlock* storage_access_block = nullptr;
   // Whether failure of conversion is an error and is diagnosed to the user.
-  // When looking for a possible conversion but with graceful fallback, diagnose
-  // should be false.
+  // When looking for a possible conversion but with graceful fallback,
+  // `diagnose` should be false. If `diagnose` is false, an `ErrorInst` may be
+  // returned, but it must be discarded.
   bool diagnose = true;
 
   // Are we converting this value into an initializer for an object?
@@ -117,6 +118,11 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
 // Converts `expr_id` to a value expression of type `type_id`.
+//
+// If `diagnose` is true, errors are diagnosed to the user. Set it to false when
+// looking to see if a conversion is possible but with graceful fallback. If
+// `diagnose` is false, an `ErrorInst` may be returned, but it must be
+// discarded.
 auto ConvertToValueOfType(Context& context, SemIR::LocId loc_id,
                           SemIR::InstId expr_id, SemIR::TypeId type_id,
                           bool diagnose = true) -> SemIR::InstId;
@@ -176,7 +182,9 @@ inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
 // Converts an expression for use as a type.
 //
 // If `diagnose` is true, errors are diagnosed to the user. Set it to false when
-// looking to see if a conversion is possible but with graceful fallback.
+// looking to see if a conversion is possible but with graceful fallback. If
+// `diagnose` is false, an `ErrorInst` may be returned, but it must be
+// discarded.
 //
 // TODO: Most of the callers of this function discard the `inst_id` and lose
 // track of the conversion. In most cases we should be retaining that as the

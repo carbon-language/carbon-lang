@@ -38,8 +38,15 @@ fn Call() {
   let a: i32 = 0;
   let b: i32 = 0;
 
+  // `a` and `b` are not classified as template arguments, so are passed as the
+  // function parameter pack `a...`.
   Cpp.f(a, b);
+
+  // `Cpp.X` and `Cpp.Y` are classified as template template arguments, so they
+  // are passed as the template parameter pack `TT...`.
   Cpp.f(Cpp.X, Cpp.Y);
+
+  // Pass some template arguments followed by some function arguments.
   Cpp.f(Cpp.X, Cpp.Y, a, b);
   Cpp.f(Cpp.X, a, b, a);
 }
@@ -60,14 +67,14 @@ fn Call() {
   Cpp.f(a, b);
   // TODO: There should be a way to indicate that the arguments are template
   // arguments, not function arguments, when calling `f`.
-  Cpp.f(1 as i32, 2 as i32);
+  Cpp.f(1, 2);
 
   // Two function arguments.
-  Cpp.g(1 as i32, 2 as i32);
-  // Two template arguments.
-  Cpp.g(1 as i32, 2 as i32, i32);
-  // Two template arguments and two function arguments.
-  Cpp.g(1 as i32, 2 as i32, i32, 3 as i32, 4 as i32);
+  Cpp.g(1, 2);
+  // Three template arguments.
+  Cpp.g(1, 2, i32);
+  // Three template arguments and two function arguments.
+  Cpp.g(1, 2, i32, 3, 4);
 }
 
 // --- fail_function_arg_not_template_arg.carbon
@@ -80,14 +87,14 @@ template<int N> void f();
 
 fn Call() {
   // We treat this as a function argument, even though that makes the call fail.
-  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+7]]:17: error: no matching function for call to 'f' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Cpp.f(1 as i32);
-  // CHECK:STDERR:       |                 ^
+  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+7]]:10: error: no matching function for call to 'f' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Cpp.f(1);
+  // CHECK:STDERR:       |          ^
   // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE-8]]:22: note: candidate function template not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
   // CHECK:STDERR:     5 | template<int N> void f();
   // CHECK:STDERR:       |                      ^
   // CHECK:STDERR:
-  Cpp.f(1 as i32);
+  Cpp.f(1);
 }
 
 // --- function_arg_not_template_arg_overloaded.carbon
@@ -100,7 +107,7 @@ void f(int n);
 ''';
 
 fn Call() {
-  Cpp.f(1 as i32);
+  Cpp.f(1);
 }
 
 // --- overloaded_with_different_template_params.carbon
@@ -117,7 +124,7 @@ template<template<typename> typename T> void f();
 ''';
 
 fn Call() {
-  Cpp.f(1 as i32, i32);
+  Cpp.f(1, i32);
   Cpp.f(Cpp.X);
   Cpp.f(Cpp.Y);
 }

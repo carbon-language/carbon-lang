@@ -162,6 +162,8 @@ static auto ConvertArgToTemplateArg(
     // When evaluating the second template argument, the generic type of
     // `T` should be substituted with `i32`.
     if (param_type->isInstantiationDependentType()) {
+      // If we don't want to diagnose errors, create a SFINAE context so that
+      // Clang knows to suppress error messages.
       std::optional<clang::Sema::SFINAETrap> sfinae;
       if (!diagnose) {
         sfinae.emplace(context.clang_sema());
