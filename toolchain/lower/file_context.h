@@ -196,14 +196,21 @@ class FileContext {
                                         SemIR::SpecificId specific_id,
                                         llvm::Type* llvm_type) -> void;
 
+  // Information used to build a `FunctionInfo`.
+  // TODO: Rename this, since it's not limited to type information, and/or
+  // restructure the code so it's not needed.
   struct FunctionTypeInfo {
+    // See documentation for the corresponding members of FunctionInfo.
     llvm::FunctionType* type;
     llvm::DISubroutineType* di_type;
     llvm::SmallVector<SemIR::CallParamIndex> lowered_param_indices;
-    llvm::SmallVector<SemIR::NameId> param_name_ids;
     llvm::SmallVector<SemIR::CallParamIndex> unused_param_indices;
 
-    // When return_param_id is not `None`, the corresponding lowered parameter
+    // The names of the lowered `Call` parameters, in the same order as
+    // `lowered_param_indices`.
+    llvm::SmallVector<SemIR::NameId> param_name_ids;
+
+    // When `return_param_id` is not `None`, the corresponding lowered parameter
     // should be given an `sret` attribute with this type.
     llvm::Type* sret_type = nullptr;
   };

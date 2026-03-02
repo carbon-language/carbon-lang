@@ -302,6 +302,7 @@ class FileContext::FunctionTypeInfoBuilder {
   auto Abort() -> bool {
     call_param_pattern_ids_ = {};
     lowered_param_indices_.clear();
+    unused_param_indices_.clear();
     param_name_ids_.clear();
     param_types_.clear();
     param_di_types_.clear();
@@ -394,6 +395,7 @@ class FileContext::FunctionTypeInfoBuilder {
   FileContext& context_;
   const SemIR::SpecificId specific_id_;
 
+  // The input `Call` parameter patterns.
   llvm::ArrayRef<SemIR::InstId> call_param_pattern_ids_;
 
   // The types of the parameters in the LLVM IR function. Each one corresponds
@@ -598,8 +600,8 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
               di_builder.getOrCreateTypeArray(param_di_types_),
               llvm::DINode::FlagZero),
           .lowered_param_indices = std::move(lowered_param_indices_),
-          .param_name_ids = std::move(param_name_ids_),
           .unused_param_indices = std::move(unused_param_indices_),
+          .param_name_ids = std::move(param_name_ids_),
           .sret_type = sret_type_};
 }
 
