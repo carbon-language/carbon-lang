@@ -462,7 +462,7 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
       return Finalize();
     }
   }
-  for (int i = 0; i < params_end; ++i) {
+  for (int i : llvm::seq(params_end)) {
     if (!HandleParameter(SemIR::CallParamIndex(i))) {
       return Finalize();
     }
