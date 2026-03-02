@@ -254,18 +254,37 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
-  Map<SemIR::InstId, int> param_pattern_to_index;
-  for (auto [index, param_pattern_id] : llvm::enumerate(
-           context.inst_blocks().Get(function.call_param_patterns_id))) {
-    param_pattern_to_index.Insert(param_pattern_id, index);
+  auto param_pattern_ids =
+      context.inst_blocks().Get(function.call_param_patterns_id);
+
+  // Maps each `Call` parameter pattern ID to its index.
+  // TODO: is it possible to arrange for the param patterns to be created in
+  // order, so that we could use `param_pattern_ids` for this directly?
+  struct InstWithIndex {
+    SemIR::InstId inst_id;
+    int index;
+
+    auto operator<(InstWithIndex other) const -> bool {
+      return inst_id.index < other.inst_id.index;
+    }
+  };
+  llvm::SmallVector<InstWithIndex> param_to_index;
+
+  param_to_index.reserve(param_pattern_ids.size());
+  for (auto [index, inst_id] : llvm::enumerate(param_pattern_ids)) {
+    param_to_index.push_back({inst_id, static_cast<int>(index)});
   }
+  std::sort(param_to_index.begin(), param_to_index.end());
 
   // Given that `call_arg_ids` is a list of the _`Call`_ arguments for a call to
   // `function_id`, this returns the _syntactic_ argument that was passed for
   // param_pattern_id in that call.
   auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
-    if (auto result = param_pattern_to_index.Lookup(param_pattern_id)) {
-      return call_arg_ids[result.value()];
+    // NOLINTNEXTLINE(readability-qualified-auto)
+    auto result = std::lower_bound(param_to_index.begin(), param_to_index.end(),
+                                   InstWithIndex{param_pattern_id, -1});
+    if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
+      return call_arg_ids[result->index];
     } else {
       if (param_pattern_id != SemIR::ErrorInst::InstId) {
         context.TODO(param_pattern_id,
