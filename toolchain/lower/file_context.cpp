@@ -447,10 +447,10 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
   param_types_.reserve(call_param_pattern_ids_.size());
   param_di_types_.reserve(call_param_pattern_ids_.size());
 
-  if (function.return_end.index > function.explicit_end.index) {
-    CARBON_CHECK(function.return_end.index - function.explicit_end.index == 1,
+  if (function.param_ranges.return_size() > 0) {
+    CARBON_CHECK(function.param_ranges.return_size() == 1,
                  "TODO: support multiple return forms");
-    semir_return_param_index_ = function.explicit_end.index;
+    semir_return_param_index_ = function.param_ranges.return_begin().index;
   }
   if (!HandleReturnForm(function.return_form_inst_id)) {
     return Finalize();

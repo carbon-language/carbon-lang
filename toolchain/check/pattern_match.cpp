@@ -665,9 +665,8 @@ auto CalleePatternMatch(Context& context,
       !implicit_param_patterns_id.has_value()) {
     return {.call_param_patterns_id = SemIR::InstBlockId::None,
             .call_params_id = SemIR::InstBlockId::None,
-            .implicit_end = SemIR::CallParamIndex(0),
-            .explicit_end = SemIR::CallParamIndex(0),
-            .return_end = SemIR::CallParamIndex(0)};
+            .param_ranges = {SemIR::CallParamIndex(0), SemIR::CallParamIndex(0),
+                             SemIR::CallParamIndex(0)}};
   }
 
   MatchContext match(MatchKind::Callee);
@@ -706,9 +705,7 @@ auto CalleePatternMatch(Context& context,
   auto blocks = std::move(match).CalleeResults(context);
   return {.call_param_patterns_id = blocks.call_param_patterns_id,
           .call_params_id = blocks.call_params_id,
-          .implicit_end = implicit_end,
-          .explicit_end = explicit_end,
-          .return_end = return_end};
+          .param_ranges = {implicit_end, explicit_end, return_end}};
 }
 
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,

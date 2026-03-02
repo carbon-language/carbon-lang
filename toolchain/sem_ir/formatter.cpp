@@ -558,7 +558,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  FormatParamList(fn.call_params_id, fn.explicit_end,
+  FormatParamList(fn.call_params_id, fn.param_ranges.return_begin(),
                   fn.GetDeclaredReturnForm(*sem_ir_));
 
   if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
@@ -1310,8 +1310,9 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   auto explicit_end = SemIR::CallParamIndex::None;
   auto callee = GetCallee(*sem_ir_, inst.callee_id);
   if (auto* callee_function = std::get_if<CalleeFunction>(&callee)) {
-    explicit_end =
-        sem_ir_->functions().Get(callee_function->function_id).explicit_end;
+    explicit_end = sem_ir_->functions()
+                       .Get(callee_function->function_id)
+                       .param_ranges.explicit_end();
   }
 
   llvm::ListSeparator sep;

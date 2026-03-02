@@ -188,9 +188,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
-          .implicit_end = SemIR::CallParamIndex::None,
-          .explicit_end = SemIR::CallParamIndex::None,
-          .return_end = SemIR::CallParamIndex::None,
+          .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
           .pattern_block_id = pattern_block_id};
 }
 

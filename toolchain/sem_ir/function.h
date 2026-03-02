@@ -50,11 +50,46 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // The past-the-end indices of the implicit parameter, explicit parameter,
-  // and return portions of the call parameter list.
-  CallParamIndex implicit_end;
-  CallParamIndex explicit_end;
-  CallParamIndex return_end;
+  // The `Call` parameters are divided into three sub-ranges: parameters from
+  // the implicit parameter list, then parameters from the explicit parameter
+  // list, then output parameters that were declared by the function's return
+  // declaration. CallParamIndexRanges represents those sub-ranges in terms of
+  // their end indices, but for convenience and clarity it provides `begin`,
+  // `end`, and `size` accessors for all three ranges, which should be preferred
+  // over directly accessing the fields. The accessors follow STL conventions
+  // but with indices rather than iterators (because they can index into
+  // `call_params`, `call_param_patterns`, and the argument list): all indices
+  // in a range are greater than or equal to `begin`, and less than `end`.
+  struct CallParamIndexRanges {
+    // A CallParamIndexRanges representing an entity with no `Call` parameters.
+    static const CallParamIndexRanges Empty;
+
+    auto implicit_size() const -> int { return implicit_end_.index; }
+    auto implicit_begin() const -> SemIR::CallParamIndex {
+      return SemIR::CallParamIndex(0);
+    }
+    auto implicit_end() const -> SemIR::CallParamIndex { return implicit_end_; }
+
+    auto explicit_size() const -> int {
+      return explicit_end_.index - implicit_end_.index;
+    }
+    auto explicit_begin() const -> SemIR::CallParamIndex {
+      return implicit_end_;
+    }
+    auto explicit_end() const -> SemIR::CallParamIndex { return explicit_end_; }
+
+    auto return_size() const -> int {
+      return return_end_.index - explicit_end_.index;
+    }
+    auto return_begin() const -> SemIR::CallParamIndex { return explicit_end_; }
+    auto return_end() const -> SemIR::CallParamIndex { return return_end_; }
+
+    CallParamIndex implicit_end_;
+    CallParamIndex explicit_end_;
+    CallParamIndex return_end_;
+  };
+
+  CallParamIndexRanges param_ranges;
 
   // The inst representing the type component of return_form_inst_id.
   // TODO: remove this in favor of return_form_inst_id.
@@ -114,6 +149,11 @@ struct FunctionFields {
   // creation to mangling.
   ClangDeclId clang_decl_id = ClangDeclId::None;
 };
+
+inline constexpr FunctionFields::CallParamIndexRanges
+    FunctionFields::CallParamIndexRanges::Empty = {SemIR::CallParamIndex(0),
+                                                   SemIR::CallParamIndex(0),
+                                                   SemIR::CallParamIndex(0)};
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
 struct Function : public EntityWithParamsBase,

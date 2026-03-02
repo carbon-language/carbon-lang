@@ -46,9 +46,7 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
 
   auto call_param_patterns_id = SemIR::InstBlockId::None;
   auto call_params_id = SemIR::InstBlockId::None;
-  auto implicit_end = SemIR::CallParamIndex::None;
-  auto explicit_end = SemIR::CallParamIndex::None;
-  auto return_end = SemIR::CallParamIndex::None;
+  auto param_ranges = SemIR::Function::CallParamIndexRanges::Empty;
   auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
@@ -57,9 +55,7 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
                                       *param_patterns_id, return_patterns_id);
     call_param_patterns_id = results.call_param_patterns_id;
     call_params_id = results.call_params_id;
-    implicit_end = results.implicit_end;
-    explicit_end = results.explicit_end;
-    return_end = results.return_end;
+    param_ranges = results.param_ranges;
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
@@ -78,9 +74,7 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
       .param_patterns_id = *param_patterns_id,
       .call_param_patterns_id = call_param_patterns_id,
       .call_params_id = call_params_id,
-      .implicit_end = implicit_end,
-      .explicit_end = explicit_end,
-      .return_end = return_end,
+      .param_ranges = param_ranges,
       .pattern_block_id = pattern_block_id,
   };
 }

@@ -1348,9 +1348,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId return_patterns_id;
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
-  SemIR::CallParamIndex implicit_end;
-  SemIR::CallParamIndex explicit_end;
-  SemIR::CallParamIndex return_end;
+  SemIR::Function::CallParamIndexRanges param_ranges;
 };
 }  // namespace
 
@@ -1398,9 +1396,7 @@ static auto CreateFunctionSignatureInsts(
            .return_patterns_id = return_patterns_id,
            .call_param_patterns_id = match_results.call_param_patterns_id,
            .call_params_id = match_results.call_params_id,
-           .implicit_end = match_results.implicit_end,
-           .explicit_end = match_results.explicit_end,
-           .return_end = match_results.return_end}};
+           .param_ranges = match_results.param_ranges}};
 }
 
 // Returns the Carbon function name for the given function.
@@ -1498,9 +1494,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
-              .implicit_end = function_params_insts->implicit_end,
-              .explicit_end = function_params_insts->explicit_end,
-              .return_end = function_params_insts->return_end,
+              .param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,
               .return_patterns_id = function_params_insts->return_patterns_id,

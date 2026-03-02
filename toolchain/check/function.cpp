@@ -72,9 +72,10 @@ auto IsValidBuiltinDeclaration(Context& context,
   }
 
   // Find the list of call parameters other than the implicit return slots.
-  auto call_params = context.inst_blocks()
-                         .Get(function.call_params_id)
-                         .take_front(function.explicit_end.index);
+  auto call_params =
+      context.inst_blocks()
+          .Get(function.call_params_id)
+          .take_front(function.param_ranges.explicit_end().index);
 
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
@@ -177,9 +178,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
-              .implicit_end = match_results.implicit_end,
-              .explicit_end = match_results.explicit_end,
-              .return_end = match_results.return_end,
+              .param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_form.type_component_inst_id,
               .return_form_inst_id = return_form.form_inst_id,
               .return_patterns_id = return_patterns_id,
