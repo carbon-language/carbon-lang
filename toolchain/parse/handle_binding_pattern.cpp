@@ -122,7 +122,7 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
     node_kind = NodeKind::VarBindingPattern;
     if (finish_kind != StateKind::BindingPatternFinishAsRegular) {
       CARBON_DIAGNOSTIC(NonRegularBindingInVarDecl, Error,
-                        "Found {0:`:!`|`:?`} pattern inside `var` pattern",
+                        "found {0:`:!`|`:?`} pattern inside `var` pattern",
                         Diagnostics::BoolAsSelect);
       context.emitter().Emit(
           *context.position(), NonRegularBindingInVarDecl,
