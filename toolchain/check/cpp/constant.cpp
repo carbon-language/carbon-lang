@@ -9,7 +9,6 @@
 
 namespace Carbon::Check {
 
-// TODO: dedup with code in `MapConstant` and `TryEvaluateMacroToConstant`.
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
     -> SemIR::ConstantId {
