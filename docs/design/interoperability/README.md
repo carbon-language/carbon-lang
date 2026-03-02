@@ -106,7 +106,7 @@ C++ type in any of the following ways:
     `MyCarbonVector(Cpp.Widget)`).
 
 More generally, a C++ interop type is any type for which Carbon's
-[orphan rule](https://docs.carbon-lang.dev/docs/design/generics/details.html#orphan-rule) 
+[orphan rule](https://docs.carbon-lang.dev/docs/design/generics/details.html#orphan-rule)
 would allow an impl to be provided by a library in `package Cpp`.
 
 This "pervasive" model of C++-awareness is a fundamental design choice. The C++
