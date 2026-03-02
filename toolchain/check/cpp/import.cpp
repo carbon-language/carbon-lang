@@ -2160,14 +2160,8 @@ static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  clang::Expr* macro_expr =
+  auto inst_id =
       TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
-
-  if (!macro_expr) {
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-
-  auto inst_id = MapConstant(context, loc_id, macro_expr);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }

@@ -9,18 +9,19 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
+#include "toolchain/check/cpp/import.h"
 
 namespace Carbon::Check {
 
 auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameId name_id,
-                                clang::MacroInfo* macro_info) -> clang::Expr* {
+                                clang::MacroInfo* macro_info) -> SemIR::InstId {
   auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
   CARBON_CHECK(macro_info, "macro info missing");
 
   if (macro_info->getNumTokens() == 0) {
     context.TODO(loc_id, "Unsupported: macro with 0 replacement tokens");
-    return nullptr;
+    return SemIR::ErrorInst::InstId;
   }
 
   clang::Sema& sema = context.clang_sema();
@@ -59,7 +60,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
         "failed to parse macro Cpp.{0} to a valid constant expression",
         std::string);
     context.emitter().Emit(loc_id, InCppMacroEvaluation, (*name_str_opt).str());
-    return nullptr;
+    return SemIR::ErrorInst::InstId;
   }
 
   result_expr = result_expr->IgnoreParenImpCasts();
@@ -67,7 +68,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   if (isa<clang::StringLiteral>(result_expr) ||
       isa<clang::CharacterLiteral>(result_expr) ||
       isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
-    return result_expr;
+    return MapConstant(context, loc_id, result_expr);
   }
 
   clang::Expr::EvalResult evaluated_result;
@@ -80,7 +81,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
       context.TODO(loc_id,
                    "Unsupported: macro evaluated to a non-integer LValue");
-      return nullptr;
+      return SemIR::ErrorInst::InstId;
     }
     ap_value = evaluated_result.Val;
   }
@@ -88,22 +89,28 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   switch (ap_value.getKind()) {
     case clang::APValue::Int:
       if (result_expr->getType()->isBooleanType()) {
-        return clang::CXXBoolLiteralExpr::Create(
-            sema.getASTContext(), ap_value.getInt().getBoolValue(),
-            result_expr->getType(), result_expr->getExprLoc());
+        return MapConstant(
+            context, loc_id,
+            clang::CXXBoolLiteralExpr::Create(
+                sema.getASTContext(), ap_value.getInt().getBoolValue(),
+                result_expr->getType(), result_expr->getExprLoc()));
       }
-      return clang::IntegerLiteral::Create(
-          sema.getASTContext(), ap_value.getInt(), result_expr->getType(),
-          result_expr->getExprLoc());
+      return MapConstant(
+          context, loc_id,
+          clang::IntegerLiteral::Create(sema.getASTContext(), ap_value.getInt(),
+                                        result_expr->getType(),
+                                        result_expr->getExprLoc()));
     case clang::APValue::Float:
-      return clang::FloatingLiteral::Create(
-          sema.getASTContext(), ap_value.getFloat(),
-          /*isExact=*/true, result_expr->getType(), result_expr->getExprLoc());
+      return MapConstant(context, loc_id,
+                         clang::FloatingLiteral::Create(
+                             sema.getASTContext(), ap_value.getFloat(),
+                             /*isExact=*/true, result_expr->getType(),
+                             result_expr->getExprLoc()));
     default:
       context.TODO(loc_id,
                    "Unsupported: macro evaluated to a constant of type: " +
                        result_expr->getType().getAsString());
-      return nullptr;
+      return SemIR::ErrorInst::InstId;
   }
 }
 
