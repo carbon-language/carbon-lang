@@ -67,7 +67,6 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   result_expr = result_expr->IgnoreParenImpCasts();
 
   if (isa<clang::StringLiteral>(result_expr) ||
-      isa<clang::CharacterLiteral>(result_expr) ||
       isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
     return MapConstant(context, loc_id, result_expr);
   }

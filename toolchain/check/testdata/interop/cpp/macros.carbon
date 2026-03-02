@@ -486,7 +486,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_character_literal_types.h";
 
 fn F() {
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char16_t` [SemanticsTodo]
  // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
@@ -498,7 +498,7 @@ fn F() {
  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
  let unused a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char32_t` [SemanticsTodo]
  // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
@@ -510,7 +510,7 @@ fn F() {
  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
  let unused b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: wchar_t` [SemanticsTodo]
  // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
  // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
@@ -1365,30 +1365,24 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %pattern_type.b09: type = pattern_type %char [concrete]
-// CHECK:STDOUT:   %.b69: %char = char_value U+0061 [concrete]
-// CHECK:STDOUT:   %.13f: %char = char_value U+0041 [concrete]
-// CHECK:STDOUT:   %.c50: %char = char_value U+0031 [concrete]
-// CHECK:STDOUT:   %.e74: %char = char_value U+0020 [concrete]
-// CHECK:STDOUT:   %.a7f: %char = char_value U+0009 [concrete]
-// CHECK:STDOUT:   %.133: %char = char_value U+0058 [concrete]
+// CHECK:STDOUT:   %int_97: %char = int_value 97 [concrete]
+// CHECK:STDOUT:   %int_65: %char = int_value 65 [concrete]
+// CHECK:STDOUT:   %int_49: %char = int_value 49 [concrete]
+// CHECK:STDOUT:   %int_32: %char = int_value 32 [concrete]
+// CHECK:STDOUT:   %int_9: %char = int_value 9 [concrete]
+// CHECK:STDOUT:   %int_88: %char = int_value 88 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .M_LOWERCASE = %.b69
-// CHECK:STDOUT:     .M_UPPERCASE = %.13f
-// CHECK:STDOUT:     .M_DIGIT = %.c50
-// CHECK:STDOUT:     .M_SPACE = %.e74
-// CHECK:STDOUT:     .M_TAB = %.a7f
-// CHECK:STDOUT:     .M_UTF8_CHAR = %.133
+// CHECK:STDOUT:     .M_LOWERCASE = constants.%int_97
+// CHECK:STDOUT:     .M_UPPERCASE = constants.%int_65
+// CHECK:STDOUT:     .M_DIGIT = constants.%int_49
+// CHECK:STDOUT:     .M_SPACE = constants.%int_32
+// CHECK:STDOUT:     .M_TAB = constants.%int_9
+// CHECK:STDOUT:     .M_UTF8_CHAR = constants.%int_88
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.b69: %char = char_value U+0061 [concrete = constants.%.b69]
-// CHECK:STDOUT:   %.13f: %char = char_value U+0041 [concrete = constants.%.13f]
-// CHECK:STDOUT:   %.c50: %char = char_value U+0031 [concrete = constants.%.c50]
-// CHECK:STDOUT:   %.e74: %char = char_value U+0020 [concrete = constants.%.e74]
-// CHECK:STDOUT:   %.a7f: %char = char_value U+0009 [concrete = constants.%.a7f]
-// CHECK:STDOUT:   %.133: %char = char_value U+0058 [concrete = constants.%.133]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1398,7 +1392,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_LOWERCASE.ref: %char = name_ref M_LOWERCASE, imports.%.b69 [concrete = constants.%.b69]
+// CHECK:STDOUT:   %M_LOWERCASE.ref: %char = name_ref M_LOWERCASE, constants.%int_97 [concrete = constants.%int_97]
 // CHECK:STDOUT:   %char.loc8: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %a: %char = value_binding a, %M_LOWERCASE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1406,7 +1400,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_UPPERCASE.ref: %char = name_ref M_UPPERCASE, imports.%.13f [concrete = constants.%.13f]
+// CHECK:STDOUT:   %M_UPPERCASE.ref: %char = name_ref M_UPPERCASE, constants.%int_65 [concrete = constants.%int_65]
 // CHECK:STDOUT:   %char.loc9: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %b: %char = value_binding b, %M_UPPERCASE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1414,7 +1408,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_DIGIT.ref: %char = name_ref M_DIGIT, imports.%.c50 [concrete = constants.%.c50]
+// CHECK:STDOUT:   %M_DIGIT.ref: %char = name_ref M_DIGIT, constants.%int_49 [concrete = constants.%int_49]
 // CHECK:STDOUT:   %char.loc10: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %c: %char = value_binding c, %M_DIGIT.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1422,7 +1416,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_SPACE.ref: %char = name_ref M_SPACE, imports.%.e74 [concrete = constants.%.e74]
+// CHECK:STDOUT:   %M_SPACE.ref: %char = name_ref M_SPACE, constants.%int_32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %char.loc11: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %d: %char = value_binding d, %M_SPACE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1430,7 +1424,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_TAB.ref: %char = name_ref M_TAB, imports.%.a7f [concrete = constants.%.a7f]
+// CHECK:STDOUT:   %M_TAB.ref: %char = name_ref M_TAB, constants.%int_9 [concrete = constants.%int_9]
 // CHECK:STDOUT:   %char.loc12: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %e: %char = value_binding e, %M_TAB.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1438,7 +1432,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_UTF8_CHAR.ref: %char = name_ref M_UTF8_CHAR, imports.%.133 [concrete = constants.%.133]
+// CHECK:STDOUT:   %M_UTF8_CHAR.ref: %char = name_ref M_UTF8_CHAR, constants.%int_88 [concrete = constants.%int_88]
 // CHECK:STDOUT:   %char.loc13: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %f: %char = value_binding f, %M_UTF8_CHAR.ref
 // CHECK:STDOUT:   <elided>
