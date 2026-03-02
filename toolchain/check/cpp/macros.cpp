@@ -11,8 +11,38 @@
 #include "common/check.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/literal.h"
 
 namespace Carbon::Check {
+
+// Maps a Clang literal expression to a Carbon constant.
+static auto MapConstant(Context& context, SemIR::LocId loc_id,
+                        clang::Expr* expr) -> SemIR::InstId {
+  CARBON_CHECK(expr, "empty expression");
+
+  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
+    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: string literal type: {0}",
+                                 expr->getType()));
+      return SemIR::ErrorInst::InstId;
+    }
+    StringLiteralValueId string_id =
+        context.string_literal_values().Add(string_literal->getString());
+    auto inst_id =
+        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
+    return inst_id;
+  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
+    auto type_id = ImportCppType(context, loc_id, expr->getType()).type_id;
+    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
+                                                   {.type_id = type_id});
+  }
+
+  context.TODO(loc_id,
+               llvm::formatv("Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
+  return SemIR::ErrorInst::InstId;
+}
 
 auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameId name_id,

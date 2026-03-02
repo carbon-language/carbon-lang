@@ -2079,36 +2079,6 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// TODO: Add support for all constant types for which a C++ to Carbon type
-// mapping exists.
-auto MapConstant(Context& context, SemIR::LocId loc_id, clang::Expr* expr)
-    -> SemIR::InstId {
-  CARBON_CHECK(expr, "empty expression");
-
-  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
-    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: string literal type: {0}",
-                                 expr->getType()));
-      return SemIR::ErrorInst::InstId;
-    }
-    StringLiteralValueId string_id =
-        context.string_literal_values().Add(string_literal->getString());
-    auto inst_id =
-        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
-    return inst_id;
-  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
-    auto type_id = MapNullptrType(context, loc_id).type_id;
-    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
-                                                   {.type_id = type_id});
-  }
-
-  context.TODO(loc_id,
-               llvm::formatv("Unsupported: C++ constant expression type: '{0}'",
-                             expr->getType().getAsString()));
-  return SemIR::ErrorInst::InstId;
-}
-
 // Imports a macro definition into the scope. Currently supports only simple
 // object-like macros that expand to a constant integer value.
 // TODO: Add support for other macro types and non-integer literal values.

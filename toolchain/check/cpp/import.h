@@ -87,10 +87,6 @@ auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
 auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl*;
 
-// Maps a Clang literal expression to a Carbon constant.
-auto MapConstant(Context& context, SemIR::LocId loc_id, clang::Expr* expr)
-    -> SemIR::InstId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
