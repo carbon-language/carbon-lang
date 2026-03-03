@@ -679,7 +679,7 @@ fn F() {
   let unused a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
 }
 
-// --- fail_todo_import_macro_constexpr_float.carbon
+// --- import_macro_constexpr_float.carbon
 
 library "[[@TEST_NAME]]";
 
