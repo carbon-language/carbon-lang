@@ -9,12 +9,12 @@
 
 namespace Carbon::Check {
 
-// Tries to evaluate the given macro to a constant expression. Returns the
-// evaluated expression on success or nullptr otherwise.
-// TODO: Add support for all literal types.
-auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameId name_id,
-                                clang::MacroInfo* macro_info) -> SemIR::InstId;
+// Tries to evaluate the given macro. The macro will be evaluated as a
+// constant if possible. Returns an `InstId` on success or
+// `SemIR::ErrorInst::InstId` otherwise.
+auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
+                      SemIR::NameId name_id, clang::MacroInfo* macro_info)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

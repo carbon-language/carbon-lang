@@ -44,9 +44,9 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
   return SemIR::ErrorInst::InstId;
 }
 
-auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameId name_id,
-                                clang::MacroInfo* macro_info) -> SemIR::InstId {
+auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
+                      SemIR::NameId name_id, clang::MacroInfo* macro_info)
+    -> SemIR::InstId {
   auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
   CARBON_CHECK(macro_info, "macro info missing");
 

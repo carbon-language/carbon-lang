@@ -2086,8 +2086,7 @@ static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  auto inst_id =
-      TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
+  auto inst_id = TryEvaluateMacro(context, loc_id, name_id, macro_info);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
