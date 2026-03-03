@@ -877,6 +877,29 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// --- fail_todo_assign_through_pointer.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+int v = 1;
+#define m &v
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+11]]:5: error: semantics TODO: `Unsupported: macro evaluated to a non-integer LValue` [SemanticsTodo]
+  // CHECK:STDERR:   (*Cpp.m) = 2;
+  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+8]]:5: note: in `Cpp` name lookup for `m` [InCppNameLookup]
+  // CHECK:STDERR:   (*Cpp.m) = 2;
+  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:5: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   (*Cpp.m) = 2;
+  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR:
+  (*Cpp.m) = 2;
+}
+
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
