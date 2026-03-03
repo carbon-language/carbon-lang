@@ -44,6 +44,22 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
   return SemIR::ErrorInst::InstId;
 }
 
+// Converts an `APValue` to a Carbon constant `InstId`. Returns
+// `SemIR::ErrorInst::InstId` on error.
+static auto MapAPValueToConstantInst(Context& context, SemIR::LocId loc_id,
+                                     const clang::APValue& ap_value,
+                                     clang::QualType type) -> SemIR::InstId {
+  auto const_id = MapAPValueToConstant(context, loc_id, ap_value, type);
+  if (const_id == SemIR::ConstantId::NotConstant) {
+    context.TODO(loc_id,
+                 "Unsupported: macro evaluated to a constant of type: " +
+                     type.getAsString());
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return context.constant_values().GetInstId(const_id);
+}
+
 auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
                       SemIR::NameId name_id, clang::MacroInfo* macro_info)
     -> SemIR::InstId {
@@ -108,37 +124,30 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
   if (ap_value.isLValue()) {
-    if (result_expr->isGLValue() &&
-        result_expr->EvaluateAsLValue(evaluated_result, sema.getASTContext())) {
-      ap_value = evaluated_result.Val;
-
+    if (result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
+      return MapAPValueToConstantInst(context, loc_id, evaluated_result.Val,
+                                      result_expr->getType());
+    } else if (result_expr->isGLValue() &&
+               result_expr->EvaluateAsLValue(evaluated_result,
+                                             sema.getASTContext())) {
       const auto* value_decl =
-          ap_value.getLValueBase().get<const clang::ValueDecl*>();
+          evaluated_result.Val.getLValueBase().get<const clang::ValueDecl*>();
 
       auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
           // TODO: can this const_cast be avoided?
           const_cast<clang::ValueDecl*>(value_decl));
 
       return ImportCppDecl(context, loc_id, key);
-    } else if (!result_expr->EvaluateAsInt(evaluated_result,
-                                           sema.getASTContext())) {
+    } else {
       context.TODO(loc_id,
                    "Macro evaluated to an unsupported lvalue of type: " +
                        result_expr->getType().getAsString());
       return SemIR::ErrorInst::InstId;
     }
+  } else {
+    return MapAPValueToConstantInst(context, loc_id, ap_value,
+                                    result_expr->getType());
   }
-
-  auto const_id =
-      MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());
-  if (const_id == SemIR::ConstantId::NotConstant) {
-    context.TODO(loc_id,
-                 "Unsupported: macro evaluated to a constant of type: " +
-                     result_expr->getType().getAsString());
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return context.constant_values().GetInstId(const_id);
 }
 
 }  // namespace Carbon::Check
