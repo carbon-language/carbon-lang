@@ -226,15 +226,15 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_6.1: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %.loc4_6.1 [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.1da] {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = ref_form %i32 [concrete = constants.%.1da]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc4_6.2: ref %i32 = form_binding x, %x.param
+// CHECK:STDOUT:     %x: ref %i32 = form_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -286,15 +286,15 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_6.1: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %.loc4_6.1 [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.324] {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = init_form %i32, call_param<none> [concrete = constants.%.324]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc4_6.2: ref %i32 = form_binding x, %x.param
+// CHECK:STDOUT:     %x: ref %i32 = form_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,15 +354,15 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_6.1: %pattern_type.7ce = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %.loc4_6.1 [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type.7ce = form_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.754] {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = value_form %i32 [concrete = constants.%.754]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc4_6.2: %i32 = form_binding x, %x.param
+// CHECK:STDOUT:     %x: %i32 = form_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -396,8 +396,8 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_6.1: %pattern_type = form_binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc4_7: %pattern_type = form_param_pattern %.loc4_6.1 [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = form_binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc4_7: %pattern_type = form_param_pattern %x.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.9f9] {
@@ -405,7 +405,7 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:       %.loc4_20.2: type = converted %.loc4_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc4_15.2: Core.Form = ref_form %.loc4_20.2 [concrete = constants.%.9f9]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc4_6.2: ref %empty_tuple.type = form_binding x, %x.param
+// CHECK:STDOUT:     %x: ref %empty_tuple.type = form_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -24,6 +24,7 @@
 #include "toolchain/sem_ir/formatter_chunks.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 #include "toolchain/sem_ir/vtable.h"
@@ -1042,23 +1043,17 @@ auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
-    case InstKind::ArrayInit:
-    case InstKind::StructInit:
-    case InstKind::TupleInit: {
-      auto init = inst.As<AnyAggregateInit>();
+    case CARBON_KIND_ANY(AnyAggregateInit, auto init): {
       FormatArgs(init.elements_id);
       return;
     }
 
-    case InstKind::ImportRefLoaded:
-    case InstKind::ImportRefUnloaded:
-      FormatImportRefRhs(inst.As<AnyImportRef>());
+    case CARBON_KIND_ANY(AnyImportRef, auto import_ref): {
+      FormatImportRefRhs(import_ref);
       return;
+    }
 
-    case InstKind::OutParam:
-    case InstKind::RefParam:
-    case InstKind::ValueParam: {
-      auto param = inst.As<AnyParam>();
+    case CARBON_KIND_ANY(AnyParam, auto param): {
       FormatArgs(param.index);
       // Omit pretty_name because it's an implementation detail of
       // pretty-printing.
@@ -1140,7 +1135,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case InstKind::ImportCppDecl: {
+    case ImportCppDecl::Kind: {
       FormatImportCppDeclRhs();
       return;
     }
@@ -1229,7 +1224,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case InstKind::ReturnSlotPattern:
+    case ReturnSlotPattern::Kind:
       // No-op because type_id is the only semantically significant field,
       // and it's handled separately.
       return;

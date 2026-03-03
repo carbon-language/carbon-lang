@@ -20,6 +20,10 @@
 //     case CARBON_KIND(SomeInstType inst): {
 //       return inst.typed_field;
 //     }
+//     case CARBON_KIND_ANY(AnyKind, auto any_inst): {
+//       return any_inst.typed_field;
+//     }
+//
 //     case OtherType1::Kind:
 //     case OtherType2::Kind:
 //       return value;
@@ -27,17 +31,54 @@
 //       return default_value;
 //   }
 //
-// For compatibility, this requires:
+// When used on kind-like types, this requires:
 //
 // - The type passed to `CARBON_KIND_SWITCH` has `.kind()` to switch on, and
 //   `.As<CaseT>` for `CARBON_KIND` to cast to.
 // - Each type passed to `CARBON_KIND` (`CaseT` above) provides
 //   `CaseT::Kind`, which is passed to the `case` keyword.
 //   `CaseT::Kind::RawEnumType` is the type returned by `.kind()`.
+// - Each type passed to `CARBON_KIND_ANY` must have two macros:
+//   1. `CARBON_KIND_ANY_EXPAND_AnyKind(X, SEP)` which expands to
+//      `X(Kind1) SEP X(Kind2) SEP ... X(KindN)` (no final separator).
+//      - EAch `KindN` follows the requirements of `Kind`.
+//   2. `CARBON_KIND_ANY_FULLY_QUALIFIED_AnyKind` which expands to the fully
+//      qualified name of the `AnyKind` type.
 //
-// Note, this is currently used primarily for Inst in toolchain. When more
-// use-cases are added, it would be worth considering whether the API
-// requirements should change.
+// When used with `std::variant` (e.g., `CARBON_KIND_SWITCH(variant_value)`),
+// members of the variant are passed to `CARBON_KIND`, instead of types that
+// have a `::Kind` member.
+
+// Produces a switch statement on value.kind().
+#define CARBON_KIND_SWITCH(value)                       \
+  switch (                                              \
+      auto&& carbon_internal_kind_switch_value = value; \
+      ::Carbon::Internal::Kind::SwitchOn(carbon_internal_kind_switch_value))
+
+// Produces a case-compatible block of code that also instantiates a local typed
+// variable. typed_variable_decl looks like `int i`; the `CARBON_KIND` value
+// will be cast to the provided type.
+//
+// Because of the dangling else, braces should always be used with a `case
+// CARBON_KIND`. Otherwise, only the first statement is going to see the
+// variable. Even if that sometimes works, it can lead to confusing issues when
+// statements are added, and `if`/`else` coding style already requires braces.
+#define CARBON_KIND(typed_variable_decl)         \
+  CARBON_KIND_INTERNAL_CASE(typed_variable_decl) \
+      : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl, typed_variable_decl)
+
+// Produces a case-compatible block of code that also instantiates a local typed
+// variable. `variable_decl` looks like `auto i`; it will be assigned a type
+// based on the cast for `AnyKind`.
+#define CARBON_KIND_ANY(AnyKind, variable_decl)                       \
+  CARBON_KIND_ANY_EXPAND_##AnyKind(CARBON_KIND_INTERNAL_CASE, : case) \
+      : CARBON_KIND_INTERNAL_DECLARE(                                 \
+            variable_decl, CARBON_KIND_ANY_FULLY_QUALIFIED_##AnyKind)
+
+// -----------------------------------------------------------------------------
+// Internal implementation details follow.
+// -----------------------------------------------------------------------------
+
 namespace Carbon::Internal::Kind {
 
 template <typename T>
@@ -243,34 +284,33 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 #define CARBON_INTERNAL_KIND_LABEL(Line) \
   CARBON_INTERNAL_KIND_MERGE(carbon_internal_kind_case_, Line)
 
-}  // namespace Carbon::Internal::Kind
+// To extract the type from an argument, we wrap it in a lambda and will use
+// `function_traits` to extract the type. This supports `typed_param` either
+// being `Type name`, or just `Type`.
+#define CARBON_KIND_INTERNAL_WRAP_TYPE(typed_param) \
+  decltype([]([[maybe_unused]] typed_param) {})
 
-// Produces a switch statement on value.kind().
-#define CARBON_KIND_SWITCH(value)                       \
-  switch (                                              \
-      auto&& carbon_internal_kind_switch_value = value; \
-      ::Carbon::Internal::Kind::SwitchOn(carbon_internal_kind_switch_value))
+// Produces the value for a `case` statement on the type of `typed_param`.
+#define CARBON_KIND_INTERNAL_CASE(typed_param)     \
+  ::Carbon::Internal::Kind::ForCase<               \
+      decltype(carbon_internal_kind_switch_value), \
+      CARBON_KIND_INTERNAL_WRAP_TYPE(typed_param)>()
 
-// Produces a case-compatible block of code that also instantiates a local typed
-// variable. typed_variable_decl looks like `int i`, with a space.
+// Produces a declaration using `variable_decl`, cast from `typed_param`.
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-//
-// Because of the dangling else, braces should always be used with a `case
-// CARBON_KIND`. Otherwise, only the first statement is going to see the
-// variable. Even if that sometimes works, it can lead to confusing issues when
-// statements are added, and `if`/`else` coding style already requires braces.
-#define CARBON_KIND(typed_variable_decl)                                   \
-  ::Carbon::Internal::Kind::ForCase<                                       \
-      decltype(carbon_internal_kind_switch_value),                         \
-      decltype([]([[maybe_unused]] typed_variable_decl) {})>()             \
-      : if (typed_variable_decl = ::Carbon::Internal::Kind::Cast<          \
-                decltype([]([[maybe_unused]] typed_variable_decl) {})>(    \
-                std::forward<decltype(carbon_internal_kind_switch_value)>( \
-                    carbon_internal_kind_switch_value));                   \
-            false) {}                                                      \
-  else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
+#define CARBON_KIND_INTERNAL_DECLARE(variable_decl, typed_param)         \
+  if (variable_decl =                                                    \
+          ::Carbon::Internal::Kind::Cast<CARBON_KIND_INTERNAL_WRAP_TYPE( \
+              typed_param)>(                                             \
+              std::forward<decltype(carbon_internal_kind_switch_value)>( \
+                  carbon_internal_kind_switch_value));                   \
+      false) {                                                           \
+  } else [[maybe_unused]]                                                \
+    CARBON_INTERNAL_KIND_LABEL(__LINE__)
+
+}  // namespace Carbon::Internal::Kind
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
