@@ -852,6 +852,31 @@ fn F() {
   Cpp.HEADER_GUARD_MACRO_H_;
 }
 
+// --- assign.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+int v = 1;
+#define m v
+''';
+
+fn F() {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: assign.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro evaluated to a non-integer LValue` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: assign.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: assign.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  Cpp.m = 2;
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1846,6 +1871,28 @@ fn F() {
 // CHECK:STDOUT:   %TWICE_DEF.ref: %i32 = name_ref TWICE_DEF, constants.%int_2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %TWICE_DEF.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- assign.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .m = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %m.ref: <error> = name_ref m, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   assign %m.ref, <error>
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
