@@ -688,11 +688,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // Lower args in the LLVM parameter order, rather than the SemIR parameter
   // order.
   std::vector<llvm::Value*> args;
-  for (auto param_pattern_id : function_info->lowered_param_pattern_ids) {
-    auto sem_ir_index = callee.file->insts()
-                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
-                            .index.index;
-    args.push_back(context.GetValue(arg_ids[sem_ir_index]));
+  for (auto index : function_info->lowered_param_indices) {
+    args.push_back(context.GetValue(arg_ids[index.index]));
   }
 
   llvm::CallInst* call;

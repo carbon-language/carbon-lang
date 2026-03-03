@@ -113,9 +113,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:     %pair.patt: @F.%pattern_type.loc7_26 (%pattern_type.eee) = value_binding_pattern pair [concrete]
-// CHECK:STDOUT:     %pair.param_patt: @F.%pattern_type.loc7_26 (%pattern_type.eee) = value_param_pattern %pair.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %pair.param_patt: @F.%pattern_type.loc7_26 (%pattern_type.eee) = value_param_pattern %pair.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc7_40 (%pattern_type.946) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_40 (%pattern_type.946) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_40 (%pattern_type.946) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc7_43: type = name_ref U, %U.loc7_16.2 [symbolic = %U.loc7_16.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc7_43.3: Core.Form = init_form %U.ref.loc7_43, call_param1 [symbolic = %.loc7_43.2 (constants.%.4b7)]
@@ -142,9 +142,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %pair.patt: %pattern_type.881 = value_binding_pattern pair [concrete]
-// CHECK:STDOUT:     %pair.param_patt: %pattern_type.881 = value_param_pattern %pair.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %pair.param_patt: %pattern_type.881 = value_param_pattern %pair.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %.loc9_23.2: Core.Form = init_form %D.ref.loc9_23, call_param1 [concrete = constants.%.c40]
@@ -358,9 +358,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %A.patt: %pattern_type.7ce = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:     %B.patt: %pattern_type.7ce = symbolic_binding_pattern B, 1 [concrete]
 // CHECK:STDOUT:     %h.patt: @F.%pattern_type (%pattern_type.dc2) = value_binding_pattern h [concrete]
-// CHECK:STDOUT:     %h.param_patt: @F.%pattern_type (%pattern_type.dc2) = value_param_pattern %h.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %h.param_patt: @F.%pattern_type (%pattern_type.dc2) = value_param_pattern %h.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_54: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc6_54: Core.Form = init_form %i32.loc6_54, call_param1 [concrete = constants.%.e54]
@@ -390,9 +390,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %h.patt: %pattern_type.530 = value_binding_pattern h [concrete]
-// CHECK:STDOUT:     %h.param_patt: %pattern_type.530 = value_param_pattern %h.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %h.param_patt: %pattern_type.530 = value_param_pattern %h.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc8_29: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
@@ -559,9 +559,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %pair.patt: @F.%pattern_type.loc7_16 (%pattern_type.c3f) = value_binding_pattern pair [concrete]
-// CHECK:STDOUT:     %pair.param_patt: @F.%pattern_type.loc7_16 (%pattern_type.c3f) = value_param_pattern %pair.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %pair.param_patt: @F.%pattern_type.loc7_16 (%pattern_type.c3f) = value_param_pattern %pair.patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc7_30 (%pattern_type.51d) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_30 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_30 (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc7_33: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc7_33.2: Core.Form = init_form %T.ref.loc7_33, call_param1 [symbolic = %.loc7_33.1 (constants.%.3cf)]
@@ -583,9 +583,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %pair.patt: %pattern_type.881 = value_binding_pattern pair [concrete]
-// CHECK:STDOUT:     %pair.param_patt: %pattern_type.881 = value_param_pattern %pair.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %pair.param_patt: %pattern_type.881 = value_param_pattern %pair.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %.loc9_23: Core.Form = init_form %D.ref.loc9_23, call_param1 [concrete = constants.%.c40]

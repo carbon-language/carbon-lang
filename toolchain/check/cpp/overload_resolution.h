@@ -20,19 +20,20 @@ auto CheckCppOverloadAccess(
     SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
     SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None) -> void;
 
-// Resolves which function to call using Clang overloading resolution, or
-// returns an error instruction if overload resolution failed.
+// Resolves which function to call using Clang overload resolution. Returns an
+// instruction referring to that function, or an error instruction if overload
+// resolution failed.
 //
 // A set with a single non-templated function goes through the same rules for
-// overloading resolution. This is to make sure that calls that have no viable
+// overload resolution. This is to make sure that calls that have no viable
 // implicit conversion sequence are rejected even when an implicit conversion is
 // possible. Keeping the same behavior here for consistency and supporting
 // migrations so that the migrated callers from C++ remain valid.
-auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                  SemIR::CppOverloadSetId overload_set_id,
-                                  SemIR::InstId self_id,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId;
+auto PerformCppOverloadResolution(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::CppOverloadSetId overload_set_id,
+    llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
+    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

@@ -71,7 +71,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst60000014:    {kind: ValueBinding, arg0: entity_name60000000, arg1: inst60000026, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000015:    {kind: PatternType, arg0: inst60000010, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000016:    {kind: ValueBindingPattern, arg0: entity_name60000000, type: type(inst60000015)}
-// CHECK:STDOUT:     inst60000017:    {kind: ValueParamPattern, arg0: inst60000016, arg1: call_param0, type: type(inst60000015)}
+// CHECK:STDOUT:     inst60000017:    {kind: ValueParamPattern, arg0: inst60000016, type: type(inst60000015)}
 // CHECK:STDOUT:     inst60000018:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000019:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst60000010)}
 // CHECK:STDOUT:     inst6000001A:    {kind: TupleType, arg0: inst_block60000008, type: type(TypeType)}
@@ -85,7 +85,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst60000022:    {kind: InitForm, arg0: inst6000001A, arg1: call_param1, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst60000023:    {kind: PatternType, arg0: inst6000001A, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000024:    {kind: ReturnSlotPattern, arg0: inst60000020, type: type(inst60000023)}
-// CHECK:STDOUT:     inst60000025:    {kind: OutParamPattern, arg0: inst60000024, arg1: call_param1, type: type(inst60000023)}
+// CHECK:STDOUT:     inst60000025:    {kind: OutParamPattern, arg0: inst60000024, type: type(inst60000023)}
 // CHECK:STDOUT:     inst60000026:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000027:    {kind: SpliceBlock, arg0: inst_block60000005, arg1: inst60000013, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000028:    {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(inst6000001A)}
@@ -244,9 +244,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_20: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_24: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

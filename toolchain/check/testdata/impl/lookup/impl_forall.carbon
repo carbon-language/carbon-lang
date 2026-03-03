@@ -169,9 +169,9 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   impl: %A.loc12_27.2 as %I.type.loc12_35.2 {
 // CHECK:STDOUT:     %A.as.I.impl.F.decl: @A.as.I.impl.%A.as.I.impl.F.type (%A.as.I.impl.F.type.58747b.1) = fn_decl @A.as.I.impl.F [symbolic = @A.as.I.impl.%A.as.I.impl.F (constants.%A.as.I.impl.F.afeb91.1)] {
 // CHECK:STDOUT:       %self.patt: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.2c404c.1) = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.2c404c.1) = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.param_patt: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.2c404c.1) = ref_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:       %return.patt: @A.as.I.impl.F.%pattern_type.loc13_26 (%pattern_type.4f4b84.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @A.as.I.impl.F.%pattern_type.loc13_26 (%pattern_type.4f4b84.2) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @A.as.I.impl.F.%pattern_type.loc13_26 (%pattern_type.4f4b84.2) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %V.ref: type = name_ref V, @A.as.I.impl.%V.loc12_14.2 [symbolic = %V (constants.%V.67d)]
 // CHECK:STDOUT:       %ptr.loc13_30.2: type = ptr_type %V.ref [symbolic = %ptr.loc13_30.1 (constants.%ptr.e8f8f9.2)]

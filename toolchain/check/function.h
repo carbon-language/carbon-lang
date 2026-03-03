@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_FUNCTION_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/function.h"
@@ -29,8 +30,10 @@ auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
                                SemIR::BuiltinFunctionKind builtin_kind) -> bool;
 
-// The signature to declare for a builtin function.
-struct BuiltinFunctionSignature {
+// Arguments for making a function declaration.
+struct FunctionDeclArgs {
+  SemIR::NameScopeId parent_scope_id;
+  SemIR::NameId name_id;
   // The type of the implicit `[self: Self]` parameter, or `None` if there is
   // none.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
@@ -42,15 +45,12 @@ struct BuiltinFunctionSignature {
   SemIR::TypeId return_type_id = SemIR::TypeId::None;
 };
 
-// Creates and returns a new builtin function declaration.
-//
-// TODO: Instead of synthesizing builtin function declarations, we should
-// ideally declare the builtin functions in Carbon code instead.
-auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
-                         SemIR::BuiltinFunctionKind builtin_kind,
-                         SemIR::NameScopeId name_scope_id,
-                         SemIR::NameId name_id,
-                         BuiltinFunctionSignature signature) -> SemIR::InstId;
+// Generates and returns a function declaration. The caller should update the
+// function object to add a definition. The caller is responsible for ensuring
+// that the signature is non-generic.
+auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
+                               const FunctionDeclArgs& args)
+    -> std::pair<SemIR::InstId, SemIR::FunctionId>;
 
 // Checks that `new_function` has the same return type as `prev_function`, or if
 // `prev_function_id` is specified, a specific version of `prev_function`.

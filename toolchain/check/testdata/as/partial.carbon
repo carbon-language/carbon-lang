@@ -120,8 +120,8 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.408: type = pattern_type %ptr.314 [concrete]
 // CHECK:STDOUT:   %reference.var: ref %.4b5 = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.315: %ptr.314 = addr_of %reference.var [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -187,12 +187,12 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_26: type = ptr_type %.loc17_17 [concrete = constants.%ptr.314]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.314 = value_binding b, %.loc17_34.2
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %i.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%i.var)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %.4b5) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %.4b5) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -208,8 +208,8 @@ fn Use() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -255,16 +255,16 @@ fn Use() {
 // CHECK:STDOUT:   assign %k.var, %.loc12_35.2
 // CHECK:STDOUT:   %X.ref.loc12_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %k: ref %X = ref_binding k, %k.var
-// CHECK:STDOUT:   %DestroyOp.bound.loc12: <bound method> = bound_method %k.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc12: init %empty_tuple.type = call %DestroyOp.bound.loc12(%k.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc11: <bound method> = bound_method %j.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc11: init %empty_tuple.type = call %DestroyOp.bound.loc11(%j.var)
-// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %i.var, constants.%DestroyOp
-// CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%i.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc12: <bound method> = bound_method %k.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc12: init %empty_tuple.type = call %Destroy.Op.bound.loc12(%k.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %j.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%j.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %i.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_remove_partial.carbon
 // CHECK:STDOUT:

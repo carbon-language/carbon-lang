@@ -26,6 +26,10 @@ fn PassI32(a: i32) -> i32 {
   return Cpp.identity(a);
 }
 
+fn PassI32Explicitly(a: i32) -> i32 {
+  return Cpp.identity(i32, a);
+}
+
 fn PassClass(a: Cpp.Class) -> Cpp.Class {
   return Cpp.identity(a);
 }
@@ -135,10 +139,17 @@ fn Call3() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #2 !dbg !23 {
+// CHECK:STDOUT: define i32 @_CPassI32Explicitly.Main(i32 %a) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !26
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !27
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #2 !dbg !28 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !34
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -172,14 +183,19 @@ fn Call3() {
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 7, column: 10, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 7, column: 3, scope: !15)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !7, line: 10, type: !24, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !27)
-// CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !25 = !{!26, !26}
-// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !27 = !{!28}
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !23, type: !26)
-// CHECK:STDOUT: !29 = !DILocation(line: 11, column: 10, scope: !23)
-// CHECK:STDOUT: !30 = !DILocation(line: 11, column: 3, scope: !23)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !7, line: 10, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !24)
+// CHECK:STDOUT: !24 = !{!25}
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !18)
+// CHECK:STDOUT: !26 = !DILocation(line: 11, column: 10, scope: !23)
+// CHECK:STDOUT: !27 = !DILocation(line: 11, column: 3, scope: !23)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !7, line: 14, type: !29, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !32)
+// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
+// CHECK:STDOUT: !30 = !{!31, !31}
+// CHECK:STDOUT: !31 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !32 = !{!33}
+// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !28, type: !31)
+// CHECK:STDOUT: !34 = !DILocation(line: 15, column: 10, scope: !28)
+// CHECK:STDOUT: !35 = !DILocation(line: 15, column: 3, scope: !28)
 // CHECK:STDOUT: ; ModuleID = 'variadic.carbon'
 // CHECK:STDOUT: source_filename = "variadic.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

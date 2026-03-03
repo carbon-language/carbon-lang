@@ -100,7 +100,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inner.G.decl: %Inner.G.type = fn_decl @Inner.G [symbolic = constants.%Inner.G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_14.1: type = splice_block %.loc13_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -142,7 +142,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type) = fn_decl @Inner.F [symbolic = @Inner.%Inner.F (constants.%Inner.F)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc8_15: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
@@ -151,7 +151,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.G.decl: @Inner.%Inner.G.type (%Inner.G.type) = fn_decl @Inner.G [symbolic = @Inner.%Inner.G (constants.%Inner.G)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc9: Core.Form = init_form %i32.loc9, call_param0 [concrete = constants.%.437]

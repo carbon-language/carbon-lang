@@ -300,7 +300,10 @@ class FileContext::FunctionTypeInfoBuilder {
   // a state where Finalize can be called, and no other operation should be
   // called.
   auto Abort() -> bool {
-    lowered_param_pattern_ids_.clear();
+    call_param_pattern_ids_ = {};
+    lowered_param_indices_.clear();
+    unused_param_indices_.clear();
+    param_name_ids_.clear();
     param_types_.clear();
     param_di_types_.clear();
     return_type_ = nullptr;
@@ -349,31 +352,34 @@ class FileContext::FunctionTypeInfoBuilder {
     return true;
   }
 
-  // Handles the given `Call` parameter, which must be a *ParamPattern inst.
-  // This should be called on parameter patterns in the order that they should
-  // appear in the LLVM IR parameter list, so in particular it should be called
-  // on the `OutParamPattern` (if any) first. It should be called on all `Call`
+  // Handles `Call` parameter pattern at the given index. This should be called
+  // on parameter patterns in the order that they should appear in the LLVM IR
+  // parameter list, so in particular it should be called on the
+  // `OutParamPattern` (if any) first. It should be called on all `Call`
   // parameters; it will determine which parameters belong in the LLVM IR
   // parameter list.
   //
   // This delegates to exactly one of AddLoweredParam, IgnoreParam, or Abort,
   // and returns false if Abort was called.
-  auto HandleParameter(SemIR::InstId param_pattern_id) -> bool;
+  auto HandleParameter(SemIR::CallParamIndex index) -> bool;
 
-  // Records that the given parameter pattern is lowered to the given
-  // IR and DI types.
-  auto AddLoweredParam(SemIR::InstId param_pattern_id, LoweredTypes param_types)
+  // Records that the parameter pattern at the given index jas the given ID, and
+  // lowers to the given IR and DI types.
+  auto AddLoweredParam(SemIR::CallParamIndex index,
+                       SemIR::InstId param_pattern_id, LoweredTypes param_types)
       -> bool {
-    lowered_param_pattern_ids_.push_back(param_pattern_id);
+    lowered_param_indices_.push_back(index);
+    param_name_ids_.push_back(
+        SemIR::GetPrettyNameFromPatternId(context_.sem_ir(), param_pattern_id));
     param_types_.push_back(param_types.llvm_ir_type);
     param_di_types_.push_back(param_types.llvm_di_type);
     return true;
   }
 
-  // Records that the given parameter pattern is not lowered to an LLVM
-  // parameter.
-  auto IgnoreParam(SemIR::InstId param_pattern_id) -> bool {
-    unused_param_pattern_ids_.push_back(param_pattern_id);
+  // Records that the `Call` parameter pattern at the given index is not lowered
+  // to an LLVM parameter.
+  auto IgnoreParam(SemIR::CallParamIndex index) -> bool {
+    unused_param_indices_.push_back(index);
     return true;
   }
 
@@ -389,6 +395,9 @@ class FileContext::FunctionTypeInfoBuilder {
   FileContext& context_;
   const SemIR::SpecificId specific_id_;
 
+  // The input `Call` parameter patterns.
+  llvm::ArrayRef<SemIR::InstId> call_param_pattern_ids_;
+
   // The types of the parameters in the LLVM IR function. Each one corresponds
   // to a SemIR `Call` parameter, but some `Call` parameters may be omitted
   // (e.g. if they are stateless) or reordered (e.g. the return parameter, if
@@ -403,13 +412,17 @@ class FileContext::FunctionTypeInfoBuilder {
   // while also representing the return type.
   llvm::SmallVector<llvm::Metadata*> param_di_types_;
 
-  // The SemIR function's `Call` param patterns that correspond to param_types_,
-  // in the same order.
-  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids_;
+  // The indices of the `Call` parameters that correspond to `param_types_`, in
+  // the same order.
+  llvm::SmallVector<SemIR::CallParamIndex> lowered_param_indices_;
 
-  // Any `Call` param patterns that aren't present in
-  // reordered_param_pattern_ids_.
-  llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids_;
+  // The names of the `Call` parameters that correspond to `param_types_`, in
+  // the same order.
+  llvm::SmallVector<SemIR::NameId> param_name_ids_;
+
+  // The indices of any `Call` param patterns that aren't present in
+  // lowered_param_indices_.
+  llvm::SmallVector<SemIR::CallParamIndex> unused_param_indices_;
 
   // The `index` member of the SemIR function's return parameter, or -1 if it
   // has no return parameter. Note that even if the SemIR function has a return
@@ -429,28 +442,30 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
   // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
   // return a value.
 
-  auto call_param_pattern_ids =
+  call_param_pattern_ids_ =
       context_.sem_ir().inst_blocks().Get(function.call_param_patterns_id);
-  lowered_param_pattern_ids_.reserve(call_param_pattern_ids.size());
-  param_types_.reserve(call_param_pattern_ids.size());
-  param_di_types_.reserve(call_param_pattern_ids.size());
+  lowered_param_indices_.reserve(call_param_pattern_ids_.size());
+  param_name_ids_.reserve(call_param_pattern_ids_.size());
+  param_types_.reserve(call_param_pattern_ids_.size());
+  param_di_types_.reserve(call_param_pattern_ids_.size());
 
   if (!HandleReturnForm(function.return_form_inst_id)) {
     return Finalize();
   }
+  int params_end = call_param_pattern_ids_.size();
   if (semir_return_param_index_ >= 0) {
     CARBON_CHECK(semir_return_param_index_ ==
-                     static_cast<int>(call_param_pattern_ids.size()) - 1,
+                     static_cast<int>(call_param_pattern_ids_.size()) - 1,
                  "Unexpected parameter order");
+    params_end = semir_return_param_index_;
     // Handle the return parameter first, because it goes first in the LLVM
-    // convention. We remove it from call_param_pattern_ids so we don't revisit
-    // it in the subsequent loop.
-    if (!HandleParameter(call_param_pattern_ids.consume_back())) {
+    // convention.
+    if (!HandleParameter(SemIR::CallParamIndex(semir_return_param_index_))) {
       return Finalize();
     }
   }
-  for (auto param_pattern_id : call_param_pattern_ids) {
-    if (!HandleParameter(param_pattern_id)) {
+  for (int i : llvm::seq(params_end)) {
+    if (!HandleParameter(SemIR::CallParamIndex(i))) {
       return Finalize();
     }
   }
@@ -508,7 +523,8 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
 }
 
 auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
-    SemIR::InstId param_pattern_id) -> bool {
+    SemIR::CallParamIndex index) -> bool {
+  auto param_pattern_id = call_param_pattern_ids_[index.index];
   auto param_pattern = context_.sem_ir().insts().Get(param_pattern_id);
   auto param_type_id = ExtractScrutineeType(
       context_.sem_ir(),
@@ -530,15 +546,15 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
   CARBON_KIND_SWITCH(param_pattern) {
     case SemIR::RefParamPattern::Kind:
     case SemIR::VarParamPattern::Kind: {
-      return AddLoweredParam(param_pattern_id, ref_lowered_types());
+      return AddLoweredParam(index, param_pattern_id, ref_lowered_types());
     }
     case SemIR::OutParamPattern::Kind: {
       switch (SemIR::InitRepr::ForType(context_.sem_ir(), param_type_id).kind) {
         case SemIR::InitRepr::InPlace:
-          return AddLoweredParam(param_pattern_id, ref_lowered_types());
+          return AddLoweredParam(index, param_pattern_id, ref_lowered_types());
         case SemIR::InitRepr::ByCopy:
         case SemIR::InitRepr::None:
-          return IgnoreParam(param_pattern_id);
+          return IgnoreParam(index);
         case SemIR::InitRepr::Dependent:
         case SemIR::InitRepr::Incomplete:
         case SemIR::InitRepr::Abstract:
@@ -555,15 +571,15 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
           CARBON_FATAL("Lowering function parameter with dependent type: {0}",
                        param_pattern);
         case SemIR::ValueRepr::None:
-          return IgnoreParam(param_pattern_id);
+          return IgnoreParam(index);
         case SemIR::ValueRepr::Copy:
         case SemIR::ValueRepr::Custom:
         case SemIR::ValueRepr::Pointer: {
           if (value_rep.type_id.has_value()) {
-            return AddLoweredParam(param_pattern_id,
+            return AddLoweredParam(index, param_pattern_id,
                                    GetLoweredTypes(value_rep.type_id));
           } else {
-            return IgnoreParam(param_pattern_id);
+            return IgnoreParam(index);
           }
         }
       }
@@ -574,6 +590,8 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
 }
 
 auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
+  CARBON_CHECK(lowered_param_indices_.size() + unused_param_indices_.size() ==
+               call_param_pattern_ids_.size());
   CARBON_CHECK(!param_di_types_.empty());
   auto& di_builder = context_.context().di_builder();
   return {.type = llvm::FunctionType::get(return_type_, param_types_,
@@ -581,8 +599,9 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
           .di_type = di_builder.createSubroutineType(
               di_builder.getOrCreateTypeArray(param_di_types_),
               llvm::DINode::FlagZero),
-          .lowered_param_pattern_ids = std::move(lowered_param_pattern_ids_),
-          .unused_param_pattern_ids = std::move(unused_param_pattern_ids_),
+          .lowered_param_indices = std::move(lowered_param_indices_),
+          .unused_param_indices = std::move(unused_param_indices_),
+          .param_name_ids = std::move(param_name_ids_),
           .sret_type = sret_type_};
 }
 
@@ -685,11 +704,9 @@ auto FileContext::GetOrCreateLLVMFunction(
                "Mangled name collision: {0}", mangled_name);
 
   // Set up parameters and the return slot.
-  for (auto [inst_id, arg] :
-       llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
-                       llvm_function->args())) {
-    arg.setName(sem_ir().names().GetIRBaseName(
-        SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
+  for (auto [name_id, arg] : llvm::zip_equal(function_type_info.param_name_ids,
+                                             llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
   if (function_type_info.sret_type != nullptr) {
     auto& return_arg = *llvm_function->args().begin();
@@ -734,10 +751,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,
-           .lowered_param_pattern_ids =
-               std::move(function_type_info.lowered_param_pattern_ids),
-           .unused_param_pattern_ids =
-               std::move(function_type_info.unused_param_pattern_ids),
+           .lowered_param_indices =
+               std::move(function_type_info.lowered_param_indices),
+           .unused_param_indices =
+               std::move(function_type_info.unused_param_indices),
            .llvm_function = llvm_function}};
 }
 
@@ -872,30 +889,19 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   auto call_param_ids = definition_ir.inst_blocks().GetOrEmpty(
       definition_function.call_params_id);
 
-  // Returns the AnyParam inst with the same index as param_pattern_id
-  // (which must be an AnyParamPattern).
-  auto param_for_param_pattern =
-      [&](SemIR::InstId param_pattern_id) -> SemIR::InstId {
-    auto sem_ir_index = sem_ir()
-                            .insts()
-                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
-                            .index.index;
-    return call_param_ids[sem_ir_index];
-  };
-
   // Add local variables for the parameters.
-  for (auto [llvm_index, param_pattern_id] :
-       llvm::enumerate(function_info->lowered_param_pattern_ids)) {
+  for (auto [llvm_index, index] :
+       llvm::enumerate(function_info->lowered_param_indices)) {
     function_lowering.SetLocal(
-        param_for_param_pattern(param_pattern_id),
+        call_param_ids[index.index],
         function_info->llvm_function->getArg(llvm_index));
   }
 
   // Add local variables for the SemIR parameters that aren't LLVM parameters.
   // These shouldn't actually be used, so they're set to poison values.
-  for (auto [llvm_index, param_pattern_id] :
-       llvm::enumerate(function_info->unused_param_pattern_ids)) {
-    auto param_id = param_for_param_pattern(param_pattern_id);
+  for (auto [llvm_index, index] :
+       llvm::enumerate(function_info->unused_param_indices)) {
+    auto param_id = call_param_ids[index.index];
     function_lowering.SetLocal(
         param_id,
         llvm::PoisonValue::get(function_lowering.GetTypeOfInst(param_id)));

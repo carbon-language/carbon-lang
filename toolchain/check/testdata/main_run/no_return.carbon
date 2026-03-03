@@ -83,9 +83,9 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {
 // CHECK:STDOUT:     %argc.patt: %pattern_type.7ce = value_binding_pattern argc [concrete]
-// CHECK:STDOUT:     %argc.param_patt: %pattern_type.7ce = value_param_pattern %argc.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %argc.param_patt: %pattern_type.7ce = value_param_pattern %argc.patt [concrete]
 // CHECK:STDOUT:     %argv.patt: %pattern_type.fe8 = value_binding_pattern argv [concrete]
-// CHECK:STDOUT:     %argv.param_patt: %pattern_type.fe8 = value_param_pattern %argv.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %argv.param_patt: %pattern_type.fe8 = value_param_pattern %argv.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_21: type = type_literal constants.%i32 [concrete = constants.%i32]

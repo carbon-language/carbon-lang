@@ -77,7 +77,7 @@ fn MyF() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %pattern_type = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %UnsizedEnum = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %UnsizedEnum.ref [concrete = constants.%UnsizedEnum] {

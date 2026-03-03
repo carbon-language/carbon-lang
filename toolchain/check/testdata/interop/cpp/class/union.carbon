@@ -194,7 +194,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -229,7 +229,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -264,7 +264,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -367,7 +367,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.f68] {
@@ -425,7 +425,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {

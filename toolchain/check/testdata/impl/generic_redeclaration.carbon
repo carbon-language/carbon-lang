@@ -792,7 +792,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %T.as.I.impl.B.decl: @T.as.I.impl.f7b5a3.2.%T.as.I.impl.B.type (%T.as.I.impl.B.type) = fn_decl @T.as.I.impl.B [symbolic = @T.as.I.impl.f7b5a3.2.%T.as.I.impl.B (constants.%T.as.I.impl.B)] {} {}
 // CHECK:STDOUT:     %T.as.I.impl.C.decl: @T.as.I.impl.f7b5a3.2.%T.as.I.impl.C.type (%T.as.I.impl.C.type) = fn_decl @T.as.I.impl.C [symbolic = @T.as.I.impl.f7b5a3.2.%T.as.I.impl.C (constants.%T.as.I.impl.C)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc19_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc19_14.2: type = converted %.loc19_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -802,7 +802,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.as.I.impl.D.decl: @T.as.I.impl.f7b5a3.2.%T.as.I.impl.D.type (%T.as.I.impl.D.type) = fn_decl @T.as.I.impl.D [symbolic = @T.as.I.impl.f7b5a3.2.%T.as.I.impl.D (constants.%T.as.I.impl.D)] {
 // CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc20_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc20_14.2: type = converted %.loc20_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

@@ -112,8 +112,8 @@ fn F() {
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor: %InitListConstructor.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.type: type = fn_type @initializer_list.cpp_destructor [concrete]
 // CHECK:STDOUT:   %initializer_list.cpp_destructor: %initializer_list.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.2: type = fn_type @DestroyOp.loc12 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.2: %DestroyOp.type.3e79c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -147,9 +147,9 @@ fn F() {
 // CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.1: %initializer_list.initializer_list.type.9fcb7f.1 = fn_decl @initializer_list.initializer_list.loc8 [concrete = constants.%initializer_list.initializer_list.643507.1] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
@@ -159,9 +159,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.2: %initializer_list.initializer_list.type.9fcb7f.2 = fn_decl @initializer_list.initializer_list.loc10 [concrete = constants.%initializer_list.initializer_list.643507.2] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
@@ -171,9 +171,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.2bdc3e.3: %initializer_list.initializer_list.type.9fcb7f.3 = fn_decl @initializer_list.initializer_list.loc12 [concrete = constants.%initializer_list.initializer_list.643507.3] {
 // CHECK:STDOUT:     %_.patt: %pattern_type.5d8 = value_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d8 = value_param_pattern %_.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.22f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.22f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form constants.%initializer_list, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
@@ -351,16 +351,16 @@ fn F() {
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.call: init %empty_tuple.type = call %InitListConstructor.cpp_destructor.bound(%.loc12_44.24)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc12: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc12(%.loc12_44.19)
-// CHECK:STDOUT:   %DestroyOp.bound.loc12: <bound method> = bound_method %.loc12_44.16, constants.%DestroyOp.b0ebf8.2
-// CHECK:STDOUT:   %DestroyOp.call.loc12: init %empty_tuple.type = call %DestroyOp.bound.loc12(%.loc12_44.16)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc12: <bound method> = bound_method %.loc12_44.16, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc12: init %empty_tuple.type = call %Destroy.Op.bound.loc12(%.loc12_44.16)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_23.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc10: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc10(%.loc10_23.18)
-// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %.loc10_23.15, constants.%DestroyOp.b0ebf8.2
-// CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%.loc10_23.15)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %.loc10_23.15, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%.loc10_23.15)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_50.18, constants.%initializer_list.cpp_destructor
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc8: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc8(%.loc8_50.18)
-// CHECK:STDOUT:   %DestroyOp.bound.loc8: <bound method> = bound_method %.loc8_50.15, constants.%DestroyOp.b0ebf8.2
-// CHECK:STDOUT:   %DestroyOp.call.loc8: init %empty_tuple.type = call %DestroyOp.bound.loc8(%.loc8_50.15)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %.loc8_50.15, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%.loc8_50.15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,5 +370,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @initializer_list.initializer_list.loc12(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:

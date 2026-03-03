@@ -38,7 +38,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.092 = value_binding_pattern U [concrete]
-// CHECK:STDOUT:     %U.param_patt: %pattern_type.092 = value_param_pattern %U.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %U.param_patt: %pattern_type.092 = value_param_pattern %U.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
 // CHECK:STDOUT:     %.loc17_28.1: type = splice_block %.loc17_28.2 [concrete = constants.%I_where.type] {

@@ -866,15 +866,12 @@ static auto RequireCompleteNamedConstraint(
   return RequireCompleteFacetType(context, loc_id, facet_type, diagnose);
 }
 
+// Given a canonical facet value, or a type value, return a facet value.
 static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
     -> SemIR::ConstantId {
   if (self_const_id == SemIR::ErrorInst::ConstantId) {
     return SemIR::ErrorInst::ConstantId;
   }
-
-  // Avoid wrapping a FacetAccessType(FacetValue) in another layer of
-  // FacetValue. Just unwrap the FacetValue inside.
-  self_const_id = GetCanonicalFacetOrTypeValue(context, self_const_id);
 
   auto self_inst_id = context.constant_values().GetInstId(self_const_id);
   auto type_id = context.insts().Get(self_inst_id).type_id();
@@ -932,7 +929,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
       break;
     }
 
-    auto self_const_id = next_impls.self;
+    auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
     const auto& facet_type_info =
         context.facet_types().Get(next_impls.facet_type);
 

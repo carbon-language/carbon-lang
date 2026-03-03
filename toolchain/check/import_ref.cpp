@@ -1561,8 +1561,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
       resolver, import_inst_id,
       {.type_id =
            resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-       .subpattern_id = subpattern_id,
-       .index = inst.index});
+       .subpattern_id = subpattern_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2333,6 +2332,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     }
     case SemIR::Function::SpecialFunctionKind::Builtin: {
       new_function.SetBuiltinFunction(import_function.builtin_function_kind());
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
+      new_function.SetCoreWitness();
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {

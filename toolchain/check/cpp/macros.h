@@ -14,7 +14,7 @@ namespace Carbon::Check {
 // TODO: Add support for all literal types.
 auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameId name_id,
-                                clang::MacroInfo* macro_info) -> clang::Expr*;
+                                clang::MacroInfo* macro_info) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

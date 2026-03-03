@@ -156,7 +156,7 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.Create.decl: @C.%C.Create.type (%C.Create.type.c11) = fn_decl @C.Create [symbolic = @C.%C.Create (constants.%C.Create.723)] {
 // CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_binding_pattern value [concrete]
-// CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
@@ -368,7 +368,7 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.Create.decl: @C.%C.Create.type (%C.Create.type.c11) = fn_decl @C.Create [symbolic = @C.%C.Create (constants.%C.Create.723)] {
 // CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_binding_pattern value [concrete]
-// CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %value.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern %value.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]

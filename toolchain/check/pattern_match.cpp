@@ -419,10 +419,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 
   switch (kind_) {
     case MatchKind::Caller: {
-      CARBON_CHECK(
-          static_cast<size_t>(param_pattern.index.index) == call_args_.size(),
-          "Parameters out of order; expecting {0} but got {1}",
-          call_args_.size(), param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
       if (entry.scrutinee_id == SemIR::ErrorInst::InstId) {
         call_args_.push_back(SemIR::ErrorInst::InstId);
@@ -446,7 +442,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           .kind = ParamKindFor(context, param_pattern, entry, form_kind),
           .type_id =
               ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
-          .index = param_pattern.index,
+          .index = SemIR::CallParamIndex(call_params_.size()),
           .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
               context.sem_ir(), entry.pattern_id)};
       auto param_id =

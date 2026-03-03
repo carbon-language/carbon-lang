@@ -61,7 +61,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.506 = value_binding_pattern ptr [concrete]
-// CHECK:STDOUT:     %ptr.param_patt: %pattern_type.506 = value_param_pattern %ptr.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %ptr.param_patt: %pattern_type.506 = value_param_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ptr.param: %ptr.31e = value_param call_param0
 // CHECK:STDOUT:     %.loc20: type = splice_block %ptr.loc20_14 [concrete = constants.%ptr.31e] {
@@ -75,7 +75,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.Member.decl: %C.Member.type = fn_decl @C.Member [concrete = constants.%C.Member] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c7 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c7 = value_param_pattern %self.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]

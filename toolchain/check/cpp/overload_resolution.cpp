@@ -9,6 +9,7 @@
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/operators.h"
@@ -34,18 +35,37 @@ static auto GetCppName(Context& context, SemIR::NameId name_id)
 }
 
 // Adds the given overload candidates to the candidate set.
-static auto AddOverloadCandidates(clang::Sema& sema,
-                                  clang::OverloadCandidateSet& candidate_set,
-                                  const clang::UnresolvedSet<4>& functions,
-                                  clang::Expr* self_arg,
-                                  llvm::ArrayRef<clang::Expr*> args) -> void {
+static auto AddOverloadCandidates(
+    Context& context, clang::OverloadCandidateSet& candidate_set,
+    const clang::UnresolvedSet<4>& functions,
+    llvm::ArrayRef<SemIR::InstId> template_arg_ids, clang::Expr* self_arg,
+    llvm::ArrayRef<clang::Expr*> args) -> void {
+  clang::Sema& sema = context.clang_sema();
+
   constexpr bool SuppressUserConversions = false;
   constexpr bool PartialOverloading = false;
-  constexpr clang::TemplateArgumentListInfo* ExplicitTemplateArgs = nullptr;
 
   for (auto found_decl : functions.pairs()) {
     auto* decl = found_decl->getUnderlyingDecl();
+
+    // Form an explicit template argument list if needed. Note that this is done
+    // per-candidate, as the conversions performed on the template arguments
+    // differ based on the corresponding template parameters.
     auto* template_decl = dyn_cast<clang::FunctionTemplateDecl>(decl);
+    clang::TemplateArgumentListInfo explicit_template_arg_storage;
+    clang::TemplateArgumentListInfo* explicit_template_args = nullptr;
+    if (!template_arg_ids.empty()) {
+      if (!template_decl) {
+        continue;
+      }
+      if (!ConvertArgsToTemplateArgs(context, template_decl, template_arg_ids,
+                                     explicit_template_arg_storage,
+                                     /*diagnose=*/false)) {
+        continue;
+      }
+      explicit_template_args = &explicit_template_arg_storage;
+    }
+
     auto* fn_decl = template_decl ? template_decl->getTemplatedDecl()
                                   : cast<clang::FunctionDecl>(decl);
     auto* method_decl = dyn_cast<clang::CXXMethodDecl>(fn_decl);
@@ -61,7 +81,7 @@ static auto AddOverloadCandidates(clang::Sema& sema,
         sema.AddMethodTemplateCandidate(
             template_decl, found_decl,
             cast<clang::CXXRecordDecl>(template_decl->getDeclContext()),
-            ExplicitTemplateArgs, self_type, self_classification, args,
+            explicit_template_args, self_type, self_classification, args,
             candidate_set, SuppressUserConversions, PartialOverloading);
       } else if (method_decl->isOverloadedOperator()) {
         sema.AddMemberOperatorCandidates(method_decl->getOverloadedOperator(),
@@ -75,8 +95,8 @@ static auto AddOverloadCandidates(clang::Sema& sema,
       }
     } else if (template_decl) {
       sema.AddTemplateOverloadCandidate(
-          template_decl, found_decl, ExplicitTemplateArgs, args, candidate_set,
-          SuppressUserConversions, PartialOverloading);
+          template_decl, found_decl, explicit_template_args, args,
+          candidate_set, SuppressUserConversions, PartialOverloading);
     } else {
       sema.AddOverloadCandidate(fn_decl, found_decl, args, candidate_set,
                                 SuppressUserConversions, PartialOverloading);
@@ -110,11 +130,11 @@ auto CheckCppOverloadAccess(
                .highest_allowed_access = allowed_access_kind});
 }
 
-auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                  SemIR::CppOverloadSetId overload_set_id,
-                                  SemIR::InstId self_id,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId {
+auto PerformCppOverloadResolution(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::CppOverloadSetId overload_set_id,
+    llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
+    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Register an annotation scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
@@ -148,12 +168,12 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
           : clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal,
       overload_set.operator_rewrite_info);
 
-  clang::Sema& sema = context.clang_sema();
-
-  AddOverloadCandidates(sema, candidate_set, overload_set.candidate_functions,
+  AddOverloadCandidates(context, candidate_set,
+                        overload_set.candidate_functions, template_arg_ids,
                         self_expr, arg_exprs);
 
   // Find best viable function among the candidates.
+  clang::Sema& sema = context.clang_sema();
   clang::OverloadCandidateSet::iterator best_viable_fn;
   clang::OverloadingResult overloading_result =
       candidate_set.BestViableFunction(sema, loc, best_viable_fn);
