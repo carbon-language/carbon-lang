@@ -88,12 +88,13 @@ auto HandleLambdaBody(Context& context) -> void {
     context.emitter().Emit(*context.position(),
                            ExpectedLambdaBodyAfterReturnType);
 
-    // adding dummy for missing body without consuming the current token
+    // Add a dummy node for the missing body without consuming the current
+    // token.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
 
     state.has_error = true;
-    // to bundle all nodes into a complete lambda node
+    // Bundle all nodes into a complete lambda node.
     context.PushState(state, StateKind::LambdaBodyFinish);
   }
 }
