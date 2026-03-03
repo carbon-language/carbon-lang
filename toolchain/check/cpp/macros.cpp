@@ -108,12 +108,25 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
   if (ap_value.isLValue()) {
-    if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
+    if (result_expr->isGLValue() &&
+        result_expr->EvaluateAsLValue(evaluated_result, sema.getASTContext())) {
+      ap_value = evaluated_result.Val;
+
+      const auto* value_decl =
+          ap_value.getLValueBase().get<const clang::ValueDecl*>();
+
+      auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+          // TODO: can this const_cast be avoided?
+          const_cast<clang::ValueDecl*>(value_decl));
+
+      return ImportCppDecl(context, loc_id, key);
+    } else if (!result_expr->EvaluateAsInt(evaluated_result,
+                                           sema.getASTContext())) {
       context.TODO(loc_id,
-                   "Unsupported: macro evaluated to a non-integer LValue");
+                   "Macro evaluated to an unsupported lvalue of type: " +
+                       result_expr->getType().getAsString());
       return SemIR::ErrorInst::InstId;
     }
-    ap_value = evaluated_result.Val;
   }
 
   auto const_id =
