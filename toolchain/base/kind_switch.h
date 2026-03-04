@@ -303,15 +303,15 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
       decltype(carbon_internal_kind_switch_value), \
       CARBON_KIND_INTERNAL_WRAP_TYPE(typed_param)>()
 
-// Produces a declaration using `variable_decl`, cast from `typed_param`.
+// Produces a declaration using `typed_variable_decl`.
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-#define CARBON_KIND_INTERNAL_DECLARE(variable_decl)                      \
-  if (variable_decl =                                                    \
+#define CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)                \
+  if (typed_variable_decl =                                              \
           ::Carbon::Internal::Kind::Cast<CARBON_KIND_INTERNAL_WRAP_TYPE( \
-              variable_decl)>(                                           \
+              typed_variable_decl)>(                                     \
               std::forward<decltype(carbon_internal_kind_switch_value)>( \
                   carbon_internal_kind_switch_value));                   \
       false) {                                                           \
@@ -323,6 +323,7 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
                                              Type_CARBON_KIND_ANY_EXPAND) \
   CARBON_KIND_ANY_INTERNAL_IMPL(typed_variable_decl,                      \
                                 Type_CARBON_KIND_ANY_EXPAND)
+
 // Helper for `CARBON_KIND_ANY` that forms the final case setup. The variadic
 // arguments are the expansion of `Type_CARBON_KIND_ANY_EXPAND`, which may
 // contain commas.

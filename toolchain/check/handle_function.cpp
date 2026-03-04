@@ -602,18 +602,11 @@ static auto CheckUnusedBindingsInPattern(Context& context,
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
     CARBON_KIND_SWITCH(inst) {
-      case SemIR::OutParamPattern::Kind:
-      case SemIR::RefParamPattern::Kind:
-      case SemIR::ValueParamPattern::Kind:
-      case SemIR::VarParamPattern::Kind: {
-        auto param = inst.As<SemIR::AnyParamPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyParamPattern, param): {
         work_list.push_back(param.subpattern_id);
         break;
       }
-      case SemIR::RefBindingPattern::Kind:
-      case SemIR::SymbolicBindingPattern::Kind:
-      case SemIR::ValueBindingPattern::Kind: {
-        auto bind = inst.As<SemIR::AnyBindingPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         // We need special treatment for the name "_" which is implicitly
         // unused but actually permitted in declarations.

@@ -634,20 +634,14 @@ auto MatchContext::EmitPatternMatch(Context& context,
       });
   auto pattern = context.insts().Get(entry.pattern_id);
   CARBON_KIND_SWITCH(pattern) {
-    case SemIR::RefBindingPattern::Kind:
-    case SemIR::SymbolicBindingPattern::Kind:
-    case SemIR::ValueBindingPattern::Kind:
-    case SemIR::FormBindingPattern::Kind:
-      DoEmitPatternMatch(context, pattern.As<SemIR::AnyBindingPattern>(),
-                         entry);
+    case CARBON_KIND_ANY(SemIR::AnyBindingPattern, any_binding_pattern): {
+      DoEmitPatternMatch(context, any_binding_pattern, entry);
       break;
-    case SemIR::FormParamPattern::Kind:
-    case SemIR::RefParamPattern::Kind:
-    case SemIR::ValueParamPattern::Kind:
-    case SemIR::VarParamPattern::Kind:
-    case SemIR::OutParamPattern::Kind:
-      DoEmitPatternMatch(context, pattern.As<SemIR::AnyParamPattern>(), entry);
+    }
+    case CARBON_KIND_ANY(SemIR::AnyParamPattern, any_param_pattern): {
+      DoEmitPatternMatch(context, any_param_pattern, entry);
       break;
+    }
     case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
       DoEmitPatternMatch(context, return_slot_pattern, entry);
       break;
