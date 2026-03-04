@@ -512,9 +512,9 @@ class V {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertPtr.decl: %ConvertPtr.type = fn_decl @ConvertPtr [concrete = constants.%ConvertPtr] {
 // CHECK:STDOUT:     %d.patt: %pattern_type.5c86 = value_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.5c86 = value_param_pattern %d.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.5c86 = value_param_pattern %d.patt [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.72a = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.72a = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.72a = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref.loc7_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
@@ -532,7 +532,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertVal.decl: %ConvertVal.type = fn_decl @ConvertVal [concrete = constants.%ConvertVal] {
 // CHECK:STDOUT:     %d.patt: %pattern_type.5de = value_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.5de = value_param_pattern %d.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.5de = value_param_pattern %d.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %Derived.ref [concrete = constants.%Derived] {

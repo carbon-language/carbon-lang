@@ -17,10 +17,12 @@ namespace Carbon::SemIR {
 
 // Function-specific fields.
 struct FunctionFields {
-  // Kinds of special functions.
+  // Kinds of special functions. See `Function::Set*` for details on each; these
+  // shouldn't be assigned directly (but are used for reads/switches).
   enum class SpecialFunctionKind : uint8_t {
     None,
     Builtin,
+    CoreWitness,
     Thunk,
     HasCppThunk,
   };
@@ -148,7 +150,8 @@ struct Function : public EntityWithParamsBase,
   // Returns the builtin function kind for this function, or None if this is not
   // a builtin function.
   auto builtin_function_kind() const -> BuiltinFunctionKind {
-    return special_function_kind == SpecialFunctionKind::Builtin
+    return (special_function_kind == SpecialFunctionKind::Builtin ||
+            special_function_kind == SpecialFunctionKind::CoreWitness)
                ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
                : BuiltinFunctionKind::None;
   }
@@ -190,6 +193,16 @@ struct Function : public EntityWithParamsBase,
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Builtin;
+    special_function_kind_data = AnyRawId(kind.AsInt());
+  }
+
+  // Sets that this function is generated for a `Core` witness. These will
+  // typically have a custom implementation, but may use builtin functions, such
+  // as `NoOp`. We still track them differently in order to support mangling.
+  auto SetCoreWitness(BuiltinFunctionKind kind = BuiltinFunctionKind::None)
+      -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CoreWitness;
     special_function_kind_data = AnyRawId(kind.AsInt());
   }
 

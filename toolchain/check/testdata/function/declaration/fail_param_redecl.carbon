@@ -50,9 +50,9 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.patt.loc22_6: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.7ce = value_param_pattern %n.patt.loc22_6, call_param0 [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.7ce = value_param_pattern %n.patt.loc22_6 [concrete]
 // CHECK:STDOUT:     %n.patt.loc22_14: %pattern_type.7ce = value_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.7ce = value_param_pattern %n.patt.loc22_14, call_param1 [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.7ce = value_param_pattern %n.patt.loc22_14 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]

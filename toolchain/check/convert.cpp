@@ -2112,10 +2112,12 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
 }
 
 auto ConvertToValueOfType(Context& context, SemIR::LocId loc_id,
-                          SemIR::InstId expr_id, SemIR::TypeId type_id)
-    -> SemIR::InstId {
+                          SemIR::InstId expr_id, SemIR::TypeId type_id,
+                          bool diagnose) -> SemIR::InstId {
   return Convert(context, loc_id, expr_id,
-                 {.kind = ConversionTarget::Value, .type_id = type_id});
+                 {.kind = ConversionTarget::Value,
+                  .type_id = type_id,
+                  .diagnose = diagnose});
 }
 
 auto ConvertToValueOrRefOfType(Context& context, SemIR::LocId loc_id,
@@ -2198,8 +2200,8 @@ static auto DiagnoseTypeExprEvaluationFailure(Context& context,
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
-  auto type_as_inst_id =
-      ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
+  auto type_as_inst_id = ConvertToValueOfType(
+      context, loc_id, value_id, SemIR::TypeType::TypeId, diagnose);
   if (type_as_inst_id == SemIR::ErrorInst::InstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};

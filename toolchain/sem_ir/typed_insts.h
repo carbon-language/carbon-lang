@@ -788,7 +788,6 @@ struct FormParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // The type `Core.Form`.
@@ -1354,7 +1353,6 @@ struct OutParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.
@@ -1476,7 +1474,6 @@ struct RefParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // A `ref x` expression. The semantics of this instruction depend on the usage
@@ -2196,7 +2193,6 @@ struct ValueParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // A pattern that represents a `Call` parameter corresponding to a `var`
@@ -2212,7 +2208,6 @@ struct VarParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
-  CallParamIndex index;
 };
 
 // A `var` pattern.

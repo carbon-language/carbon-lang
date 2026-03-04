@@ -215,16 +215,20 @@ IdentifiedFacetType::IdentifiedFacetType(
     IdentifiedFacetTypeKey key, llvm::ArrayRef<RequiredImpl> extends,
     llvm::ArrayRef<RequiredImpl> self_impls)
     : key_(key) {
-  if (extends.size() == 1) {
-    interface_id_ = extends.front().specific_interface.interface_id;
-    specific_id_ = extends.front().specific_interface.specific_id;
-  } else {
-    interface_id_ = InterfaceId::None;
-    num_interface_to_impl_ = extends.size();
-  }
-
   required_impls_.reserve(extends.size() + self_impls.size());
   llvm::append_range(required_impls_, extends);
+  SortAndDeduplicate(required_impls_, RequiredLess);
+
+  // If there's a single extended interface then we present as that interface.
+  // Otherwise, we record the number extended interfaces.
+  if (required_impls_.size() == 1) {
+    interface_id_ = required_impls_.front().specific_interface.interface_id;
+    specific_id_ = required_impls_.front().specific_interface.specific_id;
+  } else {
+    interface_id_ = InterfaceId::None;
+    num_interface_to_impl_ = required_impls_.size();
+  }
+
   llvm::append_range(required_impls_, self_impls);
   SortAndDeduplicate(required_impls_, RequiredLess);
 }

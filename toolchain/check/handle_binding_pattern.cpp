@@ -280,24 +280,21 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       if (node_kind == Parse::NodeKind::LetBindingPattern ||
           node_kind == Parse::NodeKind::FormBindingPattern) {
         auto type_id = context.insts().GetAttachedType(result_inst_id);
+        // Allocate a dummy index to preserve index of subsequent `InitForm`s.
+        // TODO: Remove this once we remove `InitForm::index`.
+        context.full_pattern_stack().NextCallParamIndex();
         if (is_ref) {
           result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
               context, node_id,
-              {.type_id = type_id,
-               .subpattern_id = result_inst_id,
-               .index = context.full_pattern_stack().NextCallParamIndex()});
+              {.type_id = type_id, .subpattern_id = result_inst_id});
         } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
           result_inst_id = AddPatternInst<SemIR::FormParamPattern>(
               context, node_id,
-              {.type_id = type_id,
-               .subpattern_id = result_inst_id,
-               .index = context.full_pattern_stack().NextCallParamIndex()});
+              {.type_id = type_id, .subpattern_id = result_inst_id});
         } else {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
-              {.type_id = type_id,
-               .subpattern_id = result_inst_id,
-               .index = context.full_pattern_stack().NextCallParamIndex()});
+              {.type_id = type_id, .subpattern_id = result_inst_id});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);

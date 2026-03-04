@@ -640,7 +640,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.A.decl: @Inner.%Inner.A.type (%Inner.A.type.c2f) = fn_decl @Inner.A [symbolic = @Inner.%Inner.A (constants.%Inner.A.07b)] {
 // CHECK:STDOUT:       %return.patt: @Inner.A.%pattern_type (%pattern_type.130) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.A.%pattern_type (%pattern_type.130) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.A.%pattern_type (%pattern_type.130) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.2 [symbolic = %T (constants.%T)]
@@ -651,7 +651,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.B.decl: @Inner.%Inner.B.type (%Inner.B.type.f42) = fn_decl @Inner.B [symbolic = @Inner.%Inner.B (constants.%Inner.B.b14)] {
 // CHECK:STDOUT:       %return.patt: @Inner.B.%pattern_type (%pattern_type.760) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.B.%pattern_type (%pattern_type.760) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.B.%pattern_type (%pattern_type.760) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.2 [symbolic = %U (constants.%U)]
@@ -662,7 +662,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.C.decl: @Inner.%Inner.C.type (%Inner.C.type.912) = fn_decl @Inner.C [symbolic = @Inner.%Inner.C (constants.%Inner.C.125)] {
 // CHECK:STDOUT:       %return.patt: @Inner.C.%pattern_type (%pattern_type.81e) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.C.%pattern_type (%pattern_type.81e) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.C.%pattern_type (%pattern_type.81e) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10_15: @Inner.C.%Inner.type (%Inner.type.e0d) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.C.%Inner.type (%Inner.type.e0d) = name_ref Inner, %.loc10_15 [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
@@ -674,7 +674,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Inner.D.decl: @Inner.%Inner.D.type (%Inner.D.type.cd0) = fn_decl @Inner.D [symbolic = @Inner.%Inner.D (constants.%Inner.D.147)] {
 // CHECK:STDOUT:       %return.patt: @Inner.D.%pattern_type (%pattern_type.0d1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Inner.D.%pattern_type (%pattern_type.0d1) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.D.%pattern_type (%pattern_type.0d1) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_15: @Inner.D.%Inner.type (%Inner.type.e0d) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.ada)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.D.%Inner.type (%Inner.type.e0d) = name_ref Inner, %.loc13_15 [symbolic = %Inner.generic (constants.%Inner.generic.ada)]

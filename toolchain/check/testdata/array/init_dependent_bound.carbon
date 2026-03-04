@@ -79,12 +79,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %complete_type.95b: <witness> = complete_type_witness %array_type.70a [concrete]
 // CHECK:STDOUT:   %pattern_type.f2c: type = pattern_type %array_type.70a [concrete]
 // CHECK:STDOUT:   %array.40f: %array_type.70a = tuple_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
-// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.809: <witness> = custom_witness (%DestroyOp), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.565: %Destroy.type = facet_value %array_type.70a, (%custom_witness.809) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.9a3: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.565) [concrete]
-// CHECK:STDOUT:   %.b12: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.9a3, %Destroy.facet.565 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.8d7: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.00d: %Destroy.type = facet_value %array_type.70a, (%custom_witness.8d7) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ed3: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.00d) [concrete]
+// CHECK:STDOUT:   %.23f: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.ed3, %Destroy.facet.00d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc4_6.2: type) {
@@ -128,7 +128,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type.70a) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type.70a) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
@@ -142,12 +142,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.95b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f2c
 // CHECK:STDOUT:   %array => constants.%array.40f
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.809
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.565
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9a3
-// CHECK:STDOUT:   %.loc7_3.2 => constants.%.b12
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%DestroyOp
-// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%DestroyOp
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.8d7
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.00d
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.ed3
+// CHECK:STDOUT:   %.loc7_3.2 => constants.%.23f
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
+// CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon

@@ -63,6 +63,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -1330,8 +1331,7 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
         MakeImportedLocIdAndInst(
             context, return_type_import_ir_inst_id,
             SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                    .subpattern_id = return_slot_pattern_id,
-                                    .index = init_form->index})));
+                                    .subpattern_id = return_slot_pattern_id})));
     return_patterns_id = context.inst_blocks().Add({param_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,
@@ -2078,81 +2078,6 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang literal expression to a Carbon constant.
-// TODO: Add support for all constant types for which a C++ to Carbon type
-// mapping exists.
-static auto MapConstant(Context& context, SemIR::LocId loc_id,
-                        clang::Expr* expr) -> SemIR::InstId {
-  CARBON_CHECK(expr, "empty expression");
-
-  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
-    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: string literal type: {0}",
-                                 expr->getType()));
-      return SemIR::ErrorInst::InstId;
-    }
-    StringLiteralValueId string_id =
-        context.string_literal_values().Add(string_literal->getString());
-    auto inst_id =
-        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
-    return inst_id;
-  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
-    auto type_id = MapNullptrType(context, loc_id).type_id;
-    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
-                                                   {.type_id = type_id});
-  }
-
-  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
-  if (!type_id.has_value()) {
-    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
-                                       "could not be mapped to a Carbon type",
-                                       expr->getType().getAsString()));
-    return SemIR::ErrorInst::InstId;
-  }
-
-  SemIR::InstId inst_id = SemIR::InstId::None;
-  SemIR::ImportIRInstId imported_loc_id =
-      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
-
-  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
-    IntId int_id =
-        context.ints().Add(integer_literal->getValue().getSExtValue());
-    inst_id = AddInstInNoBlock(
-        context,
-        MakeImportedLocIdAndInst<SemIR::IntValue>(
-            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
-  } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
-    inst_id = AddInstInNoBlock(
-        context,
-        MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
-            context, imported_loc_id,
-            {.type_id = type_id,
-             .value = SemIR::BoolValue::From(bool_literal->getValue())}));
-  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
-    FloatId float_id = context.floats().Add(float_literal->getValue());
-    inst_id = AddInstInNoBlock(context,
-                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
-                                   context, imported_loc_id,
-                                   {.type_id = type_id, .float_id = float_id}));
-  } else if (auto* character_literal =
-                 dyn_cast<clang::CharacterLiteral>(expr)) {
-    inst_id = AddInstInNoBlock(
-        context, MakeImportedLocIdAndInst<SemIR::CharLiteralValue>(
-                     context, imported_loc_id,
-                     {.type_id = type_id,
-                      .value = SemIR::CharId(character_literal->getValue())}));
-  } else {
-    context.TODO(loc_id, llvm::formatv(
-                             "Unsupported: C++ constant expression type: '{0}'",
-                             expr->getType().getAsString()));
-    return SemIR::ErrorInst::InstId;
-  }
-
-  context.imports().push_back(inst_id);
-  return inst_id;
-}
-
 // Imports a macro definition into the scope. Currently supports only simple
 // object-like macros that expand to a constant integer value.
 // TODO: Add support for other macro types and non-integer literal values.
@@ -2160,14 +2085,8 @@ static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  clang::Expr* macro_expr =
+  auto inst_id =
       TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
-
-  if (!macro_expr) {
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-
-  auto inst_id = MapConstant(context, loc_id, macro_expr);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -2310,6 +2229,27 @@ auto ImportClassDefinitionForClangDecl(Context& context,
                         enum_decl);
   }
   return true;
+}
+
+auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
+    -> clang::VarDecl* {
+  if (const auto& var_storage =
+          context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+    auto var_name_id = SemIR::GetFirstBindingNameFromPatternId(
+        context.sem_ir(), var_storage->pattern_id);
+    if (auto cpp_global_var_id = context.sem_ir().cpp_global_vars().Lookup(
+            {.entity_name_id = var_name_id});
+        cpp_global_var_id.has_value()) {
+      SemIR::ClangDeclId clang_decl_id = context.sem_ir()
+                                             .cpp_global_vars()
+                                             .Get(cpp_global_var_id)
+                                             .clang_decl_id;
+      return cast<clang::VarDecl>(
+          context.clang_decls().Get(clang_decl_id).key.decl);
+    }
+  }
+
+  return nullptr;
 }
 
 }  // namespace Carbon::Check
