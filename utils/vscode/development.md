@@ -53,8 +53,8 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
 
 -   Build and publish the release to the Open VSX Registry:
 
-
-    1. Follow the [Open VSX documentation for publishing extensions](https://github.com/EclipseFdn/open-vsx.org/wiki/Publishing-Extensions).
+    1. Follow the
+       [Open VSX documentation for publishing extensions](https://github.com/EclipseFdn/open-vsx.org/wiki/Publishing-Extensions).
 
 ## Development
 
