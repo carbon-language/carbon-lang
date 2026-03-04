@@ -16,7 +16,7 @@ var c: auto = fn { };
 
 // --- fail_unconsumed_lambda_introducer.carbon
 
-// Tests that the compiler does not crash when a LambdaIntroducer (`fn`) 
+// Tests that the compiler does not crash when a LambdaIntroducer (`fn`)
 // is left unconsumed inside an invalid binary operator sequence.
 
 // CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:10: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
