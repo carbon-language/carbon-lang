@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
+#include <type_traits>
+
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
@@ -58,22 +60,22 @@ struct DeclInfo {
 }  // namespace
 
 // Describes the function that needs to be looked up.
-enum AssociatedFunction {
+enum class AssociatedFunction : std::underlying_type_t<CoreInterface> {
   // CoreInterface::Copy
-  CopyConstructor,
+  CopyConstructor = llvm::to_underlying(CoreInterface::Copy),
 
   // CoreInterface::Destroy
-  Destructor,
+  Destructor = llvm::to_underlying(CoreInterface::Destroy),
 };
 
 // Maps a `CoreInterface` to its corresponding set of `CppCoreFunction`s.
 static auto GetCppAssociatedFunctions(const CoreInterface core_interface)
-    -> llvm::SmallVector<AssociatedFunction, 2> {
+    -> std::bitset<8> {
   switch (core_interface) {
     case CoreInterface::Copy:
-      return {AssociatedFunction::CopyConstructor};
+      return {llvm::to_underlying(AssociatedFunction::CopyConstructor)};
     case CoreInterface::Destroy:
-      return {AssociatedFunction::Destructor};
+      return {llvm::to_underlying(AssociatedFunction::Destructor)};
     case CoreInterface::Unknown:
       CARBON_FATAL(
           "`CoreInterface::Unknown` doesn't have a `CppCoreFunction` mapping");
@@ -146,9 +148,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   switch (core_interface) {
     case CoreInterface::Copy:
     case CoreInterface::Destroy: {
-      CARBON_CHECK(associated_functions.size() == 1);
+      CARBON_CHECK(associated_functions.count() == 1);
       witness_id = FindCppAssociatedFunction(
-          context, loc_id, associated_functions[0], class_decl);
+          context, loc_id,
+          static_cast<AssociatedFunction>(associated_functions.to_ullong()),
+          class_decl);
     } break;
     case CoreInterface::Unknown:
       CARBON_FATAL("shouldn't be called with `Unknown`");
