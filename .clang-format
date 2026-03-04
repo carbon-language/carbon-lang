@@ -24,4 +24,5 @@ IfMacros:
   ]
 StatementMacros: ['ABSTRACT']
 QualifierAlignment: Custom
-QualifierOrder: [inline, static, friend, constexpr, const, volatile, restrict, type]
+QualifierOrder:
+  [inline, static, friend, constexpr, const, volatile, restrict, type]
