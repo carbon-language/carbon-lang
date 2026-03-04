@@ -48,9 +48,9 @@ struct CategoryOf {
   X(::Carbon::SemIR::TupleAccess)
 // clang-format on
 
-#define AnyAggregateAccess_CARBON_KIND_ANY_EXPAND                        \
-  , AnyAggregateAccess_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                            CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyAggregateAccess_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyAggregateAccess_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.
@@ -71,9 +71,9 @@ struct AnyAggregateAccess {
   X(::Carbon::SemIR::TupleInit)
 // clang-format on
 
-#define AnyAggregateInit_CARBON_KIND_ANY_EXPAND                        \
-  , AnyAggregateInit_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                          CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyAggregateInit_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyAggregateInit_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for all kinds of aggregate initialization.
 struct AnyAggregateInit {
@@ -91,9 +91,9 @@ struct AnyAggregateInit {
   X(::Carbon::SemIR::TupleValue)
 // clang-format on
 
-#define AnyAggregateValue_CARBON_KIND_ANY_EXPAND                        \
-  , AnyAggregateValue_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                           CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyAggregateValue_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyAggregateValue_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
@@ -112,9 +112,9 @@ struct AnyAggregateValue {
   X(::Carbon::SemIR::ValueBindingPattern)
 // clang-format on
 
-#define AnyBindingPattern_CARBON_KIND_ANY_EXPAND                        \
-  , AnyBindingPattern_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                           CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyBindingPattern_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyBindingPattern_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for various `*binding_pattern` nodes.
 struct AnyBindingPattern {
@@ -142,9 +142,9 @@ struct AnyBindingPattern {
   X(::Carbon::SemIR::ValueBinding)
 // clang-format on
 
-#define AnyBinding_CARBON_KIND_ANY_EXPAND                        \
-  , AnyBinding_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                    CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyBinding_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyBinding_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for various `bind*` nodes.
 struct AnyBinding {
@@ -170,9 +170,9 @@ struct AnyBinding {
   X(::Carbon::SemIR::ExportDecl)
 // clang-format on
 
-#define AnyBindingOrExportDecl_CARBON_KIND_ANY_EXPAND                        \
-  , AnyBindingOrExportDecl_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                                CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyBindingOrExportDecl_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyBindingOrExportDecl_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for various `bind*` nodes, and `export name`.
 struct AnyBindingOrExportDecl {
@@ -192,9 +192,9 @@ struct AnyBindingOrExportDecl {
   X(::Carbon::SemIR::BranchWithArg)
 // clang-format on
 
-#define AnyBranch_CARBON_KIND_ANY_EXPAND                        \
-  , AnyBranch_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                   CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyBranch_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyBranch_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for all kinds of `Branch*` node.
 struct AnyBranch {
@@ -213,9 +213,9 @@ struct AnyBranch {
   X(::Carbon::SemIR::BaseDecl)
 // clang-format on
 
-#define AnyFoundationDecl_CARBON_KIND_ANY_EXPAND                        \
-  , AnyFoundationDecl_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                           CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyFoundationDecl_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyFoundationDecl_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
@@ -235,9 +235,9 @@ struct AnyFoundationDecl {
   X(::Carbon::SemIR::ImportRefUnloaded)
 // clang-format on
 
-#define AnyImportRef_CARBON_KIND_ANY_EXPAND                        \
-  , AnyImportRef_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                      CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyImportRef_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyImportRef_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
@@ -258,9 +258,9 @@ struct AnyImportRef {
   X(::Carbon::SemIR::ValueParam)
 // clang-format on
 
-#define AnyParam_CARBON_KIND_ANY_EXPAND                        \
-  , AnyParam_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                  CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyParam_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyParam_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // A `Call` parameter for a function or other parameterized block.
 struct AnyParam {
@@ -285,9 +285,9 @@ struct AnyParam {
   X(::Carbon::SemIR::VarParamPattern)
 // clang-format on
 
-#define AnyParamPattern_CARBON_KIND_ANY_EXPAND                        \
-  , AnyParamPattern_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                         CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyParamPattern_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyParamPattern_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // A pattern that represents a `Call` parameter. It delegates to subpattern_id
 // in pattern matching.
@@ -309,9 +309,9 @@ struct AnyParamPattern {
   X(::Carbon::SemIR::ValueForm)
 // clang-format on
 
-#define AnyPrimitiveForm_CARBON_KIND_ANY_EXPAND                        \
-  , AnyPrimitiveForm_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                          CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyPrimitiveForm_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyPrimitiveForm_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // An inst that represents a primitive form.
 struct AnyPrimitiveForm {
@@ -335,9 +335,9 @@ struct AnyPrimitiveForm {
   X(::Carbon::SemIR::PartialType)
 // clang-format on
 
-#define AnyQualifiedType_CARBON_KIND_ANY_EXPAND                        \
-  , AnyQualifiedType_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                          CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyQualifiedType_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyQualifiedType_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // A type qualifier that wraps another type and has the same object
 // representation. Qualifiers are arranged so that adding a qualifier is
@@ -357,9 +357,9 @@ struct AnyQualifiedType {
   X(::Carbon::SemIR::StructType)
 // clang-format on
 
-#define AnyStructType_CARBON_KIND_ANY_EXPAND                        \
-  , AnyStructType_CARBON_INST_CATEGORY(CARBON_KIND_ANY_EXPAND_CASE, \
-                                       CARBON_KIND_ANY_EXPAND_SEP)
+#define AnyStructType_CARBON_KIND_ANY_EXPAND                       \
+  CARBON_KIND_ANY_EXPAND_BEGIN AnyStructType_CARBON_INST_CATEGORY( \
+      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
 
 // A struct-like type with a list of named fields.
 struct AnyStructType {

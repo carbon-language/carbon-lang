@@ -41,10 +41,10 @@
 // - Each type passed to `CARBON_KIND_ANY` must have a macro of the form:
 //   ```
 //   #define AnyKind_CARBON_KIND_ANY_EXPAND   \
-//     ,                          CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
-//     CARBON_KIND_ANY_EXPAND_SEP CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
+//     CARBON_KIND_ANY_EXPAND_BEGIN CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
+//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
 //     ...
-//     CARBON_KIND_ANY_EXPAND_SEP CARBON_KIND_ANY_EXPAND_CASE(KindN)
+//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(KindN)
 //   ```
 //   Note the prefix `,` is required.
 //
@@ -66,13 +66,14 @@
 // CARBON_KIND`. Otherwise, only the first statement is going to see the
 // variable. Even if that sometimes works, it can lead to confusing issues when
 // statements are added, and `if`/`else` coding style already requires braces.
-#define CARBON_KIND(typed_variable_decl)         \
-  CARBON_KIND_INTERNAL_CASE(typed_variable_decl) \
+#define CARBON_KIND(typed_variable_decl)               \
+  CARBON_KIND_INTERNAL_CASE_VALUE(typed_variable_decl) \
       : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)
 
 // Macros for clients to add support for `Type_CARBON_KIND_ANY_EXPAND` (see
 // example above).
-#define CARBON_KIND_ANY_EXPAND_CASE(X) CARBON_KIND_INTERNAL_CASE(X)
+#define CARBON_KIND_ANY_EXPAND_CASE(X) CARBON_KIND_INTERNAL_CASE_VALUE(X)
+#define CARBON_KIND_ANY_EXPAND_BEGIN ,
 #define CARBON_KIND_ANY_EXPAND_SEP : case
 
 // Produces a case-compatible block of code that also instantiates a local typed
@@ -298,9 +299,9 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
   decltype([]([[maybe_unused]] typed_param) {})
 
 // Produces the value for a `case` statement on the type of `typed_param`.
-#define CARBON_KIND_INTERNAL_CASE(typed_param)     \
-  ::Carbon::Internal::Kind::ForCase<               \
-      decltype(carbon_internal_kind_switch_value), \
+#define CARBON_KIND_INTERNAL_CASE_VALUE(typed_param) \
+  ::Carbon::Internal::Kind::ForCase<                 \
+      decltype(carbon_internal_kind_switch_value),   \
       CARBON_KIND_INTERNAL_WRAP_TYPE(typed_param)>()
 
 // Produces a declaration using `typed_variable_decl`.
