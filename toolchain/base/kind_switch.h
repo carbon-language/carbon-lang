@@ -46,7 +46,7 @@
 //     ...
 //     CARBON_KIND_ANY_EXPAND_SEP CARBON_KIND_ANY_EXPAND_CASE(KindN)
 //   ```
-//   Note the prefix `,` is significant.
+//   Note the prefix `,` is required.
 //
 // When used with `std::variant` (e.g., `CARBON_KIND_SWITCH(variant_value)`),
 // members of the variant are passed to `CARBON_KIND`, instead of types that
