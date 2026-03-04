@@ -904,12 +904,16 @@ Struct s;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.Struct` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+11]]:3: error: semantics TODO: `Macro evaluated to an lvalue with a path: &s.field` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.Struct)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   Cpp.m = 2;
 }

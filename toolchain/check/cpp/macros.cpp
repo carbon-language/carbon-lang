@@ -134,6 +134,13 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
           // TODO: can this const_cast be avoided?
           const_cast<clang::ValueDecl*>(value_decl));
 
+      if (ap_value.hasLValuePath() && ap_value.getLValuePath().size() > 0) {
+        context.TODO(loc_id, "Macro evaluated to an lvalue with a path: " +
+                                 ap_value.getAsString(context.ast_context(),
+                                                      result_expr->getType()));
+        return SemIR::ErrorInst::InstId;
+      }
+
       return ImportCppDecl(context, loc_id, key);
     } else {
       context.TODO(loc_id,
