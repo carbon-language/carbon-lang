@@ -132,7 +132,7 @@ auto CheckCppOverloadAccess(
 
 auto PerformCppOverloadResolution(
     Context& context, SemIR::LocId loc_id,
-    SemIR::CppOverloadSetId overload_set_id,
+    const SemIR::CppOverloadSet& overload_set,
     llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Register an annotation scope to flush any Clang diagnostics when we return.
@@ -154,9 +154,6 @@ auto PerformCppOverloadResolution(
     return SemIR::ErrorInst::InstId;
   }
   auto& arg_exprs = *maybe_arg_exprs;
-
-  const SemIR::CppOverloadSet& overload_set =
-      context.cpp_overload_sets().Get(overload_set_id);
 
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
 
