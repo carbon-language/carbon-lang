@@ -14,6 +14,37 @@ var a: auto = fn [T:! type] (x: T) -> T { return x; };
 var b: auto = fn (x: i32) => x;
 var c: auto = fn { };
 
+// --- fail_unconsumed_lambda_introducer.carbon
+
+// Tests that the compiler does not crash when a LambdaIntroducer (`fn`)
+// is left unconsumed inside an invalid binary operator sequence.
+
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:10: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:          ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+8]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:16: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: require j%-fn->>
+// CHECK:STDERR:                ^
+// CHECK:STDERR:
+require j%-fn->>
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+8]]:1: error: expected `=>` or `{` after return type [ExpectedLambdaBodyAfterReturnType]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:1: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+
 // --- fail_expected_body.carbon
 
 fn F() {
@@ -93,6 +124,23 @@ fn G() {
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_unconsumed_lambda_introducer.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'RequireIntroducer', text: 'require'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'j'},
+// CHECK:STDOUT:             {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '>', has_error: yes},
+// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '', has_error: yes},
+// CHECK:STDOUT:               {kind: 'InfixOperatorGreater', text: '>', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'ReturnType', text: '->', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'InvalidParse', text: '', has_error: yes},
+// CHECK:STDOUT:           {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'InfixOperatorPercent', text: '%', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'RequireDecl', text: '>', has_error: yes, subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_expected_body.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -126,10 +174,12 @@ fn G() {
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

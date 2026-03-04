@@ -31,7 +31,7 @@ auto CheckCppOverloadAccess(
 // migrations so that the migrated callers from C++ remain valid.
 auto PerformCppOverloadResolution(
     Context& context, SemIR::LocId loc_id,
-    SemIR::CppOverloadSetId overload_set_id,
+    const SemIR::CppOverloadSet& overload_set,
     llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;
 
