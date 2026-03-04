@@ -891,6 +891,29 @@ fn F() {
   (*Cpp.m) = 2;
 }
 
+// --- fail_todo_assign_subobject.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct Struct {
+  int field;
+};
+Struct s;
+#define m s.field
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.Struct` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.Struct)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.m = 2;
+}
+
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
