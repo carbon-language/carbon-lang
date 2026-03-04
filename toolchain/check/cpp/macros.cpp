@@ -118,8 +118,10 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   }
 
   clang::Expr::EvalResult evaluated_result;
-  CARBON_CHECK(result_expr->EvaluateAsConstantExpr(evaluated_result,
-                                                   sema.getASTContext()));
+  if (!result_expr->EvaluateAsConstantExpr(evaluated_result,
+                                           sema.getASTContext())) {
+    CARBON_FATAL("failed to evaluate macro as constant expression");
+  }
 
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
