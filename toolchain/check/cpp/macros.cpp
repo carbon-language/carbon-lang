@@ -44,22 +44,6 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
   return SemIR::ErrorInst::InstId;
 }
 
-// Converts an `APValue` to a Carbon constant `InstId`. Returns
-// `SemIR::ErrorInst::InstId` on error.
-static auto MapAPValueToConstantInst(Context& context, SemIR::LocId loc_id,
-                                     const clang::APValue& ap_value,
-                                     clang::QualType type) -> SemIR::InstId {
-  auto const_id = MapAPValueToConstant(context, loc_id, ap_value, type);
-  if (const_id == SemIR::ConstantId::NotConstant) {
-    context.TODO(loc_id,
-                 "Unsupported: macro evaluated to a constant of type: " +
-                     type.getAsString());
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return context.constant_values().GetInstId(const_id);
-}
-
 auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
                       SemIR::NameId name_id, clang::MacroInfo* macro_info)
     -> SemIR::InstId {
@@ -149,8 +133,16 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
   } else {
-    return MapAPValueToConstantInst(context, loc_id, ap_value,
-                                    result_expr->getType());
+    auto const_id =
+        MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());
+    if (const_id == SemIR::ConstantId::NotConstant) {
+      context.TODO(loc_id,
+                   "Unsupported: macro evaluated to a constant of type: " +
+                       result_expr->getType().getAsString());
+      return SemIR::ErrorInst::InstId;
+    }
+
+    return context.constant_values().GetInstId(const_id);
   }
 }
 
