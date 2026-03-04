@@ -914,11 +914,11 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".assoc_type");
       return;
     }
-    case CARBON_KIND_ANY(AnyBindingOrExportDecl, auto inst): {
+    case CARBON_KIND_ANY(AnyBindingOrExportDecl, inst): {
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
-    case CARBON_KIND_ANY(AnyBindingPattern, auto inst): {
+    case CARBON_KIND_ANY(AnyBindingPattern, inst): {
       auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
         name_id = sem_ir().entity_names().Get(inst.entity_name_id).name_id;
@@ -943,7 +943,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case CARBON_KIND_ANY(AnyBranch, auto branch): {
+    case CARBON_KIND_ANY(AnyBranch, branch): {
       inst_namer_->AddBlockLabel(scope_id_, LocId(inst_id_), branch);
       return;
     }
@@ -1198,7 +1198,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case CARBON_KIND_ANY(AnyImportRef, auto inst): {
+    case CARBON_KIND_ANY(AnyImportRef, inst): {
       // Build the base import name: <package>.<entity-name>
       RawStringOstream out;
 
@@ -1291,7 +1291,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
       return;
     }
-    case CARBON_KIND_ANY(AnyParam, auto inst): {
+    case CARBON_KIND_ANY(AnyParam, inst): {
       AddInstNameId(inst.pretty_name_id, ".param");
       return;
     }

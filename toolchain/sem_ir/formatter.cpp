@@ -1043,17 +1043,17 @@ auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND_ANY(AnyAggregateInit, auto init): {
+    case CARBON_KIND_ANY(AnyAggregateInit, init): {
       FormatArgs(init.elements_id);
       return;
     }
 
-    case CARBON_KIND_ANY(AnyImportRef, auto import_ref): {
+    case CARBON_KIND_ANY(AnyImportRef, import_ref): {
       FormatImportRefRhs(import_ref);
       return;
     }
 
-    case CARBON_KIND_ANY(AnyParam, auto param): {
+    case CARBON_KIND_ANY(AnyParam, param): {
       FormatArgs(param.index);
       // Omit pretty_name because it's an implementation detail of
       // pretty-printing.

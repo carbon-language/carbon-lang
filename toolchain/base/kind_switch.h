@@ -20,7 +20,7 @@
 //     case CARBON_KIND(SomeInstType inst): {
 //       return inst.typed_field;
 //     }
-//     case CARBON_KIND_ANY(AnyKind, auto any_inst): {
+//     case CARBON_KIND_ANY(AnyKind, any_inst): {
 //       return any_inst.typed_field;
 //     }
 //
@@ -38,12 +38,15 @@
 // - Each type passed to `CARBON_KIND` (`CaseT` above) provides
 //   `CaseT::Kind`, which is passed to the `case` keyword.
 //   `CaseT::Kind::RawEnumType` is the type returned by `.kind()`.
-// - Each type passed to `CARBON_KIND_ANY` must have two macros:
-//   1. `CARBON_KIND_ANY_EXPAND_AnyKind(X, SEP)` which expands to
-//      `X(Kind1) SEP X(Kind2) SEP ... X(KindN)` (no final separator).
-//      - EAch `KindN` follows the requirements of `Kind`.
-//   2. `CARBON_KIND_ANY_FULLY_QUALIFIED_AnyKind` which expands to the fully
-//      qualified name of the `AnyKind` type.
+// - Each type passed to `CARBON_KIND_ANY` must have a macro of the form:
+//   ```
+//   #define AnyKind_CARBON_KIND_ANY_EXPAND   \
+//     ,                          CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
+//     CARBON_KIND_ANY_EXPAND_SEP CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
+//     ...
+//     CARBON_KIND_ANY_EXPAND_SEP CARBON_KIND_ANY_EXPAND_CASE(KindN)
+//   ```
+//   Note the prefix `,` is significant.
 //
 // When used with `std::variant` (e.g., `CARBON_KIND_SWITCH(variant_value)`),
 // members of the variant are passed to `CARBON_KIND`, instead of types that
@@ -65,15 +68,19 @@
 // statements are added, and `if`/`else` coding style already requires braces.
 #define CARBON_KIND(typed_variable_decl)         \
   CARBON_KIND_INTERNAL_CASE(typed_variable_decl) \
-      : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl, typed_variable_decl)
+      : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)
+
+// Macros for clients to add support for `Type_CARBON_KIND_ANY_EXPAND` (see
+// example above).
+#define CARBON_KIND_ANY_EXPAND_CASE(X) CARBON_KIND_INTERNAL_CASE(X)
+#define CARBON_KIND_ANY_EXPAND_SEP : case
 
 // Produces a case-compatible block of code that also instantiates a local typed
-// variable. `variable_decl` looks like `auto i`; it will be assigned a type
-// based on the cast for `AnyKind`.
-#define CARBON_KIND_ANY(AnyKind, variable_decl)                       \
-  CARBON_KIND_ANY_EXPAND_##AnyKind(CARBON_KIND_INTERNAL_CASE, : case) \
-      : CARBON_KIND_INTERNAL_DECLARE(                                 \
-            variable_decl, CARBON_KIND_ANY_FULLY_QUALIFIED_##AnyKind)
+// variable. Versus `CARBON_KIND(int i)`, note this requires a comma after the
+// type, as in `CARBON_KIND_ANY(AnyKind, i)`.
+#define CARBON_KIND_ANY(Type, variable_name)               \
+  CARBON_KIND_ANY_INTERNAL_WITH_SUFFIX(Type variable_name, \
+                                       Type##_CARBON_KIND_ANY_EXPAND)
 
 // -----------------------------------------------------------------------------
 // Internal implementation details follow.
@@ -301,15 +308,33 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-#define CARBON_KIND_INTERNAL_DECLARE(variable_decl, typed_param)         \
+#define CARBON_KIND_INTERNAL_DECLARE(variable_decl)                      \
   if (variable_decl =                                                    \
           ::Carbon::Internal::Kind::Cast<CARBON_KIND_INTERNAL_WRAP_TYPE( \
-              typed_param)>(                                             \
+              variable_decl)>(                                           \
               std::forward<decltype(carbon_internal_kind_switch_value)>( \
                   carbon_internal_kind_switch_value));                   \
       false) {                                                           \
   } else [[maybe_unused]]                                                \
     CARBON_INTERNAL_KIND_LABEL(__LINE__)
+
+// Helper for `CARBON_KIND_ANY` that expands the now-suffixed macro.
+#define CARBON_KIND_ANY_INTERNAL_WITH_SUFFIX(typed_variable_decl,         \
+                                             Type_CARBON_KIND_ANY_EXPAND) \
+  CARBON_KIND_ANY_INTERNAL_IMPL(typed_variable_decl,                      \
+                                Type_CARBON_KIND_ANY_EXPAND)
+// Helper for `CARBON_KIND_ANY` that forms the final case setup. The variadic
+// arguments are the expansion of `Type_CARBON_KIND_ANY_EXPAND`, which may
+// contain commas.
+//
+// As a consequence of the macro suffixing along with the required prefix comma
+// in `Type_CARBON_KIND_ANY_EXPAND`, input of `Namespace::Type` will have become
+// `Namespace::, Type_CARBON_KIND_ANY_EXPAND`, and `DiscardNamespace` exists to
+// discard `Namespace::`.
+#define CARBON_KIND_ANY_INTERNAL_IMPL(typed_variable_decl, DiscardNamespace, \
+                                      ...)                                   \
+  __VA_ARGS__:                                                               \
+  CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)
 
 }  // namespace Carbon::Internal::Kind
 
