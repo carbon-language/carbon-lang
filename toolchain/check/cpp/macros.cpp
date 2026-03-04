@@ -12,6 +12,8 @@
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/type_completion.h"
 
 namespace Carbon::Check {
 
@@ -122,10 +124,42 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
       return inst_id;
     }
 
-    context.TODO(loc_id, "Macro evaluated to an lvalue with a path: " +
-                             ap_value.getAsString(context.ast_context(),
-                                                  result_expr->getType()));
-    return SemIR::ErrorInst::InstId;
+    // Import the base type so that its fields can be accessed.
+    auto var_storage = context.insts().GetAs<SemIR::VarStorage>(inst_id);
+    if (!RequireCompleteType(
+            context, var_storage.type_id, loc_id, [&](auto& builder) {
+              CARBON_DIAGNOSTIC(IncompleteTypeInMacroExpansion, Context,
+                                "type {0} is incomplete", InstIdAsType);
+              builder.Context(loc_id, IncompleteTypeInMacroExpansion, inst_id);
+            })) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    // TODO: support array indexing.
+    for (auto& entry : ap_value.getLValuePath()) {
+      auto* field_decl =
+          cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+
+      auto field_inst_id =
+          ImportCppDecl(context, loc_id,
+                        SemIR::ClangDeclKey::ForNonFunctionDecl(
+                            const_cast<clang::Decl*>(field_decl)));
+
+      if (field_inst_id == SemIR::ErrorInst::InstId) {
+        context.TODO(loc_id, "Unsupported field in macro expansion: " +
+                                 ap_value.getAsString(context.ast_context(),
+                                                      result_expr->getType()));
+        return SemIR::ErrorInst::InstId;
+      }
+
+      const SemIR::FieldDecl& field_decl_inst =
+          context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+
+      inst_id = PerformMemberAccess(context, loc_id, inst_id,
+                                    field_decl_inst.name_id);
+    }
+
+    return inst_id;
   } else {
     auto const_id =
         MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());
