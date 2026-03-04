@@ -877,7 +877,7 @@ int v = 1;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+11]]:5: error: semantics TODO: `Macro evaluated to an unsupported lvalue of type: int *` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+11]]:5: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: int *` [SemanticsTodo]
   // CHECK:STDERR:   (*Cpp.m) = 2;
   // CHECK:STDERR:     ^~~~~
   // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+8]]:5: note: in `Cpp` name lookup for `m` [InCppNameLookup]
