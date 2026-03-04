@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 NodeJS is required to build the extension. You will also need to install `vsce`:
 
 ```
-npm install -g vsce
+npm install -g @vscode/vsce
 ```
 
 This installs `vsce` to `/usr/local/bin/vsce`. Ensure that `/usr/local/bin` is
