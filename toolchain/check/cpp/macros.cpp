@@ -126,12 +126,8 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
   if (ap_value.isLValue()) {
-    if (result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-      return MapAPValueToConstantInst(context, loc_id, evaluated_result.Val,
-                                      result_expr->getType());
-    } else if (result_expr->isGLValue() &&
-               result_expr->EvaluateAsLValue(evaluated_result,
-                                             sema.getASTContext())) {
+    if (result_expr->isGLValue() &&
+        result_expr->EvaluateAsLValue(evaluated_result, sema.getASTContext())) {
       const auto* value_decl =
           evaluated_result.Val.getLValueBase().get<const clang::ValueDecl*>();
 

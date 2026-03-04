@@ -676,10 +676,6 @@ constexpr int n = 1;
 ''';
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: constexpr_int_addr.carbon:[[@LINE+4]]:21: error: cannot take the address of non-reference expression [AddrOfNonRef]
-// CHECK:STDERR: let p: const i32* = &Cpp.N;
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
 let p: const i32* = &Cpp.N;
 //@dump-sem-ir-end
 
@@ -1779,15 +1775,19 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
-// CHECK:STDOUT:   %int_1.22e: %const = int_value 1 [concrete]
-// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %pattern_type.a65: type = pattern_type %const [concrete]
+// CHECK:STDOUT:   %a.var: ref %i32 = var imports.%a.var_patt [concrete]
+// CHECK:STDOUT:   %int_1: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .M_CONSTEXPR_INT = constants.%int_1.22e
+// CHECK:STDOUT:     .M_CONSTEXPR_INT = %a.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a.patt: %pattern_type.a65 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.a65 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %const = var %a.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1797,11 +1797,13 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %M_CONSTEXPR_INT.ref: %const = name_ref M_CONSTEXPR_INT, constants.%int_1.22e [concrete = constants.%int_1.22e]
+// CHECK:STDOUT:   %M_CONSTEXPR_INT.ref: ref %const = name_ref M_CONSTEXPR_INT, imports.%a.var [concrete = imports.%a.var]
 // CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc11_26.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_26.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_26.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_26.2
+// CHECK:STDOUT:   %.loc11_26.1: ref %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%a.var]
+// CHECK:STDOUT:   %.loc11_26.2: ref %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_26.1 [concrete = constants.%a.var]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc11_26.3: %i32 = acquire_value %.loc11_26.2 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_26.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1813,34 +1815,38 @@ fn F() {
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %pattern_type.bff: type = pattern_type %ptr [concrete]
-// CHECK:STDOUT:   %int_1: %const = int_value 1 [concrete]
+// CHECK:STDOUT:   %pattern_type.a65: type = pattern_type %const [concrete]
+// CHECK:STDOUT:   %addr: %ptr = addr_of imports.%n.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .N = constants.%int_1
+// CHECK:STDOUT:     .N = %n.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.patt: %pattern_type.a65 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt: %pattern_type.a65 = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:   %n.var: ref %const = var %n.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.bff = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %const: type = const_type %i32 [concrete = constants.%const]
 // CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr = value_binding p, @__global_init.%addr [concrete = <error>]
+// CHECK:STDOUT:   %p: %ptr = value_binding p, @__global_init.%addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %N.ref: %const = name_ref N, constants.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %addr: %ptr = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %N.ref: ref %const = name_ref N, imports.%n.var [concrete = imports.%n.var]
+// CHECK:STDOUT:   %addr: %ptr = addr_of %N.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
