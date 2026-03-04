@@ -126,10 +126,9 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
   if (ap_value.isLValue()) {
-    if (result_expr->isGLValue() &&
-        result_expr->EvaluateAsLValue(evaluated_result, sema.getASTContext())) {
+    if (result_expr->isGLValue()) {
       const auto* value_decl =
-          evaluated_result.Val.getLValueBase().get<const clang::ValueDecl*>();
+          ap_value.getLValueBase().get<const clang::ValueDecl*>();
 
       auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
           // TODO: can this const_cast be avoided?
