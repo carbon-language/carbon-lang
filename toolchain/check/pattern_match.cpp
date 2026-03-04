@@ -665,8 +665,7 @@ auto CalleePatternMatch(Context& context,
       !implicit_param_patterns_id.has_value()) {
     return {.call_param_patterns_id = SemIR::InstBlockId::None,
             .call_params_id = SemIR::InstBlockId::None,
-            .param_ranges = {SemIR::CallParamIndex(0), SemIR::CallParamIndex(0),
-                             SemIR::CallParamIndex(0)}};
+            .param_ranges = CallParamIndexRanges::Empty};
   }
 
   MatchContext match(MatchKind::Callee);

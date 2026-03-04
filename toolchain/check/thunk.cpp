@@ -274,14 +274,14 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   for (auto [index, inst_id] : llvm::enumerate(param_pattern_ids)) {
     param_to_index.push_back({inst_id, static_cast<int>(index)});
   }
-  std::sort(param_to_index.begin(), param_to_index.end());
+  llvm::sort(param_to_index);
 
   // Given that `call_arg_ids` is a list of the _`Call`_ arguments for a call to
   // `function_id`, this returns the _syntactic_ argument that was passed for
   // param_pattern_id in that call.
   auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
     // NOLINTNEXTLINE(readability-qualified-auto)
-    auto result = std::lower_bound(param_to_index.begin(), param_to_index.end(),
+    auto result = llvm::lower_bound(param_to_index,
                                    InstWithIndex{param_pattern_id, -1});
     if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
       return call_arg_ids[result->index];
