@@ -75,7 +75,7 @@ auto IsValidBuiltinDeclaration(Context& context,
   auto call_params =
       context.inst_blocks()
           .Get(function.call_params_id)
-          .take_front(function.param_ranges.explicit_end().index);
+          .take_front(function.call_param_ranges.explicit_end().index);
 
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
@@ -178,7 +178,7 @@ auto MakeBuiltinFunction(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
-              .param_ranges = match_results.param_ranges,
+              .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_form.type_component_inst_id,
               .return_form_inst_id = return_form.form_inst_id,
               .return_patterns_id = return_patterns_id,

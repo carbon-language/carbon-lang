@@ -230,7 +230,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
-              .param_ranges = match_results.param_ranges,
+              .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_type_inst_id,
               .return_form_inst_id = return_form_inst_id,
               .return_patterns_id = return_patterns_id,
@@ -281,8 +281,8 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // param_pattern_id in that call.
   auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
     // NOLINTNEXTLINE(readability-qualified-auto)
-    auto result = llvm::lower_bound(param_to_index,
-                                   InstWithIndex{param_pattern_id, -1});
+    auto result =
+        llvm::lower_bound(param_to_index, InstWithIndex{param_pattern_id, -1});
     if (result < param_to_index.end() && result->inst_id == param_pattern_id) {
       return call_arg_ids[result->index];
     } else {

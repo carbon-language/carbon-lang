@@ -558,8 +558,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  FormatParamList(fn.call_params_id, fn.param_ranges.return_begin(),
-                  fn.GetDeclaredReturnForm(*sem_ir_));
+  FormatFunctionSignature(fn.call_params_id,
+                          fn.call_param_ranges.return_begin(),
+                          fn.GetDeclaredReturnForm(*sem_ir_));
 
   if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
     out() << " = \""
@@ -712,9 +713,9 @@ auto Formatter::FormatGenericEnd() -> void {
   out() << '\n';
 }
 
-auto Formatter::FormatParamList(InstBlockId params_id,
-                                SemIR::CallParamIndex return_begin,
-                                InstId return_form_id) -> void {
+auto Formatter::FormatFunctionSignature(InstBlockId params_id,
+                                        SemIR::CallParamIndex return_begin,
+                                        InstId return_form_id) -> void {
   if (!params_id.has_value()) {
     // TODO: This happens for imported functions, for which we don't currently
     // import the call parameters list.
@@ -770,7 +771,9 @@ auto Formatter::FormatParamList(InstBlockId params_id,
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
-  CARBON_CHECK(i == static_cast<int>(params.size()));
+  CARBON_CHECK(i == static_cast<int>(params.size()),
+               "`return_begin` and `return_form_id` imply different numbers of "
+               "return params.");
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
@@ -1312,7 +1315,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   if (auto* callee_function = std::get_if<CalleeFunction>(&callee)) {
     explicit_end = sem_ir_->functions()
                        .Get(callee_function->function_id)
-                       .param_ranges.explicit_end();
+                       .call_param_ranges.explicit_end();
   }
 
   llvm::ListSeparator sep;

@@ -157,14 +157,20 @@ class Formatter {
   // entities.
   auto FormatGenericEnd() -> void;
 
-  // Formats parameters, eliding them completely if they're empty. Wraps input
-  // parameters in parentheses. If `return_form_id` is not None, this also
-  // formats the return form, and the parameters starting at `return_begin`
-  // are interpreted as the output parameters associated with it.
-  auto FormatParamList(
-      InstBlockId params_id,
-      SemIR::CallParamIndex return_begin = SemIR::CallParamIndex::None,
-      SemIR::InstId return_form_id = SemIR::InstId::None) -> void;
+  // Formats `params_id` as a parameter list in parentheses. Does nothing if
+  // `params_id` is None.
+  auto FormatParamList(InstBlockId params_id) -> void {
+    FormatFunctionSignature(params_id, SemIR::CallParamIndex::None,
+                            SemIR::InstId::None);
+  }
+
+  // Formats a function signature with `Call` parameter block `params_id` and
+  // declared return form `return_form`. `return_begin` must be the starting
+  // index of the return-parameter subrange of `params_id` (so if there are
+  // no return parameters it should be equal to the number of parameters).
+  auto FormatFunctionSignature(InstBlockId params_id,
+                               SemIR::CallParamIndex return_begin,
+                               SemIR::InstId return_form_id) -> void;
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void;

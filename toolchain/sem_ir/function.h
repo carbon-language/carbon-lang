@@ -50,46 +50,60 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // The `Call` parameters are divided into three sub-ranges: parameters from
-  // the implicit parameter list, then parameters from the explicit parameter
-  // list, then output parameters that were declared by the function's return
-  // declaration. CallParamIndexRanges represents those sub-ranges in terms of
-  // their end indices, but for convenience and clarity it provides `begin`,
-  // `end`, and `size` accessors for all three ranges, which should be preferred
-  // over directly accessing the fields. The accessors follow STL conventions
-  // but with indices rather than iterators (because they can index into
-  // `call_params`, `call_param_patterns`, and the argument list): all indices
-  // in a range are greater than or equal to `begin`, and less than `end`.
-  struct CallParamIndexRanges {
+  // The index ranges within the `Call` parameters that correspond to the
+  // implicit parameters, explicit parameters, and return.
+  //
+  // Those sub-ranges are represented in terms of their end indices, but for
+  // convenience and clarity it provides `begin`, `end`, and `size` accessors
+  // for all three ranges, which should be preferred over directly accessing the
+  // fields. The accessors follow STL conventions but with indices rather than
+  // iterators (because they can index into `call_params`,
+  // `call_param_patterns`, and the argument list): all indices in a range are
+  // greater than or equal to `begin`, and less than `end`.
+  class CallParamIndexRanges {
+   public:
     // A CallParamIndexRanges representing an entity with no `Call` parameters.
     static const CallParamIndexRanges Empty;
+    constexpr CallParamIndexRanges()
+        : implicit_end_(CallParamIndex(0)),
+          explicit_end_(CallParamIndex(0)),
+          return_end_(CallParamIndex(0)) {}
+
+    // Constructs a CallParamIndexRanges with the given end indices. None
+    // of the arguments can be CallParamIndex::None.
+    constexpr CallParamIndexRanges(CallParamIndex implicit_end,
+                                   CallParamIndex explicit_end,
+                                   CallParamIndex return_end)
+        : implicit_end_(implicit_end),
+          explicit_end_(explicit_end),
+          return_end_(return_end) {
+      CARBON_CHECK(implicit_end_.has_value() && explicit_end_.has_value() &&
+                   return_end_.has_value());
+    }
 
     auto implicit_size() const -> int { return implicit_end_.index; }
-    auto implicit_begin() const -> SemIR::CallParamIndex {
-      return SemIR::CallParamIndex(0);
-    }
-    auto implicit_end() const -> SemIR::CallParamIndex { return implicit_end_; }
+    auto implicit_begin() const -> CallParamIndex { return CallParamIndex(0); }
+    auto implicit_end() const -> CallParamIndex { return implicit_end_; }
 
     auto explicit_size() const -> int {
       return explicit_end_.index - implicit_end_.index;
     }
-    auto explicit_begin() const -> SemIR::CallParamIndex {
-      return implicit_end_;
-    }
-    auto explicit_end() const -> SemIR::CallParamIndex { return explicit_end_; }
+    auto explicit_begin() const -> CallParamIndex { return implicit_end_; }
+    auto explicit_end() const -> CallParamIndex { return explicit_end_; }
 
     auto return_size() const -> int {
       return return_end_.index - explicit_end_.index;
     }
-    auto return_begin() const -> SemIR::CallParamIndex { return explicit_end_; }
-    auto return_end() const -> SemIR::CallParamIndex { return return_end_; }
+    auto return_begin() const -> CallParamIndex { return explicit_end_; }
+    auto return_end() const -> CallParamIndex { return return_end_; }
 
+   private:
     CallParamIndex implicit_end_;
     CallParamIndex explicit_end_;
     CallParamIndex return_end_;
   };
 
-  CallParamIndexRanges param_ranges;
+  CallParamIndexRanges call_param_ranges;
 
   // The inst representing the type component of return_form_inst_id.
   // TODO: remove this in favor of return_form_inst_id.
@@ -151,9 +165,7 @@ struct FunctionFields {
 };
 
 inline constexpr FunctionFields::CallParamIndexRanges
-    FunctionFields::CallParamIndexRanges::Empty = {SemIR::CallParamIndex(0),
-                                                   SemIR::CallParamIndex(0),
-                                                   SemIR::CallParamIndex(0)};
+    FunctionFields::CallParamIndexRanges::Empty;
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
 struct Function : public EntityWithParamsBase,
