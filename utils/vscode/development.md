@@ -51,7 +51,8 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
     3. Next to the extension name, click the "..." and select "Update".
     4. Select the `carbon.vsix` file.
 
--    Build and publish the release to the Open VSX Registry:
+-   Build and publish the release to the Open VSX Registry:
+
 
     1. Follow the [Open VSX documentation for publishing extensions](https://github.com/EclipseFdn/open-vsx.org/wiki/Publishing-Extensions).
 
