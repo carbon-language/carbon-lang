@@ -666,6 +666,23 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// --- constexpr_int_addr.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr int n = 1;
+#define N n
+''';
+
+//@dump-sem-ir-begin
+// CHECK:STDERR: constexpr_int_addr.carbon:[[@LINE+4]]:21: error: cannot take the address of non-reference expression [AddrOfNonRef]
+// CHECK:STDERR: let p: const i32* = &Cpp.N;
+// CHECK:STDERR:                     ^
+// CHECK:STDERR:
+let p: const i32* = &Cpp.N;
+//@dump-sem-ir-end
+
 // --- import_constexpr_no_scope.carbon
 
 library "[[@TEST_NAME]]";
@@ -1785,6 +1802,45 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_26.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_26.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_26.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_26.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- constexpr_int_addr.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.bff: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %int_1: %const = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .N = constants.%int_1
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.bff = value_binding_pattern p [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %const: type = const_type %i32 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %p: %ptr = value_binding p, @__global_init.%addr [concrete = <error>]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %N.ref: %const = name_ref N, constants.%int_1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %addr: %ptr = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
