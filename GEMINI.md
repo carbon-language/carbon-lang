@@ -44,4 +44,3 @@ code conventions to follow.
 
 See the "Toolchain Development" skill for instructions on architecture,
 building, testing, debugging, C++ patterns, and common pitfalls.
-
