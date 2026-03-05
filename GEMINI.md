@@ -24,8 +24,6 @@ assistant, **read this first** to avoid common pitfalls.
 
 -   **Communication**: Be concise, professional, and technical. Use GitHub-style
     markdown.
--   **Planning**: For complex changes, create an `implementation_plan.md` and
-    seek user approval before implementation.
 -   **Verification**: Always run relevant tests and provide a `walkthrough.md`
     with proof of verification.
 -   **Tool usage**: Use `search_web` for any research outside the immediate
