@@ -896,15 +896,19 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-struct Struct {
-  int field;
+struct B {
+  int c;
 };
-Struct s;
-#define m s.field
+struct A {
+  B b;
+};
+A a;
+#define m a.b.c
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+11]]:3: error: semantics TODO: `Macro evaluated to an lvalue with a path: &s.field` [SemanticsTodo]
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+11]]:3: error: semantics TODO: `Macro evaluated to an lvalue with a path: &a.b.c` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
@@ -912,6 +916,34 @@ fn F() {
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_assign_subobject.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  Cpp.m = 2;
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_assign_array.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct Struct {
+  int arr[3];
+};
+Struct s;
+#define m s.arr
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `Macro evaluated to an lvalue with a path: &s.arr` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.m = 2;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
@@ -2012,6 +2044,28 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc10_9.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   assign %m.ref, %.loc10
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_assign_subobject.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .m = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %m.ref: <error> = name_ref m, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   assign %m.ref, <error>
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
