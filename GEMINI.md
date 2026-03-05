@@ -24,9 +24,8 @@ assistant, **read this first** to avoid common pitfalls.
 
 -   **Communication**: Be concise, professional, and technical. Use GitHub-style
     markdown.
--   **Verification**: Always run relevant tests and provide a `walkthrough.md`
-    with proof of verification.
--   **Tool usage**: Use `search_web` for any research outside the immediate
+-   **Verification**: Always run relevant tests.
+-   **Tool usage**: Use web search for any research outside the immediate
     codebase or KIs.
 
 ## Project structure
