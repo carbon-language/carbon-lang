@@ -260,8 +260,6 @@ If you use `jj`, you may find the following configuration snippets (added to
 
 ```toml
 [aliases]
-# Move bookmarks from ancestors up to the current working copy.
-tug = ["bookmark", "move", "--from", "heads(::@- & mutable() & bookmarks())", "--to", "@"]
 # Clean up untracked or abandoned commits.
 abandon-untagged = ["abandon", "all() & ~ancestors(@ | bookmarks() | remote_bookmarks())"]
 
