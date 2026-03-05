@@ -24,6 +24,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 enum class CoreInterface : std::int8_t {
   Copy = 1 << 0,
   Destroy = 1 << 1,
+  IntFitsIn = 1 << 2,
 
   Unknown = -1,
 };

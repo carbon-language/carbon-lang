@@ -14,6 +14,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -283,7 +284,8 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 
   for (auto [core_identifier, core_interface] :
        {std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
-        std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy}}) {
+        std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
+        std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}}) {
     if (interface.name_id ==
         context.core_identifiers().AddNameId(core_identifier)) {
       return core_interface;
@@ -348,16 +350,11 @@ static auto TypeCanDestroy(Context& context,
   }
 }
 
-auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
-                         CoreInterface core_interface,
-                         SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id)
+static auto MakeDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id)
     -> std::optional<SemIR::InstId> {
-  // TODO: Handle more interfaces, particularly copy, move, and conversion.
-  if (core_interface != CoreInterface::Destroy) {
-    return std::nullopt;
-  }
-
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
 
@@ -381,6 +378,95 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
       MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
+}
+
+static auto MakeIntFitsInWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> std::optional<SemIR::InstId> {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+
+  auto args_id = query_specific_interface.specific_id;
+  if (!args_id.has_value()) {
+    return std::nullopt;
+  }
+  auto args_block_id = context.specifics().Get(args_id).args_id;
+  auto args_block = context.inst_blocks().Get(args_block_id);
+  if (args_block.size() != 1) {
+    return std::nullopt;
+  }
+
+  auto dest_const_id = context.constant_values().Get(args_block[0]);
+  if (!dest_const_id.is_constant()) {
+    return std::nullopt;
+  }
+
+  auto src_type_id = GetFacetAsType(context, query_self_const_id);
+  auto dest_type_id = GetFacetAsType(context, dest_const_id);
+
+  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
+  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
+      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+    return std::nullopt;
+  }
+
+  auto src_info = context.types().TryGetIntTypeInfo(src_type_id);
+  auto dest_info = context.types().TryGetIntTypeInfo(dest_type_id);
+
+  if (!src_info || !dest_info) {
+    return std::nullopt;
+  }
+
+  // If the bit width is unknown (e.g., due to symbolic evaluation), we cannot
+  // determine whether it fits yet.
+  if (src_info->bit_width == IntId::None ||
+      dest_info->bit_width == IntId::None) {
+    return std::nullopt;
+  }
+
+  const auto& src_width = context.ints().Get(src_info->bit_width);
+  const auto& dest_width = context.ints().Get(dest_info->bit_width);
+
+  bool fits = false;
+  if (src_info->is_signed && !dest_info->is_signed) {
+    // Signed -> unsigned: would truncate the sign bit.
+    fits = false;
+  } else if (src_info->is_signed == dest_info->is_signed) {
+    // Signed -> signed or unsigned -> unsigned: allow widening or preserving
+    // width.
+    fits = src_width.sle(dest_width);
+  } else {
+    // Unsigned -> signed: strict widening required.
+    fits = src_width.slt(dest_width);
+  }
+
+  if (!fits) {
+    return std::nullopt;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {});
+}
+
+auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
+                         CoreInterface core_interface,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> std::optional<SemIR::InstId> {
+  switch (core_interface) {
+    case CoreInterface::Destroy:
+      return MakeDestroyWitness(context, loc_id, query_self_const_id,
+                                query_specific_interface_id);
+    case CoreInterface::IntFitsIn:
+      return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
+                                  query_specific_interface_id);
+    case CoreInterface::Copy:
+    case CoreInterface::Unknown:
+      // TODO: Handle more interfaces, particularly copy, move, and conversion.
+      return std::nullopt;
+  }
 }
 
 }  // namespace Carbon::Check

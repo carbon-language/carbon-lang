@@ -42,7 +42,26 @@ final impl forall [From:! IntLiteral()] Int(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Allow as an implicit conversion if N > M.
+// Work around the inability to put a `where` clause on a generic parameter of
+// type `IntLiteral`.
+// TODO: Remove this once possible.
+private interface AnyInt {
+  let Width:! IntLiteral();
+  fn AsInt[self: Self]() -> Int(Width);
+}
+
+impl forall [N:! IntLiteral()] Int(N) as AnyInt where .Width = N {
+  fn AsInt[self: Self]() -> Self { return self; }
+}
+
+impl forall [To:! IntLiteral(), From:! AnyInt & IntFitsIn(Int(To))]
+    From as ImplicitAs(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) {
+    fn Impl(src: Int(From.Width)) -> Int(To) = "int.convert";
+    return Impl(self.AsInt());
+  }
+}
+
 final impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(Int(To)) {
   fn Convert[self: Self]() -> Int(To) = "int.convert";
 }
