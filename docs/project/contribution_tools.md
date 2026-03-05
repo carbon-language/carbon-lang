@@ -308,6 +308,7 @@ ls
 # VCS commands.
 git diff
 git log
+git show
 git status
 ```
 
