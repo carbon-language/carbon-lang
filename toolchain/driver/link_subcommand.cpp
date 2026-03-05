@@ -117,6 +117,11 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
+  // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
+  // due to many unfixed issues.
+  if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
+    return {.success = false};
+  }
   ErrorOr<bool> run_result =
       driver_env.prebuilt_runtimes
           ? runner.RunWithPrebuiltRuntimes(clang_args,
