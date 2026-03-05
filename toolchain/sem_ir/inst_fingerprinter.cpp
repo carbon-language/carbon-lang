@@ -483,7 +483,7 @@ struct Worklist {
     const auto& observe = sem_ir->observes().Get(observe_id);
     Add(observe.operations_id);
     if (observe.IsInFunction()) {
-      Add(sem_ir->constant_values().Get(observe.parent_scope_inst_id));
+      Add(sem_ir->constant_values().Get(observe.parent_function_inst_id));
     } else {
       Add(observe.parent_scope_id);
     }

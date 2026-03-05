@@ -101,14 +101,16 @@ auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
     return true;
   }
 
+  auto parent_scope_id = context.scope_stack().PeekNameScopeId();
   auto observe_decl = SemIR::ObserveDecl{// To be filled in after.
                                          .observe_id = SemIR::ObserveId::None};
   auto decl_id = AddPlaceholderInst(context, node_id, observe_decl);
   observe_decl.observe_id = context.observes().Add(
       {.decl_id = decl_id,
        .operations_id = operations_id,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .parent_scope_inst_id = scope_inst_id});
+       .parent_scope_id = parent_scope_id,
+       .parent_function_inst_id =
+           parent_scope_id.has_value() ? SemIR::InstId::None : scope_inst_id});
   ReplaceInstBeforeConstantUse(context, decl_id, observe_decl);
   context.observe_stack().AppendToTop(observe_decl.observe_id);
   return true;

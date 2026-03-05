@@ -23,19 +23,22 @@ struct Observe : Printable<Observe> {
   // The block which contains the `ObserveEquivalent` and `ObserveImpls`
   // operators.
   InstBlockId operations_id;
-  // The interface which contains the `observe` declaration.
+  // The scope which contains the `observe` declaration.
   NameScopeId parent_scope_id;
   // The function which contains the `observe` declaration.
-  InstId parent_scope_inst_id;
+  InstId parent_function_inst_id;
 
   auto IsInFunction() const -> bool {
-    return !parent_scope_id.has_value() && parent_scope_inst_id.has_value();
+    CARBON_CHECK(parent_scope_id.has_value() !=
+                 parent_function_inst_id.has_value());
+    return !parent_scope_id.has_value() && parent_function_inst_id.has_value();
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << '{';
-    out << "operations_id: " << operations_id << "decl_id: " << decl_id
-        << ", parent_scope: " << parent_scope_id;
+    out << "decl_id: " << decl_id << ", operations_id: " << operations_id
+        << ", parent_scope: " << parent_scope_id
+        << ", parent_function_inst_id: " << parent_function_inst_id;
     out << '}';
   }
 };
