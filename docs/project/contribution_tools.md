@@ -298,7 +298,8 @@ clang-format
 pre-commit run
 ./toolchain/autoupdate_testdata.py
 
-# Shell commands.
+# Shell commands. Note that these allow reading arbitrary files on your local
+# filesystem.
 cat
 grep
 head
