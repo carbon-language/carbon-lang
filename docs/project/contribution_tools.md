@@ -176,6 +176,10 @@ These tools are essential for work on Carbon.
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
     -   [pre-commit](https://pre-commit.com): Validates and cleans up git
         commits.
+    -   `autoupdate_testdata.py`: Updates expected output for tests.
+        -   Usage: `./toolchain/autoupdate_testdata.py [files...]`
+        -   This is essential when changes affect compiler output (diagnostics,
+            SemIR, etc.).
 
 #### Running pre-commit
 
