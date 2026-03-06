@@ -150,13 +150,19 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
       if (qual_type->isArrayType()) {
         context.TODO(loc_id, "Macro expanded to array type");
       } else {
-        const auto* field_decl =
+        const auto* decl =
             cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+
+        const auto* field_decl = dyn_cast<clang::FieldDecl>(decl);
+        if (!field_decl) {
+          context.TODO(loc_id, "Macro expanded to a base class subobject");
+          return SemIR::ErrorInst::InstId;
+        }
 
         auto field_inst_id =
             ImportCppDecl(context, loc_id,
                           SemIR::ClangDeclKey::ForNonFunctionDecl(
-                              const_cast<clang::Decl*>(field_decl)));
+                              const_cast<clang::FieldDecl*>(field_decl)));
 
         if (field_inst_id == SemIR::ErrorInst::InstId) {
           context.TODO(loc_id,
