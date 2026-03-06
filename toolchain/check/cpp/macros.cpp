@@ -175,6 +175,7 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
         const SemIR::FieldDecl& field_decl_inst =
             context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
 
+        qual_type = field_decl->getType();
         inst_id = PerformMemberAccess(context, loc_id, inst_id,
                                       field_decl_inst.name_id);
       }
