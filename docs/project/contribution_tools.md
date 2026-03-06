@@ -297,7 +297,7 @@ pre-commit run
 ./toolchain/autoupdate_testdata.py
 
 # Shell commands. Note that these allow reading arbitrary files on your local
-# filesystem.
+# file system.
 cat
 grep
 head
