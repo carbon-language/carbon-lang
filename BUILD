@@ -7,3 +7,9 @@ filegroup(
     srcs = [".clang-tidy"],
     visibility = ["//visibility:public"],
 )
+
+# `bazel run //:generate_compile_commands` to produce `compile_commands.json`.
+alias(
+    name = "generate_compile_commands",
+    actual = "@wolfd_bazel_compile_commands//:generate_compile_commands",
+)
