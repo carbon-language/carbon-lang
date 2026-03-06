@@ -121,7 +121,6 @@ auto RunClangCC1(const InstallPaths& installation,
   // engine. If we've already hit an error, we can exit early once that's done.
   diag_buffer.FlushDiagnostics(clang_instance->getDiagnostics());
   if (!success) {
-    clang_instance->getDiagnosticClient().finish();
     return EXIT_FAILURE;
   }
 
