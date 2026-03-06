@@ -946,6 +946,22 @@ fn F() {
   Cpp.m = 2;
 }
 
+// --- fail_todo_assign_base_class_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct A {
+  int n;
+};
+struct B : A {} b;
+#define m b.n
+''';
+
+fn F() {
+  Cpp.m = 2;
+}
+
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
