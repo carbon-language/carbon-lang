@@ -300,8 +300,7 @@ auto ConvertArgsToTemplateArgs(Context& context,
     llvm::ArrayRef<SemIR::InstId> args_for_param =
         param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
                                               : arg_ids.consume_front();
-    unsigned argument_pack_index = 0;
-    for (auto arg_id : args_for_param) {
+    for (auto [argument_pack_index, arg_id] : llvm::enumerate(args_for_param)) {
       if (auto arg = ConvertArgToTemplateArg(context, template_decl, param_decl,
                                              arg_id, &template_args,
                                              argument_pack_index, diagnose)) {
