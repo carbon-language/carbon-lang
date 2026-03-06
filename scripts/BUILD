@@ -16,12 +16,12 @@ cc_library(
     name = "deps_for_clangd_tidy",
     srcs = ["deps_for_clangd_tidy.cpp"],
     deps = [
-        # `@boost_unordered` uses `strip_prefix`, which results in
+        # `@boost.unordered` uses `strip_prefix`, which results in
         # `_virtual_includes` being part of the `compile_commands.json`. To
         # support tools like `clangd-tidy`, this is intended to generate that directory.
         #
-        # For example:
-        # bazel-out/<mode>/bin/external/+_repo_rules+boost_unordered/_virtual_includes/boost_unordered
-        "@boost_unordered",
+        # `@boost.unordered` uses `strip_prefix`, which results in
+        # bazel-out/<mode>/bin/external/+_repo_rules+boost.unordered/_virtual_includes/boost.unordered
+        "@boost.unordered",
     ],
 )

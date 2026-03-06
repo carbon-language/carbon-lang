@@ -59,10 +59,9 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
         ":gtest",
         use_system_include=True,
     ),
-    # All of the `boost_unordered` headers are in a single rule.
-    "@boost_unordered": ExternalRepo(
+    "@boost.unordered": ExternalRepo(
         lambda x: re.sub("^(.*:include)/", "", x),
-        ":boost_unordered",
+        ":boost.unordered",
         use_system_include=True,
     ),
 }
