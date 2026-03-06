@@ -41,11 +41,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   **Iteration**: Prefer iterative algorithms over recursive ones to prevent
     stack exhaustion on complex codebases.
 
-## Building and testing
-
-AI assistants should use `bazelisk` instead of `bazel` for build and test
-commands, because some AI editors won't see `bazel` aliases.
-
 ### Essential commands
 
 -   **Test everything**: `bazelisk test //...`
@@ -65,20 +60,6 @@ of expected output.** Use the script:
 ./toolchain/autoupdate_testdata.py
 # Or for a specific file:
 ./toolchain/autoupdate_testdata.py toolchain/check/testdata/my_test.carbon
-```
-
-### Pre-commit
-
-Running `pre-commit` is mandatory. To run it on all files:
-
-```bash
-pre-commit run -a
-```
-
-To validate a specific list of files:
-
-```bash
-pre-commit run --files <files>
 ```
 
 ## Debugging and diagnostics
