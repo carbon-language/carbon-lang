@@ -115,12 +115,22 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
     const auto* value_decl =
         ap_value.getLValueBase().get<const clang::ValueDecl*>();
 
+    if (!ap_value.hasLValuePath()) {
+      context.TODO(loc_id, "Macro expanded to lvalue with no path");
+      return SemIR::ErrorInst::InstId;
+    }
+
+    if (ap_value.isLValueOnePastTheEnd()) {
+      context.TODO(loc_id, "Macro expanded to a one-past-the-end lvalue");
+      return SemIR::ErrorInst::InstId;
+    }
+
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
         // TODO: can this const_cast be avoided?
         const_cast<clang::ValueDecl*>(value_decl));
 
     auto inst_id = ImportCppDecl(context, loc_id, key);
-    if (!ap_value.hasLValuePath() || ap_value.getLValuePath().size() == 0) {
+    if (ap_value.getLValuePath().size() == 0) {
       return inst_id;
     }
 
