@@ -18,30 +18,36 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
         with:
-          disable-sudo-and-containers: true
           egress-policy: block
           # When adding endpoints, see README.md.
           # prettier-ignore
           allowed-endpoints: >
-            *.dl.sourceforge.net:443
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
             api.github.com:443
+            api.ipify.org:443
             bcr.bazel.build:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
             github.com:443
+            go.dev:443
             mirror.bazel.build:443
+            mirrors.kernel.org:443
             nodejs.org:443
+            oauth2.googleapis.com:443
             objects.githubusercontent.com:443
             pypi.org:443
             registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
             releases.bazel.build:443
             storage.googleapis.com:443
-            sourceforge.net:443
+            www.googleapis.com:443
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
 
       # Ensure LLVM is set up consistently.
       - uses: ./.github/actions/build-setup-common
@@ -63,7 +69,7 @@ jobs:
           mkdir -p pre-commit-output
           git diff > pre-commit-output/diff
           cp $GITHUB_EVENT_PATH pre-commit-output/event
-      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: failure()
         with:
           name: pre-commit output

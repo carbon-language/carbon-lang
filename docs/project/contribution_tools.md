@@ -161,7 +161,7 @@ These tools are essential for work on Carbon.
         -   To upgrade versions of `brew` packages, it will be necessary to
             periodically run `brew upgrade`.
     -   [Python](https://python.org)
-        -   Carbon requires Python 3.9 or newer.
+        -   Carbon requires Python 3.10 or newer.
         -   To upgrade versions of pip-installed packages, it will be necessary
             to periodically run `pipx list --outdated`, then
             `pipx install -U <package>` to upgrade desired packages.
