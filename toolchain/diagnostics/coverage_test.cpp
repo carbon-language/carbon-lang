@@ -69,6 +69,9 @@ constexpr Kind UntestedKinds[] = {
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
     Kind::LanguageServerDiagnosticInWrongFile,
+
+    // TODO: Figure out how to test.
+    Kind::IncompleteTypeInMacroExpansion,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
