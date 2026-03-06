@@ -324,7 +324,7 @@
         "envVariables": {},
         "generatedRepoSpecs": {
           "llvm-project": {
-            "repoRuleId": "@@+_repo_rules+llvm-raw//utils/bazel:configure.bzl%llvm_configure",
+            "repoRuleId": "@@llvm-raw+//utils/bazel:configure.bzl%llvm_configure",
             "attributes": {
               "targets": [
                 "AArch64",
@@ -337,7 +337,7 @@
           [
             "",
             "llvm-raw",
-            "+_repo_rules+llvm-raw"
+            "llvm-raw+"
           ]
         ]
       }
