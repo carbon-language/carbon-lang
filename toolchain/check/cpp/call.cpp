@@ -184,8 +184,8 @@ static auto ConvertArgToTemplateArg(
 
       mltal.addOuterRetainedLevels(non_type->getDepth());
       if (const auto* pet = param_type->getAs<clang::PackExpansionType>()) {
-        clang::Sema::ArgPackSubstIndexRAII SubstIndex(context.clang_sema(),
-                                                      argument_pack_index);
+        clang::Sema::ArgPackSubstIndexRAII subst_index(context.clang_sema(),
+                                                       argument_pack_index);
         param_type = context.clang_sema().SubstType(pet->getPattern(), mltal,
                                                     non_type->getLocation(),
                                                     non_type->getDeclName());
