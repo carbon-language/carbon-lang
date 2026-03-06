@@ -177,7 +177,7 @@ fn F(ref x:? Form);
 
 // --- fail_form_within_var.carbon
 
-// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: Found `:?` pattern inside `var` pattern [NonRegularBindingInVarDecl]
+// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: found `:?` pattern inside `var` pattern [NonRegularBindingInVarDecl]
 // CHECK:STDERR: fn FormInVar(var x:? Form);
 // CHECK:STDERR:                          ^
 // CHECK:STDERR:
