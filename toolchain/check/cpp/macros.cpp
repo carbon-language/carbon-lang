@@ -145,28 +145,33 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
 
-    // TODO: support array indexing.
+    clang::QualType qual_type = ap_value.getLValueBase().getType();
     for (const auto& entry : ap_value.getLValuePath()) {
-      const auto* field_decl =
-          cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+      if (qual_type->isArrayType()) {
+        context.TODO(loc_id, "Macro expanded to array type");
+      } else {
+        const auto* field_decl =
+            cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
 
-      auto field_inst_id =
-          ImportCppDecl(context, loc_id,
-                        SemIR::ClangDeclKey::ForNonFunctionDecl(
-                            const_cast<clang::Decl*>(field_decl)));
+        auto field_inst_id =
+            ImportCppDecl(context, loc_id,
+                          SemIR::ClangDeclKey::ForNonFunctionDecl(
+                              const_cast<clang::Decl*>(field_decl)));
 
-      if (field_inst_id == SemIR::ErrorInst::InstId) {
-        context.TODO(loc_id, "Unsupported field in macro expansion: " +
-                                 ap_value.getAsString(context.ast_context(),
-                                                      result_expr->getType()));
-        return SemIR::ErrorInst::InstId;
+        if (field_inst_id == SemIR::ErrorInst::InstId) {
+          context.TODO(loc_id,
+                       "Unsupported field in macro expansion: " +
+                           ap_value.getAsString(context.ast_context(),
+                                                result_expr->getType()));
+          return SemIR::ErrorInst::InstId;
+        }
+
+        const SemIR::FieldDecl& field_decl_inst =
+            context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+
+        inst_id = PerformMemberAccess(context, loc_id, inst_id,
+                                      field_decl_inst.name_id);
       }
-
-      const SemIR::FieldDecl& field_decl_inst =
-          context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
-
-      inst_id = PerformMemberAccess(context, loc_id, inst_id,
-                                    field_decl_inst.name_id);
     }
 
     return inst_id;
