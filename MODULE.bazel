@@ -19,6 +19,9 @@ of:
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; create a PR with those changes in order to include
         the host platform.
+
+For updates, run `scripts/query_module_versions.py` to list the latest package
+versions.
 """
 
 module(name = "carbon")
@@ -28,16 +31,16 @@ http_archive = use_repo_rule(
     "http_archive",
 )
 
-bazel_dep(name = "abseil-cpp", version = "20260107.0")
+bazel_dep(name = "abseil-cpp", version = "20260107.1")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "google_benchmark", version = "1.9.5")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
-bazel_dep(name = "tree-sitter-bazel", version = "0.26.3.bcr.1")
+bazel_dep(name = "tree-sitter-bazel", version = "0.26.5")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.
@@ -82,6 +85,7 @@ git_override(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
+# TODO: Switch to boost.unordered in BCR.
 boost_unordered_version = "1.88.0"
 
 http_archive(
@@ -94,7 +98,7 @@ http_archive(
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "protobuf", version = "34.0-rc1", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
 bazel_dep(name = "zlib-ng", version = "2.0.7", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
@@ -135,7 +139,7 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "1.8.3")
+bazel_dep(name = "rules_python", version = "1.9.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
@@ -149,7 +153,7 @@ use_repo(python, "python_versions")
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.36.0",
+    version = "0.37.1",
     dev_dependency = True,
 )
 
