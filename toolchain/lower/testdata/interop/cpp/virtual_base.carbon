@@ -112,8 +112,8 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: define dso_local void @_ZN1DC1Ev.carbon_thunk(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   call void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -122,34 +122,34 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %this) unnamed_addr #1 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %0 = getelementptr inbounds i8, ptr %this1, i64 32
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4) %0)
 // CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds (ptr, ptr @_ZTT1D, i64 1))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds (ptr, ptr @_ZTT1D, i64 2))
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !15
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !14
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !15
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !14
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMake.Main() #2 !dbg !17 {
+// CHECK:STDOUT: define void @_CMake.Main() #2 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !20
-// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %_.var), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !19
+// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %_.var), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #2 !dbg !23 {
+// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #2 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !30
-// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !30
-// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !31
+// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !29
+// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !29
+// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -174,39 +174,38 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !7 = !DIFile(filename: "use_diamond.carbon", directory: "")
-// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 _ZTS1D", !14, i64 0}
-// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !15 = !{!16, !16, i64 0}
-// CHECK:STDOUT: !16 = !{!"vtable pointer", !11, i64 0}
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !7, line: 6, type: !18, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
-// CHECK:STDOUT: !19 = !{null}
-// CHECK:STDOUT: !20 = !DILocation(line: 11, column: 3, scope: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 11, column: 18, scope: !17)
-// CHECK:STDOUT: !22 = !DILocation(line: 6, column: 1, scope: !17)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !7, line: 14, type: !24, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !28)
-// CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !25 = !{!26, !27}
-// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !28 = !{!29}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !23, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 10, scope: !23)
-// CHECK:STDOUT: !31 = !DILocation(line: 16, column: 3, scope: !23)
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "use_diamond.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"p1 _ZTS1D", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !14 = !{!15, !15, i64 0}
+// CHECK:STDOUT: !15 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !6, line: 6, type: !17, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !18 = !{null}
+// CHECK:STDOUT: !19 = !DILocation(line: 11, column: 3, scope: !16)
+// CHECK:STDOUT: !20 = !DILocation(line: 11, column: 18, scope: !16)
+// CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !16)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !6, line: 14, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !24 = !{!25, !26}
+// CHECK:STDOUT: !25 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !27 = !{!28}
+// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !22, type: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 10, scope: !22)
+// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 3, scope: !22)
