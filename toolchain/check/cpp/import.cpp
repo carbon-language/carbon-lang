@@ -1227,10 +1227,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl)
     -> Context::FormExpr {
   auto make_init_form = [&](SemIR::TypeInstId type_component_inst_id) {
-    SemIR::InitForm inst = {
-        .type_id = SemIR::FormType::TypeId,
-        .type_component_inst_id = type_component_inst_id,
-        .index = context.full_pattern_stack().NextCallParamIndex()};
+    SemIR::InitForm inst = {.type_id = SemIR::FormType::TypeId,
+                            .type_component_inst_id = type_component_inst_id};
     return context.constant_values().GetInstId(TryEvalInst(context, inst));
   };
   auto make_ref_form = [&](SemIR::TypeInstId type_component_inst_id) {
@@ -1351,6 +1349,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId return_patterns_id;
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
+  SemIR::Function::CallParamIndexRanges param_ranges;
 };
 }  // namespace
 
@@ -1387,7 +1386,7 @@ static auto CreateFunctionSignatureInsts(
   }
   pop.reset();
 
-  auto [call_param_patterns_id, call_params_id] =
+  auto match_results =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
                          return_patterns_id);
 
@@ -1396,8 +1395,9 @@ static auto CreateFunctionSignatureInsts(
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
            .return_patterns_id = return_patterns_id,
-           .call_param_patterns_id = call_param_patterns_id,
-           .call_params_id = call_params_id}};
+           .call_param_patterns_id = match_results.call_param_patterns_id,
+           .call_params_id = match_results.call_params_id,
+           .param_ranges = match_results.param_ranges}};
 }
 
 // Returns the Carbon function name for the given function.
@@ -1495,6 +1495,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
+              .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,
               .return_patterns_id = function_params_insts->return_patterns_id,

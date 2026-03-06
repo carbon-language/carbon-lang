@@ -165,9 +165,6 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
 
   const auto& param_pattern_kind =
       is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
-  // Allocate a dummy index to preserve index of subsequent `InitForm`s.
-  // TODO: Remove this once we remove `InitForm::index`.
-  context.full_pattern_stack().NextCallParamIndex();
   pattern_id = AddPatternInst(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(

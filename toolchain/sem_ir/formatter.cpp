@@ -559,7 +559,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  FormatParamList(fn.call_params_id, fn.GetDeclaredReturnForm(*sem_ir_));
+  FormatFunctionSignature(fn.call_params_id,
+                          fn.call_param_ranges.return_begin(),
+                          fn.GetDeclaredReturnForm(*sem_ir_));
 
   if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
     out() << " = \""
@@ -712,28 +714,23 @@ auto Formatter::FormatGenericEnd() -> void {
   out() << '\n';
 }
 
-auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
-    -> void {
+auto Formatter::FormatFunctionSignature(InstBlockId params_id,
+                                        SemIR::CallParamIndex return_begin,
+                                        InstId return_form_id) -> void {
   if (!params_id.has_value()) {
     // TODO: This happens for imported functions, for which we don't currently
     // import the call parameters list.
     return;
   }
 
-  int return_param_index = -1;
-  if (return_form_id.has_value()) {
-    if (auto init_form = sem_ir_->insts().TryGetAs<InitForm>(return_form_id)) {
-      return_param_index = init_form->index.index;
-    }
-  }
-
   auto params = sem_ir_->inst_blocks().Get(params_id);
 
   out() << "(";
   llvm::ListSeparator sep;
-  for (auto [i, param_id] : llvm::enumerate(params)) {
-    if (static_cast<int>(i) == return_param_index) {
-      continue;
+  int i = 0;
+  for (auto param_id : params) {
+    if (return_begin.has_value() && i >= return_begin.index) {
+      break;
     }
 
     out() << sep;
@@ -745,6 +742,7 @@ auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
       out() << "<unexpected out> ";
     }
     FormatNameAndForm(param_id, sem_ir_->insts().Get(param_id));
+    ++i;
   }
 
   out() << ")";
@@ -753,12 +751,12 @@ auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
     out() << " -> ";
     auto return_form = sem_ir_->insts().Get(return_form_id);
     CARBON_KIND_SWITCH(return_form) {
-      case CARBON_KIND(InitForm init_form): {
-        auto param_id = params[init_form.index.index];
+      case CARBON_KIND(InitForm _): {
         out() << "out ";
-        FormatName(param_id);
+        FormatName(params[i]);
         out() << ": ";
-        FormatTypeOfInst(param_id);
+        FormatTypeOfInst(params[i]);
+        ++i;
         break;
       }
       case CARBON_KIND(RefForm ref_form): {
@@ -774,6 +772,9 @@ auto Formatter::FormatParamList(InstBlockId params_id, InstId return_form_id)
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
+  CARBON_CHECK(i == static_cast<int>(params.size()),
+               "`return_begin` and `return_form_id` imply different numbers of "
+               "return params.");
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
@@ -1302,31 +1303,21 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  // If there's a return argument, don't print it here, because it's printed on
-  // the LHS.
-  int return_arg_index = -1;
+  // If there are return arguments, don't print them here, because it's printed
+  // on the LHS.
+  auto explicit_end = SemIR::CallParamIndex::None;
   auto callee = GetCallee(*sem_ir_, inst.callee_id);
   if (auto* callee_function = std::get_if<CalleeFunction>(&callee)) {
-    auto function = sem_ir_->functions().Get(callee_function->function_id);
-    auto return_form_id = function.GetDeclaredReturnForm(
-        *sem_ir_, callee_function->resolved_specific_id);
-    if (return_form_id.has_value()) {
-      if (auto init_form =
-              sem_ir_->insts().TryGetAs<InitForm>(return_form_id)) {
-        auto type_id = sem_ir_->types().GetTypeIdForTypeInstId(
-            init_form->type_component_inst_id);
-        if (InitRepr::ForType(*sem_ir_, type_id).MightBeInPlace()) {
-          return_arg_index = init_form->index.index;
-        }
-      }
-    }
+    explicit_end = sem_ir_->functions()
+                       .Get(callee_function->function_id)
+                       .call_param_ranges.explicit_end();
   }
 
   llvm::ListSeparator sep;
   out() << '(';
   for (auto [i, inst_id] : llvm::enumerate(args)) {
-    if (static_cast<int>(i) == return_arg_index) {
-      continue;
+    if (explicit_end.has_value() && static_cast<int>(i) >= explicit_end.index) {
+      break;
     }
     out() << sep;
     FormatArg(inst_id);

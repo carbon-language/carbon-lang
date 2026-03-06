@@ -42,7 +42,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F, @Inner(%F) [symbolic]
 // CHECK:STDOUT:   %Inner.F: %Inner.F.type = struct_value () [symbolic]
@@ -108,7 +108,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.loc13_10: type = symbolic_binding F, 0 [symbolic = @Class.%F.loc5_13.1 (constants.%F)]
 // CHECK:STDOUT:     %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13_33: Core.Form = init_form %i32.loc13, call_param0 [concrete = constants.%.437]
+// CHECK:STDOUT:     %.loc13_33: Core.Form = init_form %i32.loc13 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
@@ -145,7 +145,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc8_15: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
+// CHECK:STDOUT:       %.loc8_15: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:       %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -154,7 +154,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc9: Core.Form = init_form %i32.loc9, call_param0 [concrete = constants.%.437]
+// CHECK:STDOUT:       %.loc9: Core.Form = init_form %i32.loc9 [concrete = constants.%.ff5]
 // CHECK:STDOUT:       %return.param.loc9: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return.loc9: ref %i32 = return_slot %return.param.loc9
 // CHECK:STDOUT:     }

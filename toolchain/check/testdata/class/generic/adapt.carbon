@@ -152,7 +152,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %pattern_type.bf2: type = pattern_type %Adapter [concrete]
-// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
@@ -206,7 +206,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
@@ -309,7 +309,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [concrete]
 // CHECK:STDOUT:   %C.elem.fd3: type = unbound_element_type %C.829, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.bf2: type = pattern_type %Adapter [concrete]
-// CHECK:STDOUT:   %.bb0: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.4ca: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [concrete]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [concrete]
@@ -365,7 +365,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.501 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32.loc6, call_param1 [concrete = constants.%.bb0]
+// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32.loc6 [concrete = constants.%.4ca]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
@@ -460,7 +460,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %pattern_type.bf2: type = pattern_type %Adapter [concrete]
-// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
@@ -504,7 +504,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
@@ -703,7 +703,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [concrete]
 // CHECK:STDOUT:   %C.elem.fd3: type = unbound_element_type %C.829, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.bf2: type = pattern_type %Adapter [concrete]
-// CHECK:STDOUT:   %.bb0: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.4ca: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [concrete]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [concrete]
@@ -748,7 +748,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.501 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32, call_param1 [concrete = constants.%.bb0]
+// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.4ca]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
@@ -828,7 +828,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Adapter.b1e: type = class_type @Adapter, @Adapter(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.1fb: type = pattern_type %Adapter.b1e [concrete]
-// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert [concrete]
 // CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [concrete]
@@ -883,7 +883,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc8_32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc8_32: Core.Form = init_form %i32.loc8_32, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc8_32: Core.Form = init_form %i32.loc8_32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %Adapter.b1e = value_param call_param0
 // CHECK:STDOUT:     %.loc8_26: type = splice_block %Adapter [concrete = constants.%Adapter.b1e] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter.generic]
@@ -956,7 +956,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Adapter.b1e: type = class_type @Adapter, @Adapter(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.1fb: type = pattern_type %Adapter.b1e [concrete]
-// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImportedConvert.type: type = fn_type @ImportedConvert [concrete]
 // CHECK:STDOUT:   %ImportedConvert: %ImportedConvert.type = struct_value () [concrete]
@@ -1020,7 +1020,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_40: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_40: Core.Form = init_form %i32.loc6_40, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc6_40: Core.Form = init_form %i32.loc6_40 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %Adapter.b1e = value_param call_param0
 // CHECK:STDOUT:     %.loc6_34: type = splice_block %Adapter [concrete = constants.%Adapter.b1e] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter.generic]
@@ -1039,7 +1039,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc14_43: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc14_43: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %Adapter.8a3 = value_param call_param0
 // CHECK:STDOUT:     %.loc14_37: type = splice_block %Adapter [concrete = constants.%Adapter.8a3] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter.generic]

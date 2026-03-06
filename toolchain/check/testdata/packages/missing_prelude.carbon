@@ -181,7 +181,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %.bfc: Core.Form = init_form %X, call_param0 [concrete]
+// CHECK:STDOUT:   %.054: Core.Form = init_form %X [concrete]
 // CHECK:STDOUT:   %pattern_type.1f7: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
@@ -193,7 +193,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.9fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.8de: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.3cf: Core.Form = init_form %T, call_param1 [symbolic]
+// CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T, %Self) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert: %ImplicitAs.WithSelf.Convert.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
@@ -214,7 +214,7 @@ let n: type = i32;
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc6_35: Core.Form = init_form %X.ref, call_param0 [concrete = constants.%.bfc]
+// CHECK:STDOUT:     %.loc6_35: Core.Form = init_form %X.ref [concrete = constants.%.054]
 // CHECK:STDOUT:     %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc6_12.2: type = type_literal type [concrete = type]
@@ -258,7 +258,7 @@ let n: type = i32;
 // CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_28 (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_22.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc9_31.2: Core.Form = init_form %T.ref, call_param1 [symbolic = %.loc9_31.1 (constants.%.3cf)]
+// CHECK:STDOUT:       %.loc9_31.2: Core.Form = init_form %T.ref [symbolic = %.loc9_31.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc9_20.1: type = splice_block %.loc9_20.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:         %.loc9_20.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = specific_constant @ImplicitAs.%Self.loc8_32.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
@@ -313,7 +313,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.9fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc9_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc9_14 (constants.%pattern_type.8de)]
-// CHECK:STDOUT:   %.loc9_31.1: Core.Form = init_form %T, call_param1 [symbolic = %.loc9_31.1 (constants.%.3cf)]
+// CHECK:STDOUT:   %.loc9_31.1: Core.Form = init_form %T [symbolic = %.loc9_31.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc9_28: type = pattern_type %T [symbolic = %pattern_type.loc9_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%T (%T);
@@ -337,7 +337,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.8de
-// CHECK:STDOUT:   %.loc9_31.1 => constants.%.3cf
+// CHECK:STDOUT:   %.loc9_31.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,7 +365,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.1de: %ImplicitAs.WithSelf.Convert.type.b3a = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.738 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e9a: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.3cf: Core.Form = init_form %T, call_param1 [symbolic]
+// CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.151: type = facet_type <@ImplicitAs, @ImplicitAs(type)> [concrete]
 // CHECK:STDOUT:   %Self.a80: %ImplicitAs.type.151 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.5f1: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %Self.738) [symbolic]
@@ -462,7 +462,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.031) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.738)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.e9a)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %T, call_param1 [symbolic = %.1 (constants.%.3cf)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -504,7 +504,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self => constants.%Self.738
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.e9a
-// CHECK:STDOUT:   %.1 => constants.%.3cf
+// CHECK:STDOUT:   %.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

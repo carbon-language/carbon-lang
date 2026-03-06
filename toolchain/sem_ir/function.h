@@ -52,6 +52,61 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
+  // The index ranges within the `Call` parameters that correspond to the
+  // implicit parameters, explicit parameters, and return.
+  //
+  // Those sub-ranges are represented in terms of their end indices, but for
+  // convenience and clarity it provides `begin`, `end`, and `size` accessors
+  // for all three ranges, which should be preferred over directly accessing the
+  // fields. The accessors follow STL conventions but with indices rather than
+  // iterators (because they can index into `call_params`,
+  // `call_param_patterns`, and the argument list): all indices in a range are
+  // greater than or equal to `begin`, and less than `end`.
+  class CallParamIndexRanges {
+   public:
+    // A CallParamIndexRanges representing an entity with no `Call` parameters.
+    static const CallParamIndexRanges Empty;
+    constexpr CallParamIndexRanges()
+        : implicit_end_(CallParamIndex(0)),
+          explicit_end_(CallParamIndex(0)),
+          return_end_(CallParamIndex(0)) {}
+
+    // Constructs a CallParamIndexRanges with the given end indices. None
+    // of the arguments can be CallParamIndex::None.
+    constexpr CallParamIndexRanges(CallParamIndex implicit_end,
+                                   CallParamIndex explicit_end,
+                                   CallParamIndex return_end)
+        : implicit_end_(implicit_end),
+          explicit_end_(explicit_end),
+          return_end_(return_end) {
+      CARBON_CHECK(implicit_end_.has_value() && explicit_end_.has_value() &&
+                   return_end_.has_value());
+    }
+
+    auto implicit_size() const -> int { return implicit_end_.index; }
+    auto implicit_begin() const -> CallParamIndex { return CallParamIndex(0); }
+    auto implicit_end() const -> CallParamIndex { return implicit_end_; }
+
+    auto explicit_size() const -> int {
+      return explicit_end_.index - implicit_end_.index;
+    }
+    auto explicit_begin() const -> CallParamIndex { return implicit_end_; }
+    auto explicit_end() const -> CallParamIndex { return explicit_end_; }
+
+    auto return_size() const -> int {
+      return return_end_.index - explicit_end_.index;
+    }
+    auto return_begin() const -> CallParamIndex { return explicit_end_; }
+    auto return_end() const -> CallParamIndex { return return_end_; }
+
+   private:
+    CallParamIndex implicit_end_;
+    CallParamIndex explicit_end_;
+    CallParamIndex return_end_;
+  };
+
+  CallParamIndexRanges call_param_ranges;
+
   // The inst representing the type component of return_form_inst_id.
   // TODO: remove this in favor of return_form_inst_id.
   TypeInstId return_type_inst_id;
@@ -60,7 +115,7 @@ struct FunctionFields {
   // any.
   InstId return_form_inst_id;
 
-  // The call parameter pattern insts that are declared by the function's return
+  // The parameter pattern insts that are declared by the function's return
   // form declaration. They will all be OutParamPatterns, and there will be one
   // for each primitive initializing form in the return form, but they may or
   // may not be used, depending on whether the type has an in-place initializing
@@ -110,6 +165,9 @@ struct FunctionFields {
   // creation to mangling.
   ClangDeclId clang_decl_id = ClangDeclId::None;
 };
+
+inline constexpr FunctionFields::CallParamIndexRanges
+    FunctionFields::CallParamIndexRanges::Empty;
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
 struct Function : public EntityWithParamsBase,

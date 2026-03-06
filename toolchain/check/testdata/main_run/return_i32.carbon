@@ -31,7 +31,7 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -78,7 +78,7 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_13: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
+// CHECK:STDOUT:     %.loc4_13: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -106,7 +106,7 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr [concrete]
-// CHECK:STDOUT:   %.8ef: Core.Form = init_form %i32, call_param2 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -156,7 +156,7 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc5_48: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc5_48: Core.Form = init_form %i32.loc5_48, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %.loc5_48: Core.Form = init_form %i32.loc5_48 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %argc: %i32 = value_binding argc, %argc.param

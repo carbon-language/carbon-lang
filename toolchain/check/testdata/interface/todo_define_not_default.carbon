@@ -37,7 +37,7 @@ interface I {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.8ef: Core.Form = init_form %i32, call_param2 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %I.WithSelf.G.type: type = fn_type @I.WithSelf.G, @I.WithSelf(%Self.ab9) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G: %I.WithSelf.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%I.WithSelf.G.decl [concrete]
@@ -103,7 +103,7 @@ interface I {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc18_27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_27, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_27 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc18_11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param

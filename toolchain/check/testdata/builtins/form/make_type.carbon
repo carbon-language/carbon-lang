@@ -34,7 +34,7 @@ let f: Form() = form(var ());
 // CHECK:STDOUT:   %pattern_type.13f: type = pattern_type Core.Form [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.e36: Core.Form = init_form %empty_tuple.type, call_param<none> [concrete]
+// CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -58,7 +58,7 @@ let f: Form() = form(var ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc7_22: Core.Form = init_form %.loc7_27.2, call_param<none> [concrete = constants.%.e36]
+// CHECK:STDOUT:   %.loc7_22: Core.Form = init_form %.loc7_27.2 [concrete = constants.%.262]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

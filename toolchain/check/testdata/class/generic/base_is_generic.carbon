@@ -121,7 +121,7 @@ fn H() {
 // CHECK:STDOUT:   %struct_type.base.9a9: type = struct_type {.base: %Base.f8f} [concrete]
 // CHECK:STDOUT:   %complete_type.8de: <witness> = complete_type_witness %struct_type.base.9a9 [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
-// CHECK:STDOUT:   %.e54: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DoubleFieldAccess.type: type = fn_type @DoubleFieldAccess [concrete]
 // CHECK:STDOUT:   %DoubleFieldAccess: %DoubleFieldAccess.type = struct_value () [concrete]
@@ -177,7 +177,7 @@ fn H() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32, call_param1 [concrete = constants.%.e54]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
@@ -295,7 +295,7 @@ fn H() {
 // CHECK:STDOUT:   %struct_type.base.9a9: type = struct_type {.base: %Base.f8f} [concrete]
 // CHECK:STDOUT:   %complete_type.8de: <witness> = complete_type_witness %struct_type.base.9a9 [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
-// CHECK:STDOUT:   %.bb0: Core.Form = init_form %i32, call_param1 [concrete]
+// CHECK:STDOUT:   %.4ca: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [concrete]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess: %ImportedDoubleFieldAccess.type = struct_value () [concrete]
@@ -360,7 +360,7 @@ fn H() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.501 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32, call_param1 [concrete = constants.%.bb0]
+// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.4ca]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%Main.Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
@@ -554,7 +554,7 @@ fn H() {
 // CHECK:STDOUT:   %X.type: type = generic_class_type @X [concrete]
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.03b463.1: type = class_type @X, @X(%U) [symbolic]
-// CHECK:STDOUT:   %.41b: Core.Form = init_form %U, call_param0 [symbolic]
+// CHECK:STDOUT:   %.184: Core.Form = init_form %U [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %X.G.type.20eb90.1: type = fn_type @X.G, @X(%U) [symbolic]
 // CHECK:STDOUT:   %X.G.f9f685.1: %X.G.type.20eb90.1 = struct_value () [symbolic]
@@ -589,7 +589,7 @@ fn H() {
 // CHECK:STDOUT:   %C.elem.7f5: type = unbound_element_type %C.b13, %X.1bc [concrete]
 // CHECK:STDOUT:   %struct_type.base.b52: type = struct_type {.base: %X.1bc} [concrete]
 // CHECK:STDOUT:   %complete_type.ab4: <witness> = complete_type_witness %struct_type.base.b52 [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %X.G.specific_fn.54d: <specific function> = specific_function %X.G.e2a, @X.G(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -644,7 +644,7 @@ fn H() {
 // CHECK:STDOUT:       %return.param_patt: @X.G.%pattern_type (%pattern_type.51d) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc4_14.2 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %.loc5_13.3: Core.Form = init_form %U.ref, call_param0 [symbolic = %.loc5_13.2 (constants.%.41b)]
+// CHECK:STDOUT:       %.loc5_13.3: Core.Form = init_form %U.ref [symbolic = %.loc5_13.2 (constants.%.184)]
 // CHECK:STDOUT:       %return.param: ref @X.G.%U (%U) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @X.G.%U (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -689,7 +689,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @X.G(@X.%U.loc4_14.2: type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:   %.loc5_13.2: Core.Form = init_form %U, call_param0 [symbolic = %.loc5_13.2 (constants.%.41b)]
+// CHECK:STDOUT:   %.loc5_13.2: Core.Form = init_form %U [symbolic = %.loc5_13.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -738,7 +738,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:   %.loc5_13.2 => constants.%.41b
+// CHECK:STDOUT:   %.loc5_13.2 => constants.%.184
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -782,7 +782,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%i32) {
 // CHECK:STDOUT:   %U => constants.%i32
-// CHECK:STDOUT:   %.loc5_13.2 => constants.%.437
+// CHECK:STDOUT:   %.loc5_13.2 => constants.%.ff5
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -813,7 +813,7 @@ fn H() {
 // CHECK:STDOUT:   %X.G.type.20eb90.1: type = fn_type @X.G, @X(%U) [symbolic]
 // CHECK:STDOUT:   %X.G.f9f685.1: %X.G.type.20eb90.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %U [symbolic]
-// CHECK:STDOUT:   %.41b: Core.Form = init_form %U, call_param0 [symbolic]
+// CHECK:STDOUT:   %.184: Core.Form = init_form %U [symbolic]
 // CHECK:STDOUT:   %X.G.specific_fn.974: <specific function> = specific_function %X.G.f9f685.1, @X.G(%U) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %X.03b463.2: type = class_type @X, @X(%T) [symbolic]
@@ -831,7 +831,7 @@ fn H() {
 // CHECK:STDOUT:   %C.elem.7f5: type = unbound_element_type %C.b13, %X.1bc [concrete]
 // CHECK:STDOUT:   %struct_type.base.b52: type = struct_type {.base: %X.1bc} [concrete]
 // CHECK:STDOUT:   %complete_type.ab4: <witness> = complete_type_witness %struct_type.base.b52 [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %X.G.specific_fn.54d: <specific function> = specific_function %X.G.e2a, @X.G(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -929,7 +929,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @X.G(imports.%Main.import_ref.b3bc94.1: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %U, call_param0 [symbolic = %.1 (constants.%.41b)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %U [symbolic = %.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -951,7 +951,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:   %.1 => constants.%.41b
+// CHECK:STDOUT:   %.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -995,7 +995,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%i32) {
 // CHECK:STDOUT:   %U => constants.%i32
-// CHECK:STDOUT:   %.1 => constants.%.437
+// CHECK:STDOUT:   %.1 => constants.%.ff5
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

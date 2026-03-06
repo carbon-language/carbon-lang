@@ -35,7 +35,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.77a: Core.Form = init_form bool, call_param0 [concrete]
+// CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -97,7 +97,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_11.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc15_11.2: Core.Form = init_form %.loc15_11.1, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc15_11.2: Core.Form = init_form %.loc15_11.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -106,7 +106,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_11.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc16_11.2: Core.Form = init_form %.loc16_11.1, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc16_11.2: Core.Form = init_form %.loc16_11.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -115,7 +115,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_12.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc18_12.2: Core.Form = init_form %.loc18_12.1, call_param0 [concrete = constants.%.77a]
+// CHECK:STDOUT:     %.loc18_12.2: Core.Form = init_form %.loc18_12.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }

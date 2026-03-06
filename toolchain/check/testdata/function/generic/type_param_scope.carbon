@@ -27,7 +27,7 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr [symbolic]
-// CHECK:STDOUT:   %.4fe: Core.Form = init_form %ptr, call_param1 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr, @Copy [symbolic]
@@ -76,6 +76,6 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc4_27.1 => constants.%.4fe
+// CHECK:STDOUT:   %.loc4_27.1 => constants.%.cb6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

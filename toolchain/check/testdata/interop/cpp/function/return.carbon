@@ -238,7 +238,7 @@ fn Var() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %.0c8: Core.Form = init_form %u8, call_param0 [concrete]
+// CHECK:STDOUT:   %.471: Core.Form = init_form %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %u8 [concrete]
 // CHECK:STDOUT:   %GetU8.type: type = fn_type @GetU8 [concrete]
 // CHECK:STDOUT:   %GetU8: %GetU8.type = struct_value () [concrete]
@@ -291,7 +291,7 @@ fn Var() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8f3 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8, call_param0 [concrete = constants.%.0c8]
+// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8 [concrete = constants.%.471]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
 // CHECK:STDOUT:   }

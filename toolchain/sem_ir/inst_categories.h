@@ -324,8 +324,6 @@ struct AnyPrimitiveForm {
 
   // The type component of the form.
   TypeInstId type_component_id;
-
-  AnyRawId arg1;
 };
 
 // clang-format off

@@ -78,7 +78,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.035 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.2: type = pattern_type %T.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.6c815b.2: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [concrete]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.67c: <witness> = require_complete_type %T.binding.as_type [symbolic]
@@ -93,7 +93,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
-// CHECK:STDOUT:   %.4fe: Core.Form = init_form %ptr.e8f, call_param1 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %Function.specific_fn.a87: <specific function> = specific_function %Function, @Function(%T.035) [symbolic]
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f, @Copy [symbolic]
@@ -102,7 +102,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
-// CHECK:STDOUT:   %.1eb: Core.Form = init_form %ptr.31e, call_param1 [concrete]
+// CHECK:STDOUT:   %.de8: Core.Form = init_form %ptr.31e [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.2c7: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.411: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ed9: %ptr.as.Copy.impl.Op.type.411 = struct_value () [concrete]
@@ -140,7 +140,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %T.ref.loc5_37: %Copy.type = name_ref T, %T.loc5_13.2 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc5_37: type = facet_access_type %T.ref.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc5_37.3: type = converted %T.ref.loc5_37, %T.as_type.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc5_37.4: Core.Form = init_form %.loc5_37.3, call_param1 [symbolic = %.loc5_37.2 (constants.%.6c815b.2)]
+// CHECK:STDOUT:     %.loc5_37.4: Core.Form = init_form %.loc5_37.3 [symbolic = %.loc5_37.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:     %.loc5_21: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -163,7 +163,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc5_13.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.2)]
-// CHECK:STDOUT:   %.loc5_37.2: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc5_37.2 (constants.%.6c815b.2)]
+// CHECK:STDOUT:   %.loc5_37.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc5_37.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.67c)]
@@ -256,7 +256,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.076a48.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.67c
@@ -271,21 +271,21 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc10_16.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc10_40.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc10_40.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc16_19.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc16_33.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc16_40.1 => constants.%.4fe
+// CHECK:STDOUT:   %.loc16_40.1 => constants.%.cb6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%Copy.facet.c25) {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%Copy.facet.c25
 // CHECK:STDOUT:   %T.binding.as_type => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.4fe
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.cb6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ef1
@@ -300,7 +300,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%Copy.facet.a7f
 // CHECK:STDOUT:   %T.binding.as_type => constants.%ptr.31e
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.506
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.1eb
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.de8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.17a
@@ -319,7 +319,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.035 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.2: type = pattern_type %T.binding.as_type [symbolic]
-// CHECK:STDOUT:   %.6c815b.2: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [concrete]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.67c: <witness> = require_complete_type %T.binding.as_type [symbolic]
@@ -334,7 +334,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
-// CHECK:STDOUT:   %.4fe: Core.Form = init_form %ptr.e8f, call_param1 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %Function.specific_fn.a87: <specific function> = specific_function %Function, @Function(%T.035) [symbolic]
 // CHECK:STDOUT:   %.2f2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e6: <witness> = lookup_impl_witness %ptr.e8f, @Copy [symbolic]
@@ -343,7 +343,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %ptr.31e [concrete]
-// CHECK:STDOUT:   %.1eb: Core.Form = init_form %ptr.31e, call_param1 [concrete]
+// CHECK:STDOUT:   %.de8: Core.Form = init_form %ptr.31e [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.2c7: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.411: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ed9: %ptr.as.Copy.impl.Op.type.411 = struct_value () [concrete]
@@ -381,7 +381,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %T.ref.loc5_37: %Copy.type = name_ref T, %T.loc5_13.2 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc5_37: type = facet_access_type %T.ref.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc5_37.3: type = converted %T.ref.loc5_37, %T.as_type.loc5_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc5_37.4: Core.Form = init_form %.loc5_37.3, call_param1 [symbolic = %.loc5_37.2 (constants.%.6c815b.2)]
+// CHECK:STDOUT:     %.loc5_37.4: Core.Form = init_form %.loc5_37.3 [symbolic = %.loc5_37.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:     %.loc5_21: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -404,7 +404,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc5_13.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.2)]
-// CHECK:STDOUT:   %.loc5_37.2: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic = %.loc5_37.2 (constants.%.6c815b.2)]
+// CHECK:STDOUT:   %.loc5_37.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc5_37.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.67c)]
@@ -488,7 +488,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.076a48.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.67c
@@ -503,21 +503,21 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc10_16.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc10_40.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc10_40.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc16_19.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc16_33.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc16_40.1 => constants.%.4fe
+// CHECK:STDOUT:   %.loc16_40.1 => constants.%.cb6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%Copy.facet.c25) {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%Copy.facet.c25
 // CHECK:STDOUT:   %T.binding.as_type => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.4fe
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.cb6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ef1
@@ -532,7 +532,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %T.loc5_13.1 => constants.%Copy.facet.a7f
 // CHECK:STDOUT:   %T.binding.as_type => constants.%ptr.31e
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.506
-// CHECK:STDOUT:   %.loc5_37.2 => constants.%.1eb
+// CHECK:STDOUT:   %.loc5_37.2 => constants.%.de8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.17a
