@@ -32,8 +32,8 @@ namespace Carbon::Parse {
   /* `require <type> impls` or just `require impls` */       \
   X(RequireImpls)                                            \
   X(Requirement)                                             \
-  X(Statement)                                               \
-  X(ReturnDecl)
+  X(ReturnDecl)                                              \
+  X(Statement)
 
 // We expect this to grow, so are using a bigger size than needed.
 CARBON_DEFINE_RAW_ENUM_MASK(NodeCategory, uint32_t) {
