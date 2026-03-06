@@ -68,7 +68,6 @@ git_override(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
-
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
