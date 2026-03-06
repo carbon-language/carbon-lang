@@ -924,7 +924,7 @@ struct Struct {
   int arr[3];
 };
 Struct s;
-#define m s.arr
+#define m s.arr[1]
 ''';
 
 fn F() {
@@ -932,7 +932,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported field in macro expansion: &s.arr` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported field in macro expansion: &s.arr[1]` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
