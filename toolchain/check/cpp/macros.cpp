@@ -136,8 +136,8 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
     }
 
     // TODO: support array indexing.
-    for (auto& entry : ap_value.getLValuePath()) {
-      auto* field_decl =
+    for (const auto& entry : ap_value.getLValuePath()) {
+      const auto* field_decl =
           cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
 
       auto field_inst_id =
