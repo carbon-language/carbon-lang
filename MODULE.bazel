@@ -77,14 +77,12 @@ bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 bazel_dep(name = "llvm-raw")
 git_override(
     module_name = "llvm-raw",
+    build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
     # HEAD as of 2026-02-12.
     commit = "b20d7d0278059735bb8eb538ac51e13b58895c1a",
-    patch_cmds = [
-        "touch BUILD.bazel",
-        "echo \"module(name='llvm-raw')\" > MODULE.bazel",
-    ],
+    patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [
         "//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
