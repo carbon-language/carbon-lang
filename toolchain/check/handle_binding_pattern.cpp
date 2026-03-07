@@ -341,7 +341,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       break;
     }
 
-    case FullPatternStack::Kind::OutsideParamList:
+    case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
   return true;

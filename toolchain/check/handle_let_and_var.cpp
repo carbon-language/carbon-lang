@@ -112,7 +112,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;
-    case FullPatternStack::Kind::OutsideParamList:
+    case FullPatternStack::Kind::NotInEitherParamList:
       CARBON_FATAL("Unreachable");
   }
 

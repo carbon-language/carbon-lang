@@ -50,7 +50,7 @@ class FullPatternStack {
     // doesn't let us reliably distinguish the return part from the part before
     // the parameter lists (or between them), particularly in the case where
     // there is no explicit parameter list.
-    OutsideParamList
+    NotInEitherParamList
   };
 
   auto empty() const -> bool { return kind_stack_.empty(); }
@@ -60,9 +60,9 @@ class FullPatternStack {
 
   // Marks the start of a new full-pattern for a parameterized entity
   // declaration, such as a function or impl. The kind is initially
-  // OutsideParamList.
+  // NotInEitherParamList.
   auto PushParameterizedDecl() -> void {
-    kind_stack_.push_back(Kind::OutsideParamList);
+    kind_stack_.push_back(Kind::NotInEitherParamList);
     bind_name_stack_.PushArray();
   }
 
@@ -75,7 +75,7 @@ class FullPatternStack {
   // Marks the start of the current parameterized entity's implicit parameter
   // list.
   auto StartImplicitParamList() -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::OutsideParamList, "{0}",
+    CARBON_CHECK(kind_stack_.back() == Kind::NotInEitherParamList, "{0}",
                  kind_stack_.back());
     kind_stack_.back() = Kind::ImplicitParamList;
   }
@@ -85,13 +85,13 @@ class FullPatternStack {
   auto EndImplicitParamList() -> void {
     CARBON_CHECK(kind_stack_.back() == Kind::ImplicitParamList, "{0}",
                  kind_stack_.back());
-    kind_stack_.back() = Kind::OutsideParamList;
+    kind_stack_.back() = Kind::NotInEitherParamList;
   }
 
   // Marks the start of the current parameterized entity's explicit parameter
   // list.
   auto StartExplicitParamList() -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::OutsideParamList, "{0}",
+    CARBON_CHECK(kind_stack_.back() == Kind::NotInEitherParamList, "{0}",
                  kind_stack_.back());
     kind_stack_.back() = Kind::ExplicitParamList;
   }
@@ -101,7 +101,7 @@ class FullPatternStack {
   auto EndExplicitParamList() -> void {
     CARBON_CHECK(kind_stack_.back() == Kind::ExplicitParamList, "{0}",
                  kind_stack_.back());
-    kind_stack_.back() = Kind::OutsideParamList;
+    kind_stack_.back() = Kind::NotInEitherParamList;
   }
 
   // Marks the start of the initializer for the current name binding decl.
