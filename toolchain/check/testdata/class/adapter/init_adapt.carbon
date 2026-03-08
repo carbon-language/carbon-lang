@@ -134,10 +134,10 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %pattern_type.507: type = pattern_type %AdaptC [concrete]
-// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.bec: Core.Form = init_form %AdaptC, call_param0 [concrete]
+// CHECK:STDOUT:   %.e6b: Core.Form = init_form %AdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC: %MakeAdaptC.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -212,7 +212,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc19: Core.Form = init_form %C.ref, call_param0 [concrete = constants.%.768]
+// CHECK:STDOUT:     %.loc19: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -221,7 +221,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.507 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:     %.loc21: Core.Form = init_form %AdaptC.ref, call_param0 [concrete = constants.%.bec]
+// CHECK:STDOUT:     %.loc21: Core.Form = init_form %AdaptC.ref [concrete = constants.%.e6b]
 // CHECK:STDOUT:     %return.param: ref %AdaptC = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AdaptC = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -338,10 +338,10 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %pattern_type.507: type = pattern_type %AdaptC [concrete]
-// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.bec: Core.Form = init_form %AdaptC, call_param0 [concrete]
+// CHECK:STDOUT:   %.e6b: Core.Form = init_form %AdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC: %MakeAdaptC.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -418,7 +418,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc35: Core.Form = init_form %C.ref, call_param0 [concrete = constants.%.768]
+// CHECK:STDOUT:     %.loc35: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -427,7 +427,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.507 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:     %.loc37: Core.Form = init_form %AdaptC.ref, call_param0 [concrete = constants.%.bec]
+// CHECK:STDOUT:     %.loc37: Core.Form = init_form %AdaptC.ref [concrete = constants.%.e6b]
 // CHECK:STDOUT:     %return.param: ref %AdaptC = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AdaptC = return_slot %return.param
 // CHECK:STDOUT:   }

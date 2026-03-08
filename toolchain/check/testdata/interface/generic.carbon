@@ -95,7 +95,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.generic: %WithAssocFn.type.daa = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.type.d36: type = facet_type <@WithAssocFn, @WithAssocFn(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.629: %WithAssocFn.type.d36 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %.22a: Core.Form = init_form %X, call_param0 [concrete]
+// CHECK:STDOUT:   %.a1b: Core.Form = init_form %X [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.6c9: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%T.67d, %Self.629) [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.6d9: %WithAssocFn.WithSelf.F.type.6c9 = struct_value () [symbolic]
@@ -239,7 +239,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %.loc10: Core.Form = init_form %X.ref, call_param0 [concrete = constants.%.22a]
+// CHECK:STDOUT:       %.loc10: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
 // CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -278,7 +278,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %X.ref, call_param0 [concrete = constants.%.22a]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }

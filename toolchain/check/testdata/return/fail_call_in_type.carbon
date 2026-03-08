@@ -24,7 +24,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: --- fail_call_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.824: Core.Form = init_form type, call_param0 [concrete]
+// CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [concrete]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [concrete]
@@ -70,7 +70,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_20.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc17_20.2: Core.Form = init_form %.loc17_20.1, call_param0 [concrete = constants.%.824]
+// CHECK:STDOUT:     %.loc17_20.2: Core.Form = init_form %.loc17_20.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }

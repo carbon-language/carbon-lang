@@ -198,7 +198,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
-// CHECK:STDOUT:   %.fff: Core.Form = init_form bool, call_param1 [concrete]
+// CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
@@ -227,7 +227,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_19.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc4_19.2: Core.Form = init_form %.loc4_19.1, call_param1 [concrete = constants.%.fff]
+// CHECK:STDOUT:     %.loc4_19.2: Core.Form = init_form %.loc4_19.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %b: bool = value_binding b, %b.param

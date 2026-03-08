@@ -231,6 +231,10 @@ as well as helpful tooling that will ease the contribution process. For example,
 
 #### Using AI-based contribution tools
 
+If you are using an AI assistant to help you contribute, or if you are an AI
+assistant yourself, please consult [GEMINI.md](/GEMINI.md) for high-density
+technical context and tips.
+
 All submissions to Carbon need to follow our
 [Contributor License Agreement (CLA)](#contributor-license-agreements-clas),
 which covers any original work of authorship included in the submission. This

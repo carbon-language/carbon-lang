@@ -40,7 +40,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %Inner.type.af4: type = generic_class_type @Inner, @Outer(%T.035) [symbolic]
 // CHECK:STDOUT:   %Inner.generic.994: %Inner.type.af4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.c23: type = class_type @Inner, @Inner(%T.035, %U.959) [symbolic]
-// CHECK:STDOUT:   %.823: Core.Form = init_form %T.binding.as_type, call_param0 [symbolic]
+// CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Inner.Get.type.6ef: type = fn_type @Inner.Get, @Inner(%T.035, %U.959) [symbolic]
 // CHECK:STDOUT:   %Inner.Get.ba5: %Inner.Get.type.6ef = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.67c: <witness> = require_complete_type %T.binding.as_type [symbolic]
@@ -80,13 +80,13 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b37: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.545: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.b37, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.cb9: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %Inner.e4a: type = class_type @Inner, @Inner(%Copy.facet.de4, %int_42.c68) [concrete]
 // CHECK:STDOUT:   %Inner.Get.type.20d: type = fn_type @Inner.Get, @Inner(%Copy.facet.de4, %int_42.c68) [concrete]
 // CHECK:STDOUT:   %Inner.Get.f96: %Inner.Get.type.20d = struct_value () [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %Inner.Get.specific_fn: <specific function> = specific_function %Inner.Get.f96, @Inner.Get(%Copy.facet.de4, %int_42.c68) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.081: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.de4) [concrete]
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet.de4 [concrete]
@@ -146,7 +146,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc7_17.3: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc7_17.4: Core.Form = init_form %.loc7_17.3, call_param0 [symbolic = %.loc7_17.2 (constants.%.823)]
+// CHECK:STDOUT:       %.loc7_17.4: Core.Form = init_form %.loc7_17.3 [symbolic = %.loc7_17.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:       %return.param: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -164,7 +164,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: generic fn @Inner.Get(@Outer.%T.loc4_13.2: %Copy.type, @Inner.%U.loc5_15.2: @Inner.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %.loc7_17.2: Core.Form = init_form %T.binding.as_type, call_param0 [symbolic = %.loc7_17.2 (constants.%.823)]
+// CHECK:STDOUT:   %.loc7_17.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc7_17.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -241,7 +241,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: specific @Inner.Get(constants.%T.035, constants.%U.959) {
 // CHECK:STDOUT:   %T => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %.loc7_17.2 => constants.%.823
+// CHECK:STDOUT:   %.loc7_17.2 => constants.%.076a48.2
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,7 +267,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: specific @Inner.Get(constants.%Copy.facet.de4, constants.%int_42.c68) {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.de4
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
-// CHECK:STDOUT:   %.loc7_17.2 => constants.%.437
+// CHECK:STDOUT:   %.loc7_17.2 => constants.%.ff5
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

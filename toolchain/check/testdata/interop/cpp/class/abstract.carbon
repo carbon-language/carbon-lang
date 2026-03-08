@@ -94,7 +94,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
-// CHECK:STDOUT:   %.07d: Core.Form = init_form %AbstractFinal, call_param0 [concrete]
+// CHECK:STDOUT:   %.3ee: Core.Form = init_form %AbstractFinal [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -115,7 +115,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]
-// CHECK:STDOUT:     %.loc11_14.2: Core.Form = init_form %AbstractFinal.ref, call_param0 [concrete = constants.%.07d]
+// CHECK:STDOUT:     %.loc11_14.2: Core.Form = init_form %AbstractFinal.ref [concrete = constants.%.3ee]
 // CHECK:STDOUT:     %return.param: ref %AbstractFinal = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AbstractFinal = return_slot %return.param
 // CHECK:STDOUT:   }

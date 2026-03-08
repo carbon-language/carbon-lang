@@ -37,26 +37,36 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
           # prettier-ignore
           allowed-endpoints: >
-            *.dl.sourceforge.net:443
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
             api.github.com:443
+            api.ipify.org:443
             bcr.bazel.build:443
             downloads.sourceforge.net:443
+            files.pythonhosted.org:443
             github.com:443
+            go.dev:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
+            pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
             releases.bazel.build:443
-            sourceforge.net:443
             storage.googleapis.com:443
-            uploads.github.com:443
+            www.googleapis.com:443
 
       - name: Checkout branch
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up remote cache access
         env:

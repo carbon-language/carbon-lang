@@ -14,35 +14,35 @@
 
 namespace Carbon::RuntimesBuildInfo {
 
-constexpr inline llvm::StringLiteral CrtBegin = CRTBEGIN_SRC;
-constexpr inline llvm::StringLiteral CrtEnd = CRTEND_SRC;
+inline constexpr llvm::StringLiteral CrtBegin = CRTBEGIN_SRC;
+inline constexpr llvm::StringLiteral CrtEnd = CRTEND_SRC;
 
-constexpr inline llvm::StringLiteral CrtCopts[] = {CRT_COPTS};
+inline constexpr llvm::StringLiteral CrtCopts[] = {CRT_COPTS};
 
 // Prevent wrapping these lines -- the expansion of the variables will add line
 // breaks.
 //
 // clang-format off
-constexpr inline llvm::StringLiteral BuiltinsGenericSrcs[] = {BUILTINS_GENERIC_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsMacosSrcs[] = {BUILTINS_MACOS_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsBf16Srcs[] = {BUILTINS_BF16_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsTfSrcs[] = {BUILTINS_TF_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsX86ArchSrcs[] = {BUILTINS_X86_ARCH_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {BUILTINS_X86_FP80_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsAarch64Srcs[] = {BUILTINS_AARCH64_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsGenericSrcs[] = {BUILTINS_GENERIC_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsMacosSrcs[] = {BUILTINS_MACOS_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsBf16Srcs[] = {BUILTINS_BF16_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsTfSrcs[] = {BUILTINS_TF_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsX86ArchSrcs[] = {BUILTINS_X86_ARCH_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {BUILTINS_X86_FP80_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsAarch64Srcs[] = {BUILTINS_AARCH64_SRCS};
 // NOLINTNEXTLINE(readability-identifier-naming)
-constexpr inline llvm::StringLiteral BuiltinsX86_64Srcs[] = {BUILTINS_X86_64_SRCS};
-constexpr inline llvm::StringLiteral BuiltinsI386Srcs[] = {BUILTINS_I386_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsX86_64Srcs[] = {BUILTINS_X86_64_SRCS};
+inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {BUILTINS_I386_SRCS};
 // clang-format on
 
-constexpr inline llvm::StringLiteral LibcxxLinuxSrcs[] = {LIBCXX_LINUX_SRCS};
-constexpr inline llvm::StringLiteral LibcxxMacosSrcs[] = {LIBCXX_MACOS_SRCS};
-constexpr inline llvm::StringLiteral LibcxxWin32Srcs[] = {LIBCXX_WIN32_SRCS};
-constexpr inline llvm::StringLiteral LibcxxabiSrcs[] = {LIBCXXABI_SRCS};
-constexpr inline llvm::StringLiteral LibcxxCopts[] = {LIBCXX_AND_ABI_COPTS};
+inline constexpr llvm::StringLiteral LibcxxLinuxSrcs[] = {LIBCXX_LINUX_SRCS};
+inline constexpr llvm::StringLiteral LibcxxMacosSrcs[] = {LIBCXX_MACOS_SRCS};
+inline constexpr llvm::StringLiteral LibcxxWin32Srcs[] = {LIBCXX_WIN32_SRCS};
+inline constexpr llvm::StringLiteral LibcxxabiSrcs[] = {LIBCXXABI_SRCS};
+inline constexpr llvm::StringLiteral LibcxxCopts[] = {LIBCXX_AND_ABI_COPTS};
 
-constexpr inline llvm::StringLiteral LibunwindSrcs[] = {LIBUNWIND_SRCS};
-constexpr inline llvm::StringLiteral LibunwindCopts[] = {LIBUNWIND_COPTS};
+inline constexpr llvm::StringLiteral LibunwindSrcs[] = {LIBUNWIND_SRCS};
+inline constexpr llvm::StringLiteral LibunwindCopts[] = {LIBUNWIND_COPTS};
 
 }  // namespace Carbon::RuntimesBuildInfo
 

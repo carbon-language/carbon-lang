@@ -40,7 +40,7 @@ fn H() {
 // CHECK:STDOUT:   %I.type.1ab: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.fdb: %I.type.1ab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 2 [symbolic]
-// CHECK:STDOUT:   %.f4a: Core.Form = init_form %U, call_param0 [symbolic]
+// CHECK:STDOUT:   %.a6b: Core.Form = init_form %U [symbolic]
 // CHECK:STDOUT:   %pattern_type.62e: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.1d6: type = fn_type @I.WithSelf.F, @I.WithSelf(%T, %Self.fdb) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.cd4: %I.WithSelf.F.type.1d6 = struct_value () [symbolic]
@@ -110,7 +110,7 @@ fn H() {
 // CHECK:STDOUT:       %return.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.62e) = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U)]
-// CHECK:STDOUT:       %.loc16_21.2: Core.Form = init_form %U.ref, call_param0 [symbolic = %.loc16_21.1 (constants.%.f4a)]
+// CHECK:STDOUT:       %.loc16_21.2: Core.Form = init_form %U.ref [symbolic = %.loc16_21.1 (constants.%.a6b)]
 // CHECK:STDOUT:       %.loc16_12.1: type = splice_block %.loc16_12.2 [concrete = type] {
 // CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:         %.loc16_12.2: type = type_literal type [concrete = type]
@@ -132,7 +132,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%T.loc15_13.2: type, @I.%Self.loc15_23.1: @I.%I.type (%I.type.1ab), %U.loc16_8.2: type) {
 // CHECK:STDOUT:   %U.loc16_8.1: type = symbolic_binding U, 2 [symbolic = %U.loc16_8.1 (constants.%U)]
-// CHECK:STDOUT:   %.loc16_21.1: Core.Form = init_form %U.loc16_8.1, call_param0 [symbolic = %.loc16_21.1 (constants.%.f4a)]
+// CHECK:STDOUT:   %.loc16_21.1: Core.Form = init_form %U.loc16_8.1 [symbolic = %.loc16_21.1 (constants.%.a6b)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U.loc16_8.1 [symbolic = %pattern_type (constants.%pattern_type.62e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @I.WithSelf.F.%U.loc16_8.1 (%U);
@@ -190,7 +190,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%T, constants.%Self.fdb, constants.%U) {
 // CHECK:STDOUT:   %U.loc16_8.1 => constants.%U
-// CHECK:STDOUT:   %.loc16_21.1 => constants.%.f4a
+// CHECK:STDOUT:   %.loc16_21.1 => constants.%.a6b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.62e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
