@@ -27,7 +27,6 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
-      "crash backtrace.\n");
 
   // Initialize LLVM targets if //common:all_llvm_targets was linked in.
   if (InitializeTargets) {

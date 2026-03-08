@@ -116,7 +116,9 @@ auto AppendDefaultClangArgs(const InstallPaths& install_paths,
       // arguments. Clang's default is configurable, but we'd like our
       // defaults to be more stable.
       // TODO: Decide if we want this.
+#ifndef _WIN32
       "-fPIE",
+#endif
 
       // Enable function and data sections by default, and don't waste object
       // file size on unique section names. Allow these to be overridden by
@@ -177,3 +179,4 @@ auto AppendDefaultClangArgs(const InstallPaths& install_paths,
 }
 
 }  // namespace Carbon
+

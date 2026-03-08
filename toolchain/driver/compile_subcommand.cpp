@@ -707,7 +707,6 @@ auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
 auto CompilationUnit::RunLex() -> void {
   CARBON_CHECK(cache_, "Must call SetMultiUnitCache first");
   CARBON_CHECK(!tokens_, "Called RunLex twice");
-
   LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
     source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                 input_filename_, *consumer_);
@@ -723,7 +722,6 @@ auto CompilationUnit::RunLex() -> void {
   }
 
   CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
-
   LogCall("Lex::Lex", "lex", [&] {
     Lex::LexOptions options;
     options.consumer = consumer_;
@@ -1093,6 +1091,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Validate the target before passing it to Clang.
   std::string target_error;
+  auto triple = llvm::Triple(options_.codegen_options.target);
   const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
       llvm::Triple(options_.codegen_options.target), target_error);
   if (!target) {
@@ -1186,7 +1185,6 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
     driver_env.consumer.Flush();
   });
-
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
     // When crashing, flush diagnostics. If sorting diagnostics, they can be
     // redirected to the crash stream; if streaming, the original stream is

@@ -13,6 +13,13 @@
 #include "common/build_data.h"
 #include "llvm/Support/MathExtras.h"
 
+#ifdef _WIN32
+// Directory fd table definitions (declared extern in filesystem_win32.h)
+HANDLE _carbon_dir_handles[512] = {};
+volatile LONG _carbon_dir_next = 0;
+#endif
+
+
 namespace Carbon::Filesystem {
 
 // Render an error number from `errno` to the provided stream using the richest
@@ -678,7 +685,11 @@ auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
 }
 
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
+#ifdef _WIN32
+  std::filesystem::path tmpdir_path = getenv("TEMP") ? getenv("TEMP") : "C:\\Temp";
+#else
   std::filesystem::path tmpdir_path = "/tmp";
+#endif
   // We use both `TEST_TMPDIR` and `TMPDIR`. The `TEST_TMPDIR` is set by Bazel
   // and preferred to keep tests using the expected output tree rather than
   // the system temporary directory.
@@ -727,7 +738,6 @@ auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
   // It's a bit awkward to report `fstat` errors as `Error`s, but we
   // don't have much choice. The stat failing here would be very weird.
   CARBON_ASSIGN_OR_RETURN(FileStatus stat, result_dir.Stat());
-
   // The permissions must be exactly 0700 for a temporary directory, and the UID
   // should be ours.
   if (stat.permissions() != 0700 && stat.unix_uid() != geteuid()) {

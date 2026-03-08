@@ -114,7 +114,15 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
     if (token.empty()) {
       break;
     }
+    #ifdef _WIN32
+    {
+      auto entry_str = (manifest_path / std::string_view(token)).string();
+      for (auto& c : entry_str) { if (c == '\\') c = '/'; }
+      result->push_back(entry_str);
+    }
+#else
     result->push_back((manifest_path / std::string_view(token)).native());
+#endif
     buffer = remainder;
   }
 
