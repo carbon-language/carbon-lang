@@ -16,14 +16,15 @@ the "Harden Runner" steps are
 ### Allowed endpoints
 
 Most jobs only have a few endpoints, but due to tools which do downloads, a few
-have significantly more. These are:
+have significantly more. These use a shared action to ensure consistency:
 
 -   clangd_tidy.yaml (Bazel)
 -   pre_commit.yaml (Bazel, pre-commit)
 -   nightly_release.yaml (Bazel)
 -   tests.yaml (Bazel)
 
-When updating one of these, consider updating all of them.
+When adding endpoints, update the shared action in
+[`.github/actions/build-harden-runner`](../actions/build-harden-runner/action.yaml).
 
 We try to keep `allowed-endpoints` with one per line. Prettier wants to wrap
 them, which we fix this with `prettier-ignore`.

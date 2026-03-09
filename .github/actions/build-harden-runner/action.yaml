@@ -1,0 +1,42 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Harden Runner
+description: Harden Runner for Bazel workflows
+inputs:
+  extra-endpoints:
+    description: 'Extra endpoints to allow'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+      with:
+        egress-policy: block
+        # prettier-ignore
+        allowed-endpoints: >
+          *.blob.storage.azure.net:443
+          *.githubapp.com:443
+          *.sourceforge.net:443
+          api.github.com:443
+          api.ipify.org:443
+          bcr.bazel.build:443
+          downloads.sourceforge.net:443
+          files.pythonhosted.org:443
+          github.com:443
+          go.dev:443
+          mirror.bazel.build:443
+          mirrors.kernel.org:443
+          nodejs.org:443
+          oauth2.googleapis.com:443
+          objects.githubusercontent.com:443
+          pypi.org:443
+          registry.npmjs.org:443
+          release-assets.githubusercontent.com:443
+          releases.bazel.build:443
+          storage.googleapis.com:443
+          www.googleapis.com:443
+          ${{ inputs.extra-endpoints }}

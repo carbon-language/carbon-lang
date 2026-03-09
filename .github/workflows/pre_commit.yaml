@@ -17,37 +17,11 @@ jobs:
   pre-commit:
     runs-on: ubuntu-22.04
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
-        with:
-          egress-policy: block
-          # When adding endpoints, see README.md.
-          # prettier-ignore
-          allowed-endpoints: >
-            *.blob.storage.azure.net:443
-            *.githubapp.com:443
-            *.sourceforge.net:443
-            api.github.com:443
-            api.ipify.org:443
-            bcr.bazel.build:443
-            downloads.sourceforge.net:443
-            files.pythonhosted.org:443
-            github.com:443
-            go.dev:443
-            mirror.bazel.build:443
-            mirrors.kernel.org:443
-            nodejs.org:443
-            oauth2.googleapis.com:443
-            objects.githubusercontent.com:443
-            pypi.org:443
-            registry.npmjs.org:443
-            release-assets.githubusercontent.com:443
-            releases.bazel.build:443
-            storage.googleapis.com:443
-            uploads.github.com:443
-            www.googleapis.com:443
-
+      # Checkout must come before build-harden-runner so that the local action
+      # file is available.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: ./.github/actions/build-harden-runner
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
 
       # Ensure LLVM is set up consistently.
