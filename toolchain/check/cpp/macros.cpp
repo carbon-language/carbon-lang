@@ -136,14 +136,10 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
 
     // Import the base type so that its fields can be accessed.
     auto var_storage = context.insts().GetAs<SemIR::VarStorage>(inst_id);
-    if (!RequireCompleteType(
-            context, var_storage.type_id, loc_id, [&](auto& builder) {
-              CARBON_DIAGNOSTIC(IncompleteTypeInMacroExpansion, Context,
-                                "type {0} is incomplete", InstIdAsType);
-              builder.Context(loc_id, IncompleteTypeInMacroExpansion, inst_id);
-            })) {
-      return SemIR::ErrorInst::InstId;
-    }
+    // TODO: currently an error isn't reachable here because incomplete
+    // array types can't be imported. Once that changes, switch to
+    // `RequireCompleteType` and handle the error.
+    CompleteTypeOrCheckFail(context, var_storage.type_id);
 
     clang::QualType qual_type = ap_value.getLValueBase().getType();
     for (const auto& entry : ap_value.getLValuePath()) {
