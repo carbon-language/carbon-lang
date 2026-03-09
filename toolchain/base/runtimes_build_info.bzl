@@ -68,12 +68,16 @@ def _format_one_per_line(list):
 
 def _builtins_path(file):
     """Returns the install path for a file in CompilerRT's builtins library."""
+    path = file.path
 
-    # The CompilerRT package has the builtins runtime sources in the
-    # "lib/builtins/" subdirectory, and we install into a "builtins/"
-    # subdirectory, so just remove the "lib/" prefix from the package-relative
-    # label name.
-    return file.owner.name.removeprefix("lib/")
+    # Skip to the relative path below the workspace root.
+    path = path.rpartition(file.owner.workspace_root + "/")[2]
+
+    # And now we can predictably remove the `compiler-rt/lib` prefix.
+    path = path.removeprefix("compiler-rt/lib/")
+    if not path.startswith("builtins/"):
+        fail("Not a builtins-relative path for: {0}".format(file.path))
+    return path
 
 def _runtimes_path(file):
     """Returns the install path for a file in a normal runtimes library."""
