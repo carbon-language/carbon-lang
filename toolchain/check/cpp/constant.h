@@ -16,6 +16,12 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
     -> SemIR::ConstantId;
 
+// Attempt to evaluate a call to a C++ constexpr/consteval function as a
+// Carbon constant.
+auto EvalCppCall(Context& context, SemIR::LocId loc_id,
+                 SemIR::ClangDeclId clang_decl_id, SemIR::InstBlockId args_id)
+    -> SemIR::ConstantId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_CONSTANT_H_
