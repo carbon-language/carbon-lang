@@ -574,8 +574,8 @@ fn Works() {
 // CHECK:STDOUT:   %K2.decl: type = interface_decl @K2 [concrete = constants.%K2.type] {} {}
 // CHECK:STDOUT:   %Simple3.decl: %Simple3.type = fn_decl @Simple3 [concrete = constants.%Simple3] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.8cb = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @Simple3.%pattern_type (%pattern_type.6a7df6.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Simple3.%pattern_type (%pattern_type.6a7df6.1) = value_param_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @Simple3.%pattern_type (%pattern_type.6a7df6.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @Simple3.%pattern_type (%pattern_type.6a7df6.1) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_16: type = splice_block %K2.ref [concrete = constants.%K2.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -592,8 +592,8 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound3.decl: %Compound3.type = fn_decl @Compound3 [concrete = constants.%Compound3] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.8cb = symbolic_binding_pattern V, 0 [concrete]
-// CHECK:STDOUT:     %y.patt: @Compound3.%pattern_type (%pattern_type.6a7df6.2) = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: @Compound3.%pattern_type (%pattern_type.6a7df6.2) = value_param_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.param_patt: @Compound3.%pattern_type (%pattern_type.6a7df6.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %y.patt: @Compound3.%pattern_type (%pattern_type.6a7df6.2) = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_18: type = splice_block %K2.ref.loc14 [concrete = constants.%K2.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -780,10 +780,10 @@ fn Works() {
 // CHECK:STDOUT:   %L1.decl: type = interface_decl @L1 [concrete = constants.%L1.type] {} {}
 // CHECK:STDOUT:   %Simple4.decl: %Simple4.type = fn_decl @Simple4 [concrete = constants.%Simple4] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.a5c = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @Simple4.%pattern_type.loc9_20 (%pattern_type.352a62.1) = value_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Simple4.%pattern_type.loc9_20 (%pattern_type.352a62.1) = value_param_pattern %x.patt [concrete]
-// CHECK:STDOUT:     %p.patt: @Simple4.%pattern_type.loc9_26 (%pattern_type.740d56.1) = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: @Simple4.%pattern_type.loc9_26 (%pattern_type.740d56.1) = value_param_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: @Simple4.%pattern_type.loc9_21 (%pattern_type.352a62.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @Simple4.%pattern_type.loc9_21 (%pattern_type.352a62.1) = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: @Simple4.%pattern_type.loc9_27 (%pattern_type.740d56.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: @Simple4.%pattern_type.loc9_27 (%pattern_type.740d56.1) = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_16: type = splice_block %L1.ref [concrete = constants.%L1.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -808,10 +808,10 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound4.decl: %Compound4.type = fn_decl @Compound4 [concrete = constants.%Compound4] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.a5c = symbolic_binding_pattern V, 0 [concrete]
-// CHECK:STDOUT:     %y.patt: @Compound4.%pattern_type.loc15_22 (%pattern_type.352a62.2) = value_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: @Compound4.%pattern_type.loc15_22 (%pattern_type.352a62.2) = value_param_pattern %y.patt [concrete]
-// CHECK:STDOUT:     %p.patt: @Compound4.%pattern_type.loc15_28 (%pattern_type.740d56.2) = value_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: @Compound4.%pattern_type.loc15_28 (%pattern_type.740d56.2) = value_param_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %y.param_patt: @Compound4.%pattern_type.loc15_23 (%pattern_type.352a62.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %y.patt: @Compound4.%pattern_type.loc15_23 (%pattern_type.352a62.2) = at_binding_pattern y, %y.param_patt [concrete]
+// CHECK:STDOUT:     %p.param_patt: @Compound4.%pattern_type.loc15_29 (%pattern_type.740d56.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %p.patt: @Compound4.%pattern_type.loc15_29 (%pattern_type.740d56.2) = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_18: type = splice_block %L1.ref.loc15 [concrete = constants.%L1.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -842,8 +842,8 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %L1.WithSelf.R1.decl: @L1.WithSelf.%L1.WithSelf.R1.type (%L1.WithSelf.R1.type.504) = fn_decl @L1.WithSelf.R1 [symbolic = @L1.WithSelf.%L1.WithSelf.R1 (constants.%L1.WithSelf.R1.aa4)] {
-// CHECK:STDOUT:     %self.patt: @L1.WithSelf.R1.%pattern_type (%pattern_type.9c1) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @L1.WithSelf.R1.%pattern_type (%pattern_type.9c1) = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @L1.WithSelf.R1.%pattern_type (%pattern_type.9c1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @L1.WithSelf.R1.%pattern_type (%pattern_type.9c1) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @L1.WithSelf.R1.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -855,8 +855,8 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %L1.assoc_type = assoc_entity element0, %L1.WithSelf.R1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %L1.WithSelf.S1.decl: @L1.WithSelf.%L1.WithSelf.S1.type (%L1.WithSelf.S1.type.e03) = fn_decl @L1.WithSelf.S1 [symbolic = @L1.WithSelf.%L1.WithSelf.S1 (constants.%L1.WithSelf.S1.480)] {
-// CHECK:STDOUT:     %self.patt: @L1.WithSelf.S1.%pattern_type (%pattern_type.9c1) = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @L1.WithSelf.S1.%pattern_type (%pattern_type.9c1) = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @L1.WithSelf.S1.%pattern_type (%pattern_type.9c1) = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @L1.WithSelf.S1.%pattern_type (%pattern_type.9c1) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref @L1.WithSelf.S1.%Self.binding.as_type (%Self.binding.as_type) = ref_param call_param0
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -896,9 +896,9 @@ fn Works() {
 // CHECK:STDOUT: generic fn @Simple4(%T.loc9_12.2: %L1.type) {
 // CHECK:STDOUT:   %T.loc9_12.1: %L1.type = symbolic_binding T, 0 [symbolic = %T.loc9_12.1 (constants.%T)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc9_12.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc9_20: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc9_20 (constants.%pattern_type.352a62.1)]
+// CHECK:STDOUT:   %pattern_type.loc9_21: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc9_21 (constants.%pattern_type.352a62.1)]
 // CHECK:STDOUT:   %ptr.loc9_30.1: type = ptr_type %T.binding.as_type [symbolic = %ptr.loc9_30.1 (constants.%ptr.6c1f8e.1)]
-// CHECK:STDOUT:   %pattern_type.loc9_26: type = pattern_type %ptr.loc9_30.1 [symbolic = %pattern_type.loc9_26 (constants.%pattern_type.740d56.1)]
+// CHECK:STDOUT:   %pattern_type.loc9_27: type = pattern_type %ptr.loc9_30.1 [symbolic = %pattern_type.loc9_27 (constants.%pattern_type.740d56.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc9_21: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9_21 (constants.%require_complete.592d00.1)]
@@ -937,9 +937,9 @@ fn Works() {
 // CHECK:STDOUT: generic fn @Compound4(%V.loc15_14.2: %L1.type) {
 // CHECK:STDOUT:   %V.loc15_14.1: %L1.type = symbolic_binding V, 0 [symbolic = %V.loc15_14.1 (constants.%V)]
 // CHECK:STDOUT:   %V.binding.as_type: type = symbolic_binding_type V, 0, %V.loc15_14.1 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc15_22: type = pattern_type %V.binding.as_type [symbolic = %pattern_type.loc15_22 (constants.%pattern_type.352a62.2)]
+// CHECK:STDOUT:   %pattern_type.loc15_23: type = pattern_type %V.binding.as_type [symbolic = %pattern_type.loc15_23 (constants.%pattern_type.352a62.2)]
 // CHECK:STDOUT:   %ptr.loc15_32.1: type = ptr_type %V.binding.as_type [symbolic = %ptr.loc15_32.1 (constants.%ptr.6c1f8e.2)]
-// CHECK:STDOUT:   %pattern_type.loc15_28: type = pattern_type %ptr.loc15_32.1 [symbolic = %pattern_type.loc15_28 (constants.%pattern_type.740d56.2)]
+// CHECK:STDOUT:   %pattern_type.loc15_29: type = pattern_type %ptr.loc15_32.1 [symbolic = %pattern_type.loc15_29 (constants.%pattern_type.740d56.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc15_23: <witness> = require_complete_type %V.binding.as_type [symbolic = %require_complete.loc15_23 (constants.%require_complete.592d00.2)]
@@ -1001,9 +1001,9 @@ fn Works() {
 // CHECK:STDOUT: specific @Simple4(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_12.1 => constants.%T
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %pattern_type.loc9_20 => constants.%pattern_type.352a62.1
+// CHECK:STDOUT:   %pattern_type.loc9_21 => constants.%pattern_type.352a62.1
 // CHECK:STDOUT:   %ptr.loc9_30.1 => constants.%ptr.6c1f8e.1
-// CHECK:STDOUT:   %pattern_type.loc9_26 => constants.%pattern_type.740d56.1
+// CHECK:STDOUT:   %pattern_type.loc9_27 => constants.%pattern_type.740d56.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @L1.WithSelf(constants.%T) {
@@ -1030,9 +1030,9 @@ fn Works() {
 // CHECK:STDOUT: specific @Compound4(constants.%V) {
 // CHECK:STDOUT:   %V.loc15_14.1 => constants.%V
 // CHECK:STDOUT:   %V.binding.as_type => constants.%V.binding.as_type
-// CHECK:STDOUT:   %pattern_type.loc15_22 => constants.%pattern_type.352a62.2
+// CHECK:STDOUT:   %pattern_type.loc15_23 => constants.%pattern_type.352a62.2
 // CHECK:STDOUT:   %ptr.loc15_32.1 => constants.%ptr.6c1f8e.2
-// CHECK:STDOUT:   %pattern_type.loc15_28 => constants.%pattern_type.740d56.2
+// CHECK:STDOUT:   %pattern_type.loc15_29 => constants.%pattern_type.740d56.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @L1.WithSelf(constants.%V) {
@@ -1137,8 +1137,8 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %L2.WithSelf.R2.decl: @L2.WithSelf.%L2.WithSelf.R2.type (%L2.WithSelf.R2.type.e38) = fn_decl @L2.WithSelf.R2 [symbolic = @L2.WithSelf.%L2.WithSelf.R2 (constants.%L2.WithSelf.R2.f23)] {
-// CHECK:STDOUT:     %self.patt: @L2.WithSelf.R2.%pattern_type (%pattern_type.73b) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @L2.WithSelf.R2.%pattern_type (%pattern_type.73b) = value_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @L2.WithSelf.R2.%pattern_type (%pattern_type.73b) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @L2.WithSelf.R2.%pattern_type (%pattern_type.73b) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @L2.WithSelf.R2.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -1150,8 +1150,8 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %L2.assoc_type = assoc_entity element0, %L2.WithSelf.R2.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %L2.WithSelf.S2.decl: @L2.WithSelf.%L2.WithSelf.S2.type (%L2.WithSelf.S2.type.7f8) = fn_decl @L2.WithSelf.S2 [symbolic = @L2.WithSelf.%L2.WithSelf.S2 (constants.%L2.WithSelf.S2.827)] {
-// CHECK:STDOUT:     %self.patt: @L2.WithSelf.S2.%pattern_type (%pattern_type.73b) = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @L2.WithSelf.S2.%pattern_type (%pattern_type.73b) = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: @L2.WithSelf.S2.%pattern_type (%pattern_type.73b) = ref_param_pattern [concrete]
+// CHECK:STDOUT:     %self.patt: @L2.WithSelf.S2.%pattern_type (%pattern_type.73b) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref @L2.WithSelf.S2.%Self.binding.as_type (%Self.binding.as_type) = ref_param call_param0
 // CHECK:STDOUT:     %.loc6_19.1: type = splice_block %.loc6_19.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {

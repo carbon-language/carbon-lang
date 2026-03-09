@@ -180,8 +180,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Param.decl: type = class_decl @Param [concrete = constants.%Param] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.7c7 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -202,8 +202,8 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %HasF.WithSelf.F.decl: @HasF.WithSelf.%HasF.WithSelf.F.type (%HasF.WithSelf.F.type.246) = fn_decl @HasF.WithSelf.F [symbolic = @HasF.WithSelf.%HasF.WithSelf.F (constants.%HasF.WithSelf.F.58b)] {
-// CHECK:STDOUT:       %return.patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = return_slot_pattern %return.param_patt, %T.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @HasF.%T.loc4_16.2 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %.loc5_13.2: Core.Form = init_form %T.ref [symbolic = %.loc5_13.1 (constants.%.184347.1)]
@@ -226,8 +226,8 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %Self.ref as %HasF.type {
 // CHECK:STDOUT:   %C.as.HasF.impl.F.decl: %C.as.HasF.impl.F.type = fn_decl @C.as.HasF.impl.F [concrete = constants.%C.as.HasF.impl.F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.9ea = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9ea = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9ea = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9ea = return_slot_pattern %return.param_patt, %Param.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Param.ref: type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:     %.loc14: Core.Form = init_form %Param.ref [concrete = constants.%.436]
@@ -499,10 +499,10 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.1d69d8.1) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.cd4fc9.1)] {
-// CHECK:STDOUT:       %self.patt: @I.WithSelf.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @I.WithSelf.F.%pattern_type.loc5_8 (%pattern_type.a8a) = value_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:       %t.patt: @I.WithSelf.F.%pattern_type.loc5_20 (%pattern_type.51d1c4.1) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @I.WithSelf.F.%pattern_type.loc5_20 (%pattern_type.51d1c4.1) = value_param_pattern %t.patt [concrete]
+// CHECK:STDOUT:       %self.param_patt: @I.WithSelf.F.%pattern_type.loc5_12 (%pattern_type.a8a) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @I.WithSelf.F.%pattern_type.loc5_12 (%pattern_type.a8a) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %t.param_patt: @I.WithSelf.F.%pattern_type.loc5_21 (%pattern_type.51d1c4.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %t.patt: @I.WithSelf.F.%pattern_type.loc5_21 (%pattern_type.51d1c4.1) = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -543,10 +543,10 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.type.loc9_21.2 {
 // CHECK:STDOUT:     %X.as.I.impl.F.decl: @X.as.I.impl.%X.as.I.impl.F.type (%X.as.I.impl.F.type) = fn_decl @X.as.I.impl.F [symbolic = @X.as.I.impl.%X.as.I.impl.F (constants.%X.as.I.impl.F)] {
-// CHECK:STDOUT:       %self.patt: @X.as.I.impl.F.%pattern_type.loc10_17 (%pattern_type.e07) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @X.as.I.impl.F.%pattern_type.loc10_17 (%pattern_type.e07) = value_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:       %t.patt: @X.as.I.impl.F.%pattern_type.loc10_36 (%pattern_type.51d1c4.2) = value_binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @X.as.I.impl.F.%pattern_type.loc10_36 (%pattern_type.51d1c4.2) = value_param_pattern %t.patt [concrete]
+// CHECK:STDOUT:       %self.param_patt: @X.as.I.impl.F.%pattern_type.loc10_21 (%pattern_type.e07) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @X.as.I.impl.F.%pattern_type.loc10_21 (%pattern_type.e07) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %t.param_patt: @X.as.I.impl.F.%pattern_type.loc10_37 (%pattern_type.51d1c4.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %t.patt: @X.as.I.impl.F.%pattern_type.loc10_37 (%pattern_type.51d1c4.2) = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @X.as.I.impl.F.%X (%X) = value_param call_param0
 // CHECK:STDOUT:       %.loc10_23.1: type = splice_block %Self.ref [symbolic = %X (constants.%X)] {
@@ -599,8 +599,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.1ab3e4.1)]
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.1ab3e4.1) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.fdb544.1)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc5_8: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc5_8 (constants.%pattern_type.a8a)]
-// CHECK:STDOUT:   %pattern_type.loc5_20: type = pattern_type %T [symbolic = %pattern_type.loc5_20 (constants.%pattern_type.51d1c4.1)]
+// CHECK:STDOUT:   %pattern_type.loc5_12: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc5_12 (constants.%pattern_type.a8a)]
+// CHECK:STDOUT:   %pattern_type.loc5_21: type = pattern_type %T [symbolic = %pattern_type.loc5_21 (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type), %t.param: @I.WithSelf.F.%T (%T));
 // CHECK:STDOUT: }
@@ -608,10 +608,10 @@ class X(U:! type) {
 // CHECK:STDOUT: generic fn @X.as.I.impl.F(@X.%U.loc8_9.2: type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %pattern_type.loc10_17: type = pattern_type %X [symbolic = %pattern_type.loc10_17 (constants.%pattern_type.e07)]
+// CHECK:STDOUT:   %pattern_type.loc10_21: type = pattern_type %X [symbolic = %pattern_type.loc10_21 (constants.%pattern_type.e07)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U)> [symbolic = %I.type (constants.%I.type.1ab3e4.2)]
 // CHECK:STDOUT:   %require_complete.loc10_39: <witness> = require_complete_type %I.type [symbolic = %require_complete.loc10_39 (constants.%require_complete.e36)]
-// CHECK:STDOUT:   %pattern_type.loc10_36: type = pattern_type %U [symbolic = %pattern_type.loc10_36 (constants.%pattern_type.51d1c4.2)]
+// CHECK:STDOUT:   %pattern_type.loc10_37: type = pattern_type %U [symbolic = %pattern_type.loc10_37 (constants.%pattern_type.51d1c4.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc10_21: <witness> = require_complete_type %X [symbolic = %require_complete.loc10_21 (constants.%require_complete.5dd)]
@@ -634,8 +634,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %I.type => constants.%I.type.1ab3e4.1
 // CHECK:STDOUT:   %Self => constants.%Self.fdb544.1
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type.loc5_8 => constants.%pattern_type.a8a
-// CHECK:STDOUT:   %pattern_type.loc5_20 => constants.%pattern_type.51d1c4.1
+// CHECK:STDOUT:   %pattern_type.loc5_12 => constants.%pattern_type.a8a
+// CHECK:STDOUT:   %pattern_type.loc5_21 => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%U) {
@@ -680,10 +680,10 @@ class X(U:! type) {
 // CHECK:STDOUT: specific @X.as.I.impl.F(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %pattern_type.loc10_17 => constants.%pattern_type.e07
+// CHECK:STDOUT:   %pattern_type.loc10_21 => constants.%pattern_type.e07
 // CHECK:STDOUT:   %I.type => constants.%I.type.1ab3e4.2
 // CHECK:STDOUT:   %require_complete.loc10_39 => constants.%require_complete.e36
-// CHECK:STDOUT:   %pattern_type.loc10_36 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %pattern_type.loc10_37 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%U, constants.%I.facet) {
@@ -702,7 +702,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %I.type => constants.%I.type.1ab3e4.2
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%X
-// CHECK:STDOUT:   %pattern_type.loc5_8 => constants.%pattern_type.e07
-// CHECK:STDOUT:   %pattern_type.loc5_20 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %pattern_type.loc5_12 => constants.%pattern_type.e07
+// CHECK:STDOUT:   %pattern_type.loc5_21 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

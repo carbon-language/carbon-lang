@@ -65,9 +65,9 @@ import library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:           ^~~
+// CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR:
 fn G() { F(); }
 
@@ -86,9 +86,9 @@ import Same library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:           ^~~
+// CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR:
 fn G() { Same.F(); }
 
@@ -152,8 +152,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Same.C [concrete = constants.%C]

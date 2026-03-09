@@ -97,8 +97,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.MakeSelf.decl: @Class.%Class.MakeSelf.type (%Class.MakeSelf.type) = fn_decl @Class.MakeSelf [symbolic = @Class.%Class.MakeSelf (constants.%Class.MakeSelf)] {
-// CHECK:STDOUT:       %return.patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = return_slot_pattern %return.param_patt, %Self.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc18_20.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_20.2 [symbolic = %Class (constants.%Class)]
@@ -107,8 +107,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %return: ref @Class.MakeSelf.%Class (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.MakeClass.decl: @Class.%Class.MakeClass.type (%Class.MakeClass.type) = fn_decl @Class.MakeClass [symbolic = @Class.%Class.MakeClass (constants.%Class.MakeClass)] {
-// CHECK:STDOUT:       %return.patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.MakeClass.%pattern_type (%pattern_type.466) = return_slot_pattern %return.param_patt, %Class.loc19_28.2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T (constants.%T)]

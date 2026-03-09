@@ -219,8 +219,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasG.decl: type = interface_decl @HasG [concrete = constants.%HasG.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %c.patt: %pattern_type = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -446,8 +446,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasA2.decl: type = interface_decl @HasA2 [concrete = constants.%HasA2.type] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type = value_param_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
@@ -652,8 +652,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %E.decl: type = class_decl @E [concrete = constants.%E] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %e.patt: %pattern_type = value_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %E = value_param call_param0
 // CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [concrete = constants.%E]
@@ -823,8 +823,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasK.decl: type = interface_decl @HasK [concrete = constants.%HasK.type] {} {}
 // CHECK:STDOUT:   %L.decl: type = class_decl @L [concrete = constants.%L] {} {}
 // CHECK:STDOUT:   %M.decl: %M.type = fn_decl @M [concrete = constants.%M] {
-// CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
-// CHECK:STDOUT:     %l.param_patt: %pattern_type = value_param_pattern %l.patt [concrete]
+// CHECK:STDOUT:     %l.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %l.patt: %pattern_type = at_binding_pattern l, %l.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %l.param: %L = value_param call_param0
 // CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [concrete = constants.%L]
@@ -994,8 +994,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasN2.decl: type = interface_decl @HasN2 [concrete = constants.%HasN2.type] {} {}
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %P.decl: %P.type = fn_decl @P [concrete = constants.%P] {
-// CHECK:STDOUT:     %o.patt: %pattern_type = value_binding_pattern o [concrete]
-// CHECK:STDOUT:     %o.param_patt: %pattern_type = value_param_pattern %o.patt [concrete]
+// CHECK:STDOUT:     %o.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %o.patt: %pattern_type = at_binding_pattern o, %o.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %O = value_param call_param0
 // CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]

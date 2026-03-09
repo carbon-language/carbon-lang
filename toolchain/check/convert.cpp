@@ -1953,10 +1953,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!RequireConcreteType(
               context, target.type_id, loc_id,
               [&](auto& builder) {
-                CARBON_CHECK(
-                    !target.is_initializer(),
-                    "Initialization of incomplete types is expected to be "
-                    "caught elsewhere.");
                 CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Context,
                                   "forming value of incomplete type {0}",
                                   SemIR::TypeId);

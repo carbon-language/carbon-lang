@@ -133,10 +133,10 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %T.loc5_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.1c2 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.1c2 = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.1c2 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.1c2 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc9_24 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc9_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc9_24: Core.Form = init_form %i32.loc9_24 [concrete = constants.%.ff5]
@@ -152,10 +152,10 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.ce2 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %c.patt: @G.%pattern_type.loc13_21 (%pattern_type.c542f5.1) = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: @G.%pattern_type.loc13_21 (%pattern_type.c542f5.1) = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: @G.%pattern_type.loc13_34 (%pattern_type.9b9f0c.2) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @G.%pattern_type.loc13_34 (%pattern_type.9b9f0c.2) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: @G.%pattern_type.loc13_22 (%pattern_type.c542f5.1) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: @G.%pattern_type.loc13_22 (%pattern_type.c542f5.1) = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @G.%pattern_type.loc13_37 (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @G.%pattern_type.loc13_37 (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc13_37.3 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13_37: %Copy.type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc13_37: type = facet_access_type %T.ref.loc13_37 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
@@ -181,10 +181,10 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.ce2 = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %c.patt: @H.%pattern_type.loc17_21 (%pattern_type.c542f5.2) = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: @H.%pattern_type.loc17_21 (%pattern_type.c542f5.2) = value_param_pattern %c.patt [concrete]
-// CHECK:STDOUT:     %return.patt: @H.%pattern_type.loc17_34 (%pattern_type.9b9f0c.3) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @H.%pattern_type.loc17_34 (%pattern_type.9b9f0c.3) = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: @H.%pattern_type.loc17_22 (%pattern_type.c542f5.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %c.patt: @H.%pattern_type.loc17_22 (%pattern_type.c542f5.2) = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @H.%pattern_type.loc17_37 (%pattern_type.9b9f0c.3) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @H.%pattern_type.loc17_37 (%pattern_type.9b9f0c.3) = return_slot_pattern %return.param_patt, %.loc17_37.3 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc17_37: %Copy.type = name_ref U, %U.loc17_6.2 [symbolic = %U.loc17_6.1 (constants.%U.035)]
 // CHECK:STDOUT:     %U.as_type.loc17_37: type = facet_access_type %U.ref.loc17_37 [symbolic = %U.binding.as_type (constants.%U.binding.as_type.14b)]
@@ -251,9 +251,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %T.loc13_6.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc13_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %Class.loc13_31.1: type = class_type @Class, @Class(%T.binding.as_type) [symbolic = %Class.loc13_31.1 (constants.%Class.3168aa.1)]
-// CHECK:STDOUT:   %pattern_type.loc13_21: type = pattern_type %Class.loc13_31.1 [symbolic = %pattern_type.loc13_21 (constants.%pattern_type.c542f5.1)]
+// CHECK:STDOUT:   %pattern_type.loc13_22: type = pattern_type %Class.loc13_31.1 [symbolic = %pattern_type.loc13_22 (constants.%pattern_type.c542f5.1)]
 // CHECK:STDOUT:   %.loc13_37.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc13_37.2 (constants.%.076a48.2)]
-// CHECK:STDOUT:   %pattern_type.loc13_34: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc13_34 (constants.%pattern_type.9b9f0c.2)]
+// CHECK:STDOUT:   %pattern_type.loc13_37: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc13_37 (constants.%pattern_type.9b9f0c.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %Class.loc13_31.1 [symbolic = %require_complete.loc13 (constants.%require_complete.ae7bfa.1)]
@@ -285,9 +285,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %U.loc17_6.1: %Copy.type = symbolic_binding U, 0 [symbolic = %U.loc17_6.1 (constants.%U.035)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc17_6.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type.14b)]
 // CHECK:STDOUT:   %Class.loc17_31.1: type = class_type @Class, @Class(%U.binding.as_type) [symbolic = %Class.loc17_31.1 (constants.%Class.3168aa.2)]
-// CHECK:STDOUT:   %pattern_type.loc17_21: type = pattern_type %Class.loc17_31.1 [symbolic = %pattern_type.loc17_21 (constants.%pattern_type.c542f5.2)]
+// CHECK:STDOUT:   %pattern_type.loc17_22: type = pattern_type %Class.loc17_31.1 [symbolic = %pattern_type.loc17_22 (constants.%pattern_type.c542f5.2)]
 // CHECK:STDOUT:   %.loc17_37.2: Core.Form = init_form %U.binding.as_type [symbolic = %.loc17_37.2 (constants.%.076a48.3)]
-// CHECK:STDOUT:   %pattern_type.loc17_34: type = pattern_type %U.binding.as_type [symbolic = %pattern_type.loc17_34 (constants.%pattern_type.9b9f0c.3)]
+// CHECK:STDOUT:   %pattern_type.loc17_37: type = pattern_type %U.binding.as_type [symbolic = %pattern_type.loc17_37 (constants.%pattern_type.9b9f0c.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %Class.loc17_31.1 [symbolic = %require_complete.loc17 (constants.%require_complete.ae7bfa.2)]
@@ -345,9 +345,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %T.loc13_6.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Class.loc13_31.1 => constants.%Class.3168aa.1
-// CHECK:STDOUT:   %pattern_type.loc13_21 => constants.%pattern_type.c542f5.1
+// CHECK:STDOUT:   %pattern_type.loc13_22 => constants.%pattern_type.c542f5.1
 // CHECK:STDOUT:   %.loc13_37.2 => constants.%.076a48.2
-// CHECK:STDOUT:   %pattern_type.loc13_34 => constants.%pattern_type.9b9f0c.2
+// CHECK:STDOUT:   %pattern_type.loc13_37 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U.binding.as_type.14b) {
@@ -365,8 +365,8 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %U.loc17_6.1 => constants.%U.035
 // CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type.14b
 // CHECK:STDOUT:   %Class.loc17_31.1 => constants.%Class.3168aa.2
-// CHECK:STDOUT:   %pattern_type.loc17_21 => constants.%pattern_type.c542f5.2
+// CHECK:STDOUT:   %pattern_type.loc17_22 => constants.%pattern_type.c542f5.2
 // CHECK:STDOUT:   %.loc17_37.2 => constants.%.076a48.3
-// CHECK:STDOUT:   %pattern_type.loc17_34 => constants.%pattern_type.9b9f0c.3
+// CHECK:STDOUT:   %pattern_type.loc17_37 => constants.%pattern_type.9b9f0c.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

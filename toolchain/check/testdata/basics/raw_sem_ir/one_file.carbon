@@ -46,14 +46,14 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir58000004, inst_id: inst7000002D}
 // CHECK:STDOUT:     import_ir_inst7: {ir_id: import_ir58000004, inst_id: inst70000027}
 // CHECK:STDOUT:     import_ir_inst8: {ir_id: import_ir58000004, inst_id: inst70000028}
-// CHECK:STDOUT:     import_ir_inst9: {ir_id: import_ir58000004, inst_id: inst7000001E}
+// CHECK:STDOUT:     import_ir_inst9: {ir_id: import_ir58000004, inst_id: inst7000001D}
 // CHECK:STDOUT:     import_ir_instA: {ir_id: import_ir58000004, inst_id: inst70000020}
 // CHECK:STDOUT:     import_ir_instB: {ir_id: import_ir58000004, inst_id: inst70000023}
 // CHECK:STDOUT:     import_ir_instC: {ir_id: import_ir58000004, inst_id: inst70000024}
 // CHECK:STDOUT:     import_ir_instD: {ir_id: import_ir58000004, inst_id: inst70000012}
 // CHECK:STDOUT:     import_ir_instE: {ir_id: import_ir58000004, inst_id: inst70000017}
 // CHECK:STDOUT:     import_ir_instF: {ir_id: import_ir58000004, inst_id: inst7000001A}
-// CHECK:STDOUT:     import_ir_inst10: {ir_id: import_ir58000004, inst_id: inst7000001F}
+// CHECK:STDOUT:     import_ir_inst10: {ir_id: import_ir58000004, inst_id: inst7000001E}
 // CHECK:STDOUT:     import_ir_inst11: {ir_id: import_ir58000004, inst_id: inst70000026}
 // CHECK:STDOUT:     import_ir_inst12: {ir_id: import_ir58000004, inst_id: inst70000031}
 // CHECK:STDOUT:     import_ir_inst13: {ir_id: import_ir58000004, inst_id: inst70000032}
@@ -67,7 +67,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst1B: {ir_id: import_ir58000004, inst_id: inst70000089}
 // CHECK:STDOUT:     import_ir_inst1C: {ir_id: import_ir58000004, inst_id: inst70000084}
 // CHECK:STDOUT:     import_ir_inst1D: {ir_id: import_ir58000004, inst_id: inst70000085}
-// CHECK:STDOUT:     import_ir_inst1E: {ir_id: import_ir58000004, inst_id: inst7000007D}
+// CHECK:STDOUT:     import_ir_inst1E: {ir_id: import_ir58000004, inst_id: inst7000007C}
 // CHECK:STDOUT:     import_ir_inst1F: {ir_id: import_ir58000004, inst_id: inst7000007F}
 // CHECK:STDOUT:     import_ir_inst20: {ir_id: import_ir58000004, inst_id: inst70000080}
 // CHECK:STDOUT:     import_ir_inst21: {ir_id: import_ir58000004, inst_id: inst70000081}
@@ -75,7 +75,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst23: {ir_id: import_ir58000004, inst_id: inst70000078}
 // CHECK:STDOUT:     import_ir_inst24: {ir_id: import_ir58000004, inst_id: inst70000079}
 // CHECK:STDOUT:     import_ir_inst25: {ir_id: import_ir58000004, inst_id: inst7000007A}
-// CHECK:STDOUT:     import_ir_inst26: {ir_id: import_ir58000004, inst_id: inst7000007E}
+// CHECK:STDOUT:     import_ir_inst26: {ir_id: import_ir58000004, inst_id: inst7000007D}
 // CHECK:STDOUT:     import_ir_inst27: {ir_id: import_ir58000004, inst_id: inst70000083}
 // CHECK:STDOUT:     import_ir_inst28: {ir_id: import_ir58000004, inst_id: inst70000093}
 // CHECK:STDOUT:     import_ir_inst29: {ir_id: import_ir58000004, inst_id: inst7000009E}
@@ -123,14 +123,14 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst53: {ir_id: import_ir58000004, inst_id: inst70000149}
 // CHECK:STDOUT:     import_ir_inst54: {ir_id: import_ir58000004, inst_id: inst70000144}
 // CHECK:STDOUT:     import_ir_inst55: {ir_id: import_ir58000004, inst_id: inst70000145}
-// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir58000004, inst_id: inst7000013D}
+// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir58000004, inst_id: inst7000013C}
 // CHECK:STDOUT:     import_ir_inst57: {ir_id: import_ir58000004, inst_id: inst7000013F}
 // CHECK:STDOUT:     import_ir_inst58: {ir_id: import_ir58000004, inst_id: inst70000140}
 // CHECK:STDOUT:     import_ir_inst59: {ir_id: import_ir58000004, inst_id: inst70000141}
 // CHECK:STDOUT:     import_ir_inst5A: {ir_id: import_ir58000004, inst_id: inst70000129}
 // CHECK:STDOUT:     import_ir_inst5B: {ir_id: import_ir58000004, inst_id: inst70000139}
 // CHECK:STDOUT:     import_ir_inst5C: {ir_id: import_ir58000004, inst_id: inst7000013A}
-// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir58000004, inst_id: inst7000013E}
+// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir58000004, inst_id: inst7000013D}
 // CHECK:STDOUT:     import_ir_inst5E: {ir_id: import_ir58000004, inst_id: inst70000143}
 // CHECK:STDOUT:     import_ir_inst5F: {ir_id: import_ir58000004, inst_id: inst7000014C}
 // CHECK:STDOUT:     import_ir_inst60: {ir_id: import_ir58000004, inst_id: inst7000014D}
@@ -150,7 +150,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst6E: {ir_id: import_ir58000004, inst_id: inst700001C2}
 // CHECK:STDOUT:     import_ir_inst6F: {ir_id: import_ir58000004, inst_id: inst700001BD}
 // CHECK:STDOUT:     import_ir_inst70: {ir_id: import_ir58000004, inst_id: inst700001BE}
-// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir58000004, inst_id: inst700001B6}
+// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir58000004, inst_id: inst700001B5}
 // CHECK:STDOUT:     import_ir_inst72: {ir_id: import_ir58000004, inst_id: inst700001B8}
 // CHECK:STDOUT:     import_ir_inst73: {ir_id: import_ir58000004, inst_id: inst700001B9}
 // CHECK:STDOUT:     import_ir_inst74: {ir_id: import_ir58000004, inst_id: inst700001BA}
@@ -161,7 +161,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst79: {ir_id: import_ir58000004, inst_id: inst700001B1}
 // CHECK:STDOUT:     import_ir_inst7A: {ir_id: import_ir58000004, inst_id: inst700001B2}
 // CHECK:STDOUT:     import_ir_inst7B: {ir_id: import_ir58000004, inst_id: inst700001B3}
-// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir58000004, inst_id: inst700001B7}
+// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir58000004, inst_id: inst700001B6}
 // CHECK:STDOUT:     import_ir_inst7D: {ir_id: import_ir58000004, inst_id: inst700001BC}
 // CHECK:STDOUT:     import_ir_inst7E: {ir_id: import_ir58000004, inst_id: inst700001CD}
 // CHECK:STDOUT:     import_ir_inst7F: {ir_id: import_ir58000004, inst_id: inst700001D4}
@@ -198,7 +198,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst9E: {ir_id: import_ir58000004, inst_id: inst70000253}
 // CHECK:STDOUT:     import_ir_inst9F: {ir_id: import_ir58000004, inst_id: inst7000024E}
 // CHECK:STDOUT:     import_ir_instA0: {ir_id: import_ir58000004, inst_id: inst7000024F}
-// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir58000004, inst_id: inst70000247}
+// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir58000004, inst_id: inst70000246}
 // CHECK:STDOUT:     import_ir_instA2: {ir_id: import_ir58000004, inst_id: inst70000249}
 // CHECK:STDOUT:     import_ir_instA3: {ir_id: import_ir58000004, inst_id: inst7000024A}
 // CHECK:STDOUT:     import_ir_instA4: {ir_id: import_ir58000004, inst_id: inst7000024B}
@@ -212,7 +212,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_instAC: {ir_id: import_ir58000004, inst_id: inst70000242}
 // CHECK:STDOUT:     import_ir_instAD: {ir_id: import_ir58000004, inst_id: inst70000243}
 // CHECK:STDOUT:     import_ir_instAE: {ir_id: import_ir58000004, inst_id: inst70000244}
-// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir58000004, inst_id: inst70000248}
+// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir58000004, inst_id: inst70000247}
 // CHECK:STDOUT:     import_ir_instB0: {ir_id: import_ir58000004, inst_id: inst7000024D}
 // CHECK:STDOUT:     import_ir_instB1: {ir_id: import_ir58000004, inst_id: inst7000025E}
 // CHECK:STDOUT:     import_ir_instB2: {ir_id: import_ir58000004, inst_id: inst70000263}
@@ -476,10 +476,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst5800001D:    {kind: PointerType, arg0: inst58000018, type: type(TypeType)}
 // CHECK:STDOUT:     inst5800001E:    {kind: PointerType, arg0: inst58000019, type: type(TypeType)}
 // CHECK:STDOUT:     inst5800001F:    {kind: PatternType, arg0: inst5800001D, type: type(TypeType)}
-// CHECK:STDOUT:     inst58000020:    {kind: ValueBinding, arg0: entity_name58000002, arg1: inst5800003A, type: type(symbolic_constant58000004)}
-// CHECK:STDOUT:     inst58000021:    {kind: ValueBindingPattern, arg0: entity_name58000002, type: type(symbolic_constant58000006)}
-// CHECK:STDOUT:     inst58000022:    {kind: PatternType, arg0: inst5800001E, type: type(TypeType)}
-// CHECK:STDOUT:     inst58000023:    {kind: ValueParamPattern, arg0: inst58000021, type: type(symbolic_constant58000006)}
+// CHECK:STDOUT:     inst58000020:    {kind: ValueParamPattern, arg0: name2, type: type(symbolic_constant58000006)}
+// CHECK:STDOUT:     inst58000021:    {kind: PatternType, arg0: inst5800001E, type: type(TypeType)}
+// CHECK:STDOUT:     inst58000022:    {kind: ValueBinding, arg0: entity_name58000002, arg1: inst5800003A, type: type(symbolic_constant58000004)}
+// CHECK:STDOUT:     inst58000023:    {kind: AtBindingPattern, arg0: entity_name58000002, arg1: inst58000020, type: type(symbolic_constant58000006)}
 // CHECK:STDOUT:     inst58000024:    {kind: NameRef, arg0: name1, arg1: inst58000017, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000025:    {kind: PointerType, arg0: inst58000024, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000026:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
@@ -498,9 +498,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst58000033:    {kind: InitForm, arg0: inst5800002F, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst58000034:    {kind: InitForm, arg0: inst58000031, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst58000035:    {kind: PatternType, arg0: inst5800002F, type: type(TypeType)}
-// CHECK:STDOUT:     inst58000036:    {kind: ReturnSlotPattern, arg0: inst58000030, type: type(symbolic_constant5800000E)}
+// CHECK:STDOUT:     inst58000036:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant5800000E)}
 // CHECK:STDOUT:     inst58000037:    {kind: PatternType, arg0: inst58000031, type: type(TypeType)}
-// CHECK:STDOUT:     inst58000038:    {kind: OutParamPattern, arg0: inst58000036, type: type(symbolic_constant5800000E)}
+// CHECK:STDOUT:     inst58000038:    {kind: ReturnSlotPattern, arg0: inst58000036, arg1: inst58000030, type: type(symbolic_constant5800000E)}
 // CHECK:STDOUT:     inst58000039:    {kind: SpliceBlock, arg0: inst_block58000005, arg1: inst58000015, type: type(TypeType)}
 // CHECK:STDOUT:     inst5800003A:    {kind: ValueParam, arg0: call_param0, arg1: name2, type: type(symbolic_constant58000004)}
 // CHECK:STDOUT:     inst5800003B:    {kind: SpliceBlock, arg0: inst_block58000007, arg1: inst5800001C, type: type(TypeType)}
@@ -516,7 +516,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst58000045:    {kind: RequireCompleteType, arg0: inst5800002F, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst58000046:    {kind: RequireCompleteType, arg0: inst5800002F, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst58000047:    {kind: RequireCompleteType, arg0: inst58000031, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst58000048:    {kind: NameRef, arg0: name2, arg1: inst58000020, type: type(symbolic_constant58000004)}
+// CHECK:STDOUT:     inst58000048:    {kind: NameRef, arg0: name2, arg1: inst58000022, type: type(symbolic_constant58000004)}
 // CHECK:STDOUT:     inst58000049:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst58000026)}
 // CHECK:STDOUT:     inst5800004A:    {kind: TupleLiteral, arg0: inst_block5800001A, type: type(symbolic_constant5800000A)}
 // CHECK:STDOUT:     inst5800004B:    {kind: RequireCompleteType, arg0: inst5800002F, type: type(inst(WitnessType))}
@@ -535,10 +535,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst58000058:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant58000015)}
 // CHECK:STDOUT:     inst58000059:    {kind: SymbolicBindingType, arg0: entity_name58000004, arg1: inst58000052, type: type(TypeType)}
 // CHECK:STDOUT:     inst5800005A:    {kind: PatternType, arg0: inst58000059, type: type(TypeType)}
-// CHECK:STDOUT:     inst5800005B:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant5800001B)}
-// CHECK:STDOUT:     inst5800005C:    {kind: OutParamPattern, arg0: inst5800005B, type: type(symbolic_constant5800001B)}
-// CHECK:STDOUT:     inst5800005D:    {kind: ValueBindingPattern, arg0: entity_name58000008, type: type(symbolic_constant5800001B)}
-// CHECK:STDOUT:     inst5800005E:    {kind: ValueParamPattern, arg0: inst5800005D, type: type(symbolic_constant5800001B)}
+// CHECK:STDOUT:     inst5800005B:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant5800001B)}
+// CHECK:STDOUT:     inst5800005C:    {kind: ReturnSlotPattern, arg0: inst5800005B, arg1: inst<none>, type: type(symbolic_constant5800001B)}
+// CHECK:STDOUT:     inst5800005D:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant5800001B)}
+// CHECK:STDOUT:     inst5800005E:    {kind: AtBindingPattern, arg0: entity_name58000008, arg1: inst5800005D, type: type(symbolic_constant5800001B)}
 // CHECK:STDOUT:     inst5800005F:    {kind: InitForm, arg0: inst58000059, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst58000060:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000061:    {kind: ImportRefLoaded, arg0: import_ir_instC, arg1: entity_name<none>, type: type(inst(FormType))}
@@ -567,10 +567,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst58000078:    {kind: FunctionType, arg0: function58000002, arg1: specific58000004, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000079:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant58000031)}
 // CHECK:STDOUT:     inst5800007A:    {kind: PatternType, arg0: inst58000073, type: type(TypeType)}
-// CHECK:STDOUT:     inst5800007B:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant58000036)}
-// CHECK:STDOUT:     inst5800007C:    {kind: OutParamPattern, arg0: inst5800007B, type: type(symbolic_constant58000036)}
-// CHECK:STDOUT:     inst5800007D:    {kind: ValueBindingPattern, arg0: entity_name5800000F, type: type(symbolic_constant58000036)}
-// CHECK:STDOUT:     inst5800007E:    {kind: ValueParamPattern, arg0: inst5800007D, type: type(symbolic_constant58000036)}
+// CHECK:STDOUT:     inst5800007B:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant58000036)}
+// CHECK:STDOUT:     inst5800007C:    {kind: ReturnSlotPattern, arg0: inst5800007B, arg1: inst<none>, type: type(symbolic_constant58000036)}
+// CHECK:STDOUT:     inst5800007D:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant58000036)}
+// CHECK:STDOUT:     inst5800007E:    {kind: AtBindingPattern, arg0: entity_name5800000F, arg1: inst5800007D, type: type(symbolic_constant58000036)}
 // CHECK:STDOUT:     inst5800007F:    {kind: InitForm, arg0: inst58000073, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst58000080:    {kind: ImportRefLoaded, arg0: import_ir_inst20, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000081:    {kind: ImportRefLoaded, arg0: import_ir_inst21, arg1: entity_name<none>, type: type(inst(FormType))}
@@ -637,10 +637,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst580000BE:    {kind: FunctionDecl, arg0: function58000003, arg1: inst_block_empty, type: type(symbolic_constant5800006D)}
 // CHECK:STDOUT:     inst580000BF:    {kind: FunctionType, arg0: function58000003, arg1: specific5800000B, type: type(TypeType)}
 // CHECK:STDOUT:     inst580000C0:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant5800006D)}
-// CHECK:STDOUT:     inst580000C1:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant58000071)}
-// CHECK:STDOUT:     inst580000C2:    {kind: OutParamPattern, arg0: inst580000C1, type: type(symbolic_constant58000071)}
-// CHECK:STDOUT:     inst580000C3:    {kind: ValueBindingPattern, arg0: entity_name5800001A, type: type(symbolic_constant58000071)}
-// CHECK:STDOUT:     inst580000C4:    {kind: ValueParamPattern, arg0: inst580000C3, type: type(symbolic_constant58000071)}
+// CHECK:STDOUT:     inst580000C1:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant58000071)}
+// CHECK:STDOUT:     inst580000C2:    {kind: ReturnSlotPattern, arg0: inst580000C1, arg1: inst<none>, type: type(symbolic_constant58000071)}
+// CHECK:STDOUT:     inst580000C3:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant58000071)}
+// CHECK:STDOUT:     inst580000C4:    {kind: AtBindingPattern, arg0: entity_name5800001A, arg1: inst580000C3, type: type(symbolic_constant58000071)}
 // CHECK:STDOUT:     inst580000C5:    {kind: InitForm, arg0: inst5800001D, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst580000C6:    {kind: ImportRefLoaded, arg0: import_ir_inst58, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst580000C7:    {kind: ImportRefLoaded, arg0: import_ir_inst59, arg1: entity_name<none>, type: type(inst(FormType))}
@@ -674,10 +674,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst580000E3:    {kind: TupleType, arg0: inst_block5800004D, type: type(TypeType)}
 // CHECK:STDOUT:     inst580000E4:    {kind: TupleValue, arg0: inst_block5800004C, type: type(inst580000E3)}
 // CHECK:STDOUT:     inst580000E5:    {kind: PatternType, arg0: inst580000DC, type: type(TypeType)}
-// CHECK:STDOUT:     inst580000E6:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant5800008C)}
-// CHECK:STDOUT:     inst580000E7:    {kind: OutParamPattern, arg0: inst580000E6, type: type(symbolic_constant5800008C)}
-// CHECK:STDOUT:     inst580000E8:    {kind: ValueBindingPattern, arg0: entity_name5800001E, type: type(symbolic_constant5800008C)}
-// CHECK:STDOUT:     inst580000E9:    {kind: ValueParamPattern, arg0: inst580000E8, type: type(symbolic_constant5800008C)}
+// CHECK:STDOUT:     inst580000E6:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant5800008C)}
+// CHECK:STDOUT:     inst580000E7:    {kind: ReturnSlotPattern, arg0: inst580000E6, arg1: inst<none>, type: type(symbolic_constant5800008C)}
+// CHECK:STDOUT:     inst580000E8:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant5800008C)}
+// CHECK:STDOUT:     inst580000E9:    {kind: AtBindingPattern, arg0: entity_name5800001E, arg1: inst580000E8, type: type(symbolic_constant5800008C)}
 // CHECK:STDOUT:     inst580000EA:    {kind: InitForm, arg0: inst580000DC, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst580000EB:    {kind: ImportRefLoaded, arg0: import_ir_inst73, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst580000EC:    {kind: ImportRefLoaded, arg0: import_ir_inst74, arg1: entity_name<none>, type: type(inst(FormType))}
@@ -743,10 +743,10 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst58000128:    {kind: TupleType, arg0: inst_block5800006A, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000129:    {kind: TupleValue, arg0: inst_block58000069, type: type(inst58000128)}
 // CHECK:STDOUT:     inst5800012A:    {kind: PatternType, arg0: inst58000121, type: type(TypeType)}
-// CHECK:STDOUT:     inst5800012B:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant580000E0)}
-// CHECK:STDOUT:     inst5800012C:    {kind: OutParamPattern, arg0: inst5800012B, type: type(symbolic_constant580000E0)}
-// CHECK:STDOUT:     inst5800012D:    {kind: ValueBindingPattern, arg0: entity_name5800002D, type: type(symbolic_constant580000E0)}
-// CHECK:STDOUT:     inst5800012E:    {kind: ValueParamPattern, arg0: inst5800012D, type: type(symbolic_constant580000E0)}
+// CHECK:STDOUT:     inst5800012B:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant580000E0)}
+// CHECK:STDOUT:     inst5800012C:    {kind: ReturnSlotPattern, arg0: inst5800012B, arg1: inst<none>, type: type(symbolic_constant580000E0)}
+// CHECK:STDOUT:     inst5800012D:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant580000E0)}
+// CHECK:STDOUT:     inst5800012E:    {kind: AtBindingPattern, arg0: entity_name5800002D, arg1: inst5800012D, type: type(symbolic_constant580000E0)}
 // CHECK:STDOUT:     inst5800012F:    {kind: InitForm, arg0: inst58000121, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst58000130:    {kind: ImportRefLoaded, arg0: import_ir_instA3, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst58000131:    {kind: ImportRefLoaded, arg0: import_ir_instA4, arg1: entity_name<none>, type: type(inst(FormType))}
@@ -856,8 +856,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst5800001D:    symbolic_constant58000003
 // CHECK:STDOUT:       inst5800001E:    symbolic_constant58000004
 // CHECK:STDOUT:       inst5800001F:    symbolic_constant58000005
-// CHECK:STDOUT:       inst58000021:    concrete_constant(inst58000021)
-// CHECK:STDOUT:       inst58000022:    symbolic_constant58000006
+// CHECK:STDOUT:       inst58000020:    concrete_constant(inst58000020)
+// CHECK:STDOUT:       inst58000021:    symbolic_constant58000006
 // CHECK:STDOUT:       inst58000023:    concrete_constant(inst58000023)
 // CHECK:STDOUT:       inst58000024:    symbolic_constant58000002
 // CHECK:STDOUT:       inst58000025:    symbolic_constant58000004
@@ -1691,14 +1691,14 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst_block58000010:
 // CHECK:STDOUT:       0:               inst58000038
 // CHECK:STDOUT:     inst_block58000011:
-// CHECK:STDOUT:       0:               inst58000023
-// CHECK:STDOUT:       1:               inst58000038
+// CHECK:STDOUT:       0:               inst58000020
+// CHECK:STDOUT:       1:               inst58000036
 // CHECK:STDOUT:     inst_block58000012:
 // CHECK:STDOUT:       0:               inst5800003A
 // CHECK:STDOUT:       1:               inst5800003C
 // CHECK:STDOUT:     inst_block58000013:
 // CHECK:STDOUT:       0:               inst5800001A
-// CHECK:STDOUT:       1:               inst58000021
+// CHECK:STDOUT:       1:               inst58000020
 // CHECK:STDOUT:       2:               inst58000023
 // CHECK:STDOUT:       3:               inst58000036
 // CHECK:STDOUT:       4:               inst58000038
@@ -1714,7 +1714,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       8:               inst58000017
 // CHECK:STDOUT:       9:               inst5800003A
 // CHECK:STDOUT:       10:              inst5800003B
-// CHECK:STDOUT:       11:              inst58000020
+// CHECK:STDOUT:       11:              inst58000022
 // CHECK:STDOUT:       12:              inst5800003C
 // CHECK:STDOUT:       13:              inst5800003D
 // CHECK:STDOUT:     inst_block58000015:
@@ -1724,7 +1724,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst_block58000017:
 // CHECK:STDOUT:       0:               inst58000019
 // CHECK:STDOUT:       1:               inst5800001E
-// CHECK:STDOUT:       2:               inst58000022
+// CHECK:STDOUT:       2:               inst58000021
 // CHECK:STDOUT:       3:               inst5800002C
 // CHECK:STDOUT:       4:               inst58000031
 // CHECK:STDOUT:       5:               inst58000034
@@ -1768,8 +1768,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       1:               inst58000057
 // CHECK:STDOUT:       2:               inst58000058
 // CHECK:STDOUT:     inst_block5800001F:
-// CHECK:STDOUT:       0:               inst5800005E
-// CHECK:STDOUT:       1:               inst5800005C
+// CHECK:STDOUT:       0:               inst5800005D
+// CHECK:STDOUT:       1:               inst5800005B
 // CHECK:STDOUT:     inst_block58000020:
 // CHECK:STDOUT:       0:               inst5800005E
 // CHECK:STDOUT:     inst_block58000021:
@@ -1805,8 +1805,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               inst58000078
 // CHECK:STDOUT:       1:               inst58000079
 // CHECK:STDOUT:     inst_block5800002B:
-// CHECK:STDOUT:       0:               inst5800007E
-// CHECK:STDOUT:       1:               inst5800007C
+// CHECK:STDOUT:       0:               inst5800007D
+// CHECK:STDOUT:       1:               inst5800007B
 // CHECK:STDOUT:     inst_block5800002C:
 // CHECK:STDOUT:       0:               inst5800007E
 // CHECK:STDOUT:     inst_block5800002D:
@@ -1878,8 +1878,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       1:               inst580000BC
 // CHECK:STDOUT:       2:               inst580000BD
 // CHECK:STDOUT:     inst_block58000042:
-// CHECK:STDOUT:       0:               inst580000C4
-// CHECK:STDOUT:       1:               inst580000C2
+// CHECK:STDOUT:       0:               inst580000C3
+// CHECK:STDOUT:       1:               inst580000C1
 // CHECK:STDOUT:     inst_block58000043:
 // CHECK:STDOUT:       0:               inst580000C4
 // CHECK:STDOUT:     inst_block58000044:
@@ -1925,8 +1925,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               inst580000E1
 // CHECK:STDOUT:       1:               inst580000E2
 // CHECK:STDOUT:     inst_block58000050:
-// CHECK:STDOUT:       0:               inst580000E9
-// CHECK:STDOUT:       1:               inst580000E7
+// CHECK:STDOUT:       0:               inst580000E8
+// CHECK:STDOUT:       1:               inst580000E6
 // CHECK:STDOUT:     inst_block58000051:
 // CHECK:STDOUT:       0:               inst580000E9
 // CHECK:STDOUT:     inst_block58000052:
@@ -2043,8 +2043,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               inst58000126
 // CHECK:STDOUT:       1:               inst58000127
 // CHECK:STDOUT:     inst_block5800006D:
-// CHECK:STDOUT:       0:               inst5800012E
-// CHECK:STDOUT:       1:               inst5800012C
+// CHECK:STDOUT:       0:               inst5800012D
+// CHECK:STDOUT:       1:               inst5800012B
 // CHECK:STDOUT:     inst_block5800006E:
 // CHECK:STDOUT:       0:               inst5800012E
 // CHECK:STDOUT:     inst_block5800006F:

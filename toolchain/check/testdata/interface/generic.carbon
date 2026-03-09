@@ -235,8 +235,8 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %WithAssocFn.WithSelf.F.decl: @WithAssocFn.WithSelf.%WithAssocFn.WithSelf.F.type (%WithAssocFn.WithSelf.F.type.6c9) = fn_decl @WithAssocFn.WithSelf.F [symbolic = @WithAssocFn.WithSelf.%WithAssocFn.WithSelf.F (constants.%WithAssocFn.WithSelf.F.6d9)] {
-// CHECK:STDOUT:       %return.patt: %pattern_type.05f = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: %pattern_type.05f = return_slot_pattern %return.param_patt, %X.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %.loc10: Core.Form = init_form %X.ref [concrete = constants.%.a1b]
@@ -274,8 +274,8 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.WithAssocFn.impl: %Self.ref as %WithAssocFn.type {
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F.decl: %C.as.WithAssocFn.impl.F.type = fn_decl @C.as.WithAssocFn.impl.F [concrete = constants.%C.as.WithAssocFn.impl.F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.05f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.05f = return_slot_pattern %return.param_patt, %X.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %X.ref [concrete = constants.%.a1b]

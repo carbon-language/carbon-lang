@@ -4,6 +4,7 @@
 
 #include "toolchain/check/pattern.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
@@ -79,6 +80,25 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     case SemIR::InstKind::ValueBindingPattern:
       bind_name_kind = SemIR::InstKind::ValueBinding;
       break;
+    case SemIR::InstKind::AtBindingPattern: {
+      auto subpattern = context.insts().Get(pattern.subpattern_id);
+      CARBON_KIND_SWITCH(subpattern) {
+        case SemIR::FormParamPattern::Kind:
+          bind_name_kind = SemIR::FormBinding::Kind;
+          break;
+        case SemIR::RefParamPattern::Kind:
+        case SemIR::VarPattern::Kind:
+          bind_name_kind = SemIR::InstKind::RefBinding;
+          break;
+        case SemIR::ValueParamPattern::Kind:
+          bind_name_kind = SemIR::InstKind::ValueBinding;
+          break;
+        default:
+          CARBON_FATAL("Unexpected subpattern kind for at_binding_pattern: {0}",
+                       subpattern);
+      }
+      break;
+    }
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
                    pattern.kind);
@@ -134,11 +154,11 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
                           bool is_returned_var) -> void {
   // We need to emit the VarStorage insts early, because they may be output
   // arguments for the initializer. However, we can't emit them when we emit
-  // the corresponding `VarPattern`s because they're part of the pattern match,
-  // not part of the pattern.
+  // the corresponding `AnyVarPattern`s because they're part of the pattern
+  // match, not part of the pattern.
   // TODO: Find a way to do this without walking the whole pattern block.
   for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
-    if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
+    if (context.insts().Is<SemIR::AnyVarPattern>(inst_id)) {
       context.var_storage_map().Insert(
           inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
     }
@@ -149,32 +169,27 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
                      SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
-  const auto& binding_pattern_kind = is_ref ? SemIR::RefBindingPattern::Kind
-                                            : SemIR::ValueBindingPattern::Kind;
+  auto pattern_type_id = GetPatternType(context, type_id);
+  const auto& param_pattern_kind =
+      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
+  auto pattern_id = AddPatternInst(
+      context,
+      SemIR::LocIdAndInst::UncheckedLoc(
+          loc_id, SemIR::AnyLeafParamPattern{.kind = param_pattern_kind,
+                                             .type_id = pattern_type_id,
+                                             .pretty_name_id = name_id}));
+
   auto entity_name_id =
       AddBindingEntityName(context, name_id,
                            /*form_id=*/SemIR::ConstantId::None,
                            /*is_unused=*/false,
                            /*phase=*/BindingPhase::Runtime);
-  SemIR::InstId pattern_id =
-      AddBindingPattern(context, loc_id, type_expr_region_id,
-                        {.kind = binding_pattern_kind,
-                         .type_id = GetPatternType(context, type_id),
-                         .entity_name_id = entity_name_id})
-          .pattern_id;
-
-  const auto& param_pattern_kind =
-      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
-  pattern_id = AddPatternInst(
-      context,
-      SemIR::LocIdAndInst::UncheckedLoc(
-          loc_id, SemIR::AnyParamPattern{
-                      .kind = param_pattern_kind,
-                      .type_id = context.insts().Get(pattern_id).type_id(),
-                      .subpattern_id = pattern_id,
-                      .form_id = SemIR::ConstantId::None}));
-
-  return pattern_id;
+  return AddBindingPattern(context, loc_id, type_expr_region_id,
+                           {.kind = SemIR::AtBindingPattern::Kind,
+                            .type_id = GetPatternType(context, type_id),
+                            .entity_name_id = entity_name_id,
+                            .subpattern_id = pattern_id})
+      .pattern_id;
 }
 
 }  // namespace Carbon::Check

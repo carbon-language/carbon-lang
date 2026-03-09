@@ -95,7 +95,9 @@ struct DeclParams {
 
 // Checks that the parameters in a redeclaration of an entity match the
 // parameters in the prior declaration. If not, produces a diagnostic if
-// `diagnose` is true, and returns false.
+// `diagnose` is true, and returns false. If `check_self` is false,
+// type and name mismatches will not be diagnosed for the `self` parameter
+// (if any), but form mismatches will still be diagnosed.
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
                             SemIR::SpecificId prev_specific_id, bool diagnose,

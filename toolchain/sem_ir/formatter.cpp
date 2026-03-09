@@ -1066,6 +1066,19 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND_ANY(AnyLeafParamPattern, _): {
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
+    case CARBON_KIND(VarParamPattern param): {
+      FormatArgs(param.subpattern_id);
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
     case CARBON_KIND(AssociatedConstantDecl decl): {
       FormatArgs(decl.assoc_const_id);
       llvm::SaveAndRestore scope(scope_,
@@ -1229,12 +1242,12 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       FormatArgs(ret.storage_id);
       return;
     }
-
+#if 0
     case ReturnSlotPattern::Kind:
       // No-op because type_id is the only semantically significant field,
       // and it's handled separately.
       return;
-
+#endif
     case CARBON_KIND(SpliceBlock splice): {
       FormatArgs(splice.result_id);
       FormatTrailingBlock(splice.block_id);

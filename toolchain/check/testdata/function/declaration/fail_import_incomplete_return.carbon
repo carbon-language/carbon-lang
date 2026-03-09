@@ -31,9 +31,9 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnCUsed();
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D` [IncompleteTypeInFunctionReturnType]
@@ -42,9 +42,9 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnDUsed() -> D;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnDUsed();
 }
@@ -66,9 +66,9 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:7:23: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUnused() -> C;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:                    ^~~~
   // CHECK:STDERR:
   ReturnCUnused();
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+12]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
@@ -79,9 +79,9 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:8:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnCUsed();
   ReturnDUnused();
@@ -133,8 +133,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [concrete = constants.%ReturnCUnused] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.a69]
@@ -142,8 +142,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [concrete = constants.%ReturnCUsed] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref [concrete = constants.%.a69]
@@ -151,8 +151,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [concrete = constants.%ReturnDUnused] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
 // CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
@@ -160,8 +160,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [concrete = constants.%ReturnDUsed] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
