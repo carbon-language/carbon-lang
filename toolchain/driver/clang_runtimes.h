@@ -307,6 +307,9 @@ class ClangResourceDirBuilder : public ClangRuntimesBuilderBase {
   ErrorOr<Success> crt_begin_result_;
   ErrorOr<Success> crt_end_result_;
 
+  // The include paths used during the compilation of the builtins.
+  llvm::SmallVector<std::filesystem::path> include_paths_;
+
   // The archive builder for the builtins archive in the resource directory.
   std::optional<ArchiveBuilder> archive_;
 };

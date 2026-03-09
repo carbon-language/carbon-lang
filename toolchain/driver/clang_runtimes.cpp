@@ -401,11 +401,16 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
 
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   lib_path_ = std::filesystem::path("lib") / target_triple_.str();
+  include_paths_.push_back(installation().runtimes_root() / "builtins");
+
   llvm::SmallVector<llvm::StringRef> copts = {
       "-no-canonical-prefixes",
       "-w",
   };
   llvm::append_range(copts, RuntimesBuildInfo::BuiltinsCopts);
+  for (const auto& include_path : include_paths_) {
+    copts.append({"-I", include_path.native()});
+  }
   archive_.emplace(this, lib_path_ / "libclang_rt.builtins.a",
                    installation().runtimes_root(), CollectBuiltinsSrcFiles(),
                    copts);
@@ -438,6 +443,11 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
   // Only compile source files, not headers.
   llvm::erase_if(src_files,
                  [](llvm::StringRef file) { return file.ends_with(".h"); });
+
+  // TODO: Remove this once we have a way of accessing `SipHash.h`.
+  llvm::erase_if(src_files, [](llvm::StringRef file) {
+    return file.ends_with("emupac.cpp");
+  });
   return src_files;
 }
 
