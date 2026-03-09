@@ -29,9 +29,13 @@ class FullPatternStack {
  public:
   explicit FullPatternStack(LexicalLookup* lookup) : lookup_(lookup) {}
 
-  // The kind of a full-pattern. Note that a function declaration is a single
-  // full pattern, but we have several sub-kinds to track the different parts
-  // of the declaration.
+  // The kind of a full-pattern. There are two primary kinds: name binding
+  // declarations and parameterized entity declarations. However, for efficiency
+  // we also use this enum to track state transitions within a parameterized
+  // entity declaration. A parameterized entity declaration always starts and
+  // finishes in the `NotInEitherParamList` state, and can transition to either
+  // the `ImplicitParamList` or `ExplicitParamList` state, and then back to the
+  // `NotInEitherParamList` state.
   enum class Kind {
     // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
