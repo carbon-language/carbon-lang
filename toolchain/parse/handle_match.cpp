@@ -7,9 +7,8 @@
 
 namespace Carbon::Parse {
 
-static auto HandleStatementsBlockStart(Context& context, StateKind finish,
-                                       NodeKind equal_greater, NodeKind starter,
-                                       NodeKind complete) -> void {
+static auto HandleMatchHandlerStart(Context& context, NodeKind label_kind)
+    -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::EqualGreater)) {
@@ -19,14 +18,16 @@ static auto HandleStatementsBlockStart(Context& context, StateKind finish,
       context.emitter().Emit(*context.position(), ExpectedMatchCaseArrow);
     }
 
-    context.AddLeafNode(equal_greater, *context.position(), /*has_error=*/true);
-    context.AddNode(starter, *context.position(), /*has_error=*/true);
-    context.AddNode(complete, *context.position(), /*has_error=*/true);
+    context.AddNode(label_kind, *context.position(), /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandlerStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandler, *context.position(),
+                    /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
-  context.AddLeafNode(equal_greater, context.Consume());
+  context.AddLeafNode(label_kind, context.Consume());
 
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
@@ -35,14 +36,17 @@ static auto HandleStatementsBlockStart(Context& context, StateKind finish,
       context.emitter().Emit(*context.position(), ExpectedMatchCaseBlock);
     }
 
-    context.AddNode(starter, *context.position(), /*has_error=*/true);
-    context.AddNode(complete, *context.position(), /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandlerStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandler, *context.position(),
+                    /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
-  context.AddNode(starter, context.Consume(), state.has_error);
-  context.PushState(state, finish);
+  context.AddNode(NodeKind::MatchHandlerStart, context.Consume(),
+                  state.has_error);
+  context.PushState(state, StateKind::MatchHandlerFinish);
   context.PushState(StateKind::StatementScopeLoop);
 }
 
@@ -144,9 +148,11 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
 auto HandleMatchCaseAfterPattern(Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.AddNode(NodeKind::MatchCaseStart, *context.position(),
-                    /*has_error=*/true);
     context.AddNode(NodeKind::MatchCase, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandlerStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchHandler, *context.position(),
                     /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
@@ -175,9 +181,11 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
       context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
                       /*has_error=*/true);
       state = context.PopState();
-      context.AddNode(NodeKind::MatchCaseStart, *context.position(),
-                      /*has_error=*/true);
       context.AddNode(NodeKind::MatchCase, *context.position(),
+                      /*has_error=*/true);
+      context.AddNode(NodeKind::MatchHandlerStart, *context.position(),
+                      /*has_error=*/true);
+      context.AddNode(NodeKind::MatchHandler, *context.position(),
                       /*has_error=*/true);
       context.SkipPastLikelyEnd(*context.position());
       return;
@@ -208,30 +216,18 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
 }
 
 auto HandleMatchCaseStart(Context& context) -> void {
-  HandleStatementsBlockStart(context, StateKind::MatchCaseFinish,
-                             NodeKind::MatchCaseEqualGreater,
-                             NodeKind::MatchCaseStart, NodeKind::MatchCase);
-}
-
-auto HandleMatchCaseFinish(Context& context) -> void {
-  auto state = context.PopState();
-  context.AddNode(NodeKind::MatchCase,
-                  context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
-                  state.has_error);
+  HandleMatchHandlerStart(context, NodeKind::MatchCase);
 }
 
 auto HandleMatchDefaultIntroducer(Context& context) -> void {
   context.AddLeafNode(NodeKind::MatchDefaultIntroducer, context.Consume());
 
-  HandleStatementsBlockStart(context, StateKind::MatchDefaultFinish,
-                             NodeKind::MatchDefaultEqualGreater,
-                             NodeKind::MatchDefaultStart,
-                             NodeKind::MatchDefault);
+  HandleMatchHandlerStart(context, NodeKind::MatchDefault);
 }
 
-auto HandleMatchDefaultFinish(Context& context) -> void {
+auto HandleMatchHandlerFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::MatchDefault,
+  context.AddNode(NodeKind::MatchHandler,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
                   state.has_error);
 }
