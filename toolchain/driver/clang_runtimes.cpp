@@ -401,6 +401,10 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
 
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   lib_path_ = std::filesystem::path("lib") / target_triple_.str();
+  // TODO: Currently, we only need a single include path to see headers inside
+  // the `builtins` directory. However, we're anticipating needing more, for
+  // example to support SipHash. If that need doesn't materialize, we should
+  // simplify this to a single path instead of a vector.
   include_paths_.push_back(installation().runtimes_root() / "builtins");
 
   llvm::SmallVector<llvm::StringRef> copts = {
