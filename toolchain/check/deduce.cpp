@@ -290,6 +290,8 @@ auto DeductionContext::Deduce() -> bool {
 
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
+      // TODO: This looks liable to add redundant work (possibly even
+      // exponential amounts of it) in some of the cases handled below.
       Add(context().types().GetTypeInstId(param_type_id),
           context().types().GetTypeInstId(
               context().insts().Get(arg_id).type_id()));
