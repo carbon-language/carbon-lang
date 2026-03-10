@@ -66,7 +66,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
     -> SemIR::ConstantId {
   const auto& args = context.inst_blocks().Get(args_id);
 
-  auto decl = context.clang_decls().Get(clang_decl_id).GetAsKey().decl;
+  auto* decl = context.clang_decls().Get(clang_decl_id).GetAsKey().decl;
 
   auto* function_decl = cast<clang::FunctionDecl>(decl);
 
