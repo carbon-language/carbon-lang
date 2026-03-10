@@ -25,6 +25,7 @@ enum class CoreInterface : std::int8_t {
   Copy = 1 << 0,
   Destroy = 1 << 1,
   IntFitsIn = 1 << 2,
+  CppUnsafeDeref = 1 << 3,
 
   Unknown = -1,
 };
