@@ -68,7 +68,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.8ef: Core.Form = init_form %i32, call_param2 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %Interface.WithSelf.G.type: type = fn_type @Interface.WithSelf.G, @Interface.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.G: %Interface.WithSelf.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.WithSelf.%Interface.WithSelf.G.decl [concrete]
@@ -100,7 +100,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc18_35: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_35, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_35 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param.loc18: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc18_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.loc18: %i32 = value_binding a, %a.param.loc18
@@ -128,7 +128,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc13_35: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_35, call_param2 [concrete = constants.%.8ef]
+// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_35 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %a.param.loc13: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc13_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.loc13: %i32 = value_binding a, %a.param.loc13
@@ -183,7 +183,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ptr.18e: type = ptr_type %U.091 [symbolic]
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %ptr.18e [symbolic]
-// CHECK:STDOUT:   %.ddc: Core.Form = init_form %ptr.18e, call_param2 [symbolic]
+// CHECK:STDOUT:   %.6d8: Core.Form = init_form %ptr.18e [symbolic]
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%Self.887) [symbolic]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -227,7 +227,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc20_57: type = name_ref U, %U.loc20 [symbolic = %U.loc14_22.1 (constants.%U.091)]
 // CHECK:STDOUT:     %ptr.loc20_58: type = ptr_type %U.ref.loc20_57 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:     %.loc20_58: Core.Form = init_form %ptr.loc20_58, call_param2 [symbolic = %.loc14_43.1 (constants.%.ddc)]
+// CHECK:STDOUT:     %.loc20_58: Core.Form = init_form %ptr.loc20_58 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:     %self.param.loc20: @C.F.%C (%C) = value_param call_param0
 // CHECK:STDOUT:     %.loc20_31.1: type = splice_block %Self.ref.loc20 [symbolic = %C (constants.%C)] {
 // CHECK:STDOUT:       %.loc20_31.2: type = specific_constant constants.%C, @C(constants.%Self.887) [symbolic = %C (constants.%C)]
@@ -283,7 +283,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref.loc14_42: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U.091)]
 // CHECK:STDOUT:       %ptr.loc14_43: type = ptr_type %U.ref.loc14_42 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:       %.loc14_43.2: Core.Form = init_form %ptr.loc14_43, call_param2 [symbolic = %.loc14_43.1 (constants.%.ddc)]
+// CHECK:STDOUT:       %.loc14_43.2: Core.Form = init_form %ptr.loc14_43 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:       %self.param.loc14: @C.F.%C (%C) = value_param call_param0
 // CHECK:STDOUT:       %.loc14_16.1: type = splice_block %Self.ref.loc14 [symbolic = %C (constants.%C)] {
 // CHECK:STDOUT:         %.loc14_16.2: type = specific_constant constants.%C, @C(constants.%Self.887) [symbolic = %C (constants.%C)]
@@ -320,7 +320,7 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %U.loc14_22.1: type = symbolic_binding U, 1 [symbolic = %U.loc14_22.1 (constants.%U.091)]
 // CHECK:STDOUT:   %ptr.loc14_36.1: type = ptr_type %U.loc14_22.1 [symbolic = %ptr.loc14_36.1 (constants.%ptr.18e)]
 // CHECK:STDOUT:   %pattern_type.loc14_32: type = pattern_type %ptr.loc14_36.1 [symbolic = %pattern_type.loc14_32 (constants.%pattern_type.423)]
-// CHECK:STDOUT:   %.loc14_43.1: Core.Form = init_form %ptr.loc14_36.1, call_param2 [symbolic = %.loc14_43.1 (constants.%.ddc)]
+// CHECK:STDOUT:   %.loc14_43.1: Core.Form = init_form %ptr.loc14_36.1 [symbolic = %.loc14_43.1 (constants.%.6d8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20_29: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_29 (constants.%require_complete.a31)]
@@ -361,6 +361,6 @@ fn Interface.C.F[unused self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U.091
 // CHECK:STDOUT:   %ptr.loc14_36.1 => constants.%ptr.18e
 // CHECK:STDOUT:   %pattern_type.loc14_32 => constants.%pattern_type.423
-// CHECK:STDOUT:   %.loc14_43.1 => constants.%.ddc
+// CHECK:STDOUT:   %.loc14_43.1 => constants.%.6d8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

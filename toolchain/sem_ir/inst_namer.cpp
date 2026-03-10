@@ -914,19 +914,11 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".assoc_type");
       return;
     }
-    case AliasBinding::Kind:
-    case RefBinding::Kind:
-    case SymbolicBinding::Kind:
-    case ValueBinding::Kind:
-    case ExportDecl::Kind: {
-      auto inst = inst_.As<AnyBindingOrExportDecl>();
+    case CARBON_KIND_ANY(AnyBindingOrExportDecl, inst): {
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
-    case RefBindingPattern::Kind:
-    case SymbolicBindingPattern::Kind:
-    case ValueBindingPattern::Kind: {
-      auto inst = inst_.As<AnyBindingPattern>();
+    case CARBON_KIND_ANY(AnyBindingPattern, inst): {
       auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
         name_id = sem_ir().entity_names().Get(inst.entity_name_id).name_id;
@@ -951,10 +943,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case Branch::Kind:
-    case BranchIf::Kind:
-    case BranchWithArg::Kind: {
-      auto branch = inst_.As<AnyBranch>();
+    case CARBON_KIND_ANY(AnyBranch, branch): {
       inst_namer_->AddBlockLabel(scope_id_, LocId(inst_id_), branch);
       return;
     }
@@ -1209,12 +1198,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
-    case ImportRefUnloaded::Kind:
-    case ImportRefLoaded::Kind: {
+    case CARBON_KIND_ANY(AnyImportRef, inst): {
       // Build the base import name: <package>.<entity-name>
       RawStringOstream out;
 
-      auto inst = inst_.As<AnyImportRef>();
       auto import_ir_inst =
           sem_ir().import_ir_insts().Get(inst.import_ir_inst_id);
       const auto& import_ir =
@@ -1304,10 +1291,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
       return;
     }
-    case OutParam::Kind:
-    case RefParam::Kind:
-    case ValueParam::Kind: {
-      AddInstNameId(inst_.As<AnyParam>().pretty_name_id, ".param");
+    case CARBON_KIND_ANY(AnyParam, inst): {
+      AddInstNameId(inst.pretty_name_id, ".param");
       return;
     }
     case OutParamPattern::Kind:

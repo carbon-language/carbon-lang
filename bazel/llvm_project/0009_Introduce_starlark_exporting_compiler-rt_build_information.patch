@@ -1,35 +1,519 @@
-Commit ID: 530e0f9ebec68a481e6c67e81e5ac6551a6a0bef
+Commit ID: 959284a466ca392a5ccd501cf1c1622d1f423c06
 Change ID: zyxuvzwmzsnorloyuupuurxkppkoplnw
 Author   : Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:06)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:28)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-08 07:43:17)
 
-    Introduce starlark exporting compiler-rt build information
+    Improve compiler-rt build structure and export compilation info
 
+    This first improves the structure of the compiler-rt BUILD.bazel, fixing
+    bugs and exposing more carefully arranged source files.
+
+    It also exposes compilation info for builtins and CRT files for use in
+    compiling these source files.
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index 4ded226174..0c3a7daaee 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -3,6 +3,7 @@
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ 
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("compiler-rt.bzl", "make_filtered_builtins_srcs_groups")
+ 
+ package(
+     default_visibility = ["//visibility:public"],
+@@ -160,9 +161,15 @@
+     srcs = BUILTINS_CRTEND_SRCS,
+ )
+ 
++BUILTINS_EMUTLS_SRCS = ["lib/builtins/emutls.c"]
++
++filegroup(
++    name = "builtins_emutls_srcs",
++    srcs = BUILTINS_EMUTLS_SRCS,
++)
++
+ BUILTINS_HOSTED_SRCS = [
+     "lib/builtins/clear_cache.c",
+-    "lib/builtins/emutls.c",
+     "lib/builtins/enable_execute_stack.c",
+     "lib/builtins/eprintf.c",
+ ]
+@@ -224,11 +231,11 @@
+     ),
+ )
+ 
+-BUILTNS_ATOMICS_SRCS = ["lib/builtins/atomic.c"]
++BUILTINS_ATOMICS_SRCS = ["lib/builtins/atomic.c"]
+ 
+ filegroup(
+     name = "builtins_atomics_srcs",
+-    srcs = BUILTNS_ATOMICS_SRCS + ["lib/builtins/assembly.h"],
++    srcs = BUILTINS_ATOMICS_SRCS + ["lib/builtins/assembly.h"],
+ )
+ 
+ BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS = [
+@@ -241,6 +248,28 @@
+     srcs = glob(BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS),
+ )
+ 
++# Source files for portable components of the compiler builtins library.
++filegroup(
++    name = "builtins_generic_srcs",
++    srcs = ["lib/builtins/cpu_model/cpu_model.h"] + glob(
++        [
++            "lib/builtins/*.c",
++            "lib/builtins/*.cpp",
++            "lib/builtins/*.h",
++            "lib/builtins/*.inc",
++        ],
++        allow_empty = True,
++        exclude = (
++            BUILTINS_CRTBEGIN_SRCS +
++            BUILTINS_CRTEND_SRCS +
++            BUILTINS_TF_EXCLUDES +
++            BUILTINS_TF_SRCS_PATTERNS +
++            BUILTINS_ATOMICS_SRCS +
++            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
++        ),
++    ),
++)
++
+ # Apple-platform specific SME source file.
+ filegroup(
+     name = "builtins_aarch64_apple_sme_srcs",
+@@ -305,10 +334,13 @@
+ 
+ # Source files for the AArch64 architecture-specific builtins.
+ filegroup(
+-    name = "builtins_aarch64_srcs",
++    name = "builtins_unfiltered_aarch64_srcs",
+     srcs = [
+         "lib/builtins/cpu_model/aarch64.c",
+         "lib/builtins/cpu_model/aarch64.h",
++        ":builtins_bf16_srcs",
++        ":builtins_generic_srcs",
++        ":builtins_tf_srcs",
+     ] + [
+         AARCH64_OUTLINE_ATOMICS_FMT.format(pat, size, model)
+         for (pat, size, model) in AARCH64_OUTLINE_ATOMICS
+@@ -328,10 +360,18 @@
+             "lib/builtins/aarch64/lse.S",
+             # These files are provided by SME-specific file groups above.
+             "lib/builtins/aarch64/*sme*",
++            # This is only used with MinGW.
++            "lib/builtins/aarch64/chkstk.S",
+         ],
+     ),
+ )
+ 
++make_filtered_builtins_srcs_groups(
++    name = "builtins_aarch64_srcs",
++    srcs = [":builtins_unfiltered_aarch64_srcs"],
++    textual_name = "builtins_aarch64_textual_srcs",
++)
++
+ BUILTINS_ARM_VFP_SRCS_PATTERNS = [
+     "lib/builtins/arm/*vfp*.S",
+     "lib/builtins/arm/*vfp*.c",
+@@ -348,9 +388,19 @@
+     ),
+ )
+ 
++BUILTINS_ARM_IMPLICIT_IT_SRCS = [
++    "lib/builtins/arm/mulsf3.S",
++    "lib/builtins/arm/divsf3.S",
++]
++
++filegroup(
++    name = "builtins_arm_implicit_it_srcs",
++    srcs = BUILTINS_ARM_IMPLICIT_IT_SRCS,
++)
++
+ # Source files for the ARM architecture-specific builtins.
+ filegroup(
+-    name = "builtins_arm_srcs",
++    name = "builtins_arm_arch_srcs",
+     srcs = glob(
+         [
+             "lib/builtins/arm/*.S",
+@@ -359,14 +409,52 @@
+             "lib/builtins/arm/*.h",
+         ],
+         allow_empty = True,
+-        exclude = BUILTINS_ARM_VFP_SRCS_PATTERNS,
++        exclude = (BUILTINS_ARM_VFP_SRCS_PATTERNS +
++                   BUILTINS_ARM_IMPLICIT_IT_SRCS) + [
++            # This is only used with MinGW.
++            "lib/builtins/arm/chkstk.S",
++        ],
+     ),
+ )
+ 
+-# Source files for the PPC architecture-specific builtins.
+-filegroup(
+-    name = "builtins_ppc_srcs",
+-    srcs = glob(
++filegroup(
++    name = "builtins_unfiltered_armv7_srcs",
++    srcs = [
++        ":builtins_arm_arch_srcs",
++        ":builtins_arm_vfp_srcs",
++        ":builtins_bf16_srcs",
++        ":builtins_generic_srcs",
++    ],
++)
++
++make_filtered_builtins_srcs_groups(
++    name = "builtins_armv7_srcs",
++    srcs = [":builtins_unfiltered_armv7_srcs"],
++    textual_name = "builtins_armv7_textual_srcs",
++)
++
++filegroup(
++    name = "builtins_unfiltered_aarch32_srcs",
++    srcs = [
++        ":builtins_arm_arch_srcs",
++        ":builtins_arm_vfp_srcs",
++        ":builtins_bf16_srcs",
++        ":builtins_generic_srcs",
++    ],
++)
++
++make_filtered_builtins_srcs_groups(
++    name = "builtins_aarch32_srcs",
++    srcs = [":builtins_unfiltered_aarch32_srcs"],
++    textual_name = "builtins_aarch32_textual_srcs",
++)
++
++filegroup(
++    name = "builtins_unfiltered_ppc64_srcs",
++    srcs = [
++        ":builtins_generic_srcs",
++        ":builtins_tf_srcs",
++    ] + glob(
+         [
+             "lib/builtins/ppc/*.S",
+             "lib/builtins/ppc/*.c",
+@@ -377,17 +465,64 @@
+     ),
+ )
+ 
+-# Source files for the RISC-V architecture-specific builtins.
+-filegroup(
+-    name = "builtins_riscv_srcs",
+-    srcs = glob(
+-        [
+-            "lib/builtins/riscv/*.S",
+-            "lib/builtins/riscv/*.c",
+-            "lib/builtins/riscv/*.cpp",
+-        ],
+-        allow_empty = True,
+-    ),
++make_filtered_builtins_srcs_groups(
++    name = "builtins_ppc64_srcs",
++    srcs = [":builtins_unfiltered_ppc64_srcs"],
++    textual_name = "builtins_ppc64_textual_srcs",
++)
++
++filegroup(
++    name = "builtins_unfiltered_ppc32_srcs",
++    srcs = [":builtins_generic_srcs"],
++)
++
++make_filtered_builtins_srcs_groups(
++    name = "builtins_ppc32_srcs",
++    srcs = [":builtins_unfiltered_ppc32_srcs"],
++    textual_name = "builtins_ppc32_textual_srcs",
++)
++
++filegroup(
++    name = "builtins_unfiltered_riscv64_srcs",
++    srcs = [
++        ":builtins_generic_srcs",
++        ":builtins_tf_srcs",
++    ] + glob(
++        [
++            "lib/builtins/riscv/*.S",
++            "lib/builtins/riscv/*.c",
++            "lib/builtins/riscv/*.cpp",
++            "lib/builtins/riscv/*.h",
++        ],
++        allow_empty = True,
++    ),
++)
++
++make_filtered_builtins_srcs_groups(
++    name = "builtins_riscv64_srcs",
++    srcs = [":builtins_unfiltered_riscv64_srcs"],
++    textual_name = "builtins_riscv64_textual_srcs",
++)
++
++filegroup(
++    name = "builtins_unfiltered_riscv32_srcs",
++    srcs = [
++        ":builtins_generic_srcs",
++    ] + glob(
++        [
++            "lib/builtins/riscv/*.S",
++            "lib/builtins/riscv/*.c",
++            "lib/builtins/riscv/*.cpp",
++            "lib/builtins/riscv/*.h",
++        ],
++        allow_empty = True,
++    ),
++)
++
++make_filtered_builtins_srcs_groups(
++    name = "builtins_riscv32_srcs",
++    srcs = [":builtins_unfiltered_riscv32_srcs"],
++    textual_name = "builtins_riscv32_textual_srcs",
+ )
+ 
+ # Source files for the x86 architecture specific builtins (both 32-bit and
+@@ -402,8 +537,14 @@
+ 
+ # Source files for the x86-64 architecture specific builtins.
+ filegroup(
+-    name = "builtins_x86_64_srcs",
+-    srcs = glob(
++    name = "builtins_unfiltered_x86_64_srcs",
++    srcs = [
++        ":builtins_bf16_srcs",
++        ":builtins_generic_srcs",
++        ":builtins_tf_srcs",
++        ":builtins_x86_arch_srcs",
++        ":builtins_x86_fp80_srcs",
++    ] + glob(
+         [
+             "lib/builtins/x86_64/*.S",
+             "lib/builtins/x86_64/*.c",
+@@ -411,13 +552,29 @@
+             "lib/builtins/x86_64/*.h",
+         ],
+         allow_empty = True,
++        exclude = [
++            # This is a Windows-specific routine.
++            # TODO: We should expose this as a Windows source at some point.
++            "lib/builtins/x86_64/chkstk.S",
++        ],
+     ),
+ )
+ 
++make_filtered_builtins_srcs_groups(
++    name = "builtins_x86_64_srcs",
++    srcs = [":builtins_unfiltered_x86_64_srcs"],
++    textual_name = "builtins_x86_64_textual_srcs",
++)
++
+ # Source files for the 32-bit-specific x86 architecture specific builtins.
+ filegroup(
+-    name = "builtins_i386_srcs",
+-    srcs = glob(
++    name = "builtins_unfiltered_i386_srcs",
++    srcs = [
++        ":builtins_bf16_srcs",
++        ":builtins_generic_srcs",
++        ":builtins_x86_arch_srcs",
++        ":builtins_x86_fp80_srcs",
++    ] + glob(
+         [
+             "lib/builtins/i386/*.S",
+             "lib/builtins/i386/*.c",
+@@ -429,28 +586,16 @@
+             # This file is used for both i386 and x86_64 and so included in the
+             # broader x86 sources.
+             "lib/builtins/i386/fp_mode.c",
++            # These are Windows-specific routines.
++            # TODO: We should expose these as Windows source at some point.
++            "lib/builtins/i386/chkstk.S",
++            "lib/builtins/i386/chkstk2.S",
+         ],
+     ),
+ )
+ 
+-# Source files for portable components of the compiler builtins library.
+-filegroup(
+-    name = "builtins_generic_srcs",
+-    srcs = ["lib/builtins/cpu_model/cpu_model.h"] + glob(
+-        [
+-            "lib/builtins/*.c",
+-            "lib/builtins/*.cpp",
+-            "lib/builtins/*.h",
+-            "lib/builtins/*.inc",
+-        ],
+-        allow_empty = True,
+-        exclude = (
+-            BUILTINS_CRTBEGIN_SRCS +
+-            BUILTINS_CRTEND_SRCS +
+-            BUILTINS_TF_EXCLUDES +
+-            BUILTINS_TF_SRCS_PATTERNS +
+-            BUILTNS_ATOMICS_SRCS +
+-            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
+-        ),
+-    ),
++make_filtered_builtins_srcs_groups(
++    name = "builtins_i386_srcs",
++    srcs = [":builtins_unfiltered_i386_srcs"],
++    textual_name = "builtins_i386_textual_srcs",
+ )
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
 new file mode 100644
-index 0000000000..4d0bdeeff3
+index 0000000000..e33ceb6a89
 --- /dev/null
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,153 @@
 +# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 +# See https://llvm.org/LICENSE.txt for license information.
 +# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 +
-+"""Starlark variables and macros for building parts of compiler-rt.
++"""Starlark for building parts of compiler-rt.
 +
 +Variables provide baseline information for how to build various parts of
 +compiler-rt. These can be used to generate non-Bazel builds of the library.
++
++Rules and macros support building the relevant filegroups of source files.
 +
 +TODO: Add macros that provide a convenient way to construct a Bazel target for
 +the Clang resource directory with builtins and crt files.
 +"""
 +
-+crt_copts = [
-+    "-DCRT_HAS_INITFINI_ARRAY",
-+    "-DEH_USE_FRAME_REGISTRY",
++_common_copts = [
 +    "-O3",
 +    "-fPIC",
 +    "-ffreestanding",
-+    "-fno-lto",
 +    "-std=c11",
 +]
++
++crt_copts = _common_copts + [
++    "-DCRT_HAS_INITFINI_ARRAY",
++    "-DEH_USE_FRAME_REGISTRY",
++    "-fno-lto",
++]
++
++builtins_copts = _common_copts + [
++    "-fno-builtin",
++    "-fomit-frame-pointer",
++    "-fvisibility=hidden",
++    "-Wno-missing-prototypes",
++    "-Wno-unused-parameter",
++]
++
++def _get_rel_path(path_str):
++    rel_path = path_str.rpartition("/lib/builtins/")[2]
++    if rel_path == path_str:
++        fail("Expected '/lib/builtins/' in path " + path_str)
++    return rel_path
++
++def _filtered_builtins_srcs_impl(ctx):
++    """Implementation of filter_builtins_srcs rule."""
++
++    # Build a map from generic file basename to list of overriding files.
++    overrides = {}
++    for f in ctx.files.srcs:
++        rel_path = _get_rel_path(f.short_path)
++        if "/" in rel_path:
++            base_file = rel_path.rpartition("/")[2]
++            if base_file.endswith(".S"):
++                base_file = base_file.removesuffix(".S") + ".c"
++            overrides[base_file] = True
++
++    filtered_files = []
++    for f in ctx.files.srcs:
++        rel_path = _get_rel_path(f.short_path)
++        if "/" not in rel_path:
++            # This is a generic file. Check if it's overridden.
++            if rel_path not in overrides:
++                filtered_files.append(f)
++        else:
++            # This is an arch-specific file, include it.
++            filtered_files.append(f)
++
++    # Remove any textual sources from this list.
++    filtered_files = [
++        f
++        for f in filtered_files
++        if f.extension not in ["inc", "def"]
++    ]
++
++    return [DefaultInfo(files = depset(filtered_files))]
++
++filtered_builtins_srcs = rule(
++    implementation = _filtered_builtins_srcs_impl,
++    attrs = {
++        "srcs": attr.label_list(
++            mandatory = True,
++            allow_files = True,
++            doc = "Input files.",
++        ),
++    },
++    doc = """Build a filtered filegroup of non-textual srcs for builtins.
++
++    Accepts a filegroup whose files are in lib/builtins/, and produces a target
++    behaving like a filegroup containing filtered files.
++
++    This removes any textual source files (`.inc` or `.def`) from the input.
++
++    It also replaces generic srcs that are overridden by architecture-specific
++    sources. For example, given a list of sources from filegroup of the form:
++
++    - `.../lib/builtins/file_0.c`
++    - `.../lib/builtins/file_1.c`
++    - `.../lib/builtins/file_2.c`
++    - `.../lib/builtins/arch/file_0.c`
++    - `.../lib/builtins/arch/file_1.S`
++
++    It removes any source-file at the top level of lib/builtins/ (e.g.
++    lib/builtins/file_0.c) that has a corresponding source-file in an arch
++    directory (e.g. lib/builtins/arch/file_0.c or lib/builtins/arch/file_1.S),
++    producing a list like:
++
++    - `.../lib/builtins/file_2.c`
++    - `.../lib/builtins/arch/file_0.c`
++    - `.../lib/builtins/arch/file_1.S`
++
++    This allows a target architecture to simply add a specialized file to the
++    list of sources with the architecture prefix and have the specialized
++    version override the generic version.
++    """,
++)
++
++def _filtered_builtins_textual_srcs_impl(ctx):
++    """Implementation of filter_builtins_textual_srcs rule."""
++
++    filtered_files = [
++        f
++        for f in ctx.files.srcs
++        if f.extension in ["inc", "def"]
++    ]
++
++    return [DefaultInfo(files = depset(filtered_files))]
++
++filtered_builtins_textual_srcs = rule(
++    implementation = _filtered_builtins_textual_srcs_impl,
++    attrs = {
++        "srcs": attr.label_list(
++            mandatory = True,
++            allow_files = True,
++            doc = "Input files.",
++        ),
++    },
++    doc = """Build a filegroup of the textual srcs for builtins.
++
++    Textual sources are those that can't be compiled directly and aren't
++    recognized as header files by Bazel. The extensions recognized here are
++    `.inc` and `.def`.
++    """,
++)
++
++def make_filtered_builtins_srcs_groups(name, textual_name, srcs):
++    """Macro to expand both the non-textual and textual filtered srcs groups."""
++    filtered_builtins_srcs(
++        name = name,
++        srcs = srcs,
++    )
++    filtered_builtins_textual_srcs(
++        name = textual_name,
++        srcs = srcs,
++    )

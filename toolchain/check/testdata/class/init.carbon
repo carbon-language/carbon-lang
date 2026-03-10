@@ -41,7 +41,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %complete_type.bf0: <witness> = complete_type_witness %struct_type.n.next [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.018: type = pattern_type %ptr.8e5 [concrete]
-// CHECK:STDOUT:   %.7f7: Core.Form = init_form %Class, call_param2 [concrete]
+// CHECK:STDOUT:   %.cff: Core.Form = init_form %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.904: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
@@ -103,7 +103,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.904 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc20_34: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %.loc20_34: Core.Form = init_form %Class.ref.loc20_34, call_param2 [concrete = constants.%.7f7]
+// CHECK:STDOUT:     %.loc20_34: Core.Form = init_form %Class.ref.loc20_34 [concrete = constants.%.cff]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
@@ -125,7 +125,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.904 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc24_41: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %.loc24_41: Core.Form = init_form %Class.ref.loc24_41, call_param2 [concrete = constants.%.7f7]
+// CHECK:STDOUT:     %.loc24_41: Core.Form = init_form %Class.ref.loc24_41 [concrete = constants.%.cff]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param

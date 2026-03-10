@@ -112,7 +112,7 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 }
 
-// Handles BindingPatternFinishAs(Generic|Regular).
+// Handles BindingPatternFinishAs(Generic|Regular|Form).
 static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
     -> void {
   auto state = context.PopState();
@@ -120,10 +120,13 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
   auto node_kind = NodeKind::InvalidParse;
   if (state.in_var_pattern) {
     node_kind = NodeKind::VarBindingPattern;
-    if (finish_kind == StateKind::BindingPatternFinishAsGeneric) {
-      CARBON_DIAGNOSTIC(CompileTimeBindingInVarDecl, Error,
-                        "`var` pattern cannot declare a compile-time binding");
-      context.emitter().Emit(*context.position(), CompileTimeBindingInVarDecl);
+    if (finish_kind != StateKind::BindingPatternFinishAsRegular) {
+      CARBON_DIAGNOSTIC(NonRegularBindingInVarDecl, Error,
+                        "found {0:`:!`|`:?`} pattern inside `var` pattern",
+                        Diagnostics::BoolAsSelect);
+      context.emitter().Emit(
+          *context.position(), NonRegularBindingInVarDecl,
+          finish_kind == StateKind::BindingPatternFinishAsGeneric);
       state.has_error = true;
     }
   } else {

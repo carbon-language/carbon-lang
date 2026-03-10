@@ -88,7 +88,7 @@ def main() -> None:
             # Remove line endings.
             line = line.rstrip("\r\n")
             # Exactly matches our pattern
-            (key, value) = line.split(" ", 1)
+            key, value = line.split(" ", 1)
             key = key.removeprefix("STABLE_")
             if key in substitutions:
                 if args.verbose:

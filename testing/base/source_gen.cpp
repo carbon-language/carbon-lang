@@ -28,8 +28,8 @@ auto SourceGen::Global() -> SourceGen& {
 SourceGen::SourceGen(Language language) : language_(language) {}
 
 // Heuristic numbers used in synthesizing various identifier sequences.
-constexpr static int MinClassNameLength = 5;
-constexpr static int MinMemberNameLength = 4;
+static constexpr int MinClassNameLength = 5;
+static constexpr int MinMemberNameLength = 4;
 
 // The shuffled state used to generate some number of classes.
 //
@@ -255,9 +255,9 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
 // not fit as well in C++, but we use the same heuristics across languages for
 // simplicity and to make the output in different languages more directly
 // comparable.
-constexpr static int NumSingleLineFunctionParams = 3;
-constexpr static int NumSingleLineMethodParams = 2;
-constexpr static int MaxParamsPerLine = 4;
+static constexpr int NumSingleLineFunctionParams = 3;
+static constexpr int NumSingleLineMethodParams = 2;
+static constexpr int MaxParamsPerLine = 4;
 
 static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
     -> double {
@@ -466,7 +466,7 @@ static auto IdentifierChars() -> llvm::ArrayRef<char> {
   return chars;
 }
 
-constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
+static constexpr llvm::StringRef NonCarbonCppKeywords[] = {
     "asm", "do",  "double", "float",    "int", "long", "new", "signed",
     "std", "try", "unix",   "unsigned", "xor", "NAN",  "M_E", "M_PI",
 };

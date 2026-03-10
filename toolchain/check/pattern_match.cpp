@@ -79,8 +79,14 @@ class MatchContext {
   // and an inst block of references to the `Call` param patterns they were
   // emitted to match. Can only be called once, at the end of Callee pattern
   // matching.
-  auto CalleeResults(Context& context) && -> CalleePatternMatchResults;
+  struct ParamsAndPatterns {
+    SemIR::InstBlockId call_param_patterns_id;
+    SemIR::InstBlockId call_params_id;
+  };
+  auto CalleeResults(Context& context) && -> ParamsAndPatterns;
 
+  // Returns the number of call parameters that have been emitted so far.
+  auto param_count() -> int { return call_params_.size(); }
   ~MatchContext();
 
  private:
@@ -145,21 +151,6 @@ class MatchContext {
 }  // namespace
 
 auto MatchContext::DoWork(Context& context) -> void {
-  CARBON_CHECK(call_args_.empty() && call_params_.empty() &&
-               call_param_patterns_.empty());
-  switch (kind_) {
-    case MatchKind::Caller: {
-      call_args_.reserve(stack_.size());
-      break;
-    }
-    case MatchKind::Callee: {
-      call_param_patterns_.reserve(stack_.size());
-      call_params_.reserve(stack_.size());
-      break;
-    }
-    case MatchKind::Local:
-      break;
-  }
   while (!stack_.empty()) {
     EmitPatternMatch(context, stack_.pop_back_val());
   }
@@ -172,8 +163,7 @@ auto MatchContext::CallerResults(Context& context) && -> SemIR::InstBlockId {
   return block_id;
 }
 
-auto MatchContext::CalleeResults(
-    Context& context) && -> CalleePatternMatchResults {
+auto MatchContext::CalleeResults(Context& context) && -> ParamsAndPatterns {
   CARBON_CHECK(kind_ == MatchKind::Callee);
   CARBON_CHECK(call_params_.size() == call_param_patterns_.size());
   auto call_param_patterns_id = context.inst_blocks().Add(call_param_patterns_);
@@ -634,20 +624,14 @@ auto MatchContext::EmitPatternMatch(Context& context,
       });
   auto pattern = context.insts().Get(entry.pattern_id);
   CARBON_KIND_SWITCH(pattern) {
-    case SemIR::RefBindingPattern::Kind:
-    case SemIR::SymbolicBindingPattern::Kind:
-    case SemIR::ValueBindingPattern::Kind:
-    case SemIR::FormBindingPattern::Kind:
-      DoEmitPatternMatch(context, pattern.As<SemIR::AnyBindingPattern>(),
-                         entry);
+    case CARBON_KIND_ANY(SemIR::AnyBindingPattern, any_binding_pattern): {
+      DoEmitPatternMatch(context, any_binding_pattern, entry);
       break;
-    case SemIR::FormParamPattern::Kind:
-    case SemIR::RefParamPattern::Kind:
-    case SemIR::ValueParamPattern::Kind:
-    case SemIR::VarParamPattern::Kind:
-    case SemIR::OutParamPattern::Kind:
-      DoEmitPatternMatch(context, pattern.As<SemIR::AnyParamPattern>(), entry);
+    }
+    case CARBON_KIND_ANY(SemIR::AnyParamPattern, any_param_pattern): {
+      DoEmitPatternMatch(context, any_param_pattern, entry);
       break;
+    }
     case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
       DoEmitPatternMatch(context, return_slot_pattern, entry);
       break;
@@ -674,18 +658,23 @@ auto CalleePatternMatch(Context& context,
   if (!return_patterns_id.has_value() && !param_patterns_id.has_value() &&
       !implicit_param_patterns_id.has_value()) {
     return {.call_param_patterns_id = SemIR::InstBlockId::None,
-            .call_params_id = SemIR::InstBlockId::None};
+            .call_params_id = SemIR::InstBlockId::None,
+            .param_ranges = SemIR::Function::CallParamIndexRanges::Empty};
   }
 
   MatchContext match(MatchKind::Callee);
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
-  for (auto return_pattern_id :
-       context.inst_blocks().GetOrEmpty(return_patterns_id)) {
-    match.AddWork(
-        {.pattern_id = return_pattern_id, .scrutinee_id = SemIR::InstId::None});
+  if (implicit_param_patterns_id.has_value()) {
+    for (SemIR::InstId inst_id :
+         llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
+      match.AddWork(
+          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::None});
+    }
   }
+  match.DoWork(context);
+  auto implicit_end = SemIR::CallParamIndex(match.param_count());
 
   if (param_patterns_id.has_value()) {
     for (SemIR::InstId inst_id :
@@ -694,17 +683,22 @@ auto CalleePatternMatch(Context& context,
           {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::None});
     }
   }
+  match.DoWork(context);
+  auto explicit_end = SemIR::CallParamIndex(match.param_count());
 
-  if (implicit_param_patterns_id.has_value()) {
-    for (SemIR::InstId inst_id :
-         llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
-      match.AddWork(
-          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::None});
-    }
+  for (auto return_pattern_id :
+       context.inst_blocks().GetOrEmpty(return_patterns_id)) {
+    match.AddWork(
+        {.pattern_id = return_pattern_id, .scrutinee_id = SemIR::InstId::None});
   }
+  match.DoWork(context);
+  auto return_end = SemIR::CallParamIndex(match.param_count());
 
   match.DoWork(context);
-  return std::move(match).CalleeResults(context);
+  auto blocks = std::move(match).CalleeResults(context);
+  return {.call_param_patterns_id = blocks.call_param_patterns_id,
+          .call_params_id = blocks.call_params_id,
+          .param_ranges = {implicit_end, explicit_end, return_end}};
 }
 
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,

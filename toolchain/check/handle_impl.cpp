@@ -63,8 +63,7 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
   // Push a pattern block for the signature of the `forall`.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
+  context.full_pattern_stack().PushParameterizedDecl();
   return true;
 }
 
@@ -157,11 +156,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto [call_param_patterns_id, call_params_id] =
+    auto match_results =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::None, SemIR::InstBlockId::None);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
-    CARBON_CHECK(call_param_patterns_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(match_results.call_params_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(match_results.call_param_patterns_id ==
+                 SemIR::InstBlockId::Empty);
   }
 
   Parse::NodeId first_param_node_id =
@@ -187,6 +187,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
+          .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
           .pattern_block_id = pattern_block_id};
 }
 

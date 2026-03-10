@@ -248,40 +248,30 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
       return false;
     }
 
-    switch (new_param_pattern.kind()) {
-      case SemIR::FormParamPattern::Kind:
-      case SemIR::OutParamPattern::Kind:
-      case SemIR::RefParamPattern::Kind:
-      case SemIR::ValueParamPattern::Kind:
-      case SemIR::VarParamPattern::Kind: {
+    CARBON_KIND_SWITCH(new_param_pattern) {
+      case CARBON_KIND_ANY(SemIR::AnyParamPattern, new_any_param_pattern): {
+        auto prev_any_param_pattern =
+            prev_param_pattern.As<SemIR::AnyParamPattern>();
         pattern_stack.push_back(
-            {.prev_id =
-                 prev_param_pattern.As<SemIR::AnyParamPattern>().subpattern_id,
-             .new_id =
-                 new_param_pattern.As<SemIR::AnyParamPattern>().subpattern_id});
+            {.prev_id = prev_any_param_pattern.subpattern_id,
+             .new_id = new_any_param_pattern.subpattern_id});
         break;
       }
-      case SemIR::VarPattern::Kind:
-        pattern_stack.push_back(
-            {.prev_id =
-                 prev_param_pattern.As<SemIR::VarPattern>().subpattern_id,
-             .new_id =
-                 new_param_pattern.As<SemIR::VarPattern>().subpattern_id});
+      case CARBON_KIND(SemIR::VarPattern new_var_pattern): {
+        auto prev_var_pattern = prev_param_pattern.As<SemIR::VarPattern>();
+        pattern_stack.push_back({.prev_id = prev_var_pattern.subpattern_id,
+                                 .new_id = new_var_pattern.subpattern_id});
         break;
-      case SemIR::FormBindingPattern::Kind:
-      case SemIR::RefBindingPattern::Kind:
-      case SemIR::SymbolicBindingPattern::Kind:
-      case SemIR::ValueBindingPattern::Kind: {
-        auto new_name_id =
-            context.entity_names()
-                .Get(new_param_pattern.As<SemIR::AnyBindingPattern>()
-                         .entity_name_id)
-                .name_id;
-        auto prev_name_id =
-            context.entity_names()
-                .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>()
-                         .entity_name_id)
-                .name_id;
+      }
+      case CARBON_KIND_ANY(SemIR::AnyBindingPattern, new_any_binding_pattern): {
+        auto prev_any_binding_pattern =
+            prev_param_pattern.As<SemIR::AnyBindingPattern>();
+        auto new_name_id = context.entity_names()
+                               .Get(new_any_binding_pattern.entity_name_id)
+                               .name_id;
+        auto prev_name_id = context.entity_names()
+                                .Get(prev_any_binding_pattern.entity_name_id)
+                                .name_id;
 
         if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
             prev_name_id == SemIR::NameId::SelfValue) {

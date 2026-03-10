@@ -2212,6 +2212,7 @@ static auto ImportFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_param_patterns_id = SemIR::InstBlockId::None,
         .call_params_id = SemIR::InstBlockId::None,
+        .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
         .return_patterns_id = SemIR::InstBlockId::None,
@@ -3569,8 +3570,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
               resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
           .type_component_inst_id = resolver.local_types().GetTypeInstId(
               resolver.local_types().GetTypeIdForTypeConstantId(
-                  type_component_const_id)),
-          .index = inst.index});
+                  type_component_const_id))});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

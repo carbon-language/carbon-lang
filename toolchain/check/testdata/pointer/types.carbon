@@ -29,7 +29,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %.85d: Core.Form = init_form %ptr.235, call_param1 [concrete]
+// CHECK:STDOUT:   %.605: Core.Form = init_form %ptr.235 [concrete]
 // CHECK:STDOUT:   %Ptr.type: type = fn_type @Ptr [concrete]
 // CHECK:STDOUT:   %Ptr: %Ptr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -46,7 +46,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %const.20a: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.36b: type = ptr_type %const.20a [concrete]
 // CHECK:STDOUT:   %pattern_type.bff: type = pattern_type %ptr.36b [concrete]
-// CHECK:STDOUT:   %.78f: Core.Form = init_form %ptr.36b, call_param1 [concrete]
+// CHECK:STDOUT:   %.132: Core.Form = init_form %ptr.36b [concrete]
 // CHECK:STDOUT:   %ConstPtr.type: type = fn_type @ConstPtr [concrete]
 // CHECK:STDOUT:   %ConstPtr: %ConstPtr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.ce1: <witness> = impl_witness imports.%Copy.impl_witness_table.c3a, @ptr.as.Copy.impl(%const.20a) [concrete]
@@ -86,7 +86,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15_20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc15_23: type = ptr_type %i32.loc15_20 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %.loc15_23: Core.Form = init_form %ptr.loc15_23, call_param1 [concrete = constants.%.85d]
+// CHECK:STDOUT:     %.loc15_23: Core.Form = init_form %ptr.loc15_23 [concrete = constants.%.605]
 // CHECK:STDOUT:     %p.param: %ptr.235 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_14: type = splice_block %ptr.loc15_14 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:       %i32.loc15_11: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -105,7 +105,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %i32.loc19_38: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc19_32: type = const_type %i32.loc19_38 [concrete = constants.%const.20a]
 // CHECK:STDOUT:     %ptr.loc19_42: type = ptr_type %const.loc19_32 [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:     %.loc19_42: Core.Form = init_form %ptr.loc19_42, call_param1 [concrete = constants.%.78f]
+// CHECK:STDOUT:     %.loc19_42: Core.Form = init_form %ptr.loc19_42 [concrete = constants.%.132]
 // CHECK:STDOUT:     %p.param: %ptr.36b = value_param call_param0
 // CHECK:STDOUT:     %.loc19_25: type = splice_block %ptr.loc19_25 [concrete = constants.%ptr.36b] {
 // CHECK:STDOUT:       %i32.loc19_22: type = type_literal constants.%i32 [concrete = constants.%i32]

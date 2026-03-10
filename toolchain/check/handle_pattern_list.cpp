@@ -21,6 +21,7 @@ static auto HandlePatternListStart(Context& context, Parse::NodeId node_id)
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
+  context.full_pattern_stack().StartImplicitParamList();
   return HandlePatternListStart(context, node_id);
 }
 
@@ -31,7 +32,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
     -> bool {
-  context.full_pattern_stack().EndImplicitParamList();
+  context.full_pattern_stack().StartExplicitParamList();
   return HandlePatternListStart(context, node_id);
 }
 
@@ -53,12 +54,14 @@ static auto HandleParamListEnd(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
+  context.full_pattern_stack().EndImplicitParamList();
   return HandleParamListEnd(context, node_id,
                             Parse::NodeKind::ImplicitParamListStart);
 }
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListId node_id)
     -> bool {
+  context.full_pattern_stack().EndExplicitParamList();
   return HandleParamListEnd(context, node_id,
                             Parse::NodeKind::ExplicitParamListStart);
 }

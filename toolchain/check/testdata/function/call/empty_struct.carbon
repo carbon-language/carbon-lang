@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.305: Core.Form = init_form %empty_struct_type, call_param1 [concrete]
+// CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Echo.type: type = fn_type @Echo [concrete]
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -46,7 +46,7 @@ fn Main() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc15_20.3: Core.Form = init_form %.loc15_20.2, call_param1 [concrete = constants.%.305]
+// CHECK:STDOUT:     %.loc15_20.3: Core.Form = init_form %.loc15_20.2 [concrete = constants.%.469]
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:       %.loc15_13.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]

@@ -43,12 +43,52 @@ final impl forall [From:! IntLiteral()] UInt(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Allow as an implicit conversion if To > From.
+// Work around the inability to put a `where` clause on a generic parameter of
+// type `IntLiteral`.
+// TODO: Remove this once possible.
+private interface AnyUInt {
+  let Width:! IntLiteral();
+  fn AsUInt[self: Self]() -> UInt(Width);
+}
+
+impl forall [N:! IntLiteral()] UInt(N) as AnyUInt where .Width = N {
+  fn AsUInt[self: Self]() -> Self { return self; }
+}
+
+// Work around the inability to constrain types other than `.Self` by reversing
+// the Self and argument type of `ImplicitAs`.
+// TODO: Remove this once possible.
+private interface FromUInt(From:! type) {
+  fn Convert(from: From) -> Self;
+}
+
+impl forall [To:! IntLiteral(), From:! AnyUInt & IntFitsIn(UInt(To))]
+    UInt(To) as FromUInt(From) {
+  fn Convert(from: From) -> Self {
+    fn Impl(src: UInt(From.Width)) -> Self = "int.convert";
+    return Impl(from.AsUInt());
+  }
+}
+
+impl forall [To:! IntLiteral(), From:! AnyUInt & IntFitsIn(Int(To))]
+    Int(To) as FromUInt(From) {
+  fn Convert(from: From) -> Self {
+    fn Impl(src: UInt(From.Width)) -> Self = "int.convert";
+    return Impl(from.AsUInt());
+  }
+}
+
+impl forall [From:! IntLiteral(), To:! FromUInt(UInt(From))]
+    UInt(From) as ImplicitAs(To) {
+  fn Convert[self: Self]() -> To {
+    return To.Convert(self);
+  }
+}
+
 final impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(UInt(To)) {
   fn Convert[self: Self]() -> UInt(To) = "int.convert";
 }
 
-// TODO: Allow as an implicit conversion if To > From.
 final impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(Int(To)) {
   fn Convert[self: Self]() -> Int(To) = "int.convert";
 }

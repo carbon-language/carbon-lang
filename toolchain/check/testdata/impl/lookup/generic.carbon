@@ -364,7 +364,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self.f09: %HasF.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.87c: type = symbolic_binding_type Self, 0, %Self.f09 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d0b: type = pattern_type %Self.binding.as_type.87c [symbolic]
-// CHECK:STDOUT:   %.897: Core.Form = init_form %Self.binding.as_type.87c, call_param1 [symbolic]
+// CHECK:STDOUT:   %.779: Core.Form = init_form %Self.binding.as_type.87c [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.adc: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self.f09) [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.faa: %HasF.WithSelf.F.type.adc = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
@@ -376,7 +376,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %HasF.impl_witness.e63: <witness> = impl_witness @ptr.as.HasF.impl.%HasF.impl_witness_table, @ptr.as.HasF.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
-// CHECK:STDOUT:   %.4fe: Core.Form = init_form %ptr.e8f, call_param1 [symbolic]
+// CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %ptr.as.HasF.impl.F.type.672: type = fn_type @ptr.as.HasF.impl.F, @ptr.as.HasF.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.HasF.impl.F.dbd: %ptr.as.HasF.impl.F.type.672 = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.facet.506: %HasF.type = facet_value %ptr.e8f, (%HasF.impl_witness.e63) [symbolic]
@@ -397,7 +397,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.1cc: type = pattern_type %ptr.c28 [concrete]
-// CHECK:STDOUT:   %.98f: Core.Form = init_form %ptr.c28, call_param1 [concrete]
+// CHECK:STDOUT:   %.9ba: Core.Form = init_form %ptr.c28 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness.e25: <witness> = impl_witness @ptr.as.HasF.impl.%HasF.impl_witness_table, @ptr.as.HasF.impl(%empty_struct_type) [concrete]
@@ -459,7 +459,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     %.loc12_18: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc12_19.1: type = converted %.loc12_18, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %ptr.loc12_19: type = ptr_type %.loc12_19.1 [concrete = constants.%ptr.c28]
-// CHECK:STDOUT:     %.loc12_19.2: Core.Form = init_form %ptr.loc12_19, call_param1 [concrete = constants.%.98f]
+// CHECK:STDOUT:     %.loc12_19.2: Core.Form = init_form %ptr.loc12_19 [concrete = constants.%.9ba]
 // CHECK:STDOUT:     %x.param: %ptr.c28 = value_param call_param0
 // CHECK:STDOUT:     %.loc12_11.1: type = splice_block %ptr.loc12_11 [concrete = constants.%ptr.c28] {
 // CHECK:STDOUT:       %.loc12_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -486,7 +486,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     %Self.ref.loc5_25: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self.f09)]
 // CHECK:STDOUT:     %Self.as_type.loc5_25: type = facet_access_type %Self.ref.loc5_25 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.87c)]
 // CHECK:STDOUT:     %.loc5_25.2: type = converted %Self.ref.loc5_25, %Self.as_type.loc5_25 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.87c)]
-// CHECK:STDOUT:     %.loc5_25.3: Core.Form = init_form %.loc5_25.2, call_param1 [symbolic = %.loc5_25.1 (constants.%.897)]
+// CHECK:STDOUT:     %.loc5_25.3: Core.Form = init_form %.loc5_25.2 [symbolic = %.loc5_25.1 (constants.%.779)]
 // CHECK:STDOUT:     %self.param: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.87c) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.87c)] {
 // CHECK:STDOUT:       %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self.f09)]
@@ -525,7 +525,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ptr.as.HasF.impl.%T.loc8_14.2 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %ptr.loc9_26: type = ptr_type %T.ref [symbolic = %ptr.loc9_14 (constants.%ptr.e8f)]
-// CHECK:STDOUT:       %.loc9_26.2: Core.Form = init_form %ptr.loc9_26, call_param1 [symbolic = %.loc9_26.1 (constants.%.4fe)]
+// CHECK:STDOUT:       %.loc9_26.2: Core.Form = init_form %ptr.loc9_26 [symbolic = %.loc9_26.1 (constants.%.cb6)]
 // CHECK:STDOUT:       %self.param: @ptr.as.HasF.impl.F.%ptr.loc9_14 (%ptr.e8f) = value_param call_param0
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @ptr.as.HasF.impl.%ptr.loc8_25.2 [symbolic = %ptr.loc9_14 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       %self: @ptr.as.HasF.impl.F.%ptr.loc9_14 (%ptr.e8f) = value_binding self, %self.param
@@ -546,7 +546,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f09)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.87c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.d0b)]
-// CHECK:STDOUT:   %.loc5_25.1: Core.Form = init_form %Self.binding.as_type, call_param1 [symbolic = %.loc5_25.1 (constants.%.897)]
+// CHECK:STDOUT:   %.loc5_25.1: Core.Form = init_form %Self.binding.as_type [symbolic = %.loc5_25.1 (constants.%.779)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.87c)) -> out %return.param: @HasF.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.87c);
 // CHECK:STDOUT: }
@@ -555,7 +555,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:   %ptr.loc9_14: type = ptr_type %T [symbolic = %ptr.loc9_14 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc9_14 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
-// CHECK:STDOUT:   %.loc9_26.1: Core.Form = init_form %ptr.loc9_14, call_param1 [symbolic = %.loc9_26.1 (constants.%.4fe)]
+// CHECK:STDOUT:   %.loc9_26.1: Core.Form = init_form %ptr.loc9_14 [symbolic = %.loc9_26.1 (constants.%.cb6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc9_14 [symbolic = %require_complete (constants.%require_complete.ef1)]
@@ -603,7 +603,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self => constants.%Self.f09
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.87c
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d0b
-// CHECK:STDOUT:   %.loc5_25.1 => constants.%.897
+// CHECK:STDOUT:   %.loc5_25.1 => constants.%.779
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ptr.as.HasF.impl(constants.%T.67d) {
@@ -620,7 +620,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc9_14 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc9_26.1 => constants.%.4fe
+// CHECK:STDOUT:   %.loc9_26.1 => constants.%.cb6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet.506) {
@@ -634,7 +634,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.506
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %.loc5_25.1 => constants.%.4fe
+// CHECK:STDOUT:   %.loc5_25.1 => constants.%.cb6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ptr.as.HasF.impl(constants.%empty_struct_type) {
@@ -658,7 +658,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:   %ptr.loc9_14 => constants.%ptr.c28
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1cc
-// CHECK:STDOUT:   %.loc9_26.1 => constants.%.98f
+// CHECK:STDOUT:   %.loc9_26.1 => constants.%.9ba
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type

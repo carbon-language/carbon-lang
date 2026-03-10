@@ -280,9 +280,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       if (node_kind == Parse::NodeKind::LetBindingPattern ||
           node_kind == Parse::NodeKind::FormBindingPattern) {
         auto type_id = context.insts().GetAttachedType(result_inst_id);
-        // Allocate a dummy index to preserve index of subsequent `InitForm`s.
-        // TODO: Remove this once we remove `InitForm::index`.
-        context.full_pattern_stack().NextCallParamIndex();
         if (is_ref) {
           result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
               context, node_id,
@@ -343,6 +340,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.node_stack().Push(node_id, binding_pattern_id);
       break;
     }
+
+    case FullPatternStack::Kind::NotInEitherParamList:
+      CARBON_FATAL("Unreachable");
   }
   return true;
 }
@@ -520,18 +520,11 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
     auto current_inst_id = worklist.pop_back_val();
     auto inst = context.insts().Get(current_inst_id);
     CARBON_KIND_SWITCH(inst) {
-      case SemIR::OutParamPattern::Kind:
-      case SemIR::RefParamPattern::Kind:
-      case SemIR::ValueParamPattern::Kind:
-      case SemIR::VarParamPattern::Kind: {
-        auto param = inst.As<SemIR::AnyParamPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyParamPattern, param): {
         worklist.push_back(param.subpattern_id);
         break;
       }
-      case SemIR::RefBindingPattern::Kind:
-      case SemIR::SymbolicBindingPattern::Kind:
-      case SemIR::ValueBindingPattern::Kind: {
-        auto bind = inst.As<SemIR::AnyBindingPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& name = context.entity_names().Get(bind.entity_name_id);
         name.is_unused = true;
         // We treat `_` as not marking the pattern as unused for the purpose of

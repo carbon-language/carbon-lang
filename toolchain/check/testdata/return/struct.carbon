@@ -24,7 +24,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
-// CHECK:STDOUT:   %.fcf: Core.Form = init_form %struct_type.a.ba9, call_param0 [concrete]
+// CHECK:STDOUT:   %.c43: Core.Form = init_form %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
@@ -75,7 +75,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
-// CHECK:STDOUT:     %.loc15: Core.Form = init_form %struct_type.a, call_param0 [concrete = constants.%.fcf]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %struct_type.a [concrete = constants.%.c43]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.ba9 = return_slot %return.param
 // CHECK:STDOUT:   }

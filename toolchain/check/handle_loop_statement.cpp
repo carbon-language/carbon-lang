@@ -115,8 +115,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
   // Begin an implicit let declaration context for the pattern.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::NameBindingDecl);
+  context.full_pattern_stack().PushNameBindingDecl();
   BeginSubpattern(context);
 
   context.node_stack().Push(node_id);

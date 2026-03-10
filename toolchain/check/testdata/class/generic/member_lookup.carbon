@@ -84,7 +84,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.035 [symbolic]
 // CHECK:STDOUT:   %Derived.ad7: type = class_type @Derived, @Derived(%T.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %pattern_type.d85: type = pattern_type %Derived.ad7 [symbolic]
-// CHECK:STDOUT:   %.6c815b.2: Core.Form = init_form %T.binding.as_type, call_param1 [symbolic]
+// CHECK:STDOUT:   %.076a48.2: Core.Form = init_form %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.9b9f0c.2: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Base.ab3: type = class_type @Base, @Base(%T.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %require_complete.b68: <witness> = require_complete_type %Base.ab3 [symbolic]
@@ -165,7 +165,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc13_45.1 => constants.%Derived.ad7
 // CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.d85
-// CHECK:STDOUT:   %.loc13_51.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc13_51.2 => constants.%.076a48.2
 // CHECK:STDOUT:   %pattern_type.loc13_48 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,7 +174,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc19_42.1 => constants.%Derived.ad7
 // CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.d85
-// CHECK:STDOUT:   %.loc19_48.2 => constants.%.6c815b.2
+// CHECK:STDOUT:   %.loc19_48.2 => constants.%.076a48.2
 // CHECK:STDOUT:   %pattern_type.loc19_45 => constants.%pattern_type.9b9f0c.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

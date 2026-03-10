@@ -543,7 +543,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexHash)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-// A set of custom dispatch functions that pre-select the symbol token to lex.
+// A set of custom dispatch functions that preselect the symbol token to lex.
 #define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
   static auto Dispatch##LexMethod##SymbolToken(                              \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \

@@ -164,6 +164,20 @@ var n: i32;
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, &n);
 
+// --- dependent_parameter_pack.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+template<typename ...T> struct X {
+  template<T... N> static int n;
+};
+''';
+
+fn G() -> i32 {
+  return Cpp.X(i32, i32).n(1, 2);
+}
+
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

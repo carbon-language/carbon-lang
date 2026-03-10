@@ -49,19 +49,29 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-
-  // Propagate the type expression.
-  auto form_expr = ReturnExprAsForm(context, type_node_id, type_inst_id);
+// Handles a `->` or `->?` return declaration.
+static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
+    -> bool {
+  auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
+  Context::FormExpr form_expr = [&]() {
+    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
+      return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
+    } else {
+      return FormExprAsForm(context, expr_node_id, expr_inst_id);
+    }
+  }();
   context.PushReturnForm(form_expr);
   auto return_patterns_id = AddReturnPatterns(context, node_id, form_expr);
   context.node_stack().Push(node_id, return_patterns_id);
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
+  return HandleReturnDecl(context, node_id);
+}
+
 auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
-  return context.TODO(node_id, "Support ->?");
+  return HandleReturnDecl(context, node_id);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -486,7 +496,8 @@ static auto BuildFunctionDecl(Context& context,
   auto return_type_inst_id = SemIR::TypeInstId::None;
   auto return_form_inst_id = SemIR::InstId::None;
   if (auto [return_node, maybe_return_patterns_id] =
-          context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
+          context.node_stack()
+              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
       maybe_return_patterns_id) {
     return_patterns_id = *maybe_return_patterns_id;
     auto return_form = context.PopReturnForm();
@@ -528,6 +539,7 @@ static auto BuildFunctionDecl(Context& context,
                           name, decl_id, is_extern, introducer.extern_library),
                       {.call_param_patterns_id = name.call_param_patterns_id,
                        .call_params_id = name.call_params_id,
+                       .call_param_ranges = name.param_ranges,
                        .return_type_inst_id = return_type_inst_id,
                        .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,
@@ -602,18 +614,11 @@ static auto CheckUnusedBindingsInPattern(Context& context,
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
     CARBON_KIND_SWITCH(inst) {
-      case SemIR::OutParamPattern::Kind:
-      case SemIR::RefParamPattern::Kind:
-      case SemIR::ValueParamPattern::Kind:
-      case SemIR::VarParamPattern::Kind: {
-        auto param = inst.As<SemIR::AnyParamPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyParamPattern, param): {
         work_list.push_back(param.subpattern_id);
         break;
       }
-      case SemIR::RefBindingPattern::Kind:
-      case SemIR::SymbolicBindingPattern::Kind:
-      case SemIR::ValueBindingPattern::Kind: {
-        auto bind = inst.As<SemIR::AnyBindingPattern>();
+      case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         // We need special treatment for the name "_" which is implicitly
         // unused but actually permitted in declarations.

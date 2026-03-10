@@ -77,8 +77,8 @@ static auto GetCppAssociatedFunctions(const CoreInterface core_interface)
     case CoreInterface::Destroy:
       return {llvm::to_underlying(AssociatedFunction::Destructor)};
     case CoreInterface::Unknown:
-      CARBON_FATAL(
-          "`CoreInterface::Unknown` doesn't have a `CppCoreFunction` mapping");
+    case CoreInterface::IntFitsIn:
+      CARBON_FATAL("No AssociatedFunction mapping for this interface");
   }
 }
 
@@ -131,6 +131,7 @@ static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
 
   return fn_id;
 }
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
@@ -142,18 +143,20 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto associated_functions = GetCppAssociatedFunctions(core_interface);
   auto witness_id = SemIR::ErrorInst::InstId;
 
   switch (core_interface) {
     case CoreInterface::Copy:
     case CoreInterface::Destroy: {
+      auto associated_functions = GetCppAssociatedFunctions(core_interface);
       CARBON_CHECK(associated_functions.count() == 1);
       witness_id = FindCppAssociatedFunction(
           context, loc_id,
           static_cast<AssociatedFunction>(associated_functions.to_ullong()),
           class_decl);
     } break;
+    case CoreInterface::IntFitsIn:
+      return SemIR::InstId::None;
     case CoreInterface::Unknown:
       CARBON_FATAL("shouldn't be called with `Unknown`");
   }

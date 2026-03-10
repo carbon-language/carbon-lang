@@ -406,7 +406,7 @@ fn CallF() {
 // CHECK:STDOUT:   %ImplicitAs.type.20a: type = facet_type <@ImplicitAs, @ImplicitAs(%C)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @empty_tuple.type.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %.b89: Core.Form = init_form %C, call_param1 [concrete]
+// CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.type: type = fn_type @empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert: %empty_tuple.type.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
@@ -497,7 +497,7 @@ fn CallF() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc11_36: Core.Form = init_form %C.ref, call_param1 [concrete = constants.%.b89]
+// CHECK:STDOUT:     %.loc11_36: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc11_28.1: type = splice_block %.loc11_28.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc11_28.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]

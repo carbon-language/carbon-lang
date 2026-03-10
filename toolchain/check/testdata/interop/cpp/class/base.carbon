@@ -475,7 +475,7 @@ class V {
 // CHECK:STDOUT:   %pattern_type.5c86: type = pattern_type %ptr.ddb [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %.fa5: Core.Form = init_form %ptr.fb2, call_param1 [concrete]
+// CHECK:STDOUT:   %.c2a: Core.Form = init_form %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %ConvertPtr.type: type = fn_type @ConvertPtr [concrete]
 // CHECK:STDOUT:   %ConvertPtr: %ConvertPtr.type = struct_value () [concrete]
@@ -519,7 +519,7 @@ class V {
 // CHECK:STDOUT:     %Cpp.ref.loc7_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:     %ptr.loc7_43: type = ptr_type %Base.ref [concrete = constants.%ptr.fb2]
-// CHECK:STDOUT:     %.loc7_43: Core.Form = init_form %ptr.loc7_43, call_param1 [concrete = constants.%.fa5]
+// CHECK:STDOUT:     %.loc7_43: Core.Form = init_form %ptr.loc7_43 [concrete = constants.%.c2a]
 // CHECK:STDOUT:     %d.param: %ptr.ddb = value_param call_param0
 // CHECK:STDOUT:     %.loc7_29: type = splice_block %ptr.loc7_29 [concrete = constants.%ptr.ddb] {
 // CHECK:STDOUT:       %Cpp.ref.loc7_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

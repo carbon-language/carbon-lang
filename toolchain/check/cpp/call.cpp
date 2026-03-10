@@ -112,7 +112,8 @@ static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
 static auto ConvertArgToTemplateArg(
     Context& context, clang::TemplateDecl* template_decl,
     clang::NamedDecl* param_decl, SemIR::InstId arg_id,
-    clang::SmallVector<clang::TemplateArgument>* template_args, bool diagnose)
+    clang::SmallVector<clang::TemplateArgument>* template_args,
+    unsigned argument_pack_index, bool diagnose)
     -> std::optional<clang::TemplateArgumentLoc> {
   if (isa<clang::TemplateTypeParmDecl>(param_decl)) {
     auto type = ExprAsType(context, SemIR::LocId(arg_id), arg_id, diagnose);
@@ -153,6 +154,9 @@ static auto ConvertArgToTemplateArg(
 
   if (auto* non_type = dyn_cast<clang::NonTypeTemplateParmDecl>(param_decl)) {
     auto param_type = non_type->getType();
+    if (non_type->isParameterPack() && non_type->isExpandedParameterPack()) {
+      param_type = non_type->getExpansionType(argument_pack_index);
+    }
 
     // Handle non-type parameters with a dependent type. For example:
     //
@@ -179,9 +183,13 @@ static auto ConvertArgToTemplateArg(
                                                   /*Final=*/true);
 
       mltal.addOuterRetainedLevels(non_type->getDepth());
-      // TODO: handle pack expansion by passing in the pack index from
-      // `ConvertArgsToTemplateArgs`.
-      if (!param_type->getAs<clang::PackExpansionType>()) {
+      if (const auto* pet = param_type->getAs<clang::PackExpansionType>()) {
+        clang::Sema::ArgPackSubstIndexRAII subst_index(context.clang_sema(),
+                                                       argument_pack_index);
+        param_type = context.clang_sema().SubstType(pet->getPattern(), mltal,
+                                                    non_type->getLocation(),
+                                                    non_type->getDeclName());
+      } else {
         param_type = context.clang_sema().SubstType(param_type, mltal,
                                                     non_type->getLocation(),
                                                     non_type->getDeclName());
@@ -292,12 +300,13 @@ auto ConvertArgsToTemplateArgs(Context& context,
     llvm::ArrayRef<SemIR::InstId> args_for_param =
         param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
                                               : arg_ids.consume_front();
-    for (auto arg_id : args_for_param) {
-      if (auto arg =
-              ConvertArgToTemplateArg(context, template_decl, param_decl,
-                                      arg_id, &template_args, diagnose)) {
+    for (auto [argument_pack_index, arg_id] : llvm::enumerate(args_for_param)) {
+      if (auto arg = ConvertArgToTemplateArg(context, template_decl, param_decl,
+                                             arg_id, &template_args,
+                                             argument_pack_index, diagnose)) {
         arg_list.addArgument(*arg);
         template_args.push_back(arg->getArgument());
+        argument_pack_index++;
       } else {
         return false;
       }

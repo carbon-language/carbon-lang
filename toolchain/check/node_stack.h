@@ -403,6 +403,8 @@ class NodeStack {
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
+    set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
+                          Id::KindFor<SemIR::InstBlockId>());
     return result;
   }
 
@@ -426,8 +428,6 @@ class NodeStack {
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileConditionStart:
-      case Parse::NodeKind::ReturnType:
-      case Parse::NodeKind::ReturnForm:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:

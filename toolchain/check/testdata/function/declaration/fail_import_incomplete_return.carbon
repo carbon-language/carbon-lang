@@ -93,13 +93,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.768: Core.Form = init_form %C, call_param0 [concrete]
+// CHECK:STDOUT:   %.a69: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %ReturnCUnused.type: type = fn_type @ReturnCUnused [concrete]
 // CHECK:STDOUT:   %ReturnCUnused: %ReturnCUnused.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ReturnCUsed.type: type = fn_type @ReturnCUsed [concrete]
 // CHECK:STDOUT:   %ReturnCUsed: %ReturnCUsed.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.4b7: Core.Form = init_form %D, call_param0 [concrete]
+// CHECK:STDOUT:   %.9a5: Core.Form = init_form %D [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [concrete]
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [concrete]
@@ -137,7 +137,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref, call_param0 [concrete = constants.%.768]
+// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -146,7 +146,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref, call_param0 [concrete = constants.%.768]
+// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -155,7 +155,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref, call_param0 [concrete = constants.%.4b7]
+// CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -164,7 +164,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref, call_param0 [concrete = constants.%.4b7]
+// CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }

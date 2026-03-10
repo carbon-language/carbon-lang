@@ -98,7 +98,7 @@ fn f() {
   // CHECK:STDERR:   var T:! type;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var T:! type;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -120,7 +120,7 @@ fn F[var u: ()]();
 // CHECK:STDERR: fn G[var T:! type]();
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
 // CHECK:STDERR: fn G[var T:! type]();
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
@@ -838,7 +838,7 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.842: Core.Form = init_form %empty_tuple.type, call_param0 [concrete]
+// CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -873,7 +873,7 @@ fn G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_12.2: type = converted %.loc4_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc4_12.3: Core.Form = init_form %.loc4_12.2, call_param0 [concrete = constants.%.842]
+// CHECK:STDOUT:     %.loc4_12.3: Core.Form = init_form %.loc4_12.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

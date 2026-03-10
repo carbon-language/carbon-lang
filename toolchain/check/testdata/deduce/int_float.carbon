@@ -49,7 +49,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.764: type = pattern_type %Int [symbolic]
-// CHECK:STDOUT:   %.7dc: Core.Form = init_form Core.IntLiteral, call_param1 [concrete]
+// CHECK:STDOUT:   %.f7d: Core.Form = init_form Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.901: <witness> = require_complete_type %Int [symbolic]
@@ -106,7 +106,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call.loc4_71: init type = call %IntLiteral.ref.loc4_59() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_71.1: type = value_of_initializer %IntLiteral.call.loc4_71 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_71.2: type = converted %IntLiteral.call.loc4_71, %.loc4_71.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_71.3: Core.Form = init_form %.loc4_71.2, call_param1 [concrete = constants.%.7dc]
+// CHECK:STDOUT:     %.loc4_71.3: Core.Form = init_form %.loc4_71.2 [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -138,7 +138,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.7dc]
+// CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2 [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %a.param: %i64 = value_param call_param0
 // CHECK:STDOUT:     %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:     %a: %i64 = value_binding a, %a.param
@@ -204,7 +204,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Float: type = class_type @Float, @Float(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.7d0: type = pattern_type %Float [symbolic]
-// CHECK:STDOUT:   %.7dc: Core.Form = init_form Core.IntLiteral, call_param1 [concrete]
+// CHECK:STDOUT:   %.f7d: Core.Form = init_form Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.dc0: <witness> = require_complete_type %Float [symbolic]
@@ -261,7 +261,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call.loc4_73: init type = call %IntLiteral.ref.loc4_61() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_73.1: type = value_of_initializer %IntLiteral.call.loc4_73 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_73.2: type = converted %IntLiteral.call.loc4_73, %.loc4_73.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_73.3: Core.Form = init_form %.loc4_73.2, call_param1 [concrete = constants.%.7dc]
+// CHECK:STDOUT:     %.loc4_73.3: Core.Form = init_form %.loc4_73.2 [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -293,7 +293,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.7dc]
+// CHECK:STDOUT:     %.loc8_33.3: Core.Form = init_form %.loc8_33.2 [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %a.param: %f64.d77 = value_param call_param0
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %a: %f64.d77 = value_binding a, %a.param

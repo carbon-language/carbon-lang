@@ -12,12 +12,12 @@ runs:
   using: composite
   steps:
     # Setup Python and related tools.
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         # Match the min version listed in docs/project/contribution_tools.md
         # or the oldest version available on the OS.
         python-version:
-          ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.9' }}
+          ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.10' }}
 
     - uses: ./.github/actions/build-setup-macos
       if: startsWith(inputs.matrix_runner, 'macos')

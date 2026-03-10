@@ -29,7 +29,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.437: Core.Form = init_form %i32, call_param0 [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [concrete]
 // CHECK:STDOUT:   %MakeI32: %MakeI32.type = struct_value () [concrete]
@@ -37,12 +37,12 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %.833: Core.Form = init_form %f64.d77, call_param0 [concrete]
+// CHECK:STDOUT:   %.49c: Core.Form = init_form %f64.d77 [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %MakeF64.type: type = fn_type @MakeF64 [concrete]
 // CHECK:STDOUT:   %MakeF64: %MakeF64.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %f64.d77} [concrete]
-// CHECK:STDOUT:   %.45a: Core.Form = init_form %struct_type.a.b, call_param0 [concrete]
+// CHECK:STDOUT:   %.956: Core.Form = init_form %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %pattern_type.a5c: type = pattern_type %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -99,7 +99,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32, call_param0 [concrete = constants.%.437]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -108,7 +108,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %f64, call_param0 [concrete = constants.%.833]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %f64 [concrete = constants.%.49c]
 // CHECK:STDOUT:     %return.param: ref %f64.d77 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %f64.d77 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -119,7 +119,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %f64.loc18: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: %f64.d77} [concrete = constants.%struct_type.a.b]
-// CHECK:STDOUT:     %.loc18: Core.Form = init_form %struct_type.a.b.loc18, call_param0 [concrete = constants.%.45a]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %struct_type.a.b.loc18 [concrete = constants.%.956]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.b = return_slot %return.param
 // CHECK:STDOUT:   }

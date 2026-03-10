@@ -23,3 +23,6 @@ IfMacros:
     'CARBON_KIND_SWITCH',
   ]
 StatementMacros: ['ABSTRACT']
+QualifierAlignment: Custom
+QualifierOrder:
+  [inline, static, friend, constexpr, const, volatile, restrict, type]
