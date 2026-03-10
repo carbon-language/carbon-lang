@@ -387,7 +387,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc32_45: <witness> = require_complete_type %A.binding.as_type [symbolic = %require_complete.loc32_45 (constants.%require_complete.72f)]
 // CHECK:STDOUT:   %require_complete.loc32_54: <witness> = require_complete_type %Food.binding.as_type [symbolic = %require_complete.loc32_54 (constants.%require_complete.0a9)]
-// CHECK:STDOUT:   %.loc32_76.4: require_specific_def_type = require_specific_def @T.binding.as_type.as.Eats.impl(%A.loc32_17.1, %Food.loc32_29.1) [symbolic = %.loc32_76.4 (constants.%.f9e)]
+// CHECK:STDOUT:   %.loc32_76.3: require_specific_def_type = require_specific_def @T.binding.as_type.as.Eats.impl(%A.loc32_17.1, %Food.loc32_29.1) [symbolic = %.loc32_76.3 (constants.%.f9e)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc32_17.1, @Eats, @Eats(%Food.binding.as_type) [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats, @Eats(%Food.binding.as_type)> [symbolic = %Eats.type (constants.%Eats.type.bb4cf6.2)]
 // CHECK:STDOUT:   %Eats.facet.loc32_76.2: @HandleAnimal.%Eats.type (%Eats.type.bb4cf6.2) = facet_value %A.binding.as_type, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.702)]
@@ -399,9 +399,8 @@ fn F() {
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%A.binding.as_type (%A.binding.as_type) = name_ref a, %a
 // CHECK:STDOUT:     %food.ref: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.e7e) = name_ref food, %food
 // CHECK:STDOUT:     %.loc32_76.1: %Edible.type = converted constants.%Food.binding.as_type.e7e, constants.%Food.2fc [symbolic = %Food.loc32_29.1 (constants.%Food.2fc)]
-// CHECK:STDOUT:     %.loc32_76.2: %Edible.type = converted constants.%Food.binding.as_type.e7e, constants.%Food.2fc [symbolic = %Food.loc32_29.1 (constants.%Food.2fc)]
 // CHECK:STDOUT:     %Eats.facet.loc32_76.1: @HandleAnimal.%Eats.type (%Eats.type.bb4cf6.2) = facet_value constants.%A.binding.as_type, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.702)]
-// CHECK:STDOUT:     %.loc32_76.3: @HandleAnimal.%Eats.type (%Eats.type.bb4cf6.2) = converted constants.%A.binding.as_type, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.702)]
+// CHECK:STDOUT:     %.loc32_76.2: @HandleAnimal.%Eats.type (%Eats.type.bb4cf6.2) = converted constants.%A.binding.as_type, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.702)]
 // CHECK:STDOUT:     %Feed.specific_fn.loc32_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.2fc, constants.%Eats.facet.702) [symbolic = %Feed.specific_fn.loc32_64.2 (constants.%Feed.specific_fn.1f9)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc32_64.1(%a.ref, %food.ref)
 // CHECK:STDOUT:     return
@@ -423,14 +422,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_29.3: init %Grass to %.loc35_29.2 = class_init () [concrete = constants.%Grass.val]
 // CHECK:STDOUT:   %.loc35_29.4: ref %Grass = temporary %.loc35_29.2, %.loc35_29.3
 // CHECK:STDOUT:   %.loc35_31.1: ref %Grass = converted %.loc35_29.1, %.loc35_29.4
-// CHECK:STDOUT:   %Animal.facet.loc35_39.1: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc35_39.1: %Animal.type = converted constants.%Goat, %Animal.facet.loc35_39.1 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Animal.facet.loc35_39.2: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc35_39.2: %Animal.type = converted constants.%Goat, %Animal.facet.loc35_39.2 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Edible.facet.loc35_39.1: %Edible.type = facet_value constants.%Grass, (constants.%Edible.impl_witness) [concrete = constants.%Edible.facet]
-// CHECK:STDOUT:   %.loc35_39.3: %Edible.type = converted constants.%Grass, %Edible.facet.loc35_39.1 [concrete = constants.%Edible.facet]
-// CHECK:STDOUT:   %Edible.facet.loc35_39.2: %Edible.type = facet_value constants.%Grass, (constants.%Edible.impl_witness) [concrete = constants.%Edible.facet]
-// CHECK:STDOUT:   %.loc35_39.4: %Edible.type = converted constants.%Grass, %Edible.facet.loc35_39.2 [concrete = constants.%Edible.facet]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc35_39.1: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Edible.facet: %Edible.type = facet_value constants.%Grass, (constants.%Edible.impl_witness) [concrete = constants.%Edible.facet]
+// CHECK:STDOUT:   %.loc35_39.2: %Edible.type = converted constants.%Grass, %Edible.facet [concrete = constants.%Edible.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet, constants.%Edible.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = acquire_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = acquire_value %.loc35_31.1
@@ -567,7 +562,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc32_45 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc32_54 => constants.%complete_type.357
-// CHECK:STDOUT:   %.loc32_76.4 => constants.%.767
+// CHECK:STDOUT:   %.loc32_76.3 => constants.%.767
 // CHECK:STDOUT:   %Eats.lookup_impl_witness => constants.%Eats.impl_witness.f54
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.8c2
 // CHECK:STDOUT:   %Eats.facet.loc32_76.2 => constants.%Eats.facet.a4e

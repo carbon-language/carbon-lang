@@ -401,11 +401,6 @@ auto DeductionContext::Deduce() -> bool {
         continue;
       }
 
-      case CARBON_KIND(SemIR::ValueParamPattern pattern): {
-        Add(pattern.subpattern_id, arg_id);
-        continue;
-      }
-
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;

@@ -247,8 +247,7 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:     %x.ref: @F.%C.loc25_29.1 (%C) = name_ref x, %x
-// CHECK:STDOUT:     %.loc27_6.1: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
-// CHECK:STDOUT:     %.loc27_6.2: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
+// CHECK:STDOUT:     %.loc27: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
 // CHECK:STDOUT:     %G.specific_fn.loc27_3.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc27_3.1(%x.ref)
 // CHECK:STDOUT:     <elided>
