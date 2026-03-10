@@ -75,8 +75,6 @@ void f2() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.S = type { i32 }
-// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN2t24funcEv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN2t3IiE1iE = comdat any
@@ -102,7 +100,7 @@ void f2() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds ([10 x %struct.S], ptr @a, i64 0, i64 3), align 4, !tbaa !14
+// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds nuw (i8, ptr @a, i64 12), align 4, !tbaa !14
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
