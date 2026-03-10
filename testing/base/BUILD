@@ -137,3 +137,26 @@ cc_test(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_library(
+    name = "union_diff_matcher",
+    testonly = 1,
+    hdrs = ["union_diff_matcher.h"],
+    deps = [
+        "//common:check",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "union_diff_matcher_test",
+    size = "small",
+    srcs = ["union_diff_matcher_test.cpp"],
+    deps = [
+        ":gtest_main",
+        ":union_diff_matcher",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
