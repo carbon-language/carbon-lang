@@ -92,8 +92,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %A.lookup_impl_witness.04abbb.1: <witness> = lookup_impl_witness %.Self.660472.1, @A, @A(%CC) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.f51d29.1: type = impl_witness_access %A.lookup_impl_witness.04abbb.1, element0 [symbolic]
 // CHECK:STDOUT:   %A_where.type.4028e0.1: type = facet_type <@A, @A(%CC) where %impl.elem0.f51d29.1 = %CC> [symbolic]
-// CHECK:STDOUT:   %T.6c0: %A_where.type.4028e0.1 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.1d5: type = pattern_type %A_where.type.4028e0.1 [symbolic]
+// CHECK:STDOUT:   %T.6c0: %A_where.type.4028e0.1 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %C.F.type.1f899e.1: type = fn_type @C.F, @C(%CC) [symbolic]
 // CHECK:STDOUT:   %C.F.faeec9.1: %C.F.type.1f899e.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -308,8 +308,8 @@ fn H(T:! type) {
 // CHECK:STDOUT: --- dot_self_symbolic_in_impl_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %AA: type = symbolic_binding AA, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %AA: type = symbolic_binding AA, 0 [symbolic]
 // CHECK:STDOUT:   %A.type.464: type = generic_interface_type @A [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type.464 = struct_value () [concrete]
@@ -325,8 +325,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %impl.elem0.f51d29.1: type = impl_witness_access %A.lookup_impl_witness.04abbb.1, element0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %A_where.type.29f165.1: type = facet_type <@A, @A(%AA) where %impl.elem0.f51d29.1 = %empty_tuple.type> [symbolic]
-// CHECK:STDOUT:   %BB.0b1: %A_where.type.29f165.1 = symbolic_binding BB, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.12a: type = pattern_type %A_where.type.29f165.1 [symbolic]
+// CHECK:STDOUT:   %BB.0b1: %A_where.type.29f165.1 = symbolic_binding BB, 1 [symbolic]
 // CHECK:STDOUT:   %BB.binding.as_type: type = symbolic_binding_type BB, 1, %BB.0b1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %AA [symbolic]
 // CHECK:STDOUT:   %B.type.abcc5d.1: type = facet_type <@B, @B(%ptr.e8f8f9.1)> [symbolic]

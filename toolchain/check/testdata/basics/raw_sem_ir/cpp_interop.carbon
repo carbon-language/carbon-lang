@@ -152,10 +152,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000014:    {kind: ClassDecl, arg0: class50000000, arg1: inst_block<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000015:    {kind: ClassType, arg0: class50000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000016:    {kind: NameRef, arg0: name2, arg1: inst50000014, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000017:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst5000001B, type: type(inst50000015)}
-// CHECK:STDOUT:     inst50000018:    {kind: PatternType, arg0: inst50000015, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000019:    {kind: ValueBindingPattern, arg0: entity_name50000000, type: type(inst50000018)}
-// CHECK:STDOUT:     inst5000001A:    {kind: ValueParamPattern, arg0: inst50000019, type: type(inst50000018)}
+// CHECK:STDOUT:     inst50000017:    {kind: PatternType, arg0: inst50000015, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000018:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst5000001B, type: type(inst50000015)}
+// CHECK:STDOUT:     inst50000019:    {kind: ValueBindingPattern, arg0: entity_name50000000, type: type(inst50000017)}
+// CHECK:STDOUT:     inst5000001A:    {kind: ValueParamPattern, arg0: inst50000019, type: type(inst50000017)}
 // CHECK:STDOUT:     inst5000001B:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000015)}
 // CHECK:STDOUT:     inst5000001C:    {kind: SpliceBlock, arg0: inst_block50000005, arg1: inst50000016, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000001D:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block5000000A, type: type(inst5000001E)}
@@ -183,18 +183,18 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000033:    {kind: Call, arg0: inst50000030, arg1: inst_block_empty, type: type(inst50000013)}
 // CHECK:STDOUT:     inst50000034:    {kind: NameRef, arg0: name(Cpp), arg1: inst50000011, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000035:    {kind: NameRef, arg0: name3, arg1: inst5000002A, type: type(inst50000029)}
-// CHECK:STDOUT:     inst50000036:    {kind: NameRef, arg0: name1, arg1: inst50000017, type: type(inst50000015)}
+// CHECK:STDOUT:     inst50000036:    {kind: NameRef, arg0: name1, arg1: inst50000018, type: type(inst50000015)}
 // CHECK:STDOUT:     inst50000037:    {kind: ValueBinding, arg0: entity_name50000001, arg1: inst5000003A, type: type(inst50000015)}
-// CHECK:STDOUT:     inst50000038:    {kind: ValueBindingPattern, arg0: entity_name50000001, type: type(inst50000018)}
-// CHECK:STDOUT:     inst50000039:    {kind: ValueParamPattern, arg0: inst50000038, type: type(inst50000018)}
+// CHECK:STDOUT:     inst50000038:    {kind: ValueBindingPattern, arg0: entity_name50000001, type: type(inst50000017)}
+// CHECK:STDOUT:     inst50000039:    {kind: ValueParamPattern, arg0: inst50000038, type: type(inst50000017)}
 // CHECK:STDOUT:     inst5000003A:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000015)}
 // CHECK:STDOUT:     inst5000003B:    {kind: FunctionDecl, arg0: function50000003, arg1: inst_block50000012, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst5000003C:    {kind: FunctionType, arg0: function50000003, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003D:    {kind: StructValue, arg0: inst_block_empty, type: type(inst5000003C)}
-// CHECK:STDOUT:     inst5000003E:    {kind: ValueBinding, arg0: entity_name50000002, arg1: inst50000042, type: type(inst50000020)}
-// CHECK:STDOUT:     inst5000003F:    {kind: PatternType, arg0: inst50000020, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000040:    {kind: ValueBindingPattern, arg0: entity_name50000002, type: type(inst5000003F)}
-// CHECK:STDOUT:     inst50000041:    {kind: ValueParamPattern, arg0: inst50000040, type: type(inst5000003F)}
+// CHECK:STDOUT:     inst5000003E:    {kind: PatternType, arg0: inst50000020, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003F:    {kind: ValueBinding, arg0: entity_name50000002, arg1: inst50000042, type: type(inst50000020)}
+// CHECK:STDOUT:     inst50000040:    {kind: ValueBindingPattern, arg0: entity_name50000002, type: type(inst5000003E)}
+// CHECK:STDOUT:     inst50000041:    {kind: ValueParamPattern, arg0: inst50000040, type: type(inst5000003E)}
 // CHECK:STDOUT:     inst50000042:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000020)}
 // CHECK:STDOUT:     inst50000043:    {kind: FunctionDecl, arg0: function50000004, arg1: inst_block50000018, type: type(inst50000044)}
 // CHECK:STDOUT:     inst50000044:    {kind: FunctionType, arg0: function50000004, arg1: specific<none>, type: type(TypeType)}
@@ -205,8 +205,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000049:    {kind: NameRef, arg0: name(Cpp), arg1: inst50000011, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst5000004A:    {kind: NameRef, arg0: name3, arg1: inst5000002A, type: type(inst50000029)}
 // CHECK:STDOUT:     inst5000004B:    {kind: NameRef, arg0: name(Cpp), arg1: inst50000011, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst5000004C:    {kind: RefBindingPattern, arg0: entity_name50000003, type: type(inst5000003F)}
-// CHECK:STDOUT:     inst5000004D:    {kind: VarPattern, arg0: inst5000004C, type: type(inst5000003F)}
+// CHECK:STDOUT:     inst5000004C:    {kind: RefBindingPattern, arg0: entity_name50000003, type: type(inst5000003E)}
+// CHECK:STDOUT:     inst5000004D:    {kind: VarPattern, arg0: inst5000004C, type: type(inst5000003E)}
 // CHECK:STDOUT:     inst5000004E:    {kind: VarStorage, arg0: inst5000004D, type: type(inst50000020)}
 // CHECK:STDOUT:     inst5000004F:    {kind: NameRef, arg0: name4, arg1: inst5000004E, type: type(inst50000020)}
 // CHECK:STDOUT:     inst50000050:    {kind: AcquireValue, arg0: inst5000004F, type: type(inst50000020)}
@@ -240,7 +240,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000015)
 // CHECK:STDOUT:       inst50000015:    concrete_constant(inst50000015)
 // CHECK:STDOUT:       inst50000016:    concrete_constant(inst50000015)
-// CHECK:STDOUT:       inst50000018:    concrete_constant(inst50000018)
+// CHECK:STDOUT:       inst50000017:    concrete_constant(inst50000017)
 // CHECK:STDOUT:       inst50000019:    concrete_constant(inst50000019)
 // CHECK:STDOUT:       inst5000001A:    concrete_constant(inst5000001A)
 // CHECK:STDOUT:       inst5000001C:    concrete_constant(inst50000015)
@@ -273,7 +273,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       inst5000003B:    concrete_constant(inst5000003D)
 // CHECK:STDOUT:       inst5000003C:    concrete_constant(inst5000003C)
 // CHECK:STDOUT:       inst5000003D:    concrete_constant(inst5000003D)
-// CHECK:STDOUT:       inst5000003F:    concrete_constant(inst5000003F)
+// CHECK:STDOUT:       inst5000003E:    concrete_constant(inst5000003E)
 // CHECK:STDOUT:       inst50000040:    concrete_constant(inst50000040)
 // CHECK:STDOUT:       inst50000041:    concrete_constant(inst50000041)
 // CHECK:STDOUT:       inst50000043:    concrete_constant(inst50000045)
@@ -319,7 +319,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst_block5000000A:
 // CHECK:STDOUT:       0:               inst5000001B
 // CHECK:STDOUT:       1:               inst5000001C
-// CHECK:STDOUT:       2:               inst50000017
+// CHECK:STDOUT:       2:               inst50000018
 // CHECK:STDOUT:     inst_block5000000B:
 // CHECK:STDOUT:       0:               inst50000028
 // CHECK:STDOUT:       1:               inst5000002C
@@ -370,7 +370,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       1:               inst50000041
 // CHECK:STDOUT:     inst_block50000018:
 // CHECK:STDOUT:       0:               inst50000042
-// CHECK:STDOUT:       1:               inst5000003E
+// CHECK:STDOUT:       1:               inst5000003F
 // CHECK:STDOUT:     inst_block50000019:
 // CHECK:STDOUT:       0:               inst50000036
 // CHECK:STDOUT:     inst_block5000001A:

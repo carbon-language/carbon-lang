@@ -46,14 +46,27 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
   context.region_stack().PopAndDiscardRegion();
 }
 
+auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
+                          SemIR::ConstantId form_id, bool is_unused,
+                          BindingPhase phase) -> SemIR::EntityNameId {
+  SemIR::EntityName entity_name = {
+      .name_id = name_id,
+      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+      .is_unused = is_unused || name_id == SemIR::NameId::Underscore};
+  if (phase != BindingPhase::Runtime) {
+    entity_name.bind_index_value =
+        context.scope_stack().AddCompileTimeBinding().index;
+    entity_name.is_template = phase == BindingPhase::Template;
+  }
+  entity_name.form_id = form_id;
+  return context.entity_names().Add(entity_name);
+}
+
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
-                       SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ConstantId form_id,
                        SemIR::ExprRegionId type_region_id,
-                       SemIR::InstKind pattern_kind, bool is_template,
-                       bool is_unused) -> BindingPatternInfo {
+                       SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
-  switch (pattern_kind) {
+  switch (pattern.kind) {
     case SemIR::InstKind::FormBindingPattern:
       bind_name_kind = SemIR::InstKind::FormBinding;
       break;
@@ -68,40 +81,22 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       break;
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
-                   pattern_kind);
+                   pattern.kind);
   }
-  bool is_generic = pattern_kind == SemIR::SymbolicBindingPattern::Kind;
-
-  SemIR::EntityName entity_name = {
-      .name_id = name_id,
-      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-      .is_unused = is_unused || name_id == SemIR::NameId::Underscore};
-  if (is_generic) {
-    entity_name.bind_index_value =
-        context.scope_stack().AddCompileTimeBinding().index;
-    entity_name.is_template = is_template;
-  } else if (pattern_kind == SemIR::InstKind::FormBindingPattern) {
-    entity_name.form_id = form_id;
-  }
-  auto entity_name_id = context.entity_names().Add(entity_name);
+  auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
 
   auto bind_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
           name_loc, SemIR::AnyBinding{.kind = bind_name_kind,
                                       .type_id = type_id,
-                                      .entity_name_id = entity_name_id,
+                                      .entity_name_id = pattern.entity_name_id,
                                       .value_id = SemIR::InstId::None}));
 
-  auto pattern_type_id = GetPatternType(context, type_id);
   auto binding_pattern_id = AddPatternInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(
-                   name_loc,
-                   SemIR::AnyBindingPattern{.kind = pattern_kind,
-                                            .type_id = pattern_type_id,
-                                            .entity_name_id = entity_name_id}));
+      context, SemIR::LocIdAndInst::UncheckedLoc(name_loc, pattern));
 
-  if (is_generic) {
+  if (pattern.kind == SemIR::SymbolicBindingPattern::Kind) {
     context.scope_stack().PushCompileTimeBinding(bind_id);
   }
 
@@ -156,11 +151,16 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
   const auto& binding_pattern_kind = is_ref ? SemIR::RefBindingPattern::Kind
                                             : SemIR::ValueBindingPattern::Kind;
+  auto entity_name_id =
+      AddBindingEntityName(context, name_id,
+                           /*form_id=*/SemIR::ConstantId::None,
+                           /*is_unused=*/false,
+                           /*phase=*/BindingPhase::Runtime);
   SemIR::InstId pattern_id =
-      AddBindingPattern(context, loc_id, name_id, type_id,
-                        /*form_id=*/SemIR::ConstantId::None,
-                        type_expr_region_id, binding_pattern_kind,
-                        /*is_template=*/false, /*is_unused=*/false)
+      AddBindingPattern(context, loc_id, type_expr_region_id,
+                        {.kind = binding_pattern_kind,
+                         .type_id = GetPatternType(context, type_id),
+                         .entity_name_id = entity_name_id})
           .pattern_id;
 
   const auto& param_pattern_kind =
