@@ -17,7 +17,11 @@ namespace Carbon {
 // Returns true if a found path resolves to the actual executable path.
 static auto RealPathMatches(const char* found_path, llvm::StringRef exe_path)
     -> bool {
+#ifdef _WIN32
+  char* buffer = _fullpath(nullptr, found_path, 0);
+#else
   char* buffer = realpath(found_path, nullptr);
+#endif
   if (!buffer) {
     return false;
   }

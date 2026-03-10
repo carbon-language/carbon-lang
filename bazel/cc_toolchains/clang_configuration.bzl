@@ -111,7 +111,11 @@ _CLANG_INCLUDE_FILE_CONTENT = """
 #include <version>
 #endif
 #ifndef _LIBCPP_STD_VER
+#if !defined(_WIN32)
+#if !defined(_WIN32)
 #error "No libc++ install found!"
+#endif
+#endif
 #endif
 """
 
@@ -141,7 +145,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         # Use the input file.
         input_file,
         # Always use libc++.
-        "-stdlib=libc++",
+    ] + ([] if repository_ctx.os.name.lower().startswith("windows") else ["-stdlib=libc++"]) + [
     ]
 
     # We need to use a sysroot to correctly represent a run on macOS.
@@ -283,3 +287,6 @@ configure_clang_toolchain = repository_rule(
 clang_toolchain_extension = module_extension(
     implementation = lambda ctx: configure_clang_toolchain(name = "bazel_cc_toolchain"),
 )
+
+# Windows local alias
+clang_toolchain_extension_local_local_local = clang_toolchain_extension

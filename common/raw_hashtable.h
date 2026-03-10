@@ -643,7 +643,11 @@ class TableImpl : public InputBaseT {
 
   auto SetUpStorage() -> void;
 
+#ifdef _WIN32
+  [[msvc::no_unique_address]] mutable SmallStorage small_storage_;
+#else
   [[no_unique_address]] mutable SmallStorage small_storage_;
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////////

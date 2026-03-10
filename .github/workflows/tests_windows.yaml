@@ -1,0 +1,95 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Tests (Windows)
+
+on:
+  push:
+    branches: [trunk, action-test]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache LLVM and Clang installation
+        id: cache-llvm-windows
+        uses: actions/cache@v5
+        with:
+          path: ~/llvm
+          key: LLVM-19.1.7-Cache-windows-x64
+
+      - name: Download LLVM and Clang installation
+        if: steps.cache-llvm-windows.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $LLVM_RELEASE = "19.1.7"
+          $LLVM_TARBALL = "clang+llvm-$LLVM_RELEASE-x86_64-pc-windows-msvc.tar.xz"
+          $LLVM_PATH = "$HOME/llvm"
+          Write-Host "Downloading LLVM $LLVM_RELEASE"
+          Invoke-WebRequest "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_RELEASE/$LLVM_TARBALL" -OutFile $LLVM_TARBALL
+          New-Item -ItemType Directory -Force -Path $LLVM_PATH
+          tar -xJf $LLVM_TARBALL --strip-components=1 -C $LLVM_PATH
+          Remove-Item $LLVM_TARBALL
+
+      - name: Setup LLVM and Clang paths
+        shell: pwsh
+        run: |
+          $LLVM_PATH = "$HOME/llvm"
+          echo "$LLVM_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Add ASAN runtime to PATH
+        shell: pwsh
+        run: |
+          $ASAN_PATH = "$HOME/llvm/lib/clang/19/lib/windows"
+          echo "$ASAN_PATH" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Build and test common
+        shell: pwsh
+        run: |
+          bazel test `
+            //common:array_stack_test `
+            //common:command_line_test `
+            //common:emplace_by_calling_test `
+            //common:enum_base_test `
+            //common:enum_mask_base_test `
+            //common:find_test `
+            //common:growing_range_test `
+            //common:hashing_test `
+            //common:hashtable_key_context_test `
+            //common:latch_test `
+            //common:map_test `
+            //common:raw_string_ostream_test `
+            //common:set_test `
+            //common:string_helpers_test `
+            //common:struct_reflection_test `
+            //common:template_string_test `
+            //common:vlog_test `
+            --repo_env=CC=clang `
+            --repo_env=CXX=clang++ `
+            --deleted_packages=bazel/check_deps `
+            --nocheck_visibility `
+            --force_pic=false `
+            --copt=-fno-pic `
+            --cxxopt=-fno-pic `
+            --copt=-gz=none `
+            --copt=-Wno-unknown-attributes `
+            --cxxopt=-Wno-unknown-attributes `
+            --cxxopt=-gz=none `
+            "--@llvm-project//third-party:llvm_enable_zlib=false" `
+            --features=archive_param_file `
+            --jobs=4 `
+            --linkopt=-Xlinker `
+            --linkopt=/SUBSYSTEM:CONSOLE `
+            --test_output=errors
