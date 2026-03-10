@@ -12,6 +12,8 @@
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/type_completion.h"
 
 namespace Carbon::Check {
 
@@ -113,18 +115,69 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
     const auto* value_decl =
         ap_value.getLValueBase().get<const clang::ValueDecl*>();
 
+    if (!ap_value.hasLValuePath()) {
+      context.TODO(loc_id, "Macro expanded to lvalue with no path");
+      return SemIR::ErrorInst::InstId;
+    }
+
+    if (ap_value.isLValueOnePastTheEnd()) {
+      context.TODO(loc_id, "Macro expanded to a one-past-the-end lvalue");
+      return SemIR::ErrorInst::InstId;
+    }
+
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
         // TODO: can this const_cast be avoided?
         const_cast<clang::ValueDecl*>(value_decl));
 
-    if (ap_value.hasLValuePath() && ap_value.getLValuePath().size() > 0) {
-      context.TODO(loc_id, "Macro evaluated to an lvalue with a path: " +
-                               ap_value.getAsString(context.ast_context(),
-                                                    result_expr->getType()));
-      return SemIR::ErrorInst::InstId;
+    auto inst_id = ImportCppDecl(context, loc_id, key);
+    if (ap_value.getLValuePath().size() == 0) {
+      return inst_id;
     }
 
-    return ImportCppDecl(context, loc_id, key);
+    // Import the base type so that its fields can be accessed.
+    auto var_storage = context.insts().GetAs<SemIR::VarStorage>(inst_id);
+    // TODO: currently an error isn't reachable here because incomplete
+    // array types can't be imported. Once that changes, switch to
+    // `RequireCompleteType` and handle the error.
+    CompleteTypeOrCheckFail(context, var_storage.type_id);
+
+    clang::QualType qual_type = ap_value.getLValueBase().getType();
+    for (const auto& entry : ap_value.getLValuePath()) {
+      if (qual_type->isArrayType()) {
+        context.TODO(loc_id, "Macro expanded to array type");
+      } else {
+        const auto* decl =
+            cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+
+        const auto* field_decl = dyn_cast<clang::FieldDecl>(decl);
+        if (!field_decl) {
+          context.TODO(loc_id, "Macro expanded to a base class subobject");
+          return SemIR::ErrorInst::InstId;
+        }
+
+        auto field_inst_id =
+            ImportCppDecl(context, loc_id,
+                          SemIR::ClangDeclKey::ForNonFunctionDecl(
+                              const_cast<clang::FieldDecl*>(field_decl)));
+
+        if (field_inst_id == SemIR::ErrorInst::InstId) {
+          context.TODO(loc_id,
+                       "Unsupported field in macro expansion: " +
+                           ap_value.getAsString(context.ast_context(),
+                                                result_expr->getType()));
+          return SemIR::ErrorInst::InstId;
+        }
+
+        const SemIR::FieldDecl& field_decl_inst =
+            context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+
+        qual_type = field_decl->getType();
+        inst_id = PerformMemberAccess(context, loc_id, inst_id,
+                                      field_decl_inst.name_id);
+      }
+    }
+
+    return inst_id;
   } else {
     auto const_id =
         MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());

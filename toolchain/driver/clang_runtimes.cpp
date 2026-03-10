@@ -401,65 +401,41 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
 
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   lib_path_ = std::filesystem::path("lib") / target_triple_.str();
+  // TODO: Currently, we only need a single include path to see headers inside
+  // the `builtins` directory. However, we're anticipating needing more, for
+  // example to support SipHash. If that need doesn't materialize, we should
+  // simplify this to a single path instead of a vector.
+  include_paths_.push_back(installation().runtimes_root() / "builtins");
+
+  llvm::SmallVector<llvm::StringRef> copts = {
+      "-no-canonical-prefixes",
+      "-w",
+  };
+  llvm::append_range(copts, RuntimesBuildInfo::BuiltinsCopts);
+  for (const auto& include_path : include_paths_) {
+    copts.append({"-I", include_path.native()});
+  }
   archive_.emplace(this, lib_path_ / "libclang_rt.builtins.a",
-                   installation().runtimes_root(),
-                   CollectBuiltinsSrcFiles(), /*cflags=*/
-                   llvm::SmallVector<llvm::StringRef>{
-                       "-no-canonical-prefixes",
-                       "-O3",
-                       "-fPIC",
-                       "-ffreestanding",
-                       "-fno-builtin",
-                       "-fomit-frame-pointer",
-                       "-fvisibility=hidden",
-                       "-w",
-                   });
+                   installation().runtimes_root(), CollectBuiltinsSrcFiles(),
+                   copts);
   tasks_.async([this]() { Setup(); });
 }
 
 auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> src_files;
-  auto append_src_files =
-      [&](auto input_srcs,
-          llvm::function_ref<bool(llvm::StringRef)> filter_out = {}) {
-        for (llvm::StringRef input_src : input_srcs) {
-          if (!input_src.ends_with(".c") && !input_src.ends_with(".S")) {
-            // Not a compiled file.
-            continue;
-          }
-          if (filter_out && filter_out(input_src)) {
-            // Filtered out.
-            continue;
-          }
-
-          src_files.push_back(input_src);
-        }
-      };
-  append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsGenericSrcs));
-  append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsBf16Srcs));
-  if (target_triple_.isArch64Bit()) {
-    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsTfSrcs));
-  }
-  auto filter_out_chkstk = [&](llvm::StringRef src) {
-    return !target_triple_.isOSWindows() || !src.ends_with("chkstk.S");
-  };
   if (target_triple_.isAArch64()) {
-    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsAarch64Srcs),
-                     filter_out_chkstk);
+    llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsAarch64Srcs);
   } else if (target_triple_.isX86()) {
-    append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsX86ArchSrcs));
     if (target_triple_.isArch64Bit()) {
-      append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsX86_64Srcs),
-                       filter_out_chkstk);
+      llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsX86_64Srcs);
     } else {
       // TODO: This should be turned into a nice user-facing diagnostic about an
       // unsupported target.
       CARBON_CHECK(
           target_triple_.isArch32Bit(),
           "The Carbon toolchain doesn't currently support 16-bit x86.");
-      append_src_files(llvm::ArrayRef(RuntimesBuildInfo::BuiltinsI386Srcs),
-                       filter_out_chkstk);
+      llvm::append_range(src_files, RuntimesBuildInfo::BuiltinsI386Srcs);
     }
   } else {
     // TODO: This should be turned into a nice user-facing diagnostic about an
@@ -467,6 +443,15 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
     CARBON_FATAL("Target architecture is not supported: {0}",
                  target_triple_.str());
   }
+
+  // Only compile source files, not headers.
+  llvm::erase_if(src_files,
+                 [](llvm::StringRef file) { return file.ends_with(".h"); });
+
+  // TODO: Remove this once we have a way of accessing `SipHash.h`.
+  llvm::erase_if(src_files, [](llvm::StringRef file) {
+    return file.ends_with("emupac.cpp");
+  });
   return src_files;
 }
 

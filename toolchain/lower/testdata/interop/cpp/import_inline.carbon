@@ -33,21 +33,21 @@ fn Call() -> i32 {
 // CHECK:STDOUT: define dso_local void @_Z1FPi(ptr noundef %p) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %p, ptr %p.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   %0 = load ptr, ptr %p.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   store i32 1, ptr %0, align 4, !tbaa !8
+// CHECK:STDOUT:   store ptr %p, ptr %p.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %0 = load ptr, ptr %p.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   store i32 1, ptr %0, align 4, !tbaa !7
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !15 {
+// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !19
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !19
-// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !20
-// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !21
-// CHECK:STDOUT:   ret i32 %.loc24, !dbg !22
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !18
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !18
+// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !19
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !20
+// CHECK:STDOUT:   ret i32 %.loc24, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -57,30 +57,29 @@ fn Call() -> i32 {
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !7 = !DIFile(filename: "import_inline.carbon", directory: "")
-// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 int", !14, i64 0}
-// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !7, line: 21, type: !16, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 3, scope: !15)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !15)
-// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 10, scope: !15)
-// CHECK:STDOUT: !22 = !DILocation(line: 24, column: 3, scope: !15)
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "import_inline.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"p1 int", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 21, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 3, scope: !14)
+// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 3, scope: !14)
+// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 10, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 3, scope: !14)

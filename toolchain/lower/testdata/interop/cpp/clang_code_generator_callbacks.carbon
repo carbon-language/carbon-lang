@@ -94,7 +94,7 @@ void f2() {
 // CHECK:STDOUT: define dso_local void @_ZN2t12f1Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #0 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -102,7 +102,7 @@ void f2() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds ([10 x %struct.S], ptr @a, i64 0, i64 3), align 4, !tbaa !15
+// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds ([10 x %struct.S], ptr @a, i64 0, i64 3), align 4, !tbaa !14
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,7 +110,7 @@ void f2() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN2t24funcEv(ptr noundef nonnull align 1 dereferenceable(1) %this) #0 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -118,32 +118,31 @@ void f2() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z2f2v() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 42, ptr @_ZN2t3IiE1iE, align 4, !tbaa !8
+// CHECK:STDOUT:   store i32 42, ptr @_ZN2t3IiE1iE, align 4, !tbaa !7
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !7 = !DIFile(filename: "clang_code_generator_callbacks.carbon", directory: "")
-// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 _ZTS2t1", !14, i64 0}
-// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !15 = !{!16, !9, i64 0}
-// CHECK:STDOUT: !16 = !{!"_ZTS1S", !9, i64 0}
-// CHECK:STDOUT: !17 = !{!18, !18, i64 0}
-// CHECK:STDOUT: !18 = !{!"p1 _ZTS2t2", !14, i64 0}
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "clang_code_generator_callbacks.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"p1 _ZTS2t1", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !14 = !{!15, !8, i64 0}
+// CHECK:STDOUT: !15 = !{!"_ZTS1S", !8, i64 0}
+// CHECK:STDOUT: !16 = !{!17, !17, i64 0}
+// CHECK:STDOUT: !17 = !{!"p1 _ZTS2t2", !13, i64 0}
