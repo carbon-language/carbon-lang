@@ -90,6 +90,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %MulWith.type.8b4: type = generic_interface_type @MulWith [concrete]
 // CHECK:STDOUT:   %MulWith.generic: %MulWith.type.8b4 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.lookup_impl_witness.052: <witness> = lookup_impl_witness @F.%.loc11_11.5, @MulWith, @MulWith(Core.IntLiteral) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -140,6 +141,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc6_15.1 [template]
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
+// CHECK:STDOUT:   %MulWith.lookup_impl_witness: <witness> = lookup_impl_witness %.loc11_11.5, @MulWith, @MulWith(Core.IntLiteral) [template = %MulWith.lookup_impl_witness (constants.%MulWith.lookup_impl_witness.052)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.loc6_15.1 (%T)) -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
@@ -178,6 +180,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %MulWith.type.8b4: type = generic_interface_type @MulWith [concrete]
 // CHECK:STDOUT:   %MulWith.generic: %MulWith.type.8b4 = struct_value () [concrete]
+// CHECK:STDOUT:   %MulWith.lookup_impl_witness.292: <witness> = lookup_impl_witness @F.%.loc16_11.3, @MulWith, @MulWith(Core.IntLiteral) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -233,6 +236,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
 // CHECK:STDOUT:   %.loc16_11.3: type = type_of_inst %.loc16_11.2 [template]
+// CHECK:STDOUT:   %MulWith.lookup_impl_witness: <witness> = lookup_impl_witness %.loc16_11.3, @MulWith, @MulWith(Core.IntLiteral) [template = %MulWith.lookup_impl_witness (constants.%MulWith.lookup_impl_witness.292)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
@@ -270,6 +274,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness.6d3: <witness> = lookup_impl_witness %T.765, @ImplicitAs, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.765, @Destroy [template]
@@ -329,6 +334,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.binding.as_type)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.112)]
 // CHECK:STDOUT:   %.loc14_3.3: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
 // CHECK:STDOUT:   %.loc14_3.4: type = type_of_inst %.loc14_3.3 [template]
+// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_15.1, @ImplicitAs, @ImplicitAs(constants.%i32) [template = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness.6d3)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_15.1, @Destroy [template = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%T.loc4_15.1) [template = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.cb2e47.2)]
 // CHECK:STDOUT:   %.loc14_3.5: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %T.loc4_15.1 [template = %.loc14_3.5 (constants.%.d5f)]

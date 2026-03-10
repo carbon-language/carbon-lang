@@ -41,8 +41,8 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> std::optional<SemIR::InstId>;
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         bool build_witness) -> std::optional<SemIR::InstId>;
 
 }  // namespace Carbon::Check
 

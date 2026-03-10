@@ -530,7 +530,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
     auto witness_result = EvalLookupSingleImplWitness(
-        context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
+        context_, poison.loc_id, poison.query, SemIR::InstId::None,
         EvalImplLookupMode::RecheckPoisonedLookup);
     CARBON_CHECK(witness_result.has_final_value());
     auto found_witness_id = witness_result.final_witness();

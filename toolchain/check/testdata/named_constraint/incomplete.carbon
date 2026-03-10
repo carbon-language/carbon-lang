@@ -21,16 +21,12 @@ fn F(T:! N) {
   // instead of being a separate error. This can be done by making a top-level
   // convert error as a Context for specific errors that happen during convert.
   //
-  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+11]]:3: error: facet type of value `T` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
+  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+7]]:3: error: facet type of value `T` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
   // CHECK:STDERR:   T as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE-9]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR: constraint N;
   // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T as Z;
-  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   T as Z;
 }
@@ -52,13 +48,6 @@ fn F() {
   // diagnostic happened during deduction, which means to suppress diagnostics.
   // Only the convert error should be emitted.
   //
-  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+11]]:3: error: facet type `N` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   C as Z;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE-17]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-  // CHECK:STDERR: constraint N;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~

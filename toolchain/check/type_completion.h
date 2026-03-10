@@ -77,10 +77,13 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // resulting IdentifiedFacetType. Comparing the `self_const_id` against the
 // output self values requires the caller to also canonicalize the
 // `self_const_id`.
+//
+// TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 const SemIR::FacetType& facet_type,
-                                DiagnosticContextFn diagnostic_context)
+                                DiagnosticContextFn diagnostic_context,
+                                bool diagnose = true)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.

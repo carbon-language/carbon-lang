@@ -149,7 +149,11 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
     CARBON_CHECK(
-        (inst.IsOneOf<SemIR::SymbolicBinding, SemIR::SymbolicBindingPattern>()),
+        (inst.IsOneOf<SemIR::SymbolicBinding, SemIR::SymbolicBindingPattern,
+                      // LookupImplWitness can have a SymbolicBinding as its
+                      // only symbolic operand, which means it may not change in
+                      // Subst.
+                      SemIR::LookupImplWitness>()),
         "Instruction {0} has symbolic constant value but no symbolic operands",
         inst);
 

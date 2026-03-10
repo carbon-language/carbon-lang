@@ -353,7 +353,7 @@ static auto TypeCanDestroy(Context& context,
 static auto MakeDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id)
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
     -> std::optional<SemIR::InstId> {
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
@@ -361,6 +361,10 @@ static auto MakeDestroyWitness(
   if (!TypeCanDestroy(context, query_self_const_id,
                       query_specific_interface.interface_id)) {
     return std::nullopt;
+  }
+
+  if (!build_witness) {
+    return SemIR::InstId::None;
   }
 
   if (query_self_const_id.is_symbolic()) {
@@ -383,7 +387,7 @@ static auto MakeDestroyWitness(
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id)
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
     -> std::optional<SemIR::InstId> {
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
@@ -446,6 +450,10 @@ static auto MakeIntFitsInWitness(
     return std::nullopt;
   }
 
+  if (!build_witness) {
+    return SemIR::InstId::None;
+  }
+
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {});
 }
@@ -453,15 +461,15 @@ static auto MakeIntFitsInWitness(
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id)
-    -> std::optional<SemIR::InstId> {
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
     case CoreInterface::Destroy:
       return MakeDestroyWitness(context, loc_id, query_self_const_id,
-                                query_specific_interface_id);
+                                query_specific_interface_id, build_witness);
     case CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
-                                  query_specific_interface_id);
+                                  query_specific_interface_id, build_witness);
     case CoreInterface::CppUnsafeDeref:
     case CoreInterface::Copy:
     case CoreInterface::Unknown:

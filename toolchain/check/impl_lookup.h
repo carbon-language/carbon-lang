@@ -36,8 +36,8 @@ namespace Carbon::Check {
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
-                       SemIR::ConstantId query_facet_type_const_id)
-    -> SemIR::InstBlockIdOrError;
+                       SemIR::ConstantId query_facet_type_const_id,
+                       bool diagnose = true) -> SemIR::InstBlockIdOrError;
 
 // Returns whether the query matches against the given impl. This is like a
 // `LookupImplWitness` operation but for a single interface, and against only
@@ -111,9 +111,9 @@ enum class EvalImplLookupMode {
 
 // Looks for a witness instruction of an impl declaration for a query consisting
 // of a type value or facet value, and a single interface. This is for eval to
-// execute lookup via the LookupImplWitness instruction. It does not consider
-// the self facet value for finding a witness, since LookupImplWitness() would
-// have found that and not caused us to defer lookup to here.
+// execute lookup via the LookupImplWitness instruction. It only finds final
+// witnesses, and is used for providing monomorphization of an impl lookup,
+// which allows for finding specializations.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
                                  SemIR::InstId self_facet_value_inst_id,

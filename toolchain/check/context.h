@@ -221,6 +221,9 @@ class Context {
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
     SemIR::InstId impl_loc = SemIR::InstId::None;
+    // TODO: If we make a proper stack class, we only need one `diagnosed_cycle`
+    // field, which resets to false when the stack becomes empty.
+    bool diagnosed_cycle = false;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;

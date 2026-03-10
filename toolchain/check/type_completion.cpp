@@ -888,7 +888,8 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 const SemIR::FacetType& facet_type,
-                                DiagnosticContextFn diagnostic_context)
+                                DiagnosticContextFn diagnostic_context,
+                              bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
@@ -953,7 +954,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
              facet_type_info.self_impls_named_constraints)) {
       if (!RequireCompleteNamedConstraint(
               context, loc_id, specific_constraint.named_constraint_id,
-              specific_constraint.specific_id, true)) {
+              specific_constraint.specific_id, diagnose)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
     }

@@ -552,6 +552,7 @@ fn Works() {
 // CHECK:STDOUT:   %require_complete.57854f.2: <witness> = require_complete_type %V.binding.as_type [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %V, @ImplicitAs, @ImplicitAs(%K2.type) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -661,6 +662,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %V.binding.as_type [symbolic = %require_complete (constants.%require_complete.57854f.2)]
+// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %V.loc14_14.1, @ImplicitAs, @ImplicitAs(constants.%K2.type) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @Compound3.%V.binding.as_type (%V.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -1082,13 +1084,13 @@ fn Works() {
 // CHECK:STDOUT:   %L2.WithSelf.S2.type.68b: type = fn_type @L2.WithSelf.S2, @L2.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %L2.WithSelf.S2.470: %L2.WithSelf.S2.type.68b = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
-// CHECK:STDOUT:   %L2.lookup_impl_witness: <witness> = lookup_impl_witness %T, @L2 [symbolic]
+// CHECK:STDOUT:   %L2.lookup_impl_witness.074: <witness> = lookup_impl_witness %T, @L2 [symbolic]
 // CHECK:STDOUT:   %.f8e: type = fn_type_with_self_type %L2.WithSelf.R2.type.ba3, %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.f8e = impl_witness_access %L2.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.f8e = impl_witness_access %L2.lookup_impl_witness.074, element0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.0fc: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.b6c: <specific function> = specific_impl_function %impl.elem0, @L2.WithSelf.R2(%T) [symbolic]
 // CHECK:STDOUT:   %.b1c: type = fn_type_with_self_type %L2.WithSelf.S2.type.68b, %T [symbolic]
-// CHECK:STDOUT:   %impl.elem1: %.b1c = impl_witness_access %L2.lookup_impl_witness, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1: %.b1c = impl_witness_access %L2.lookup_impl_witness.074, element1 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.b67: <specific function> = specific_impl_function %impl.elem1, @L2.WithSelf.S2(%T) [symbolic]
 // CHECK:STDOUT:   %V: %L2.type = symbolic_binding V, 0 [symbolic]
 // CHECK:STDOUT:   %Compound5.type: type = fn_type @Compound5 [concrete]
@@ -1193,7 +1195,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc10_12.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %L2.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_12.1, @L2 [symbolic = %L2.lookup_impl_witness (constants.%L2.lookup_impl_witness)]
+// CHECK:STDOUT:   %L2.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_12.1, @L2 [symbolic = %L2.lookup_impl_witness (constants.%L2.lookup_impl_witness.074)]
 // CHECK:STDOUT:   %L2.WithSelf.R2.type: type = fn_type @L2.WithSelf.R2, @L2.WithSelf(%T.loc10_12.1) [symbolic = %L2.WithSelf.R2.type (constants.%L2.WithSelf.R2.type.ba3)]
 // CHECK:STDOUT:   %.loc18_4.2: type = fn_type_with_self_type %L2.WithSelf.R2.type, %T.loc10_12.1 [symbolic = %.loc18_4.2 (constants.%.f8e)]
 // CHECK:STDOUT:   %impl.elem0.loc18_4.2: @Simple5.%.loc18_4.2 (%.f8e) = impl_witness_access %L2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
@@ -1209,14 +1211,14 @@ fn Works() {
 // CHECK:STDOUT:     %T.as_type.loc18: type = facet_access_type %T.ref.loc18 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc18_4.1: type = converted %T.ref.loc18, %T.as_type.loc18 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %R2.ref: %L2.assoc_type = name_ref R2, @L2.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @Simple5.%.loc18_4.2 (%.f8e) = impl_witness_access constants.%L2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @Simple5.%.loc18_4.2 (%.f8e) = impl_witness_access constants.%L2.lookup_impl_witness.074, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc18_4.1: <specific function> = specific_impl_function %impl.elem0.loc18_4.1, @L2.WithSelf.R2(constants.%T) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.b6c)]
 // CHECK:STDOUT:     %L2.WithSelf.R2.call: init %empty_tuple.type = call %specific_impl_fn.loc18_4.1(<error>)
 // CHECK:STDOUT:     %T.ref.loc26: %L2.type = name_ref T, %T.loc10_12.2 [symbolic = %T.loc10_12.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc26: type = facet_access_type %T.ref.loc26 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc26_4.1: type = converted %T.ref.loc26, %T.as_type.loc26 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %S2.ref: %L2.assoc_type = name_ref S2, @L2.WithSelf.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %impl.elem1.loc26_4.1: @Simple5.%.loc26_4.2 (%.b1c) = impl_witness_access constants.%L2.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
+// CHECK:STDOUT:     %impl.elem1.loc26_4.1: @Simple5.%.loc26_4.2 (%.b1c) = impl_witness_access constants.%L2.lookup_impl_witness.074, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     %specific_impl_fn.loc26_4.1: <specific function> = specific_impl_function %impl.elem1.loc26_4.1, @L2.WithSelf.S2(constants.%T) [symbolic = %specific_impl_fn.loc26_4.2 (constants.%specific_impl_fn.b67)]
 // CHECK:STDOUT:     %L2.WithSelf.S2.call: init %empty_tuple.type = call %specific_impl_fn.loc26_4.1(<error>)
 // CHECK:STDOUT:     return

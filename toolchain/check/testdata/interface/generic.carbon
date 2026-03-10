@@ -474,6 +474,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.b24: %Generic.type.cb7 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.3ee [symbolic]
+// CHECK:STDOUT:   %Generic.lookup_impl_witness: <witness> = lookup_impl_witness %T.3ee, @Generic, @Generic(%A) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -565,6 +566,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc10_6.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %Generic.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_6.1, @Generic, @Generic(constants.%A) [symbolic = %Generic.lookup_impl_witness (constants.%Generic.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:

@@ -91,8 +91,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.74e: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3a3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.2e7: <witness> = lookup_impl_witness %ptr.e7d, @Copy [symbolic]
+// CHECK:STDOUT:   %.3a3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic]
 // CHECK:STDOUT:   %Copy.facet.8e7: %Copy.type = facet_value %ptr.e7d, (%Copy.lookup_impl_witness.2e7) [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.486: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.8e7) [symbolic]
 // CHECK:STDOUT:   %.b63: type = fn_type_with_self_type %Copy.WithSelf.Op.type.486, %Copy.facet.8e7 [symbolic]
@@ -201,8 +201,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.05d)]
-// CHECK:STDOUT:   %.loc15_12.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic = %.loc15_12.1 (constants.%.3a3)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc13_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e7)]
+// CHECK:STDOUT:   %.loc15_12.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic = %.loc15_12.1 (constants.%.3a3)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc13_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.8e7)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.486)]
 // CHECK:STDOUT:   %.loc15_12.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc15_12.2 (constants.%.b63)]
@@ -355,8 +355,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete.loc13_22 => constants.%complete_type.1ec
 // CHECK:STDOUT:   %require_complete.loc13_36 => constants.%complete_type.3d0
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.da5
-// CHECK:STDOUT:   %.loc15_12.1 => constants.%.cab
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.843
+// CHECK:STDOUT:   %.loc15_12.1 => constants.%.cab
 // CHECK:STDOUT:   %Copy.facet => constants.%Copy.facet.a7b
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.e01
 // CHECK:STDOUT:   %.loc15_12.2 => constants.%.a62
