@@ -45,3 +45,16 @@ constexpr float flt = 123.5;
 class C(V:! f32) {}
 fn F() -> C(Cpp.flt);
 let x: C(123.5) = F();
+
+// --- function.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+constexpr int f(int a, int b) { return a + b; }
+''';
+
+// CHECK:STDERR: function.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
+// CHECK:STDERR:                   ^~~~~~~~~~~
+// CHECK:STDERR:
+let a: array(i32, Cpp.f(1, 2)) = (1, 2, 3);
