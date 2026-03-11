@@ -118,4 +118,6 @@ jobs:
             --cxxopt=-Wno-unknown-attributes `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
+            --linkopt=-Xlinker `
+            "--linkopt=~/llvm/lib/clang/19/lib/windows/clang_rt.builtins-x86_64.lib" `
             --test_output=errors
