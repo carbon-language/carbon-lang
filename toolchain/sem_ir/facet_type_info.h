@@ -143,9 +143,18 @@ struct IdentifiedFacetType {
         -> bool = default;
   };
 
+  struct OrderedRequiredImpl {
+    int order_key;
+    ConstantId self_facet_value;
+    SpecificInterface specific_interface;
+
+    friend auto operator==(const OrderedRequiredImpl& lhs,
+                           const OrderedRequiredImpl& rhs) -> bool = default;
+  };
+
   IdentifiedFacetType(IdentifiedFacetTypeKey key,
-                      llvm::ArrayRef<RequiredImpl> extends,
-                      llvm::ArrayRef<RequiredImpl> self_impls);
+                      llvm::ArrayRef<OrderedRequiredImpl> extends,
+                      llvm::ArrayRef<OrderedRequiredImpl> self_impls);
 
   // The order here defines the order of impl witnesses for this facet type.
   auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {

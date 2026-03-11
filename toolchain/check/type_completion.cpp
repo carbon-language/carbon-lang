@@ -906,14 +906,19 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     SemIR::FacetTypeId facet_type;
   };
 
+  // Tracks the order of interfaces as they are discovered in the facet type, so
+  // that we can produce an IdenfifiedFacetType with the same order for any self
+  // value.
+  int sort_key = 0;
+
   // Work queue.
   llvm::SmallVector<SelfImplsFacetType> extend_facet_types = {
       {self_const_id, facet_type.facet_type_id}};
   llvm::SmallVector<SelfImplsFacetType> impls_facet_types;
 
   // Outputs for the IdentifiedFacetType.
-  llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
-  llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
+  llvm::SmallVector<SemIR::IdentifiedFacetType::OrderedRequiredImpl> extends;
+  llvm::SmallVector<SemIR::IdentifiedFacetType::OrderedRequiredImpl> impls;
 
   while (true) {
     SelfImplsFacetType next_impls = {SemIR::ConstantId::None,
@@ -934,8 +939,9 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         context.facet_types().Get(next_impls.facet_type);
 
     auto self_and_interface = [&](SemIR::SpecificInterface interface)
-        -> SemIR::IdentifiedFacetType::RequiredImpl {
-      return {self_const_id, interface};
+        -> SemIR::IdentifiedFacetType::OrderedRequiredImpl {
+      ++sort_key;
+      return {sort_key, self_const_id, interface};
     };
 
     if (facet_type_extends) {
@@ -981,8 +987,9 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, extends.specific_id, self_facet);
 
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               constraint.require_impls_block_id)) {
+      for (auto require_impls_id :
+           llvm::reverse(context.require_impls_blocks().Get(
+               constraint.require_impls_block_id))) {
         const auto& require = context.require_impls().Get(require_impls_id);
 
         // Each require is in its own generic, with no additional bindings and
@@ -1021,8 +1028,9 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id, self_facet);
 
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               constraint.require_impls_block_id)) {
+      for (auto require_impls_id :
+           llvm::reverse(context.require_impls_blocks().Get(
+               constraint.require_impls_block_id))) {
         const auto& require = context.require_impls().Get(require_impls_id);
 
         // Each require is in its own generic, with no additional bindings and

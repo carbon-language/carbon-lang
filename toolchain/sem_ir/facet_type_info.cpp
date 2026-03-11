@@ -45,17 +45,6 @@ static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
          std::tie(rhs.named_constraint_id.index, rhs.specific_id.index);
 }
 
-// Canonically ordered by the numerical ids.
-static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
-                         const IdentifiedFacetType::RequiredImpl& rhs) -> bool {
-  return std::tie(lhs.self_facet_value.index,
-                  lhs.specific_interface.interface_id.index,
-                  lhs.specific_interface.specific_id.index) <
-         std::tie(rhs.self_facet_value.index,
-                  rhs.specific_interface.interface_id.index,
-                  rhs.specific_interface.specific_id.index);
-}
-
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
 // b` as sets. Assumes there are few elements between them.
 template <typename VecT>
@@ -211,26 +200,80 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
+// Ordered by the numerical ids to look for duplicates, with the lowest ordering
+// key coming first amongst duplicates.
+static auto RequiredLessOrdered(
+    const IdentifiedFacetType::OrderedRequiredImpl& lhs,
+    const IdentifiedFacetType::OrderedRequiredImpl& rhs) -> bool {
+  return std::tie(lhs.self_facet_value.index,
+                  lhs.specific_interface.interface_id.index,
+                  lhs.specific_interface.specific_id.index, lhs.order_key) <
+         std::tie(rhs.self_facet_value.index,
+                  rhs.specific_interface.interface_id.index,
+                  rhs.specific_interface.specific_id.index, lhs.order_key);
+}
+
+static auto SortAndDeduplicateKeepFirst(
+    llvm::SmallVector<IdentifiedFacetType::OrderedRequiredImpl>& vec,
+    LessThanFn<IdentifiedFacetType::OrderedRequiredImpl> compare) -> void {
+  if (vec.size() < 2) {
+    return;
+  }
+
+  llvm::sort(vec, compare);
+
+  auto* end = vec.end();
+  for (auto* it = vec.begin() + 1; it != end; ++it) {
+    auto& a = *(it - 1);
+    auto& b = *it;
+    if (a.self_facet_value != b.self_facet_value ||
+        a.specific_interface != b.specific_interface) {
+      continue;
+    }
+    // Duplicate, keep `a` since it has the lower order key. Remove `b`.
+    for (auto* keep_it = it + 1; keep_it < end; ++keep_it) {
+      *(keep_it - 1) = *keep_it;
+    }
+    --it;
+    --end;
+  }
+
+  vec.erase(end, vec.end());
+}
+
 IdentifiedFacetType::IdentifiedFacetType(
-    IdentifiedFacetTypeKey key, llvm::ArrayRef<RequiredImpl> extends,
-    llvm::ArrayRef<RequiredImpl> self_impls)
+    IdentifiedFacetTypeKey key, llvm::ArrayRef<OrderedRequiredImpl> extends,
+    llvm::ArrayRef<OrderedRequiredImpl> self_impls)
     : key_(key) {
-  required_impls_.reserve(extends.size() + self_impls.size());
-  llvm::append_range(required_impls_, extends);
-  SortAndDeduplicate(required_impls_, RequiredLess);
+  llvm::SmallVector<OrderedRequiredImpl> ordered;
+  ordered.reserve(extends.size() + self_impls.size());
+  llvm::append_range(ordered, extends);
+  SortAndDeduplicateKeepFirst(ordered, RequiredLessOrdered);
 
   // If there's a single extended interface then we present as that interface.
   // Otherwise, we record the number extended interfaces.
-  if (required_impls_.size() == 1) {
-    interface_id_ = required_impls_.front().specific_interface.interface_id;
-    specific_id_ = required_impls_.front().specific_interface.specific_id;
+  if (ordered.size() == 1) {
+    interface_id_ = ordered.front().specific_interface.interface_id;
+    specific_id_ = ordered.front().specific_interface.specific_id;
   } else {
     interface_id_ = InterfaceId::None;
-    num_interface_to_impl_ = required_impls_.size();
+    num_interface_to_impl_ = ordered.size();
   }
 
-  llvm::append_range(required_impls_, self_impls);
-  SortAndDeduplicate(required_impls_, RequiredLess);
+  llvm::append_range(ordered, self_impls);
+  SortAndDeduplicateKeepFirst(ordered, RequiredLessOrdered);
+
+  // After deduping, order by the ordering key for use.
+  llvm::sort(ordered, [](auto& lhs, auto& rhs) -> bool {
+    return lhs.order_key < rhs.order_key;
+  });
+  llvm::append_range(
+      required_impls_, llvm::map_range(ordered, [](auto& ordered_impl) {
+        return RequiredImpl{
+            .self_facet_value = ordered_impl.self_facet_value,
+            .specific_interface = ordered_impl.specific_interface,
+        };
+      }));
 }
 
 auto AddCanonicalWitnessesBlock(File& sem_ir,
