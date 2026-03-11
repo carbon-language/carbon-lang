@@ -109,18 +109,8 @@ jobs:
             //common:vlog_test `
             --repo_env=CC=clang `
             --repo_env=CXX=clang++ `
-            --deleted_packages=bazel/check_deps `
-            --nocheck_visibility `
-            --force_pic=false `
-            --copt=-fno-pic `
-            --cxxopt=-fno-pic `
-            --copt=-gz=none `
             --copt=-Wno-unknown-attributes `
             --cxxopt=-Wno-unknown-attributes `
-            --cxxopt=-gz=none `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
-            --jobs=4 `
-            --linkopt=-Xlinker `
-            --linkopt=/SUBSYSTEM:CONSOLE `
             --test_output=errors
