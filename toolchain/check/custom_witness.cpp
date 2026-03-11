@@ -465,6 +465,7 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id);
+    case CoreInterface::CppUnsafeDeref:
     case CoreInterface::Copy:
     case CoreInterface::Unknown:
       // TODO: Handle more interfaces, particularly copy, move, and conversion.
