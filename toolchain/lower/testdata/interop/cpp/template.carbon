@@ -263,7 +263,7 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %class.X = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc12_12.3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc12_14.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr noundef %0) #0 {
@@ -318,7 +318,7 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 8, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !17
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !17
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr %.loc12_12.2.temp), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
@@ -328,7 +328,7 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !21
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !21
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr %.loc18_12.2.temp, i32 2), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
@@ -338,7 +338,7 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 8, !dbg !25
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc24_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !25
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc24_12.2.temp, ptr align 1 @X.val.loc12_14.1, i64 0, i1 false), !dbg !25
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr %.loc24_12.2.temp, i32 2, i32 3), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }

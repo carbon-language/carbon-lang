@@ -193,8 +193,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.6: ref %i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.7: init %i32 to %.loc13_27.6 = in_place_init %.loc13_27.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.8: init %C to %.loc13_27.2 = class_init (%.loc13_27.4, %.loc13_27.7) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
-// CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9
+// CHECK:STDOUT:   %.loc13_27.9: init %C = converted @__global_init.%.loc13, %.loc13_27.8 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_27.10: ref %C = temporary %.loc13_27.2, %.loc13_27.9
 // CHECK:STDOUT:   %.loc13_27.11: %C = acquire_value %.loc13_27.10
 // CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {
@@ -397,8 +397,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.6: ref %i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.7: init %i32 to %.loc13_27.6 = in_place_init %.loc13_27.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc13_27.8: init %C to %.loc13_27.2 = class_init (%.loc13_27.4, %.loc13_27.7) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
-// CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9
+// CHECK:STDOUT:   %.loc13_27.9: init %C = converted @__global_init.%.loc13, %.loc13_27.8 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_27.10: ref %C = temporary %.loc13_27.2, %.loc13_27.9
 // CHECK:STDOUT:   %.loc13_27.11: %C = acquire_value %.loc13_27.10
 // CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {

@@ -35,6 +35,7 @@ fn F(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
   //@dump-sem-ir-begin
   v.const_this();
   v.const_ref_this();
+  v.const_ref_ref_this();
 
   p->plain();
   p->ref_this();
@@ -47,63 +48,49 @@ fn F(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./object_param_qualifiers.h:11:8: error: 'this' argument to member function 'const_ref_ref_this' is an lvalue, but function has rvalue ref-qualifier [CppInteropParseError]
-// CHECK:STDERR:    11 |   void const_ref_ref_this() const&&;
-// CHECK:STDERR:       |        ^
-// CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./object_param_qualifiers.h:11:8: note: 'const_ref_ref_this' declared here [CppInteropParseNote]
-// CHECK:STDERR:    11 |   void const_ref_ref_this() const&&;
-// CHECK:STDERR:       |        ^
 import Cpp library "object_param_qualifiers.h";
 
 fn Value(v: Cpp.HasQualifiers) {
-  v.plain();
-
-  // TODO: This should remain invalid once we support `volatile`.
-  v.volatile_this();
-
-  v.ref_this();
-
-  v.ref_ref_this();
-
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+36]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   v.const_ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-13]]:11: error: no matching function for call to 'plain' [CppInteropParseError]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:11: error: no matching function for call to 'plain' [CppInteropParseError]
   // CHECK:STDERR:    15 |   v.plain();
   // CHECK:STDERR:       |           ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:3:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
   // CHECK:STDERR:     3 |   void plain();
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-18]]:19: error: no matching function for call to 'volatile_this' [CppInteropParseError]
-  // CHECK:STDERR:    18 |   v.volatile_this();
+  v.plain();
+
+  // TODO: This should remain invalid once we support `volatile`.
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:19: error: no matching function for call to 'volatile_this' [CppInteropParseError]
+  // CHECK:STDERR:    26 |   v.volatile_this();
   // CHECK:STDERR:       |                   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:5:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
   // CHECK:STDERR:     5 |   void volatile_this() volatile;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-24]]:14: error: no matching function for call to 'ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   v.ref_this();
+  v.volatile_this();
+
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:14: error: no matching function for call to 'ref_this' [CppInteropParseError]
+  // CHECK:STDERR:    36 |   v.ref_this();
   // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
   // CHECK:STDERR:     7 |   void ref_this() &;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-30]]:18: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   v.ref_ref_this();
+  v.ref_this();
+
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:18: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR:    46 |   v.ref_ref_this();
   // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-43]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
   // CHECK:STDERR:    10 |   void ref_ref_this() &&;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
-  v.const_ref_ref_this();
+  v.ref_ref_this();
 }
 
 // --- fail_todo_bad_object_param_qualifiers_by_ref.carbon
@@ -266,6 +253,11 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.type: type = fn_type @const_ref_this__carbon_thunk [concrete]
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk: %const_ref_this__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %HasQualifiers.const_ref_ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_ref_ref_this.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %HasQualifiers.const_ref_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_ref_this.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %const: type = const_type %HasQualifiers [concrete]
+// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.type: type = fn_type @const_ref_ref_this__carbon_thunk [concrete]
+// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk: %const_ref_ref_this__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.plain.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.value: %HasQualifiers.plain.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.plain.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.type: type = fn_type @HasQualifiers.plain [concrete]
@@ -285,6 +277,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.decl: %const_ref_this__carbon_thunk.type = fn_decl @const_ref_this__carbon_thunk [concrete = constants.%const_ref_this__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %HasQualifiers.const_ref_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value]
+// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.decl: %const_ref_ref_this__carbon_thunk.type = fn_decl @const_ref_ref_this__carbon_thunk [concrete = constants.%const_ref_ref_this__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -317,28 +315,34 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %const_ref_this.ref.loc9: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %v.ref.loc9, %const_ref_this.ref.loc9
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%v.ref.loc9)
-// CHECK:STDOUT:   %p.ref.loc11: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc11: ref %HasQualifiers = deref %p.ref.loc11
-// CHECK:STDOUT:   %plain.ref: %HasQualifiers.plain.cpp_overload_set.type = name_ref plain, imports.%HasQualifiers.plain.cpp_overload_set.value [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11, %plain.ref
-// CHECK:STDOUT:   %HasQualifiers.plain.call: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl(%.loc11)
+// CHECK:STDOUT:   %v.ref.loc10: %HasQualifiers = name_ref v, %v
+// CHECK:STDOUT:   %const_ref_ref_this.ref: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = name_ref const_ref_ref_this, imports.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %v.ref.loc10, %const_ref_ref_this.ref
+// CHECK:STDOUT:   %.loc10_3.1: %const = as_compatible %v.ref.loc10
+// CHECK:STDOUT:   %.loc10_3.2: %const = converted %v.ref.loc10, %.loc10_3.1
+// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%const_ref_ref_this__carbon_thunk.decl(%.loc10_3.2)
 // CHECK:STDOUT:   %p.ref.loc12: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc12: ref %HasQualifiers = deref %p.ref.loc12
-// CHECK:STDOUT:   %ref_this.ref: %HasQualifiers.ref_this.cpp_overload_set.type = name_ref ref_this, imports.%HasQualifiers.ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %ref_this.ref
-// CHECK:STDOUT:   %HasQualifiers.ref_this.call: init %empty_tuple.type = call imports.%HasQualifiers.ref_this.decl(%.loc12)
+// CHECK:STDOUT:   %plain.ref: %HasQualifiers.plain.cpp_overload_set.type = name_ref plain, imports.%HasQualifiers.plain.cpp_overload_set.value [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %plain.ref
+// CHECK:STDOUT:   %HasQualifiers.plain.call: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl(%.loc12)
 // CHECK:STDOUT:   %p.ref.loc13: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc13_4.1: ref %HasQualifiers = deref %p.ref.loc13
-// CHECK:STDOUT:   %const_this.ref.loc13: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_4.1, %const_this.ref.loc13
-// CHECK:STDOUT:   %.loc13_4.2: %HasQualifiers = acquire_value %.loc13_4.1
-// CHECK:STDOUT:   %const_this__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc13_4.2)
+// CHECK:STDOUT:   %.loc13: ref %HasQualifiers = deref %p.ref.loc13
+// CHECK:STDOUT:   %ref_this.ref: %HasQualifiers.ref_this.cpp_overload_set.type = name_ref ref_this, imports.%HasQualifiers.ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.ref_this.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13, %ref_this.ref
+// CHECK:STDOUT:   %HasQualifiers.ref_this.call: init %empty_tuple.type = call imports.%HasQualifiers.ref_this.decl(%.loc13)
 // CHECK:STDOUT:   %p.ref.loc14: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc14_4.1: ref %HasQualifiers = deref %p.ref.loc14
-// CHECK:STDOUT:   %const_ref_this.ref.loc14: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_4.1, %const_ref_this.ref.loc14
+// CHECK:STDOUT:   %const_this.ref.loc14: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_4.1, %const_this.ref.loc14
 // CHECK:STDOUT:   %.loc14_4.2: %HasQualifiers = acquire_value %.loc14_4.1
-// CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc14: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc14_4.2)
+// CHECK:STDOUT:   %const_this__carbon_thunk.call.loc14: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc14_4.2)
+// CHECK:STDOUT:   %p.ref.loc15: %ptr.ec3 = name_ref p, %p
+// CHECK:STDOUT:   %.loc15_4.1: ref %HasQualifiers = deref %p.ref.loc15
+// CHECK:STDOUT:   %const_ref_this.ref.loc15: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15_4.1, %const_ref_this.ref.loc15
+// CHECK:STDOUT:   %.loc15_4.2: %HasQualifiers = acquire_value %.loc15_4.1
+// CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc15_4.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -572,9 +572,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc25_25.7: ref %i32 = class_element_access %.loc25_25.3, element1
 // CHECK:STDOUT:     %.loc25_25.8: init %i32 to %.loc25_25.7 = in_place_init %.loc25_25.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc25_25.9: init %D to %.loc25_25.3 = class_init (%.loc25_25.5, %.loc25_25.8) [concrete = constants.%D.val.525]
-// CHECK:STDOUT:     %.loc25_25.10: ref %D = temporary %.loc25_25.3, %.loc25_25.9
-// CHECK:STDOUT:     %.loc25_26.1: ref %D = converted %.loc25_25.1, %.loc25_25.10
-// CHECK:STDOUT:     %.loc25_26.2: %D = acquire_value %.loc25_26.1
+// CHECK:STDOUT:     %.loc25_26.1: init %D = converted %.loc25_25.1, %.loc25_25.9 [concrete = constants.%D.val.525]
+// CHECK:STDOUT:     %.loc25_26.2: ref %D = temporary %.loc25_25.3, %.loc25_26.1
+// CHECK:STDOUT:     %.loc25_26.3: %D = acquire_value %.loc25_26.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g: ref <error> = ref_binding g, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -633,9 +633,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %.loc25_53.7: ref %i32 = class_element_access %.loc25_53.3, element1
 // CHECK:STDOUT:   %.loc25_53.8: init %i32 to %.loc25_53.7 = in_place_init %.loc25_53.6 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc25_53.9: init %D to %.loc25_53.3 = class_init (%.loc25_53.5, %.loc25_53.8) [concrete = constants.%D.val.659]
-// CHECK:STDOUT:   %.loc25_53.10: ref %D = temporary %.loc25_53.3, %.loc25_53.9
-// CHECK:STDOUT:   %.loc25_55.1: ref %D = converted %.loc25_53.1, %.loc25_53.10
-// CHECK:STDOUT:   %.loc25_55.2: %D = acquire_value %.loc25_55.1
+// CHECK:STDOUT:   %.loc25_55.1: init %D = converted %.loc25_53.1, %.loc25_53.9 [concrete = constants.%D.val.659]
+// CHECK:STDOUT:   %.loc25_55.2: ref %D = temporary %.loc25_53.3, %.loc25_55.1
+// CHECK:STDOUT:   %.loc25_55.3: %D = acquire_value %.loc25_55.2
 // CHECK:STDOUT:   assign file.%g.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

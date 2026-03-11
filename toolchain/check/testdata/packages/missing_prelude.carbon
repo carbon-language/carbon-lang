@@ -594,8 +594,8 @@ let n: type = i32;
 // CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.553 [concrete = constants.%Int.553]
 // CHECK:STDOUT:   %.loc8_15.1: ref %Int.553 = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.2: init %Int.553 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.3: ref %Int.553 = temporary %.loc8_15.1, %.loc8_15.2
-// CHECK:STDOUT:   %.loc8_15.4: ref %Int.553 = converted @__global_init.%.loc8, %.loc8_15.3
+// CHECK:STDOUT:   %.loc8_15.3: init %Int.553 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.4: ref %Int.553 = temporary %.loc8_15.1, %.loc8_15.3
 // CHECK:STDOUT:   %.loc8_15.5: %Int.553 = acquire_value %.loc8_15.4
 // CHECK:STDOUT:   %n: %Int.553 = value_binding n, %.loc8_15.5
 // CHECK:STDOUT: }

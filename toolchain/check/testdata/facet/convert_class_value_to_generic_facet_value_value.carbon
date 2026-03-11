@@ -159,9 +159,9 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.27a: type = pattern_type %GenericParam [concrete]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc20_42 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc20_44 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20_22 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20_24 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.57a: <witness> = complete_type_witness %Generic.type.498 [concrete]
 // CHECK:STDOUT:   %.fcf: type = fn_type_with_self_type %Generic.WithSelf.F.type.c86, %Generic.facet [concrete]
@@ -338,30 +338,30 @@ fn B() {
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   %.loc20_22.2: ref %ImplsGeneric = temporary_storage
 // CHECK:STDOUT:   %.loc20_22.3: init %ImplsGeneric to %.loc20_22.2 = class_init () [concrete = constants.%ImplsGeneric.val]
-// CHECK:STDOUT:   %.loc20_22.4: ref %ImplsGeneric = temporary %.loc20_22.2, %.loc20_22.3
-// CHECK:STDOUT:   %.loc20_24.1: ref %ImplsGeneric = converted %.loc20_22.1, %.loc20_22.4
+// CHECK:STDOUT:   %.loc20_24.1: init %ImplsGeneric = converted %.loc20_22.1, %.loc20_22.3 [concrete = constants.%ImplsGeneric.val]
 // CHECK:STDOUT:   %.loc20_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:   %.loc20_42.2: ref %GenericParam = temporary_storage
 // CHECK:STDOUT:   %.loc20_42.3: init %GenericParam to %.loc20_42.2 = class_init () [concrete = constants.%GenericParam.val]
-// CHECK:STDOUT:   %.loc20_42.4: ref %GenericParam = temporary %.loc20_42.2, %.loc20_42.3
-// CHECK:STDOUT:   %.loc20_44.1: ref %GenericParam = converted %.loc20_42.1, %.loc20_42.4
+// CHECK:STDOUT:   %.loc20_44.1: init %GenericParam = converted %.loc20_42.1, %.loc20_42.3 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.498 = facet_value constants.%ImplsGeneric, (constants.%Generic.impl_witness) [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %.loc20_59: %Generic.type.498 = converted constants.%ImplsGeneric, %Generic.facet [concrete = constants.%Generic.facet]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
-// CHECK:STDOUT:   %.loc20_24.2: %ImplsGeneric = acquire_value %.loc20_24.1
-// CHECK:STDOUT:   %.loc20_44.2: %GenericParam = acquire_value %.loc20_44.1
-// CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.2, %.loc20_44.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc20_42: <bound method> = bound_method %.loc20_42.4, constants.%Destroy.Op.651ba6.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc20_42: init %empty_tuple.type = call %Destroy.Op.bound.loc20_42(%.loc20_42.4)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc20_22: <bound method> = bound_method %.loc20_22.4, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc20_22: init %empty_tuple.type = call %Destroy.Op.bound.loc20_22(%.loc20_22.4)
+// CHECK:STDOUT:   %.loc20_24.2: ref %ImplsGeneric = temporary %.loc20_22.2, %.loc20_24.1
+// CHECK:STDOUT:   %.loc20_24.3: %ImplsGeneric = acquire_value %.loc20_24.2
+// CHECK:STDOUT:   %.loc20_44.2: ref %GenericParam = temporary %.loc20_42.2, %.loc20_44.1
+// CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2
+// CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.3, %.loc20_44.3)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc20_44: <bound method> = bound_method %.loc20_44.2, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_44: init %empty_tuple.type = call %Destroy.Op.bound.loc20_44(%.loc20_44.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc20_24: <bound method> = bound_method %.loc20_24.2, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_24: init %empty_tuple.type = call %Destroy.Op.bound.loc20_24(%.loc20_24.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_42(%self.param: ref %GenericParam) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_44(%self.param: ref %GenericParam) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_22(%self.param: ref %ImplsGeneric) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_24(%self.param: ref %ImplsGeneric) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_19.1 => constants.%Scalar
@@ -654,15 +654,15 @@ fn B() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc12_6.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc12_6.3: init %C to %.loc12_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc12_6.4: ref %C = temporary %.loc12_6.2, %.loc12_6.3
-// CHECK:STDOUT:   %.loc12_8.1: ref %C = converted %.loc12_6.1, %.loc12_6.4
+// CHECK:STDOUT:   %.loc12_8.1: init %C = converted %.loc12_6.1, %.loc12_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %I.facet: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet.0e1]
 // CHECK:STDOUT:   %.loc12_12: %I.type.5f7 = converted constants.%C, %I.facet [concrete = constants.%I.facet.0e1]
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A.ref, @A(constants.%I.facet.0e1) [concrete = constants.%A.specific_fn]
-// CHECK:STDOUT:   %.loc12_8.2: %C = acquire_value %.loc12_8.1
-// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc12_6.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc12_6.4)
+// CHECK:STDOUT:   %.loc12_8.2: ref %C = temporary %.loc12_6.2, %.loc12_8.1
+// CHECK:STDOUT:   %.loc12_8.3: %C = acquire_value %.loc12_8.2
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.3)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc12_8.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc12_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -771,18 +771,13 @@ fn B() {
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -917,14 +912,9 @@ fn B() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc19_6.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc19_6.3: init %C to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_6.4: ref %C = temporary %.loc19_6.2, %.loc19_6.3
-// CHECK:STDOUT:   %.loc19_8: ref %C = converted %.loc19_6.1, %.loc19_6.4
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc19_6.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc19_6.4)
+// CHECK:STDOUT:   %.loc19_8: init %C = converted %.loc19_6.1, %.loc19_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc3_13.1 => constants.%V
@@ -979,7 +969,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.ab9: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 0 [symbolic]
@@ -1008,18 +998,13 @@ fn B() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.9f1: type = class_type @C, @C(%empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.val: %C.9f1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1084,7 +1069,7 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1151,16 +1136,11 @@ fn B() {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_struct_type, constants.%empty_struct_type) [concrete = constants.%C.9f1]
 // CHECK:STDOUT:   %.loc19_6.2: ref %C.9f1 = temporary_storage
 // CHECK:STDOUT:   %.loc19_6.3: init %C.9f1 to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_6.4: ref %C.9f1 = temporary %.loc19_6.2, %.loc19_6.3
-// CHECK:STDOUT:   %.loc19_8: ref %C.9f1 = converted %.loc19_6.1, %.loc19_6.4
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc19_6.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc19_6.4)
+// CHECK:STDOUT:   %.loc19_8: init %C.9f1 = converted %.loc19_6.1, %.loc19_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C.9f1) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.ab9) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
