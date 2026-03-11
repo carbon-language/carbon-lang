@@ -9,7 +9,7 @@ mirrors the exact style of runtimes tree the Carbon toolchain would build on its
 own. However, it would be preferable to preserve the builtins, libc++, and
 libunwind `cc_library` rules as "normal" library rules (if behind a transition)
 and automatically depend on them. This would allow things like LTO and such to
-include these. However, this requires support it `@rules_cc` for this kind of
+include these. However, this requires support in `@rules_cc` for this kind of
 dependency to be added.
 """
 
