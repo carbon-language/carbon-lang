@@ -283,7 +283,7 @@ void operator+(C, short);
 ''';
 
 fn Test(c: Cpp.C) {
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+10]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'C' and 'int') [CppInteropParseError]
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+10]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const C' and 'int') [CppInteropParseError]
   // CHECK:STDERR:    21 |   c + 1;
   // CHECK:STDERR:       |     ^
   // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-8]]:6: note: candidate function [CppInteropParseNote]

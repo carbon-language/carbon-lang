@@ -66,7 +66,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
 // CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !23
 // CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %1 = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !38
+// CHECK:STDOUT:   %1 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !38
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !38
 // CHECK:STDOUT:   %wide.load = load <4 x i32>, ptr %1, align 4, !dbg !38
 // CHECK:STDOUT:   %wide.load4 = load <4 x i32>, ptr %2, align 4, !dbg !38
@@ -75,7 +75,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   store <4 x i32> %3, ptr %1, align 4, !dbg !38
 // CHECK:STDOUT:   store <4 x i32> %4, ptr %2, align 4, !dbg !38
 // CHECK:STDOUT:   %5 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %6 = getelementptr inbounds nuw i32, ptr %a, i64 %5, !dbg !38
+// CHECK:STDOUT:   %6 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %5, !dbg !38
 // CHECK:STDOUT:   %7 = getelementptr inbounds nuw i8, ptr %6, i64 32, !dbg !38
 // CHECK:STDOUT:   %8 = getelementptr inbounds nuw i8, ptr %6, i64 48, !dbg !38
 // CHECK:STDOUT:   %wide.load.1 = load <4 x i32>, ptr %7, align 4, !dbg !38

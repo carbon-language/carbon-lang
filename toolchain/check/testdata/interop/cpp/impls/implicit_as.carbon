@@ -92,10 +92,10 @@ import Cpp library "implicit_conversions.h";
 
 fn NonConstConversionTest(s: Cpp.NonConstConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+7]]:21: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `Cpp.NonConstConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR:   let _: Cpp.Dest = s;
   // CHECK:STDERR:                     ^
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:21: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:21: note: type `Cpp.NonConstConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   let _: Cpp.Dest = s;
   // CHECK:STDERR:                     ^
   // CHECK:STDERR:
@@ -568,18 +568,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_expr_category.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonConstConversion: type = class_type @NonConstConversion [concrete]
-// CHECK:STDOUT:   %pattern_type.b08: type = pattern_type %NonConstConversion [concrete]
-// CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
-// CHECK:STDOUT:   %pattern_type.69a: type = pattern_type %Dest [concrete]
-// CHECK:STDOUT:   %NonConstConversion.cpp_operator.type: type = fn_type @NonConstConversion.cpp_operator [concrete]
-// CHECK:STDOUT:   %NonConstConversion.cpp_operator: %NonConstConversion.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.551: type = ptr_type %Dest [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk.type: type = fn_type @Dest__carbon_thunk [concrete]
-// CHECK:STDOUT:   %Dest__carbon_thunk: %Dest__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Dest.cpp_destructor.type: type = fn_type @Dest.cpp_destructor [concrete]
-// CHECK:STDOUT:   %Dest.cpp_destructor: %Dest.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Dest.5e7: type = class_type @Dest [concrete]
+// CHECK:STDOUT:   %pattern_type.69a: type = pattern_type %Dest.5e7 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -589,21 +580,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonConstConversion.decl: type = class_decl @NonConstConversion [concrete = constants.%NonConstConversion] {} {}
-// CHECK:STDOUT:   %Dest.decl: type = class_decl @Dest [concrete = constants.%Dest] {} {}
-// CHECK:STDOUT:   %NonConstConversion.cpp_operator.decl: %NonConstConversion.cpp_operator.type = fn_decl @NonConstConversion.cpp_operator [concrete = constants.%NonConstConversion.cpp_operator] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.b08 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.b08 = ref_param_pattern %self.patt [concrete]
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %NonConstConversion = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %NonConstConversion = ref_binding self, %self.param
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Dest__carbon_thunk.decl: %Dest__carbon_thunk.type = fn_decl @Dest__carbon_thunk [concrete = constants.%Dest__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Dest.decl: type = class_decl @Dest [concrete = constants.%Dest.5e7] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConversionTest(%s.param: %NonConstConversion) {
@@ -612,21 +589,12 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.69a = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %NonConstConversion = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_13: type = splice_block %Dest.ref [concrete = constants.%Dest] {
+// CHECK:STDOUT:   %.loc15_13: type = splice_block %Dest.ref [concrete = constants.%Dest.5e7] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
+// CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.5e7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonConstConversion.cpp_operator.bound: <bound method> = bound_method %s.ref, imports.%NonConstConversion.cpp_operator.decl
-// CHECK:STDOUT:   %.loc15_21.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.551 = addr_of %.loc15_21.1
-// CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(<error>, %addr)
-// CHECK:STDOUT:   %.loc15_21.2: init %Dest to %.loc15_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc15_21.3: init %Dest = converted %s.ref, %.loc15_21.2
-// CHECK:STDOUT:   %.loc15_21.4: ref %Dest = temporary %.loc15_21.1, %.loc15_21.3
-// CHECK:STDOUT:   %.loc15_21.5: %Dest = acquire_value %.loc15_21.4
-// CHECK:STDOUT:   %_: %Dest = value_binding _, %.loc15_21.5
-// CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc15_21.4, constants.%Dest.cpp_destructor
-// CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc15_21.4)
+// CHECK:STDOUT:   %.loc15_21: %Dest.5e7 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_: %Dest.5e7 = value_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
