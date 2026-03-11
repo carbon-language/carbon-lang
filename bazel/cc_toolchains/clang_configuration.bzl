@@ -112,9 +112,7 @@ _CLANG_INCLUDE_FILE_CONTENT = """
 #endif
 #ifndef _LIBCPP_STD_VER
 #if !defined(_WIN32)
-#if !defined(_WIN32)
 #error "No libc++ install found!"
-#endif
 #endif
 #endif
 """
@@ -287,6 +285,3 @@ configure_clang_toolchain = repository_rule(
 clang_toolchain_extension = module_extension(
     implementation = lambda ctx: configure_clang_toolchain(name = "bazel_cc_toolchain"),
 )
-
-# Windows local alias
-clang_toolchain_extension_local_local_local = clang_toolchain_extension
