@@ -885,13 +885,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Abstract [concrete]
 // CHECK:STDOUT:   %struct_type.base.709: type = struct_type {.base: %Abstract} [concrete]
 // CHECK:STDOUT:   %complete_type.907: <witness> = complete_type_witness %struct_type.base.709 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.a2e: type = pattern_type %Abstract [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct.a40) [concrete]
@@ -899,18 +898,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %empty_struct.8eb: %.ec6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Abstract.val: %Abstract = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Abstract.val) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -950,7 +944,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.a2e = value_binding_pattern l [concrete]
+// CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
 // CHECK:STDOUT:   %.loc22_39.1: %struct_type.base.f5e = struct_literal (%.loc22_38.1) [concrete = constants.%struct]
@@ -961,16 +955,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %.loc22_39.4: init %.ec6 = converted %.loc22_38.1, %.loc22_38.2 [concrete = constants.%empty_struct.8eb]
 // CHECK:STDOUT:   %.loc22_39.5: init %Abstract = as_compatible %.loc22_39.4 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %.loc22_39.6: init %Derived to %.loc22_39.2 = class_init (%.loc22_39.5) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc22_39.7: ref %Derived = temporary %.loc22_39.2, %.loc22_39.6
-// CHECK:STDOUT:   %.loc22_41: ref %Derived = converted %.loc22_39.1, %.loc22_39.7
+// CHECK:STDOUT:   %.loc22_41: init %Derived = converted %.loc22_39.1, %.loc22_39.6 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc22_39.7, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc22_39.7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Derived) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_abstract_return.carbon
 // CHECK:STDOUT:

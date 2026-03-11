@@ -370,6 +370,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %As.facet.c03: %As.type.d1e = facet_value %X, (%As.impl_witness.e92) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.edc: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.c03) [concrete]
 // CHECK:STDOUT:   %.84a: type = fn_type_with_self_type %As.WithSelf.Convert.type.edc, %As.facet.c03 [concrete]
+// CHECK:STDOUT:   %X.as.As.impl.Convert.bound: <bound method> = bound_method %X.val, %X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -392,14 +393,14 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_20.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_21.4: init %empty_tuple.type = converted %.loc19_20.1, %.loc19_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_21.5: init %X to %.loc19_21.2 = class_init (%.loc19_21.4) [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc19_21.6: ref %X = temporary %.loc19_21.2, %.loc19_21.5
-// CHECK:STDOUT:   %.loc19_23.1: ref %X = converted %.loc19_21.1, %.loc19_21.6
+// CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.5 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %impl.elem0: %.84a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
-// CHECK:STDOUT:   %.loc19_23.2: %X = acquire_value %.loc19_23.1
-// CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.2)
+// CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1
+// CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2
+// CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

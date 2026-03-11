@@ -309,16 +309,16 @@ fn G() {
 // CHECK:STDOUT:     %C.as.I.impl.F.specific_fn.loc8_24.1: <specific function> = specific_function %F.ref, @C.as.I.impl.F.loc8_24.1(constants.%Y) [symbolic = %C.as.I.impl.F.specific_fn.loc8_24.2 (constants.%C.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %.1: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary_storage
 // CHECK:STDOUT:     %.2: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) to %.1 = class_init () [symbolic = %C.val (constants.%C.val)]
-// CHECK:STDOUT:     %.3: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary %.1, %.2
-// CHECK:STDOUT:     %.4: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = converted %x.ref, %.3
+// CHECK:STDOUT:     %.3: init @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = converted %x.ref, %.2 [symbolic = %C.val (constants.%C.val)]
+// CHECK:STDOUT:     %.4: ref @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = temporary %.1, %.3
 // CHECK:STDOUT:     %.5: @C.as.I.impl.F.loc8_24.2.%C (%C.c8540f.2) = acquire_value %.4
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn.loc8_24.1(%.5)
 // CHECK:STDOUT:     %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.06b [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.1: @C.as.I.impl.F.loc8_24.2.%.6 (%.371) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %.3, %impl.elem0.1
+// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %.4, %impl.elem0.1
 // CHECK:STDOUT:     %specific_impl_fn.1: <specific function> = specific_impl_function %impl.elem0.1, @Destroy.WithSelf.Op(constants.%Destroy.facet) [symbolic = %specific_impl_fn.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %.3, %specific_impl_fn.1
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.2(%.3)
+// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %.4, %specific_impl_fn.1
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.2(%.4)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -535,12 +535,12 @@ fn G() {
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn: <specific function> = specific_function %F.ref.loc7_17, @C.as.I.impl.F.2(constants.%empty_tuple) [concrete = constants.%C.as.I.impl.F.specific_fn.a77113.2]
 // CHECK:STDOUT:   %.loc7_16.3: ref %C.387 = temporary_storage
 // CHECK:STDOUT:   %.loc7_16.4: init %C.387 to %.loc7_16.3 = class_init () [concrete = constants.%C.val.135]
-// CHECK:STDOUT:   %.loc7_16.5: ref %C.387 = temporary %.loc7_16.3, %.loc7_16.4
-// CHECK:STDOUT:   %.loc7_16.6: ref %C.387 = converted %.loc7_16.2, %.loc7_16.5
+// CHECK:STDOUT:   %.loc7_16.5: init %C.387 = converted %.loc7_16.2, %.loc7_16.4 [concrete = constants.%C.val.135]
+// CHECK:STDOUT:   %.loc7_16.6: ref %C.387 = temporary %.loc7_16.3, %.loc7_16.5
 // CHECK:STDOUT:   %.loc7_16.7: %C.387 = acquire_value %.loc7_16.6
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn(%.loc7_16.7)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_16.5, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_16.5)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_16.6, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_16.6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
