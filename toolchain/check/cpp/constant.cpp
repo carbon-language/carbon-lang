@@ -126,6 +126,11 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   // Evaluate the expr as a constant and map that to Carbon constant.
   clang::Expr::EvalResult eval_result;
   if (!call_expr->EvaluateAsConstantExpr(eval_result, context.ast_context())) {
+    // TODO: improve this diagnostic with information from `eval_result`.
+    CARBON_DIAGNOSTIC(
+        CppConstexprEval, Error,
+        "failed to evaluate constexpr/consteval function call as a constant");
+    context.emitter().Emit(loc_id, CppConstexprEval);
     return SemIR::ConstantId::NotConstant;
   }
   return MapAPValueToConstant(context, loc_id, eval_result.Val,
