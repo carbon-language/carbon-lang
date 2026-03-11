@@ -63,6 +63,10 @@ def _make_action_configs(runtimes_path = None):
             flag_sets = [flag_set(flag_groups = [flag_group(flags = [
                 runtimes_flag,
                 "link",
+                # We want to allow Bazel to intermingle linked object files and
+                # Clang-spelled link flags. The first `--` starts the list of
+                # initial object files by ending flags to the `link` subcommand,
+                # and the second `--` switches to Clang-spelled flags.
                 "--",
                 "--",
             ])])],

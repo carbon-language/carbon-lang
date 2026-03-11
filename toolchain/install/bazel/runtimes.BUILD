@@ -34,11 +34,29 @@ load(
 
 package(default_visibility = ["//visibility:public"])
 
+# Clang looks in a target-triple subdirectory of its resource directory for the
+# builtins and CRT files. Triples capture a large range of settings and aren't
+# even consistent structurally between platforms, so we expect to have roughly
+# one setting per supported target triple. By convention, we name them after the
+# target triple.
+#
+# TODO: Add constraints and other settings so we can select the correct target
+# triple for different `libc`s.
+#
+# TODO: Add other OS and CPU triples.
 config_setting(
     name = "x86_64-unknown-linux-gnu",
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "aarch64-unknown-linux-gnu",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
     ],
 )
 
@@ -82,7 +100,8 @@ cc_library(
     srcs = libunwind_srcs,
     hdrs = [":libunwind_hdrs"],
     copts = libunwind_copts + [
-        # We also disable all warnings on the runtimes code.
+        # We disable all warnings as upstream isn't clean with the common
+        # warning flags Carbon uses by default.
         "-w",
     ],
     hdrs_check = "strict",
@@ -128,7 +147,8 @@ cc_library(
         "libcxx/src",
         "libc/internal",
     ]) + [
-        # We also disable all warnings on the runtimes code.
+        # We disable all warnings as upstream isn't clean with the common
+        # warning flags Carbon uses by default.
         "-w",
     ],
     hdrs_check = "strict",
@@ -161,6 +181,7 @@ carbon_runtimes(
     libcxx_archive = ":libcxx_archive",
     libunwind_archive = ":libunwind_archive",
     target_triple = select({
+        ":aarch64-unknown-linux-gnu": "aarch64-unknown-linux-gnu",
         ":x86_64-unknown-linux-gnu": "x86_64-unknown-linux-gnu",
         "//conditions:default": "",
     }),

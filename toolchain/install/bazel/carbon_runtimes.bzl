@@ -51,7 +51,11 @@ def _carbon_runtimes_impl(ctx):
     outputs.append(root_out)
 
     # Setup the C++ toolchain and configuration. We also force the `pic` feature
-    # to be enabled for these actions.
+    # to be enabled for these actions as we always want PIC generated code --
+    # this avoids the need to build two versions of the runtimes and doesn't
+    # create problems with modern code generation when linking statically. This
+    # also simplifies extracting the outputs as we only need to look at
+    # `pic_objects`.
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
