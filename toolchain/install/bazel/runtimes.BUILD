@@ -79,7 +79,9 @@ cc_library(
         "@platforms//cpu:x86_64": builtins_x86_64_srcs,
         "//conditions:default": [],
     }),
-    copts = builtins_copts,
+    copts = builtins_copts + make_include_copts([
+        "builtins",
+    ]),
     hdrs_check = "strict",
     deps = [":builtins_internal"],
 )
@@ -176,8 +178,14 @@ carbon_runtimes(
         "//llvm/lib/clang/{0}:clang_hdrs".format(llvm_version_major),
     ],
     crt_copts = crt_copts,
-    crtbegin_src = crtbegin_src,
-    crtend_src = crtend_src,
+    crtbegin_src = select({
+        "@platforms//os:linux": crtbegin_src,
+        "//conditions:default": None,
+    }),
+    crtend_src = select({
+        "@platforms//os:linux": crtend_src,
+        "//conditions:default": None,
+    }),
     libcxx_archive = ":libcxx_archive",
     libunwind_archive = ":libunwind_archive",
     target_triple = select({

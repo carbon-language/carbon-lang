@@ -447,11 +447,6 @@ auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
   // Only compile source files, not headers.
   llvm::erase_if(src_files,
                  [](llvm::StringRef file) { return file.ends_with(".h"); });
-
-  // TODO: Remove this once we have a way of accessing `SipHash.h`.
-  llvm::erase_if(src_files, [](llvm::StringRef file) {
-    return file.ends_with("emupac.cpp");
-  });
   return src_files;
 }
 

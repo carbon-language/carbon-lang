@@ -70,9 +70,12 @@ def _carbon_runtimes_impl(ctx):
         builtins_lib_path = "clang_resource_dir/lib"
 
     for filename, src in [
-        ("crtbegin", ctx.files.crtbegin_src[0]),
-        ("crtend", ctx.files.crtend_src[0]),
+        ("crtbegin", ctx.files.crtbegin_src),
+        ("crtend", ctx.files.crtend_src),
     ]:
+        if not src:
+            continue
+        src = src[0]
         crt_obj = _build_crt_file(ctx, cc_toolchain, feature_configuration, src)
         crt_out = ctx.actions.declare_file("{0}/{1}/clang_rt.{2}.o".format(
             prefix,
@@ -119,8 +122,8 @@ carbon_runtimes = rule(
         "builtins_archive": attr.label(mandatory = True, allow_files = [".a"]),
         "clang_hdrs": attr.label_list(mandatory = True, allow_files = True),
         "crt_copts": attr.string_list(default = []),
-        "crtbegin_src": attr.label(mandatory = True, allow_files = [".c"]),
-        "crtend_src": attr.label(mandatory = True, allow_files = [".c"]),
+        "crtbegin_src": attr.label(allow_files = [".c"]),
+        "crtend_src": attr.label(allow_files = [".c"]),
         "libcxx_archive": attr.label(mandatory = True, allow_files = [".a"]),
         "libunwind_archive": attr.label(mandatory = True, allow_files = [".a"]),
         "target_triple": attr.string(mandatory = True),
