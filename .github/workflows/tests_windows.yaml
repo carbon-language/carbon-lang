@@ -109,6 +109,9 @@ jobs:
             //common:vlog_test `
             --repo_env=CC=clang `
             --repo_env=CXX=clang++ `
+            --force_pic=false `
+            --copt=-fno-pic `
+            --cxxopt=-fno-pic `
             --copt=-Wno-unknown-attributes `
             --cxxopt=-Wno-unknown-attributes `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
