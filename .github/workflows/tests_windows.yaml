@@ -112,6 +112,8 @@ jobs:
             --force_pic=false `
             --copt=-fno-pic `
             --cxxopt=-fno-pic `
+            --copt=-gz=none `
+            --cxxopt=-gz=none `
             --copt=-Wno-unknown-attributes `
             --cxxopt=-Wno-unknown-attributes `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
