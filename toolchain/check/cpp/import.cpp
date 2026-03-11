@@ -1155,8 +1155,7 @@ namespace {
 struct ParameterTypeInfo {
   // The type to use for the Carbon parameter.
   TypeExpr type;
-  // Whether to build a `ref` pattern.
-  bool want_ref_pattern;
+  ParamPatternKind kind;
 };
 }  // namespace
 
@@ -1168,29 +1167,33 @@ struct ParameterTypeInfo {
 // as the C++ type.
 static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type) -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None, .want_ref_pattern = false};
+  ParameterTypeInfo info = {.type = TypeExpr::None,
+                            .kind = ParamPatternKind::Value};
 
   // Perform some custom mapping for parameters of reference type:
   //
   //   * `T& x` -> `ref x: T`.
+  //   * `T&& x` -> `var x: T`.
   //   * `const T& x` -> `x: T`.
-  //   * `T&& x` -> `x: T`.
-  //
-  // TODO: For the `&&` mapping, we allow an rvalue reference to bind to a
-  // durable reference expression. This should not be allowed.
+  //   * `const T&& x` -> `x: T`.
   if (param_type->isReferenceType()) {
     clang::QualType pointee_type = param_type->getPointeeType();
-    if (param_type->isLValueReferenceType()) {
-      if (pointee_type.isConstQualified()) {
-        // TODO: Consider only doing this if `const` is the only qualifier. For
-        // now, any other qualifier will fail when mapping the type.
-        auto split_type = pointee_type.getSplitUnqualifiedType();
-        split_type.Quals.removeConst();
-        pointee_type = context.ast_context().getQualifiedType(split_type);
-      } else {
-        // The reference will map to a `ref` pattern.
-        info.want_ref_pattern = true;
-      }
+    if (pointee_type.isConstQualified()) {
+      // TODO: Consider only doing this if `const` is the only qualifier. For
+      // now, any other qualifier will fail when mapping the type.
+      auto split_type = pointee_type.getSplitUnqualifiedType();
+      split_type.Quals.removeConst();
+      pointee_type = context.ast_context().getQualifiedType(split_type);
+    } else if (param_type->isLValueReferenceType()) {
+      // Lvalue references map to a `ref` pattern.
+      info.kind = ParamPatternKind::Ref;
+    } else {
+      // Rvalue references map to a `var` pattern. When given a value expression
+      // as an argument, this will result in a copy. However, if the argument is
+      // of class type, we will map its type to `const T`, which means overload
+      // resolution won't allow the call anyway, so this only permits passing
+      // value expressions of non-class type to a `T&&` parameter.
+      info.kind = ParamPatternKind::Var;
     }
     param_type = pointee_type;
   }
@@ -1232,9 +1235,9 @@ static auto MakeImplicitParamPatternsBlockId(
   }
 
   // TODO: Fill in a location once available.
-  auto pattern_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
-                                    type_expr_region_id, type_id,
-                                    param_info.want_ref_pattern);
+  auto pattern_id =
+      AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                      type_expr_region_id, type_id, param_info.kind);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1303,7 +1306,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: Add template support.
     SemIR::InstId pattern_id =
         AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                        type_id, param_info.want_ref_pattern);
+                        type_id, param_info.kind);
     param_ids.push_back(pattern_id);
     param_type_ids.push_back(type_inst_id);
   }

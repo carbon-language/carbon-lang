@@ -255,7 +255,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk: %const_ref_this__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_ref_ref_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_ref_this.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %const: type = const_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.type: type = fn_type @const_ref_ref_this__carbon_thunk [concrete]
 // CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk: %const_ref_ref_this__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.plain.cpp_overload_set [concrete]
@@ -318,9 +317,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %v.ref.loc10: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %const_ref_ref_this.ref: %HasQualifiers.const_ref_ref_this.cpp_overload_set.type = name_ref const_ref_ref_this, imports.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %v.ref.loc10, %const_ref_ref_this.ref
-// CHECK:STDOUT:   %.loc10_3.1: %const = as_compatible %v.ref.loc10
-// CHECK:STDOUT:   %.loc10_3.2: %const = converted %v.ref.loc10, %.loc10_3.1
-// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%const_ref_ref_this__carbon_thunk.decl(%.loc10_3.2)
+// CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%const_ref_ref_this__carbon_thunk.decl(%v.ref.loc10)
 // CHECK:STDOUT:   %p.ref.loc12: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc12: ref %HasQualifiers = deref %p.ref.loc12
 // CHECK:STDOUT:   %plain.ref: %HasQualifiers.plain.cpp_overload_set.type = name_ref plain, imports.%HasQualifiers.plain.cpp_overload_set.value [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]

@@ -532,7 +532,6 @@ fn F() {
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.type: type = fn_type @TakesRValue__carbon_thunk [concrete]
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk: %TakesRValue__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.6ef: ref %S = temporary invalid, %S.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -557,13 +556,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc8_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc8_20.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc8_20.3: init %S to %.loc8_20.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc8_22.1: init %S = converted %.loc8_20.1, %.loc8_20.3 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc8_22.2: ref %S = temporary %.loc8_20.2, %.loc8_22.1 [concrete = constants.%.6ef]
-// CHECK:STDOUT:   %.loc8_22.3: %S = acquire_value %.loc8_22.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc8_22.4: ref %S = value_as_ref %.loc8_22.3
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_22.4
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc8_20.2: init %S to %_.var = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_22: init %S = converted %.loc8_20.1, %.loc8_20.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %_.var
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

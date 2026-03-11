@@ -142,7 +142,8 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
     insts.self_param_id = AddParamPattern(
         context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
-        args.self_type_id, args.self_is_ref);
+        args.self_type_id,
+        args.self_is_ref ? ParamPatternKind::Ref : ParamPatternKind::Value);
     insts.implicit_param_patterns_id =
         context.inst_blocks().Add({insts.self_param_id});
 
@@ -162,9 +163,11 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
           context, context.types().GetTypeInstId(param_type_id));
       EndEmptySubpattern(context);
 
-      context.inst_block_stack().AddInstId(AddParamPattern(
-          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, /*is_ref=*/args.params_are_refs));
+      context.inst_block_stack().AddInstId(
+          AddParamPattern(context, loc_id, SemIR::NameId::Underscore,
+                          param_type_region_id, param_type_id,
+                          args.params_are_refs ? ParamPatternKind::Ref
+                                               : ParamPatternKind::Value));
     }
     insts.param_patterns_id = context.inst_block_stack().Pop();
   }
