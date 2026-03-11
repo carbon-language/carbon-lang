@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -21,41 +22,71 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            files.pythonhosted.org:443
+            github.com:443
+            go.dev:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            objects.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.bazel.build:443
+            storage.googleapis.com:443
+            www.googleapis.com:443
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            has_code:
+              - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
 
       - name: Cache LLVM and Clang installation
+        if: steps.filter.outputs.has_code == 'true'
         id: cache-llvm-windows
-        uses: actions/cache@v5
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: ~/llvm
           key: LLVM-19.1.7-Cache-windows-x64
 
       - name: Download LLVM and Clang installation
-        if: steps.cache-llvm-windows.outputs.cache-hit != 'true'
+        if: >-
+          steps.filter.outputs.has_code == 'true' &&
+          steps.cache-llvm-windows.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $LLVM_RELEASE = "19.1.7"
           $LLVM_TARBALL = "clang+llvm-$LLVM_RELEASE-x86_64-pc-windows-msvc.tar.xz"
           $LLVM_PATH = "$HOME/llvm"
-          Write-Host "Downloading LLVM $LLVM_RELEASE"
           Invoke-WebRequest "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_RELEASE/$LLVM_TARBALL" -OutFile $LLVM_TARBALL
           New-Item -ItemType Directory -Force -Path $LLVM_PATH
           tar -xJf $LLVM_TARBALL --strip-components=1 -C $LLVM_PATH
           Remove-Item $LLVM_TARBALL
 
       - name: Setup LLVM and Clang paths
+        if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
           $LLVM_PATH = "$HOME/llvm"
           echo "$LLVM_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-
-      - name: Add ASAN runtime to PATH
-        shell: pwsh
-        run: |
-          $ASAN_PATH = "$HOME/llvm/lib/clang/19/lib/windows"
-          echo "$ASAN_PATH" | Out-File -FilePath $env:GITHUB_PATH -Append
+          echo "$LLVM_PATH/lib/clang/19/lib/windows" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Build and test common
+        if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
           bazel test `
