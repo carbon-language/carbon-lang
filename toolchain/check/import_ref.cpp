@@ -3672,6 +3672,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::RefForm inst) -> ResolveResult {
+  auto type_component_inst_id =
+      GetLocalConstantId(resolver, inst.type_component_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Deduplicated<SemIR::RefForm>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .type_component_inst_id = resolver.local_types().GetTypeInstId(
+                     resolver.local_types().GetTypeIdForTypeConstantId(
+                         type_component_inst_id))});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RequireCompleteType inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
@@ -4179,6 +4194,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::RefBindingPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::RefForm inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::RefParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
