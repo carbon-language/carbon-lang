@@ -77,9 +77,6 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
       /*RefersToEnclosingVariableOrCapture=*/false,
       /*NameLoc=*/clang::SourceLocation(), function_decl->getType(),
       clang::VK_LValue);
-  if (!decl_ref_expr) {
-    return SemIR::ConstantId::NotConstant;
-  }
 
   // Cast to a function pointer type.
   auto function_ptr_type =
@@ -106,10 +103,6 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
       context.ast_context(), implicit_cast_expr, arg_exprs,
       function_decl->getCallResultType(), clang::VK_PRValue,
       /*RParenLoc=*/clang::SourceLocation(), clang::FPOptionsOverride());
-
-  if (!call_expr) {
-    return SemIR::ConstantId::NotConstant;
-  }
 
   // Evaluate the expr as a constant and map that to Carbon constant.
   clang::Expr::EvalResult eval_result;
