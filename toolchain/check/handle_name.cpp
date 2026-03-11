@@ -128,8 +128,7 @@ auto HandleParseNode(Context& context,
     -> bool {
   // Push a pattern block stack entry to handle the parameter pattern.
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
+  context.full_pattern_stack().PushParameterizedDecl();
   // The parent is responsible for binding the name.
   context.node_stack().Push(node_id, GetIdentifierAsNameId(context, node_id));
   return true;

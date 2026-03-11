@@ -764,6 +764,11 @@ auto Formatter::FormatFunctionSignature(InstBlockId params_id,
         FormatInstAsType(ref_form.type_component_inst_id);
         break;
       }
+      case CARBON_KIND(ValueForm val_form): {
+        out() << "val ";
+        FormatInstAsType(val_form.type_component_inst_id);
+        break;
+      }
       case CARBON_KIND(ErrorInst _): {
         FormatInstAsType(return_form_id);
         break;

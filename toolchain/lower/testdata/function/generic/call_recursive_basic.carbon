@@ -60,7 +60,7 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !16
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc40_9.5.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc40_9.4.temp = alloca {}, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !15
@@ -76,8 +76,8 @@ fn M() {
 // CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !26
 // CHECK:STDOUT:   %F.call.loc37 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc37_5, i32 0), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.5.temp), !dbg !19
-// CHECK:STDOUT:   call void @_CF.Main.706e9f413f1bae3d(ptr %.loc40_9.5.temp, ptr %c.var, i32 0), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.4.temp), !dbg !19
+// CHECK:STDOUT:   call void @_CF.Main.706e9f413f1bae3d(ptr %.loc40_9.4.temp, ptr %c.var, i32 0), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -403,6 +403,8 @@ class NodeStack {
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
+    set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
+                          Id::KindFor<SemIR::InstBlockId>());
     return result;
   }
 
@@ -426,8 +428,6 @@ class NodeStack {
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileConditionStart:
-      case Parse::NodeKind::ReturnType:
-      case Parse::NodeKind::ReturnForm:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
@@ -513,18 +513,16 @@ class NodeStack {
       case Parse::NodeKind::InlineImportSpecifier:
       case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
-      case Parse::NodeKind::MatchCaseEqualGreater:
       case Parse::NodeKind::MatchCaseGuard:
       case Parse::NodeKind::MatchCaseGuardIntroducer:
       case Parse::NodeKind::MatchCaseGuardStart:
       case Parse::NodeKind::MatchCaseIntroducer:
-      case Parse::NodeKind::MatchCaseStart:
       case Parse::NodeKind::MatchCondition:
       case Parse::NodeKind::MatchConditionStart:
       case Parse::NodeKind::MatchDefault:
-      case Parse::NodeKind::MatchDefaultEqualGreater:
       case Parse::NodeKind::MatchDefaultIntroducer:
-      case Parse::NodeKind::MatchDefaultStart:
+      case Parse::NodeKind::MatchHandlerStart:
+      case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
       case Parse::NodeKind::NamespaceStart:

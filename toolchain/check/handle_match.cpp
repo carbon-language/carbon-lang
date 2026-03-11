@@ -48,16 +48,6 @@ auto HandleParseNode(Context& context, Parse::MatchCaseGuardId node_id)
   return context.TODO(node_id, "HandleMatchCaseGuard");
 }
 
-auto HandleParseNode(Context& context, Parse::MatchCaseEqualGreaterId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleMatchCaseEqualGreater");
-}
-
-auto HandleParseNode(Context& context, Parse::MatchCaseStartId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleMatchCaseStart");
-}
-
 auto HandleParseNode(Context& context, Parse::MatchCaseId node_id) -> bool {
   return context.TODO(node_id, "HandleMatchCase");
 }
@@ -67,18 +57,17 @@ auto HandleParseNode(Context& context, Parse::MatchDefaultIntroducerId node_id)
   return context.TODO(node_id, "MatchDefaultIntroducer");
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::MatchDefaultEqualGreaterId node_id) -> bool {
-  return context.TODO(node_id, "MatchDefaultEqualGreater");
-}
-
-auto HandleParseNode(Context& context, Parse::MatchDefaultStartId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleMatchDefaultStart");
-}
-
 auto HandleParseNode(Context& context, Parse::MatchDefaultId node_id) -> bool {
   return context.TODO(node_id, "HandleMatchDefault");
+}
+
+auto HandleParseNode(Context& context, Parse::MatchHandlerStartId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleMatchHandlerStart");
+}
+
+auto HandleParseNode(Context& context, Parse::MatchHandlerId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchHandler");
 }
 
 auto HandleParseNode(Context& context, Parse::MatchStatementId node_id)

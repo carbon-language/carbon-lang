@@ -77,6 +77,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
                 return ExprCategory::ReprInitializing;
               case CARBON_KIND(RefForm _):
                 return ExprCategory::DurableRef;
+              case CARBON_KIND(ValueForm _):
+                return ExprCategory::Value;
               case CARBON_KIND(ErrorInst _):
                 return ExprCategory::Error;
               default:
