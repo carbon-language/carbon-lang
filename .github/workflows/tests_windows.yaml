@@ -97,7 +97,7 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
-          bazel test `
+          bazel --bazelrc=windows_clang_rt.bazelrc test `
             //common:array_stack_test `
             //common:command_line_test `
             //common:emplace_by_calling_test `
@@ -126,5 +126,5 @@ jobs:
             --cxxopt=-Wno-unknown-attributes `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
-            --bazelrc=windows_clang_rt.bazelrc `
+
             --test_output=errors
