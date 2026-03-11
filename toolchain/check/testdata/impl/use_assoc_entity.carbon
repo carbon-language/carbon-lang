@@ -4727,8 +4727,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%D) [concrete = constants.%C.302]
 // CHECK:STDOUT:   %.loc12_28.2: ref %C.302 = temporary_storage
 // CHECK:STDOUT:   %.loc12_28.3: init %C.302 to %.loc12_28.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc12_28.4: ref %C.302 = temporary %.loc12_28.2, %.loc12_28.3
-// CHECK:STDOUT:   %.loc12_30.1: ref %C.302 = converted %.loc12_28.1, %.loc12_28.4
+// CHECK:STDOUT:   %.loc12_30.1: init %C.302 = converted %.loc12_28.1, %.loc12_28.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc12_18.1: type = splice_block %impl.elem0 [concrete = constants.%C.302] {
 // CHECK:STDOUT:     %D.ref.loc12_17: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -4737,10 +4736,11 @@ fn F() {
 // CHECK:STDOUT:     %.loc12_18.2: %Z.type = converted %D.ref.loc12_17, %Z.facet [concrete = constants.%Z.facet.59e]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.63b, element0 [concrete = constants.%C.302]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_30.2: %C.302 = acquire_value %.loc12_30.1
-// CHECK:STDOUT:   %a: %C.302 = value_binding a, %.loc12_30.2
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc12_28.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc12_28.4)
+// CHECK:STDOUT:   %.loc12_30.2: ref %C.302 = temporary %.loc12_28.2, %.loc12_30.1
+// CHECK:STDOUT:   %.loc12_30.3: %C.302 = acquire_value %.loc12_30.2
+// CHECK:STDOUT:   %a: %C.302 = value_binding a, %.loc12_30.3
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc12_30.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc12_30.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

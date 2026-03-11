@@ -48,7 +48,7 @@ fn F() {
   // CHECK:STDERR:    18 |   Cpp.TakesLValue(s);
   // CHECK:STDERR:       |                    ^
   // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: expects an lvalue for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
   // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
@@ -111,21 +111,23 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_param_value_arg_for_rvalue_ref.carbon
+// --- fail_param_value_arg_for_rvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "param_rvalue_ref.h";
 
 fn F() {
-  //@dump-sem-ir-begin
-  // TODO: We should probably reject binding an rvalue reference to a value
-  // expression. If we don't reject, we should instead force a copy to be made,
-  // at least if the type has a pointer value representation, so that moving
-  // from the reference doesn't alter tne original value.
   let s: Cpp.S = {};
+  // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Cpp.TakesRValue(s);
+  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
+  // CHECK:STDERR:       |      ^           ~~~
+  // CHECK:STDERR:
   Cpp.TakesRValue(s);
-  //@dump-sem-ir-end
 }
 
 // --- fail_param_rvalue_ref.carbon
@@ -515,74 +517,14 @@ fn F() {
 // CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc8_20.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc8_20.3: init %S to %.loc8_20.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc8_20.4: ref %S = temporary %.loc8_20.2, %.loc8_20.3
-// CHECK:STDOUT:   %.loc8_22.1: ref %S = converted %.loc8_20.1, %.loc8_20.4
-// CHECK:STDOUT:   %.loc8_22.2: %S = acquire_value %.loc8_22.1
-// CHECK:STDOUT:   %.loc8_22.3: ref %S = value_as_ref %.loc8_22.2
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_22.3
+// CHECK:STDOUT:   %.loc8_22.1: init %S = converted %.loc8_20.1, %.loc8_20.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_22.2: ref %S = temporary %.loc8_20.2, %.loc8_22.1
+// CHECK:STDOUT:   %.loc8_22.3: %S = acquire_value %.loc8_22.2
+// CHECK:STDOUT:   %.loc8_22.4: ref %S = value_as_ref %.loc8_22.3
+// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_22.4
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_20.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_20.4)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_param_value_arg_for_rvalue_ref.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %TakesRValue.cpp_overload_set.type: type = cpp_overload_set_type @TakesRValue.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %TakesRValue__carbon_thunk.type: type = fn_type @TakesRValue__carbon_thunk [concrete]
-// CHECK:STDOUT:   %TakesRValue__carbon_thunk: %TakesRValue__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
-// CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .TakesRValue = %TakesRValue.cpp_overload_set.value
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %TakesRValue__carbon_thunk.decl: %TakesRValue__carbon_thunk.type = fn_decl @TakesRValue__carbon_thunk [concrete = constants.%TakesRValue__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.7da = value_binding_pattern s [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_19.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc12_19.3: init %S to %.loc12_19.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc12_19.4: ref %S = temporary %.loc12_19.2, %.loc12_19.3
-// CHECK:STDOUT:   %.loc12_19.5: ref %S = converted %.loc12_19.1, %.loc12_19.4
-// CHECK:STDOUT:   %.loc12_19.6: %S = acquire_value %.loc12_19.5
-// CHECK:STDOUT:   %s: %S = value_binding s, %.loc12_19.6
-// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
-// CHECK:STDOUT:   %.loc13: ref %S = value_as_ref %s.ref
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc13
-// CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc12_19.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc12_19.4)
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_22.2, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_22.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -597,13 +539,14 @@ fn F() {
 // CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %T: type = class_type @T [concrete]
 // CHECK:STDOUT:   %pattern_type.e6b: type = pattern_type %T [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
 // CHECK:STDOUT:   %const: type = const_type %S [concrete]
-// CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
-// CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct.6ef: %const = struct_value () [concrete]
 // CHECK:STDOUT:   %T.cpp_destructor.type: type = fn_type @T.cpp_destructor [concrete]
 // CHECK:STDOUT:   %T.cpp_destructor: %T.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
+// CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -648,24 +591,21 @@ fn F() {
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
 // CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc38: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc38_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc38_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
 // CHECK:STDOUT:   %Cpp.ref.loc38_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc38_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc38_21.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc38_21.3: init %S to %.loc38_21.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc38_21.4: ref %S = temporary %.loc38_21.2, %.loc38_21.3
-// CHECK:STDOUT:   %.loc38_23: ref %S = converted %.loc38_21.1, %.loc38_21.4
+// CHECK:STDOUT:   %.loc38_23: init %S = converted %.loc38_21.1, %.loc38_21.3 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %Cpp.ref.loc38_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc38_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %const: type = const_type %S.ref.loc38_45 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc38_33.1: ref %const = as_compatible %.loc38_23
-// CHECK:STDOUT:   %.loc38_33.2: ref %const = converted %.loc38_23, %.loc38_33.1
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc38: <bound method> = bound_method %.loc38_21.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc38: init %empty_tuple.type = call %S.cpp_destructor.bound.loc38(%.loc38_21.4)
+// CHECK:STDOUT:   %.loc38_33.1: init %const = as_compatible %.loc38_23 [concrete = constants.%empty_struct.6ef]
+// CHECK:STDOUT:   %.loc38_33.2: init %const = converted %.loc38_23, %.loc38_33.1 [concrete = constants.%empty_struct.6ef]
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc8: init %empty_tuple.type = call %S.cpp_destructor.bound.loc8(%s.var)
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -797,8 +737,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_19.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc8_19.3: init %S to %.loc8_19.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc8_19.4: ref %S = temporary %.loc8_19.2, %.loc8_19.3
-// CHECK:STDOUT:   %.loc8_19.5: ref %S = converted %.loc8_19.1, %.loc8_19.4
+// CHECK:STDOUT:   %.loc8_19.4: init %S = converted %.loc8_19.1, %.loc8_19.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.5: ref %S = temporary %.loc8_19.2, %.loc8_19.4
 // CHECK:STDOUT:   %.loc8_19.6: %S = acquire_value %.loc8_19.5
 // CHECK:STDOUT:   %s: %S = value_binding s, %.loc8_19.6
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -824,8 +764,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_40.1: %ptr.ff5 = as_compatible %addr.loc11
 // CHECK:STDOUT:   %.loc11_40.2: %ptr.ff5 = converted %addr.loc11, %.loc11_40.1
 // CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc11_40.2)
-// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_19.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_19.4)
+// CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_19.5, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_19.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

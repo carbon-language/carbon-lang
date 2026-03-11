@@ -500,11 +500,11 @@ static auto BuildThunkBody(clang::Sema& sema,
   // the callee. Otherwise, build a regular reference to the function.
   clang::ExprResult callee;
   if (callee_info.has_object_parameter) {
+    clang::QualType object_param_type =
+        cast<clang::CXXMethodDecl>(callee_info.decl)
+            ->getFunctionObjectParameterReferenceType();
     auto* object_param_ref =
-        BuildThunkParamRef(sema, thunk_function_decl, 0,
-                           callee_info.has_explicit_object_parameter()
-                               ? callee_info.decl->getParamDecl(0)->getType()
-                               : clang::QualType());
+        BuildThunkParamRef(sema, thunk_function_decl, 0, object_param_type);
     constexpr bool IsArrow = false;
     auto object =
         sema.PerformMemberExprBaseConversion(object_param_ref, IsArrow);

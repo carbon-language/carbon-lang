@@ -514,6 +514,9 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
       break;
 
     case SemIR::ExprCategory::Value:
+      value_kind = clang::ExprValueKind::VK_PRValue;
+      break;
+
     case SemIR::ExprCategory::ReprInitializing:
     case SemIR::ExprCategory::InPlaceInitializing:
       value_kind = clang::ExprValueKind::VK_PRValue;
@@ -550,6 +553,15 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
     context.emitter().Emit(form.loc_id, CppCallArgTypeNotSupported,
                            form.type_id);
     return nullptr;
+  }
+
+  // Map a value expression to a const-qualified prvalue so that overload
+  // resolution doesn't think it's a suitable argument for a non-const-qualified
+  // object parameter or a `T&&` parameter. We can only do this for class
+  // prvalues, because non-class non-array prvalues can't be qualified in C++.
+  if (form.category == SemIR::ExprCategory::Value &&
+      arg_cpp_type->isRecordType()) {
+    arg_cpp_type = context.ast_context().getConstType(arg_cpp_type);
   }
 
   // TODO: Avoid heap allocating more of these on every call. Either cache them

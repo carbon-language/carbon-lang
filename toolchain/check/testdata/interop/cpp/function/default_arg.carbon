@@ -338,10 +338,10 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc10: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc10_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc10_5.3: init %X to %.loc10_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc10_5.4: ref %X = temporary %.loc10_5.2, %.loc10_5.3
-// CHECK:STDOUT:   %.loc10_7: ref %X = converted %.loc10_5.1, %.loc10_5.4
+// CHECK:STDOUT:   %.loc10_7.1: init %X = converted %.loc10_5.1, %.loc10_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc10_7.2: ref %X = temporary %.loc10_5.2, %.loc10_7.1
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc10_16: <bound method> = bound_method %.loc10_7, %B.ref
+// CHECK:STDOUT:   %bound_method.loc10_16: <bound method> = bound_method %.loc10_7.2, %B.ref
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc10_19: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -358,7 +358,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22: init %i32 = call %bound_method.loc10_22.2(%int_2.loc10) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.2: %i32 = converted %int_2.loc10, %.loc10_22.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %X.B.call: init %empty_tuple.type = call imports.%X.B.decl(%.loc10_7, %.loc10_19.2, %.loc10_22.2)
+// CHECK:STDOUT:   %X.B.call: init %empty_tuple.type = call imports.%X.B.decl(%.loc10_7.2, %.loc10_19.2, %.loc10_22.2)
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc11: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -384,13 +384,13 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc12_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc12_5.3: init %X to %.loc12_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc12_5.4: ref %X = temporary %.loc12_5.2, %.loc12_5.3
-// CHECK:STDOUT:   %.loc12_7.1: ref %X = converted %.loc12_5.1, %.loc12_5.4
+// CHECK:STDOUT:   %.loc12_7.1: init %X = converted %.loc12_5.1, %.loc12_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc12_7.2: ref %X = temporary %.loc12_5.2, %.loc12_7.1
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc12_16: <bound method> = bound_method %.loc12_7.1, %D.ref
+// CHECK:STDOUT:   %bound_method.loc12_16: <bound method> = bound_method %.loc12_7.2, %D.ref
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc12_7.2: %X = acquire_value %.loc12_7.1
+// CHECK:STDOUT:   %.loc12_7.3: %X = acquire_value %.loc12_7.2
 // CHECK:STDOUT:   %impl.elem0.loc12_19: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc12_19.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc12_19: <specific function> = specific_function %impl.elem0.loc12_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -405,18 +405,18 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_22: init %i32 = call %bound_method.loc12_22.2(%int_2.loc12) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %int_2.loc12, %.loc12_22.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc12_7.3: ref %X = value_as_ref %.loc12_7.2
-// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc12_7.3
+// CHECK:STDOUT:   %.loc12_7.4: ref %X = value_as_ref %.loc12_7.3
+// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc12_7.4
 // CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc12_19.2, %.loc12_22.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %X.Op.bound.loc12: <bound method> = bound_method %.loc12_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.Op.bound.loc12: <bound method> = bound_method %.loc12_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc12: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_5.4, %Op.ref.loc12
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc12: init %empty_tuple.type = call %X.cpp_destructor.bound.loc12(%.loc12_5.4)
-// CHECK:STDOUT:   %X.Op.bound.loc10: <bound method> = bound_method %.loc10_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_7.2, %Op.ref.loc12
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc12: init %empty_tuple.type = call %X.cpp_destructor.bound.loc12(%.loc12_7.2)
+// CHECK:STDOUT:   %X.Op.bound.loc10: <bound method> = bound_method %.loc10_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc10: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_5.4, %Op.ref.loc10
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc10: init %empty_tuple.type = call %X.cpp_destructor.bound.loc10(%.loc10_5.4)
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_7.2, %Op.ref.loc10
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc10: init %empty_tuple.type = call %X.cpp_destructor.bound.loc10(%.loc10_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -754,10 +754,10 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc11: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc11_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc11_5.3: init %X to %.loc11_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc11_5.4: ref %X = temporary %.loc11_5.2, %.loc11_5.3
-// CHECK:STDOUT:   %.loc11_7: ref %X = converted %.loc11_5.1, %.loc11_5.4
+// CHECK:STDOUT:   %.loc11_7.1: init %X = converted %.loc11_5.1, %.loc11_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc11_7.2: ref %X = temporary %.loc11_5.2, %.loc11_7.1
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_7, %B.ref
+// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_7.2, %B.ref
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc11: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc11_19.1: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
@@ -766,7 +766,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_19.2(%int_1.loc11) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int_1.loc11, %.loc11_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc11_7, %.loc11_19.2)
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc11_7.2, %.loc11_19.2)
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -784,12 +784,12 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc13: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc13_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc13_5.3: init %X to %.loc13_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc13_5.4: ref %X = temporary %.loc13_5.2, %.loc13_5.3
-// CHECK:STDOUT:   %.loc13_7.1: ref %X = converted %.loc13_5.1, %.loc13_5.4
+// CHECK:STDOUT:   %.loc13_7.1: init %X = converted %.loc13_5.1, %.loc13_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc13_7.2: ref %X = temporary %.loc13_5.2, %.loc13_7.1
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc13_16: <bound method> = bound_method %.loc13_7.1, %D.ref
+// CHECK:STDOUT:   %bound_method.loc13_16: <bound method> = bound_method %.loc13_7.2, %D.ref
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc13_7.2: %X = acquire_value %.loc13_7.1
+// CHECK:STDOUT:   %.loc13_7.3: %X = acquire_value %.loc13_7.2
 // CHECK:STDOUT:   %impl.elem0.loc13: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc13_19.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.215]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -797,8 +797,8 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_19.2(%int_1.loc13) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %int_1.loc13, %.loc13_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc13_7.3: ref %X = value_as_ref %.loc13_7.2
-// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc13_7.3
+// CHECK:STDOUT:   %.loc13_7.4: ref %X = value_as_ref %.loc13_7.3
+// CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc13_7.4
 // CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc13_19.2)
 // CHECK:STDOUT:   %X.Op.decl: %X.Op.type = fn_decl @X.Op [concrete = constants.%X.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.46b = ref_binding_pattern self [concrete]
@@ -807,14 +807,14 @@ fn Call() {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.Op.bound.loc13: <bound method> = bound_method %.loc13_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc13: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_5.4, %Op.ref.loc13
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc13: init %empty_tuple.type = call %X.cpp_destructor.bound.loc13(%.loc13_5.4)
-// CHECK:STDOUT:   %X.Op.bound.loc11: <bound method> = bound_method %.loc11_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_7.2, %Op.ref.loc13
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc13: init %empty_tuple.type = call %X.cpp_destructor.bound.loc13(%.loc13_7.2)
+// CHECK:STDOUT:   %X.Op.bound.loc11: <bound method> = bound_method %.loc11_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc11: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_5.4, %Op.ref.loc11
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc11: init %empty_tuple.type = call %X.cpp_destructor.bound.loc11(%.loc11_5.4)
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_7.2, %Op.ref.loc11
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc11: init %empty_tuple.type = call %X.cpp_destructor.bound.loc11(%.loc11_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -918,10 +918,10 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc56: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc56_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc56_5.3: init %X to %.loc56_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc56_5.4: ref %X = temporary %.loc56_5.2, %.loc56_5.3
-// CHECK:STDOUT:   %.loc56_7: ref %X = converted %.loc56_5.1, %.loc56_5.4
+// CHECK:STDOUT:   %.loc56_7.1: init %X = converted %.loc56_5.1, %.loc56_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc56_7.2: ref %X = temporary %.loc56_5.2, %.loc56_7.1
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc56: <bound method> = bound_method %.loc56_7, %B.ref
+// CHECK:STDOUT:   %bound_method.loc56: <bound method> = bound_method %.loc56_7.2, %B.ref
 // CHECK:STDOUT:   %Cpp.ref.loc66: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc66: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -930,19 +930,19 @@ fn Call() {
 // CHECK:STDOUT:   %X.ref.loc76: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc76_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc76_5.3: init %X to %.loc76_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc76_5.4: ref %X = temporary %.loc76_5.2, %.loc76_5.3
-// CHECK:STDOUT:   %.loc76_7: ref %X = converted %.loc76_5.1, %.loc76_5.4
+// CHECK:STDOUT:   %.loc76_7.1: init %X = converted %.loc76_5.1, %.loc76_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc76_7.2: ref %X = temporary %.loc76_5.2, %.loc76_7.1
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc76: <bound method> = bound_method %.loc76_7, %D.ref
+// CHECK:STDOUT:   %bound_method.loc76: <bound method> = bound_method %.loc76_7.2, %D.ref
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %X.Op.bound.loc76: <bound method> = bound_method %.loc76_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.Op.bound.loc76: <bound method> = bound_method %.loc76_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc76: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc76: <bound method> = bound_method %.loc76_5.4, %Op.ref.loc76
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc76: init %empty_tuple.type = call %X.cpp_destructor.bound.loc76(%.loc76_5.4)
-// CHECK:STDOUT:   %X.Op.bound.loc56: <bound method> = bound_method %.loc56_5.4, constants.%X.Op
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc76: <bound method> = bound_method %.loc76_7.2, %Op.ref.loc76
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc76: init %empty_tuple.type = call %X.cpp_destructor.bound.loc76(%.loc76_7.2)
+// CHECK:STDOUT:   %X.Op.bound.loc56: <bound method> = bound_method %.loc56_7.2, constants.%X.Op
 // CHECK:STDOUT:   %Op.ref.loc56: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc56: <bound method> = bound_method %.loc56_5.4, %Op.ref.loc56
-// CHECK:STDOUT:   %X.cpp_destructor.call.loc56: init %empty_tuple.type = call %X.cpp_destructor.bound.loc56(%.loc56_5.4)
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc56: <bound method> = bound_method %.loc56_7.2, %Op.ref.loc56
+// CHECK:STDOUT:   %X.cpp_destructor.call.loc56: init %empty_tuple.type = call %X.cpp_destructor.bound.loc56(%.loc56_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

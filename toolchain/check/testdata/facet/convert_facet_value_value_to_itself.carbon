@@ -192,15 +192,15 @@ fn F() {
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc25_17.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc25_17.3: init %Goat to %.loc25_17.2 = class_init () [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc25_17.4: ref %Goat = temporary %.loc25_17.2, %.loc25_17.3
-// CHECK:STDOUT:   %.loc25_19.1: ref %Goat = converted %.loc25_17.1, %.loc25_17.4
+// CHECK:STDOUT:   %.loc25_19.1: init %Goat = converted %.loc25_17.1, %.loc25_17.3 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc25_26: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet) [concrete = constants.%HandleAnimal.specific_fn]
-// CHECK:STDOUT:   %.loc25_19.2: %Goat = acquire_value %.loc25_19.1
-// CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc25_19.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc25_17.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc25_17.4)
+// CHECK:STDOUT:   %.loc25_19.2: ref %Goat = temporary %.loc25_17.2, %.loc25_19.1
+// CHECK:STDOUT:   %.loc25_19.3: %Goat = acquire_value %.loc25_19.2
+// CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc25_19.3)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc25_19.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc25_19.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

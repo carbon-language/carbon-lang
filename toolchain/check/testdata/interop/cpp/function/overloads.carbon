@@ -2453,8 +2453,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_21.2: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc9_21.3: init %NoFields to %.loc9_21.2 = class_init () [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc9_21.4: ref %NoFields = temporary %.loc9_21.2, %.loc9_21.3
-// CHECK:STDOUT:   %.loc9_21.5: ref %NoFields = converted %.loc9_21.1, %.loc9_21.4
+// CHECK:STDOUT:   %.loc9_21.4: init %NoFields = converted %.loc9_21.1, %.loc9_21.3 [concrete = constants.%NoFields.val]
+// CHECK:STDOUT:   %.loc9_21.5: ref %NoFields = temporary %.loc9_21.2, %.loc9_21.4
 // CHECK:STDOUT:   %.loc9_21.6: %NoFields = acquire_value %.loc9_21.5
 // CHECK:STDOUT:   %.loc9_21.7: ref %NoFields = value_as_ref %.loc9_21.6
 // CHECK:STDOUT:   %addr.loc9: %ptr.dd0 = addr_of %.loc9_21.7
@@ -2464,8 +2464,8 @@ fn F() {
 // CHECK:STDOUT:   %value.ref: %empty_struct_type = name_ref value, %value
 // CHECK:STDOUT:   %.loc11_20.1: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc11_20.2: init %NoFields to %.loc11_20.1 = class_init () [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc11_20.3: ref %NoFields = temporary %.loc11_20.1, %.loc11_20.2
-// CHECK:STDOUT:   %.loc11_20.4: ref %NoFields = converted %value.ref, %.loc11_20.3
+// CHECK:STDOUT:   %.loc11_20.3: init %NoFields = converted %value.ref, %.loc11_20.2 [concrete = constants.%NoFields.val]
+// CHECK:STDOUT:   %.loc11_20.4: ref %NoFields = temporary %.loc11_20.1, %.loc11_20.3
 // CHECK:STDOUT:   %.loc11_20.5: %NoFields = acquire_value %.loc11_20.4
 // CHECK:STDOUT:   %.loc11_20.6: ref %NoFields = value_as_ref %.loc11_20.5
 // CHECK:STDOUT:   %addr.loc11: %ptr.dd0 = addr_of %.loc11_20.6
@@ -2475,8 +2475,8 @@ fn F() {
 // CHECK:STDOUT:   %reference.ref: ref %empty_struct_type = name_ref reference, %reference
 // CHECK:STDOUT:   %.loc13_20.1: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc13_20.2: init %NoFields to %.loc13_20.1 = class_init () [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc13_20.3: ref %NoFields = temporary %.loc13_20.1, %.loc13_20.2
-// CHECK:STDOUT:   %.loc13_20.4: ref %NoFields = converted %reference.ref, %.loc13_20.3
+// CHECK:STDOUT:   %.loc13_20.3: init %NoFields = converted %reference.ref, %.loc13_20.2 [concrete = constants.%NoFields.val]
+// CHECK:STDOUT:   %.loc13_20.4: ref %NoFields = temporary %.loc13_20.1, %.loc13_20.3
 // CHECK:STDOUT:   %.loc13_20.5: %NoFields = acquire_value %.loc13_20.4
 // CHECK:STDOUT:   %.loc13_20.6: ref %NoFields = value_as_ref %.loc13_20.5
 // CHECK:STDOUT:   %addr.loc13: %ptr.dd0 = addr_of %.loc13_20.6
@@ -2489,22 +2489,22 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_30.2: ref %empty_struct_type = temporary %.loc15_30.1, %MakeEmpty.call
 // CHECK:STDOUT:   %.loc15_30.3: ref %NoFields = temporary_storage
 // CHECK:STDOUT:   %.loc15_30.4: init %NoFields to %.loc15_30.3 = class_init () [concrete = constants.%NoFields.val]
-// CHECK:STDOUT:   %.loc15_30.5: ref %NoFields = temporary %.loc15_30.3, %.loc15_30.4
-// CHECK:STDOUT:   %.loc15_30.6: ref %NoFields = converted %MakeEmpty.call, %.loc15_30.5
+// CHECK:STDOUT:   %.loc15_30.5: init %NoFields = converted %MakeEmpty.call, %.loc15_30.4 [concrete = constants.%NoFields.val]
+// CHECK:STDOUT:   %.loc15_30.6: ref %NoFields = temporary %.loc15_30.3, %.loc15_30.5
 // CHECK:STDOUT:   %.loc15_30.7: %NoFields = acquire_value %.loc15_30.6
 // CHECK:STDOUT:   %.loc15_30.8: ref %NoFields = value_as_ref %.loc15_30.7
 // CHECK:STDOUT:   %addr.loc15: %ptr.dd0 = addr_of %.loc15_30.8
 // CHECK:STDOUT:   %PassNoFields__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%PassNoFields__carbon_thunk.decl(%addr.loc15)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_30.5, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc15: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc15(%.loc15_30.5)
+// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_30.6, constants.%NoFields.cpp_destructor
+// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc15: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc15(%.loc15_30.6)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_30.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_30.2)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_20.3, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc13: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc13(%.loc13_20.3)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_20.3, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc11: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc11(%.loc11_20.3)
-// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_21.4, constants.%NoFields.cpp_destructor
-// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc9: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc9(%.loc9_21.4)
+// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_20.4, constants.%NoFields.cpp_destructor
+// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc13: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc13(%.loc13_20.4)
+// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_20.4, constants.%NoFields.cpp_destructor
+// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc11: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc11(%.loc11_20.4)
+// CHECK:STDOUT:   %NoFields.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_21.5, constants.%NoFields.cpp_destructor
+// CHECK:STDOUT:   %NoFields.cpp_destructor.call.loc9: init %empty_tuple.type = call %NoFields.cpp_destructor.bound.loc9(%.loc9_21.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

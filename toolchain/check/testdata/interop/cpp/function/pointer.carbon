@@ -1926,11 +1926,11 @@ fn F() {
 // CHECK:STDOUT:   %S.ref.loc13_63: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc13_55.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc13_55.3: init %S to %.loc13_55.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc13_55.4: ref %S = temporary %.loc13_55.2, %.loc13_55.3
-// CHECK:STDOUT:   %.loc13_57.1: ref %S = converted %.loc13_55.1, %.loc13_55.4
-// CHECK:STDOUT:   %.loc13_57.2: %S = acquire_value %.loc13_57.1
-// CHECK:STDOUT:   %.loc13_57.3: ref %S = value_as_ref %.loc13_57.2
-// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %.loc13_57.3
+// CHECK:STDOUT:   %.loc13_57.1: init %S = converted %.loc13_55.1, %.loc13_55.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc13_57.2: ref %S = temporary %.loc13_55.2, %.loc13_57.1
+// CHECK:STDOUT:   %.loc13_57.3: %S = acquire_value %.loc13_57.2
+// CHECK:STDOUT:   %.loc13_57.4: ref %S = value_as_ref %.loc13_57.3
+// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %.loc13_57.4
 // CHECK:STDOUT:   %Indirect__carbon_thunk.call: init %Optional.065 = call imports.%Indirect__carbon_thunk.decl(%addr.loc13)
 // CHECK:STDOUT:   %.loc13_37.1: type = splice_block %Optional [concrete = constants.%Optional.065] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -1948,8 +1948,8 @@ fn F() {
 // CHECK:STDOUT:   %a: %Optional.065 = value_binding a, %.loc13_65.3
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_65.2, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_65.2)
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_55.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc13: init %empty_tuple.type = call %S.cpp_destructor.bound.loc13(%.loc13_55.4)
+// CHECK:STDOUT:   %S.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_57.2, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call.loc13: init %empty_tuple.type = call %S.cpp_destructor.bound.loc13(%.loc13_57.2)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %.loc11_14.3, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%.loc11_14.3)
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc10: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
