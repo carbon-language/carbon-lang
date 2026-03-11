@@ -6,5 +6,5 @@ package Core library "prelude/operators/deref";
 
 interface CppUnsafeDeref {
   let Result:! type;
-  fn Op[ref self: Self]() -> Result;
+  fn Op[self: Self]() -> ref Result;
 }
