@@ -88,8 +88,8 @@ static auto GetCppAssociatedFunctions(const CoreInterface core_interface)
 }
 
 // Retrieves a `core_interface`'s corresponding `NamedDecl`, also with the
-// expected number of parameters. May return a null decl to indicate nothing
-// was found, or nullopt to indicate an error has been diagnosed.
+// expected number of parameters. May return a null decl to indicate nothing was
+// found, or nullopt to indicate `SemIR::ErrInst::InstId` should be propagated.
 auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
                              AssociatedFunction associated_function,
                              clang::CXXRecordDecl* class_decl)
