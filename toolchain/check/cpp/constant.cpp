@@ -39,6 +39,28 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
   }
 }
 
+static auto ConvertConstantToAPValue(Context& context,
+                                     SemIR::InstId const_inst_id,
+                                     clang::QualType param_type)
+    -> std::optional<clang::APValue> {
+  if (param_type->isIntegerType()) {
+    if (auto int_value =
+            context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
+      const auto& ap_int = context.ints().GetAtWidth(
+          int_value->int_id, context.ast_context().getIntWidth(param_type));
+
+      auto aps_int =
+          llvm::APSInt(ap_int, !param_type->isSignedIntegerOrEnumerationType())
+              .extOrTrunc(context.ast_context().getIntWidth(param_type));
+
+      return clang::APValue(aps_int);
+    }
+  }
+
+  // TODO: support additional parameter types.
+  return std::nullopt;
+}
+
 static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
                              clang::QualType param_type) -> clang::Expr* {
   auto const_inst_id = context.constant_values().GetConstantInstId(arg_inst_id);
@@ -46,19 +68,16 @@ static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
     return nullptr;
   }
 
-  if (param_type->isIntegerType()) {
-    if (auto int_value =
-            context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
-      const auto& ap_int = context.ints().GetAtWidth(
-          int_value->int_id, context.ast_context().getIntWidth(param_type));
-
-      return clang::IntegerLiteral::Create(context.ast_context(), ap_int,
-                                           param_type, clang::SourceLocation());
-    }
+  auto ap_value = ConvertConstantToAPValue(context, const_inst_id, param_type);
+  if (!ap_value.has_value()) {
+    return nullptr;
   }
 
-  // TODO: support additional parameter types.
-  return nullptr;
+  auto* opaque_value_expr = new (context.ast_context()) clang::OpaqueValueExpr(
+      clang::SourceLocation(), param_type, clang::VK_PRValue);
+
+  return clang::ConstantExpr::Create(context.ast_context(), opaque_value_expr,
+                                     *ap_value);
 }
 
 auto EvalCppCall(Context& context, SemIR::LocId loc_id,
