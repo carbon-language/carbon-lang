@@ -67,7 +67,7 @@ constexpr int f(int a) {
 }
 ''';
 
-// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+8]]:19: error: failed to evaluate constexpr/consteval function call as a constant [CppConstexprEval]
+// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+8]]:19: error: failed to evaluate consteval function call as a constant [CppConstexprEval]
 // CHECK:STDERR: let a: array(i32, Cpp.f(5)) = (1, 2, 3);
 // CHECK:STDERR:                   ^~~~~~~~
 // CHECK:STDERR:

@@ -6,6 +6,7 @@
 
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -127,10 +128,12 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   clang::Expr::EvalResult eval_result;
   if (!call_expr->EvaluateAsConstantExpr(eval_result, context.ast_context())) {
     // TODO: improve this diagnostic with information from `eval_result`.
-    CARBON_DIAGNOSTIC(
-        CppConstexprEval, Error,
-        "failed to evaluate constexpr/consteval function call as a constant");
-    context.emitter().Emit(loc_id, CppConstexprEval);
+    CARBON_DIAGNOSTIC(CppConstexprEval, Error,
+                      "failed to evaluate {0:constexpr|consteval} function "
+                      "call as a constant",
+                      Diagnostics::BoolAsSelect);
+    context.emitter().Emit(loc_id, CppConstexprEval,
+                           function_decl->isConsteval());
     return SemIR::ConstantId::NotConstant;
   }
   return MapAPValueToConstant(context, loc_id, eval_result.Val,
