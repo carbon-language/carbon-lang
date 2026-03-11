@@ -15,7 +15,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -119,5 +119,5 @@ jobs:
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
             --linkopt=-Xlinker `
-            "--linkopt=~/llvm/lib/clang/19/lib/windows/clang_rt.builtins-x86_64.lib" `
+            "--linkopt=$env:USERPROFILE/llvm/lib/clang/19/lib/windows/clang_rt.builtins-x86_64.lib" `
             --test_output=errors
