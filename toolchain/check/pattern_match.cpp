@@ -231,12 +231,9 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
 }
 
 // Returns the kind of conversion to perform on the scrutinee when matching the
-// given pattern. `form_kind` is the form of the pattern, if known; it only
-// affects the behavior of `FormBindingPattern` and `FormParamPattern`,
-// and it must be set in the `FormParamPattern` case.
-static auto ConversionKindFor(
-    Context& context, SemIR::Inst pattern, MatchContext::WorkItem entry,
-    std::optional<SemIR::InstKind> form_kind = std::nullopt)
+// given pattern.
+static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
+                              MatchContext::WorkItem entry)
     -> ConversionTarget::Kind {
   CARBON_KIND_SWITCH(pattern) {
     case SemIR::OutParamPattern::Kind:
@@ -252,15 +249,13 @@ static auto ConversionKindFor(
     case SemIR::ValueParamPattern::Kind:
       return ConversionTarget::Value;
     case CARBON_KIND(SemIR::FormBindingPattern form_binding_pattern): {
-      if (!form_kind) {
-        auto form_id = context.entity_names()
-                           .Get(form_binding_pattern.entity_name_id)
-                           .form_id;
-        auto form_inst_id = context.constant_values().GetInstId(form_id);
-        form_kind = context.insts().Get(form_inst_id).kind();
-      }
+      auto form_id = context.entity_names()
+                         .Get(form_binding_pattern.entity_name_id)
+                         .form_id;
+      auto form_inst_id = context.constant_values().GetInstId(form_id);
+      auto form_inst = context.insts().Get(form_inst_id);
 
-      switch (*form_kind) {
+      switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
           context.TODO(entry.pattern_id, "Support local initializing forms");
           [[fallthrough]];
@@ -272,12 +267,15 @@ static auto ConversionKindFor(
         case SemIR::ValueForm::Kind:
           return ConversionTarget::Value;
         default:
-          CARBON_FATAL("Unexpected form kind {0}", form_kind);
+          CARBON_FATAL("Unexpected form {0}", form_inst);
       }
     }
-    case SemIR::FormParamPattern::Kind: {
-      CARBON_CHECK(form_kind);
-      switch (*form_kind) {
+    case CARBON_KIND(SemIR::FormParamPattern form_param_pattern): {
+      auto form_inst_id =
+          context.constant_values().GetInstId(form_param_pattern.form_id);
+      auto form_inst = context.insts().Get(form_inst_id);
+
+      switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
           return ConversionTarget::NoOp;
         case SemIR::RefForm::Kind:
@@ -291,7 +289,7 @@ static auto ConversionKindFor(
         case SemIR::ValueForm::Kind:
           return ConversionTarget::Value;
         default:
-          CARBON_FATAL("Unexpected form kind {0}", form_kind);
+          CARBON_FATAL("Unexpected form {0}", form_inst);
       }
     }
     default:
@@ -346,13 +344,10 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 }
 
 // Returns the inst kind to use for the parameter corresponding to the given
-// parameter pattern. If the pattern is a `FormParamPattern`, `form_kind`
-// must be the pattern's form; otherwise it is ignored.
-static auto ParamKindFor(
-    Context& context, SemIR::Inst param_pattern, MatchContext::WorkItem entry,
-    std::optional<SemIR::InstKind> form_kind = std::nullopt)
-    -> SemIR::InstKind {
-  switch (param_pattern.kind()) {
+// parameter pattern.
+static auto ParamKindFor(Context& context, SemIR::Inst param_pattern,
+                         MatchContext::WorkItem entry) -> SemIR::InstKind {
+  CARBON_KIND_SWITCH(param_pattern) {
     case SemIR::OutParamPattern::Kind:
       return SemIR::OutParam::Kind;
     case SemIR::RefParamPattern::Kind:
@@ -360,9 +355,11 @@ static auto ParamKindFor(
       return SemIR::RefParam::Kind;
     case SemIR::ValueParamPattern::Kind:
       return SemIR::ValueParam::Kind;
-    case SemIR::FormParamPattern::Kind:
-      CARBON_CHECK(form_kind);
-      switch (*form_kind) {
+    case CARBON_KIND(SemIR::FormParamPattern form_param_pattern): {
+      auto form_inst_id =
+          context.constant_values().GetInstId(form_param_pattern.form_id);
+      auto form_inst = context.insts().Get(form_inst_id);
+      switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
         case SemIR::RefForm::Kind:
           return SemIR::RefParam::Kind;
@@ -373,8 +370,9 @@ static auto ParamKindFor(
         case SemIR::ValueForm::Kind:
           return SemIR::ValueParam::Kind;
         default:
-          CARBON_FATAL("Unexpected form kind {0}", form_kind);
+          CARBON_FATAL("Unexpected form {0}", form_inst);
       }
+    }
     default:
       CARBON_FATAL("Unexpected param pattern kind: {0}", param_pattern);
   }
@@ -383,26 +381,15 @@ static auto ParamKindFor(
 auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::AnyParamPattern param_pattern,
                                       WorkItem entry) -> void {
-  // If this is a FormParamPattern, determine its form.
-  std::optional<SemIR::InstKind> form_kind;
+  // If the form is initializing, match this as a `VarPattern` before matching
+  // it as a parameter pattern.
   if (param_pattern.kind == SemIR::FormParamPattern::Kind) {
-    if (param_pattern.subpattern_id == SemIR::ErrorInst::InstId) {
-      form_kind = SemIR::ErrorInst::Kind;
-    } else {
-      auto binding_pattern = context.insts().GetAs<SemIR::FormBindingPattern>(
-          param_pattern.subpattern_id);
-      auto form_id =
-          context.entity_names().Get(binding_pattern.entity_name_id).form_id;
-      auto form_inst_id = context.constant_values().GetInstId(form_id);
-      form_kind = context.insts().Get(form_inst_id).kind();
-
-      // If the form is initializing, match this as a `VarPattern` before
-      // matching it as a parameter pattern.
-      if (form_kind == SemIR::InitForm::Kind) {
-        auto new_scrutinee_id =
-            DoEmitVarPatternMatchImpl(context, param_pattern.type_id, entry);
-        entry.scrutinee_id = new_scrutinee_id;
-      }
+    auto form_inst_id =
+        context.constant_values().GetInstId(param_pattern.form_id);
+    if (context.insts().Get(form_inst_id).kind() == SemIR::InitForm::Kind) {
+      auto new_scrutinee_id =
+          DoEmitVarPatternMatchImpl(context, param_pattern.type_id, entry);
+      entry.scrutinee_id = new_scrutinee_id;
     }
   }
 
@@ -418,8 +405,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                 context.sem_ir(), callee_specific_id_, entry.pattern_id));
         call_args_.push_back(Convert(
             context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-            {.kind =
-                 ConversionKindFor(context, param_pattern, entry, form_kind),
+            {.kind = ConversionKindFor(context, param_pattern, entry),
              .type_id = scrutinee_type_id}));
       }
       // Do not traverse farther, because the caller side of the pattern
@@ -428,7 +414,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     }
     case MatchKind::Callee: {
       SemIR::AnyParam param = {
-          .kind = ParamKindFor(context, param_pattern, entry, form_kind),
+          .kind = ParamKindFor(context, param_pattern, entry),
           .type_id =
               ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
           .index = SemIR::CallParamIndex(call_params_.size()),

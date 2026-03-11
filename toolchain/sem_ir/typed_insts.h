@@ -788,6 +788,7 @@ struct FormParamPattern {
 
   TypeId type_id;
   InstId subpattern_id;
+  ConstantId form_id;
 };
 
 // The type `Core.Form`.

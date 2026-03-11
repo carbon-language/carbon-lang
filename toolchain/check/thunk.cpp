@@ -127,12 +127,13 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   }
 
   // Rebuild parameter.
-  if (param) {
+  if (param && new_pattern_id != SemIR::ErrorInst::InstId) {
     new_pattern_id = RebuildPatternInst<SemIR::AnyParamPattern>(
         context, param_id,
         {.kind = param->kind,
          .type_id = get_type(param_id),
-         .subpattern_id = new_pattern_id});
+         .subpattern_id = new_pattern_id,
+         .form_id = SemIR::ConstantId::None});
   }
 
   return new_pattern_id;
