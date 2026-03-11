@@ -151,66 +151,83 @@ fn F(Form:! Core.Form()) {
   let y:? Form = 0;
 }
 
-// --- fail_todo_ref_return_form.carbon
+// --- ref_return_form.carbon
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_ref_return_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
-// CHECK:STDERR: fn F() ->? form(ref i32);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F() ->? form(ref i32);
 //@dump-sem-ir-end
 
 fn G() {
   //@dump-sem-ir-begin
-  let ref x: i32 = F();
+  let ref _: i32 = F();
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_var_return_form.carbon
+// --- var_return_form.carbon
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_var_return_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
-// CHECK:STDERR: fn F() ->? form(var i32);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F() ->? form(var i32);
 //@dump-sem-ir-end
 
 fn G() {
   //@dump-sem-ir-begin
-  let var x: i32 = F();
+  let var _: i32 = F();
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_val_return_form.carbon
+// --- val_return_form.carbon
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_val_return_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
-// CHECK:STDERR: fn F() ->? form(val i32);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F() ->? form(val i32);
 //@dump-sem-ir-end
 
 fn G() {
   //@dump-sem-ir-begin
-  let x: i32 = F();
+  let _: i32 = F();
   //@dump-sem-ir-end
 }
 
 // --- fail_return_form_not_form.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support ->?` [SemanticsTodo]
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
 // CHECK:STDERR: fn F() ->? i32;
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:            ^~~
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:12: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F() ->? i32;
+// CHECK:STDERR:            ^~~
 // CHECK:STDERR:
 fn F() ->? i32;
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:12: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR: fn F() ->? ref i32;
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
+// CHECK:STDERR: fn F() ->? ref i32;
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+4]]:12: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F() ->? ref i32;
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
 fn F() ->? ref i32;
+
+// -- fail_todo_form_generic_return.carbon
+
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+11]]:26: error: semantics TODO: `Support symbolic return forms` [SemanticsTodo]
+// CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
+// CHECK:STDERR:                          ^~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
+// CHECK:STDERR: fn F(Form:! Core.Form()) ->? Form;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE-23]]:1: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
+// CHECK:STDERR: fn F() ->? i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(Form:! Core.Form()) ->? Form;
 
 // CHECK:STDOUT: --- ref_form_param.carbon
 // CHECK:STDOUT:
@@ -411,9 +428,114 @@ fn F() ->? ref i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_ref_return_form.carbon
+// CHECK:STDOUT: --- ref_return_form.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_var_return_form.carbon
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.1da: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_val_return_form.carbon
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc4: Core.Form = ref_form %i32 [concrete = constants.%.1da]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> ref %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.7ce = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %_: ref %i32 = ref_binding _, %F.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- var_return_form.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.ff5: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc4: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> out %return.param: %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.7ce = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.7ce = var_pattern %_.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %_.var: ref %i32 = var %_.var_patt
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
+// CHECK:STDOUT:   assign %_.var, %F.call
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %_: ref %i32 = ref_binding _, %_.var
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- val_return_form.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.754: Core.Form = value_form %i32 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc4: Core.Form = value_form %i32 [concrete = constants.%.754]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> val %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.7ce = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: %i32 = call %F.ref()
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %_: %i32 = value_binding _, %F.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

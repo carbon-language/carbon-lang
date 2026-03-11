@@ -97,8 +97,8 @@ impl u32 as ImplicitAs(CppCompat.ULong32) {
 }
 
 // TODO: ImplicitAs from ULong32 to UInt(N) if N > 32.
-final impl CppCompat.ULong32 as ImplicitAs(u32) {
-  fn Convert[self: Self]() -> u32 = "int.convert";
+final impl CppCompat.ULong32 as ImplicitAs(u64) {
+  fn Convert[self: Self]() -> u64 = "int.convert";
 }
 
 impl IntLiteral() as ImplicitAs(CppCompat.LongLong64) {
@@ -146,8 +146,8 @@ impl u64 as ImplicitAs(CppCompat.ULongLong64) {
 }
 
 // TODO: ImplicitAs from ULongLong64 to UInt(N) if N > 64.
-final impl CppCompat.ULongLong64 as ImplicitAs(u64) {
-  fn Convert[self: Self]() -> u64 = "int.convert";
+final impl CppCompat.ULongLong64 as ImplicitAs(u128) {
+  fn Convert[self: Self]() -> u128 = "int.convert";
 }
 
 // TODO: As from Long32 to Int(N) if N < 32.

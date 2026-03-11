@@ -279,6 +279,7 @@ filegroup(
     srcs = [
         "@llvm-project//libcxxabi:libcxxabi_hdrs",
         "@llvm-project//libcxxabi:libcxxabi_srcs",
+        "@llvm-project//libcxxabi:libcxxabi_textual_srcs",
     ],
 )
 

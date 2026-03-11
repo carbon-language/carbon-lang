@@ -82,26 +82,66 @@
 #'a'#
 // CHECK:STDOUT:   - { index:  7, kind: "CharLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "#'a'#", has_leading_space: true }
 
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: unexpected `#` before character literal [CharLiteralRaw]
+// CHECK:STDERR: #'\'#
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+#'\'#
+// CHECK:STDOUT:   - { index:  8, kind: "CharLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "#'\\'#", has_leading_space: true }
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+8]]:1: error: unexpected `#` before character literal [CharLiteralRaw]
+// CHECK:STDERR: ##''##
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: empty character literal [CharLiteralEmpty]
+// CHECK:STDERR: ##''##
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+##''##
+// CHECK:STDOUT:   - { index:  9, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "##''##", has_leading_space: true }
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+8]]:1: error: unexpected `#` before character literal [CharLiteralRaw]
+// CHECK:STDERR: #'foo\'#
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: too many characters [CharLiteralOverflow]
+// CHECK:STDERR: #'foo\'#
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+#'foo\'#
+// CHECK:STDOUT:   - { index: 10, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "#'foo\\'#", has_leading_space: true }
+
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+8]]:1: error: unexpected `#` before character literal [CharLiteralRaw]
+// CHECK:STDERR: ##'#\'##
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: too many characters [CharLiteralOverflow]
+// CHECK:STDERR: ##'#\'##
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+##'#\'##
+// CHECK:STDOUT:   - { index: 11, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "##'#\\'##", has_leading_space: true }
+
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR: '
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 '
-// CHECK:STDOUT:   - { index:  8, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 12, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'", has_leading_space: true }
 
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR: '\'
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 '\'
-// CHECK:STDOUT:   - { index:  9, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\'", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 13, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\'", has_leading_space: true }
 
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR: '\
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 '\
-// CHECK:STDOUT:   - { index: 10, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 14, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\", has_leading_space: true }
 
 // This literal contains a raw tab character.
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: whitespace other than plain space must be expressed with an escape sequence in a string literal [InvalidHorizontalWhitespaceInString]
@@ -109,4 +149,4 @@
 // CHECK:STDERR:  ^~~~
 // CHECK:STDERR:
 '	'
-// CHECK:STDOUT:   - { index: 11, kind: "CharLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\t'", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 15, kind: "CharLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\t'", has_leading_space: true }

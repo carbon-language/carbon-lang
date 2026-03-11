@@ -519,6 +519,26 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
                   ref_form.type_component_inst_id));
       return SetReturnByReference(return_type_id);
     }
+    case CARBON_KIND(SemIR::ValueForm val_form): {
+      auto return_type_id =
+          context_.sem_ir().types().GetTypeIdForTypeConstantId(
+              SemIR::GetConstantValueInSpecific(
+                  context_.sem_ir(), specific_id_,
+                  val_form.type_component_inst_id));
+      switch (
+          SemIR::ValueRepr::ForType(context_.sem_ir(), return_type_id).kind) {
+        case SemIR::ValueRepr::Unknown:
+        case SemIR::ValueRepr::Dependent:
+          return Abort();
+        case SemIR::ValueRepr::None:
+          return SetReturnByCopy(SemIR::TypeId::None);
+        case SemIR::ValueRepr::Copy:
+          return SetReturnByCopy(return_type_id);
+        case SemIR::ValueRepr::Pointer:
+        case SemIR::ValueRepr::Custom:
+          return SetReturnByReference(return_type_id);
+      }
+    }
     default:
       CARBON_FATAL("Unexpected inst kind: {0}", return_form_inst);
   }
@@ -526,12 +546,12 @@ auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
 
 auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
     SemIR::CallParamIndex index) -> bool {
+  const auto& sem_ir = context_.sem_ir();
   auto param_pattern_id = call_param_pattern_ids_[index.index];
-  auto param_pattern = context_.sem_ir().insts().Get(param_pattern_id);
+  auto param_pattern = sem_ir.insts().Get(param_pattern_id);
   auto param_type_id = ExtractScrutineeType(
-      context_.sem_ir(),
-      SemIR::GetTypeOfInstInSpecific(context_.sem_ir(), specific_id_,
-                                     param_pattern_id));
+      sem_ir,
+      SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id_, param_pattern_id));
 
   // Returns the appropriate LoweredTypes for reference-like parameters.
   auto ref_lowered_types = [&]() -> LoweredTypes {
@@ -545,13 +565,42 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
       !param_type_id.AsConstantId().is_symbolic(),
       "Found symbolic type id after resolution when lowering type {0}.",
       param_pattern.type_id());
-  CARBON_KIND_SWITCH(param_pattern) {
+
+  auto param_kind = param_pattern.kind();
+
+  // Treat a form parameter pattern like the kind of param pattern that
+  // corresponds to its form.
+  if (auto form_param_pattern =
+          param_pattern.TryAs<SemIR::FormParamPattern>()) {
+    auto form_binding_pattern = sem_ir.insts().GetAs<SemIR::FormBindingPattern>(
+        form_param_pattern->subpattern_id);
+    auto form_id =
+        sem_ir.entity_names().Get(form_binding_pattern.entity_name_id).form_id;
+    CARBON_CHECK(!form_id.is_symbolic(), "TODO");
+    auto form_inst_id = sem_ir.constant_values().GetInstId(form_id);
+    auto form_kind = sem_ir.insts().Get(form_inst_id).kind();
+    switch (form_kind) {
+      case SemIR::InitForm::Kind:
+        param_kind = SemIR::VarParamPattern::Kind;
+        break;
+      case SemIR::RefForm::Kind:
+        param_kind = SemIR::RefParamPattern::Kind;
+        break;
+      case SemIR::ValueForm::Kind:
+        param_kind = SemIR::ValueParamPattern::Kind;
+        break;
+      default:
+        CARBON_FATAL("Unexpected kind {0} for form inst", form_kind);
+    }
+  }
+
+  switch (param_kind) {
     case SemIR::RefParamPattern::Kind:
     case SemIR::VarParamPattern::Kind: {
       return AddLoweredParam(index, param_pattern_id, ref_lowered_types());
     }
     case SemIR::OutParamPattern::Kind: {
-      switch (SemIR::InitRepr::ForType(context_.sem_ir(), param_type_id).kind) {
+      switch (SemIR::InitRepr::ForType(sem_ir, param_type_id).kind) {
         case SemIR::InitRepr::InPlace:
           return AddLoweredParam(index, param_pattern_id, ref_lowered_types());
         case SemIR::InitRepr::ByCopy:
@@ -564,8 +613,7 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
       }
     }
     case SemIR::ValueParamPattern::Kind: {
-      switch (auto value_rep =
-                  SemIR::ValueRepr::ForType(context_.sem_ir(), param_type_id);
+      switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir, param_type_id);
               value_rep.kind) {
         case SemIR::ValueRepr::Unknown:
           return Abort();

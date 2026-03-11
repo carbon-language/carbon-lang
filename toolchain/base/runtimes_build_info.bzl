@@ -41,20 +41,36 @@ BUILTINS_TEXTUAL_SRCS_FILEGROUPS = [
     "@llvm-project//compiler-rt:builtins_x86_64_textual_srcs",
 ]
 
-RUNTIMES_FILEGROUPS = {
-    "libcxx_linux": "@llvm-project//libcxx:libcxx_linux_srcs",
-    "libcxx_macos": "@llvm-project//libcxx:libcxx_macos_srcs",
-    "libcxx_win32": "@llvm-project//libcxx:libcxx_win32_srcs",
-    "libcxxabi": "@llvm-project//libcxxabi:libcxxabi_srcs",
-    "libunwind": "@llvm-project//libunwind:libunwind_srcs",
-}
+RUNTIMES_HDRS_FILEGROUPS = [
+    "@llvm-project//libc:libcxx_shared_headers_hdrs",
+    "@llvm-project//libcxx:libcxx_hdrs",
+    "@llvm-project//libcxxabi:libcxxabi_hdrs",
+    "@llvm-project//libunwind:libunwind_hdrs",
+]
+
+RUNTIMES_SRCS_FILEGROUPS = [
+    "@llvm-project//libcxx:libcxx_linux_srcs",
+    "@llvm-project//libcxx:libcxx_macos_srcs",
+    "@llvm-project//libcxx:libcxx_win32_srcs",
+    "@llvm-project//libcxxabi:libcxxabi_srcs",
+    "@llvm-project//libunwind:libunwind_srcs",
+]
+
+RUNTIMES_TEXTUAL_SRCS_FILEGROUPS = [
+    "@llvm-project//libcxxabi:libcxxabi_textual_srcs",
+]
 
 RUNTIMES_PREFIXES = {
-    "libcxx_linux": "libcxx/",
-    "libcxx_macos": "libcxx/",
-    "libcxx_win32": "libcxx/",
-    "libcxxabi": "libcxxabi/",
-    "libunwind": "libunwind/",
+    "libcxx_hdrs": "libcxx/",
+    "libcxx_linux_srcs": "libcxx/",
+    "libcxx_macos_srcs": "libcxx/",
+    "libcxx_shared_headers_hdrs": "libc/internal/",
+    "libcxx_win32_srcs": "libcxx/",
+    "libcxxabi_hdrs": "libcxxabi/",
+    "libcxxabi_srcs": "libcxxabi/",
+    "libcxxabi_textual_srcs": "libcxxabi/",
+    "libunwind_hdrs": "libunwind/",
+    "libunwind_srcs": "libunwind/",
 }
 
 def _get_name(target):
@@ -119,12 +135,15 @@ def _get_substitutions(ctx):
     } | {
         # Other runtimes are installed under separate directories named the
         # same as their key.
-        k.upper() + "_SRCS": _get_paths(
-            key_attr(k),
+        name.upper(): _get_paths(
+            key_attr(name),
             _runtimes_path,
-            RUNTIMES_PREFIXES[k],
+            RUNTIMES_PREFIXES[name],
         )
-        for k in RUNTIMES_FILEGROUPS.keys()
+        for name in [_get_name(g) for g in (
+            RUNTIMES_HDRS_FILEGROUPS + RUNTIMES_SRCS_FILEGROUPS +
+            RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
+        )]
     }
 
 def _generate_runtimes_build_info_h_rule(ctx):
@@ -143,10 +162,13 @@ generate_runtimes_build_info_h = rule(
         for k, v in CRT_FILES.items()
     } | {
         "_" + _get_name(g): attr.label_list(default = [g], allow_files = True)
-        for g in BUILTINS_SRCS_FILEGROUPS + BUILTINS_TEXTUAL_SRCS_FILEGROUPS
-    } | {
-        "_" + k: attr.label_list(default = [v], allow_files = True)
-        for k, v in RUNTIMES_FILEGROUPS.items()
+        for g in (
+            BUILTINS_SRCS_FILEGROUPS +
+            BUILTINS_TEXTUAL_SRCS_FILEGROUPS +
+            RUNTIMES_HDRS_FILEGROUPS +
+            RUNTIMES_SRCS_FILEGROUPS +
+            RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
+        )
     } | {
         "_template_file": attr.label(
             default = "runtimes_build_info.tpl.h",

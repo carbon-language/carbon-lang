@@ -656,10 +656,8 @@ fn B() {
 // CHECK:STDOUT:   %.loc12_6.3: init %C to %.loc12_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc12_6.4: ref %C = temporary %.loc12_6.2, %.loc12_6.3
 // CHECK:STDOUT:   %.loc12_8.1: ref %C = converted %.loc12_6.1, %.loc12_6.4
-// CHECK:STDOUT:   %I.facet.loc12_12.1: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet.0e1]
-// CHECK:STDOUT:   %.loc12_12.1: %I.type.5f7 = converted constants.%C, %I.facet.loc12_12.1 [concrete = constants.%I.facet.0e1]
-// CHECK:STDOUT:   %I.facet.loc12_12.2: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet.0e1]
-// CHECK:STDOUT:   %.loc12_12.2: %I.type.5f7 = converted constants.%C, %I.facet.loc12_12.2 [concrete = constants.%I.facet.0e1]
+// CHECK:STDOUT:   %I.facet: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet.0e1]
+// CHECK:STDOUT:   %.loc12_12: %I.type.5f7 = converted constants.%C, %I.facet [concrete = constants.%I.facet.0e1]
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A.ref, @A(constants.%I.facet.0e1) [concrete = constants.%A.specific_fn]
 // CHECK:STDOUT:   %.loc12_8.2: %C = acquire_value %.loc12_8.1
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.2)
