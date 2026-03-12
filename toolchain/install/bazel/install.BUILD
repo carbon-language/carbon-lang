@@ -6,9 +6,16 @@ load("//bazel:carbon_cc_toolchain_config.bzl", "carbon_cc_toolchain_suite")
 
 package(default_visibility = ["//visibility:public"])
 
+constraint_setting(name = "runtimes_build")
+
+constraint_value(
+    name = "is_runtimes_build",
+    constraint_setting = ":runtimes_build",
+)
+
 carbon_cc_toolchain_suite(
-    name = "carbon_cc_toolchain",
-    configs = [
+    name = "carbon",
+    platforms = [
         ("linux", "aarch64"),
         ("linux", "x86_64"),
         ("freebsd", "x86_64"),

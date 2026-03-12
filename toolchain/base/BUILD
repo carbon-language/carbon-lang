@@ -8,6 +8,10 @@ load("runtimes_build_info.bzl", "generate_runtimes_build_info_cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+    "runtimes_build_vars.tpl.bzl",
+])
+
 cc_library(
     name = "block_value_store",
     hdrs = ["block_value_store.h"],

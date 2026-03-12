@@ -1,7 +1,7 @@
-Commit ID: 959284a466ca392a5ccd501cf1c1622d1f423c06
+Commit ID: d3b82534c2546a892a27856672ed95a7db97dba3
 Change ID: zyxuvzwmzsnorloyuupuurxkppkoplnw
 Author   : Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:06)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-08 07:43:17)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-11 07:54:02)
 
     Improve compiler-rt build structure and export compilation info
 
@@ -12,7 +12,7 @@ Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-08 07:43:17)
     compiling these source files.
 
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
-index 4ded226174..0c3a7daaee 100644
+index 4ded226174..3b5b8fc787 100644
 --- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 @@ -3,6 +3,7 @@
@@ -98,12 +98,14 @@ index 4ded226174..0c3a7daaee 100644
      ] + [
          AARCH64_OUTLINE_ATOMICS_FMT.format(pat, size, model)
          for (pat, size, model) in AARCH64_OUTLINE_ATOMICS
-@@ -328,10 +360,18 @@
+@@ -328,10 +360,20 @@
              "lib/builtins/aarch64/lse.S",
              # These files are provided by SME-specific file groups above.
              "lib/builtins/aarch64/*sme*",
 +            # This is only used with MinGW.
 +            "lib/builtins/aarch64/chkstk.S",
++            # TODO: Remove this once we have a way of accessing `SipHash.h`.
++            "lib/builtins/aarch64/emupac.cpp",
          ],
      ),
  )
@@ -117,7 +119,7 @@ index 4ded226174..0c3a7daaee 100644
  BUILTINS_ARM_VFP_SRCS_PATTERNS = [
      "lib/builtins/arm/*vfp*.S",
      "lib/builtins/arm/*vfp*.c",
-@@ -348,9 +388,19 @@
+@@ -348,9 +390,19 @@
      ),
  )
  
@@ -138,7 +140,7 @@ index 4ded226174..0c3a7daaee 100644
      srcs = glob(
          [
              "lib/builtins/arm/*.S",
-@@ -359,14 +409,52 @@
+@@ -359,14 +411,52 @@
              "lib/builtins/arm/*.h",
          ],
          allow_empty = True,
@@ -196,7 +198,7 @@ index 4ded226174..0c3a7daaee 100644
          [
              "lib/builtins/ppc/*.S",
              "lib/builtins/ppc/*.c",
-@@ -377,17 +465,64 @@
+@@ -377,17 +467,64 @@
      ),
  )
  
@@ -272,7 +274,7 @@ index 4ded226174..0c3a7daaee 100644
  )
  
  # Source files for the x86 architecture specific builtins (both 32-bit and
-@@ -402,8 +537,14 @@
+@@ -402,8 +539,14 @@
  
  # Source files for the x86-64 architecture specific builtins.
  filegroup(
@@ -289,7 +291,7 @@ index 4ded226174..0c3a7daaee 100644
          [
              "lib/builtins/x86_64/*.S",
              "lib/builtins/x86_64/*.c",
-@@ -411,13 +552,29 @@
+@@ -411,13 +554,29 @@
              "lib/builtins/x86_64/*.h",
          ],
          allow_empty = True,
@@ -321,7 +323,7 @@ index 4ded226174..0c3a7daaee 100644
          [
              "lib/builtins/i386/*.S",
              "lib/builtins/i386/*.c",
-@@ -429,28 +586,16 @@
+@@ -429,28 +588,16 @@
              # This file is used for both i386 and x86_64 and so included in the
              # broader x86 sources.
              "lib/builtins/i386/fp_mode.c",

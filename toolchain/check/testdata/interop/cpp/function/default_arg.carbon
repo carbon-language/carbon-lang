@@ -197,6 +197,8 @@ fn Call() {
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
+// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -242,6 +244,13 @@ fn Call() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.46b = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,9 +408,14 @@ fn Call() {
 // CHECK:STDOUT:   %.loc12_7.4: ref %X = value_as_ref %.loc12_7.3
 // CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc12_7.4
 // CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc12_19.2, %.loc12_22.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %X.Op.bound.loc12: <bound method> = bound_method %.loc12_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc12: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_7.2, %Op.ref.loc12
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc12: init %empty_tuple.type = call %X.cpp_destructor.bound.loc12(%.loc12_7.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   %X.Op.bound.loc10: <bound method> = bound_method %.loc10_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc10: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_7.2, %Op.ref.loc10
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc10: init %empty_tuple.type = call %X.cpp_destructor.bound.loc10(%.loc10_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -475,6 +489,8 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
+// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -625,6 +641,13 @@ fn Call() {
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.46b = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -777,9 +800,20 @@ fn Call() {
 // CHECK:STDOUT:   %.loc13_7.4: ref %X = value_as_ref %.loc13_7.3
 // CHECK:STDOUT:   %addr: %ptr.1f9 = addr_of %.loc13_7.4
 // CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc13_19.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   %X.Op.decl: %X.Op.type = fn_decl @X.Op [concrete = constants.%X.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.46b = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc13: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_7.2, %Op.ref.loc13
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc13: init %empty_tuple.type = call %X.cpp_destructor.bound.loc13(%.loc13_7.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   %X.Op.bound.loc11: <bound method> = bound_method %.loc11_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc11: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc11: <bound method> = bound_method %.loc11_7.2, %Op.ref.loc11
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc11: init %empty_tuple.type = call %X.cpp_destructor.bound.loc11(%.loc11_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -810,6 +844,15 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.cpp_destructor(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @X.Op(%self.param: ref %X) [thunk imports.%X.cpp_destructor.decl] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Op.ref: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %self.ref: ref %X = name_ref self, %self.param
+// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.ref, %Op.ref
+// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%self.ref)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -829,8 +872,11 @@ fn Call() {
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.type: type = cpp_overload_set_type @X.D.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %pattern_type.46b: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.Op.type: type = fn_type @X.Op [concrete]
+// CHECK:STDOUT:   %X.Op: %X.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -846,6 +892,13 @@ fn Call() {
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
+// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.46b = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.46b = ref_param_pattern %self.patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
@@ -881,9 +934,14 @@ fn Call() {
 // CHECK:STDOUT:   %.loc76_7.2: ref %X = temporary %.loc76_5.2, %.loc76_7.1
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc76: <bound method> = bound_method %.loc76_7.2, %D.ref
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc76: <bound method> = bound_method %.loc76_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %X.Op.bound.loc76: <bound method> = bound_method %.loc76_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc76: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc76: <bound method> = bound_method %.loc76_7.2, %Op.ref.loc76
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc76: init %empty_tuple.type = call %X.cpp_destructor.bound.loc76(%.loc76_7.2)
-// CHECK:STDOUT:   %X.cpp_destructor.bound.loc56: <bound method> = bound_method %.loc56_7.2, constants.%X.cpp_destructor
+// CHECK:STDOUT:   %X.Op.bound.loc56: <bound method> = bound_method %.loc56_7.2, constants.%X.Op
+// CHECK:STDOUT:   %Op.ref.loc56: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
+// CHECK:STDOUT:   %X.cpp_destructor.bound.loc56: <bound method> = bound_method %.loc56_7.2, %Op.ref.loc56
 // CHECK:STDOUT:   %X.cpp_destructor.call.loc56: init %empty_tuple.type = call %X.cpp_destructor.bound.loc56(%.loc56_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
