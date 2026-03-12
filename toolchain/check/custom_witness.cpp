@@ -210,9 +210,6 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   // Fill in the witness table.
   for (const auto& [assoc_entity_id, value_id] :
        llvm::zip_equal(assoc_entities, values)) {
-    CARBON_DCHECK(value_id != SemIR::InstId::None);
-    CARBON_DCHECK(value_id != SemIR::ErrorInst::InstId);
-
     LoadImportRef(context, assoc_entity_id);
 
     // Build a witness with the current contents of the witness table. This will

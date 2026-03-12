@@ -21,13 +21,13 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 
 // Significant interfaces in `Core` which correspond to language features and
 // can have custom witnesses.
-enum class CoreInterface : std::int8_t {
-  Copy = 1 << 0,
-  Destroy = 1 << 1,
-  IntFitsIn = 1 << 2,
-  CppUnsafeDeref = 1 << 3,
+enum class CoreInterface {
+  Copy,
+  Destroy,
+  IntFitsIn,
+  CppUnsafeDeref,
 
-  Unknown = -1,
+  Unknown,
 };
 
 // Given an interface, returns the corresponding enum if it's covered by

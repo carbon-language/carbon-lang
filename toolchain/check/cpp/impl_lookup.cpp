@@ -4,8 +4,6 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
-#include <type_traits>
-
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
@@ -59,39 +57,11 @@ struct DeclInfo {
 };
 }  // namespace
 
-// Describes the function that needs to be looked up.
-enum class AssociatedFunction : std::underlying_type_t<CoreInterface> {
-  // CoreInterface::Copy
-  CopyConstructor = llvm::to_underlying(CoreInterface::Copy),
-
-  // CoreInterface::Destroy
-  Destructor = llvm::to_underlying(CoreInterface::Destroy),
-
-  // CoreInterface::CppUnsafeDeref
-  CppUnsafeDeref = llvm::to_underlying(CoreInterface::CppUnsafeDeref),
-};
-
-// Maps a `CoreInterface` to its corresponding set of `CppCoreFunction`s.
-static auto GetCppAssociatedFunctions(const CoreInterface core_interface)
-    -> std::bitset<8> {
-  switch (core_interface) {
-    case CoreInterface::Copy:
-      return {llvm::to_underlying(AssociatedFunction::CopyConstructor)};
-    case CoreInterface::Destroy:
-      return {llvm::to_underlying(AssociatedFunction::Destructor)};
-    case CoreInterface::CppUnsafeDeref:
-      return {llvm::to_underlying(AssociatedFunction::CppUnsafeDeref)};
-    case CoreInterface::Unknown:
-    case CoreInterface::IntFitsIn:
-      CARBON_FATAL("No AssociatedFunction mapping for this interface");
-  }
-}
-
 // Retrieves a `core_interface`'s corresponding `NamedDecl`, also with the
 // expected number of parameters. May return a null decl to indicate nothing was
 // found, or nullopt to indicate `SemIR::ErrInst::InstId` should be propagated.
 auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
-                             AssociatedFunction associated_function,
+                             CoreInterface core_interface,
                              clang::CXXRecordDecl* class_decl)
     -> std::optional<DeclInfo> {
   auto& clang_sema = context.clang_sema();
@@ -99,15 +69,15 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
 
   // TODO: Handle other interfaces.
 
-  switch (associated_function) {
-    case AssociatedFunction::CopyConstructor:
+  switch (core_interface) {
+    case CoreInterface::Copy:
       return DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                           class_decl, clang::Qualifiers::Const),
                       .signature = {.num_params = 1}};
-    case AssociatedFunction::Destructor:
+    case CoreInterface::Destroy:
       return DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
                       .signature = {.num_params = 0}};
-    case AssociatedFunction::CppUnsafeDeref: {
+    case CoreInterface::CppUnsafeDeref: {
       auto candidates = class_decl->lookup(
           clang_sema.getASTContext().DeclarationNames.getCXXOperatorName(
               clang::OO_Star));
@@ -123,17 +93,20 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
       return DeclInfo{.decl = *candidates.begin(),
                       .signature = {.num_params = 0}};
     }
+    case CoreInterface::IntFitsIn:
+    case CoreInterface::Unknown:
+      CARBON_FATAL("shouldn't be called with `{}`", core_interface);
   }
 }
 
 static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
-                                      AssociatedFunction associated_function,
+                                      CoreInterface core_interface,
                                       clang::CXXRecordDecl* class_decl)
     -> SemIR::InstId {
   // TODO: This should provide `Destroy` for enums and other trivially
   // destructible types.
   auto decl_info =
-      GetDeclForCoreInterface(context, loc_id, associated_function, class_decl);
+      GetDeclForCoreInterface(context, loc_id, core_interface, class_decl);
   if (!decl_info.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
@@ -179,12 +152,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case CoreInterface::Copy:
     case CoreInterface::Destroy:
     case CoreInterface::CppUnsafeDeref: {
-      auto associated_functions = GetCppAssociatedFunctions(core_interface);
-      CARBON_CHECK(associated_functions.count() == 1);
-      witness_id = FindCppAssociatedFunction(
-          context, loc_id,
-          static_cast<AssociatedFunction>(associated_functions.to_ullong()),
-          class_decl);
+      witness_id = FindCppAssociatedFunction(context, loc_id, core_interface,
+                                             class_decl);
     } break;
     case CoreInterface::IntFitsIn:
       return SemIR::InstId::None;
