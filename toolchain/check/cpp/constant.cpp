@@ -129,7 +129,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   if (!call_expr->EvaluateAsConstantExpr(eval_result, context.ast_context())) {
     // TODO: improve this diagnostic with information from `eval_result`.
     CARBON_DIAGNOSTIC(CppConstexprEval, Error,
-                      "failed to evaluate {0:constexpr|consteval} function "
+                      "failed to evaluate {0:consteval|constexpr} function "
                       "call as a constant",
                       Diagnostics::BoolAsSelect);
     context.emitter().Emit(loc_id, CppConstexprEval,
