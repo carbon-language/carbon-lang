@@ -148,3 +148,37 @@ fn F(w:! W) {
   w as Y;
   w as NeedsY(w);
 }
+
+// --- access_through_previous_require.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z0:! type; }
+interface Y {}
+interface X {
+  let X0:! type;
+  fn XF() -> X0;
+}
+
+class P(T:! type) { adapt (); }
+
+constraint M {
+  require impls Z where .Z0 = {};
+  require impls Y;
+}
+constraint N {
+  require impls M;
+  // The facts from M travel back to here.
+  require impls X where .X0 = P(Self.(Z.Z0));
+}
+
+fn F(T:! N) -> T.(X.X0) { return T.(X.XF)(); }
+
+fn G() -> P({}) {
+  class C {}
+  impl C as Z where .Z0 = {} {}
+  impl C as Y {}
+  impl C as X where .X0 = P({}) {
+    fn XF() -> P({}) { return () as P({}); }
+  }
+  return F(C);
+}
