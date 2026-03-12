@@ -897,9 +897,7 @@ interface B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.550) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.550) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf.Self.binding.as_type.impls.Z.type.require(constants.%Self.550) {
 // CHECK:STDOUT:   %Self => constants.%Self.550

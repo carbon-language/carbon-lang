@@ -13,40 +13,115 @@
 // --- fail_self_doesnt_meet_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface Y2 {}
-interface Y(T:! Y2) {}
-// TODO: The error should be that Self does not implement Y2, not that it can't
-// be identified. We should allow identifying `Self`.
-//
-// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+10]]:37: error: facet type of value `Self` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
-// CHECK:STDERR: constraint W { extend require impls Y(Self); }
-// CHECK:STDERR:                                     ^~~~~~~
-// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
-// CHECK:STDERR: constraint W { extend require impls Y(Self); }
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: interface Y(T:! Y2) {}
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
-constraint W { extend require impls Y(Self); }
+interface Y {}
+interface NeedsY(T:! Y) {}
+constraint W {
+  // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:24: error: cannot convert type `Self` that implements `W` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   extend require impls NeedsY(Self);
+  // CHECK:STDERR:                        ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-5]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: interface NeedsY(T:! Y) {}
+  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:
+  extend require impls NeedsY(Self);
+}
 
-// --- fail_todo_self_meets_constraint.carbon
+// --- self_meets_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface Y2 {}
-interface Y(T:! Y2) {}
+interface Y {}
+interface NeedsY(T:! Y) {}
 constraint W {
-  // TODO: This should allow the next line to work, as Self should be known to impl Y2.
-  require impls Y2;
-  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE+10]]:24: error: facet type of value `Self` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
-  // CHECK:STDERR:   extend require impls Y(Self);
-  // CHECK:STDERR:                        ^~~~~~~
-  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-6]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
-  // CHECK:STDERR: constraint W {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: interface Y(T:! Y2) {}
-  // CHECK:STDERR:             ^
+  require impls Y;
+  extend require impls NeedsY(Self);
+}
+
+fn F(w:! W) {
+  w as Y;
+  w as NeedsY(w);
+}
+
+// --- self_meets_constraint_through_indirection.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface NeedsY(T:! Y) {}
+constraint GivesY {
+  require impls Y;
+}
+constraint W {
+  require impls GivesY;
+  extend require impls NeedsY(Self);
+}
+
+fn F(w:! W) {
+  w as Y;
+  w as NeedsY(w);
+}
+
+// --- self_in_constraint_specific_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface NeedsY(T:! Y) {}
+
+// All types impl Y. This requires an impl lookup to find a witness, and it will
+// be a symbolic witness for a symbolic self type.
+impl forall [T:! type] T as Y {}
+
+constraint W {
+  // Constructs a FacetValue of `Self as Y`, containing the impl lookup
+  // instruction as its witness, which will be part of the generic definition of
+  // this require.
+  require impls NeedsY(Self);
+}
+
+class C {}
+impl C as NeedsY(C) {}
+
+fn G(w:! W) {
+  // The witness of Z(Self) monomorphized by `w` must be the same as the witness
+  // of `Z(w)` constructed directly here in order for this to find `Z(w)` in the
+  // facet type `W`.
+  w as NeedsY(w);
+}
+
+fn F() {
+  // Further monomorphize `Z(w)` to `Z(C)`.
+  G(C);
+}
+
+// --- todo_fail_facet_access_type_of_self_meets_constraint.carbon
+library "[[@TEST_NAME]]";
+
+class C(T:! type) {}
+
+interface Y {}
+interface NeedsY(T:! Y) {}
+constraint W {
+  require C(Self) impls Y;
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:17: error: cannot convert type `C(Self)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   require impls NeedsY(C(Self));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-6]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: interface NeedsY(T:! Y) {}
+  // CHECK:STDERR:                  ^
   // CHECK:STDERR:
-  extend require impls Y(Self);
+  require impls NeedsY(C(Self));
+}
+
+fn F(w:! W) {
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(w) as Y;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  C(w) as Y;
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:11: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(w) as NeedsY(C(w));
+  // CHECK:STDERR:           ^~~~~~~~~~~~
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-22]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: interface NeedsY(T:! Y) {}
+  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:
+  C(w) as NeedsY(C(w));
 }
