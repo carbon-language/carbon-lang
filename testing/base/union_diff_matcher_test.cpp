@@ -37,7 +37,7 @@ TEST(UnionDiffMatcherTest, Matches) {
 
 TEST(UnionDiffMatcherTest, MismatchMissing) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 2:
+=== diff in expected elements 1 to 3 (1-based index):
   A
 - is equal to "B"
   C
@@ -49,7 +49,7 @@ TEST(UnionDiffMatcherTest, MismatchMissing) {
 
 TEST(UnionDiffMatcherTest, MismatchExtra) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 1:
+=== diff in expected elements 1 to 2 (1-based index):
   A
 + B
   C
@@ -60,7 +60,7 @@ TEST(UnionDiffMatcherTest, MismatchExtra) {
 
 TEST(UnionDiffMatcherTest, MismatchBoth) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 1:
+=== diff in expected elements 1 to 2 (1-based index):
   A
 - is equal to "C"
 + B
@@ -71,7 +71,7 @@ TEST(UnionDiffMatcherTest, MismatchBoth) {
 
 TEST(UnionDiffMatcherTest, MismatchMultiple) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 4:
+=== diff in expected elements 1 to 5 (1-based index):
   A
 - is equal to "B"
 + X
@@ -88,7 +88,7 @@ TEST(UnionDiffMatcherTest, MismatchMultiple) {
 
 TEST(UnionDiffMatcherTest, MismatchLongContext) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 1 to 7:
+=== diff in expected elements 2 to 8 (1-based index):
   1
   2
   3
@@ -107,7 +107,7 @@ TEST(UnionDiffMatcherTest, MismatchLongContext) {
 
 TEST(UnionDiffMatcherTest, Mismatch5LineContext) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 6:
+=== diff in expected elements 1 to 7 (1-based index):
 - is equal to "X"
 + 0
   1
@@ -127,7 +127,7 @@ TEST(UnionDiffMatcherTest, Mismatch5LineContext) {
 
 TEST(UnionDiffMatcherTest, Mismatch6LineContext) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 7:
+=== diff in expected elements 1 to 8 (1-based index):
 - is equal to "X"
 + 0
   1
@@ -148,13 +148,13 @@ TEST(UnionDiffMatcherTest, Mismatch6LineContext) {
 
 TEST(UnionDiffMatcherTest, Mismatch7LineContext) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 3:
+=== diff in expected elements 1 to 4 (1-based index):
 - is equal to "X"
 + 0
   1
   2
   3
-=== diff in expected elements 5 to 8:
+=== diff in expected elements 6 to 9 (1-based index):
   5
   6
   7
@@ -170,7 +170,7 @@ TEST(UnionDiffMatcherTest, Mismatch7LineContext) {
 
 TEST(UnionDiffMatcherTest, MismatchEmptyExpected) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 0:
+=== diff in expected elements 1 to 1 (1-based index):
 + A
 === diff end
 )";
@@ -179,11 +179,66 @@ TEST(UnionDiffMatcherTest, MismatchEmptyExpected) {
 
 TEST(UnionDiffMatcherTest, MismatchEmptyActual) {
   constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
-=== diff in expected elements 0 to 0:
+=== diff in expected elements 1 to 1 (1-based index):
 - is equal to "A"
 === diff end
 )";
   ExpectUnionDiff({}, {StrEq("A")}, ExpectedDiff);
+}
+
+TEST(UnionDiffMatcherTest, MismatchLongDifference) {
+  constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
+=== diff in expected elements 1 to 4 (1-based index):
+  1
+- is equal to "2"
+- is equal to "3"
++ X
++ Y
++ Z
+  4
+=== diff end
+)";
+  ExpectUnionDiff({"1", "X", "Y", "Z", "4"},
+                  {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4")},
+                  ExpectedDiff);
+}
+
+TEST(UnionDiffMatcherTest, MismatchGreedyResyncActualMissing) {
+  constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
+=== diff in expected elements 1 to 6 (1-based index):
+  1
+  2
+- is equal to "3"
++ X
++ 7
+  4
+  5
+  6
+=== diff end
+)";
+  ExpectUnionDiff({"1", "2", "X", "7", "4", "5", "6", "7", "8", "9"},
+                  {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"), StrEq("5"),
+                   StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
+                  ExpectedDiff);
+}
+
+TEST(UnionDiffMatcherTest, MismatchGreedyResyncExpectedMissing) {
+  constexpr char ExpectedDiff[] = R"(union diff (- expected, + actual):
+=== diff in expected elements 1 to 7 (1-based index):
+  1
+  2
+- is equal to "X"
+- is equal to "7"
++ 3
+  4
+  5
+  6
+=== diff end
+)";
+  ExpectUnionDiff({"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+                  {StrEq("1"), StrEq("2"), StrEq("X"), StrEq("7"), StrEq("4"),
+                   StrEq("5"), StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
+                  ExpectedDiff);
 }
 
 }  // namespace

@@ -181,8 +181,12 @@ auto UnionDiffMatcher<Container>::GetLongestCommonSubsequences(
       int subsequence_value;
       if (IsElementMatch(expected_index, actual_index, actual_element,
                          match_results)) {
+        // If the elements match, the LCS length increases by 1 relative to
+        // the prefixes where both elements are excluded.
         subsequence_value = subsequences.Get(expected_index, actual_index) + 1;
       } else {
+        // Otherwise, the LCS length is the maximum of the LCS lengths
+        // relative to the prefixes where one element is excluded.
         subsequence_value =
             std::max(subsequences.Get(expected_index, actual_index + 1),
                      subsequences.Get(expected_index + 1, actual_index));
@@ -220,6 +224,9 @@ auto UnionDiffMatcher<Container>::PrintDiff(
                             ? match_results.Get(expected_index, actual_index)
                             : MatchResult::DoesNotMatch;
     CARBON_CHECK(match_result != MatchResult::Unknown);
+    // Backtrack through the LCS table. If dropping an element from actual
+    // preserves the LCS length, treat it as an insertion (ActualOnly).
+    // Otherwise, it's a deletion (ExpectedOnly).
     if (match_result == MatchResult::Matches) {
       diff.push_back({.kind = DiffLine::Kind::Match,
                       .actual_value = &*actual_it,
@@ -250,14 +257,17 @@ auto UnionDiffMatcher<Container>::PrintDiff(
   };
   llvm::SmallVector<PrintRange> print_ranges;
 
+  constexpr int ContextLines = 3;
   for (auto [i, line] :
        llvm::reverse(llvm::zip_equal(llvm::seq<int>(diff.size()), diff))) {
     if (line.kind != DiffLine::Kind::Match) {
-      PrintRange range = {.begin = std::max(0, i - 3),
-                          .end = std::min<int>(diff.size() - 1, i + 3)};
+      PrintRange range = {
+          .begin = std::max(0, i - ContextLines),
+          .end = std::min<int>(diff.size() - 1, i + ContextLines)};
       if (print_ranges.empty() || print_ranges.back().begin > range.end + 1) {
         print_ranges.push_back(range);
       } else {
+        // Merge diffs with overlapping context.
         print_ranges.back().begin = range.begin;
       }
     }
@@ -266,8 +276,8 @@ auto UnionDiffMatcher<Container>::PrintDiff(
   *listener << "union diff (- expected, + actual):\n";
   for (const auto& range : print_ranges) {
     *listener << "=== diff in expected elements "
-              << diff[range.end].expected_index << " to "
-              << diff[range.begin].expected_index << ":\n";
+              << diff[range.end].expected_index + 1 << " to "
+              << diff[range.begin].expected_index + 1 << " (1-based index):\n";
     for (auto i : llvm::reverse(llvm::seq_inclusive(range.begin, range.end))) {
       const auto& line = diff[i];
       if (line.kind == DiffLine::Kind::Match) {
