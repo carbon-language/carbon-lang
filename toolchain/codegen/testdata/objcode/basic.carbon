@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
-// EXTRA-ARGS: --target=x86_64-unknown-linux-gnu --output=%t
+// Don't include a min_prelude file because we need only one input file.
+// EXTRA-ARGS: --no-prelude-import --target=x86_64-unknown-linux-gnu --output=%t
 //
 // TODO: Add a way to write some basic tests for object file outputs.
 // AUTOUPDATE

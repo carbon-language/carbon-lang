@@ -24,6 +24,7 @@
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
@@ -1028,11 +1029,8 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       llvm::sys::path::replace_extension(output_filename,
                                          options_->asm_output ? ".s" : ".o");
     } else {
-      // TODO: Handle the case where multiple input files were specified
-      // along with an output file name. That should either be an error or
-      // should produce a single LLVM IR module containing all inputs.
-      // Currently each unit overwrites the output from the previous one in
-      // this case.
+      CARBON_CHECK(total_ir_count_ == 1,
+                   "Handled by CompileMultipleInputsWithOutput diagnostic");
     }
     CARBON_VLOG("Writing output to: {0}\n", output_filename);
 
@@ -1156,9 +1154,20 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
+  int total_unit_count = prelude.size() + options_.input_filenames.size();
+  if (total_unit_count > 1 && !options_.output_filename.empty() &&
+      options_.output_filename != "-") {
+    CARBON_DIAGNOSTIC(
+        CompileMultipleInputsWithOutput, Error,
+        "writing {0} input file{0:s} to the same `--output` file would "
+        "overwrite the output file",
+        Diagnostics::IntAsSelect);
+    driver_env.emitter.Emit(CompileMultipleInputsWithOutput, total_unit_count);
+    return {.success = false};
+  }
+
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  int total_unit_count = prelude.size() + options_.input_filenames.size();
   int unit_index = -1;
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
