@@ -134,7 +134,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
                       Diagnostics::BoolAsSelect);
     context.emitter().Emit(loc_id, CppConstexprEval,
                            function_decl->isConsteval());
-    return SemIR::ConstantId::NotConstant;
+    return SemIR::ErrorInst::ConstantId;
   }
   return MapAPValueToConstant(context, loc_id, eval_result.Val,
                               function_decl->getCallResultType());
