@@ -330,6 +330,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::NoOp:
       return;
 
+    case SemIR::BuiltinFunctionKind::MakeUninitialized: {
+      context.SetLocal(inst_id,
+                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::PrimitiveCopy:
       context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
       return;
