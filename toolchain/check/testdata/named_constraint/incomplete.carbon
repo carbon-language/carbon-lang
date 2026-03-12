@@ -44,10 +44,6 @@ impl forall [T:! N] T as Z {}
 class C;
 
 fn F() {
-  // TODO: The "can not be identified" diagnostic should not occur here. That
-  // diagnostic happened during deduction, which means to suppress diagnostics.
-  // Only the convert error should be emitted.
-  //
   // CHECK:STDERR: fail_todo_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
