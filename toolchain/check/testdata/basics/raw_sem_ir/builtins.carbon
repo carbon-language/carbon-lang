@@ -86,7 +86,7 @@
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block60000005:
+// CHECK:STDOUT:     inst_block50000005:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
