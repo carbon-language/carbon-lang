@@ -11,6 +11,11 @@
 
 namespace Carbon::Check {
 
+// Converts an LValue `APValue` to a Carbon `ConstantId`.
+auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
+                         const clang::APValue& ap_value, clang::QualType type)
+    -> SemIR::ConstantId;
+
 // Converts an `APValue` to a Carbon `ConstantId`.
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)

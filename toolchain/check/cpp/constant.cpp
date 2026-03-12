@@ -6,9 +6,85 @@
 
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
+
+// TODO: call from MapAPValueToConstant and make `static`.
+// TODO: update error messages.
+auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
+                         const clang::APValue& ap_value, clang::QualType type)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(ap_value.isLValue(), "not an LValue");
+
+  const auto* value_decl =
+      ap_value.getLValueBase().get<const clang::ValueDecl*>();
+
+  if (!ap_value.hasLValuePath()) {
+    context.TODO(loc_id, "Macro expanded to lvalue with no path");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  if (ap_value.isLValueOnePastTheEnd()) {
+    context.TODO(loc_id, "Macro expanded to a one-past-the-end lvalue");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      // TODO: can this const_cast be avoided?
+      const_cast<clang::ValueDecl*>(value_decl));
+
+  auto inst_id = ImportCppDecl(context, loc_id, key);
+  if (ap_value.getLValuePath().size() == 0) {
+    return context.constant_values().Get(inst_id);
+  }
+
+  // Import the base type so that its fields can be accessed.
+  auto var_storage = context.insts().GetAs<SemIR::VarStorage>(inst_id);
+  // TODO: currently an error isn't reachable here because incomplete
+  // array types can't be imported. Once that changes, switch to
+  // `RequireCompleteType` and handle the error.
+  CompleteTypeOrCheckFail(context, var_storage.type_id);
+
+  clang::QualType qual_type = ap_value.getLValueBase().getType();
+  for (const auto& entry : ap_value.getLValuePath()) {
+    if (qual_type->isArrayType()) {
+      context.TODO(loc_id, "Macro expanded to array type");
+    } else {
+      const auto* decl =
+          cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
+
+      const auto* field_decl = dyn_cast<clang::FieldDecl>(decl);
+      if (!field_decl) {
+        context.TODO(loc_id, "Macro expanded to a base class subobject");
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      auto field_inst_id =
+          ImportCppDecl(context, loc_id,
+                        SemIR::ClangDeclKey::ForNonFunctionDecl(
+                            const_cast<clang::FieldDecl*>(field_decl)));
+
+      if (field_inst_id == SemIR::ErrorInst::InstId) {
+        context.TODO(loc_id,
+                     "Unsupported field in macro expansion: " +
+                         ap_value.getAsString(context.ast_context(), type));
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      const SemIR::FieldDecl& field_decl_inst =
+          context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+
+      qual_type = field_decl->getType();
+      inst_id = PerformMemberAccess(context, loc_id, inst_id,
+                                    field_decl_inst.name_id);
+    }
+  }
+
+  return context.constant_values().Get(inst_id);
+}
 
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                           const clang::APValue& ap_value, clang::QualType type)
