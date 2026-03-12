@@ -12,5 +12,5 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/fail_multi_input_with_output.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_multi_input_with_output.carbon
-// CHECK:STDERR: error: writing 2 input files to the same `--output` file would overwrite the output file [CompileMultipleInputsWithOutput]
+// CHECK:STDERR: error: writing 2 input files to the same `--output` file would overwrite the output file; for now, pass `--output-last-input-only` if intended [CompileMultipleInputsWithOutput]
 // CHECK:STDERR:

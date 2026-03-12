@@ -361,6 +361,17 @@ Whether to emit DWARF debug information.
       });
   b.AddFlag(
       {
+          .name = "output-last-input-only",
+          .help = R"""(
+Only write output for the last input file, ignoring all others.
+
+TODO: This is a temporary workaround and should be removed once separate
+compilation is better implemented.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
+  b.AddFlag(
+      {
           .name = "verify-llvm-ir",
           .help = R"""(
 Whether to run the LLVM verifier on modules.
@@ -1029,7 +1040,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       llvm::sys::path::replace_extension(output_filename,
                                          options_->asm_output ? ".s" : ".o");
     } else {
-      CARBON_CHECK(total_ir_count_ == 1,
+      CARBON_CHECK(total_ir_count_ == 1 || options_->output_last_input_only,
                    "Handled by CompileMultipleInputsWithOutput diagnostic");
     }
     CARBON_VLOG("Writing output to: {0}\n", output_filename);
@@ -1155,12 +1166,13 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   int total_unit_count = prelude.size() + options_.input_filenames.size();
-  if (total_unit_count > 1 && !options_.output_filename.empty() &&
-      options_.output_filename != "-") {
+  if (!options_.output_last_input_only && total_unit_count > 1 &&
+      !options_.output_filename.empty() && options_.output_filename != "-") {
     CARBON_DIAGNOSTIC(
         CompileMultipleInputsWithOutput, Error,
         "writing {0} input file{0:s} to the same `--output` file would "
-        "overwrite the output file",
+        "overwrite the output file; for now, pass `--output-last-input-only` if "
+        "intended",
         Diagnostics::IntAsSelect);
     driver_env.emitter.Emit(CompileMultipleInputsWithOutput, total_unit_count);
     return {.success = false};
@@ -1319,8 +1331,12 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
                "CodeGen should be the last stage");
 
   // Codegen.
-  for (auto& unit : units) {
-    unit->RunCodeGen();
+  if (options_.output_last_input_only) {
+    units.back()->RunCodeGen();
+  } else {
+    for (const auto& unit : units) {
+      unit->RunCodeGen();
+    }
   }
   return make_result();
 }
