@@ -874,6 +874,23 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
       context, context.types().GetAsTypeInstId(self_inst_id));
 }
 
+static auto InsideNamedConstraintDefinition(Context& context,
+                                            const SemIR::FacetType& facet_type)
+    -> bool {
+  auto single =
+      context.facet_types().Get(facet_type.facet_type_id).TryAsSingleExtend();
+  if (!single) {
+    return false;
+  }
+  auto* sc = std::get_if<SemIR::SpecificNamedConstraint>(&*single);
+  if (!sc) {
+    return false;
+  }
+  const auto& constraint =
+      context.named_constraints().Get(sc->named_constraint_id);
+  return constraint.is_being_defined();
+}
+
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 const SemIR::FacetType& facet_type,
@@ -885,6 +902,12 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
   auto key =
       SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type.facet_type_id,
                                     .self_const_id = self_const_id};
+  if (InsideNamedConstraintDefinition(context, facet_type)) {
+    // Each use of `Self` inside a constraint produces an identified facet type
+    // that only includes the require decls seen so far. We give each one a
+    // unique ID by counting the number of require decls seen so far.
+    key.num_require_impls = context.require_impls_stack().PeekArray().size();
+  }
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;

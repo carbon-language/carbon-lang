@@ -111,6 +111,9 @@ constraint W {
 }
 
 fn F(w:! W) {
+  // TODO: Lookups for `C(w) as <something>` need to look into the facet types
+  // of any facet value in the type `C(w)`, so that it can find a witness from
+  // the constraint `W`.
   // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(w) as Y;
   // CHECK:STDERR:   ^~~~~~~~~
@@ -119,9 +122,29 @@ fn F(w:! W) {
   // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:11: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(w) as NeedsY(C(w));
   // CHECK:STDERR:           ^~~~~~~~~~~~
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-22]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-25]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface NeedsY(T:! Y) {}
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   C(w) as NeedsY(C(w));
+}
+
+// --- multiple_use_of_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface NeedsY(T:! Y) {}
+interface NeedsNeedsY(T:! Y, U:! NeedsY(T)) {}
+constraint W {
+  require impls Y;
+  // The idenfified facet type of Self is {Y}.
+  extend require impls NeedsY(Self);
+  // The idenfified facet type of Self is {Y, NeedsY}. Ensure we don't keep
+  // seeing the previous identified facet type of Self.
+  extend require impls NeedsNeedsY(Self, Self);
+}
+
+fn F(w:! W) {
+  w as Y;
+  w as NeedsY(w);
 }
