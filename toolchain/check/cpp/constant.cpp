@@ -12,10 +12,9 @@
 
 namespace Carbon::Check {
 
-// TODO: call from MapAPValueToConstant and make `static`.
-auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
-                         const clang::APValue& ap_value, clang::QualType type)
-    -> SemIR::ConstantId {
+static auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
+                                const clang::APValue& ap_value,
+                                clang::QualType type) -> SemIR::ConstantId {
   CARBON_CHECK(ap_value.isLValue(), "not an LValue");
 
   const auto* value_decl =
@@ -109,6 +108,17 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
     FloatId float_id = context.floats().Add(ap_value.getFloat());
     return TryEvalInst(
         context, SemIR::FloatValue{.type_id = type_id, .float_id = float_id});
+  } else if (ap_value.isLValue()) {
+    auto const_id = MapLValueToConstant(context, loc_id, ap_value, type);
+    if (type->isPointerType()) {
+      auto inst_id = AddInst<SemIR::AddrOf>(
+          context, loc_id,
+          {.type_id = type_id,
+           .lvalue_id = context.constant_values().GetInstId(const_id)});
+      return context.constant_values().Get(inst_id);
+    }
+    return const_id;
+
   } else {
     // TODO: support other types.
     context.TODO(loc_id, "unsupported conversion to constant from APValue " +

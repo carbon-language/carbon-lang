@@ -107,24 +107,16 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
     CARBON_FATAL("failed to evaluate macro as constant expression");
   }
 
-  clang::APValue ap_value = evaluated_result.Val;
-  // TODO: Add support for other types.
-  if (result_expr->isGLValue()) {
-    auto const_id =
-        MapLValueToConstant(context, loc_id, ap_value, result_expr->getType());
-    return context.constant_values().GetInstId(const_id);
-  } else {
-    auto const_id =
-        MapAPValueToConstant(context, loc_id, ap_value, result_expr->getType());
-    if (const_id == SemIR::ConstantId::NotConstant) {
-      context.TODO(loc_id,
-                   "Unsupported: macro evaluated to a constant of type: " +
-                       result_expr->getType().getAsString());
-      return SemIR::ErrorInst::InstId;
-    }
-
-    return context.constant_values().GetInstId(const_id);
+  auto const_id = MapAPValueToConstant(context, loc_id, evaluated_result.Val,
+                                       result_expr->getType());
+  if (const_id == SemIR::ConstantId::NotConstant) {
+    context.TODO(loc_id,
+                 "Unsupported: macro evaluated to a constant of type: " +
+                     result_expr->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
   }
+
+  return context.constant_values().GetInstId(const_id);
 }
 
 }  // namespace Carbon::Check

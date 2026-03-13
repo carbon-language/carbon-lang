@@ -56,13 +56,6 @@ constexpr int* _Nonnull ptr = &i;
 ''';
 
 class C(V:! i32*) {}
-// CHECK:STDERR: pointer.carbon:[[@LINE+7]]:11: error: semantics TODO: `unsupported conversion to constant from APValue &i` [SemanticsTodo]
-// CHECK:STDERR: fn F() -> C(Cpp.ptr);
-// CHECK:STDERR:           ^~~~~~~~~~
-// CHECK:STDERR: pointer.carbon:[[@LINE-4]]:9: note: initializing generic parameter `V` declared here [InitializingGenericParam]
-// CHECK:STDERR: class C(V:! i32*) {}
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
 fn F() -> C(Cpp.ptr);
 let x: C(&Cpp.i) = F();
 

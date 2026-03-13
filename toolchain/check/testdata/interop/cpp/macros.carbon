@@ -877,16 +877,9 @@ int v = 1;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+11]]:5: error: semantics TODO: `unsupported conversion to constant from APValue &v` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:4: error: cannot dereference operand of non-pointer type `Core.Optional(i32* as Core.OptionalStorage)` [DerefOfNonPointer]
   // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+8]]:5: note: in `Cpp` name lookup for `m` [InCppNameLookup]
-  // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:5: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR:    ^
   // CHECK:STDERR:
   (*Cpp.m) = 2;
 }
@@ -2073,12 +2066,12 @@ fn F() {
 // CHECK:STDOUT: --- assign_subobject.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %B [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
 // CHECK:STDOUT:   %.1b7: ref %B = class_element_access imports.%a.var, element0 [concrete]
 // CHECK:STDOUT:   %.59e: ref %i32 = class_element_access %.1b7, element0 [concrete]
@@ -2114,6 +2107,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %b.ref: %A.elem = name_ref b, @A.%.1 [concrete = @A.%.1]
 // CHECK:STDOUT:   %.loc17_6.1: ref %B = class_element_access imports.%a.var, element0 [concrete = constants.%.1b7]
 // CHECK:STDOUT:   %c.ref: %B.elem = name_ref c, @B.%.1 [concrete = @B.%.1]
