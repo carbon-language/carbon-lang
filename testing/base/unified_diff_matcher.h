@@ -224,10 +224,8 @@ auto UnifiedDiffMatcher<Container>::PrintDiff(
                             ? match_results.Get(expected_index, actual_index)
                             : MatchResult::DoesNotMatch;
     CARBON_CHECK(match_result != MatchResult::Unknown);
-    // Backtrack through the LCS table. If dropping an element from actual
-    // preserves the LCS length, treat it as an insertion (ActualOnly).
-    // Otherwise, it's a deletion (ExpectedOnly).
     if (match_result == MatchResult::Matches) {
+      // The element is in both lists for the diff.
       diff.push_back({.kind = DiffLine::Kind::Match,
                       .actual_value = &*actual_it,
                       .expected_index = expected_index});
@@ -238,12 +236,15 @@ auto UnifiedDiffMatcher<Container>::PrintDiff(
                (expected_index < 0 ||
                 subsequences.Get(expected_index + 1, actual_index) >=
                     subsequences.Get(expected_index, actual_index + 1))) {
+      // Dropping an element from `actual` preserves the LCS length, so treat it
+      // as an insertion.
       diff.push_back({.kind = DiffLine::Kind::ActualOnly,
                       .actual_value = &*actual_it,
                       .expected_index = std::max(0, expected_index)});
       --actual_index;
       --actual_it;
     } else {
+      // Otherwise, treat it as a deletion from `expected`.
       diff.push_back({.kind = DiffLine::Kind::ExpectedOnly,
                       .actual_value = nullptr,
                       .expected_index = expected_index});
