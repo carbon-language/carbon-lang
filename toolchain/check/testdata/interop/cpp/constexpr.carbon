@@ -56,7 +56,7 @@ constexpr int* _Nonnull ptr = &i;
 ''';
 
 class C(V:! i32*) {}
-// CHECK:STDERR: pointer.carbon:[[@LINE+7]]:11: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: pointer.carbon:[[@LINE+7]]:11: error: semantics TODO: `unsupported conversion to constant from APValue &i` [SemanticsTodo]
 // CHECK:STDERR: fn F() -> C(Cpp.ptr);
 // CHECK:STDERR:           ^~~~~~~~~~
 // CHECK:STDERR: pointer.carbon:[[@LINE-4]]:9: note: initializing generic parameter `V` declared here [InitializingGenericParam]

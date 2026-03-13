@@ -111,7 +111,9 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
         context, SemIR::FloatValue{.type_id = type_id, .float_id = float_id});
   } else {
     // TODO: support other types.
-    return SemIR::ConstantId::NotConstant;
+    context.TODO(loc_id, "unsupported conversion to constant from APValue " +
+                             ap_value.getAsString(context.ast_context(), type));
+    return SemIR::ErrorInst::ConstantId;
   }
 }
 
