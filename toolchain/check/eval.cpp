@@ -2494,6 +2494,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                more_info.extend_constraints);
             llvm::append_range(info.self_impls_constraints,
                                more_info.self_impls_constraints);
+            llvm::append_range(info.self_impls_named_constraints,
+                               more_info.extend_named_constraints);
+            llvm::append_range(info.self_impls_named_constraints,
+                               more_info.self_impls_named_constraints);
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);

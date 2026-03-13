@@ -175,34 +175,82 @@ constraint Z {
 // --- fail_require_impls_incomplete_self.carbon
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self.carbon:[[@LINE+7]]:17: error: facet type `Z` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR: fail_require_impls_incomplete_self.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:   require impls Z;
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_require_impls_incomplete_self.carbon:[[@LINE-4]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
-  // CHECK:STDERR: constraint Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   require impls Z;
 }
-//@dump-sem-ir-end
+
+// --- fail_require_impls_incomplete_self_forward_declared.carbon
+library "[[@TEST_NAME]]";
+
+constraint Z;
+
+constraint Z {
+  // CHECK:STDERR: fail_require_impls_incomplete_self_forward_declared.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
+  // CHECK:STDERR:   require impls Z;
+  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:
+  require impls Z;
+}
+
+// --- fail_require_impls_incomplete_self_in_period_self_impls.carbon
+library "[[@TEST_NAME]]";
+
+constraint Z {
+  // CHECK:STDERR: fail_require_impls_incomplete_self_in_period_self_impls.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
+  // CHECK:STDERR:   require impls type where .Self impls Z;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require impls type where .Self impls Z;
+}
+
+// --- fail_require_impls_incomplete_self_in_class_impls.carbon
+library "[[@TEST_NAME]]";
+
+class C;
+constraint Z {
+  // TODO: This should be a RequireImplsReferenceCycle error since `Z` is being
+  // used inside `Z`.
+  // CHECK:STDERR: fail_require_impls_incomplete_self_in_class_impls.carbon:[[@LINE+4]]:17: error: semantics TODO: `facet type has constraints that we don't handle yet` [SemanticsTodo]
+  // CHECK:STDERR:   require impls type where C impls Z;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require impls type where C impls Z;
+}
+
+// --- fail_require_impls_incomplete_indirect.carbon
+library "[[@TEST_NAME]]";
+
+constraint Z;
+
+constraint Y {
+  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE+7]]:17: error: facet type `Z` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR:   require impls Z;
+  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: constraint Z;
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require impls Z;
+}
+
+constraint Z {
+  require impls Y;
+}
 
 // --- fail_require_impls_incomplete_self_specific.carbon
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 constraint Z(T:! type) {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE+7]]:19: error: facet type `Z(Self)` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE+4]]:19: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:   require T impls Z(Self);
   // CHECK:STDERR:                   ^~~~~~~
-  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE-4]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
-  // CHECK:STDERR: constraint Z(T:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   require T impls Z(Self);
 }
-//@dump-sem-ir-end
 
 // --- fail_require_impls_without_self.carbon
 library "[[@TEST_NAME]]";
@@ -1063,87 +1111,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_incomplete_self.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
-// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Z.decl: type = constraint_decl @Z [concrete = constants.%Z.type] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constraint @Z {
-// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Z.WithSelf.decl = constraint_with_self_decl @Z [concrete]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Z = <poisoned>
-// CHECK:STDOUT:   .Z = <poisoned>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_incomplete_self_specific.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Z.type.7a8: type = generic_named_constaint_type @Z [concrete]
-// CHECK:STDOUT:   %empty_struct: %Z.type.7a8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.type.d682d6.1: type = facet_type <@Z, @Z(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %Z.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Z.decl: %Z.type.7a8 = constraint_decl @Z [concrete = constants.%empty_struct] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_18.1: type = splice_block %.loc4_18.2 [concrete = type] {
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.loc4_18.2: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @Z(%T.loc4_14.2: type) {
-// CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc4_14.1)> [symbolic = %Z.type (constants.%Z.type.d682d6.1)]
-// CHECK:STDOUT:   %Self.loc4_24.2: @Z.%Z.type (%Z.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_24.2 (constants.%Self)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc4_24.1: @Z.%Z.type (%Z.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_24.2 (constants.%Self)]
-// CHECK:STDOUT:     %Z.WithSelf.decl = constraint_with_self_decl @Z [concrete]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc4_24.1
-// CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Z = <poisoned>
-// CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Z = <poisoned>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T, constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%Self.binding.as_type) {
-// CHECK:STDOUT:   %T.loc4_14.1 => constants.%Self.binding.as_type
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_require_impls_without_self.carbon
 // CHECK:STDOUT:
