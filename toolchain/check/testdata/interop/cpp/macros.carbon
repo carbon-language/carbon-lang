@@ -932,7 +932,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported field in macro expansion: &s.arr[1]` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: error: semantics TODO: `unsupported field in lvalue path: &s.arr[1]` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
@@ -959,7 +959,7 @@ struct B : A {} b;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+11]]:3: error: semantics TODO: `Macro expanded to a base class subobject` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+11]]:3: error: semantics TODO: `lvalue path contains a base class subobject` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.m = 2;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]

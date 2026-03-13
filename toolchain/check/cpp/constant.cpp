@@ -13,7 +13,6 @@
 namespace Carbon::Check {
 
 // TODO: call from MapAPValueToConstant and make `static`.
-// TODO: update error messages.
 auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
                          const clang::APValue& ap_value, clang::QualType type)
     -> SemIR::ConstantId {
@@ -23,12 +22,12 @@ auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
       ap_value.getLValueBase().get<const clang::ValueDecl*>();
 
   if (!ap_value.hasLValuePath()) {
-    context.TODO(loc_id, "Macro expanded to lvalue with no path");
+    context.TODO(loc_id, "lvalue has no path");
     return SemIR::ErrorInst::ConstantId;
   }
 
   if (ap_value.isLValueOnePastTheEnd()) {
-    context.TODO(loc_id, "Macro expanded to a one-past-the-end lvalue");
+    context.TODO(loc_id, "one-past-the-end lvalue");
     return SemIR::ErrorInst::ConstantId;
   }
 
@@ -51,14 +50,14 @@ auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
   clang::QualType qual_type = ap_value.getLValueBase().getType();
   for (const auto& entry : ap_value.getLValuePath()) {
     if (qual_type->isArrayType()) {
-      context.TODO(loc_id, "Macro expanded to array type");
+      context.TODO(loc_id, "lvalue path contains an array type");
     } else {
       const auto* decl =
           cast<clang::Decl>(entry.getAsBaseOrMember().getPointer());
 
       const auto* field_decl = dyn_cast<clang::FieldDecl>(decl);
       if (!field_decl) {
-        context.TODO(loc_id, "Macro expanded to a base class subobject");
+        context.TODO(loc_id, "lvalue path contains a base class subobject");
         return SemIR::ErrorInst::ConstantId;
       }
 
@@ -69,7 +68,7 @@ auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
 
       if (field_inst_id == SemIR::ErrorInst::InstId) {
         context.TODO(loc_id,
-                     "Unsupported field in macro expansion: " +
+                     "unsupported field in lvalue path: " +
                          ap_value.getAsString(context.ast_context(), type));
         return SemIR::ErrorInst::ConstantId;
       }
