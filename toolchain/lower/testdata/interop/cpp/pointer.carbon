@@ -296,6 +296,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %self) #2 !dbg !63 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !66
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !66
+// CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !66
 // CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !67
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !68
 // CHECK:STDOUT:   ret ptr %2, !dbg !69
@@ -359,28 +360,28 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: !42 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !6, line: 38, type: !28, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !43 = !DILocation(line: 39, column: 10, scope: !42)
 // CHECK:STDOUT: !44 = !DILocation(line: 39, column: 3, scope: !42)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", scope: null, file: !46, line: 93, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", scope: null, file: !46, line: 96, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
 // CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !48)
 // CHECK:STDOUT: !48 = !{!17, !17}
 // CHECK:STDOUT: !49 = !{!50}
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !45, type: !17)
-// CHECK:STDOUT: !51 = !DILocation(line: 94, column: 12, scope: !45)
-// CHECK:STDOUT: !52 = !DILocation(line: 94, column: 5, scope: !45)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !46, line: 68, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !54)
+// CHECK:STDOUT: !51 = !DILocation(line: 97, column: 12, scope: !45)
+// CHECK:STDOUT: !52 = !DILocation(line: 97, column: 5, scope: !45)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !46, line: 71, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !54)
 // CHECK:STDOUT: !54 = !{!55}
 // CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !53, type: !17)
-// CHECK:STDOUT: !56 = !DILocation(line: 69, column: 12, scope: !53)
-// CHECK:STDOUT: !57 = !DILocation(line: 69, column: 5, scope: !53)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.8f431b36581f9e63", scope: null, file: !46, line: 29, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
+// CHECK:STDOUT: !56 = !DILocation(line: 72, column: 12, scope: !53)
+// CHECK:STDOUT: !57 = !DILocation(line: 72, column: 5, scope: !53)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.8f431b36581f9e63", scope: null, file: !46, line: 30, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
 // CHECK:STDOUT: !59 = !{!60}
 // CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !58, type: !17)
-// CHECK:STDOUT: !61 = !DILocation(line: 30, column: 12, scope: !58)
-// CHECK:STDOUT: !62 = !DILocation(line: 30, column: 5, scope: !58)
-// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655", scope: null, file: !46, line: 138, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !64)
+// CHECK:STDOUT: !61 = !DILocation(line: 31, column: 12, scope: !58)
+// CHECK:STDOUT: !62 = !DILocation(line: 31, column: 5, scope: !58)
+// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655", scope: null, file: !46, line: 150, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !64)
 // CHECK:STDOUT: !64 = !{!65}
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !63, type: !17)
-// CHECK:STDOUT: !66 = !DILocation(line: 139, column: 14, scope: !63)
-// CHECK:STDOUT: !67 = !DILocation(line: 140, column: 5, scope: !63)
-// CHECK:STDOUT: !68 = !DILocation(line: 139, column: 18, scope: !63)
-// CHECK:STDOUT: !69 = !DILocation(line: 141, column: 5, scope: !63)
+// CHECK:STDOUT: !66 = !DILocation(line: 151, column: 14, scope: !63)
+// CHECK:STDOUT: !67 = !DILocation(line: 153, column: 5, scope: !63)
+// CHECK:STDOUT: !68 = !DILocation(line: 151, column: 18, scope: !63)
+// CHECK:STDOUT: !69 = !DILocation(line: 154, column: 5, scope: !63)

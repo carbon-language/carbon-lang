@@ -31,11 +31,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir58000002: {decl_id: inst58000010, is_export: false}
-// CHECK:STDOUT:     import_ir58000003: {decl_id: inst58000010, is_export: false}
-// CHECK:STDOUT:     import_ir58000004: {decl_id: inst58000010, is_export: false}
-// CHECK:STDOUT:     import_ir58000005: {decl_id: inst58000010, is_export: false}
-// CHECK:STDOUT:     import_ir58000006: {decl_id: inst58000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000002: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000003: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000004: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000005: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000006: {decl_id: inst60000010, is_export: false}
+// CHECK:STDOUT:     import_ir58000007: {decl_id: inst60000010, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir58000004, inst_id: inst70000010}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir58000004, inst_id: inst70000010}

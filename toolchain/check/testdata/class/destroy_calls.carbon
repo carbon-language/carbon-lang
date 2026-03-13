@@ -20,9 +20,9 @@ class C {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var unused a: A;
-  var unused b: B;
-  var unused c: C;
+  var unused a: A = {};
+  var unused b: B = {};
+  var unused c: C = {};
 }
 //@dump-sem-ir-end
 
@@ -36,10 +36,10 @@ class C {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var unused a: A;
-  var unused b: B;
+  var unused a: A = {};
+  var unused b: B = {};
   if (true) {
-    var unused c: C;
+    var unused c: C = {};
   }
 }
 //@dump-sem-ir-end
@@ -71,7 +71,7 @@ class D(template T:! type) {}
 
 //@dump-sem-ir-begin
 fn F() {
-  var unused a: D(C);
+  var unused a: D(C) = {};
 }
 //@dump-sem-ir-end
 
@@ -82,7 +82,7 @@ class C(template T:! type) {}
 
 //@dump-sem-ir-begin
 fn F(template T:! type) {
-  var unused v: C(T);
+  var unused v: C(T) = {};
 }
 //@dump-sem-ir-end
 
@@ -92,14 +92,19 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1f4: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc12 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc11 [concrete]
@@ -119,6 +124,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.1ab = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
+// CHECK:STDOUT:   %.loc10_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_22.2: init %A to %a.var = class_init () [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc10_3: init %A = converted %.loc10_22.1, %.loc10_22.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   assign %a.var, %.loc10_3
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -126,6 +135,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1f4 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt
+// CHECK:STDOUT:   %.loc11_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_22.2: init %B to %b.var = class_init () [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc11_3: init %B = converted %.loc11_22.1, %.loc11_22.2 [concrete = constants.%B.val]
+// CHECK:STDOUT:   assign %b.var, %.loc11_3
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -133,6 +146,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7c7 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
+// CHECK:STDOUT:   %.loc12_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_22.2: init %C to %c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc12_3: init %C = converted %.loc12_22.1, %.loc12_22.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc12_3
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc12: <bound method> = bound_method %c.var, constants.%Destroy.Op.651ba6.1
@@ -154,15 +171,20 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1ab: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.1f4: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc13 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc11 [concrete]
@@ -182,6 +204,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.1ab = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
+// CHECK:STDOUT:   %.loc10_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_22.2: init %A to %a.var = class_init () [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc10_3: init %A = converted %.loc10_22.1, %.loc10_22.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   assign %a.var, %.loc10_3
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -189,6 +215,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1f4 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt
+// CHECK:STDOUT:   %.loc11_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_22.2: init %B to %b.var = class_init () [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc11_3: init %B = converted %.loc11_22.1, %.loc11_22.2 [concrete = constants.%B.val]
+// CHECK:STDOUT:   assign %b.var, %.loc11_3
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
@@ -200,6 +230,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7c7 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
+// CHECK:STDOUT:   %.loc13_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_24.2: init %C to %c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_5: init %C = converted %.loc13_24.1, %.loc13_24.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc13_5
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   br !if.else
@@ -283,6 +317,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [concrete]
@@ -290,6 +325,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %D.213: type = class_type @D, @D(%C) [concrete]
 // CHECK:STDOUT:   %pattern_type.002: type = pattern_type %D.213 [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %D.val: %D.213 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -305,7 +342,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.002 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %D.213 = var %a.var_patt
-// CHECK:STDOUT:   %.loc9: type = splice_block %D [concrete = constants.%D.213] {
+// CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_25.2: init %D.213 to %a.var = class_init () [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc9_3: init %D.213 = converted %.loc9_25.1, %.loc9_25.2 [concrete = constants.%D.val]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
+// CHECK:STDOUT:   %.loc9_20: type = splice_block %D [concrete = constants.%D.213] {
 // CHECK:STDOUT:     %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %D: type = class_type @D, @D(constants.%C) [concrete = constants.%D.213]
@@ -333,6 +374,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.5a3 [template]
 // CHECK:STDOUT:   %pattern_type.3d5: type = pattern_type %C.5a3 [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.val.8b3: %C.5a3 = struct_value () [template]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.5a3, @Destroy [template]
 // CHECK:STDOUT:   %Destroy.facet.472: %Destroy.type = facet_value %C.5a3, (%Destroy.lookup_impl_witness) [template]
@@ -342,6 +385,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(%Destroy.facet.472) [template]
 // CHECK:STDOUT:   %C.850: type = class_type @C, @C(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %pattern_type.526: type = pattern_type %C.850 [concrete]
+// CHECK:STDOUT:   %C.val.09d: %C.850 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.8d7: <witness> = custom_witness (%Destroy.Op), @Destroy [concrete]
@@ -369,11 +413,12 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %C.loc7_20.2: type = class_type @C, @C(%T.loc6_15.1) [template = %C.loc7_20.2 (constants.%C.5a3)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_20.2 [template = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc7_20.2 [template = %pattern_type (constants.%pattern_type.3d5)]
+// CHECK:STDOUT:   %C.val: @F.%C.loc7_20.2 (%C.5a3) = struct_value () [template = %C.val (constants.%C.val.8b3)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.loc7_20.2, @Destroy [template = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.loc7_20.2, (%Destroy.lookup_impl_witness) [template = %Destroy.facet (constants.%Destroy.facet.472)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [template = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.7d1)]
-// CHECK:STDOUT:   %.loc7_3: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [template = %.loc7_3 (constants.%.306)]
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @F.%.loc7_3 (%.306) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc7_3.2: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [template = %.loc7_3.2 (constants.%.306)]
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @F.%.loc7_3.2 (%.306) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2: <specific function> = specific_impl_function %impl.elem0.loc7_3.2, @Destroy.WithSelf.Op(%Destroy.facet) [template = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -383,13 +428,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.3d5) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%C.loc7_20.2 (%C.5a3) = var %v.var_patt
+// CHECK:STDOUT:     %.loc7_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc7_25.2: init @F.%C.loc7_20.2 (%C.5a3) to %v.var = class_init () [template = %C.val (constants.%C.val.8b3)]
+// CHECK:STDOUT:     %.loc7_3.1: init @F.%C.loc7_20.2 (%C.5a3) = converted %.loc7_25.1, %.loc7_25.2 [template = %C.val (constants.%C.val.8b3)]
+// CHECK:STDOUT:     assign %v.var, %.loc7_3.1
 // CHECK:STDOUT:     %.loc7_20: type = splice_block %C.loc7_20.1 [template = %C.loc7_20.2 (constants.%C.5a3)] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_15.2 [template = %T.loc6_15.1 (constants.%T)]
 // CHECK:STDOUT:       %C.loc7_20.1: type = class_type @C, @C(constants.%T) [template = %C.loc7_20.2 (constants.%C.5a3)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%C.loc7_20.2 (%C.5a3) = ref_binding v, %v.var
-// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @F.%.loc7_3 (%.306) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @F.%.loc7_3.2 (%.306) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc7_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc7_3.1: <specific function> = specific_impl_function %impl.elem0.loc7_3.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.472) [template = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc7_3.1
@@ -411,10 +460,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %C.loc7_20.2 => constants.%C.850
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.526
+// CHECK:STDOUT:   %C.val => constants.%C.val.09d
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.8d7
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.81b
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.599
-// CHECK:STDOUT:   %.loc7_3 => constants.%.540
+// CHECK:STDOUT:   %.loc7_3.2 => constants.%.540
 // CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }

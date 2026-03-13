@@ -51,7 +51,9 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_f64.var, align 8, !dbg !8
 // CHECK:STDOUT:   %.loc39_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main.bfb441135f07cbe1(ptr %.loc39_5), !dbg !10
 // CHECK:STDOUT:   %.loc40_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !11

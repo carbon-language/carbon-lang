@@ -74,3 +74,10 @@ var p2: i32->foo;
 // CHECK:STDOUT:   %p2: ref <error> = ref_binding p2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%p.var, <error>
+// CHECK:STDOUT:   assign file.%p2.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -30,7 +30,7 @@ library "[[@TEST_NAME]]";
 
 constraint E {
   // TODO: Any var in a constraint is an error.
-  var c: ();
+  var c: () = ();
 }
 
 // --- fail_todo_invalid_var_template.carbon
@@ -46,7 +46,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any var in a constraint is an error.
-  var c: ();
+  var c: () = ();
 }
 
 // --- todo_fail_invalid_let.carbon
@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 
 constraint E {
   // TODO: Any let in a constraint is an error.
-  var c: ();
+  var c: () = ();
 }
 
 // --- fail_todo_invalid_let_template.carbon
@@ -70,5 +70,5 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any let in a constraint is an error.
-  var c: ();
+  var c: () = ();
 }

@@ -4,6 +4,9 @@
 
 package Core library "prelude/default";
 
+import library "prelude/types/bool";
+import library "prelude/types/int_literal";
+
 // Provides the default value of an object. If implemented for a type `T`, this
 // is used to initialize declarations without an explicit initializer, such as
 // `var x: T;`, and leaves them in a fully-formed state.
@@ -20,6 +23,10 @@ interface UnformedInit {
   // leave the object uninitialized when it is in an unformed state.
   // See https://github.com/carbon-language/carbon-lang/pull/5913
 }
+
+impl bool as UnformedInit {}
+impl forall [T:! type] T* as UnformedInit {}
+impl forall [T:! UnformedInit, N:! IntLiteral()] array(T, N) as UnformedInit {}
 
 // Provides a default, possibly unformed, value of an object. This should not be
 // implemented directly. Instead, implement `Default` to provide a fully-formed
