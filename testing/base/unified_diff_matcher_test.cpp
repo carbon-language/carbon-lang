@@ -20,8 +20,8 @@ using ::testing::StrEq;
 // Asserts that when expected does not match actual, the string
 // representation of the produced diff equals expected_diff.
 auto ExpectUnifiedDiff(const llvm::SmallVector<std::string>& actual,
-                     const llvm::SmallVector<Matcher<std::string>>& expected,
-                     const std::string& expected_diff) -> void {
+                       const llvm::SmallVector<Matcher<std::string>>& expected,
+                       const std::string& expected_diff) -> void {
   testing::StringMatchResultListener listener;
   EXPECT_FALSE(testing::ExplainMatchResult(
       ElementsAreArrayWithUnifiedDiff(expected), actual, &listener));
@@ -44,7 +44,7 @@ TEST(UnifiedDiffMatcherTest, MismatchMissing) {
 === diff end
 )";
   ExpectUnifiedDiff({"A", "C"}, {StrEq("A"), StrEq("B"), StrEq("C")},
-                  ExpectedDiff);
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, MismatchExtra) {
@@ -81,9 +81,10 @@ TEST(UnifiedDiffMatcherTest, MismatchMultiple) {
   E
 === diff end
 )";
-  ExpectUnifiedDiff({"A", "X", "C", "Y", "E"},
-                  {StrEq("A"), StrEq("B"), StrEq("C"), StrEq("D"), StrEq("E")},
-                  ExpectedDiff);
+  ExpectUnifiedDiff(
+      {"A", "X", "C", "Y", "E"},
+      {StrEq("A"), StrEq("B"), StrEq("C"), StrEq("D"), StrEq("E")},
+      ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, MismatchLongContext) {
@@ -100,9 +101,9 @@ TEST(UnifiedDiffMatcherTest, MismatchLongContext) {
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7", "8"},
-                  {StrEq("0"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("X"),
-                   StrEq("5"), StrEq("6"), StrEq("7"), StrEq("8")},
-                  ExpectedDiff);
+                    {StrEq("0"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("X"),
+                     StrEq("5"), StrEq("6"), StrEq("7"), StrEq("8")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, Mismatch5LineContext) {
@@ -120,9 +121,9 @@ TEST(UnifiedDiffMatcherTest, Mismatch5LineContext) {
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6"},
-                  {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
-                   StrEq("5"), StrEq("Y")},
-                  ExpectedDiff);
+                    {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
+                     StrEq("5"), StrEq("Y")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, Mismatch6LineContext) {
@@ -141,9 +142,9 @@ TEST(UnifiedDiffMatcherTest, Mismatch6LineContext) {
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7"},
-                  {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
-                   StrEq("5"), StrEq("6"), StrEq("Y")},
-                  ExpectedDiff);
+                    {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
+                     StrEq("5"), StrEq("6"), StrEq("Y")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, Mismatch7LineContext) {
@@ -163,9 +164,9 @@ TEST(UnifiedDiffMatcherTest, Mismatch7LineContext) {
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7", "8"},
-                  {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
-                   StrEq("5"), StrEq("6"), StrEq("7"), StrEq("Y")},
-                  ExpectedDiff);
+                    {StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
+                     StrEq("5"), StrEq("6"), StrEq("7"), StrEq("Y")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, MismatchEmptyExpected) {
@@ -199,8 +200,8 @@ TEST(UnifiedDiffMatcherTest, MismatchLongDifference) {
 === diff end
 )";
   ExpectUnifiedDiff({"1", "X", "Y", "Z", "4"},
-                  {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4")},
-                  ExpectedDiff);
+                    {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncActualMissing) {
@@ -217,9 +218,9 @@ TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncActualMissing) {
 === diff end
 )";
   ExpectUnifiedDiff({"1", "2", "X", "7", "4", "5", "6", "7", "8", "9"},
-                  {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"), StrEq("5"),
-                   StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
-                  ExpectedDiff);
+                    {StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"), StrEq("5"),
+                     StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
+                    ExpectedDiff);
 }
 
 TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncExpectedMissing) {
@@ -235,10 +236,11 @@ TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncExpectedMissing) {
   6
 === diff end
 )";
-  ExpectUnifiedDiff({"1", "2", "3", "4", "5", "6", "7", "8", "9"},
-                  {StrEq("1"), StrEq("2"), StrEq("X"), StrEq("7"), StrEq("4"),
-                   StrEq("5"), StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
-                  ExpectedDiff);
+  ExpectUnifiedDiff(
+      {"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+      {StrEq("1"), StrEq("2"), StrEq("X"), StrEq("7"), StrEq("4"), StrEq("5"),
+       StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
+      ExpectedDiff);
 }
 
 }  // namespace
