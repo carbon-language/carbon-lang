@@ -19,7 +19,7 @@
 
 namespace Carbon::Testing {
 
-// Matcher that compares the elements of two containers and produces a union
+// Matcher that compares the elements of two containers and produces a unified
 // diff on failure.
 template <typename Container>
 class UnifiedDiffMatcher {
