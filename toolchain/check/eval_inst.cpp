@@ -310,15 +310,17 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   inst.query_self_inst_id =
       GetCanonicalFacetOrTypeValue(context, inst.query_self_inst_id);
 
-  auto result = EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id),
-                                            inst, self_facet_value_inst_id,
-                                            EvalImplLookupMode::Normal);
-  if (result.has_final_value()) {
-    return ConstantEvalResult::Existing(
-        context.constant_values().Get(result.final_witness()));
+  auto witness_id = EvalLookupSingleFinalWitness(context, SemIR::LocId(inst_id),
+                                                 inst, self_facet_value_inst_id,
+                                                 EvalImplLookupMode::Normal);
+  if (!witness_id.has_value()) {
+    // Try again when the query is modified by a specific.
+    return ConstantEvalResult::NewSamePhase(inst);
   }
-
-  return ConstantEvalResult::NewSamePhase(inst);
+  if (witness_id == SemIR::ErrorInst::ConstantId) {
+    return ConstantEvalResult::Error;
+  }
+  return ConstantEvalResult::Existing(witness_id);
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,

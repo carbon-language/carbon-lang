@@ -232,7 +232,7 @@ class Context {
   // A map from a (self, interface) pair to a final witness.
   using ImplLookupCacheKey =
       std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
-  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
@@ -243,8 +243,8 @@ class Context {
     SemIR::LocId loc_id;
     // The query for a witness of an impl for an interface.
     SemIR::LookupImplWitness query;
-    // The resulting ImplWitness.
-    SemIR::InstId impl_witness;
+    // The resulting final witness.
+    SemIR::ConstantId witness_id;
   };
   auto poisoned_concrete_impl_lookup_queries()
       -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {

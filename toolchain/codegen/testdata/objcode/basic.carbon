@@ -11,5 +11,9 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/codegen/testdata/objcode/basic.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/codegen/testdata/objcode/basic.carbon
+// CHECK:STDERR: error: could not open output file `{{.+}}/temp_file`: No such file or directory [CompileOutputFileOpenError]
+// CHECK:STDERR:
+// CHECK:STDERR: error: could not open output file `{{.+}}/temp_file`: No such file or directory [CompileOutputFileOpenError]
+// CHECK:STDERR:
 
 fn Main() {}
