@@ -99,12 +99,19 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
   }
 }
 
-static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
-                                      CoreInterface core_interface,
-                                      clang::CXXRecordDecl* class_decl)
-    -> SemIR::InstId {
+auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
+                   CoreInterface core_interface,
+                   SemIR::ConstantId query_self_const_id,
+                   SemIR::SpecificInterfaceId query_specific_interface_id,
+                   const TypeStructure* best_impl_type_structure,
+                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   // TODO: This should provide `Destroy` for enums and other trivially
   // destructible types.
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
+  }
+
   auto decl_info =
       GetDeclForCoreInterface(context, loc_id, core_interface, class_decl);
   if (!decl_info.has_value()) {
@@ -132,47 +139,13 @@ static auto FindCppAssociatedFunction(Context& context, SemIR::LocId loc_id,
       context, loc_id, clang::DeclAccessPair::make(cpp_fn, cpp_fn->getAccess()),
       context.insts().GetAsKnownInstId<SemIR::FunctionDecl>(fn_id));
 
-  return fn_id;
-}
-
-auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   CoreInterface core_interface,
-                   SemIR::ConstantId query_self_const_id,
-                   SemIR::SpecificInterfaceId query_specific_interface_id,
-                   const TypeStructure* best_impl_type_structure,
-                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
-    return SemIR::InstId::None;
-  }
-
-  auto witness_id = SemIR::ErrorInst::InstId;
-
-  switch (core_interface) {
-    case CoreInterface::Copy:
-    case CoreInterface::Destroy:
-    case CoreInterface::CppUnsafeDeref: {
-      witness_id = FindCppAssociatedFunction(context, loc_id, core_interface,
-                                             class_decl);
-    } break;
-    case CoreInterface::IntFitsIn:
-      return SemIR::InstId::None;
-    case CoreInterface::Unknown:
-      CARBON_FATAL("shouldn't be called with `Unknown`");
-  }
-
-  if (witness_id == SemIR::InstId::None ||
-      witness_id == SemIR::ErrorInst::InstId) {
-    return witness_id;
-  }
-
   // TODO: Infer a C++ type structure and check whether it's less strict than
   // the best Carbon type structure.
   static_cast<void>(best_impl_type_structure);
   static_cast<void>(best_impl_loc_id);
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {witness_id});
+                            query_specific_interface_id, {fn_id});
 }
 
 }  // namespace Carbon::Check
