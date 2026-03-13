@@ -353,7 +353,6 @@ void CarbonExternalASTSource::StartTranslationUnit(
   // Mark the translation unit as having external storage so we get a query for
   // the `Carbon` namespace in the top level/translation unit scope.
   translation_unit.setHasExternalVisibleStorage();
-  translation_unit.setHasExternalLexicalStorage();
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
@@ -521,7 +520,6 @@ auto GenerateAst(Context& context,
   }
 
   auto& ast = clang_instance.getASTContext();
-  ast.getTranslationUnitDecl()->setHasExternalLexicalStorage(true);
   // TODO: Clang's modules support is implemented as an ExternalASTSource
   // (ASTReader) and there's no multiplexing support for ExternalASTSources at
   // the moment - so registering CarbonExternalASTSource breaks Clang modules
