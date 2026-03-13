@@ -1172,8 +1172,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         CompileMultipleInputsWithOutput, Error,
         "writing {0} input file{0:s} to the same `--output` file would "
         "overwrite the output file; for now, pass `--output-last-input-only` "
-        "if "
-        "intended",
+        "if intended",
         Diagnostics::IntAsSelect);
     driver_env.emitter.Emit(CompileMultipleInputsWithOutput, total_unit_count);
     return {.success = false};
