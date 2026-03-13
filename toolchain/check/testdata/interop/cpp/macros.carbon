@@ -868,6 +868,23 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// --- assign_pointer.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+int *p;
+#define q p
+''';
+
+var n: i32;
+fn F() {
+  // CHECK:STDERR: assign_pointer.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   Cpp.q = &n;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  Cpp.q = &n;
+}
+
 // --- fail_todo_assign_through_pointer.carbon
 library "[[@TEST_NAME]]";
 
