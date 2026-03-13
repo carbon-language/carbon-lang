@@ -17,7 +17,6 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/ExternalSemaSource.h"
-#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
