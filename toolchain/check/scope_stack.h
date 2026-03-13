@@ -62,7 +62,8 @@ class ScopeStack {
   auto PushForSameRegion() -> void;
 
   // Pushes a function scope.
-  auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
+  auto PushForFunctionBody(SemIR::InstId scope_inst_id,
+                           SemIR::FunctionId function_id) -> void;
 
   // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
   // If `check_unused` is set, checks and emits diagnostics for unused names.

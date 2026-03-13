@@ -68,13 +68,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
-  if (scope_stack_.back().is_lexical_scope()) {
-    // For lexical lookups, unqualified lookup doesn't know how to find the
-    // associated specific, so if we start adding lexical scopes associated with
-    // specifics, we'll need to somehow track them in lookup.
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Lexical scope should not have an associated specific.");
-  } else {
+  if (!scope_stack_.back().is_lexical_scope()) {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
                                         .specific_id = enclosing_specific_id});
@@ -109,9 +103,12 @@ auto ScopeStack::PushForSameRegion() -> void {
        /*lexical_lookup_has_load_error=*/false);
 }
 
-auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
+auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id,
+                                     SemIR::FunctionId function_id) -> void {
   CARBON_DCHECK(sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
-  Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+  const auto& function = sem_ir().functions().Get(function_id);
+  auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
+  Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
        /*lexical_lookup_has_load_error=*/false);
 
   return_scope_stack_.push_back({.decl_id = scope_inst_id});
