@@ -46,6 +46,26 @@ class C(V:! f32) {}
 fn F() -> C(Cpp.flt);
 let x: C(123.5) = F();
 
+// --- pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+int i = 123;
+constexpr int* _Nonnull ptr = &i;
+''';
+
+class C(V:! i32*) {}
+// CHECK:STDERR: pointer.carbon:[[@LINE+7]]:11: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: fn F() -> C(Cpp.ptr);
+// CHECK:STDERR:           ^~~~~~~~~~
+// CHECK:STDERR: pointer.carbon:[[@LINE-4]]:9: note: initializing generic parameter `V` declared here [InitializingGenericParam]
+// CHECK:STDERR: class C(V:! i32*) {}
+// CHECK:STDERR:         ^
+// CHECK:STDERR:
+fn F() -> C(Cpp.ptr);
+let x: C(&Cpp.i) = F();
+
 // --- function.carbon
 
 library "[[@TEST_NAME]]";
