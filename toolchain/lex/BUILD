@@ -73,6 +73,7 @@ cc_library(
         ":character_set",
         ":helpers",
         "//common:check",
+        "//toolchain/base:int",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
         "@llvm-project//llvm:Support",

@@ -16,7 +16,7 @@ auto CanLexInt(Diagnostics::Emitter<const char*>& emitter, llvm::StringRef text)
   //
   // 2^128 would be 39 decimal digits or 128 binary. In either case, this limit
   // is far above the threshold for normal ints.
-  constexpr size_t DigitLimit = 1000;
+  constexpr size_t DigitLimit = 10000;
   if (text.size() > DigitLimit) {
     CARBON_DIAGNOSTIC(
         TooManyDigits, Error,
