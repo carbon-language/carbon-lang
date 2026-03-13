@@ -50,7 +50,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ThreadPool.h"
-#include "testing/base/union_diff_matcher.h"
+#include "testing/base/unified_diff_matcher.h"
 #include "testing/file_test/autoupdate.h"
 #include "testing/file_test/run_test.h"
 #include "testing/file_test/test_file.h"
@@ -259,9 +259,9 @@ auto FileTestCase::TestBody() -> void {
 
   } else {
     EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                ElementsAreArrayWithUnionDiff(test_file.expected_stdout));
+                ElementsAreArrayWithUnifiedDiff(test_file.expected_stdout));
     EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                ElementsAreArrayWithUnionDiff(test_file.expected_stderr));
+                ElementsAreArrayWithUnifiedDiff(test_file.expected_stderr));
   }
 
   if (HasFailure()) {

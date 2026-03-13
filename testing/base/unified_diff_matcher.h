@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_BASE_UNION_DIFF_MATCHER_H_
-#define CARBON_TESTING_BASE_UNION_DIFF_MATCHER_H_
+#ifndef CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_
+#define CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_
 
 #include <gmock/gmock.h>
 
@@ -22,23 +22,23 @@ namespace Carbon::Testing {
 // Matcher that compares the elements of two containers and produces a union
 // diff on failure.
 template <typename Container>
-class UnionDiffMatcher {
+class UnifiedDiffMatcher {
  public:
-  explicit UnionDiffMatcher(Container expected)
+  explicit UnifiedDiffMatcher(Container expected)
       : expected_(std::move(expected)) {}
 
   // Matches `actual` against `expected_`. Returns true on a match; returns
-  // false and prints a union diff to `listener` on a mismatch.
+  // false and prints a unified diff to `listener` on a mismatch.
   template <typename ActualContainer>
   auto MatchAndExplain(const ActualContainer& actual,
                        testing::MatchResultListener* listener) const -> bool;
 
   auto DescribeTo(std::ostream* os) const -> void {
-    *os << "matches elements with union diff";
+    *os << "matches elements with unified diff";
   }
 
   auto DescribeNegationTo(std::ostream* os) const -> void {
-    *os << "does not match elements with union diff";
+    *os << "does not match elements with unified diff";
   }
 
  private:
@@ -84,7 +84,7 @@ class UnionDiffMatcher {
                                     Table<MatchResult>& match_results,
                                     Table<int>& subsequences) const -> void;
 
-  // Prints the union diff.
+  // Prints the unified diff.
   template <typename ActualContainer>
   auto PrintDiff(const ActualContainer& actual,
                  Table<MatchResult>& match_results,
@@ -96,11 +96,11 @@ class UnionDiffMatcher {
 };
 
 // Returns a polymorphic matcher that acts similarly to
-// ElementsAreArray but produces a union diff on failure.
+// ElementsAreArray but produces a unified diff on failure.
 template <typename Container>
-auto ElementsAreArrayWithUnionDiff(Container expected) {
+auto ElementsAreArrayWithUnifiedDiff(Container expected) {
   return testing::MakePolymorphicMatcher(
-      UnionDiffMatcher<Container>(std::move(expected)));
+      UnifiedDiffMatcher<Container>(std::move(expected)));
 }
 
 // -----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ auto ElementsAreArrayWithUnionDiff(Container expected) {
 
 template <typename Container>
 template <typename T>
-class UnionDiffMatcher<Container>::Table {
+class UnifiedDiffMatcher<Container>::Table {
  public:
   // Constructs a table with dimensions of expected_size and actual_size,
   // corresponding to the containers being compared.
@@ -136,7 +136,7 @@ class UnionDiffMatcher<Container>::Table {
 
 template <typename Container>
 template <typename ActualContainer>
-auto UnionDiffMatcher<Container>::MatchAndExplain(
+auto UnifiedDiffMatcher<Container>::MatchAndExplain(
     const ActualContainer& actual, testing::MatchResultListener* listener) const
     -> bool {
   Table<MatchResult> match_results(expected_.size(), std::size(actual),
@@ -156,7 +156,7 @@ auto UnionDiffMatcher<Container>::MatchAndExplain(
 
 template <typename Container>
 template <typename ActualContainer>
-auto UnionDiffMatcher<Container>::IsEqual(
+auto UnifiedDiffMatcher<Container>::IsEqual(
     const ActualContainer& actual, Table<MatchResult>& match_results) const
     -> bool {
   if (expected_.size() != std::size(actual)) {
@@ -173,7 +173,7 @@ auto UnionDiffMatcher<Container>::IsEqual(
 
 template <typename Container>
 template <typename ActualContainer>
-auto UnionDiffMatcher<Container>::GetLongestCommonSubsequences(
+auto UnifiedDiffMatcher<Container>::GetLongestCommonSubsequences(
     const ActualContainer& actual, Table<MatchResult>& match_results,
     Table<int>& subsequences) const -> void {
   for (auto expected_index : llvm::seq(expected_.size())) {
@@ -198,7 +198,7 @@ auto UnionDiffMatcher<Container>::GetLongestCommonSubsequences(
 
 template <typename Container>
 template <typename ActualContainer>
-auto UnionDiffMatcher<Container>::PrintDiff(
+auto UnifiedDiffMatcher<Container>::PrintDiff(
     const ActualContainer& actual, Table<MatchResult>& match_results,
     const Table<int>& subsequences,
     testing::MatchResultListener* listener) const -> void {
@@ -273,7 +273,7 @@ auto UnionDiffMatcher<Container>::PrintDiff(
     }
   }
 
-  *listener << "union diff (- expected, + actual):\n";
+  *listener << "unified diff (- expected, + actual):\n";
   for (const auto& range : print_ranges) {
     *listener << "=== diff in expected elements "
               << diff[range.end].expected_index + 1 << " to "
@@ -296,4 +296,4 @@ auto UnionDiffMatcher<Container>::PrintDiff(
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_BASE_UNION_DIFF_MATCHER_H_
+#endif  // CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_

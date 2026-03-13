@@ -139,9 +139,9 @@ cc_test(
 )
 
 cc_library(
-    name = "union_diff_matcher",
+    name = "unified_diff_matcher",
     testonly = 1,
-    hdrs = ["union_diff_matcher.h"],
+    hdrs = ["unified_diff_matcher.h"],
     deps = [
         "//common:check",
         "@googletest//:gtest",
@@ -150,12 +150,12 @@ cc_library(
 )
 
 cc_test(
-    name = "union_diff_matcher_test",
+    name = "unified_diff_matcher_test",
     size = "small",
-    srcs = ["union_diff_matcher_test.cpp"],
+    srcs = ["unified_diff_matcher_test.cpp"],
     deps = [
         ":gtest_main",
-        ":union_diff_matcher",
+        ":unified_diff_matcher",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
