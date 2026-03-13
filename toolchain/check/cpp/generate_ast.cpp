@@ -363,7 +363,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     return false;
   }
 
-  static const llvm::StringRef carbon_namespace_name = "Carbon";
+  static const llvm::StringLiteral carbon_namespace_name = "Carbon";
   if (auto* identifier = decl_name.getAsIdentifierInfo();
       !identifier || !identifier->isStr(carbon_namespace_name)) {
     return false;
