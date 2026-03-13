@@ -159,6 +159,8 @@ NumericLiteral::Parser::Parser(Diagnostics::Emitter<const char*>& emitter,
     radix_ = Radix::Hexadecimal;
   } else if (int_part_.consume_front("0b")) {
     radix_ = Radix::Binary;
+  } else if (int_part_.consume_front("0o")) {
+    radix_ = Radix::Octal;
   }
 
   fract_part_ = literal.text_.substr(
@@ -190,16 +192,28 @@ static auto ParseBinary(llvm::StringRef digits) -> llvm::APInt {
   return value;
 }
 
-// Parses a hexadecimal integer literal.
-static auto ParseHexadecimal(llvm::StringRef digits) -> llvm::APInt {
-  llvm::APInt value(std::max<int>(IntStore::MinAPWidth, digits.size() * 4), 0);
-  int cursor = digits.size() * 4 - 1;
+// Parses an octal or hexadecimal integer literal.
+template <NumericLiteral::Radix Radix>
+  requires(Radix == NumericLiteral::Radix::Hexadecimal ||
+           Radix == NumericLiteral::Radix::Octal)
+static auto ParseOctalOrHexadecimal(llvm::StringRef digits) -> llvm::APInt {
+  static constexpr int BitsPerDigit =
+      Radix == NumericLiteral::Radix::Hexadecimal ? 4 : 3;
+  llvm::APInt value(
+      std::max<int>(IntStore::MinAPWidth, digits.size() * BitsPerDigit), 0);
+  int cursor = digits.size() * BitsPerDigit - 1;
   for (char c : digits) {
-    uint8_t digit = c <= '9' ? (c - '0') : (c - 'A' + 10);
-    if (digit & 0x8) {
-      value.setBit(cursor);
+    uint8_t digit;
+    if constexpr (Radix == NumericLiteral::Radix::Octal) {
+      digit = c - '0';
+    } else {
+      digit = c <= '9' ? (c - '0') : (c - 'A' + 10);
+
+      if (digit & 0x8) {
+        value.setBit(cursor);
+      }
+      --cursor;
     }
-    --cursor;
     if (digit & 0x4) {
       value.setBit(cursor);
     }
@@ -289,10 +303,13 @@ static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
   switch (radix) {
     case NumericLiteral::Radix::Binary:
       return ParseBinary(digits);
+    case NumericLiteral::Radix::Octal:
+      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Octal>(digits);
     case NumericLiteral::Radix::Decimal:
       return ParseDecimal(digits);
     case NumericLiteral::Radix::Hexadecimal:
-      return ParseHexadecimal(digits);
+      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Hexadecimal>(
+          digits);
   }
 }
 
@@ -326,6 +343,8 @@ auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
   int excess_exponent = fract_part_.size();
   if (radix_ == Radix::Hexadecimal) {
     excess_exponent *= 4;
+  } else if (radix_ == Radix::Octal) {
+    excess_exponent *= 3;
   }
   exponent -= excess_exponent;
   if (exponent_is_negative_ && !exponent.isNegative()) {
@@ -347,22 +366,9 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
                                                 bool allow_digit_separators)
     -> CheckDigitSequenceResult {
   std::bitset<256> valid_digits;
-  switch (radix) {
-    case Radix::Binary:
-      for (char c : "01") {
-        valid_digits[static_cast<unsigned char>(c)] = true;
-      }
-      break;
-    case Radix::Decimal:
-      for (char c : "0123456789") {
-        valid_digits[static_cast<unsigned char>(c)] = true;
-      }
-      break;
-    case Radix::Hexadecimal:
-      for (char c : "0123456789ABCDEF") {
-        valid_digits[static_cast<unsigned char>(c)] = true;
-      }
-      break;
+  static constexpr llvm::StringLiteral Digits = "0123456789ABCDEF";
+  for (char c : Digits.take_front(static_cast<int>(radix))) {
+    valid_digits[static_cast<unsigned char>(c)] = true;
   }
 
   int num_digit_separators = 0;
@@ -386,11 +392,11 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
       continue;
     }
 
-    CARBON_DIAGNOSTIC(
-        InvalidDigit, Error,
-        "invalid digit '{0}' in {1:=2:binary|=10:decimal|=16:hexadecimal} "
-        "numeric literal",
-        char, Diagnostics::IntAsSelect);
+    CARBON_DIAGNOSTIC(InvalidDigit, Error,
+                      "invalid digit '{0}' in "
+                      "{1:=2:binary|=8:octal|=10:decimal|=16:hexadecimal} "
+                      "numeric literal",
+                      char, Diagnostics::IntAsSelect);
     emitter_.Emit(text.begin() + i, InvalidDigit, c, static_cast<int>(radix));
     return {.ok = false};
   }
@@ -435,12 +441,14 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
     return true;
   }
 
-  if (radix_ == Radix::Binary) {
-    CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
-                      "binary real number literals are not supported");
+  if (radix_ == Radix::Binary || radix_ == Radix::Octal) {
+    CARBON_DIAGNOSTIC(
+        InvalidRealLiteralRadix, Error,
+        "{0:=2:binary|=8:octal} real number literals are not supported",
+        Diagnostics::IntAsSelect);
     emitter_.Emit(literal_.text_.begin() + literal_.radix_point_,
-                  BinaryRealLiteral);
-    // Carry on and parse the binary real literal anyway.
+                  InvalidRealLiteralRadix, static_cast<int>(radix_));
+    // Carry on and parse the real literal anyway.
   }
 
   // We need to remove a '.' from the mantissa.

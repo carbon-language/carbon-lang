@@ -95,6 +95,7 @@ TEST_F(NumericLiteralTest, HandlesIntLiteral) {
       {.token = "12", .value = 12, .radix = 10},
       {.token = "0x12_3ABC", .value = 0x12'3ABC, .radix = 16},
       {.token = "0b10_10_11", .value = 0b10'10'11, .radix = 2},
+      {.token = "0o12_345", .value = 012345, .radix = 8},
       {.token = "1_234_567", .value = 1'234'567, .radix = 10},
   };
   for (bool can_form_real_literal : {false, true}) {
@@ -122,6 +123,10 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
       // Binary integer literals.
       "0b10110100101001010",
       "0b0000000",
+
+      // Octal integer literals.
+      "0o01234567",
+      "0o0000000",
   };
   for (llvm::StringLiteral literal : valid) {
     error_tracker.Reset();
@@ -130,10 +135,9 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
   }
 
   llvm::StringLiteral invalid[] = {
-      "00",  "0X123",    "0o123",          "0B1",
-      "007", "123L",     "123456789A",     "0x",
-      "0b",  "0x123abc", "0b011101201001", "0b10A",
-      "0x_", "0b_",
+      "00",         "0X123", "0O123", "0B1", "007",      "123L",
+      "123456789A", "0x",    "0b",    "0o",  "0x123abc", "0b011101201001",
+      "0b10A",      "0x_",   "0b_",   "0o_", "0o1238",   "0o12A",
   };
   for (llvm::StringLiteral literal : invalid) {
     error_tracker.Reset();
@@ -162,6 +166,10 @@ TEST_F(NumericLiteralTest, ValidatesIntDigitSeparators) {
       // Binary literals.
       "0b1_0_1_0_1_0",
       "0b111_0000",
+
+      // Octal literals.
+      "0o1_234",
+      "0o12_34",
   };
   for (llvm::StringLiteral literal : valid) {
     error_tracker.Reset();
@@ -184,6 +192,11 @@ TEST_F(NumericLiteralTest, ValidatesIntDigitSeparators) {
       "0b1__01",
       "0b1011_",
       "0b1_01_01_",
+
+      // Octal literals.
+      "0o_1234",
+      "0o123_",
+      "0o1_2__34",
   };
   for (llvm::StringLiteral literal : invalid) {
     error_tracker.Reset();
@@ -275,6 +288,14 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
        .exponent = -2,
        .radix = 2,
        .int_value = 0b101101},
+
+      // Octal real literals. These are invalid, but we accept them for error
+      // recovery.
+      {.token = "0o12_34.56",
+       .mantissa = 0123456,
+       .exponent = -6,
+       .radix = 8,
+       .int_value = 01234},
   };
   // Check we get the right real value.
   for (Testcase testcase : testcases) {
@@ -284,7 +305,8 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
                               .mantissa = IsUnsignedInt(testcase.mantissa),
                               .exponent = IsSignedInt(testcase.exponent)}))
         << testcase.token;
-    EXPECT_EQ(error_tracker.seen_error(), testcase.radix == 2)
+    EXPECT_EQ(error_tracker.seen_error(),
+              testcase.radix == 2 || testcase.radix == 8)
         << testcase.token;
   }
   // If we are required to stop at the `.` character, check we get the right int
@@ -319,6 +341,8 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
       "0b.0",
       "0x_.0",
       "0b_.0",
+      "0o.0",
+      "0o_.0",
 
       // No digits in fractional part.
       "0.e",
