@@ -8,6 +8,13 @@ This file gets processed by a repository rule, substituting the `VARIABLE`s with
 values, for example using an invocation of `carbon config`.
 """
 
-clang_include_dirs = CLANG_INCLUDE_DIRS
-clang_resource_dir = "CLANG_RESOURCE_DIR"
-clang_sysroot = "CLANG_SYSROOT"
+load(
+    "@bazel_cc_toolchain//:clang_detected_variables.bzl",
+    _clang_include_dirs = "clang_include_dirs",
+    _clang_resource_dir = "clang_resource_dir",
+    _sysroot_dir = "sysroot_dir",
+)
+
+clang_include_dirs = _clang_include_dirs
+clang_resource_dir = _clang_resource_dir
+clang_sysroot = _sysroot_dir

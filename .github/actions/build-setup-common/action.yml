@@ -70,6 +70,13 @@ runs:
         build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
         build --remote_download_outputs=minimal
 
+        # Allow passing targets that are incompatible so that our explicit
+        # target lists work more like //... wild card patterns in CI. In CI,
+        # we're using explicit target lists to prune to a minimal set of
+        # dependencies, and so skipping incompatible targets is the expected
+        # behavior.
+        build --skip_incompatible_explicit_targets
+
         # We import a special key into every action in order to key the Bazel
         # remote cache in a way that avoids collisions between different
         # runners. Anything that might change the system external to Bazel but

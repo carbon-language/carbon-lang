@@ -56,6 +56,8 @@ use_repo(bazel_cc_toolchain, "bazel_cc_toolchain")
 
 register_toolchains("@bazel_cc_toolchain//:all")
 
+register_toolchains("//toolchain/install:all")
+
 # TODO: Trying out `wolfd_bazel_compile_commands`, figure out if there are
 # issues. Once people have had a chance to try and check for problems, remove
 # one or the other.

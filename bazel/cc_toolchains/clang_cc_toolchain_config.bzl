@@ -17,7 +17,7 @@ load(
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
-    "clang_include_dirs_list",
+    "clang_include_dirs",
     "clang_resource_dir",
     "clang_version_for_cache",
     "llvm_bindir",
@@ -40,7 +40,7 @@ def _impl(ctx):
             extra_cpp_features = [libcxx_feature(llvm_bindir, clang_bindir)],
         ),
         action_configs = llvm_action_configs(llvm_bindir, clang_bindir),
-        cxx_builtin_include_directories = clang_include_dirs_list + [
+        cxx_builtin_include_directories = clang_include_dirs + [
             # Add Clang's resource directory to the end of the builtin include
             # directories to cover the use of sanitizer resource files by the
             # driver.
@@ -109,7 +109,7 @@ def cc_local_toolchain_suite(name, configs):
         native.toolchain(
             name = config_name,
             exec_compatible_with = compatible_with,
-            target_compatible_with = compatible_with,
+            target_compatible_with = compatible_with + ["@carbon//bazel/cc_toolchains:stage0"],
             toolchain = config_name + "_tools",
             toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         )

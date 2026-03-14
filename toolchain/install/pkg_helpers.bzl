@@ -25,7 +25,7 @@ pkg_naming_variables = rule(
     attrs = VERSION_ATTRS,
 )
 
-def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, **kwargs):
+def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, tags = [], **kwargs):
     """Create a `pkg_tar` and a test for both `.tar` and `.tar.gz` extensions.
 
     Args:
@@ -37,6 +37,8 @@ def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, *
             extensions will be appended after a `.`.
         install_data_manifest:
             The install data manifest file to compare with.
+        tags:
+            Tags to apply to the generated rules and tests.
         **kwargs:
             Passed to `pkg_tar` for all the rest of its attributes.
     """
@@ -48,7 +50,7 @@ def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, *
             extension = file_ext,
             package_file_name = package_file_name_base + "." + file_ext,
             # The compressed tar is slow, exclude building and testing that.
-            tags = ["manual"] if file_ext == "tar.gz" else [],
+            tags = tags + (["manual"] if file_ext == "tar.gz" else []),
             **kwargs
         )
 
@@ -63,5 +65,5 @@ def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, *
             },
             main = "toolchain_tar_test.py",
             # The compressed tar is slow, exclude building and testing that.
-            tags = ["manual"] if file_ext == "tar.gz" else [],
+            tags = tags + (["manual"] if file_ext == "tar.gz" else []),
         )

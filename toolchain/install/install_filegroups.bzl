@@ -5,162 +5,195 @@
 """Rules for constructing install information."""
 
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
-load("symlink_helpers.bzl", "symlink_file", "symlink_filegroup")
+load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
 
-def install_filegroup(name, filegroup_target, remove_prefix = "", label = None):
-    """Adds a filegroup for install.
+_clang_aliases = [
+    "clang",
+    "clang++",
+    "clang-cl",
+    "clang-cpp",
+]
 
-    Used in the `install_dirs` dict.
+# TODO: Add remaining aliases of LLD for Windows and WASM when we have support
+# for them wired up through the busybox.
+_lld_aliases = [
+    "ld.lld",
+    "ld64.lld",
+]
 
-    Args:
-      name: The base directory for the filegroup.
-      filegroup_target: The bazel filegroup target to install.
-      remove_prefix: A prefix to remove from the name of each source file when
-        determining the name of the corresponding installed file.
-      label: A custom label to assign to the filegroup containing the
-        installed files.
+_llvm_binaries = _clang_aliases + _lld_aliases + [
+    tool.bin_name
+    for tool in LLVM_MAIN_TOOLS.values()
+] + [
+    "llvm-" + alias
+    for (_, aliases) in LLVM_TOOL_ALIASES.items()
+    for alias in aliases
+]
+
+def _toolchain_llvm_binaries_impl(ctx):
+    outputs = []
+    for bin in _llvm_binaries:
+        out = ctx.actions.declare_file(ctx.attr.prefix + "llvm/bin/" + bin)
+        ctx.actions.symlink(
+            output = out,
+            target_file = ctx.files.carbon_binary[0],
+        )
+        outputs.append(out)
+
+    return [DefaultInfo(files = depset(direct = outputs))]
+
+toolchain_llvm_binaries = rule(
+    doc = "Creates symlinks for LLVM binaries pointing to a single Carbon binary.",
+    implementation = _toolchain_llvm_binaries_impl,
+    attrs = {
+        "carbon_binary": attr.label(
+            allow_single_file = True,
+            #executable = True,
+            mandatory = True,
+            #cfg = None,
+        ),
+        "prefix": attr.string(default = ""),
+    },
+)
+
+def _removeprefix_or_fail(s, prefix):
+    if prefix == "":
+        return s
+    new_s = s.removeprefix(prefix)
+    if new_s == s:
+        fail("Unable to remove prefix '{0}' from '{1}'".format(prefix, s))
+    return new_s
+
+def _get_pkg_relative_path(file):
+    path = file.path
+    if file.root.path != "":
+        path = _removeprefix_or_fail(path, file.root.path + "/")
+    if file.owner.workspace_root != "":
+        path = _removeprefix_or_fail(path, file.owner.workspace_root + "/")
+    return _removeprefix_or_fail(path, file.owner.package + "/")
+
+def _toolchain_files_impl(ctx):
+    prefix = ctx.attr.prefix
+    outputs = []
+    for src in ctx.files.srcs:
+        rel_path = _get_pkg_relative_path(src)
+        rel_path = _removeprefix_or_fail(rel_path, ctx.attr.remove_prefix)
+        if rel_path in ctx.attr.renames:
+            rel_path = ctx.attr.renames[rel_path]
+        out = ctx.actions.declare_file("{0}{1}".format(prefix, rel_path))
+        ctx.actions.symlink(output = out, target_file = src)
+        outputs.append(out)
+
+    return [DefaultInfo(files = depset(outputs))]
+
+toolchain_files = rule(
+    doc = "Arranges files into a directory structure by symlinking them with prefix removal and renames.",
+    implementation = _toolchain_files_impl,
+    attrs = {
+        "prefix": attr.string(default = ""),
+        "remove_prefix": attr.string(default = ""),
+        "renames": attr.string_dict(default = {}),
+        "srcs": attr.label_list(allow_files = True),
+    },
+)
+
+def _filtered_files_impl(ctx):
+    include_set = set()
+    for filter_src in ctx.files.filter_to_srcs:
+        rel_path = _get_pkg_relative_path(filter_src)
+        include_set.add(_removeprefix_or_fail(rel_path, ctx.attr.filter_to_srcs_prefix))
+
+    outputs = []
+    for src in ctx.files.srcs:
+        rel_path = _get_pkg_relative_path(src)
+        if _removeprefix_or_fail(rel_path, ctx.attr.srcs_prefix) in include_set:
+            outputs.append(src)
+
+    return [DefaultInfo(files = depset(outputs))]
+
+filtered_files = rule(
+    doc = "Filters a set of files based on their relative paths matching another set of files.",
+    implementation = _filtered_files_impl,
+    attrs = {
+        "filter_to_srcs": attr.label_list(),
+        "filter_to_srcs_prefix": attr.string(default = ""),
+        "srcs": attr.label_list(),
+        "srcs_prefix": attr.string(default = ""),
+    },
+)
+
+def filtered_toolchain_files(name, prefix, remove_prefix, srcs_groups):
+    """A collection of filtered toolchain files from overlapping `srcs`."""
+    name_base = name.removesuffix("_srcs")
+    if name_base == "" or name_base == name:
+        fail("Invalid name for building a set of filtered toolchain files.")
+    toolchain_files(
+        name = name_base + "_all_srcs",
+        srcs = srcs_groups,
+        prefix = prefix,
+        remove_prefix = remove_prefix,
+    )
+
+    for srcs in srcs_groups:
+        suffix = srcs.partition(":")[2].removeprefix(name_base)
+        filtered_files(
+            name = name_base + suffix,
+            srcs = [":" + name_base + "_all_srcs"],
+            srcs_prefix = prefix,
+            filter_to_srcs = [srcs],
+            filter_to_srcs_prefix = remove_prefix,
+        )
+
+def toolchain_pkg_filegroup(name, carbon_busybox, srcs, tags = []):
+    """Given a CMake-style install prefix[1], the hierarchy looks like:
+
+    - prefix/bin: Binaries intended for direct use.
+    - prefix/lib/carbon: Private data and files.
+    - prefix/lib/carbon/core: The `Core` package files.
+    - prefix/lib/carbon/llvm/bin: LLVM binaries.
+
+    This will be how installs are provided on Unix-y platforms, and is loosely
+    based on the FHS (Filesystem Hierarchy Standard). See the CMake install prefix
+    documentation[1] for more details.
+
+    [1]: https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
     """
-    return {
-        "filegroup": filegroup_target,
-        "is_digest": False,
-        "is_driver": False,
-        "label": label,
-        "name": name,
-        "remove_prefix": remove_prefix,
-    }
-
-def install_symlink(name, symlink_to, is_driver = False):
-    """Adds a symlink for install.
-
-    Used in the `install_dirs` dict.
-
-    Args:
-      name: The filename to use.
-      symlink_to: A relative path for the symlink.
-      is_driver: False if it should be included in the `no_driver_name`
-        filegroup.
-    """
-    return {
-        "is_digest": False,
-        "is_driver": is_driver,
-        "name": name,
-        "symlink": symlink_to,
-    }
-
-def install_target(name, target, executable = False, is_driver = False, is_digest = False):
-    """Adds a target for install.
-
-    Used in the `install_dirs` dict.
-
-    Args:
-      name: The filename to use.
-      target: The bazel target being installed.
-      executable: True if executable.
-      is_driver: False if it should be included in the `no_driver_name`
-        filegroup.
-      is_digest: False if it should be included in the `no_digest_name`
-        filegroup.
-    """
-    return {
-        "executable": executable,
-        "is_digest": is_digest,
-        "is_driver": is_driver,
-        "name": name,
-        "target": target,
-    }
-
-def make_install_filegroups(name, no_digest_name, no_driver_name, pkg_name, install_dirs, prefix):
-    """Makes filegroups of install data.
-
-    Args:
-      name: The name of the main filegroup, that contains all install_data.
-      no_digest_name: The name of a filegroup which excludes the digest. This is
-        used to compute the digest itself.
-      no_driver_name: The name of a filegroup which excludes the driver. This is
-        for the driver to depend on and get other files, without a circular
-        dependency.
-      pkg_name: The name of a pkg_filegroup for tar.
-      install_dirs: A dict of {directory: [install_* rules]}. This is used to
-        structure files to be installed.
-      prefix: A prefix for files in the native (non-pkg) filegroups.
-    """
-    all_srcs = []
-    no_driver_srcs = []
-    no_digest_srcs = []
     pkg_srcs = []
 
-    for dir, entries in install_dirs.items():
-        for entry in entries:
-            path = "{0}/{1}".format(dir, entry["name"])
+    # Separately handle the busybox so that we can set its attributes.
+    pkg_files(
+        name = name + "_busybox",
+        srcs = [carbon_busybox],
+        prefix = "lib/carbon",
+        attributes = pkg_attributes(mode = "0755"),
+        tags = tags,
+    )
+    pkg_srcs.append(":" + name + "_busybox")
 
-            prefixed_path = "{0}/{1}".format(prefix, path)
-            all_srcs.append(prefixed_path)
-            if not entry["is_driver"]:
-                no_driver_srcs.append(prefixed_path)
-            if not entry["is_digest"]:
-                no_digest_srcs.append(prefixed_path)
+    pkg_files(
+        name = name + "_srcs",
+        srcs = srcs,
+        prefix = "lib/carbon",
+        strip_prefix = strip_prefix.from_pkg(),
+        tags = tags,
+    )
+    pkg_srcs.append(":" + name + "_srcs")
 
-            pkg_label = entry.get("label") or path + ".pkg"
-            pkg_srcs.append(pkg_label)
+    for bin in _llvm_binaries:
+        pkg_mklink(
+            name = name + "_llvm_symlink_" + bin,
+            link_name = "lib/carbon/llvm/bin/" + bin,
+            target = "../../carbon-busybox",
+            tags = tags,
+        )
+        pkg_srcs.append(":" + name + "_llvm_symlink_" + bin)
 
-            if "target" in entry:
-                if entry["executable"]:
-                    symlink_file(
-                        name = prefixed_path,
-                        symlink_binary = entry["target"],
-                    )
-                    mode = "0755"
-                else:
-                    symlink_file(
-                        name = prefixed_path,
-                        symlink_label = entry["target"],
-                    )
-                    mode = "0644"
-                pkg_files(
-                    name = pkg_label,
-                    srcs = [entry["target"]],
-                    attributes = pkg_attributes(mode = mode),
-                    renames = {entry["target"]: path},
-                )
-            elif "filegroup" in entry:
-                symlink_filegroup(
-                    name = prefixed_path,
-                    out_prefix = prefixed_path,
-                    srcs = [entry["filegroup"]],
-                    remove_prefix = entry["remove_prefix"],
-                )
-                pkg_files(
-                    name = pkg_label,
-                    srcs = [prefixed_path],
-                    strip_prefix = strip_prefix.from_pkg(prefix),
-                )
-            elif "symlink" in entry:
-                symlink_to = "{0}/{1}/{2}".format(prefix, dir, entry["symlink"])
+    pkg_mklink(
+        name = name + "_bin_symlink",
+        link_name = "bin/carbon",
+        target = "../lib/carbon/carbon-busybox",
+        tags = tags,
+    )
+    pkg_srcs.append(":" + name + "_bin_symlink")
 
-                # For bazel, we need to resolve relative symlinks.
-                if "../" in symlink_to:
-                    parts = symlink_to.split("/")
-                    result = []
-                    for part in parts:
-                        if part == "..":
-                            result = result[:-1]
-                        else:
-                            result.append(part)
-                    symlink_to = "/".join(result)
-                symlink_file(
-                    name = prefixed_path,
-                    symlink_binary = symlink_to,
-                )
-
-                # For the distributed package, we retain relative symlinks.
-                pkg_mklink(
-                    name = pkg_label,
-                    link_name = path,
-                    target = entry["symlink"],
-                )
-            else:
-                fail("Unrecognized structure: {0}".format(entry))
-    native.filegroup(name = name, srcs = all_srcs)
-    native.filegroup(name = no_driver_name, srcs = no_driver_srcs)
-    native.filegroup(name = no_digest_name, srcs = no_digest_srcs)
-    pkg_filegroup(name = pkg_name, srcs = pkg_srcs)
+    pkg_filegroup(name = name, srcs = pkg_srcs, tags = tags)

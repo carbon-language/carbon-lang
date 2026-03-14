@@ -85,7 +85,8 @@ jobs:
         run: |
           # Decrease the jobs sharply if we see repeated failures to try to
           # work around transient network errors even if it makes things
-          # slower.
+          # slower. Note that we allow passing targets that are incompatible and
+          # skip thim as-if we were using `//...` style wild card patterns.
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c ${{ matrix.build_mode }} \

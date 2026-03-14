@@ -104,9 +104,11 @@ def _carbon_runtimes_impl(ctx):
         rel_path = hdr.path
         if hdr.root.path != "":
             rel_path = _removeprefix_or_fail(rel_path, hdr.root.path + "/")
-        rel_path = _removeprefix_or_fail(rel_path, hdr.owner.workspace_root + "/")
-        rel_path = _removeprefix_or_fail(rel_path, hdr.owner.package + "/")
-        rel_path = _removeprefix_or_fail(rel_path, "include/")
+        if hdr.owner.workspace_root != "":
+            rel_path = _removeprefix_or_fail(rel_path, hdr.owner.workspace_root + "/")
+        if hdr.owner.package != "":
+            rel_path = _removeprefix_or_fail(rel_path, hdr.owner.package + "/")
+        rel_path = _removeprefix_or_fail(rel_path, ctx.attr.clang_hdrs_prefix)
 
         out_hdr = ctx.actions.declare_file(
             "{0}/clang_resource_dir/include/{1}".format(prefix, rel_path),
@@ -121,6 +123,7 @@ carbon_runtimes = rule(
     attrs = {
         "builtins_archive": attr.label(mandatory = True, allow_files = [".a"]),
         "clang_hdrs": attr.label_list(mandatory = True, allow_files = True),
+        "clang_hdrs_prefix": attr.string(default = "include/"),
         "crt_copts": attr.string_list(default = []),
         "crtbegin_src": attr.label(allow_files = [".c"]),
         "crtend_src": attr.label(allow_files = [".c"]),
