@@ -136,8 +136,10 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
           return ConstantEvalResult::TODO;
         }
 
+        // TODO
+        bool is_lvalue = ap_value->isLValue();
         auto const_id = MapAPValueToConstant(context, SemIR::LocId(inst_id),
-                                             *ap_value, clang_type);
+                                             *ap_value, clang_type, is_lvalue);
         if (const_id.has_value() && const_id.is_constant()) {
           return ConstantEvalResult::Existing(const_id);
         }

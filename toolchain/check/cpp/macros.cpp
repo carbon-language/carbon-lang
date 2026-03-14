@@ -108,7 +108,8 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   }
 
   auto const_id = MapAPValueToConstant(context, loc_id, evaluated_result.Val,
-                                       result_expr->getType());
+                                       result_expr->getType(),
+                                       /*is_lvalue=*/result_expr->isGLValue());
   if (const_id == SemIR::ConstantId::NotConstant) {
     context.TODO(loc_id,
                  "Unsupported: macro evaluated to a constant of type: " +
