@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <unistd.h>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#undef min
+#undef max
+#undef ERROR
+#endif
 
 #include <cstdlib>
 #include <string>
@@ -34,7 +42,11 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   std::filesystem::path exe_path = busybox_info.bin_path.string();
   exe_path = SetWorkingDirForBazelRun(exe_path);
 
+#ifdef _WIN32
+  const auto install_paths = InstallPaths::MakeExeRelative(exe_path.string());
+#else
   const auto install_paths = InstallPaths::MakeExeRelative(exe_path.native());
+#endif
   if (install_paths.error()) {
     return Error(*install_paths.error());
   }
@@ -42,10 +54,16 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // If `LLVM_SYMBOLIZER_PATH` is unset, sets it. Signals.cpp would do some more
   // path resolution which this overrides in favor of using the busybox itself
   // for symbolization.
+#ifdef _WIN32
+  _putenv_s(
+      "LLVM_SYMBOLIZER_PATH",
+      (install_paths.llvm_install_bin() / "llvm-symbolizer").string().c_str());
+#else
   setenv(
       "LLVM_SYMBOLIZER_PATH",
       (install_paths.llvm_install_bin() / "llvm-symbolizer").native().c_str(),
       /*overwrite=*/0);
+#endif
 
   auto fs = llvm::vfs::getRealFileSystem();
 
@@ -136,11 +154,36 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 }  // namespace Carbon
 
 auto main(int argc, char** argv) -> int {
+#ifdef _WIN32
+  // Windows default thread stack is 1MB. Carbon prelude loading recurses deeply
+  // through ~28 files, causing stack overflow (0xC00000FD). Use 64MB thread.
+  struct Args {
+    int argc;
+    char** argv;
+    int result;
+  };
+  Args targs = {argc, argv, 1};
+  HANDLE t = CreateThread(
+      nullptr, 64UL * 1024UL * 1024UL,
+      [](LPVOID p) -> DWORD {
+        auto* a = reinterpret_cast<Args*>(p);
+        auto r = Carbon::Main(a->argc, a->argv);
+        a->result = r.ok() ? *r : 1;
+        if (!r.ok()) {
+          llvm::errs() << "error: " << r.error() << "\n";
+        }
+        return (DWORD)a->result;
+      },
+      &targs, 0, nullptr);
+  WaitForSingleObject(t, INFINITE);
+  CloseHandle(t);
+  return targs.result;
+#else
   auto result = Carbon::Main(argc, argv);
   if (result.ok()) {
     return *result;
-  } else {
-    llvm::errs() << "error: " << result.error() << "\n";
-    return EXIT_FAILURE;
   }
+  llvm::errs() << "error: " << result.error() << "\n";
+  return EXIT_FAILURE;
+#endif
 }

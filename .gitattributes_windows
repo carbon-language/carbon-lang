@@ -1,0 +1,9 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Force LF for all C++ files to prevent Windows CRLF corruption
+*.h text eol=lf
+*.cpp text eol=lf
+*.bzl text eol=lf
+*.yaml text eol=lf

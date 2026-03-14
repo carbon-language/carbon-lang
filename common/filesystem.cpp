@@ -1,3 +1,4 @@
+// Windows port fix applied
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -12,6 +13,12 @@
 
 #include "common/build_data.h"
 #include "llvm/Support/MathExtras.h"
+
+#ifdef _WIN32
+// Directory fd table definitions (declared extern in filesystem_win32.h)
+HANDLE _carbon_dir_handles[512] = {};
+volatile LONG _carbon_dir_next = 0;
+#endif
 
 namespace Carbon::Filesystem {
 
@@ -45,6 +52,14 @@ static auto PrintErrorNumber(llvm::raw_ostream& out, int errnum) -> void {
         "an error message",
         errnum, meta_error);
   }
+#elif defined(_WIN32)
+  char buffer[256];
+  strerror_s(buffer, sizeof(buffer), errnum);
+  out << llvm::formatv("errno {0}: {1}", errnum, llvm::StringRef(buffer));
+#elif defined(_WIN32)
+  char buffer[256];
+  strerror_s(buffer, sizeof(buffer), errnum);
+  out << llvm::formatv("errno {0}: {1}", errnum, llvm::StringRef(buffer));
 #else
 #error TODO: Implement this for other platforms.
 #endif
@@ -62,7 +77,7 @@ auto PathError::Print(llvm::raw_ostream& out) const -> void {
   // The `format_` member is a `StringLiteral` that is null terminated, so
   // `.data()` is safe here.
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  out << llvm::formatv(format_.data(), path_,
+  out << llvm::formatv(format_.data(), path_.string(),
                        dir_fd_ == AT_FDCWD ? std::string("AT_FDCWD")
                                            : std::to_string(dir_fd_))
       << " failed: ";
@@ -183,7 +198,8 @@ static auto Sleep(Duration sleep) -> void {
   ts = Internal::DurationToTimespec(stop_time);
 
   do {
-    result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, nullptr);
+    result =
+        clock_nanosleep(CLOCK_MONOTONIC, 1 /* TIMER_ABSTIME */, &ts, nullptr);
 
     // Continue sleeping if we get interrupted by a resumable signal. Because
     // we're using a monotonic clock and an absolute deadline time we will
@@ -202,6 +218,9 @@ static auto Sleep(Duration sleep) -> void {
 auto Internal::FileRefBase::TryLock(FileLock::Kind kind, Duration deadline,
                                     Duration poll_interval)
     -> ErrorOr<FileLock, FdError> {
+#ifdef _WIN32
+  (void)kind;
+#endif
   CARBON_CHECK(poll_interval <= deadline);
   if (deadline != Duration(0) && poll_interval == Duration(0)) {
     // If the caller didn't provide a poll interval but did provide a deadline,
@@ -323,7 +342,12 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
                  "no support for truncating directories, and so they cannot be "
                  "created in an analogous way to files if they already exist.");
 
-    if (mkdirat(dfd_, path.c_str(), creation_mode) != 0) {
+#ifdef _WIN32
+    if (_mkdir(path.string().c_str()) != 0)
+#else
+    if (mkdirat(dfd_, path.c_str(), creation_mode) != 0)
+#endif
+    {
       // Unless the error is just that the path already exists, and that is
       // allowed for the requested creation flags, report any error here as part
       // of opening just like we would if the error originated from `openat`
@@ -340,8 +364,12 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
   // Open this path as a directory. Note that this has to succeed, and when we
   // created the directory we require the last component to not be a symlink in
   // case it was _replaced_ with a symlink while running.
+#ifdef _WIN32
   int result_fd =
-      openat(dfd_, path.c_str(), static_cast<int>(open_flags) | O_DIRECTORY);
+      openat(dfd_, path.wstring().c_str(), static_cast<int>(open_flags));
+#else
+  int result_fd = openat(dfd_, path.c_str(), static_cast<int>(open_flags));
+#endif
   if (result_fd == -1) {
     // No need for `EINTR` handling here as if this is a FIFO it would be an
     // error with `O_DIRECTORY`.
@@ -380,7 +408,11 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
     }
 
     // Check that the owning UID is the current effective UID.
+#ifdef _WIN32
+    if (stat_result->unix_uid() != 0) {
+#else
     if (stat_result->unix_uid() != geteuid()) {
+#endif
       // Model this as `EPERM`, which is a bit awkward, but should be fine.
       return PathError(EPERM,
                        "Unexpected UID change after creating '{0}' relative to "
@@ -402,7 +434,7 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
   }
 
   return result;
-}
+}  // namespace Carbon::Filesystem
 
 auto DirRef::ReadFileToString(const std::filesystem::path& path)
     -> ErrorOr<std::string, PathError> {
@@ -645,7 +677,11 @@ auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
   }
   large_buffer.resize(status.size());
   ssize_t result =
+#ifdef _WIN32
+      0; /* readlinkat not available on Windows */
+#else
       readlinkat(dfd_, path.c_str(), large_buffer.data(), large_buffer.size());
+#endif
   if (result == -1) {
     return PathError(errno, "Readlink on '{0}' relative to '{1}'", path, dfd_);
   }
@@ -664,12 +700,14 @@ auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
                        dfd_);
     }
     large_buffer.resize(next_buffer_size);
+#ifndef _WIN32
     result = readlinkat(dfd_, path.c_str(), large_buffer.data(),
                         large_buffer.size());
     if (result == -1) {
       return PathError(errno, "Readlink on '{0}' relative to '{1}'", path,
                        dfd_);
     }
+#endif
   }
 
   // Fix-up the size of the string and return it.
@@ -678,7 +716,12 @@ auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
 }
 
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
+#ifdef _WIN32
+  std::filesystem::path tmpdir_path =
+      getenv("TEMP") ? getenv("TEMP") : "C:\\Temp";
+#else
   std::filesystem::path tmpdir_path = "/tmp";
+#endif
   // We use both `TEST_TMPDIR` and `TMPDIR`. The `TEST_TMPDIR` is set by Bazel
   // and preferred to keep tests using the expected output tree rather than
   // the system temporary directory.
@@ -702,12 +745,24 @@ auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
   std::filesystem::path tmpdir_path = std::move(prefix);
   tmpdir_path += ".XXXXXX";
 
+#ifdef _WIN32
+  std::string tmpdir_path_buffer = tmpdir_path.string();
+#else
   std::string tmpdir_path_buffer = tmpdir_path.native();
+#endif
+#ifdef _WIN32
+  _mktemp_s(tmpdir_path_buffer.data(), tmpdir_path_buffer.size());
+  char* result = tmpdir_path_buffer.data();
+  if (mkdir(tmpdir_path_buffer.data()) != 0) {
+    result = nullptr;
+  }
+#else
   char* result = mkdtemp(tmpdir_path_buffer.data());
+#endif
   if (result == nullptr) {
     RawStringOstream os;
     os << llvm::formatv("Calling mkdtemp on '{0}' failed: ",
-                        tmpdir_path.native());
+                        tmpdir_path.string());
     PrintErrorNumber(os, errno);
     return Error(os.TakeStr());
   }
@@ -727,13 +782,16 @@ auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
   // It's a bit awkward to report `fstat` errors as `Error`s, but we
   // don't have much choice. The stat failing here would be very weird.
   CARBON_ASSIGN_OR_RETURN(FileStatus stat, result_dir.Stat());
-
   // The permissions must be exactly 0700 for a temporary directory, and the UID
   // should be ours.
+#ifdef _WIN32
+  if (stat.permissions() != 0700 && stat.unix_uid() != 0) {
+#else
   if (stat.permissions() != 0700 && stat.unix_uid() != geteuid()) {
+#endif
     return Error(
         llvm::formatv("Found incorrect permissions or UID on tmpdir '{0}'",
-                      tmpdir_path.native())
+                      tmpdir_path.string())
             .str());
   }
 

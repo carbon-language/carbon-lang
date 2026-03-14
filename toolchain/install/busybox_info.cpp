@@ -15,7 +15,7 @@ namespace Carbon {
 // The mode is set to the initial filename used for `argv[0]`.
 static auto GetMode(const std::filesystem::path& argv0)
     -> std::optional<std::string> {
-  std::string filename = argv0.filename();
+  std::string filename = argv0.filename().string();
   if (filename != "carbon" && filename != "carbon-busybox") {
     return filename;
   }
@@ -46,11 +46,21 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
     argv0_path = argv0_override;
+#ifdef _WIN32
+    _putenv_s(Argv0OverrideEnv, "");
+#else
     unsetenv(Argv0OverrideEnv);
+#endif
   }
 
+#ifdef _WIN32
+  BusyboxInfo info = {
+    .bin_path = FindExecutablePath(argv0_path.string().c_str()),
+#else
   BusyboxInfo info = {.bin_path = FindExecutablePath(argv0_path.c_str()),
-                      .mode = GetMode(argv0_path)};
+#endif
+    .mode = GetMode(argv0_path)
+  };
 
   // Now search through any symlinks to locate the installed busybox binary.
   while (true) {
@@ -65,7 +75,17 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
                                  "/prefix/lib/carbon/carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {
+#ifdef _WIN32
+        std::string norm_path = busybox_path;
+        for (auto& c : norm_path) {
+          if (c == '/') {
+            c = '\\';
+          }
+        }
+        info.bin_path = norm_path;
+#else
         info.bin_path = busybox_path;
+#endif
       }
       return info;
     }
@@ -100,7 +120,17 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       auto busybox_path = lib_path / "carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {
+#ifdef _WIN32
+        std::string norm_path = busybox_path.string();
+        for (auto& c : norm_path) {
+          if (c == '/') {
+            c = '\\';
+          }
+        }
+        info.bin_path = norm_path;
+#else
         info.bin_path = busybox_path;
+#endif
         return info;
       }
     }
@@ -109,6 +139,14 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
     // installation there or are linked directly to the busybox.
     auto readlink = Filesystem::Cwd().Readlink(info.bin_path);
     if (!readlink.ok()) {
+#ifdef _WIN32
+      // On Windows, the binary may be a regular file named carbon-busybox.exe
+      // rather than a symlink. Use the file directly as the install root.
+      auto stem = info.bin_path.stem().string();
+      if (stem == "carbon-busybox") {
+        return info;
+      }
+#endif
       return ErrorBuilder()
              << "expected carbon-busybox symlink at `" << info.bin_path << "`";
     }

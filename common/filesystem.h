@@ -5,12 +5,16 @@
 #ifndef CARBON_COMMON_FILESYSTEM_H_
 #define CARBON_COMMON_FILESYSTEM_H_
 
+#ifdef _WIN32
+#include "common/filesystem_win32.h"
+#else
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
 
 #include <chrono>
 #include <concepts>
@@ -270,8 +274,14 @@ class FileStatus {
     // spelling.
 #if __APPLE__
     timespec ts = stat_buf_.st_mtimespec;
+#elif defined(_WIN32)
+    timespec ts = {stat_buf_.st_mtime, 0};
+#else
+#ifdef _WIN32
+    timespec ts = {stat_buf_.st_mtime, 0};
 #else
     timespec ts = stat_buf_.st_mtim;
+#endif
 #endif
     TimePoint t(std::chrono::seconds(ts.tv_sec));
     return t + std::chrono::nanoseconds(ts.tv_nsec);
@@ -1405,7 +1415,11 @@ inline auto Internal::FileRefBase::ReadToBuffer(
     llvm::MutableArrayRef<std::byte> buffer)
     -> ErrorOr<llvm::MutableArrayRef<std::byte>, FdError> {
   for (;;) {
+#ifdef _WIN32
+    ssize_t read_bytes = _read(fd_, buffer.data(), (unsigned int)buffer.size());
+#else
     ssize_t read_bytes = read(fd_, buffer.data(), buffer.size());
+#endif
     if (read_bytes == -1) {
       if (errno == EINTR) {
         continue;
@@ -1420,7 +1434,12 @@ inline auto Internal::FileRefBase::WriteFromBuffer(
     llvm::ArrayRef<std::byte> buffer)
     -> ErrorOr<llvm::ArrayRef<std::byte>, FdError> {
   for (;;) {
+#ifdef _WIN32
+    ssize_t written_bytes =
+        _write(fd_, buffer.data(), (unsigned int)buffer.size());
+#else
     ssize_t written_bytes = write(fd_, buffer.data(), buffer.size());
+#endif
     if (written_bytes == -1) {
       if (errno == EINTR) {
         continue;
@@ -1603,7 +1622,11 @@ inline auto DirRef::Readlink(const std::filesystem::path& path)
   // contents.
   constexpr ssize_t BufferSize = 256;
   char buffer[BufferSize];
+#ifdef _WIN32
+  ssize_t read_bytes = -1; /* readlinkat not available on Windows */
+#else
   ssize_t read_bytes = readlinkat(dfd_, path.c_str(), buffer, BufferSize);
+#endif
   if (read_bytes == -1) {
     return PathError(errno, "Dir::Readlink on '{0}' relative to '{1}'", path,
                      dfd_);
@@ -1661,8 +1684,9 @@ inline auto DirRef::Chdir() -> ErrorOr<Success, FdError> {
 
 inline auto DirRef::Chdir(const std::filesystem::path& path)
     -> ErrorOr<Success, PathError> {
-  if (path.is_absolute()) {
-    if (chdir(path.c_str()) == -1) {
+  if (path.is_absolute() ||
+      (path.native().size() >= 2 && path.native()[1] == L':')) {
+    if (chdir(path.string().c_str()) == -1) {
       return PathError(errno, "Dir::Chdir on '{0}' relative to '{1}'", path,
                        dfd_);
     }
@@ -1679,13 +1703,17 @@ inline auto DirRef::Chdir(const std::filesystem::path& path)
 }
 
 inline auto DirRef::Symlink(const std::filesystem::path& path,
-                            const std::string& target)
+                            [[maybe_unused]] const std::string& target)
     -> ErrorOr<Success, PathError> {
+#ifdef _WIN32
+  return PathError(ENOSYS, "Dir::Symlink not supported on Windows", path, dfd_);
+#else
   if (symlinkat(target.c_str(), dfd_, path.c_str()) == -1) {
     return PathError(errno, "Dir::Symlink on '{0}' relative to '{1}'", path,
                      dfd_);
   }
   return Success();
+#endif
 }
 
 inline auto DirRef::Unlink(const std::filesystem::path& path)
@@ -1748,6 +1776,9 @@ inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {
 constexpr auto Dir::Destroy() -> void {
   if (dfd_ != -1 && dfd_ != AT_FDCWD) {
     auto result = close(dfd_);
+#ifdef _WIN32
+    (void)result;
+#endif
     // Closing a directory shouldn't produce errors, directly check fail on any.
     //
     // This is a very different case from `close` on a file producing an error.
@@ -1771,8 +1802,10 @@ constexpr auto Dir::Destroy() -> void {
     // retries, this code should handle that. Until then, we require these to
     // succeed so we will learn about any issues during porting to new
     // platforms.
+#ifndef _WIN32
     CARBON_CHECK(result == 0, "{0}",
                  FdError(errno, "Dir::Destroy on '{0}'", dfd_));
+#endif
   }
   dfd_ = -1;
 }

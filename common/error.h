@@ -1,4 +1,4 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+﻿// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
@@ -6,6 +6,7 @@
 #define CARBON_COMMON_ERROR_H_
 
 #include <concepts>
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -207,7 +208,15 @@ class ErrorBuilder {
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
   auto operator<<(T&& message) && -> ErrorBuilder&& {
+#ifdef _WIN32
+    if constexpr (std::is_same_v<std::decay_t<T>, std::filesystem::path>) {
+      *out_ << message.string();
+    } else {
+      *out_ << message;
+    }
+#else
     *out_ << message;
+#endif
     return std::move(*this);
   }
 
