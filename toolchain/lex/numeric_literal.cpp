@@ -180,8 +180,9 @@ auto NumericLiteral::Parser::Check() -> bool {
 }
 
 // Parses a binary integer literal.
-static auto ParseBinary(llvm::StringRef digits) -> llvm::APInt {
-  llvm::APInt value(std::max<int>(IntStore::MinAPWidth, digits.size()), 0);
+static auto ParseBinary(llvm::StringRef digits, bool is_signed) -> llvm::APInt {
+  llvm::APInt value(
+      std::max<int>(IntStore::MinAPWidth, digits.size() + is_signed), 0);
   int cursor = digits.size() - 1;
   for (char c : digits) {
     if (c == '1') {
@@ -196,11 +197,13 @@ static auto ParseBinary(llvm::StringRef digits) -> llvm::APInt {
 template <NumericLiteral::Radix Radix>
   requires(Radix == NumericLiteral::Radix::Hexadecimal ||
            Radix == NumericLiteral::Radix::Octal)
-static auto ParseOctalOrHexadecimal(llvm::StringRef digits) -> llvm::APInt {
+static auto ParseOctalOrHexadecimal(llvm::StringRef digits, bool is_signed)
+    -> llvm::APInt {
   constexpr int BitsPerDigit =
       Radix == NumericLiteral::Radix::Hexadecimal ? 4 : 3;
-  llvm::APInt value(
-      std::max<int>(IntStore::MinAPWidth, digits.size() * BitsPerDigit), 0);
+  llvm::APInt value(std::max<int>(IntStore::MinAPWidth,
+                                  digits.size() * BitsPerDigit + is_signed),
+                    0);
   int cursor = digits.size() * BitsPerDigit - 1;
   for (char c : digits) {
     uint8_t digit;
@@ -243,13 +246,15 @@ static auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
 // 19 digits at a time because that's the most that fit into uint64_t, which
 // is APInt's internal unit for storage; chunking this way minimizes
 // cross-unit arithmetic.
-static auto ParseDecimal(llvm::StringRef digits) -> llvm::APInt {
+static auto ParseDecimal(llvm::StringRef digits, bool is_signed)
+    -> llvm::APInt {
   // APInt performance scales based on the number of bits, so be precise.
   // TODO: Check if this can be `constexpr` when C++26 is in use.
   static const double bits_per_digit = std::log2(10);
-  llvm::APInt value(std::max<int>(IntStore::MinAPWidth,
-                                  std::ceil(digits.size() * bits_per_digit)),
-                    0);
+  llvm::APInt value(
+      std::max<int>(IntStore::MinAPWidth,
+                    std::ceil(digits.size() * bits_per_digit) + is_signed),
+      0);
   static constexpr int DigitsPerChunk = 19;
 
   // If there's only a few digits, we don't need the multiplication logic.
@@ -279,15 +284,16 @@ static auto ParseDecimal(llvm::StringRef digits) -> llvm::APInt {
 }
 
 // Parse a string that is known to be a valid base-radix integer into an
-// APInt.  If needs_cleaning is true, the string may additionally contain '_'
-// and '.' characters that should be ignored.
+// APInt.  If `needs_cleaning` is true, the string may additionally contain '_'
+// and '.' characters that should be ignored. If `is_signed` is true, a bit is
+// kept unused for the sign.
 //
 // Ignoring '.' is used when parsing a real literal. For example, when
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
 static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
-                     bool needs_cleaning) -> llvm::APInt {
+                     bool needs_cleaning, bool is_signed) -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
@@ -302,38 +308,32 @@ static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
   // Instead, we implement our own.
   switch (radix) {
     case NumericLiteral::Radix::Binary:
-      return ParseBinary(digits);
+      return ParseBinary(digits, is_signed);
     case NumericLiteral::Radix::Octal:
-      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Octal>(digits);
+      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Octal>(digits,
+                                                                   is_signed);
     case NumericLiteral::Radix::Decimal:
-      return ParseDecimal(digits);
+      return ParseDecimal(digits, is_signed);
     case NumericLiteral::Radix::Hexadecimal:
       return ParseOctalOrHexadecimal<NumericLiteral::Radix::Hexadecimal>(
-          digits);
+          digits, is_signed);
   }
 }
 
 auto NumericLiteral::Parser::GetMantissa() -> llvm::APInt {
   const char* end = IsInt() ? int_part_.end() : fract_part_.end();
   llvm::StringRef digits(int_part_.begin(), end - int_part_.begin());
-  return ParseInt(digits, radix_, mantissa_needs_cleaning_);
+  return ParseInt(digits, radix_, mantissa_needs_cleaning_,
+                  /*is_signed=*/false);
 }
 
 auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
   // Compute the effective exponent from the specified exponent, if any,
   // and the position of the radix point.
-  llvm::APInt exponent(64, 0);
+  llvm::APInt exponent(IntStore::MinAPWidth, 0);
   if (!exponent_part_.empty()) {
-    exponent =
-        ParseInt(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
-
-    // The exponent is a signed integer, and the number we just parsed is
-    // non-negative, so ensure we have a wide enough representation to
-    // include a sign bit. Also make sure the exponent isn't too narrow so
-    // the calculation below can't lose information through overflow.
-    if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
-      exponent = exponent.zext(std::max(64U, exponent.getBitWidth() + 1));
-    }
+    exponent = ParseInt(exponent_part_, Radix::Decimal,
+                        exponent_needs_cleaning_, /*is_signed=*/true);
     if (exponent_is_negative_) {
       exponent.negate();
     }
@@ -347,6 +347,7 @@ auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
     excess_exponent *= 3;
   }
   exponent -= excess_exponent;
+  CARBON_CHECK(exponent.getBitWidth() >= 64, "overflow requires high width");
   if (exponent_is_negative_ && !exponent.isNegative()) {
     // We overflowed. Note that we can only overflow by a little, and only
     // from negative to positive, because exponent is at least 64 bits wide
