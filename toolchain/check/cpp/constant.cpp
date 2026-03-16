@@ -128,6 +128,16 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
   }
 }
 
+static auto MapAPValueToConstantForConstexpr(Context& context,
+                                             SemIR::LocId loc_id,
+                                             const clang::APValue& ap_value,
+                                             clang::QualType type)
+    -> SemIR::ConstantId {
+  // TODO
+  bool is_lvalue = ap_value.isLValue();
+  return MapAPValueToConstant(context, loc_id, ap_value, type, is_lvalue);
+}
+
 auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
                     const clang::VarDecl* var_decl, SemIR::TypeId type_id)
     -> SemIR::ConstantId {
@@ -140,10 +150,8 @@ auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
         return SemIR::ErrorInst::ConstantId;
       }
 
-      // TODO
-      bool is_lvalue = ap_value->isLValue();
-      return MapAPValueToConstant(context, loc_id, *ap_value, clang_type,
-                                  is_lvalue);
+      return MapAPValueToConstantForConstexpr(context, loc_id, *ap_value,
+                                              clang_type);
     }
   }
 
@@ -247,10 +255,8 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  // TODO
-  bool is_lvalue = eval_result.Val.isLValue();
-  return MapAPValueToConstant(context, loc_id, eval_result.Val,
-                              function_decl->getCallResultType(), is_lvalue);
+  return MapAPValueToConstantForConstexpr(context, loc_id, eval_result.Val,
+                                          function_decl->getCallResultType());
 }
 
 }  // namespace Carbon::Check
