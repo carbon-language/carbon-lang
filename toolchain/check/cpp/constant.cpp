@@ -93,7 +93,18 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
     return SemIR::ConstantId::NotConstant;
   }
 
-  if (ap_value.isInt()) {
+  if (is_lvalue) {
+    auto const_id = MapLValueToConstant(context, loc_id, ap_value, type);
+    if (type->isPointerType()) {
+      auto inst_id = AddInst<SemIR::AddrOf>(
+          context, loc_id,
+          {.type_id = type_id,
+           .lvalue_id = context.constant_values().GetInstId(const_id)});
+      return context.constant_values().Get(inst_id);
+    }
+    return const_id;
+
+  } else if (ap_value.isInt()) {
     if (type->isBooleanType()) {
       auto value = SemIR::BoolValue::From(!ap_value.getInt().isZero());
       return TryEvalInst(
@@ -109,17 +120,6 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
     FloatId float_id = context.floats().Add(ap_value.getFloat());
     return TryEvalInst(
         context, SemIR::FloatValue{.type_id = type_id, .float_id = float_id});
-  } else if (is_lvalue) {
-    auto const_id = MapLValueToConstant(context, loc_id, ap_value, type);
-    if (type->isPointerType()) {
-      auto inst_id = AddInst<SemIR::AddrOf>(
-          context, loc_id,
-          {.type_id = type_id,
-           .lvalue_id = context.constant_values().GetInstId(const_id)});
-      return context.constant_values().Get(inst_id);
-    }
-    return const_id;
-
   } else {
     // TODO: support other types.
     context.TODO(loc_id, "unsupported conversion to constant from APValue " +
