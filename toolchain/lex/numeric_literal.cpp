@@ -231,6 +231,7 @@ static auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
 // cross-unit arithmetic.
 static auto ParseDecimal(llvm::StringRef digits) -> llvm::APInt {
   // APInt performance scales based on the number of bits, so be precise.
+  // TODO: Check if this can be `constexpr` when C++26 is in use.
   static const double bits_per_digit = std::log2(10);
   llvm::APInt value(std::max<int>(IntStore::MinAPWidth,
                                   std::ceil(digits.size() * bits_per_digit)),
