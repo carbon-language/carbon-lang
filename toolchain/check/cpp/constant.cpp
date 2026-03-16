@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/constant.h"
 
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/type_completion.h"
@@ -125,6 +126,28 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
                              ap_value.getAsString(context.ast_context(), type));
     return SemIR::ErrorInst::ConstantId;
   }
+}
+
+auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
+                    const clang::VarDecl* var_decl, SemIR::TypeId type_id)
+    -> SemIR::ConstantId {
+  // If the C++ global is constant, map it to a Carbon constant.
+  if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
+    if (const auto* ap_value = var_decl->getEvaluatedValue()) {
+      auto clang_type = MapToCppType(context, type_id);
+      if (clang_type.isNull()) {
+        context.TODO(loc_id, "failed to map C++ type to Carbon");
+        return SemIR::ErrorInst::ConstantId;
+      }
+
+      // TODO
+      bool is_lvalue = ap_value->isLValue();
+      return MapAPValueToConstant(context, loc_id, *ap_value, clang_type,
+                                  is_lvalue);
+    }
+  }
+
+  return SemIR::ConstantId::NotConstant;
 }
 
 static auto ConvertConstantToAPValue(Context& context,
