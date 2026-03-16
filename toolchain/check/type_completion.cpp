@@ -90,17 +90,14 @@ static auto DiagnoseIncompleteNamedConstraint(
 
   const auto& constraint = context.named_constraints().Get(named_constraint_id);
   CARBON_CHECK(!constraint.is_complete(), "Named constraint is not incomplete");
-  if (constraint.is_being_defined()) {
-    CARBON_DIAGNOSTIC(NamedConstraintIncompleteWithinDefinition, Error,
-                      "constraint is currently being defined");
-    context.emitter().Emit(constraint.definition_id,
-                           NamedConstraintIncompleteWithinDefinition);
-  } else {
-    CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Error,
-                      "constraint was forward declared here");
-    context.emitter().Emit(constraint.latest_decl_id(),
-                           NamedConstraintForwardDeclaredHere);
-  }
+  // It's not possible to use a named constraint inside its definition in a way
+  // that requires it to be complete. Using its name is an error, it can only be
+  // used through `Self`.
+  CARBON_CHECK(!constraint.is_being_defined());
+  CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Error,
+                    "constraint was forward declared here");
+  context.emitter().Emit(constraint.latest_decl_id(),
+                         NamedConstraintForwardDeclaredHere);
 }
 
 // TODO: Have the resolved specific know whether any instructions in the
