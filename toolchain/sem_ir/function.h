@@ -24,6 +24,7 @@ struct FunctionFields {
     Builtin,
     CoreWitness,
     Thunk,
+    CppThunk,
     HasCppThunk,
   };
 
@@ -231,6 +232,13 @@ struct Function : public EntityWithParamsBase,
                : InstId::None;
   }
 
+  // Gets the `InstId` of the C++ function called by this thunk.
+  auto cpp_thunk_callee() const -> InstId {
+    return special_function_kind == SpecialFunctionKind::CppThunk
+               ? InstId(special_function_kind_data.index)
+               : InstId::None;
+  }
+
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
@@ -268,6 +276,13 @@ struct Function : public EntityWithParamsBase,
   auto SetThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a C++ thunk.
+  auto SetCppThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 
