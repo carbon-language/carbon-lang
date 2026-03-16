@@ -145,7 +145,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_loc_id);
 
   // Determine what associated entities a core interface needs.
-  // TODO: This switch statment doesn't scale well, so we should refactor when
+  // TODO: This switch statement doesn't scale well, so we should refactor when
   // more complex core interfaces are added.
   auto insts = std::initializer_list<SemIR::InstId>();
   switch (core_interface) {
