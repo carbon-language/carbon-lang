@@ -366,7 +366,7 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
   // case it was _replaced_ with a symlink while running.
 #ifdef _WIN32
   int result_fd =
-      openat(dfd_, path.wstring().c_str(), static_cast<int>(open_flags));
+      openat(dfd_, path.wstring().c_str(), static_cast<int>(open_flags) | O_DIRECTORY);
 #else
   int result_fd = openat(dfd_, path.c_str(), static_cast<int>(open_flags));
 #endif
