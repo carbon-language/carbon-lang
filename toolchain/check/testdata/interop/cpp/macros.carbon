@@ -878,10 +878,6 @@ int *p;
 
 var n: i32;
 fn F() {
-  // CHECK:STDERR: assign_pointer.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
-  // CHECK:STDERR:   Cpp.q = &n;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR:
   Cpp.q = &n;
 }
 

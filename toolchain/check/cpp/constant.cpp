@@ -94,16 +94,7 @@ auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
   }
 
   if (is_lvalue) {
-    auto const_id = MapLValueToConstant(context, loc_id, ap_value, type);
-    if (type->isPointerType()) {
-      auto inst_id = AddInst<SemIR::AddrOf>(
-          context, loc_id,
-          {.type_id = type_id,
-           .lvalue_id = context.constant_values().GetInstId(const_id)});
-      return context.constant_values().Get(inst_id);
-    }
-    return const_id;
-
+    return MapLValueToConstant(context, loc_id, ap_value, type);
   } else if (ap_value.isInt()) {
     if (type->isBooleanType()) {
       auto value = SemIR::BoolValue::From(!ap_value.getInt().isZero());
