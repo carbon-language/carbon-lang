@@ -197,7 +197,7 @@ template <NumericLiteral::Radix Radix>
   requires(Radix == NumericLiteral::Radix::Hexadecimal ||
            Radix == NumericLiteral::Radix::Octal)
 static auto ParseOctalOrHexadecimal(llvm::StringRef digits) -> llvm::APInt {
-  static constexpr int BitsPerDigit =
+  constexpr int BitsPerDigit =
       Radix == NumericLiteral::Radix::Hexadecimal ? 4 : 3;
   llvm::APInt value(
       std::max<int>(IntStore::MinAPWidth, digits.size() * BitsPerDigit), 0);
