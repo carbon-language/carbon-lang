@@ -144,8 +144,35 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_type_structure);
   static_cast<void>(best_impl_loc_id);
 
+  // Determine what associated entities a core interface needs.
+  // TODO: This switch statment doesn't scale well, so we should refactor when
+  // more complex core interfaces are added.
+  auto insts = std::initializer_list<SemIR::InstId>();
+  switch (core_interface) {
+    // Core interfaces with only one associated function.
+    case CoreInterface::Copy:
+    case CoreInterface::Destroy: {
+      insts = {fn_id};
+      break;
+    }
+    // Core interfaces with one associated function whose return type is an
+    // associated type.
+    case CoreInterface::CppUnsafeDeref: {
+      auto return_type_id =
+          context.functions()
+              .Get(
+                  context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+              .return_type_inst_id;
+      insts = {return_type_id, fn_id};
+      break;
+    }
+    case CoreInterface::IntFitsIn:
+    case CoreInterface::Unknown:
+      CARBON_FATAL("{} should have been handled earlier.", core_interface);
+  }
+
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface_id, insts);
 }
 
 }  // namespace Carbon::Check
