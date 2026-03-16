@@ -32,6 +32,10 @@ import Cpp library "global_scope.h";
 fn MyF() {
   let unused local: Cpp.C = Cpp.global;
   let unused local_ptr: Cpp.C* = Cpp.global_ptr;
+  // CHECK:STDERR: import_global_scope.carbon:[[@LINE+4]]:34: error: semantics TODO: `unsupported conversion to constant from APValue &global` [SemanticsTodo]
+  // CHECK:STDERR:   let unused local_ref: Cpp.C* = Cpp.global_ref;
+  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let unused local_ref: Cpp.C* = Cpp.global_ref;
 }
 
@@ -83,7 +87,6 @@ fn MyF() {
 // CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %pattern_type.8ca: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %global_ref.var: ref %ptr.d9e = var imports.%global_ref.var_patt [concrete]
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -160,18 +163,17 @@ fn MyF() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.a31 = value_binding_pattern local_ref [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc9_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc13_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ref.ref: ref %const = name_ref global_ref, imports.%global_ref.var [concrete = imports.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_30: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.d9e]
+// CHECK:STDOUT:   %.loc13_30: type = splice_block %ptr.loc13 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:     %Cpp.ref.loc13_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %C.ref.loc13 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_37.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_37.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_37.1 [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete = constants.%addr]
-// CHECK:STDOUT:   %.loc9_37.3: %ptr.d9e = acquire_value %.loc9_37.2 [concrete = constants.%addr]
-// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   %.loc13_37.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %.loc13_37.2: ref %ptr.d9e = converted %global_ref.ref, %.loc13_37.1 [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %.loc13_37.3: %ptr.d9e = acquire_value %.loc13_37.2 [concrete = <error>]
+// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc13_37.3 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
