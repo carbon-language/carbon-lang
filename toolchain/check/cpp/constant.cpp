@@ -37,7 +37,7 @@ static auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
       const_cast<clang::ValueDecl*>(value_decl));
 
   auto inst_id = ImportCppDecl(context, loc_id, key);
-  if (ap_value.getLValuePath().size() == 0) {
+  if (ap_value.getLValuePath().empty()) {
     return context.constant_values().Get(inst_id);
   }
 
