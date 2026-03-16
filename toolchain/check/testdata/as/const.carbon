@@ -96,6 +96,7 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
@@ -106,8 +107,8 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.bf1: type = pattern_type %ptr.d4c [concrete]
 // CHECK:STDOUT:   %reference.var: ref %const = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.160: %ptr.d4c = addr_of %reference.var [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc14_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.3: %Destroy.Op.type.bae255.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -173,12 +174,22 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_24: type = ptr_type %const.loc17_17 [concrete = constants.%ptr.d4c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.d4c = value_binding b, %.loc17_32.2
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op.651ba6.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %const) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.2(%self.param: ref %X) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.3(%self.param: ref %const) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -189,13 +200,14 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %const: type = const_type %X [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc12_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -223,12 +235,17 @@ fn Use() {
 // CHECK:STDOUT:   %.loc13_27.2: %X = converted %value.ref, %.loc13_27.1
 // CHECK:STDOUT:   %X.ref.loc13_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_27.2
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %X) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc12_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc12_3.2(%self.param: ref %X) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

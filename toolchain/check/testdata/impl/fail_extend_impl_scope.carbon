@@ -209,6 +209,9 @@ fn F() {
 // CHECK:STDOUT:   %Z.WithSelf.Zero.55b: %Z.WithSelf.Zero.type.15e = struct_value () [concrete]
 // CHECK:STDOUT:   %.c1b: type = fn_type_with_self_type %Z.WithSelf.Zero.type.bb1, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc25_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.fcf, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -323,10 +326,16 @@ fn F() {
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.cc0]
 // CHECK:STDOUT:   %impl.elem0: %.c1b = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.fcf)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Point) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc25_7.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc25_7.2(%self.param: ref %Point) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.c59) {
 // CHECK:STDOUT: !definition:

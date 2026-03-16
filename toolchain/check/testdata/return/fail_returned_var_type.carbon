@@ -40,6 +40,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.794: type = float_type %int_64, f64 [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %float.1f7: Core.FloatLiteral = float_literal_value 0e-1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
@@ -59,8 +60,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.0a8: %f64.d77 = float_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc23_12.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -115,10 +116,15 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %v: ref %f64.d77 = ref_binding v, %v.var
 // CHECK:STDOUT:   %.loc23_17: %f64.d77 = acquire_value %v
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return %.loc23_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref %f64.794) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_12.2(%self.param: ref %f64.d77) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

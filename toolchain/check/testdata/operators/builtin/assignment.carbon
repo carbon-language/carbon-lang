@@ -40,6 +40,7 @@ fn Main() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_12.6a3: Core.IntLiteral = int_value 12 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
@@ -116,12 +117,12 @@ fn Main() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc27 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc23 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc23_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.3: %Destroy.Op.type.bae255.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc16 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc23_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.5: type = fn_type @Destroy.Op.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.5: %Destroy.Op.type.bae255.5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -342,20 +343,31 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc30_3, %.loc30_29
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27: <bound method> = bound_method %p.var, constants.%Destroy.Op.651ba6.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc27: init %empty_tuple.type = call %Destroy.Op.bound.loc27(%p.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %c.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %c.var, constants.%Destroy.Op.651ba6.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%c.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc19: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.3
+// CHECK:STDOUT:   %Destroy.Op.bound.loc19: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc19: init %empty_tuple.type = call %Destroy.Op.bound.loc19(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.4
+// CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc16: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc27(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23(%self.param: ref %struct_type.a.b.501) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc19(%self.param: ref %tuple.type.d07) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc16(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.3(%self.param: ref %struct_type.a.b.501) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc19(%self.param: ref %tuple.type.d07) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

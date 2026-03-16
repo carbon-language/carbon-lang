@@ -161,6 +161,12 @@ fn B() {
 // CHECK:STDOUT:   %.80a: ref %ImplsGeneric = temporary invalid, %ImplsGeneric.val [concrete]
 // CHECK:STDOUT:   %.601: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20_44.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound.eb4: <bound method> = bound_method %.601, %Destroy.Op.651ba6.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc20_24 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.3: %Destroy.Op.type.bae255.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound.55e: <bound method> = bound_method %.80a, %Destroy.Op.651ba6.3 [concrete]
 // CHECK:STDOUT:   %complete_type.57a: <witness> = complete_type_witness %Generic.type.498 [concrete]
 // CHECK:STDOUT:   %.fcf: type = fn_type_with_self_type %Generic.WithSelf.F.type.c86, %Generic.facet [concrete]
 // CHECK:STDOUT: }
@@ -350,12 +356,22 @@ fn B() {
 // CHECK:STDOUT:   %.loc20_44.2: ref %GenericParam = temporary %.loc20_42.2, %.loc20_44.1 [concrete = constants.%.601]
 // CHECK:STDOUT:   %.loc20_44.3: %GenericParam = acquire_value %.loc20_44.2 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc20_24.3, %.loc20_44.3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_44: init %empty_tuple.type = call constants.%Destroy.Op.bound.eb4(constants.%.601)
+// CHECK:STDOUT:   %Destroy.Op.call.loc20_24: init %empty_tuple.type = call constants.%Destroy.Op.bound.55e(constants.%.80a)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_44(%self.param: ref %GenericParam) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_44.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_24(%self.param: ref %ImplsGeneric) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_44.2(%self.param: ref %GenericParam) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc20_24(%self.param: ref %ImplsGeneric) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_25.1 => constants.%Scalar
@@ -504,6 +520,9 @@ fn B() {
 // CHECK:STDOUT:   %A.specific_fn: <specific function> = specific_function %A, @A(%I.facet.0e1) [concrete]
 // CHECK:STDOUT:   %.5ea: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc12_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.5ea, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -654,10 +673,16 @@ fn B() {
 // CHECK:STDOUT:   %.loc12_8.2: ref %C = temporary %.loc12_6.2, %.loc12_8.1 [concrete = constants.%.5ea]
 // CHECK:STDOUT:   %.loc12_8.3: %C = acquire_value %.loc12_8.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.3)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.5ea)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc12_8.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc12_8.2(%self.param: ref %C) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc3_14.1 => constants.%V

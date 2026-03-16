@@ -178,6 +178,7 @@ fn MyF() {
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.type: type = fn_type @ThunkOnArg__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk: %ThunkOnArg__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.9fb: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.882: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.74f, @Core.IntLiteral.as.ImplicitAs.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c54: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_16) [concrete]
@@ -211,8 +212,9 @@ fn MyF() {
 // CHECK:STDOUT:   %ThunkOnBoth.cpp_overload_set.value: %ThunkOnBoth.cpp_overload_set.type = cpp_overload_set_value @ThunkOnBoth.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.type: type = fn_type @ThunkOnBoth__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk: %ThunkOnBoth__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc16_41.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.dde, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -349,12 +351,19 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc16_41.3: ref %i16 = temporary %.loc16_41.1, %.loc16_41.2
 // CHECK:STDOUT:   %.loc16_41.4: %i16 = acquire_value %.loc16_41.3
 // CHECK:STDOUT:   %r4: %i16 = value_binding r4, %.loc16_41.4
-// CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc16: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%.loc16_41.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc16_41: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%.loc16_41.3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc16_40: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.dde)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%.loc15_43.3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.dde)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i16) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc16_41.1(%self.param: ref %i16.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc16_41.2(%self.param: ref %i16) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

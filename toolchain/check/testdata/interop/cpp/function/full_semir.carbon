@@ -79,6 +79,7 @@ fn F() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %As.type.90f: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.90f = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.359: type = facet_type <@As, @As(%i16)> [concrete]
@@ -114,6 +115,9 @@ fn F() {
 // CHECK:STDOUT:   %.dde: ref %i16 = temporary invalid, %int_1.f90 [concrete]
 // CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.dde [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc7_13.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.dde, %Destroy.Op.651ba6.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -187,6 +191,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_13.4: ref %i16 = temporary %.loc7_13.3, %Int.as.Copy.impl.Op.call [concrete = constants.%.dde]
 // CHECK:STDOUT:   %addr: %ptr.251 = addr_of %.loc7_13.4 [concrete = constants.%addr]
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.dde)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,7 +199,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.251);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i16) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_13.1(%self.param: ref %i16.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc7_13.2(%self.param: ref %i16) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param.carbon
 // CHECK:STDOUT:
@@ -301,6 +311,7 @@ fn F() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
 // CHECK:STDOUT:   %pattern_type.2f8: type = pattern_type %i16 [concrete]
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.type: type = cpp_overload_set_type @foo_short.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.value: %foo_short.cpp_overload_set.type = cpp_overload_set_value @foo_short.cpp_overload_set [concrete]
@@ -309,8 +320,8 @@ fn F() {
 // CHECK:STDOUT:   %foo_short__carbon_thunk.type: type = fn_type @foo_short__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_short__carbon_thunk: %foo_short__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc7_37.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -369,7 +380,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_37.3: ref %i16 = temporary %.loc7_37.1, %.loc7_37.2
 // CHECK:STDOUT:   %.loc7_37.4: %i16 = acquire_value %.loc7_37.3
 // CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc7_37.4
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_37.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_37.3, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_37.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -378,5 +389,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo_short__carbon_thunk(%return.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i16) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc7_37.1(%self.param: ref %i16.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc7_37.2(%self.param: ref %i16) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

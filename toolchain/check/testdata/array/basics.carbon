@@ -167,6 +167,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.ff9 = tuple_value (%C, %C, %C) [concrete]
 // CHECK:STDOUT:   %tuple.type.e56: type = tuple_type (%C, %C, %C) [concrete]
@@ -179,8 +180,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type.708: type = tuple_type (%tuple.type.e56, %tuple.type.e56) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc10_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -216,12 +217,27 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc10_31.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %array_type = ref_binding v, %v.var
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.651ba6.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %C) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.3(%self.param: ref %tuple.type.e56) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc10_3.4(%self.param: ref %array_type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- array_vs_tuple.carbon
 // CHECK:STDOUT:
@@ -242,10 +258,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.032: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.349, @T.as.DefaultOrUnformed.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.1ea: %DefaultOrUnformed.type = facet_value %tuple.type, (%DefaultOrUnformed.impl_witness.032) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc8 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc7 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc8_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc7 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.3: %Destroy.Op.type.bae255.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -299,16 +315,24 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc8_28.6: type = converted %.loc8_28.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type = ref_binding b, %b.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.651ba6.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8(%self.param: ref %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %tuple.type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc7(%self.param: ref %array_type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- assign_return_value.carbon
 // CHECK:STDOUT:
@@ -323,10 +347,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc8_34 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc8_3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc8_34.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.3: type = fn_type @Destroy.Op.loc8_3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.3: %Destroy.Op.type.bae255.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -355,16 +379,24 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %.loc8_24.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %array_type = ref_binding t, %t.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc8_34: <bound method> = bound_method %.loc8_34.2, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound.loc8_34: <bound method> = bound_method %.loc8_34.2, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc8_34: init %empty_tuple.type = call %Destroy.Op.bound.loc8_34(%.loc8_34.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%Destroy.Op.651ba6.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc8_3: init %empty_tuple.type = call %Destroy.Op.bound.loc8_3(%t.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_34(%self.param: ref %tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_34.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc8_34.2(%self.param: ref %tuple.type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_3(%self.param: ref %array_type) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nine_elements.carbon
 // CHECK:STDOUT:

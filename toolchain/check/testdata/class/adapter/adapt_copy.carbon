@@ -182,8 +182,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc16 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc16_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -194,8 +194,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.5d1: Core.Form = init_form %tuple.type.d78 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc35 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %u32.builtin: type = int_type unsigned, %int_32 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.5: type = fn_type @Destroy.Op.loc35_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.5: %Destroy.Op.type.bae255.5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -283,12 +284,17 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %d: ref %AdaptCopyable = ref_binding d, %d.var
 // CHECK:STDOUT:   %d.ref: ref %AdaptCopyable = name_ref d, %d
 // CHECK:STDOUT:   %.loc24: %AdaptCopyable = acquire_value %d.ref
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc16(%self.param: ref %AdaptCopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc16_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc16_3.2(%self.param: ref %AdaptCopyable) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.d78) -> out %return.param: %tuple.type.d78 {
 // CHECK:STDOUT: !entry:
@@ -310,12 +316,22 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %d.ref: ref %tuple.type.d78 = name_ref d, %d
 // CHECK:STDOUT:   %tuple.elem0.loc43: ref %AdaptCopyable = tuple_access %d.ref, element0
 // CHECK:STDOUT:   %.loc43: %AdaptCopyable = acquire_value %tuple.elem0.loc43
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35(%self.param: ref %tuple.type.d78) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc35_3.1(%self.param: ref %u32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc35_3.2(%self.param: ref %u32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc35_3.3(%self.param: ref %tuple.type.d78) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_copyable_tuple.carbon
 // CHECK:STDOUT:
@@ -330,6 +346,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.65d: <witness> = complete_type_witness %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %pattern_type.6cd: type = pattern_type %AdaptTuple [concrete]
 // CHECK:STDOUT:   %.52a: Core.Form = init_form %AdaptTuple [concrete]
@@ -346,8 +363,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet.de4 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc9 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc9_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -357,6 +374,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.709: Core.Form = init_form %tuple.type.3c7 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
+// CHECK:STDOUT:   %u32.builtin: type = int_type unsigned, %int_32 [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.68f: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.576: %UInt.as.Copy.impl.Op.type.68f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.514: <witness> = impl_witness imports.%Copy.impl_witness_table.bd0, @UInt.as.Copy.impl(%int_32) [concrete]
@@ -366,8 +384,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.ad7: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.10b) [concrete]
 // CHECK:STDOUT:   %.38c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ad7, %Copy.facet.10b [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %UInt.as.Copy.impl.Op.c10, @UInt.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc14 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.7: type = fn_type @Destroy.Op.loc14_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.7: %Destroy.Op.type.bae255.7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -505,12 +523,27 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc10_11.7: init %tuple.type.d07 to %.loc10_11.3 = tuple_init (%.loc10_11.4, %.loc10_11.6)
 // CHECK:STDOUT:   %.loc10_11.8: init %AdaptTuple = as_compatible %.loc10_11.7
 // CHECK:STDOUT:   %.loc10_11.9: init %AdaptTuple = converted %d.ref, %.loc10_11.8
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   return %.loc10_11.9 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9(%self.param: ref %AdaptTuple) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %tuple.type.d07) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.4(%self.param: ref %AdaptTuple) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.3c7) -> out %return.param: %tuple.type.3c7 {
 // CHECK:STDOUT: !entry:
@@ -598,12 +631,22 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc15_10.11: init %u32 to %tuple.elem1.loc15_10.4 = in_place_init %UInt.as.Copy.impl.Op.call.loc15
 // CHECK:STDOUT:   %.loc15_10.12: init %tuple.type.3c7 to %return.param = tuple_init (%.loc15_10.9, %.loc15_10.11)
 // CHECK:STDOUT:   %.loc15_11: init %tuple.type.3c7 = converted %d.ref, %.loc15_10.12
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.7
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   return %.loc15_11 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %tuple.type.3c7) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.1(%self.param: ref %u32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.2(%self.param: ref %u32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.3(%self.param: ref %tuple.type.3c7) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_not_copyable.carbon
 // CHECK:STDOUT:
@@ -619,8 +662,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc20_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -692,12 +735,17 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyable = ref_binding b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyable = name_ref b, %b
 // CHECK:STDOUT:   %.loc28: %AdaptNoncopyable = acquire_value %b.ref
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %AdaptNoncopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %AdaptNoncopyable) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_not_copyable_indirect.carbon
 // CHECK:STDOUT:
@@ -715,6 +763,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple.19a: %tuple.type.ff9 = tuple_value (%i32, %Noncopyable, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.7f9: type = tuple_type (%i32, %Noncopyable, %i32) [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.381: <witness> = complete_type_witness %tuple.type.7f9 [concrete]
 // CHECK:STDOUT:   %pattern_type.ca6: type = pattern_type %AdaptNoncopyableIndirect [concrete]
 // CHECK:STDOUT:   %.ae4: Core.Form = init_form %AdaptNoncopyableIndirect [concrete]
@@ -731,8 +780,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.6: type = fn_type @Destroy.Op.loc23_3.6 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.6: %Destroy.Op.type.bae255.6 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -835,12 +884,34 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc34_11.4: init %i32 to %tuple.elem0.loc34_11.2 = in_place_init %Int.as.Copy.impl.Op.call.loc34
 // CHECK:STDOUT:   %tuple.elem1.loc34: ref %Noncopyable = tuple_access %.loc34_11.1, element1
 // CHECK:STDOUT:   %.loc34_11.5: %Noncopyable = acquire_value %tuple.elem1.loc34
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.651ba6.6
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %AdaptNoncopyableIndirect) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.3(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.4(%self.param: ref %Noncopyable) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.5(%self.param: ref %tuple.type.7f9) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc23_3.6(%self.param: ref %AdaptNoncopyableIndirect) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_copyable_struct.carbon
 // CHECK:STDOUT:
@@ -853,6 +924,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.e.f: type = struct_type {.e: %i32, .f: %i32} [concrete]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.511: <witness> = complete_type_witness %struct_type.e.f [concrete]
 // CHECK:STDOUT:   %pattern_type.341: type = pattern_type %AdaptStruct [concrete]
 // CHECK:STDOUT:   %.8e3: Core.Form = init_form %AdaptStruct [concrete]
@@ -869,8 +941,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.8e2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.081, %Copy.facet.de4 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.1: type = fn_type @Destroy.Op.loc9 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.1: %Destroy.Op.type.bae255.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.4: type = fn_type @Destroy.Op.loc9_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.4: %Destroy.Op.type.bae255.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -881,6 +953,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.174: Core.Form = init_form %tuple.type.691 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
+// CHECK:STDOUT:   %u32.builtin: type = int_type unsigned, %int_32 [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.68f: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.576: %UInt.as.Copy.impl.Op.type.68f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.514: <witness> = impl_witness imports.%Copy.impl_witness_table.bd0, @UInt.as.Copy.impl(%int_32) [concrete]
@@ -890,8 +963,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.ad7: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.10b) [concrete]
 // CHECK:STDOUT:   %.38c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ad7, %Copy.facet.10b [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %UInt.as.Copy.impl.Op.c10, @UInt.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.bae255.2: type = fn_type @Destroy.Op.loc14 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.651ba6.2: %Destroy.Op.type.bae255.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.bae255.7: type = fn_type @Destroy.Op.loc14_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.651ba6.7: %Destroy.Op.type.bae255.7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1028,12 +1101,27 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc10_11.11: init %struct_type.e.f to %.loc10_11.4 = struct_init (%.loc10_11.6, %.loc10_11.10)
 // CHECK:STDOUT:   %.loc10_11.12: init %AdaptStruct = as_compatible %.loc10_11.11
 // CHECK:STDOUT:   %.loc10_11.13: init %AdaptStruct = converted %h.ref, %.loc10_11.12
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %h.var, constants.%Destroy.Op.651ba6.1
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %h.var, constants.%Destroy.Op.651ba6.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%h.var)
 // CHECK:STDOUT:   return %.loc10_11.13 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9(%self.param: ref %AdaptStruct) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %struct_type.e.f) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_3.4(%self.param: ref %AdaptStruct) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.691) -> out %return.param: %tuple.type.691 {
 // CHECK:STDOUT: !entry:
@@ -1121,10 +1209,20 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc15_10.15: init %u32 to %tuple.elem1.loc15_10.2 = in_place_init %UInt.as.Copy.impl.Op.call.loc15
 // CHECK:STDOUT:   %.loc15_10.16: init %tuple.type.691 to %return.param = tuple_init (%.loc15_10.13, %.loc15_10.15)
 // CHECK:STDOUT:   %.loc15_11: init %tuple.type.691 = converted %d.ref, %.loc15_10.16
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.651ba6.7
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   return %.loc15_11 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %tuple.type.691) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.1(%self.param: ref %u32.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.2(%self.param: ref %u32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc14_3.3(%self.param: ref %tuple.type.691) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
