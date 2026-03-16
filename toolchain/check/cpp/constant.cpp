@@ -133,8 +133,11 @@ static auto MapAPValueToConstantForConstexpr(Context& context,
                                              const clang::APValue& ap_value,
                                              clang::QualType type)
     -> SemIR::ConstantId {
-  // TODO
-  bool is_lvalue = ap_value.isLValue();
+  bool is_lvalue = false;
+  if (type->isReferenceType()) {
+    is_lvalue = true;
+    type = type.getNonReferenceType();
+  }
   return MapAPValueToConstant(context, loc_id, ap_value, type, is_lvalue);
 }
 
