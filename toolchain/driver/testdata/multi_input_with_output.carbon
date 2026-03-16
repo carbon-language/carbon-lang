@@ -20,4 +20,3 @@ library "[[@TEST_NAME]]";
 
 // --- bar.carbon
 library "[[@TEST_NAME]]";
-

@@ -1325,9 +1325,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         "only outputting {0} to {1}, skipping output of {2} input "
         "file{2:s}; pass `--output-last-input-only` to silence this warning",
         std::string, std::string, Diagnostics::IntAsSelect);
-    driver_env.emitter.Emit(
-        CompileMultipleInputsWithOutput, units.back()->input_filename().str(),
-        options_.output_filename.str(), units.size() - 1);
+    driver_env.emitter.Emit(CompileMultipleInputsWithOutput,
+                            units.back()->input_filename().str(),
+                            options_.output_filename.str(), units.size() - 1);
     output_last_input_only = true;
   }
 
