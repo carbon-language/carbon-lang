@@ -881,7 +881,7 @@ fn F() {
   Cpp.q = &n;
 }
 
-// --- fail_todo_assign_through_pointer.carbon
+// --- assign_through_pointer.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
@@ -890,11 +890,7 @@ int v = 1;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:4: error: cannot dereference operand of non-pointer type `Core.Optional(i32* as Core.OptionalStorage)` [DerefOfNonPointer]
-  // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:    ^
-  // CHECK:STDERR:
-  (*Cpp.m) = 2;
+  *Cpp.m.Get() = 2;
 }
 
 // --- assign_subobject.carbon
