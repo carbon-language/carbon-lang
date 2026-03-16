@@ -890,16 +890,9 @@ int v = 1;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+11]]:5: error: semantics TODO: `unsupported conversion to constant from APValue &v` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:4: error: cannot dereference operand of non-pointer type `Core.Optional(i32* as Core.OptionalStorage)` [DerefOfNonPointer]
   // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+8]]:5: note: in `Cpp` name lookup for `m` [InCppNameLookup]
-  // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_through_pointer.carbon:[[@LINE+4]]:5: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   (*Cpp.m) = 2;
-  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR:    ^
   // CHECK:STDERR:
   (*Cpp.m) = 2;
 }
