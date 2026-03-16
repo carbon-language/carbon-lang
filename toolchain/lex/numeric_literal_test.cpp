@@ -366,7 +366,7 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
 }
 
 TEST_F(NumericLiteralTest, TooManyDigits) {
-  std::string long_number(2000, '1');
+  std::string long_number(20000, '1');
   EXPECT_THAT(Parse(long_number), HasUnrecoverableError());
   EXPECT_TRUE(error_tracker.seen_error());
 }

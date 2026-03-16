@@ -46,6 +46,19 @@ class C(V:! f32) {}
 fn F() -> C(Cpp.flt);
 let x: C(123.5) = F();
 
+// --- pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+int i = 123;
+constexpr int* _Nonnull ptr = &i;
+''';
+
+class C(V:! i32*) {}
+fn F() -> C(Cpp.ptr);
+let x: C(&Cpp.i) = F();
+
 // --- function.carbon
 
 library "[[@TEST_NAME]]";

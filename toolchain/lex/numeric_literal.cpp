@@ -12,6 +12,7 @@
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadicDetails.h"
+#include "toolchain/base/int.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
@@ -176,6 +177,93 @@ auto NumericLiteral::Parser::Check() -> bool {
          CheckExponentPart();
 }
 
+// Parses a binary integer literal.
+static auto ParseBinary(llvm::StringRef digits) -> llvm::APInt {
+  llvm::APInt value(std::max<int>(IntStore::MinAPWidth, digits.size()), 0);
+  int cursor = digits.size() - 1;
+  for (char c : digits) {
+    if (c == '1') {
+      value.setBit(cursor);
+    }
+    --cursor;
+  }
+  return value;
+}
+
+// Parses a hexadecimal integer literal.
+static auto ParseHexadecimal(llvm::StringRef digits) -> llvm::APInt {
+  llvm::APInt value(std::max<int>(IntStore::MinAPWidth, digits.size() * 4), 0);
+  int cursor = digits.size() * 4 - 1;
+  for (char c : digits) {
+    uint8_t digit = c <= '9' ? (c - '0') : (c - 'A' + 10);
+    if (digit & 0x8) {
+      value.setBit(cursor);
+    }
+    --cursor;
+    if (digit & 0x4) {
+      value.setBit(cursor);
+    }
+    --cursor;
+    if (digit & 0x2) {
+      value.setBit(cursor);
+    }
+    --cursor;
+    if (digit & 0x1) {
+      value.setBit(cursor);
+    }
+    --cursor;
+  }
+  return value;
+}
+
+// Parses a single chunk of up to 19 decimal digits.
+static auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
+  uint64_t chunk_val = 0;
+  for (char c : digits) {
+    chunk_val = chunk_val * 10 + (c - '0');
+  }
+  return chunk_val;
+}
+
+// Parsing decimals is complex because they're not a power of 2. We process it
+// 19 digits at a time because that's the most that fit into uint64_t, which
+// is APInt's internal unit for storage; chunking this way minimizes
+// cross-unit arithmetic.
+static auto ParseDecimal(llvm::StringRef digits) -> llvm::APInt {
+  // APInt performance scales based on the number of bits, so be precise.
+  // TODO: Check if this can be `constexpr` when C++26 is in use.
+  static const double bits_per_digit = std::log2(10);
+  llvm::APInt value(std::max<int>(IntStore::MinAPWidth,
+                                  std::ceil(digits.size() * bits_per_digit)),
+                    0);
+  static constexpr int DigitsPerChunk = 19;
+
+  // If there's only a few digits, we don't need the multiplication logic.
+  if (digits.size() <= DigitsPerChunk) {
+    value = ParseDecimalChunk(digits);
+    return value;
+  }
+
+  // For the first chunk, we set it up so that all remaining chunks will
+  // cause equivalent multiplications when adding in. This lets us only
+  // compute the multiplier once.
+  int first_chunk_size = digits.size() % DigitsPerChunk;
+  if (first_chunk_size == 0) {
+    first_chunk_size = DigitsPerChunk;
+  }
+  value = ParseDecimalChunk(digits.take_front(first_chunk_size));
+  digits = digits.drop_front(first_chunk_size);
+
+  // For each remaining chunk, multiply the value by 10^19 and add the
+  // chunk value.
+  static constexpr uint64_t Mult = 10'000'000'000'000'000'000ULL;
+  for (; !digits.empty(); digits = digits.drop_front(DigitsPerChunk)) {
+    value *= Mult;
+    value += ParseDecimalChunk(digits.take_front(DigitsPerChunk));
+  }
+  return value;
+}
+
 // Parse a string that is known to be a valid base-radix integer into an
 // APInt.  If needs_cleaning is true, the string may additionally contain '_'
 // and '.' characters that should be ignored.
@@ -194,11 +282,18 @@ static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
     digits = cleaned;
   }
 
-  llvm::APInt value;
-  if (digits.getAsInteger(static_cast<int>(radix), value)) {
-    llvm_unreachable("should never fail");
+  digits = digits.ltrim('0');
+
+  // We don't use LLVM's `getAsInteger` because it has poor performance.
+  // Instead, we implement our own.
+  switch (radix) {
+    case NumericLiteral::Radix::Binary:
+      return ParseBinary(digits);
+    case NumericLiteral::Radix::Decimal:
+      return ParseDecimal(digits);
+    case NumericLiteral::Radix::Hexadecimal:
+      return ParseHexadecimal(digits);
   }
-  return value;
 }
 
 auto NumericLiteral::Parser::GetMantissa() -> llvm::APInt {

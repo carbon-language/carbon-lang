@@ -13,7 +13,12 @@ namespace Carbon::Check {
 
 // Converts an `APValue` to a Carbon `ConstantId`.
 auto MapAPValueToConstant(Context& context, SemIR::LocId loc_id,
-                          const clang::APValue& ap_value, clang::QualType type)
+                          const clang::APValue& ap_value, clang::QualType type,
+                          bool is_lvalue) -> SemIR::ConstantId;
+
+// Attempt to evaluate a C++ constexpr variable as a Carbon constant.
+auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
+                    const clang::VarDecl* var_decl, SemIR::TypeId type_id)
     -> SemIR::ConstantId;
 
 // Attempt to evaluate a call to a C++ constexpr/consteval function as a
