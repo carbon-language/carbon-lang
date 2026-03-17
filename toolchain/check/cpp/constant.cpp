@@ -160,8 +160,8 @@ auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
   return SemIR::ConstantId::NotConstant;
 }
 
-static auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
-                                 clang::QualType param_type)
+auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
+                          clang::QualType param_type)
     -> std::optional<clang::APValue> {
   if (param_type->isIntegerType()) {
     if (auto int_value =
