@@ -164,15 +164,21 @@ auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
                           clang::QualType param_type)
     -> std::optional<clang::APValue> {
   if (param_type->isIntegerType()) {
+    const bool is_signed = param_type->isSignedIntegerOrEnumerationType();
     if (auto int_value =
             context.insts().TryGetAs<SemIR::IntValue>(const_inst_id)) {
-      const auto& ap_int = context.ints().GetAtWidth(
-          int_value->int_id, context.ast_context().getIntWidth(param_type));
-
+      const auto& ap_int = context.ints().Get(int_value->int_id);
       auto aps_int =
-          llvm::APSInt(ap_int, !param_type->isSignedIntegerOrEnumerationType())
+          llvm::APSInt(ap_int, !is_signed)
               .extOrTrunc(context.ast_context().getIntWidth(param_type));
-
+      return clang::APValue(aps_int);
+    } else if (auto bool_value = context.insts().TryGetAs<SemIR::BoolLiteral>(
+                   const_inst_id)) {
+      llvm::APInt ap_int(context.ast_context().getIntWidth(param_type),
+                         bool_value->value.ToBool(), is_signed);
+      auto aps_int =
+          llvm::APSInt(ap_int, !is_signed)
+              .extOrTrunc(context.ast_context().getIntWidth(param_type));
       return clang::APValue(aps_int);
     }
   }
