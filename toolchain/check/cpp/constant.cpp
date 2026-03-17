@@ -181,6 +181,12 @@ auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
               .extOrTrunc(context.ast_context().getIntWidth(param_type));
       return clang::APValue(aps_int);
     }
+  } else if (param_type->isFloatingType()) {
+    if (auto float_value =
+            context.insts().TryGetAs<SemIR::FloatValue>(const_inst_id)) {
+      const auto& ap_float = context.floats().Get(float_value->float_id);
+      return clang::APValue(ap_float);
+    }
   }
 
   // TODO: support additional parameter types.
