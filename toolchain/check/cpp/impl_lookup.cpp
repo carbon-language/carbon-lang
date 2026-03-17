@@ -106,7 +106,7 @@ static auto CoreInterfaceIsCarbonOnly(CoreInterface core_interface) -> bool {
     case CoreInterface::CppUnsafeDeref:
       return false;
 
-    // IntFitsIn is for carbon integer types only.
+    // IntFitsIn is for Carbon integer types only.
     case CoreInterface::IntFitsIn:
       return true;
 
