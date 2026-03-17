@@ -94,6 +94,7 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
                       .signature = {.num_params = 0}};
     }
     case CoreInterface::IntFitsIn:
+      return DeclInfo{.decl = nullptr, .signature = {.num_params = 0}};
     case CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
