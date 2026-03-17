@@ -229,7 +229,6 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %pattern_type.14f: type = pattern_type %A.binding.as_type [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%A, %B) [symbolic]
-// CHECK:STDOUT:   %require_complete.19a: <witness> = require_complete_type %A.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.e04: type = pattern_type %C [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -259,7 +258,6 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.14f
-// CHECK:STDOUT:   %require_complete.loc25_29 => constants.%require_complete.19a
 // CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc25_20 => constants.%pattern_type.e04
 // CHECK:STDOUT: }
