@@ -95,7 +95,7 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
     }
     case CoreInterface::IntFitsIn:
     case CoreInterface::Unknown:
-      CARBON_FATAL("shouldn't be called with `{}`", core_interface);
+      CARBON_FATAL("shouldn't be called with `{0}`", core_interface);
   }
 }
 
@@ -171,10 +171,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     // Values that should never reach this section of code.
     case CoreInterface::IntFitsIn:
     case CoreInterface::Unknown:
-      CARBON_FATAL(
-          "`LookupCppImpl` shouldn't reach this section of code when "
-          "`core_interface == {}`",
-          core_interface);
+      CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
 }
 
