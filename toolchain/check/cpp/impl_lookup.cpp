@@ -158,14 +158,14 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     // Core interfaces with one associated function whose return type is an
     // associated type.
     case CoreInterface::CppUnsafeDeref: {
-      auto return_type_id =
+      auto result_type_id =
           context.functions()
               .Get(
                   context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
               .return_type_inst_id;
       return BuildCustomWitness(context, loc_id, query_self_const_id,
                                 query_specific_interface_id,
-                                {return_type_id, fn_id});
+                                {result_type_id, fn_id});
       break;
     }
     // Values that should never reach this section of code.
