@@ -99,12 +99,32 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
   }
 }
 
+static auto CoreInterfaceIsCarbonOnly(CoreInterface core_interface) -> bool {
+  switch (core_interface) {
+    case CoreInterface::Copy:
+    case CoreInterface::Destroy:
+    case CoreInterface::CppUnsafeDeref:
+      return false;
+
+    // IntFitsIn is for carbon integer types only.
+    case CoreInterface::IntFitsIn:
+      return true;
+
+    case CoreInterface::Unknown:
+      CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
+  }
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  if (CoreInterfaceIsCarbonOnly(core_interface)) {
+    return SemIR::InstId::None;
+  }
+
   // TODO: This should provide `Destroy` for enums and other trivially
   // destructible types.
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
