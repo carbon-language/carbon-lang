@@ -79,10 +79,6 @@ constexpr int f(bool b) {
 }
 ''';
 
-// CHECK:STDERR: function_bool_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(true)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(true)) = (1, 2, 3);
 
 // --- function_float_param.carbon
@@ -95,10 +91,6 @@ constexpr int f(float b) {
 }
 ''';
 
-// CHECK:STDERR: function_float_param.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, Cpp.f(3.0)) = (1, 2, 3);
 
 // --- function_return_bool.carbon
@@ -115,17 +107,6 @@ musteval fn F(b: bool) -> i32 {
   return if b then 3 else 0;
 }
 
-// CHECK:STDERR: function_return_bool.carbon:[[@LINE+11]]:19: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let a: array(i32, F(Cpp.f())) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR: function_return_bool.carbon:[[@LINE-7]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: musteval fn F(b: bool) -> i32 {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: function_return_bool.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, F(Cpp.f())) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~
-// CHECK:STDERR:
 let a: array(i32, F(Cpp.f())) = (1, 2, 3);
 
 // --- fail_invalid_constant_eval.carbon
