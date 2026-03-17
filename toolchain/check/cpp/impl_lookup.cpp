@@ -168,9 +168,13 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                                 {return_type_id, fn_id});
       break;
     }
+    // Values that should never reach this section of code.
     case CoreInterface::IntFitsIn:
     case CoreInterface::Unknown:
-      CARBON_FATAL("{} should have been handled earlier.", core_interface);
+      CARBON_FATAL(
+          "`LookupCppImpl` shouldn't reach this section of code when "
+          "`core_interface == {}`",
+          core_interface);
   }
 }
 
