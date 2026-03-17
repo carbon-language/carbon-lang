@@ -146,12 +146,32 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_invalid_separator.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_invalid_separator.carbon:[[@LINE+4]]:2: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
+// CHECK:STDERR: fail_invalid_separator.carbon:[[@LINE+4]]:3: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
 // CHECK:STDERR: 1__2
-// CHECK:STDERR:  ^
+// CHECK:STDERR:   ^
 // CHECK:STDERR:
 1__2
 // CHECK:STDOUT:   - { index: 1, kind: "IntLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1__2", value: "12", has_leading_space: true }
+
+// --- fail_fraction_separator.carbon
+// CHECK:STDOUT: - filename: fail_fraction_separator.carbon
+// CHECK:STDOUT:   tokens:
+// CHECK:STDERR: fail_fraction_separator.carbon:[[@LINE+4]]:7: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
+// CHECK:STDERR: 1.0000_0000
+// CHECK:STDERR:       ^
+// CHECK:STDERR:
+1.0000_0000
+// CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1.0000_0000", value: "100000000*10^-9", has_leading_space: true }
+
+// --- fail_fraction_separator_at_end.carbon
+// CHECK:STDOUT: - filename: fail_fraction_separator_at_end.carbon
+// CHECK:STDOUT:   tokens:
+// CHECK:STDERR: fail_fraction_separator_at_end.carbon:[[@LINE+4]]:6: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
+// CHECK:STDERR: 1.000_
+// CHECK:STDERR:      ^
+// CHECK:STDERR:
+1.000_
+// CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1.000_", value: "1000*10^-4", has_leading_space: true }
 
 // --- fail_unknown_base.carbon
 // CHECK:STDOUT: - filename: fail_unknown_base.carbon
