@@ -183,6 +183,20 @@ constraint Z {
   require impls Z;
 }
 
+// --- fail_require_impls_incomplete_self_through_alias.carbon
+library "[[@TEST_NAME]]";
+
+constraint Z;
+
+alias Y = Z;
+constraint Z {
+  // CHECK:STDERR: fail_require_impls_incomplete_self_through_alias.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
+  // CHECK:STDERR:   require impls Y;
+  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:
+  require impls Y;
+}
+
 // --- fail_require_impls_incomplete_self_forward_declared.carbon
 library "[[@TEST_NAME]]";
 
