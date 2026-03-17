@@ -95,7 +95,7 @@ auto GetDeclForCoreInterface(Context& context, SemIR::LocId loc_id,
     }
     case CoreInterface::IntFitsIn:
     case CoreInterface::Unknown:
-      CARBON_FATAL("shouldn't be called with `{0}`", core_interface);
+      CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
 }
 
