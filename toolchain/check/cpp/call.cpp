@@ -8,6 +8,7 @@
 #include "clang/Sema/Template.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/operators.h"
@@ -227,6 +228,13 @@ static auto ConvertArgToTemplateArg(
     auto const_inst_id =
         context.constant_values().GetConstantInstId(converted_inst_id);
     if (const_inst_id.has_value()) {
+      if (auto ap_value =
+              MapConstantToAPValue(context, const_inst_id, param_type)) {
+        clang::TemplateArgument template_arg(context.ast_context(), param_type,
+                                             *ap_value);
+        return clang::TemplateArgumentLoc(template_arg, template_loc);
+      }
+
       if (param_type->isIntegerType()) {
         const bool is_signed = param_type->isSignedIntegerOrEnumerationType();
         if (auto int_value =
