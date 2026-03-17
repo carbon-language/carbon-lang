@@ -160,9 +160,8 @@ auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
   return SemIR::ConstantId::NotConstant;
 }
 
-static auto ConvertConstantToAPValue(Context& context,
-                                     SemIR::InstId const_inst_id,
-                                     clang::QualType param_type)
+static auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
+                                 clang::QualType param_type)
     -> std::optional<clang::APValue> {
   if (param_type->isIntegerType()) {
     if (auto int_value =
@@ -189,7 +188,7 @@ static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
     return nullptr;
   }
 
-  auto ap_value = ConvertConstantToAPValue(context, const_inst_id, param_type);
+  auto ap_value = MapConstantToAPValue(context, const_inst_id, param_type);
   if (!ap_value.has_value()) {
     return nullptr;
   }
