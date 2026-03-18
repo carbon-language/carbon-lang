@@ -1891,8 +1891,7 @@ static auto ConversionNeedsCompleteTarget(Context& context,
   }
 
   // If the types are the same, we only have to worry about form conversions.
-  if (context.types().GetUnqualifiedType(source_type_id) ==
-      context.types().GetUnqualifiedType(target.type_id)) {
+  if (source_type_id == target.type_id) {
     auto source_category = SemIR::GetExprCategory(context.sem_ir(), expr_id);
 
     // If there's no form conversion and no type conversion, the conversion is
@@ -1946,6 +1945,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // TODO: Allow abstract but complete types if the conversion is just a
   // same-type value acqisition.
+  // TODO: Push this check down to the points where we perform operations that
+  // need the type to be complete.
   if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
     if (target.diagnose) {
       if (!RequireConcreteType(
