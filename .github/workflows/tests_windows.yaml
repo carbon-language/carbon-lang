@@ -94,7 +94,8 @@ jobs:
           $clang_rt = "$env:USERPROFILE\llvm\lib\clang\19\lib\windows\clang_rt.builtins-x86_64.lib"
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc
           "build --linkopt=$($clang_rt -replace '\\', '/')" | Out-File -FilePath windows_clang_rt.bazelrc -Append
-          "build --linkopt=-Wl,/FORCE:UNRESOLVED" | Out-File -FilePath windows_clang_rt.bazelrc -Append
+          "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
+          "build --linkopt=/FORCE:UNRESOLVED" | Out-File -FilePath windows_clang_rt.bazelrc -Append
 
       - name: Build and test common
         if: steps.filter.outputs.has_code == 'true'
