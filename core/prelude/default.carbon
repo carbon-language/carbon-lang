@@ -24,9 +24,16 @@ interface UnformedInit {
   // See https://github.com/carbon-language/carbon-lang/pull/5913
 }
 
+// Implementations for some builtin types. These need to be here to satisfy the
+// orphan rule because these builtin types have no associated library of their
+// own.
 impl bool as UnformedInit {}
 impl forall [T:! type] T* as UnformedInit {}
 impl forall [T:! UnformedInit, N:! IntLiteral()] array(T, N) as UnformedInit {}
+// TODO: Generalize these to apply to tuples and structs containing only
+// `UnformedInit` types.
+impl () as UnformedInit {}
+impl {} as UnformedInit {}
 
 // Provides a default, possibly unformed, value of an object. This should not be
 // implemented directly. Instead, implement `Default` to provide a fully-formed
