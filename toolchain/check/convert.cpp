@@ -1944,8 +1944,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     context.emitter().Emit(expr_id, RefTagNoRefParam);
   }
 
-  // We can only perform initialization for complete, concrete types.
-  //
   // TODO: Allow abstract but complete types if the conversion is just a
   // same-type value acqisition.
   if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
