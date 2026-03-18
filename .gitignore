@@ -49,3 +49,4 @@
 
 # Ignore the .gdb_history that's created next to the project-specific .gdbinit
 .gdb_history
+windows_clang_rt.bazelrc
