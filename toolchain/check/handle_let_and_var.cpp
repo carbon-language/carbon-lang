@@ -207,9 +207,7 @@ static auto MakeDefaultInit(Context& context, SemIR::LocId loc_id,
   if (pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
   }
-  auto type_inst_id = context.types()
-                          .GetAs<SemIR::PatternType>(pattern_type_id)
-                          .scrutinee_type_inst_id;
+  auto type_inst_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
 
   // Form `Type as Core.DefaultOrUnformed`.
   auto interface_id =
