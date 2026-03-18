@@ -49,10 +49,15 @@ static auto TypeAsClassDecl(Context& context,
       context.clang_decls().Get(decl_id).key.decl);
 }
 
+namespace {
 struct DeclInfo {
-  clang::NamedDecl* decl;
+  // If null, no C++ decl was found and no witness can be created.
+  clang::NamedDecl* decl = nullptr;
   SemIR::ClangDeclKey::Signature signature;
+  // If true, an error was diagnosed and the witness will be an ErrorInst.
+  bool error = false;
 };
+}  // namespace
 
 // Given a DeclInfo of the C++ function to call that will act as an impl for a
 // specific interface, construct a custom witness for that function.
@@ -62,6 +67,11 @@ static auto BuildWitnessForDeclInfo(
     SemIR::SpecificInterfaceId query_specific_interface_id,
     const TypeStructure* best_impl_type_structure,
     SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  if (decl_info.error) {
+    // An error was diagnosed.
+    return SemIR::ErrorInst::InstId;
+  }
+
   if (!decl_info.decl) {
     // The C++ type is not able to implement the interface.
     return SemIR::InstId::None;
@@ -92,54 +102,85 @@ static auto BuildWitnessForDeclInfo(
                             query_specific_interface_id, {fn_id});
 }
 
+auto LookupCopyConstructor(Context& context,
+                           SemIR::ConstantId query_self_const_id) -> DeclInfo {
+  auto& clang_sema = context.clang_sema();
+
+  // TODO: This should provide `Copy` for enums and other trivially copyable
+  // types.
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return {};
+  }
+  return {.decl = clang_sema.LookupCopyingConstructor(class_decl,
+                                                      clang::Qualifiers::Const),
+          .signature = {.num_params = 1}};
+}
+
+auto LookupDestructor(Context& context, SemIR::ConstantId query_self_const_id)
+    -> DeclInfo {
+  auto& clang_sema = context.clang_sema();
+
+  // TODO: This should provide `Destroy` for enums and other trivially
+  // destructible types.
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return {};
+  }
+  return {.decl = clang_sema.LookupDestructor(class_decl),
+          .signature = {.num_params = 0}};
+}
+
+auto LookupUnsafeDeref(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId query_self_const_id) -> DeclInfo {
+  auto& clang_sema = context.clang_sema();
+
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return {};
+  }
+  auto candidates = class_decl->lookup(
+      clang_sema.getASTContext().DeclarationNames.getCXXOperatorName(
+          clang::OO_Star));
+  if (candidates.empty()) {
+    return {};
+  }
+  if (!candidates.isSingleResult()) {
+    context.TODO(loc_id, "operator* overload sets not implemented yet");
+    return {.error = true};
+  }
+  return {.decl = *candidates.begin(), .signature = {.num_params = 0}};
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  auto& clang_sema = context.clang_sema();
-
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-
-  DeclInfo decl_info;
   switch (core_interface) {
     case CoreInterface::Copy: {
-      // TODO: This should provide `Copy` for enums and other trivially copyable
-      // types.
-      if (!class_decl) {
-        return SemIR::InstId::None;
-      }
-      decl_info = {.decl = clang_sema.LookupCopyingConstructor(
-                       class_decl, clang::Qualifiers::Const),
-                   .signature = {.num_params = 1}};
+      auto decl_info = LookupCopyConstructor(context, query_self_const_id);
+      return BuildWitnessForDeclInfo(
+          context, loc_id, decl_info, query_self_const_id,
+          query_specific_interface_id, best_impl_type_structure,
+          best_impl_loc_id);
       break;
     }
-
     case CoreInterface::Destroy: {
-      // TODO: This should provide `Destroy` for enums and other trivially
-      // destructible types.
-      if (!class_decl) {
-        return SemIR::InstId::None;
-      }
-      decl_info = {.decl = clang_sema.LookupDestructor(class_decl),
-                   .signature = {.num_params = 0}};
+      auto decl_info = LookupDestructor(context, query_self_const_id);
+      return BuildWitnessForDeclInfo(
+          context, loc_id, decl_info, query_self_const_id,
+          query_specific_interface_id, best_impl_type_structure,
+          best_impl_loc_id);
       break;
     }
-
     case CoreInterface::CppUnsafeDeref: {
-      auto candidates = class_decl->lookup(
-          clang_sema.getASTContext().DeclarationNames.getCXXOperatorName(
-              clang::OO_Star));
-      clang::NamedDecl* decl = nullptr;
-      if (!candidates.empty()) {
-        if (!candidates.isSingleResult()) {
-          context.TODO(loc_id, "operator* overload sets not implemented yet");
-          return SemIR::ErrorInst::InstId;
-        }
-        decl = *candidates.begin();
-      }
-      decl_info = {.decl = decl, .signature = {.num_params = 0}};
+      auto decl_info = LookupUnsafeDeref(context, loc_id, query_self_const_id);
+      return BuildWitnessForDeclInfo(
+          context, loc_id, decl_info, query_self_const_id,
+          query_specific_interface_id, best_impl_type_structure,
+          best_impl_loc_id);
       break;
     }
 
@@ -150,10 +191,6 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
-
-  return BuildWitnessForDeclInfo(
-      context, loc_id, decl_info, query_self_const_id,
-      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
 }
 
 }  // namespace Carbon::Check
