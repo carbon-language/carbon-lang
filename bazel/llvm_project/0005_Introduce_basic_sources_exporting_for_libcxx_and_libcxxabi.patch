@@ -1,13 +1,14 @@
-Commit ID: 3812a423c5ca98c5cf6ceee006a59d6c3a3b33df
+Commit ID: 1fd710ed69a0f47f454c386d39302ddb756a88b3
 Change ID: mstnwoqruyypnoouksnyqssllrsozpos
 Bookmarks: bz-libcxx* bz-libcxx@git
 Author   : Chandler Carruth <chandlerc@gmail.com> (2025-09-25 22:55:26)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2026-02-14 04:12:09)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-08 07:41:54)
 
     Introduce basic sources exporting for libcxx and libcxxabi
 
     This exports the source files directly so that they can be used to build
-    a libcxx runtime library on demand.
+    a libcxx runtime library on demand. It also differentiates between
+    normal sources and textual sources.
 
 diff --git a/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxx/BUILD.bazel
 new file mode 100644
@@ -199,10 +200,10 @@ index 0000000000..66f64f3610
 +libcxx_and_abi_copts = _libcxx_base_copts + _libcxx_defines + _libcxxabi_defines
 diff --git a/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
 new file mode 100644
-index 0000000000..279030b097
+index 0000000000..2db70b54e2
 --- /dev/null
 +++ b/utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,30 @@
 +# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 +# See https://llvm.org/LICENSE.txt for license information.
 +# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -223,6 +224,12 @@ index 0000000000..279030b097
 +    srcs = glob([
 +        "src/**/*.cpp",
 +        "src/**/*.h",
++    ]),
++)
++
++filegroup(
++    name = "libcxxabi_textual_srcs",
++    srcs = glob([
 +        "src/**/*.def",
 +        "src/**/*.inc",
 +    ]),
