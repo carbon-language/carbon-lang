@@ -43,7 +43,8 @@ auto FindExecutablePath(const char* argv0) -> std::string {
 
   // If `argv[0]` is path-like and points at the executable, use the form in
   // `argv[0]`.
-  if (argv0_ref.contains('/') && RealPathMatches(argv0, exe_path)) {
+  if ((argv0_ref.contains('/') || argv0_ref.contains('\\')) &&
+      RealPathMatches(argv0, exe_path)) {
     return argv0_ref.str();
   }
 
