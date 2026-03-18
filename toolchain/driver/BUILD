@@ -215,6 +215,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/diagnostics:sorting_consumer",
         "//toolchain/format",
         "//toolchain/language_server",

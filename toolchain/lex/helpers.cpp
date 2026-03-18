@@ -8,15 +8,13 @@ namespace Carbon::Lex {
 
 auto CanLexInt(Diagnostics::Emitter<const char*>& emitter, llvm::StringRef text)
     -> bool {
-  // llvm::getAsInteger is used for parsing, but it's quadratic and visibly slow
-  // on large integer values. This limit exists to avoid hitting those limits.
-  // Per https://github.com/carbon-language/carbon-lang/issues/980, it may be
-  // feasible to optimize integer parsing in order to address performance if
-  // this limit becomes an issue.
+  // Integer parsing has poor scaling characteristics for extremely large digit
+  // amounts. We've done some performance work on this, but this limit exists to
+  // avoid really extreme cases.
   //
   // 2^128 would be 39 decimal digits or 128 binary. In either case, this limit
   // is far above the threshold for normal ints.
-  constexpr size_t DigitLimit = 1000;
+  constexpr size_t DigitLimit = 10000;
   if (text.size() > DigitLimit) {
     CARBON_DIAGNOSTIC(
         TooManyDigits, Error,

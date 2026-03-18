@@ -50,6 +50,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ThreadPool.h"
+#include "testing/base/unified_diff_matcher.h"
 #include "testing/file_test/autoupdate.h"
 #include "testing/file_test/run_test.h"
 #include "testing/file_test/test_file.h"
@@ -119,7 +120,6 @@ static auto SplitOutput(llvm::StringRef output)
   llvm::StringRef(output).split(lines, "\n");
   return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
 }
-
 // Verify that the success and `fail_` prefix use correspond. Separately handle
 // both cases for clearer test failures.
 static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
@@ -259,13 +259,9 @@ auto FileTestCase::TestBody() -> void {
 
   } else {
     EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                ElementsAreArray(test_file.expected_stdout))
-        << "Actual text:\n"
-        << test_file.actual_stdout;
+                ElementsAreArrayWithUnifiedDiff(test_file.expected_stdout));
     EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                ElementsAreArray(test_file.expected_stderr))
-        << "Actual text:\n"
-        << test_file.actual_stderr;
+                ElementsAreArrayWithUnifiedDiff(test_file.expected_stderr));
   }
 
   if (HasFailure()) {

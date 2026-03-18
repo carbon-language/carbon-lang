@@ -1817,7 +1817,7 @@ CARBON_PARSE_STATE(MatchCaseGuardFinish)
 // match (...) { case ... => {...} }
 //                        ^~~~
 //   1. StatementScopeLoop
-//   2. MatchCaseFinish
+//   2. MatchHandlerFinish
 //
 // match (...) { case ... ??? }
 //                        ^
@@ -1828,19 +1828,12 @@ CARBON_PARSE_STATE(MatchCaseGuardFinish)
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseStart)
 
-// Handles `match` case statements block closing `}`.
-//
-// match (...) { case ... => {...} }
-//                               ^
-//   (state done)
-CARBON_PARSE_STATE(MatchCaseFinish)
-
 // Handles `match` default introducer, `=>` and `{` opening statements block.
 //
 // match (...) { default => {...} }
 //               ^~~~~~~~~~~~
 //   1. StatementScopeLoop
-//   2. MatchDefaultFinish
+//   2. MatchHandlerFinish
 //
 // match (...) { default ??? }
 //                       ^
@@ -1851,12 +1844,16 @@ CARBON_PARSE_STATE(MatchCaseFinish)
 //   (state done)
 CARBON_PARSE_STATE(MatchDefaultIntroducer)
 
-// Handles `match` default case statements block closing `}`.
+// Handles `match` handler block closing `}`.
+//
+// match (...) { case ... => {...} }
+//                               ^
+//   (state done)
 //
 // match (...) { default => {...} }
 //                              ^
 //   (state done)
-CARBON_PARSE_STATE(MatchDefaultFinish)
+CARBON_PARSE_STATE(MatchHandlerFinish)
 
 // Handles `match` cases after the `default` case.
 //

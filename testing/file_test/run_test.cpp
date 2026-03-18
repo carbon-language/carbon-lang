@@ -104,10 +104,10 @@ static auto CollectOutputIfCapturing(TestFile& test_file) -> void {
 auto RunTestFile(const FileTestBase& test_base, bool dump_output,
                  TestFile& test_file) -> ErrorOr<Success> {
   llvm::SmallVector<TestFile::Split*> all_splits;
-  for (auto& split : test_file.file_splits) {
+  for (auto& split : test_file.include_file_splits) {
     all_splits.push_back(&split);
   }
-  for (auto& split : test_file.include_file_splits) {
+  for (auto& split : test_file.file_splits) {
     all_splits.push_back(&split);
   }
 

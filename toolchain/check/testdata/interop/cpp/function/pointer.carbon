@@ -1604,18 +1604,16 @@ fn F() {
 // CHECK:STDOUT:   %Some.ref: %Optional.Some.type.031 = name_ref Some, %.loc9_32 [concrete = constants.%Optional.Some.16d]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %s.ref
-// CHECK:STDOUT:   %OptionalStorage.facet.loc9_40.1: %OptionalStorage.type = facet_value constants.%ptr.5c7, (constants.%OptionalStorage.impl_witness.ba1) [concrete = constants.%OptionalStorage.facet]
-// CHECK:STDOUT:   %.loc9_40.1: %OptionalStorage.type = converted constants.%ptr.5c7, %OptionalStorage.facet.loc9_40.1 [concrete = constants.%OptionalStorage.facet]
-// CHECK:STDOUT:   %OptionalStorage.facet.loc9_40.2: %OptionalStorage.type = facet_value constants.%ptr.5c7, (constants.%OptionalStorage.impl_witness.ba1) [concrete = constants.%OptionalStorage.facet]
-// CHECK:STDOUT:   %.loc9_40.2: %OptionalStorage.type = converted constants.%ptr.5c7, %OptionalStorage.facet.loc9_40.2 [concrete = constants.%OptionalStorage.facet]
+// CHECK:STDOUT:   %OptionalStorage.facet.loc9_40: %OptionalStorage.type = facet_value constants.%ptr.5c7, (constants.%OptionalStorage.impl_witness.ba1) [concrete = constants.%OptionalStorage.facet]
+// CHECK:STDOUT:   %.loc9_40.1: %OptionalStorage.type = converted constants.%ptr.5c7, %OptionalStorage.facet.loc9_40 [concrete = constants.%OptionalStorage.facet]
 // CHECK:STDOUT:   %Optional.Some.specific_fn: <specific function> = specific_function %Some.ref, @Optional.Some(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Some.specific_fn]
 // CHECK:STDOUT:   %Optional.Some.call: init %Optional.065 = call %Optional.Some.specific_fn(%addr)
-// CHECK:STDOUT:   %.loc9_40.3: ref %Optional.065 = temporary_storage
-// CHECK:STDOUT:   %.loc9_40.4: ref %Optional.065 = temporary %.loc9_40.3, %Optional.Some.call
-// CHECK:STDOUT:   %.loc9_40.5: %Optional.065 = acquire_value %.loc9_40.4
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc9_40.5)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_40.4, constants.%Destroy.Op.651ba6.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_40.4)
+// CHECK:STDOUT:   %.loc9_40.2: ref %Optional.065 = temporary_storage
+// CHECK:STDOUT:   %.loc9_40.3: ref %Optional.065 = temporary %.loc9_40.2, %Optional.Some.call
+// CHECK:STDOUT:   %.loc9_40.4: %Optional.065 = acquire_value %.loc9_40.3
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc9_40.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_40.3, constants.%Destroy.Op.651ba6.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_40.3)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
@@ -1928,11 +1926,11 @@ fn F() {
 // CHECK:STDOUT:   %S.ref.loc13_63: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc13_55.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc13_55.3: init %S to %.loc13_55.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc13_55.4: ref %S = temporary %.loc13_55.2, %.loc13_55.3
-// CHECK:STDOUT:   %.loc13_57.1: ref %S = converted %.loc13_55.1, %.loc13_55.4
-// CHECK:STDOUT:   %.loc13_57.2: %S = acquire_value %.loc13_57.1
-// CHECK:STDOUT:   %.loc13_57.3: ref %S = value_as_ref %.loc13_57.2
-// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %.loc13_57.3
+// CHECK:STDOUT:   %.loc13_57.1: init %S = converted %.loc13_55.1, %.loc13_55.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc13_57.2: ref %S = temporary %.loc13_55.2, %.loc13_57.1
+// CHECK:STDOUT:   %.loc13_57.3: %S = acquire_value %.loc13_57.2
+// CHECK:STDOUT:   %.loc13_57.4: ref %S = value_as_ref %.loc13_57.3
+// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %.loc13_57.4
 // CHECK:STDOUT:   %Indirect__carbon_thunk.call: init %Optional.065 = call imports.%Indirect__carbon_thunk.decl(%addr.loc13)
 // CHECK:STDOUT:   %.loc13_37.1: type = splice_block %Optional [concrete = constants.%Optional.065] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -1950,8 +1948,8 @@ fn F() {
 // CHECK:STDOUT:   %a: %Optional.065 = value_binding a, %.loc13_65.3
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_65.2, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_65.2)
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_55.4, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc13: init %empty_tuple.type = call %S.cpp_destructor.bound.loc13(%.loc13_55.4)
+// CHECK:STDOUT:   %S.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_57.2, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call.loc13: init %empty_tuple.type = call %S.cpp_destructor.bound.loc13(%.loc13_57.2)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %.loc11_14.3, constants.%Destroy.Op.651ba6.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%.loc11_14.3)
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc10: <bound method> = bound_method %s.var, constants.%S.cpp_destructor

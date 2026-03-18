@@ -19,6 +19,7 @@ Future runtimes we plan to add support for but not yet included:
 - Profiling runtimes
 """
 
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@llvm-project//compiler-rt:compiler-rt.bzl", "builtins_copts", "crt_copts")
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
@@ -124,6 +125,7 @@ def _get_substitutions(ctx):
         "CRT_COPTS": _format_one_per_line(crt_copts),
         "LIBCXX_AND_ABI_COPTS": _format_one_per_line(libcxx_and_abi_copts),
         "LIBUNWIND_COPTS": _format_one_per_line(libunwind_copts),
+        "LLVM_VERSION_MAJOR": LLVM_VERSION_MAJOR,
     } | {
         k.upper(): _get_path(key_attr(k), _builtins_path)
         for k in CRT_FILES.keys()
@@ -146,6 +148,20 @@ def _get_substitutions(ctx):
         )]
     }
 
+_common_runtimes_rule_attrs = {
+    "_" + k: attr.label(default = v, allow_single_file = True)
+    for k, v in CRT_FILES.items()
+} | {
+    "_" + _get_name(g): attr.label_list(default = [g], allow_files = True)
+    for g in (
+        BUILTINS_SRCS_FILEGROUPS +
+        BUILTINS_TEXTUAL_SRCS_FILEGROUPS +
+        RUNTIMES_HDRS_FILEGROUPS +
+        RUNTIMES_SRCS_FILEGROUPS +
+        RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
+    )
+}
+
 def _generate_runtimes_build_info_h_rule(ctx):
     h_file = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.expand_template(
@@ -157,19 +173,7 @@ def _generate_runtimes_build_info_h_rule(ctx):
 
 generate_runtimes_build_info_h = rule(
     implementation = _generate_runtimes_build_info_h_rule,
-    attrs = {
-        "_" + k: attr.label(default = v, allow_single_file = True)
-        for k, v in CRT_FILES.items()
-    } | {
-        "_" + _get_name(g): attr.label_list(default = [g], allow_files = True)
-        for g in (
-            BUILTINS_SRCS_FILEGROUPS +
-            BUILTINS_TEXTUAL_SRCS_FILEGROUPS +
-            RUNTIMES_HDRS_FILEGROUPS +
-            RUNTIMES_SRCS_FILEGROUPS +
-            RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
-        )
-    } | {
+    attrs = _common_runtimes_rule_attrs | {
         "_template_file": attr.label(
             default = "runtimes_build_info.tpl.h",
             allow_single_file = True,
@@ -197,3 +201,22 @@ def generate_runtimes_build_info_cc_library(name, deps = [], **kwargs):
         ] + deps,
         **kwargs
     )
+
+def _generate_runtimes_build_vars_rule(ctx):
+    file = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.expand_template(
+        template = ctx.file._template_file,
+        output = file,
+        substitutions = _get_substitutions(ctx),
+    )
+    return [DefaultInfo(files = depset([file]))]
+
+generate_runtimes_build_vars = rule(
+    implementation = _generate_runtimes_build_vars_rule,
+    attrs = _common_runtimes_rule_attrs | {
+        "_template_file": attr.label(
+            default = "runtimes_build_vars.tpl.bzl",
+            allow_single_file = True,
+        ),
+    },
+)

@@ -17,6 +17,7 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
@@ -331,6 +332,56 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
+class CarbonExternalASTSource : public clang::ExternalASTSource {
+ public:
+  explicit CarbonExternalASTSource(clang::ASTContext* ast_context)
+      : ast_context_(*ast_context) {}
+
+  auto FindExternalVisibleDeclsByName(
+      const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
+      const clang::DeclContext* original_decl_context) -> bool override;
+
+  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+
+ private:
+  clang::ASTContext& ast_context_;
+};
+
+void CarbonExternalASTSource::StartTranslationUnit(
+    clang::ASTConsumer* /*Consumer*/) {
+  auto& translation_unit = *ast_context_.getTranslationUnitDecl();
+  // Mark the translation unit as having external storage so we get a query for
+  // the `Carbon` namespace in the top level/translation unit scope.
+  translation_unit.setHasExternalVisibleStorage();
+}
+
+auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
+    const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
+    const clang::DeclContext* /*OriginalDC*/) -> bool {
+  if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
+    return false;
+  }
+
+  static const llvm::StringLiteral carbon_namespace_name = "Carbon";
+  if (auto* identifier = decl_name.getAsIdentifierInfo();
+      !identifier || !identifier->isStr(carbon_namespace_name)) {
+    return false;
+  }
+
+  auto& ast_context = decl_context->getParentASTContext();
+  auto& mutable_tu_decl_context = *ast_context.getTranslationUnitDecl();
+  SetExternalVisibleDeclsForName(
+      decl_context, decl_name,
+      {
+          clang::NamespaceDecl::Create(
+              ast_context, &mutable_tu_decl_context, false,
+              clang::SourceLocation(), clang::SourceLocation(),
+              &ast_context.Idents.get(carbon_namespace_name), nullptr, false),
+      });
+
+  return true;
+}
+
 // An action and a set of registered Clang callbacks used to generate an AST
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
@@ -358,8 +409,6 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
   auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
       -> bool override {
-    // TODO: Consider creating an `ExternalSemaSource` here and attaching it to
-    // the compilation.
     // TODO: `clang.getPreprocessor().enableIncrementalProcessing();` to avoid
     // the TU scope getting torn down before we're done parsing macros.
     return true;
@@ -469,6 +518,15 @@ auto GenerateAst(Context& context,
   if (!action.BeginSourceFile(clang_instance, inputs[0])) {
     return false;
   }
+
+  auto& ast = clang_instance.getASTContext();
+  // TODO: Clang's modules support is implemented as an ExternalASTSource
+  // (ASTReader) and there's no multiplexing support for ExternalASTSources at
+  // the moment - so registering CarbonExternalASTSource breaks Clang modules
+  // support. Implement multiplexing support (possibly in Clang) to restore
+  // modules functionality.
+  ast.setExternalSource(
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&ast));
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.

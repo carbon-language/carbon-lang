@@ -83,6 +83,7 @@ fn MyF() {
 // CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %pattern_type.8ca: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %global_ref.var: ref %ptr.d9e = var imports.%global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -168,7 +169,8 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_37.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
 // CHECK:STDOUT:   %.loc9_37.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_37.1 [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_37.3: %ptr.d9e = acquire_value %.loc9_37.2
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete = constants.%addr]
+// CHECK:STDOUT:   %.loc9_37.3: %ptr.d9e = acquire_value %.loc9_37.2 [concrete = constants.%addr]
 // CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

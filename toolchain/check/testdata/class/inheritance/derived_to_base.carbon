@@ -420,16 +420,16 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_64.7: ref %i32 = class_element_access %.loc32_64.2, element1
 // CHECK:STDOUT:   %.loc32_64.8: init %i32 to %.loc32_64.7 = in_place_init %.loc32_64.6 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc32_64.9: init %C to %.loc32_64.2 = class_init (%.loc32_64.5, %.loc32_64.8) [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_64.10: ref %C = temporary %.loc32_64.2, %.loc32_64.9
-// CHECK:STDOUT:   %.loc32_66.1: ref %C = converted %.loc32_64.1, %.loc32_64.10
+// CHECK:STDOUT:   %.loc32_66.1: init %C = converted %.loc32_64.1, %.loc32_64.9 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc32_66.2: ref %B = class_element_access %.loc32_66.1, element0
-// CHECK:STDOUT:   %.loc32_66.3: ref %A = class_element_access %.loc32_66.2, element0
-// CHECK:STDOUT:   %.loc32_66.4: ref %A = converted %.loc32_66.1, %.loc32_66.3
-// CHECK:STDOUT:   %.loc32_66.5: %A = acquire_value %.loc32_66.4
-// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.5
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc32_64.10, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc32_64.10)
+// CHECK:STDOUT:   %.loc32_66.2: ref %C = temporary %.loc32_64.2, %.loc32_66.1
+// CHECK:STDOUT:   %.loc32_66.3: ref %B = class_element_access %.loc32_66.2, element0
+// CHECK:STDOUT:   %.loc32_66.4: ref %A = class_element_access %.loc32_66.3, element0
+// CHECK:STDOUT:   %.loc32_66.5: ref %A = converted %.loc32_66.1, %.loc32_66.4
+// CHECK:STDOUT:   %.loc32_66.6: %A = acquire_value %.loc32_66.5
+// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.6
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -89,7 +89,7 @@ def _carbon_binary_impl(ctx):
                 inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
                 executable = toolchain_driver,
                 tools = depset(toolchain_data),
-                arguments = ["compile", "--output=" + out.path] +
+                arguments = ["compile", "--output=" + out.path, "--output-last-input-only"] +
                             [s.path for s in srcs_reordered] + extra_flags + ctx.attr.flags,
                 mnemonic = "CarbonCompile",
                 progress_message = "Compiling " + src.short_path,

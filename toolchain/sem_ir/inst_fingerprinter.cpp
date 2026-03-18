@@ -338,14 +338,9 @@ struct Worklist {
   }
 
   auto Add(const llvm::APInt& value) -> void {
-    unsigned width = value.getBitWidth();
-    contents.push_back(width);
-    for (auto word : llvm::seq((width + 63) / 64)) {
-      // TODO: Is there a better way to copy the words from an APInt?
-      unsigned start = 64 * word;
-      contents.push_back(
-          value.extractBitsAsZExtValue(std::min(64U, width - start), start));
-    }
+    contents.push_back(value.getBitWidth());
+    contents.append(value.getRawData(),
+                    value.getRawData() + value.getNumWords());
   }
 
   auto Add(IntId int_id) -> void { Add(sem_ir->ints().Get(int_id)); }

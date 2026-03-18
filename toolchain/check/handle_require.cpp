@@ -17,6 +17,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_iterator.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -207,6 +208,36 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
     // Can't continue without a constraint to use.
     return std::nullopt;
+  }
+
+  if (auto named_constraint =
+          context.insts().TryGetAs<SemIR::NamedConstraintWithSelfDecl>(
+              scope_inst_id)) {
+    const auto& constraint_facet_type_info =
+        context.facet_types().Get(constraint_facet_type->facet_type_id);
+    // TODO: Handle other impls named constraints for the
+    // RequireImplsReferenceCycle diagnostic.
+    if (constraint_facet_type_info.other_requirements) {
+      context.TODO(constraint_inst_id,
+                   "facet type has constraints that we don't handle yet");
+      return std::nullopt;
+    }
+    auto named_constraints = llvm::concat<const SemIR::SpecificNamedConstraint>(
+        constraint_facet_type_info.extend_named_constraints,
+        constraint_facet_type_info.self_impls_named_constraints);
+    for (auto c : named_constraints) {
+      if (c.named_constraint_id == named_constraint->named_constraint_id) {
+        const auto& named_constraint =
+            context.named_constraints().Get(c.named_constraint_id);
+        CARBON_DIAGNOSTIC(RequireImplsReferenceCycle, Error,
+                          "facet type in `require` declaration refers to the "
+                          "named constraint `{0}` from within its definition",
+                          SemIR::NameId);
+        context.emitter().Emit(constraint_inst_id, RequireImplsReferenceCycle,
+                               named_constraint.name_id);
+        return std::nullopt;
+      }
+    }
   }
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(

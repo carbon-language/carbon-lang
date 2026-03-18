@@ -203,7 +203,7 @@ fn F() {
 // CHECK:STDOUT:   %int_1.c1d: %u32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %f32.97e: type = class_type @Float, @Float(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.201: type = pattern_type %f32.97e [concrete]
-// CHECK:STDOUT:   %float.674bbc.1: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
+// CHECK:STDOUT:   %float.6daae3.1: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %As.type.9fc: type = facet_type <@As, @As(%f32.97e)> [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.882: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.27d: %Core.FloatLiteral.as.As.impl.Convert.type.882 = struct_value () [symbolic]
@@ -213,14 +213,14 @@ fn F() {
 // CHECK:STDOUT:   %As.facet.58f: %As.type.9fc = facet_value Core.FloatLiteral, (%As.impl_witness.748) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.85f: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%f32.97e, %As.facet.58f) [concrete]
 // CHECK:STDOUT:   %.49e: type = fn_type_with_self_type %As.WithSelf.Convert.type.85f, %As.facet.58f [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound.ec8: <bound method> = bound_method %float.674bbc.1, %Core.FloatLiteral.as.As.impl.Convert.683 [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound.04c: <bound method> = bound_method %float.6daae3.1, %Core.FloatLiteral.as.As.impl.Convert.683 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a: <specific function> = specific_function %Core.FloatLiteral.as.As.impl.Convert.683, @Core.FloatLiteral.as.As.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.cae: <bound method> = bound_method %float.674bbc.1, %Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a [concrete]
+// CHECK:STDOUT:   %bound_method.4ec: <bound method> = bound_method %float.6daae3.1, %Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a [concrete]
 // CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
-// CHECK:STDOUT:   %float.674bbc.2: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
+// CHECK:STDOUT:   %float.6daae3.2: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %As.type.a57: type = facet_type <@As, @As(%f64.d77)> [concrete]
 // CHECK:STDOUT:   %As.impl_witness.187: <witness> = impl_witness imports.%As.impl_witness_table.7c1, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.07c: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
@@ -228,9 +228,9 @@ fn F() {
 // CHECK:STDOUT:   %As.facet.750: %As.type.a57 = facet_value Core.FloatLiteral, (%As.impl_witness.187) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.dab: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%f64.d77, %As.facet.750) [concrete]
 // CHECK:STDOUT:   %.293: type = fn_type_with_self_type %As.WithSelf.Convert.type.dab, %As.facet.750 [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound.f54: <bound method> = bound_method %float.674bbc.2, %Core.FloatLiteral.as.As.impl.Convert.4b9 [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound.9c5: <bound method> = bound_method %float.6daae3.2, %Core.FloatLiteral.as.As.impl.Convert.4b9 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e: <specific function> = specific_function %Core.FloatLiteral.as.As.impl.Convert.4b9, @Core.FloatLiteral.as.As.impl.Convert(%int_64) [concrete]
-// CHECK:STDOUT:   %bound_method.20b: <bound method> = bound_method %float.674bbc.2, %Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e [concrete]
+// CHECK:STDOUT:   %bound_method.18b: <bound method> = bound_method %float.6daae3.2, %Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e [concrete]
 // CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -403,12 +403,12 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_float.patt: %pattern_type.201 = value_binding_pattern cpp_float [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %float.loc26: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674bbc.1]
+// CHECK:STDOUT:   %float.loc26: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.1]
 // CHECK:STDOUT:   %f32.loc26: type = type_literal constants.%f32.97e [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   %impl.elem0.loc26: %.49e = impl_witness_access constants.%As.impl_witness.748, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.683]
-// CHECK:STDOUT:   %bound_method.loc26_35.1: <bound method> = bound_method %float.loc26, %impl.elem0.loc26 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.ec8]
+// CHECK:STDOUT:   %bound_method.loc26_35.1: <bound method> = bound_method %float.loc26, %impl.elem0.loc26 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.04c]
 // CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem0.loc26, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.10a]
-// CHECK:STDOUT:   %bound_method.loc26_35.2: <bound method> = bound_method %float.loc26, %specific_fn.loc26 [concrete = constants.%bound_method.cae]
+// CHECK:STDOUT:   %bound_method.loc26_35.2: <bound method> = bound_method %float.loc26, %specific_fn.loc26 [concrete = constants.%bound_method.4ec]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc26: init %f32.97e = call %bound_method.loc26_35.2(%float.loc26) [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc26_35.1: %f32.97e = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc26 [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc26_35.2: %f32.97e = converted %float.loc26, %.loc26_35.1 [concrete = constants.%float.e3b]
@@ -427,12 +427,12 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_double.patt: %pattern_type.0ae = value_binding_pattern cpp_double [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %float.loc29: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674bbc.2]
+// CHECK:STDOUT:   %float.loc29: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6daae3.2]
 // CHECK:STDOUT:   %f64.loc29: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %impl.elem0.loc29: %.293 = impl_witness_access constants.%As.impl_witness.187, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.4b9]
-// CHECK:STDOUT:   %bound_method.loc29_37.1: <bound method> = bound_method %float.loc29, %impl.elem0.loc29 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.f54]
+// CHECK:STDOUT:   %bound_method.loc29_37.1: <bound method> = bound_method %float.loc29, %impl.elem0.loc29 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound.9c5]
 // CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn.b2e]
-// CHECK:STDOUT:   %bound_method.loc29_37.2: <bound method> = bound_method %float.loc29, %specific_fn.loc29 [concrete = constants.%bound_method.20b]
+// CHECK:STDOUT:   %bound_method.loc29_37.2: <bound method> = bound_method %float.loc29, %specific_fn.loc29 [concrete = constants.%bound_method.18b]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call.loc29: init %f64.d77 = call %bound_method.loc29_37.2(%float.loc29) [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc29_37.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call.loc29 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc29_37.2: %f64.d77 = converted %float.loc29, %.loc29_37.1 [concrete = constants.%float.d20]
@@ -454,7 +454,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_unsupported_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %float.674: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
+// CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %As.type.a57: type = facet_type <@As, @As(%f64.d77)> [concrete]
@@ -467,10 +467,10 @@ fn F() {
 // CHECK:STDOUT:   %As.facet: %As.type.a57 = facet_value Core.FloatLiteral, (%As.impl_witness.187) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.dab: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%f64.d77, %As.facet) [concrete]
 // CHECK:STDOUT:   %.293: type = fn_type_with_self_type %As.WithSelf.Convert.type.dab, %As.facet [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.As.impl.Convert.4b9 [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.As.impl.Convert.4b9 [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.As.impl.Convert.4b9, @Core.FloatLiteral.as.As.impl.Convert(%int_64) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -484,7 +484,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_long_double.patt: <error> = value_binding_pattern cpp_long_double [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
 // CHECK:STDOUT:   %f64.loc15: type = type_literal constants.%f64.d77 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %impl.elem0: %.293 = impl_witness_access constants.%As.impl_witness.187, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.4b9]
 // CHECK:STDOUT:   %bound_method.loc15_47.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]

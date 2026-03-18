@@ -313,12 +313,12 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc27_62.1: ref %tuple.type.e87 = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc28_25.2: ref %A = temporary_storage
 // CHECK:STDOUT:   %.loc28_25.3: init %A to %.loc28_25.2 = class_init () [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc28_25.4: ref %A = temporary %.loc28_25.2, %.loc28_25.3
-// CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
+// CHECK:STDOUT:   %.loc28_25.4: init %A = converted %.loc28_25.1, %.loc28_25.3 [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc28_25.5: ref %A = temporary %.loc28_25.2, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 to %.loc27_62.1 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc28_25.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc28_25.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc28_25.5, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc28_25.5)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

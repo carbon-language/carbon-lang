@@ -14,6 +14,7 @@
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
@@ -2493,6 +2494,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                more_info.extend_constraints);
             llvm::append_range(info.self_impls_constraints,
                                more_info.self_impls_constraints);
+            llvm::append_range(info.self_impls_named_constraints,
+                               more_info.extend_named_constraints);
+            llvm::append_range(info.self_impls_named_constraints,
+                               more_info.self_impls_named_constraints);
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
@@ -2872,7 +2877,10 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
                         SemIR::InstBlockId args_id) -> SemIR::ConstantId {
-  if (function.body_block_ids.empty()) {
+  if (function.clang_decl_id != SemIR::ClangDeclId::None) {
+    return EvalCppCall(outer_eval_context.context(), loc_id,
+                       function.clang_decl_id, args_id);
+  } else if (function.body_block_ids.empty()) {
     // TODO: Diagnose this.
     return SemIR::ConstantId::NotConstant;
   }

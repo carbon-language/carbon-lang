@@ -1469,6 +1469,14 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  SemIR::FunctionFields::EvaluationMode evaluation_mode =
+      SemIR::FunctionFields::EvaluationMode::None;
+  if (clang_decl->isConsteval()) {
+    evaluation_mode = SemIR::FunctionFields::EvaluationMode::MustEval;
+  } else if (clang_decl->isConstexpr()) {
+    evaluation_mode = SemIR::FunctionFields::EvaluationMode::Eval;
+  }
+
   auto [decl_id, function_id] = MakeFunctionDecl(
       context, import_ir_inst_id, decl_block_id, /*build_generic=*/false,
       /*is_definition=*/false,
@@ -1499,6 +1507,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .return_patterns_id = function_params_insts->return_patterns_id,
               .virtual_modifier = virtual_modifier,
               .virtual_index = virtual_index,
+              .evaluation_mode = evaluation_mode,
               .self_param_id = FindSelfPattern(
                   context, function_params_insts->implicit_param_patterns_id),
           }});

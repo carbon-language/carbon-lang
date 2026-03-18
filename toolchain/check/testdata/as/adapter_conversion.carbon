@@ -82,7 +82,7 @@ class B {
 let b_value: B = ({.x = 1, .y = 2} as A) as B;
 //@dump-sem-ir-end
 
-// --- fail_init_class_variable.carbon
+// --- init_class_variable.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -95,18 +95,6 @@ class B {
   adapt A;
 }
 
-// TODO: Here, we treat `{.x = 1, .y = 2} as A` as a value expression, not an
-// initializing expression, so `(...) as B` is a value expression too, requiring
-// a copy to perform initialization. It's not clear whether that is the right
-// behavior.
-
-// CHECK:STDERR: fail_init_class_variable.carbon:[[@LINE+7]]:17: error: cannot copy value of type `B` [CopyOfUncopyableType]
-// CHECK:STDERR: var b_init: B = ({.x = 1, .y = 2} as A) as B;
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_init_class_variable.carbon:[[@LINE+4]]:17: note: type `B` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var b_init: B = ({.x = 1, .y = 2} as A) as B;
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 var b_init: B = ({.x = 1, .y = 2} as A) as B;
 
 // --- init_tuple_value.carbon
@@ -365,6 +353,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %bound_method.646: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
+// CHECK:STDOUT:   %B.val: %B = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -377,8 +366,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_value.patt: %pattern_type.1f4 = value_binding_pattern b_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc14: %B = acquire_value @__global_init.%.loc14_42.2
-// CHECK:STDOUT:   %b_value: %B = value_binding b_value, %.loc14
+// CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2
+// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1
+// CHECK:STDOUT:   %b_value: %B = value_binding b_value, %.loc14_42.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -405,11 +395,10 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_34.7: ref %i32 = class_element_access %.loc14_34.3, element1
 // CHECK:STDOUT:   %.loc14_34.8: init %i32 to %.loc14_34.7 = in_place_init %.loc14_34.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_34.9: init %A to %.loc14_34.3 = class_init (%.loc14_34.5, %.loc14_34.8) [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc14_34.10: ref %A = temporary %.loc14_34.3, %.loc14_34.9
-// CHECK:STDOUT:   %.loc14_36: ref %A = converted %.loc14_34.1, %.loc14_34.10
+// CHECK:STDOUT:   %.loc14_36: init %A = converted %.loc14_34.1, %.loc14_34.9 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc14_42.1: ref %B = as_compatible %.loc14_36
-// CHECK:STDOUT:   %.loc14_42.2: ref %B = converted %.loc14_36, %.loc14_42.1
+// CHECK:STDOUT:   %.loc14_42.1: init %B = as_compatible %.loc14_36 [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc14_42.2: init %B = converted %.loc14_36, %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

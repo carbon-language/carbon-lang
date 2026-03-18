@@ -66,7 +66,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
 // CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
 // CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !23
-// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !23
+// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !23
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !23
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !23
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !23

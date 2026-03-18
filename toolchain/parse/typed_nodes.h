@@ -904,48 +904,40 @@ struct MatchCaseGuard {
   Lex::CloseParenTokenIndex token;
 };
 
-using MatchCaseEqualGreater =
-    LeafNode<NodeKind::MatchCaseEqualGreater, Lex::EqualGreaterTokenIndex>;
-
-struct MatchCaseStart {
-  static constexpr auto Kind = NodeKind::MatchCaseStart.Define(
-      {.bracketed_by = MatchCaseIntroducer::Kind});
+struct MatchCase {
+  static constexpr auto Kind =
+      NodeKind::MatchCase.Define({.bracketed_by = MatchCaseIntroducer::Kind});
 
   MatchCaseIntroducerId introducer;
   AnyPatternId pattern;
   std::optional<MatchCaseGuardId> guard;
-  MatchCaseEqualGreaterId equal_greater_token;
-  Lex::OpenCurlyBraceTokenIndex token;
-};
-
-struct MatchCase {
-  static constexpr auto Kind =
-      NodeKind::MatchCase.Define({.bracketed_by = MatchCaseStart::Kind});
-
-  MatchCaseStartId head;
-  llvm::SmallVector<AnyStatementId> statements;
-  Lex::CloseCurlyBraceTokenIndex token;
+  Lex::EqualGreaterTokenIndex token;
 };
 
 using MatchDefaultIntroducer =
     LeafNode<NodeKind::MatchDefaultIntroducer, Lex::DefaultTokenIndex>;
-using MatchDefaultEqualGreater =
-    LeafNode<NodeKind::MatchDefaultEqualGreater, Lex::EqualGreaterTokenIndex>;
 
-struct MatchDefaultStart {
-  static constexpr auto Kind = NodeKind::MatchDefaultStart.Define(
-      {.bracketed_by = MatchDefaultIntroducer::Kind, .child_count = 2});
+struct MatchDefault {
+  static constexpr auto Kind = NodeKind::MatchDefault.Define(
+      {.bracketed_by = MatchDefaultIntroducer::Kind, .child_count = 1});
 
   MatchDefaultIntroducerId introducer;
-  MatchDefaultEqualGreaterId equal_greater_token;
+  Lex::EqualGreaterTokenIndex token;
+};
+
+struct MatchHandlerStart {
+  static constexpr auto Kind =
+      NodeKind::MatchHandlerStart.Define({.child_count = 1});
+
+  NodeIdOneOf<MatchCase, MatchDefault> label;
   Lex::OpenCurlyBraceTokenIndex token;
 };
 
-struct MatchDefault {
+struct MatchHandler {
   static constexpr auto Kind =
-      NodeKind::MatchDefault.Define({.bracketed_by = MatchDefaultStart::Kind});
+      NodeKind::MatchHandler.Define({.bracketed_by = MatchHandlerStart::Kind});
 
-  MatchDefaultStartId introducer;
+  MatchHandlerStartId head;
   llvm::SmallVector<AnyStatementId> statements;
   Lex::CloseCurlyBraceTokenIndex token;
 };
@@ -958,8 +950,7 @@ struct MatchStatement {
 
   MatchStatementStartId head;
 
-  llvm::SmallVector<MatchCaseId> cases;
-  std::optional<MatchDefaultId> default_case;
+  llvm::SmallVector<MatchHandlerId> handlers;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 

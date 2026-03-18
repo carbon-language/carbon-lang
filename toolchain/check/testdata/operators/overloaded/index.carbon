@@ -483,14 +483,14 @@ fn F() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_15.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc15_15.3: init %C to %.loc15_15.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc15_15.4: ref %C = temporary %.loc15_15.2, %.loc15_15.3
-// CHECK:STDOUT:   %.loc15_15.5: ref %C = converted %.loc15_15.1, %.loc15_15.4
+// CHECK:STDOUT:   %.loc15_15.4: init %C = converted %.loc15_15.1, %.loc15_15.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc15_15.5: ref %C = temporary %.loc15_15.2, %.loc15_15.4
 // CHECK:STDOUT:   %.loc15_15.6: %C = acquire_value %.loc15_15.5
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_15.6
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_15.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_15.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_15.5, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_15.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
