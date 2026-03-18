@@ -169,7 +169,6 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                                 {result_type_id, fn_id});
       break;
     }
-    // Values that should never reach this section of code.
     case CoreInterface::IntFitsIn:
     case CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
