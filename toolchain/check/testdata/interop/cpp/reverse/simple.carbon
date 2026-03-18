@@ -23,3 +23,19 @@ import Cpp inline '''
 // CHECK:STDERR:
 Carbon::NonExistent v;
 ''';
+
+
+// --- other.carbon
+package Other;
+// --- namespace.carbon
+
+library "[[@TEST_NAME]]";
+
+import Other;
+import Cpp inline '''
+// CHECK:STDERR: namespace.carbon:[[@LINE+4]]:23: error: expected namespace name [CppInteropParseError]
+// CHECK:STDERR:     6 | namespace X = Carbon::Other;
+// CHECK:STDERR:       |               ~~~~~~~~^
+// CHECK:STDERR:
+namespace X = Carbon::Other;
+''';
