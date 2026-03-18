@@ -380,7 +380,8 @@ static auto LookupImplWitnessInSelfFacetValue(
           self_facet_value_inst_id)) {
     auto witness_id =
         context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
-    if (context.insts().Is<SemIR::ImplWitness>(witness_id)) {
+    if (context.insts().IsOneOf<SemIR::ImplWitness, SemIR::CustomWitness>(
+            witness_id)) {
       return EvalImplLookupResult::MakeFinal(witness_id);
     }
   }
