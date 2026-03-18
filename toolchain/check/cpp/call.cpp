@@ -228,12 +228,7 @@ static auto ConvertArgToTemplateArg(
     auto const_inst_id =
         context.constant_values().GetConstantInstId(converted_inst_id);
     if (const_inst_id.has_value()) {
-      if (auto ap_value =
-              MapConstantToAPValue(context, const_inst_id, param_type)) {
-        clang::TemplateArgument template_arg(context.ast_context(), param_type,
-                                             *ap_value);
-        return clang::TemplateArgumentLoc(template_arg, template_loc);
-      } else if (param_type->isPointerType()) {
+      if (param_type->isPointerType()) {
         if (auto addr_of =
                 context.insts().TryGetAs<SemIR::AddrOf>(const_inst_id)) {
           if (auto* var_decl = GetAsClangVarDecl(context, addr_of->lvalue_id)) {
@@ -243,6 +238,11 @@ static auto ConvertArgToTemplateArg(
 
           // TODO: support pointers to variables declared in Carbon.
         }
+      } else if (auto ap_value =
+                     MapConstantToAPValue(context, const_inst_id, param_type)) {
+        clang::TemplateArgument template_arg(context.ast_context(), param_type,
+                                             *ap_value);
+        return clang::TemplateArgumentLoc(template_arg, template_loc);
       }
     }
 
