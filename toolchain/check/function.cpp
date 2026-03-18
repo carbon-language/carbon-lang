@@ -50,7 +50,7 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
           {.type_id = pattern_type_id,
            .pretty_name_id = SemIR::NameId::ReturnSlot});
       return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
-          context, loc_id,
+          context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
            .subpattern_id = out_param_id,
            .type_inst_id = form_expr.type_component_inst_id}));

@@ -68,18 +68,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::InstKind::FormBindingPattern:
-      bind_name_kind = SemIR::InstKind::FormBinding;
-      break;
-    case SemIR::InstKind::RefBindingPattern:
-      bind_name_kind = SemIR::InstKind::RefBinding;
-      break;
-    case SemIR::InstKind::SymbolicBindingPattern:
-      bind_name_kind = SemIR::InstKind::SymbolicBinding;
-      break;
-    case SemIR::InstKind::ValueBindingPattern:
-      bind_name_kind = SemIR::InstKind::ValueBinding;
-      break;
     case SemIR::InstKind::AtBindingPattern: {
       auto subpattern = context.insts().Get(pattern.subpattern_id);
       CARBON_KIND_SWITCH(subpattern) {
@@ -99,6 +87,18 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       }
       break;
     }
+    case SemIR::InstKind::FormBindingPattern:
+      bind_name_kind = SemIR::InstKind::FormBinding;
+      break;
+    case SemIR::InstKind::RefBindingPattern:
+      bind_name_kind = SemIR::InstKind::RefBinding;
+      break;
+    case SemIR::InstKind::SymbolicBindingPattern:
+      bind_name_kind = SemIR::InstKind::SymbolicBinding;
+      break;
+    case SemIR::InstKind::ValueBindingPattern:
+      bind_name_kind = SemIR::InstKind::ValueBinding;
+      break;
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
                    pattern.kind);

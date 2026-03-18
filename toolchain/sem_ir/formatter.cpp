@@ -1242,12 +1242,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       FormatArgs(ret.storage_id);
       return;
     }
-#if 0
-    case ReturnSlotPattern::Kind:
-      // No-op because type_id is the only semantically significant field,
-      // and it's handled separately.
-      return;
-#endif
+
     case CARBON_KIND(SpliceBlock splice): {
       FormatArgs(splice.result_id);
       FormatTrailingBlock(splice.block_id);

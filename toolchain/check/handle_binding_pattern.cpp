@@ -179,6 +179,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                      ? context.constant_values().Get(type_expr.inst_id)
                      : SemIR::ConstantId::None;
 
+  // Adds a binding pattern for `node_id`, with the given kind and subpattern,
+  // and adds its name to the current context. The subpattern must not be
+  // provided unless the kind is `FormBindingPattern`.
   auto make_binding_pattern = [&](SemIR::InstKind kind,
                                   SemIR::InstId subpattern_id =
                                       SemIR::InstId::None) -> SemIR::InstId {
@@ -549,9 +552,6 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
     auto current_inst_id = worklist.pop_back_val();
     auto inst = context.insts().Get(current_inst_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND_ANY(SemIR::AnyLeafParamPattern, _): {
-        break;
-      }
       case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& name = context.entity_names().Get(bind.entity_name_id);
         name.is_unused = true;

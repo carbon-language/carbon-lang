@@ -105,41 +105,12 @@ struct AnyAggregateValue {
 };
 
 // clang-format off
-#define AnyLeafBindingPattern_CARBON_INST_CATEGORY(X, Sep) \
+#define AnyBindingPattern_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::AtBindingPattern) Sep             \
   X(::Carbon::SemIR::FormBindingPattern) Sep           \
   X(::Carbon::SemIR::RefBindingPattern) Sep            \
   X(::Carbon::SemIR::SymbolicBindingPattern) Sep       \
   X(::Carbon::SemIR::ValueBindingPattern)
-// clang-format on
-
-#define AnyLeafBindingPattern_CARBON_KIND_ANY_EXPAND                       \
-  CARBON_KIND_ANY_EXPAND_BEGIN AnyLeafBindingPattern_CARBON_INST_CATEGORY( \
-      CARBON_KIND_ANY_EXPAND_CASE, CARBON_KIND_ANY_EXPAND_SEP)
-
-// Common representation for various `*binding_pattern` nodes.
-struct AnyLeafBindingPattern {
-  // TODO: Also handle TemplateBindingPattern once it exists.
-  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyLeafBindingPattern);
-
-  InstKind kind;
-
-  // Always a PatternType whose scrutinee type is the declared type of the
-  // binding.
-  TypeId type_id;
-
-  // The name declared by the binding pattern. `None` indicates that the
-  // pattern has `_` in the name position, and so does not truly declare
-  // a name.
-  EntityNameId entity_name_id;
-};
-
-// clang-format off
-#define AnyBindingPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::FormBindingPattern) Sep           \
-  X(::Carbon::SemIR::RefBindingPattern) Sep            \
-  X(::Carbon::SemIR::SymbolicBindingPattern) Sep       \
-  X(::Carbon::SemIR::ValueBindingPattern) Sep          \
-  X(::Carbon::SemIR::AtBindingPattern)
 // clang-format on
 
 #define AnyBindingPattern_CARBON_KIND_ANY_EXPAND                       \

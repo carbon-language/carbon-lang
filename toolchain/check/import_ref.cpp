@@ -1739,15 +1739,13 @@ template <typename BindingPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 BindingPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
-  constexpr bool HasSubpatternField =
-      requires { BindingPatternT::subpattern_id; };
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   const auto& import_entity_name =
       resolver.import_entity_names().Get(inst.entity_name_id);
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_entity_name.parent_scope_id);
   auto subpattern_id = SemIR::InstId::None;
-  if constexpr (HasSubpatternField) {
+  if constexpr (std::is_same_v<BindingPatternT, SemIR::AtBindingPattern>) {
     subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
   }
   if (resolver.HasNewWork()) {
@@ -1760,6 +1758,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .parent_scope_id = parent_scope_id,
        .bind_index_value = import_entity_name.bind_index().index,
        .is_template = import_entity_name.is_template});
+  // We use AnyBindingPattern here so that we can initialize it uniformly,
+  // regardless of whether BindingPatternT has a subpattern_id field.
   SemIR::AnyBindingPattern result = {
       .kind = BindingPatternT::Kind,
       .type_id =

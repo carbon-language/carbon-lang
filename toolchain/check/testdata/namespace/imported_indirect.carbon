@@ -65,9 +65,9 @@ import library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { F(); }
 
@@ -86,9 +86,9 @@ import Same library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { Same.F(); }
 

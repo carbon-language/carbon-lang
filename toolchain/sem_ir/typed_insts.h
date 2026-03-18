@@ -265,7 +265,8 @@ struct AssociatedEntityType {
 // A binding pattern that binds a name to the result of matching
 // `subpattern_id` against this pattern's scrutinee. Currently there is no
 // explicit syntax for such a pattern, but it arises implicitly when handling
-// function parameters, and particularly `:?` form bindings.
+// function parameters, and particularly `:?` form bindings. The name comes from
+// Rust, which has a `<name> @ <pattern>` binding syntax with these semantics.
 struct AtBindingPattern {
   static constexpr auto Kind = InstKind::AtBindingPattern.Define<Parse::NodeId>(
       {.ir_name = "at_binding_pattern",

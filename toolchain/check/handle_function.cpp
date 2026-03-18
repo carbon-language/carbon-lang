@@ -312,6 +312,8 @@ static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
       continue;
     }
 
+    // Validate that the parameter pattern is an AtBindingPattern wrapping a
+    // ValueParamPattern.
     auto type_id = SemIR::TypeId::None;
     if (auto binding = context.insts().TryGetAs<SemIR::AtBindingPattern>(
             param_pattern_id)) {
@@ -322,7 +324,6 @@ static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
       }
     }
     if (!type_id.has_value()) {
-      // Only value parameters are supported for now.
       return false;
     }
 
@@ -634,8 +635,8 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                             "`unused` modifier on declaration");
           context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
         }
-        if (auto at_pattern = inst.TryAs<SemIR::AtBindingPattern>()) {
-          work_list.push_back(at_pattern->subpattern_id);
+        if (bind.kind == SemIR::AtBindingPattern::Kind) {
+          work_list.push_back(bind.subpattern_id);
         }
         break;
       }

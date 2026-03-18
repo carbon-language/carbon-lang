@@ -207,9 +207,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId orig_prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
                              bool check_syntax, bool check_self) -> bool {
-  // TODO: Consider differentiating between type and name mistakes. For now,
-  // taking the simpler approach because I also think we may want to refactor
-  // params.
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
@@ -229,25 +226,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Emit();
   };
 
-  bool check_type = true;
-  auto emit_type_mismatch_diagnostic = [&](SemIR::TypeId prev_type_id,
-                                           SemIR::TypeId new_type_id) {
-    if (!diagnose) {
-      return;
-    }
-    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
-                      "type {3} of {0:implicit |}parameter {1} in "
-                      "redeclaration differs from previous parameter type {2}",
-                      Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
-                      SemIR::TypeId);
-    context.emitter()
-        .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
-               is_implicit_param, param_index + 1, prev_type_id, new_type_id)
-        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
-              is_implicit_param)
-        .Emit();
-  };
-
   struct PatternPair {
     SemIR::InstId prev_id;
     SemIR::InstId new_id;
@@ -258,6 +236,10 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   pattern_stack.push_back({.prev_id = orig_prev_param_pattern_id,
                            .new_id = orig_new_param_pattern_id});
 
+  // When `check_self` is false, we need to disable type checking as soon as we
+  // determine this is a `self` parameter, and that decision needs to persist
+  // across the handling of any subpatterns.
+  bool check_type = true;
   do {
     auto patterns = pattern_stack.pop_back_val();
     auto new_param_pattern = context.insts().Get(patterns.new_id);
@@ -267,15 +249,35 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
       return false;
     }
 
+    // Conditionally checks for and diagnoses a type mismatch between the old
+    // and new parameter patterns. Returns false if a mismatch was found.
+    auto check_for_type_mismatch = [&]() {
+      auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
+          context.sem_ir(), prev_specific_id, patterns.prev_id);
+      if (check_type && !context.types().AreEqualAcrossDeclarations(
+                            new_param_pattern.type_id(), prev_param_type_id)) {
+        if (diagnose) {
+          CARBON_DIAGNOSTIC(
+              RedeclParamDiffersType, Error,
+              "type {3} of {0:implicit |}parameter {1} in "
+              "redeclaration differs from previous parameter type {2}",
+              Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+          context.emitter()
+              .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
+                     is_implicit_param, param_index + 1, prev_param_type_id,
+                     new_param_pattern.type_id())
+              .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+                    is_implicit_param)
+              .Emit();
+        }
+        return false;
+      }
+      return true;
+    };
+
     CARBON_KIND_SWITCH(new_param_pattern) {
       case CARBON_KIND_ANY(SemIR::AnyLeafParamPattern, _): {
-        auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
-            context.sem_ir(), prev_specific_id, patterns.prev_id);
-        if (check_type &&
-            !context.types().AreEqualAcrossDeclarations(
-                new_param_pattern.type_id(), prev_param_type_id)) {
-          emit_type_mismatch_diagnostic(prev_param_type_id,
-                                        new_param_pattern.type_id());
+        if (!check_for_type_mismatch()) {
           return false;
         }
         break;
@@ -310,13 +312,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
               {.prev_id = prev_any_binding_pattern.subpattern_id,
                .new_id = new_any_binding_pattern.subpattern_id});
         } else {
-          auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
-              context.sem_ir(), prev_specific_id, patterns.prev_id);
-          if (check_type &&
-              !context.types().AreEqualAcrossDeclarations(
-                  new_param_pattern.type_id(), prev_param_type_id)) {
-            emit_type_mismatch_diagnostic(prev_param_type_id,
-                                          new_param_pattern.type_id());
+          if (!check_for_type_mismatch()) {
             return false;
           }
         }

@@ -390,13 +390,13 @@ auto MatchContext::DoPreWork(Context& /*context*/,
     AddWork({.pattern_id = binding_pattern.subpattern_id,
              .work = PreWork{.scrutinee_id = scrutinee_id},
              .allow_unmarked_ref = entry.allow_unmarked_ref});
-  } else {
-    // PostWork expects a result to bind the name to. If we scheduled PostWork,
-    // but didn't schedule PreWork for a subpattern, the name should be bound to
-    // the scrutinee
-    if (scheduled_post_work) {
-      results_stack_.AppendToTop(scrutinee_id);
-    }
+  }
+  // PostWork expects a result to bind the name to. If we scheduled PostWork,
+  // but didn't schedule PreWork for a subpattern, the name should be bound to
+  // the scrutinee.
+  if (scheduled_post_work &&
+      binding_pattern.kind != SemIR::AtBindingPattern::Kind) {
+    results_stack_.AppendToTop(scrutinee_id);
   }
 }
 
@@ -491,7 +491,7 @@ auto MatchContext::DoPreWork(Context& context,
           context.insts().GetAs<SemIR::FormParamPattern>(entry.pattern_id);
       auto form_inst_id =
           context.constant_values().GetInstId(form_param_pattern.form_id);
-      if (context.insts().Get(form_inst_id).kind() != SemIR::InitForm::Kind) {
+      if (!context.insts().Is<SemIR::InitForm>(form_inst_id)) {
         break;
       }
       [[fallthrough]];
