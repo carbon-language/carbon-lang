@@ -131,4 +131,3 @@ jobs:
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
             --test_output=errors
-            --verbose_failures
