@@ -122,8 +122,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       if (!class_decl) {
         return SemIR::InstId::None;
       }
-      decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
-                           .signature = {.num_params = 0}};
+      decl_info = {.decl = clang_sema.LookupDestructor(class_decl),
+                   .signature = {.num_params = 0}};
       break;
     }
 
