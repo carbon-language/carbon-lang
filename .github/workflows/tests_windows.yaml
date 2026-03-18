@@ -129,4 +129,4 @@ jobs:
             --cxxopt=-Wno-unknown-attributes `
             "--@llvm-project//third-party:llvm_enable_zlib=false" `
             --features=archive_param_file `
-            --test_output=errors
+            --test_output=errors \n            --verbose_failures
