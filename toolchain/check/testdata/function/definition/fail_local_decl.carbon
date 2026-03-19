@@ -48,4 +48,3 @@ fn F() {
   // CHECK:STDERR:
   protected var unused w: {} = {};
 }
-

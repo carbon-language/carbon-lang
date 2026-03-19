@@ -43,4 +43,3 @@ protected protected var d: () = ();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract var e: () = ();
-

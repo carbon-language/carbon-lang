@@ -29,4 +29,3 @@ var A: ();
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 var A: () = ();
-
