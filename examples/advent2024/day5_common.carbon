@@ -42,7 +42,7 @@ class Rules {
 
 class PageList {
   impl as Core.UnformedInit {}
-  
+
   fn Empty() -> PageList {
     returned var me: PageList;
     me.num_pages = 0;
