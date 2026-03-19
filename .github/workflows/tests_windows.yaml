@@ -106,6 +106,12 @@ jobs:
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/SUBSYSTEM:CONSOLE" | Out-File -FilePath windows_clang_rt.bazelrc -Append
 
+      - name: Create dummy stack obj
+        if: steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType File -Path "16777216.obj" -Force
+
       - name: Build and test common
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
