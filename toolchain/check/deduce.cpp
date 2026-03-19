@@ -290,6 +290,8 @@ auto DeductionContext::Deduce() -> bool {
 
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
+      // TODO: This looks liable to add redundant work (possibly even
+      // exponential amounts of it) in some of the cases handled below.
       Add(context().types().GetTypeInstId(param_type_id),
           context().types().GetTypeInstId(
               context().insts().Get(arg_id).type_id()));
@@ -398,11 +400,6 @@ auto DeductionContext::Deduce() -> bool {
           }
           result_arg_ids_[index.index] = arg_const_inst_id;
         }
-        continue;
-      }
-
-      case CARBON_KIND(SemIR::ValueParamPattern pattern): {
-        Add(pattern.subpattern_id, arg_id);
         continue;
       }
 

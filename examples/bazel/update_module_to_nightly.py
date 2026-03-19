@@ -158,7 +158,7 @@ def main() -> None:
     version = get_latest_version()
     new_block = generate_override(version)
 
-    (new_content, count) = OVERRIDE_PATTERN.subn(new_block, content)
+    new_content, count = OVERRIDE_PATTERN.subn(new_block, content)
     if count > 0:
         log("Existing override found, replacing with a fresh one")
     else:

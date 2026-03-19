@@ -1898,10 +1898,8 @@ interface I {
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl.loc7 [concrete = constants.%G]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %X.facet.loc28_6.1: %X.type = facet_value constants.%C, (constants.%X.impl_witness) [concrete = constants.%X.facet]
-// CHECK:STDOUT:   %.loc28_6.1: %X.type = converted constants.%C, %X.facet.loc28_6.1 [concrete = constants.%X.facet]
-// CHECK:STDOUT:   %X.facet.loc28_6.2: %X.type = facet_value constants.%C, (constants.%X.impl_witness) [concrete = constants.%X.facet]
-// CHECK:STDOUT:   %.loc28_6.2: %X.type = converted constants.%C, %X.facet.loc28_6.2 [concrete = constants.%X.facet]
+// CHECK:STDOUT:   %X.facet.loc28: %X.type = facet_value constants.%C, (constants.%X.impl_witness) [concrete = constants.%X.facet]
+// CHECK:STDOUT:   %.loc28: %X.type = converted constants.%C, %X.facet.loc28 [concrete = constants.%X.facet]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%X.facet) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%c.ref)
 // CHECK:STDOUT:   return

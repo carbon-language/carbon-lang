@@ -515,15 +515,16 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 
 #### Integer literals
 
-Integers may be written in decimal, hexadecimal, or binary:
+Integers may be written in decimal, hexadecimal, octal, or binary:
 
 -   `12345` (decimal)
 -   `0x1FE` (hexadecimal)
+-   `0o755` (octal)
 -   `0b1010` (binary)
 
 Underscores (`_`) may be used as digit separators. Numeric literals are
-case-sensitive: `0x`, `0b` must be lowercase, whereas hexadecimal digits must be
-uppercase. Integer literals never contain a `.`.
+case-sensitive: `0x`, `0o`, `0b` must be lowercase, whereas hexadecimal digits
+must be uppercase. Integer literals never contain a `.`.
 
 Unlike in C++, literals do not have a suffix to indicate their type. Instead,
 numeric literals have a type derived from their value, and can be

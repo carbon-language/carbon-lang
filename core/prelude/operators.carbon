@@ -9,3 +9,4 @@ export import library "prelude/operators/as";
 export import library "prelude/operators/bitwise";
 export import library "prelude/operators/comparison";
 export import library "prelude/operators/index";
+export import library "prelude/operators/deref";

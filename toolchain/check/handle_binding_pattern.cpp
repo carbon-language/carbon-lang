@@ -340,6 +340,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.node_stack().Push(node_id, binding_pattern_id);
       break;
     }
+
+    case FullPatternStack::Kind::NotInEitherParamList:
+      CARBON_FATAL("Unreachable");
   }
   return true;
 }

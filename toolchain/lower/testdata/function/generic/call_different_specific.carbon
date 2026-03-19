@@ -94,22 +94,22 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_7.3.temp = alloca i32, align 4, !dbg !38
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.3.temp), !dbg !38
+// CHECK:STDOUT:   %.loc34_7.2.temp = alloca i32, align 4, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.2.temp), !dbg !38
 // CHECK:STDOUT:   %.loc34_5.2 = load i32, ptr %x, align 4, !dbg !39
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %.loc34_5.2), !dbg !38
-// CHECK:STDOUT:   store i32 %D.call, ptr %.loc34_7.3.temp, align 4, !dbg !38
+// CHECK:STDOUT:   store i32 %D.call, ptr %.loc34_7.2.temp, align 4, !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_7.3.temp = alloca double, align 8, !dbg !44
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.3.temp), !dbg !44
+// CHECK:STDOUT:   %.loc34_7.2.temp = alloca double, align 8, !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.2.temp), !dbg !44
 // CHECK:STDOUT:   %.loc34_5.2 = load double, ptr %x, align 8, !dbg !45
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.de5b400758c39a65(double %.loc34_5.2), !dbg !44
-// CHECK:STDOUT:   store double %D.call, ptr %.loc34_7.3.temp, align 8, !dbg !44
+// CHECK:STDOUT:   store double %D.call, ptr %.loc34_7.2.temp, align 8, !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

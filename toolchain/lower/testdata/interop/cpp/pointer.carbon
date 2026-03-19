@@ -99,8 +99,8 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: define dso_local void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci(ptr noundef %1, i32 noundef 0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -117,81 +117,80 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: declare noundef ptr @_Z18ReturnPtrWithThunki(i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %p) #2 !dbg !15 {
+// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %p) #2 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %p), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %p), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !23 {
+// CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtr.call = call ptr @_Z9ReturnPtrv(), !dbg !26
-// CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !27
+// CHECK:STDOUT:   %ReturnPtr.call = call ptr @_Z9ReturnPtrv(), !dbg !25
+// CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef ptr @_Z9ReturnPtrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %p) #2 !dbg !28 {
+// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %p) #2 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %p), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %p), !dbg !30
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #2 !dbg !33 {
+// CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #2 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !34
-// CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !35
+// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !33
+// CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !7 = !DIFile(filename: "nonnull.carbon", directory: "")
-// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 _ZTS1C", !14, i64 0}
-// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "PassPtr", linkageName: "_CPassPtr.Main", scope: null, file: !7, line: 14, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !19)
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
-// CHECK:STDOUT: !17 = !{null, !18}
-// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 15, column: 3, scope: !15)
-// CHECK:STDOUT: !22 = !DILocation(line: 14, column: 1, scope: !15)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "ReturnPtr", linkageName: "_CReturnPtr.Main", scope: null, file: !7, line: 18, type: !24, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !25 = !{!18}
-// CHECK:STDOUT: !26 = !DILocation(line: 19, column: 10, scope: !23)
-// CHECK:STDOUT: !27 = !DILocation(line: 19, column: 3, scope: !23)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "PassPtrWithThunk", linkageName: "_CPassPtrWithThunk.Main", scope: null, file: !7, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !29)
-// CHECK:STDOUT: !29 = !{!30}
-// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !28, type: !18)
-// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 3, scope: !28)
-// CHECK:STDOUT: !32 = !DILocation(line: 22, column: 1, scope: !28)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !7, line: 26, type: !24, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !34 = !DILocation(line: 27, column: 10, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 27, column: 3, scope: !33)
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "nonnull.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"p1 _ZTS1C", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "PassPtr", linkageName: "_CPassPtr.Main", scope: null, file: !6, line: 14, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !18)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{null, !17}
+// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !18 = !{!19}
+// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
+// CHECK:STDOUT: !20 = !DILocation(line: 15, column: 3, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 14, column: 1, scope: !14)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "ReturnPtr", linkageName: "_CReturnPtr.Main", scope: null, file: !6, line: 18, type: !23, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !24 = !{!17}
+// CHECK:STDOUT: !25 = !DILocation(line: 19, column: 10, scope: !22)
+// CHECK:STDOUT: !26 = !DILocation(line: 19, column: 3, scope: !22)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "PassPtrWithThunk", linkageName: "_CPassPtrWithThunk.Main", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !28 = !{!29}
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !17)
+// CHECK:STDOUT: !30 = !DILocation(line: 23, column: 3, scope: !27)
+// CHECK:STDOUT: !31 = !DILocation(line: 22, column: 1, scope: !27)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !6, line: 26, type: !23, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !33 = !DILocation(line: 27, column: 10, scope: !32)
+// CHECK:STDOUT: !34 = !DILocation(line: 27, column: 3, scope: !32)
 // CHECK:STDOUT: ; ModuleID = 'nullable.carbon'
 // CHECK:STDOUT: source_filename = "nullable.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -201,8 +200,8 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: define dso_local void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci(ptr noundef %1, i32 noundef 0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -219,87 +218,87 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: declare noundef ptr @_Z18ReturnPtrWithThunki(i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %_) #2 !dbg !15 {
+// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %_) #2 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassNonnullPtr.Main(ptr %p) #2 !dbg !22 {
+// CHECK:STDOUT: define void @_CPassNonnullPtr.Main(ptr %p) #2 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_15.2.temp = alloca ptr, align 8, !dbg !25
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_15.2.temp), !dbg !25
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc22_15.2.temp, align 8, !dbg !25
-// CHECK:STDOUT:   %.loc22_15.4 = load ptr, ptr %.loc22_15.2.temp, align 8, !dbg !25
-// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %.loc22_15.4), !dbg !26
-// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT:   %.loc22_15.2.temp = alloca ptr, align 8, !dbg !24
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_15.2.temp), !dbg !24
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc22_15.2.temp, align 8, !dbg !24
+// CHECK:STDOUT:   %.loc22_15.4 = load ptr, ptr %.loc22_15.2.temp, align 8, !dbg !24
+// CHECK:STDOUT:   call void @_Z7TakePtrP1C(ptr %.loc22_15.4), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !28 {
+// CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtr.call = call ptr @_Z9ReturnPtrv(), !dbg !31
-// CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !32
+// CHECK:STDOUT:   %ReturnPtr.call = call ptr @_Z9ReturnPtrv(), !dbg !30
+// CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef ptr @_Z9ReturnPtrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %_) #2 !dbg !33 {
+// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %_) #2 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassNonnullPtrWithThunk.Main(ptr %p) #2 !dbg !37 {
+// CHECK:STDOUT: define void @_CPassNonnullPtrWithThunk.Main(ptr %p) #2 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc35_24.2.temp = alloca ptr, align 8, !dbg !40
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !40
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc35_24.2.temp), !dbg !40
-// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_24.2.temp, align 8, !dbg !40
-// CHECK:STDOUT:   %.loc35_24.4 = load ptr, ptr %.loc35_24.2.temp, align 8, !dbg !40
-// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc35_24.4), !dbg !41
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   %.loc35_24.2.temp = alloca ptr, align 8, !dbg !39
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %p), !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc35_24.2.temp), !dbg !39
+// CHECK:STDOUT:   store ptr %U.binding.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_24.2.temp, align 8, !dbg !39
+// CHECK:STDOUT:   %.loc35_24.4 = load ptr, ptr %.loc35_24.2.temp, align 8, !dbg !39
+// CHECK:STDOUT:   call void @_Z16TakePtrWithThunkP1Ci.carbon_thunk1(ptr %.loc35_24.4), !dbg !40
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #2 !dbg !43 {
+// CHECK:STDOUT: define ptr @_CReturnPtrWithThunk.Main() #2 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !44
-// CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !45
+// CHECK:STDOUT:   %ReturnPtrWithThunk__carbon_thunk.call = call ptr @_Z18ReturnPtrWithThunki.carbon_thunk0(), !dbg !43
+// CHECK:STDOUT:   ret ptr %ReturnPtrWithThunk__carbon_thunk.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %self) #2 !dbg !46 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self), !dbg !52
-// CHECK:STDOUT:   ret ptr %1, !dbg !53
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a"(ptr %self) #2 !dbg !45 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self), !dbg !51
+// CHECK:STDOUT:   ret ptr %1, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #2 !dbg !54 {
-// CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %self), !dbg !57
-// CHECK:STDOUT:   ret ptr %1, !dbg !58
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63"(ptr %self) #2 !dbg !53 {
+// CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %self), !dbg !56
+// CHECK:STDOUT:   ret ptr %1, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %value) #2 !dbg !59 {
-// CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %value), !dbg !62
-// CHECK:STDOUT:   ret ptr %1, !dbg !63
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.8f431b36581f9e63(ptr %value) #2 !dbg !58 {
+// CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %value), !dbg !61
+// CHECK:STDOUT:   ret ptr %1, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %self) #2 !dbg !64 {
-// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !67
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !67
-// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !68
-// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !69
-// CHECK:STDOUT:   ret ptr %2, !dbg !70
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655"(ptr %self) #2 !dbg !63 {
+// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !66
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !66
+// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !67
+// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !68
+// CHECK:STDOUT:   ret ptr %2, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -311,78 +310,77 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
-// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !7 = !DIFile(filename: "nullable.carbon", directory: "")
-// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 _ZTS1C", !14, i64 0}
-// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "PassPtr", linkageName: "_CPassPtr.Main", scope: null, file: !7, line: 14, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !19)
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
-// CHECK:STDOUT: !17 = !{null, !18}
-// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 14, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "PassNonnullPtr", linkageName: "_CPassNonnullPtr.Main", scope: null, file: !7, line: 19, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !23)
-// CHECK:STDOUT: !23 = !{!24}
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !18)
-// CHECK:STDOUT: !25 = !DILocation(line: 22, column: 15, scope: !22)
-// CHECK:STDOUT: !26 = !DILocation(line: 22, column: 3, scope: !22)
-// CHECK:STDOUT: !27 = !DILocation(line: 19, column: 1, scope: !22)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "ReturnPtr", linkageName: "_CReturnPtr.Main", scope: null, file: !7, line: 25, type: !29, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !30 = !{!18}
-// CHECK:STDOUT: !31 = !DILocation(line: 26, column: 10, scope: !28)
-// CHECK:STDOUT: !32 = !DILocation(line: 26, column: 3, scope: !28)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "PassPtrWithThunk", linkageName: "_CPassPtrWithThunk.Main", scope: null, file: !7, line: 29, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !34)
-// CHECK:STDOUT: !34 = !{!35}
-// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !18)
-// CHECK:STDOUT: !36 = !DILocation(line: 29, column: 1, scope: !33)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "PassNonnullPtrWithThunk", linkageName: "_CPassNonnullPtrWithThunk.Main", scope: null, file: !7, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !38)
-// CHECK:STDOUT: !38 = !{!39}
-// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !37, type: !18)
-// CHECK:STDOUT: !40 = !DILocation(line: 35, column: 24, scope: !37)
-// CHECK:STDOUT: !41 = !DILocation(line: 35, column: 3, scope: !37)
-// CHECK:STDOUT: !42 = !DILocation(line: 34, column: 1, scope: !37)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !7, line: 38, type: !29, spFlags: DISPFlagDefinition, unit: !6)
-// CHECK:STDOUT: !44 = !DILocation(line: 39, column: 10, scope: !43)
-// CHECK:STDOUT: !45 = !DILocation(line: 39, column: 3, scope: !43)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", scope: null, file: !47, line: 93, type: !48, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !50)
-// CHECK:STDOUT: !47 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !49)
-// CHECK:STDOUT: !49 = !{!18, !18}
-// CHECK:STDOUT: !50 = !{!51}
-// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !46, type: !18)
-// CHECK:STDOUT: !52 = !DILocation(line: 94, column: 12, scope: !46)
-// CHECK:STDOUT: !53 = !DILocation(line: 94, column: 5, scope: !46)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !47, line: 68, type: !48, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !55)
-// CHECK:STDOUT: !55 = !{!56}
-// CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !54, type: !18)
-// CHECK:STDOUT: !57 = !DILocation(line: 69, column: 12, scope: !54)
-// CHECK:STDOUT: !58 = !DILocation(line: 69, column: 5, scope: !54)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.8f431b36581f9e63", scope: null, file: !47, line: 29, type: !48, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !60)
-// CHECK:STDOUT: !60 = !{!61}
-// CHECK:STDOUT: !61 = !DILocalVariable(arg: 1, scope: !59, type: !18)
-// CHECK:STDOUT: !62 = !DILocation(line: 30, column: 12, scope: !59)
-// CHECK:STDOUT: !63 = !DILocation(line: 30, column: 5, scope: !59)
-// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655", scope: null, file: !47, line: 138, type: !48, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !65)
-// CHECK:STDOUT: !65 = !{!66}
-// CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !64, type: !18)
-// CHECK:STDOUT: !67 = !DILocation(line: 139, column: 14, scope: !64)
-// CHECK:STDOUT: !68 = !DILocation(line: 140, column: 5, scope: !64)
-// CHECK:STDOUT: !69 = !DILocation(line: 139, column: 18, scope: !64)
-// CHECK:STDOUT: !70 = !DILocation(line: 141, column: 5, scope: !64)
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "nullable.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"p1 _ZTS1C", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "PassPtr", linkageName: "_CPassPtr.Main", scope: null, file: !6, line: 14, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !18)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{null, !17}
+// CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !18 = !{!19}
+// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
+// CHECK:STDOUT: !20 = !DILocation(line: 14, column: 1, scope: !14)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "PassNonnullPtr", linkageName: "_CPassNonnullPtr.Main", scope: null, file: !6, line: 19, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
+// CHECK:STDOUT: !22 = !{!23}
+// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !17)
+// CHECK:STDOUT: !24 = !DILocation(line: 22, column: 15, scope: !21)
+// CHECK:STDOUT: !25 = !DILocation(line: 22, column: 3, scope: !21)
+// CHECK:STDOUT: !26 = !DILocation(line: 19, column: 1, scope: !21)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "ReturnPtr", linkageName: "_CReturnPtr.Main", scope: null, file: !6, line: 25, type: !28, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !29 = !{!17}
+// CHECK:STDOUT: !30 = !DILocation(line: 26, column: 10, scope: !27)
+// CHECK:STDOUT: !31 = !DILocation(line: 26, column: 3, scope: !27)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "PassPtrWithThunk", linkageName: "_CPassPtrWithThunk.Main", scope: null, file: !6, line: 29, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !17)
+// CHECK:STDOUT: !35 = !DILocation(line: 29, column: 1, scope: !32)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "PassNonnullPtrWithThunk", linkageName: "_CPassNonnullPtrWithThunk.Main", scope: null, file: !6, line: 34, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !17)
+// CHECK:STDOUT: !39 = !DILocation(line: 35, column: 24, scope: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 35, column: 3, scope: !36)
+// CHECK:STDOUT: !41 = !DILocation(line: 34, column: 1, scope: !36)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !6, line: 38, type: !28, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !43 = !DILocation(line: 39, column: 10, scope: !42)
+// CHECK:STDOUT: !44 = !DILocation(line: 39, column: 3, scope: !42)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.e76fd6d2be138e4a", scope: null, file: !46, line: 93, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
+// CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
+// CHECK:STDOUT: !47 = !DISubroutineType(types: !48)
+// CHECK:STDOUT: !48 = !{!17, !17}
+// CHECK:STDOUT: !49 = !{!50}
+// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !45, type: !17)
+// CHECK:STDOUT: !51 = !DILocation(line: 94, column: 12, scope: !45)
+// CHECK:STDOUT: !52 = !DILocation(line: 94, column: 5, scope: !45)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.90961d7b1ce4f089:OptionalAs.0e326e799dad0c64.Core.8f431b36581f9e63", scope: null, file: !46, line: 68, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !54)
+// CHECK:STDOUT: !54 = !{!55}
+// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !53, type: !17)
+// CHECK:STDOUT: !56 = !DILocation(line: 69, column: 12, scope: !53)
+// CHECK:STDOUT: !57 = !DILocation(line: 69, column: 5, scope: !53)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.8f431b36581f9e63", scope: null, file: !46, line: 29, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
+// CHECK:STDOUT: !59 = !{!60}
+// CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !58, type: !17)
+// CHECK:STDOUT: !61 = !DILocation(line: 30, column: 12, scope: !58)
+// CHECK:STDOUT: !62 = !DILocation(line: 30, column: 5, scope: !58)
+// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.e8f8f92d3d08d149:OptionalStorage.Core.f53db17714b9f655", scope: null, file: !46, line: 138, type: !47, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !64)
+// CHECK:STDOUT: !64 = !{!65}
+// CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !63, type: !17)
+// CHECK:STDOUT: !66 = !DILocation(line: 139, column: 14, scope: !63)
+// CHECK:STDOUT: !67 = !DILocation(line: 140, column: 5, scope: !63)
+// CHECK:STDOUT: !68 = !DILocation(line: 139, column: 18, scope: !63)
+// CHECK:STDOUT: !69 = !DILocation(line: 141, column: 5, scope: !63)

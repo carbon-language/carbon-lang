@@ -1364,27 +1364,25 @@ static auto CreateFunctionSignatureInsts(
     Context& context, SemIR::LocId loc_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclKey::Signature signature)
     -> std::optional<FunctionSignatureInsts> {
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
-  std::optional pop = llvm::scope_exit(
-      [&context] { context.full_pattern_stack().PopFullPattern(); });
+  context.full_pattern_stack().StartImplicitParamList();
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndImplicitParamList();
+  context.full_pattern_stack().StartExplicitParamList();
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl, signature);
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
+  context.full_pattern_stack().EndExplicitParamList();
   auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
-  pop.reset();
 
   auto match_results =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
@@ -1471,6 +1469,14 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  SemIR::FunctionFields::EvaluationMode evaluation_mode =
+      SemIR::FunctionFields::EvaluationMode::None;
+  if (clang_decl->isConsteval()) {
+    evaluation_mode = SemIR::FunctionFields::EvaluationMode::MustEval;
+  } else if (clang_decl->isConstexpr()) {
+    evaluation_mode = SemIR::FunctionFields::EvaluationMode::Eval;
+  }
+
   auto [decl_id, function_id] = MakeFunctionDecl(
       context, import_ir_inst_id, decl_block_id, /*build_generic=*/false,
       /*is_definition=*/false,
@@ -1501,6 +1507,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .return_patterns_id = function_params_insts->return_patterns_id,
               .virtual_modifier = virtual_modifier,
               .virtual_index = virtual_index,
+              .evaluation_mode = evaluation_mode,
               .self_param_id = FindSelfPattern(
                   context, function_params_insts->implicit_param_patterns_id),
           }});

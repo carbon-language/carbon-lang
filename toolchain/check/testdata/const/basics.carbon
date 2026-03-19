@@ -85,43 +85,14 @@ fn PassReferenceToConstValue(p: X*) {
   TakeConstValue(*p);
 }
 
-// --- fail_todo_add_or_remove_while_initializing.carbon
+// --- add_or_remove_while_initializing.carbon
 library "[[@TEST_NAME]]";
 
 class X {}
 
-// TODO: None of these should require `X` to be copyable.
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:40: error: cannot copy value of type `X` [CopyOfUncopyableType]
-// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
-// CHECK:STDERR:                                        ^~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
-// CHECK:STDERR:                                        ^~~~~~~
-// CHECK:STDERR:
 var init_non_const_from_non_const: X = {} as X;
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `X` [CopyOfUncopyableType]
-// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 var init_non_const_from_const: X = ({} as X) as const X;
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `const X` [CopyOfUncopyableType]
-// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 var init_const_from_non_const: const X = {} as X;
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:38: error: cannot copy value of type `const X` [CopyOfUncopyableType]
-// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
-// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
-// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 var init_const_from_const: const X = ({} as X) as const X;
 
 // --- add_while_forming_reference.carbon

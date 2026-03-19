@@ -848,29 +848,18 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_id);
 
-  // If we're trying to create a class value, form a temporary for the value to
-  // point to.
-  bool need_temporary = !target.is_initializer();
-  if (need_temporary) {
+  // If we're trying to create a class value, form temporary storage to hold the
+  // initializer.
+  if (!target.is_initializer()) {
     target.kind = ConversionTarget::Initializing;
     target.storage_access_block = &target_block;
     target.storage_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
-  auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
+  return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
       is_partial ? nullptr : &dest_type);
-
-  if (need_temporary) {
-    target_block.InsertHere();
-    result_id =
-        AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(value_id),
-                                             {.type_id = target.type_id,
-                                              .storage_id = target.storage_id,
-                                              .init_id = result_id});
-  }
-  return result_id;
 }
 
 // An inheritance path is a sequence of `BaseDecl`s and corresponding base types
@@ -1754,15 +1743,18 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         return Done{expr_id};
       }
 
-      // Commit to using a temporary for this initializing expression.
-      // TODO: Don't create a temporary if the initializing representation
-      // is already a value representation.
-      // TODO: If the target is DurableRef, materialize a VarStorage instead of
-      // a TemporaryStorage to lifetime-extend.
       if (target_.kind == ConversionTarget::Discarded) {
         DiscardInitializer(context_, expr_id);
         return Done{SemIR::InstId::None};
+      } else if (IsValidExprCategoryForConversionTarget(category,
+                                                        target_.kind)) {
+        return Done{expr_id};
       } else {
+        // Commit to using a temporary for this initializing expression.
+        // TODO: Don't create a temporary if the initializing representation is
+        // already a value representation.
+        // TODO: If the target is DurableRef, materialize a VarStorage instead
+        // of a TemporaryStorage to lifetime-extend.
         return NextStep{.expr_id = MaterializeTemporary(context_, expr_id),
                         .category = SemIR::ExprCategory::EphemeralRef};
       }

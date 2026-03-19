@@ -35,6 +35,11 @@ assistant, **read this first** to avoid common pitfalls.
 -   **[`toolchain/`](toolchain/)**: The C++ implementation of the compiler
     (Toolchain).
 
+## Tool usage
+
+See the "Tool usage" skill for instructions on what tools to use in the
+carbon-lang project.
+
 ## Code style
 
 See the "Code style" skill for instructions on formatting, style guides, and

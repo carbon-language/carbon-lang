@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
-// ARGS: -v compile --phase=codegen --target=x86_64-unknown-linux-gnu --output=%t %s
+// ARGS: -v compile --phase=codegen --target=x86_64-unknown-linux-gnu --output=%t --output-last-input-only %s
 //
 // Verifies that various phases are included in vlog output.
 //

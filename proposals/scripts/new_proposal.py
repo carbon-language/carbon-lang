@@ -194,6 +194,16 @@ def main() -> None:
         assert jj_bin  # For mypy.
         _run([jj_bin, "new", parsed_args.branch_start_point])
         _run([jj_bin, "bookmark", "create", branch])
+        _run(
+            [
+                jj_bin,
+                "bookmark",
+                "track",
+                branch,
+                "--remote",
+                parsed_args.remote,
+            ]
+        )
 
     # Copy template.md to a temp file.
     template_path = "proposals/scripts/template.md"

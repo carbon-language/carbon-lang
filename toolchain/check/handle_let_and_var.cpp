@@ -62,8 +62,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::NameBindingDecl);
+  context.full_pattern_stack().PushNameBindingDecl();
   BeginSubpattern(context);
   return true;
 }
@@ -113,6 +112,8 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;
+    case FullPatternStack::Kind::NotInEitherParamList:
+      CARBON_FATAL("Unreachable");
   }
 
   auto pattern_id = AddPatternInst<SemIR::VarPattern>(

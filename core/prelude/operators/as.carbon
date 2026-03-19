@@ -49,3 +49,5 @@ impl forall [T:! type, U:! ImplicitAs(T)] const U as ImplicitAs(T) {
 impl forall [T:! type, U:! type] T* as UnsafeAs(U*) {
   fn Convert[self: T*]() -> U* = "pointer.unsafe_convert";
 }
+
+interface IntFitsIn(Dest:! type) {}

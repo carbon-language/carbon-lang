@@ -63,6 +63,7 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.bazel.build:443
             storage.googleapis.com:443
+            uploads.github.com:443
             www.googleapis.com:443
 
       - name: Checkout branch

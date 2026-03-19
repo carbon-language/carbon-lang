@@ -902,33 +902,22 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
   }
 
   struct SelfImplsFacetType {
+    bool extend;
     SemIR::ConstantId self;
     SemIR::FacetTypeId facet_type;
   };
 
   // Work queue.
-  llvm::SmallVector<SelfImplsFacetType> extend_facet_types = {
-      {self_const_id, facet_type.facet_type_id}};
-  llvm::SmallVector<SelfImplsFacetType> impls_facet_types;
+  llvm::SmallVector<SelfImplsFacetType> work = {
+      {true, self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
 
-  while (true) {
-    SelfImplsFacetType next_impls = {SemIR::ConstantId::None,
-                                     SemIR::FacetTypeId::None};
-    bool facet_type_extends = false;
-    if (!extend_facet_types.empty()) {
-      next_impls = extend_facet_types.pop_back_val();
-      facet_type_extends = true;
-    } else if (!impls_facet_types.empty()) {
-      next_impls = impls_facet_types.pop_back_val();
-      facet_type_extends = false;
-    } else {
-      break;
-    }
-
+  while (!work.empty()) {
+    SelfImplsFacetType next_impls = work.pop_back_val();
+    bool facet_type_extends = next_impls.extend;
     auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
     const auto& facet_type_info =
         context.facet_types().Get(next_impls.facet_type);
@@ -1006,11 +995,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         auto facet_type_id = context.insts()
                                  .GetAs<SemIR::FacetType>(facet_type_inst_id)
                                  .facet_type_id;
-        if (facet_type_extends && require.extend_self) {
-          extend_facet_types.push_back({require_self, facet_type_id});
-        } else {
-          impls_facet_types.push_back({require_self, facet_type_id});
-        }
+        bool extend = facet_type_extends && require.extend_self;
+        work.push_back({extend, require_self, facet_type_id});
       }
     }
 
@@ -1046,7 +1032,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         auto facet_type_id = context.insts()
                                  .GetAs<SemIR::FacetType>(facet_type_inst_id)
                                  .facet_type_id;
-        impls_facet_types.push_back({require_self, facet_type_id});
+        work.push_back({false, require_self, facet_type_id});
       }
     }
   }
