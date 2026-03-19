@@ -77,9 +77,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.220: <witness> = require_complete_type %tuple.type.a5e [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type.a5e [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.a54: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
-// CHECK:STDOUT:   %require_complete.441: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %tuple.a0a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.281: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.881: type = pattern_type %tuple.type.281 [concrete]
@@ -187,9 +186,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40: type = pattern_type %U.loc7_16.1 [symbolic = %pattern_type.loc7_40 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_30 (constants.%require_complete.220)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1, %U.loc7_16.1) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.a54)]
-// CHECK:STDOUT:   %require_complete.loc7_61: <witness> = require_complete_type %U.loc7_16.1 [symbolic = %require_complete.loc7_61 (constants.%require_complete.441)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.a5e)) -> out %return.param: @F.%U.loc7_16.1 (%U) {
 // CHECK:STDOUT:   !entry:
@@ -222,9 +220,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.946
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%require_complete.220
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.a54
-// CHECK:STDOUT:   %require_complete.loc7_61 => constants.%require_complete.441
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
@@ -237,9 +234,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.9c8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%complete_type.734
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.734
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.107
-// CHECK:STDOUT:   %require_complete.loc7_61 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_value.carbon

@@ -62,20 +62,13 @@ abstract class Abstract {
 fn F(var _: Abstract) {
 }
 
-// --- fail_todo_abstract_let.carbon
+// --- abstract_let.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {
 }
 
 fn F(a: Abstract) {
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let unused l: Abstract = a;
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   let unused l: Abstract = a;
 }
 
@@ -97,7 +90,7 @@ class Adapter {
   adapt Abstract;
 }
 
-// --- fail_todo_define_and_call_abstract_param.carbon
+// --- define_and_call_abstract_param.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {
@@ -106,16 +99,6 @@ abstract class Abstract {
 fn Param(a: Abstract);
 
 fn Call(p: Abstract) {
-  // CHECK:STDERR: fail_todo_define_and_call_abstract_param.carbon:[[@LINE+10]]:9: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   Param(p);
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR: fail_todo_define_and_call_abstract_param.carbon:[[@LINE-9]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_define_and_call_abstract_param.carbon:[[@LINE-9]]:10: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn Param(a: Abstract);
-  // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR:
   Param(p);
 }
 
@@ -393,7 +376,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
@@ -443,8 +426,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %Abstract.ref.loc14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   %l: %Abstract = value_binding l, %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -494,7 +477,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_define_and_call_abstract_param.carbon
+// CHECK:STDOUT: --- define_and_call_abstract_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
@@ -556,7 +539,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
-// CHECK:STDOUT:   %Param.call: init %empty_tuple.type = call %Param.ref(<error>)
+// CHECK:STDOUT:   %Param.call: init %empty_tuple.type = call %Param.ref(%p.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
