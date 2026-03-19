@@ -178,9 +178,8 @@ static auto BuildCppUnsafeDerefWitness(
       context.functions()
           .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
           .return_type_inst_id;
-  if (result_type_id == SemIR::ErrorInst::InstId ||
-      result_type_id == SemIR::InstId::None) {
-    return result_type_id;
+  if (result_type_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
   }
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
