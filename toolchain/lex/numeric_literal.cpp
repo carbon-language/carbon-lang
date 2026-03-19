@@ -387,7 +387,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
           i + 1 == n) {
         CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
                           "misplaced digit separator in numeric literal");
-        emitter_.Emit(text.begin() + 1, InvalidDigitSeparator);
+        emitter_.Emit(text.begin() + i, InvalidDigitSeparator);
       }
       ++num_digit_separators;
       continue;
