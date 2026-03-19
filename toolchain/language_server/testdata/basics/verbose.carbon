@@ -4,6 +4,8 @@
 //
 // ARGS: -v language-server
 //
+// SET-NO-SPLIT-PADDING
+//
 // Verbose output includes a timestamp.
 // NOAUTOUPDATE
 // TIP: To test this file alone, run:

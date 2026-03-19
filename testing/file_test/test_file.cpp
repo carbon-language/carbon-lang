@@ -413,8 +413,8 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
                             bool missing_autoupdate, int& line_index,
                             SplitState& split,
                             llvm::SmallVector<TestFile::Split>& file_splits,
-                            llvm::SmallVector<FileTestLine>* non_check_lines)
-    -> ErrorOr<bool> {
+                            llvm::SmallVector<FileTestLine>* non_check_lines,
+                            bool no_split_padding) -> ErrorOr<bool> {
   if (!line_trimmed.consume_front("// ---")) {
     if (!split.has_splits() && !line_trimmed.starts_with("//") &&
         !line_trimmed.empty()) {
@@ -450,6 +450,12 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
     }
   }
 
+  if (!no_split_padding) {
+    // Ensure line numbers in the split content match line numbers in the
+    // physical file.
+    split.content.assign(line_index, '\n');
+  }
+
   ++split.file_index;
   split.filename = line_trimmed.trim();
   if (split.filename.empty()) {
@@ -457,7 +463,6 @@ static auto TryConsumeSplit(llvm::StringRef line, llvm::StringRef line_trimmed,
   }
   // The split line is added to non_check_lines for retention in autoupdate, but
   // is not added to the test file content.
-  line_index = 0;
   if (non_check_lines) {
     non_check_lines->push_back(
         FileTestLine(split.file_index, line_index, line));
@@ -754,14 +759,18 @@ static auto ProcessFileContent(llvm::StringRef filename,
                                llvm::SmallVector<TestFile::Split>& splits,
                                llvm::SmallVector<std::string>& include_files)
     -> ErrorOr<Success> {
-  // The index in the current test file. Will be reset on splits.
-  int line_index = 0;
+  // Current line number in the test file. Conflict markers aren't counted.
+  int line_number = 0;
 
   // When autoupdating, we track whether we're inside conflict markers.
   // Otherwise conflict markers are errors.
   auto previous_conflict_marker = MarkerKind::None;
 
   SplitState split_state;
+
+  // Whether to pad splits with leading newlines so that their line numbers
+  // match the physical file line numbers. Generated from SET-NO-SPLIT-PADDING.
+  bool no_split_padding = false;
 
   while (!content_cursor.empty()) {
     auto [line, next_cursor] = content_cursor.split("\n");
@@ -779,6 +788,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
     }
 
     // At this point, remaining lines are part of the test input.
+    ++line_number;
 
     // We need to consume a split, but the main file has a little more handling.
     bool missing_autoupdate = false;
@@ -788,14 +798,12 @@ static auto ProcessFileContent(llvm::StringRef filename,
       non_check_lines = &test_file->non_check_lines;
     }
     CARBON_ASSIGN_OR_RETURN(
-        is_consumed,
-        TryConsumeSplit(line, line_trimmed, missing_autoupdate, line_index,
-                        split_state, splits, non_check_lines));
+        is_consumed, TryConsumeSplit(line, line_trimmed, missing_autoupdate,
+                                     line_number, split_state, splits,
+                                     non_check_lines, no_split_padding));
     if (is_consumed) {
       continue;
     }
-
-    ++line_index;
 
     // TIP lines have no impact on validation.
     if (line_trimmed.starts_with("// TIP:")) {
@@ -804,7 +812,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
 
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
-        TryConsumeCheck(running_autoupdate, line_index, line, line_trimmed,
+        TryConsumeCheck(running_autoupdate, line_number, line, line_trimmed,
                         test_file ? &test_file->expected_stdout : nullptr,
                         test_file ? &test_file->expected_stderr : nullptr));
     if (is_consumed) {
@@ -814,7 +822,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
     if (test_file) {
       // At this point, lines are retained as non-CHECK lines.
       test_file->non_check_lines.push_back(
-          FileTestLine(split_state.file_index, line_index, line));
+          FileTestLine(split_state.file_index, line_number, line));
     }
 
     CARBON_ASSIGN_OR_RETURN(is_consumed,
@@ -836,7 +844,7 @@ static auto ProcessFileContent(llvm::StringRef filename,
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
         TryConsumeAutoupdate(
-            line_index, line_trimmed, found_autoupdate,
+            line_number, line_trimmed, found_autoupdate,
             test_file ? &test_file->autoupdate_line_number : nullptr));
     if (is_consumed) {
       continue;
@@ -853,6 +861,13 @@ static auto ProcessFileContent(llvm::StringRef filename,
         is_consumed,
         TryConsumeSetFlag(line_trimmed, "SET-CHECK-SUBSET",
                           test_file ? &test_file->check_subset : nullptr));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeSetFlag(line_trimmed, "SET-NO-SPLIT-PADDING",
+                          test_file ? &no_split_padding : nullptr));
     if (is_consumed) {
       continue;
     }

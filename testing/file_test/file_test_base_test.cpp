@@ -102,16 +102,16 @@ struct TestParams {
 static auto TestAlternatingFiles(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
   params.output_stream << "unattached message 1\n"
-                       << "a.carbon:2: message 2\n"
-                       << "b.carbon:5: message 3\n"
-                       << "a.carbon:2: message 4\n"
-                       << "b.carbon:5: message 5\n"
+                       << "a.carbon:16: message 2\n"
+                       << "b.carbon:24: message 3\n"
+                       << "a.carbon:16: message 4\n"
+                       << "b.carbon:24: message 5\n"
                        << "unattached message 6\n";
   params.error_stream << "unattached message 1\n"
-                      << "a.carbon:2: message 2\n"
-                      << "b.carbon:5: message 3\n"
-                      << "a.carbon:2: message 4\n"
-                      << "b.carbon:5: message 5\n"
+                      << "a.carbon:16: message 2\n"
+                      << "b.carbon:24: message 3\n"
+                      << "a.carbon:16: message 4\n"
+                      << "b.carbon:24: message 5\n"
                       << "unattached message 6\n";
   return {{.success = true}};
 }
@@ -169,14 +169,14 @@ static auto TestFileOnlyREMultiFile(TestParams& params)
   params.output_stream << "unattached message " << ++msg_count << "\n"
                        << "file: a.carbon\n"
                        << "unattached message " << ++msg_count << "\n"
-                       << "line: 3: attached message " << ++msg_count << "\n"
+                       << "line: 16: attached message " << ++msg_count << "\n"
                        << "unattached message " << ++msg_count << "\n"
-                       << "line: 8: late message " << ++msg_count << "\n"
+                       << "line: 21: late message " << ++msg_count << "\n"
                        << "unattached message " << ++msg_count << "\n"
                        << "file: b.carbon\n"
-                       << "line: 2: attached message " << ++msg_count << "\n"
+                       << "line: 24: attached message " << ++msg_count << "\n"
                        << "unattached message " << ++msg_count << "\n"
-                       << "line: 7: late message " << ++msg_count << "\n"
+                       << "line: 29: late message " << ++msg_count << "\n"
                        << "unattached message " << ++msg_count << "\n";
   return {{.success = true}};
 }

@@ -296,15 +296,13 @@ auto FileTestAutoupdater::FinishFile(bool is_last_file) -> void {
 auto FileTestAutoupdater::StartSplitFile() -> void {
   // Advance the file.
   ++output_file_number_;
-  output_line_number_ = 0;
   CARBON_CHECK(output_file_number_ == non_check_line_->file_number(),
                "Non-sequential file: {0}", non_check_line_->file_number());
 
-  // Each following file has precisely one split line.
-  CARBON_CHECK(non_check_line_->line_number() < 1,
-               "Expected a split line, got {0}", *non_check_line_);
-  // The split line is ignored when calculating line counts.
+  CARBON_CHECK(non_check_line_->line_number() == output_line_number_ + 1,
+               "Non-sequential split line: {0}", *non_check_line_);
   new_lines_.push_back(non_check_line_);
+  ++output_line_number_;
 
   // Add any file-specific but line-unattached STDOUT messages here. STDERR is
   // handled through the main loop because it's before the next line.

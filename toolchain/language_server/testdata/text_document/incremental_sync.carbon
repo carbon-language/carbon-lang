@@ -42,6 +42,7 @@
 //
 // Fourth `didChange` replaces full content.
 
+// SET-NO-SPLIT-PADDING
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/incremental_sync.carbon

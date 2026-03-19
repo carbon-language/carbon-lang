@@ -17,5 +17,5 @@ bbb
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
-// CHECK:STDOUT: a.carbon:1: aaa
-// CHECK:STDOUT: b.carbon:1: bbb
+// CHECK:STDOUT: a.carbon:12: aaa
+// CHECK:STDOUT: b.carbon:15: bbb

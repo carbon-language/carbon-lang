@@ -269,6 +269,20 @@ Supported comment markers are:
     information).
 
 -   ```
+    // SET-NO-SPLIT-PADDING
+    ```
+
+    By default, split files are padded with leading blank lines so that the line
+    number of a line in a split file matches its line number in the physical
+    file used to generate it. This is helpful for interpreting line numbers when
+    debugging, but it can cause problems in rare cases where newlines are
+    semantically significant.
+
+    Using this marker disables newline padding for all splits in the file, so
+    that the first line of each split file is the line following its `// ---`
+    marker.
+
+-   ```
     // CHECK:STDOUT: <output line>
     // CHECK:STDERR: <output line>
     ```
