@@ -102,6 +102,7 @@ jobs:
           "build --linkopt=/STACK:16777216" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/FORCE:UNRESOLVED" | Out-File -FilePath windows_clang_rt.bazelrc -Append
+          "build --features=-default_link_flags" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/SUBSYSTEM:CONSOLE" | Out-File -FilePath windows_clang_rt.bazelrc -Append
 
