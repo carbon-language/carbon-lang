@@ -742,8 +742,8 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
-// Looks in the facet ype of the query self facet value and returns the index of
-// `query_specific_interface` in the defined interface order for that facet
+// Looks in the facet type of the query self facet value and returns the index
+// of `query_specific_interface` in the defined interface order for that facet
 // type. The order comes from the `query_self_type_identified_id` which must be
 // the IdentifiedFacetType of the type of `query_self_const_id `.
 //
