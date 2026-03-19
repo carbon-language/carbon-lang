@@ -1129,8 +1129,8 @@ fn F() {
 // CHECK:STDOUT: --- fail_require_impls_without_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.7a8: type = generic_named_constaint_type @Z [concrete]
 // CHECK:STDOUT:   %empty_struct: %Z.type.7a8 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type.d68: type = facet_type <@Z, @Z(%T)> [symbolic]

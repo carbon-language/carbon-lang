@@ -116,8 +116,8 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ce2: type = pattern_type %Copy.type [concrete]
+// CHECK:STDOUT:   %T.035: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.035) [symbolic]
@@ -381,13 +381,13 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T) [symbolic]
-// CHECK:STDOUT:   %_: %T = symbolic_binding _, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %_: %T = symbolic_binding _, 1 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [symbolic]
 // CHECK:STDOUT:   %B.generic: %B.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T, %_) [symbolic]
