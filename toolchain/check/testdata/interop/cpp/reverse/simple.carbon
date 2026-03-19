@@ -23,3 +23,15 @@ import Cpp inline '''
 // CHECK:STDERR:
 Carbon::NonExistent v;
 ''';
+
+
+// --- other.carbon
+package Other;
+// --- namespace.carbon
+
+library "[[@TEST_NAME]]";
+
+import Other;
+import Cpp inline '''
+namespace X = Carbon::Other;
+''';
