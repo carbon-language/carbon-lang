@@ -54,8 +54,6 @@ struct DeclInfo {
   // If null, no C++ decl was found and no witness can be created.
   clang::NamedDecl* decl = nullptr;
   SemIR::ClangDeclKey::Signature signature;
-  // If true, an error was diagnosed and the witness will be an ErrorInst.
-  bool error = false;
 };
 }  // namespace
 
@@ -67,11 +65,6 @@ static auto BuildWitnessForDeclInfo(
     SemIR::SpecificInterfaceId query_specific_interface_id,
     const TypeStructure* best_impl_type_structure,
     SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  if (decl_info.error) {
-    // An error was diagnosed.
-    return SemIR::ErrorInst::InstId;
-  }
-
   if (!decl_info.decl) {
     // The C++ type is not able to implement the interface.
     return SemIR::InstId::None;
@@ -102,54 +95,76 @@ static auto BuildWitnessForDeclInfo(
                             query_specific_interface_id, {fn_id});
 }
 
-auto LookupCopyConstructor(Context& context,
-                           SemIR::ConstantId query_self_const_id) -> DeclInfo {
+static auto BuildCopyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    const TypeStructure* best_impl_type_structure,
+    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   // TODO: This should provide `Copy` for enums and other trivially copyable
   // types.
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
-    return {};
+    return SemIR::InstId::None;
   }
-  return {.decl = clang_sema.LookupCopyingConstructor(class_decl,
-                                                      clang::Qualifiers::Const),
-          .signature = {.num_params = 1}};
+  auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
+                                class_decl, clang::Qualifiers::Const),
+                            .signature = {.num_params = 1}};
+  return BuildWitnessForDeclInfo(
+      context, loc_id, decl_info, query_self_const_id,
+      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
 }
 
-auto LookupDestructor(Context& context, SemIR::ConstantId query_self_const_id)
-    -> DeclInfo {
+static auto BuildDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    const TypeStructure* best_impl_type_structure,
+    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   // TODO: This should provide `Destroy` for enums and other trivially
   // destructible types.
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
-    return {};
+    return SemIR::InstId::None;
   }
-  return {.decl = clang_sema.LookupDestructor(class_decl),
-          .signature = {.num_params = 0}};
+  auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
+                            .signature = {.num_params = 0}};
+  return BuildWitnessForDeclInfo(
+      context, loc_id, decl_info, query_self_const_id,
+      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
 }
 
-auto LookupUnsafeDeref(Context& context, SemIR::LocId loc_id,
-                       SemIR::ConstantId query_self_const_id) -> DeclInfo {
+static auto BuildCppUnsafeDerefWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    const TypeStructure* best_impl_type_structure,
+    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
-    return {};
+    return SemIR::InstId::None;
   }
   auto candidates = class_decl->lookup(
       clang_sema.getASTContext().DeclarationNames.getCXXOperatorName(
           clang::OO_Star));
   if (candidates.empty()) {
-    return {};
+    return SemIR::InstId::None;
   }
   if (!candidates.isSingleResult()) {
     context.TODO(loc_id, "operator* overload sets not implemented yet");
-    return {.error = true};
+    return SemIR::ErrorInst::InstId;
   }
-  return {.decl = *candidates.begin(), .signature = {.num_params = 0}};
+  auto decl_info =
+      DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
+  return BuildWitnessForDeclInfo(
+      context, loc_id, decl_info, query_self_const_id,
+      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
@@ -159,30 +174,18 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   switch (core_interface) {
-    case CoreInterface::Copy: {
-      auto decl_info = LookupCopyConstructor(context, query_self_const_id);
-      return BuildWitnessForDeclInfo(
-          context, loc_id, decl_info, query_self_const_id,
-          query_specific_interface_id, best_impl_type_structure,
-          best_impl_loc_id);
-      break;
-    }
-    case CoreInterface::Destroy: {
-      auto decl_info = LookupDestructor(context, query_self_const_id);
-      return BuildWitnessForDeclInfo(
-          context, loc_id, decl_info, query_self_const_id,
-          query_specific_interface_id, best_impl_type_structure,
-          best_impl_loc_id);
-      break;
-    }
-    case CoreInterface::CppUnsafeDeref: {
-      auto decl_info = LookupUnsafeDeref(context, loc_id, query_self_const_id);
-      return BuildWitnessForDeclInfo(
-          context, loc_id, decl_info, query_self_const_id,
-          query_specific_interface_id, best_impl_type_structure,
-          best_impl_loc_id);
-      break;
-    }
+    case CoreInterface::Copy:
+      return BuildCopyWitness(context, loc_id, query_self_const_id,
+                              query_specific_interface_id,
+                              best_impl_type_structure, best_impl_loc_id);
+    case CoreInterface::Destroy:
+      return BuildDestroyWitness(context, loc_id, query_self_const_id,
+                                 query_specific_interface_id,
+                                 best_impl_type_structure, best_impl_loc_id);
+    case CoreInterface::CppUnsafeDeref:
+      return BuildCppUnsafeDerefWitness(
+          context, loc_id, query_self_const_id, query_specific_interface_id,
+          best_impl_type_structure, best_impl_loc_id);
 
     // IntFitsIn is for Carbon integer types only.
     case CoreInterface::IntFitsIn:
