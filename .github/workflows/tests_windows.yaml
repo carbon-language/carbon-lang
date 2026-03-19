@@ -110,9 +110,7 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
-          # Create minimal valid COFF object to satisfy stray -stack linker arg
-           = [byte[]]@(0x4C,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00)
-          [IO.File]::WriteAllBytes("16777216.obj", )
+          [IO.File]::WriteAllBytes("16777216.obj", [byte[]]@(0x4C,0x01,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 
       - name: Build and test common
         if: steps.filter.outputs.has_code == 'true'
