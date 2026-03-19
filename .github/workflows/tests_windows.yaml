@@ -98,18 +98,16 @@ jobs:
           "build --linkopt=/FORCE:UNRESOLVED" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/SUBSYSTEM:CONSOLE" | Out-File -FilePath windows_clang_rt.bazelrc -Append
-          "build --linkopt=-Wl,/STACK:16777216" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/FORCE:UNRESOLVED" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=-Xlinker" | Out-File -FilePath windows_clang_rt.bazelrc -Append
           "build --linkopt=/SUBSYSTEM:CONSOLE" | Out-File -FilePath windows_clang_rt.bazelrc -Append
-          "build --linkopt=-Wl,/STACK:16777216" | Out-File -FilePath windows_clang_rt.bazelrc -Append
 
       - name: Build and test common
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
-          bazel --bazelrc=windows_clang_rt.bazelrc --bazelrc=.bazelrc test `
+          bazel --bazelrc=windows_clang_rt.bazelrc test `
             //common:array_stack_test `
             //common:command_line_test `
             //common:emplace_by_calling_test `
