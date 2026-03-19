@@ -67,7 +67,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%int_0) [concrete]
 // CHECK:STDOUT:   %i0: type = class_type @Int, @Int(%int_0) [concrete]
-// CHECK:STDOUT:   %complete_type.d94: <witness> = complete_type_witness <error> [concrete]
 // CHECK:STDOUT:   %pattern_type.47b: type = pattern_type %i0 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -170,7 +169,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc9_27.2 => constants.%i0
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.d94
+// CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.47b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.8d7
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.eb2
