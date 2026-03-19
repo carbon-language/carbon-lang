@@ -48,8 +48,7 @@ fn H() {
 // CHECK:STDOUT:   %assoc0.203: %I.assoc_type.76c = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.e36: <witness> = require_complete_type %I.type.1ab [symbolic]
-// CHECK:STDOUT:   %require_complete.ac0: <witness> = require_complete_type %I.assoc_type.76c [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -61,8 +60,7 @@ fn H() {
 // CHECK:STDOUT:   %I.WithSelf.F.02c: %I.WithSelf.F.type.3f5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.294: type = assoc_entity_type @I, @I(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %assoc0.c64: %I.assoc_type.294 = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %complete_type.5b1: <witness> = complete_type_witness %I.type.ab5 [concrete]
-// CHECK:STDOUT:   %complete_type.7fc: <witness> = complete_type_witness %I.assoc_type.294 [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %I.type.ab5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -143,10 +141,9 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc23_6.2: type = facet_type <@I, @I(%T.loc19_6.1)> [symbolic = %I.type.loc23_6.2 (constants.%I.type.1ab)]
-// CHECK:STDOUT:   %require_complete.loc23_7.1: <witness> = require_complete_type %I.type.loc23_6.2 [symbolic = %require_complete.loc23_7.1 (constants.%require_complete.e36)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc23_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc19_6.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.76c)]
 // CHECK:STDOUT:   %assoc0: @G.%I.assoc_type (%I.assoc_type.76c) = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [symbolic = %assoc0 (constants.%assoc0.203)]
-// CHECK:STDOUT:   %require_complete.loc23_7.2: <witness> = require_complete_type %I.assoc_type [symbolic = %require_complete.loc23_7.2 (constants.%require_complete.ac0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -203,10 +200,9 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc23_6.2 => constants.%I.type.ab5
-// CHECK:STDOUT:   %require_complete.loc23_7.1 => constants.%complete_type.5b1
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.294
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.c64
-// CHECK:STDOUT:   %require_complete.loc23_7.2 => constants.%complete_type.7fc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {

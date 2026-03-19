@@ -1876,6 +1876,34 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
   }
 }
 
+// Returns true if converting `expr_id` to `target` requires `target.type_id`
+// to be complete.
+static auto ConversionNeedsCompleteTarget(Context& context,
+                                          SemIR::InstId expr_id,
+                                          ConversionTarget target) -> bool {
+  auto source_type_id = context.insts().Get(expr_id).type_id();
+
+  // We allow conversion to incomplete facet types, since their representation
+  // is fixed. This allows us to support using the `Self` of an interface inside
+  // its definition.
+  if (context.types().IsFacetType(target.type_id)) {
+    return false;
+  }
+
+  // If the types are the same, we only have to worry about form conversions.
+  if (source_type_id == target.type_id) {
+    auto source_category = SemIR::GetExprCategory(context.sem_ir(), expr_id);
+
+    // If there's no form conversion and no type conversion, the conversion is
+    // a no-op, so we don't need a complete type.
+    if (IsValidExprCategoryForConversionTarget(source_category, target.kind)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -1915,16 +1943,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     context.emitter().Emit(expr_id, RefTagNoRefParam);
   }
 
-  // We can only perform initialization for complete, non-abstract types.
-  //
-  // TODO: Don't require a concrete type when `!target.is_initializer()`. We
-  // want to allow constructing a value of an abstract class type, but right now
-  // if we proceed into Convert with an abstract target type, we crash.
-  //
-  // Note that we allow conversion to incomplete to facet types, since their
-  // representation is fixed. This allows us to support using the `Self` of an
-  // interface inside its definition.
-  if (!context.types().IsFacetType(target.type_id)) {
+  // TODO: Allow abstract but complete types if the conversion is just a
+  // same-type value acqisition.
+  // TODO: Push this check down to the points where we perform operations that
+  // need the type to be complete.
+  if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
     if (target.diagnose) {
       if (!RequireConcreteType(
               context, target.type_id, loc_id,
