@@ -107,7 +107,9 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
-          bazel --bazelrc=windows_clang_rt.bazelrc test `
+          bazel --bazelrc=windows_clang_rt.bazelrc test 
+            "--linkopt=-Xlinker" 
+            "--linkopt=/stack:16777216" `
             //common:array_stack_test `
             //common:command_line_test `
             //common:emplace_by_calling_test `
