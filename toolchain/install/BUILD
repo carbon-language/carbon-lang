@@ -10,7 +10,13 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
-load("//toolchain/base:runtimes_build_info.bzl", "BUILTINS_FILEGROUPS", "CRT_FILES")
+load(
+    "//toolchain/base:runtimes_build_info.bzl",
+    "BUILTINS_SRCS_FILEGROUPS",
+    "BUILTINS_TEXTUAL_SRCS_FILEGROUPS",
+    "CRT_FILES",
+    "generate_runtimes_build_vars",
+)
 load("configure_cmake_file.bzl", "configure_cmake_file")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
@@ -101,7 +107,11 @@ filegroup(
 # `builtins` directory.
 filegroup(
     name = "clang_builtins_runtimes",
-    srcs = CRT_FILES.values() + BUILTINS_FILEGROUPS.values(),
+    srcs = (
+        CRT_FILES.values() +
+        BUILTINS_SRCS_FILEGROUPS +
+        BUILTINS_TEXTUAL_SRCS_FILEGROUPS
+    ),
 )
 
 py_binary(
@@ -270,6 +280,7 @@ filegroup(
     srcs = [
         "@llvm-project//libcxxabi:libcxxabi_hdrs",
         "@llvm-project//libcxxabi:libcxxabi_srcs",
+        "@llvm-project//libcxxabi:libcxxabi_textual_srcs",
     ],
 )
 
@@ -293,6 +304,11 @@ filegroup(
     srcs = [
         "@llvm-project//libc:libcxx_shared_headers_hdrs",
     ],
+)
+
+# Generate a Starlark file with all the build variables needed for our runtimes.
+generate_runtimes_build_vars(
+    name = "staging_bazel/runtimes_build_vars.bzl",
 )
 
 # Given a CMake-style install prefix[1], the hierarchy looks like:
@@ -340,7 +356,10 @@ install_dirs = {
     "lib/carbon/bazel": [
         install_target("carbon_cc_toolchain_config.bzl", "bazel/carbon_cc_toolchain_config.bzl"),
         install_target("carbon_detected_variables.tpl.bzl", "bazel/carbon_detected_variables.tpl.bzl"),
+        install_target("carbon_runtimes.bzl", "bazel/carbon_runtimes.bzl"),
         install_target("carbon_toolchain.bzl", "bazel/carbon_toolchain.bzl"),
+        install_target("make_include_copts.bzl", "bazel/make_include_copts.bzl"),
+        install_target("runtimes_build_vars.bzl", "staging_bazel/runtimes_build_vars.bzl"),
         install_target("BUILD", "bazel/empty.BUILD"),
     ],
     "lib/carbon/llvm/bin": [install_symlink(
@@ -357,6 +376,7 @@ install_dirs = {
         install_filegroup("libcxx", ":libcxx"),
         install_filegroup("libcxxabi", ":libcxxabi"),
         install_filegroup("libunwind", ":libunwind"),
+        install_target("BUILD", "bazel/runtimes.BUILD"),
     ],
     "lib/carbon/runtimes/libc": [
         install_filegroup("internal", ":libc_internal"),
@@ -369,6 +389,7 @@ install_dirs = {
         ),
     ],
     "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
+        install_target("BUILD", "bazel/clang_resource_dir.BUILD"),
         install_filegroup(
             "include",
             ":clang_headers",
