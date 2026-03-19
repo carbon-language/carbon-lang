@@ -204,10 +204,11 @@ static auto MakeDefaultInit(Context& context, SemIR::LocId loc_id,
   // TODO: Diagnose if the pattern doesn't have a type, for example `var 123;`
   // or `var a: auto;`.
   auto pattern_type_id = context.insts().Get(pattern_id).type_id();
-  if (pattern_type_id == SemIR::ErrorInst::TypeId) {
+  auto type_inst_id = context.types().GetTypeInstId(
+      SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id));
+  if (type_inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
-  auto type_inst_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
 
   // Form `Type as Core.DefaultOrUnformed`.
   auto interface_id =

@@ -25,6 +25,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/import.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -334,8 +336,9 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 
 class CarbonExternalASTSource : public clang::ExternalASTSource {
  public:
-  explicit CarbonExternalASTSource(clang::ASTContext* ast_context)
-      : ast_context_(*ast_context) {}
+  explicit CarbonExternalASTSource(Context* context,
+                                   clang::ASTContext* ast_context)
+      : context_(context), ast_context_(ast_context) {}
 
   auto FindExternalVisibleDeclsByName(
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
@@ -344,41 +347,107 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
 
  private:
-  clang::ASTContext& ast_context_;
+  Check::Context* context_;
+  clang::ASTContext* ast_context_;
+  clang::NamespaceDecl* carbon_cpp_namespace_ = nullptr;
 };
 
 void CarbonExternalASTSource::StartTranslationUnit(
     clang::ASTConsumer* /*Consumer*/) {
-  auto& translation_unit = *ast_context_.getTranslationUnitDecl();
+  auto& translation_unit = *ast_context_->getTranslationUnitDecl();
   // Mark the translation unit as having external storage so we get a query for
   // the `Carbon` namespace in the top level/translation unit scope.
   translation_unit.setHasExternalVisibleStorage();
 }
 
+// Map a Carbon entity to a Clang NamedDecl.
+static auto MapInstIdToClangDecl(Context& context,
+                                 clang::ASTContext& ast_context,
+                                 clang::DeclContext& decl_context,
+                                 LookupResult lookup) -> clang::NamedDecl* {
+  auto target_inst_id = lookup.scope_result.target_inst_id();
+  if (auto target_inst =
+          context.insts().TryGetAs<SemIR::Namespace>(target_inst_id)) {
+    auto& name_scope = context.name_scopes().Get(target_inst->name_scope_id);
+    auto* identifier_info =
+        GetClangIdentifierInfo(context, name_scope.name_id());
+    // TODO: Don't immediately use the decl_context - build any intermediate
+    // namespaces iteratively.
+    // Eventually add a mapping and use that/populate it/keep it up to date.
+    // decl_context could be prepopulated in that mapping and not passed
+    // explicitly to MapInstIdToClangDecl.
+    return clang::NamespaceDecl::Create(
+        ast_context, &decl_context, false, clang::SourceLocation(),
+        clang::SourceLocation(), identifier_info, nullptr, false);
+  }
+  return nullptr;
+}
+
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
+  if (decl_context != carbon_cpp_namespace_) {
+    if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
+      return false;
+    }
+
+    static const llvm::StringLiteral carbon_namespace_name = "Carbon";
+    if (auto* identifier = decl_name.getAsIdentifierInfo();
+        !identifier || !identifier->isStr(carbon_namespace_name)) {
+      return false;
+    }
+
+    // Build the top level 'Carbon' namespace
+    auto& ast_context = decl_context->getParentASTContext();
+    auto& mutable_tu_decl_context = *ast_context.getTranslationUnitDecl();
+    carbon_cpp_namespace_ = clang::NamespaceDecl::Create(
+        ast_context, &mutable_tu_decl_context, false, clang::SourceLocation(),
+        clang::SourceLocation(), &ast_context.Idents.get(carbon_namespace_name),
+        nullptr, false);
+    carbon_cpp_namespace_->setHasExternalVisibleStorage();
+    SetExternalVisibleDeclsForName(decl_context, decl_name,
+                                   {carbon_cpp_namespace_});
+    return true;
+  }
+
+  // Lookup the name in Carbon package scope
+
+  llvm::SmallVector<Check::LookupScope> lookup_scopes;
+
+  // LocId::None seems fine here because we shouldn't produce any diagnostics
+  // here - completeness should've been checked by clang before this point.
+  if (!AppendLookupScopesForConstant(
+          *context_, SemIR::LocId::None,
+          context_->constant_values().Get(SemIR::Namespace::PackageInstId),
+          SemIR::ConstantId::None, &lookup_scopes)) {
     return false;
   }
 
-  static const llvm::StringLiteral carbon_namespace_name = "Carbon";
-  if (auto* identifier = decl_name.getAsIdentifierInfo();
-      !identifier || !identifier->isStr(carbon_namespace_name)) {
+  auto* identifier = decl_name.getAsIdentifierInfo();
+  if (!identifier) {
+    // Only supporting identifiers for now.
     return false;
   }
 
-  auto& ast_context = decl_context->getParentASTContext();
-  auto& mutable_tu_decl_context = *ast_context.getTranslationUnitDecl();
-  SetExternalVisibleDeclsForName(
-      decl_context, decl_name,
-      {
-          clang::NamespaceDecl::Create(
-              ast_context, &mutable_tu_decl_context, false,
-              clang::SourceLocation(), clang::SourceLocation(),
-              &ast_context.Idents.get(carbon_namespace_name), nullptr, false),
-      });
+  auto name_id = AddIdentifierName(*context_, identifier->getName());
 
+  // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
+  // it or even SFINAE.
+  LookupResult result =
+      LookupQualifiedName(*context_, SemIR::LocId::None, name_id, lookup_scopes,
+                          /*required=*/false);
+  if (!result.scope_result.is_found()) {
+    return false;
+  }
+
+  // Map the found Carbon entity to a Clang NamedDecl.
+  auto* clang_decl = MapInstIdToClangDecl(*context_, *ast_context_,
+                                          *carbon_cpp_namespace_, result);
+  if (!clang_decl) {
+    return false;
+  }
+
+  SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
   return true;
 }
 
@@ -526,7 +595,7 @@ auto GenerateAst(Context& context,
   // support. Implement multiplexing support (possibly in Clang) to restore
   // modules functionality.
   ast.setExternalSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&ast));
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context, &ast));
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
