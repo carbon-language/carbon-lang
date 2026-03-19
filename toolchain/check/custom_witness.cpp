@@ -253,6 +253,9 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
           return SemIR::ErrorInst::InstId;
         }
 
+        // TODO: remove once we have a test-case for all associated constants.
+        // Special-case the ones we want to support in this if-statement, until
+        // we're able to account for everything.
         if (decl.type_id != SemIR::TypeType::TypeId) {
           context.TODO(
               loc_id, "Associated constant in interface with synthesized impl");
