@@ -4,7 +4,13 @@
 
 #include "toolchain/check/cpp/impl_lookup.h"
 
+#include <type_traits>
+#include <utility>
+
+#include "clang/AST/DeclarationName.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/Sema.h"
+#include "common/map.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -15,7 +21,9 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -54,6 +62,56 @@ struct DeclInfo {
   // If null, no C++ decl was found and no witness can be created.
   clang::NamedDecl* decl = nullptr;
   SemIR::ClangDeclKey::Signature signature;
+};
+
+// Describes whether the C++ overload set that we want to look up is a set of
+// functions or a set of member functions.
+struct CppLookupInfo {
+  enum class Type : std::uint8_t {
+    // Overload resolution only performs unqualified lookup.
+    OnlyUnqualifiedLookup = 0,
+
+    // Overload resolution only performs lookup on methods.
+    OnlyMethods = 1,
+
+    // Overload resolution should prioritise unqualified lookup, but may rewrite
+    // `f(x, args...)` as `x.f(args...)`, if a viable function isn't found.
+    PreferUnqualifiedLookup = 2,
+
+    // Overload resolution should prioritise looking up methods, but may rewrite
+    // `x.f(args...)` as `f(x, args...)`, if a viable method isn't found.
+    PreferMethods = 3,
+  };
+  using enum Type;
+
+  clang::DeclarationNameInfo name_info;
+  Type type;
+
+  // Returns the type of lookup we should perform on the first attempt at
+  // lookup.
+  auto PrimaryLookup() const -> clang::Sema::LookupNameKind {
+    switch (type) {
+      case OnlyUnqualifiedLookup:
+      case PreferUnqualifiedLookup:
+        return clang::Sema::LookupOrdinaryName;
+      case OnlyMethods:
+      case PreferMethods:
+        return clang::Sema::LookupMemberName;
+    }
+  }
+
+  // Returns the type of lookup we should perform on a second attempt at lookup,
+  // if one exists.
+  auto SecondaryLookup() const -> std::optional<clang::Sema::LookupNameKind> {
+    switch (type) {
+      case PreferUnqualifiedLookup:
+        return clang::Sema::LookupMemberName;
+      case PreferMethods:
+        return clang::Sema::LookupOrdinaryName;
+      default:
+        return std::nullopt;
+    }
+  }
 };
 }  // namespace
 
@@ -217,6 +275,37 @@ static auto BuildDestroyWitness(
                             query_specific_interface_id, {fn_id});
 }
 
+// static auto LookupCppFunction(clang::Sema& clang_sema,
+//                             const CppLookupInfo& metadata,
+//                             clang::CXXRecordDecl* class_decl) -> DeclInfo {
+// (void)clang_sema;
+// (void)metadata;
+// (void)class_decl;
+// CARBON_FATAL("unimplemented");
+// auto lookup_result = clang::LookupResult(clang_sema, metadata.name_info,
+//                                          metadata.PrimaryLookup());
+// clang_sema.LookupQualifiedName(lookup_result, class_decl);
+// if (lookup_result.isAmbiguous()) {
+//   return {};
+// }
+
+// if (auto secondary_lookup = metadata.SecondaryLookup();
+// lookup_result.empty() && secondary_lookup) {
+// }
+
+// auto candidate_set = clang::OverloadCandidateSet(
+//     {}, clang::OverloadCandidateSet::CSK_Normal, {});
+// clang::Expr* range;
+// auto call_expr = clang::ExprResult();
+// const auto range_status = clang_sema.BuildForRangeBeginEndCall(
+//     {},  // TODO: replace with loc
+//     {},  // TODO: replace with loc
+//     name_info, lookup_result, &candidate_set, range, &call_expr);
+// if (range_status != clang::Sema::FRS_Success) {
+//   return DeclInfo{};
+// }
+// }
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
@@ -242,6 +331,25 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                                  best_impl_type_structure, best_impl_loc_id);
 
     // IntFitsIn is for Carbon integer types only.
+    case CoreInterface::CppRangeForIterate: {
+      SemIR::InstId begin_fn = SemIR::InstId::None;
+      SemIR::InstId end_fn = SemIR::InstId::None;
+      SemIR::InstId next_fn = SemIR::InstId::None;
+      SemIR::InstId not_eq_fn = SemIR::InstId::None;
+      const auto& functions = context.functions();
+      const auto& insts = context.insts();
+      auto iterator_type_id =
+          functions.Get(insts.GetAs<SemIR::FunctionDecl>(begin_fn).function_id)
+              .return_type_inst_id;
+      auto sentinel_type_id =
+          functions.Get(insts.GetAs<SemIR::FunctionDecl>(end_fn).function_id)
+              .return_type_inst_id;
+      return BuildCustomWitness(context, loc_id, query_self_const_id,
+                                query_specific_interface_id,
+                                {iterator_type_id, sentinel_type_id, begin_fn,
+                                 end_fn, next_fn, not_eq_fn});
+    }
+    // Values that should never reach this section of code.
     case CoreInterface::IntFitsIn:
       return SemIR::InstId::None;
 

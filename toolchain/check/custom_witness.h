@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_
 #define CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_
 
+#include <bit>
+#include <limits>
+
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -27,6 +30,7 @@ enum class CoreInterface {
   Default,
   Destroy,
   IntFitsIn,
+  CppRangeForIterate,
 
   Unknown,
 };

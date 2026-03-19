@@ -36,7 +36,8 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::As:
     case CoreIdentifier::ImplicitAs:
     case CoreIdentifier::UnsafeAs:
-    case CoreIdentifier::Copy: {
+    case CoreIdentifier::Copy:
+    case CoreIdentifier::Iterate: {
       // TODO: Support destructors and conversions.
       return std::nullopt;
     }

@@ -5,6 +5,7 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -307,7 +308,10 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
       std::pair{CoreIdentifier::CppUnsafeDeref, CoreInterface::CppUnsafeDeref},
       std::pair{CoreIdentifier::Default, CoreInterface::Default},
       std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy},
-      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn}};
+      std::pair{CoreIdentifier::IntFitsIn, CoreInterface::IntFitsIn},
+      std::pair{CoreIdentifier::CppRangeForIterate,
+                CoreInterface::CppRangeForIterate},
+  };
 
   for (auto [core_identifier, core_interface] : CoreIdentifiersToInterfaces) {
     if (interface.name_id ==
@@ -494,6 +498,7 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);
+    case CoreInterface::CppRangeForIterate:
     case CoreInterface::Copy:
     case CoreInterface::CppUnsafeDeref:
     case CoreInterface::Default:
