@@ -313,14 +313,14 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   auto witness_id = EvalLookupSingleFinalWitness(context, SemIR::LocId(inst_id),
                                                  inst, self_facet_value_inst_id,
                                                  EvalImplLookupMode::Normal);
-  if (!witness_id.has_value()) {
-    // Try again when the query is modified by a specific.
-    return ConstantEvalResult::NewSamePhase(inst);
-  }
   if (witness_id == SemIR::ErrorInst::ConstantId) {
     return ConstantEvalResult::Error;
   }
-  return ConstantEvalResult::Existing(witness_id);
+  if (witness_id.has_value()) {
+    return ConstantEvalResult::Existing(witness_id);
+  }
+  // Try again when the query is modified by a specific.
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
