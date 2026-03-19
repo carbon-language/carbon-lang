@@ -110,7 +110,7 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         shell: pwsh
         run: |
-          bazel --bazelrc=windows_clang_rt.bazelrc test `
+          bazel --bazelrc=.bazelrc --bazelrc=windows_clang_rt.bazelrc test `
             //common:array_stack_test `
             //common:command_line_test `
             //common:emplace_by_calling_test `
