@@ -747,8 +747,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_impls_self_specific.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.352: type = generic_interface_type @Z [concrete]
 // CHECK:STDOUT:   %Z.generic: %Z.type.352 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T)> [symbolic]
@@ -908,8 +908,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_same.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.352: type = generic_interface_type @Z [concrete]
 // CHECK:STDOUT:   %Z.generic: %Z.type.352 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type.0ed: type = facet_type <@Z, @Z(%T)> [symbolic]

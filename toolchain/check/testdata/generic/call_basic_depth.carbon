@@ -50,8 +50,8 @@ fn M() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %C.Cfn.type: type = fn_type @C.Cfn [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

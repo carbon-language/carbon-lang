@@ -314,10 +314,9 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       std::exchange(context.bind_name_map().Lookup(entry.pattern_id).value(),
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
-  // bind_name_id doesn't have a value in the case of an unused binding pattern,
-  // but type_expr_region_id should always be populated.
-  CARBON_CHECK(type_expr_region_id.has_value());
-  InsertHere(context, type_expr_region_id);
+  if (type_expr_region_id.has_value()) {
+    InsertHere(context, type_expr_region_id);
+  }
   auto value_id = SemIR::InstId::None;
   if (kind_ == MatchKind::Local) {
     auto conversion_kind = ConversionKindFor(context, binding_pattern, entry);

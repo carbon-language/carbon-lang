@@ -72,19 +72,18 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
   }
-  auto type_inst_id = context.types()
-                          .GetAs<SemIR::PatternType>(new_pattern_type_id)
-                          .scrutinee_type_inst_id;
-  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
-  auto type_expr_region_id = context.sem_ir().expr_regions().Add(
-      {.block_ids = {SemIR::InstBlockId::Empty}, .result_id = type_inst_id});
-
+  pattern.type_id = new_pattern_type_id;
+  auto phase = BindingPhase::Runtime;
+  if (pattern.kind == SemIR::SymbolicBindingPattern::Kind) {
+    phase = entity_name.is_template ? BindingPhase::Template
+                                    : BindingPhase::Symbolic;
+  }
+  pattern.entity_name_id = AddBindingEntityName(
+      context, entity_name.name_id, /*form_id=*/SemIR::ConstantId::None,
+      entity_name.is_unused, phase);
   // Rebuild the binding pattern.
-  return AddBindingPattern(
-             context, SemIR::LocId(pattern_id), entity_name.name_id, type_id,
-             /*form_id=*/SemIR::ConstantId::None, type_expr_region_id,
-             pattern.kind, entity_name.is_template,
-             /*is_unused=*/false)
+  return AddBindingPattern(context, SemIR::LocId(pattern_id),
+                           SemIR::ExprRegionId::None, pattern)
       .pattern_id;
 }
 
