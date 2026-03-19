@@ -19,7 +19,8 @@ Future runtimes we plan to add support for but not yet included:
 - Profiling runtimes
 """
 
-load("@llvm-project//compiler-rt:compiler-rt.bzl", "crt_copts")
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
+load("@llvm-project//compiler-rt:compiler-rt.bzl", "builtins_copts", "crt_copts")
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
@@ -29,33 +30,52 @@ CRT_FILES = {
     "crtend_src": "@llvm-project//compiler-rt:builtins_crtend_src",
 }
 
-BUILTINS_FILEGROUPS = {
-    "aarch64_srcs": "@llvm-project//compiler-rt:builtins_aarch64_srcs",
-    "bf16_srcs": "@llvm-project//compiler-rt:builtins_bf16_srcs",
-    "generic_srcs": "@llvm-project//compiler-rt:builtins_generic_srcs",
-    "i386_srcs": "@llvm-project//compiler-rt:builtins_i386_srcs",
-    "macos_srcs": "@llvm-project//compiler-rt:builtins_macos_atomic_srcs",
-    "tf_srcs": "@llvm-project//compiler-rt:builtins_tf_srcs",
-    "x86_64_srcs": "@llvm-project//compiler-rt:builtins_x86_64_srcs",
-    "x86_arch_srcs": "@llvm-project//compiler-rt:builtins_x86_arch_srcs",
-    "x86_fp80_srcs": "@llvm-project//compiler-rt:builtins_x86_fp80_srcs",
-}
+BUILTINS_SRCS_FILEGROUPS = [
+    "@llvm-project//compiler-rt:builtins_aarch64_srcs",
+    "@llvm-project//compiler-rt:builtins_i386_srcs",
+    "@llvm-project//compiler-rt:builtins_x86_64_srcs",
+]
 
-RUNTIMES_FILEGROUPS = {
-    "libcxx_linux": "@llvm-project//libcxx:libcxx_linux_srcs",
-    "libcxx_macos": "@llvm-project//libcxx:libcxx_macos_srcs",
-    "libcxx_win32": "@llvm-project//libcxx:libcxx_win32_srcs",
-    "libcxxabi": "@llvm-project//libcxxabi:libcxxabi_srcs",
-    "libunwind": "@llvm-project//libunwind:libunwind_srcs",
-}
+BUILTINS_TEXTUAL_SRCS_FILEGROUPS = [
+    "@llvm-project//compiler-rt:builtins_aarch64_textual_srcs",
+    "@llvm-project//compiler-rt:builtins_i386_textual_srcs",
+    "@llvm-project//compiler-rt:builtins_x86_64_textual_srcs",
+]
+
+RUNTIMES_HDRS_FILEGROUPS = [
+    "@llvm-project//libc:libcxx_shared_headers_hdrs",
+    "@llvm-project//libcxx:libcxx_hdrs",
+    "@llvm-project//libcxxabi:libcxxabi_hdrs",
+    "@llvm-project//libunwind:libunwind_hdrs",
+]
+
+RUNTIMES_SRCS_FILEGROUPS = [
+    "@llvm-project//libcxx:libcxx_linux_srcs",
+    "@llvm-project//libcxx:libcxx_macos_srcs",
+    "@llvm-project//libcxx:libcxx_win32_srcs",
+    "@llvm-project//libcxxabi:libcxxabi_srcs",
+    "@llvm-project//libunwind:libunwind_srcs",
+]
+
+RUNTIMES_TEXTUAL_SRCS_FILEGROUPS = [
+    "@llvm-project//libcxxabi:libcxxabi_textual_srcs",
+]
 
 RUNTIMES_PREFIXES = {
-    "libcxx_linux": "libcxx/",
-    "libcxx_macos": "libcxx/",
-    "libcxx_win32": "libcxx/",
-    "libcxxabi": "libcxxabi/",
-    "libunwind": "libunwind/",
+    "libcxx_hdrs": "libcxx/",
+    "libcxx_linux_srcs": "libcxx/",
+    "libcxx_macos_srcs": "libcxx/",
+    "libcxx_shared_headers_hdrs": "libc/internal/",
+    "libcxx_win32_srcs": "libcxx/",
+    "libcxxabi_hdrs": "libcxxabi/",
+    "libcxxabi_srcs": "libcxxabi/",
+    "libcxxabi_textual_srcs": "libcxxabi/",
+    "libunwind_hdrs": "libunwind/",
+    "libunwind_srcs": "libunwind/",
 }
+
+def _get_name(target):
+    return target.split(":")[1]
 
 def _format_one_per_line(list):
     return "\n" + "\n".join([
@@ -65,12 +85,16 @@ def _format_one_per_line(list):
 
 def _builtins_path(file):
     """Returns the install path for a file in CompilerRT's builtins library."""
+    path = file.path
 
-    # The CompilerRT package has the builtins runtime sources in the
-    # "lib/builtins/" subdirectory, and we install into a "builtins/"
-    # subdirectory, so just remove the "lib/" prefix from the package-relative
-    # label name.
-    return file.owner.name.removeprefix("lib/")
+    # Skip to the relative path below the workspace root.
+    path = path.rpartition(file.owner.workspace_root + "/")[2]
+
+    # And now we can predictably remove the `compiler-rt/lib` prefix.
+    path = path.removeprefix("compiler-rt/lib/")
+    if not path.startswith("builtins/"):
+        fail("Not a builtins-relative path for: {0}".format(file.path))
+    return path
 
 def _runtimes_path(file):
     """Returns the install path for a file in a normal runtimes library."""
@@ -97,25 +121,46 @@ def _get_paths(files_attr, to_path_fn, prefix = ""):
 def _get_substitutions(ctx):
     key_attr = lambda k: getattr(ctx.attr, "_" + k)
     return {
+        "BUILTINS_COPTS": _format_one_per_line(builtins_copts),
         "CRT_COPTS": _format_one_per_line(crt_copts),
         "LIBCXX_AND_ABI_COPTS": _format_one_per_line(libcxx_and_abi_copts),
         "LIBUNWIND_COPTS": _format_one_per_line(libunwind_copts),
+        "LLVM_VERSION_MAJOR": LLVM_VERSION_MAJOR,
     } | {
         k.upper(): _get_path(key_attr(k), _builtins_path)
         for k in CRT_FILES.keys()
     } | {
-        "BUILTINS_" + k.upper(): _get_paths(key_attr(k), _builtins_path)
-        for k in BUILTINS_FILEGROUPS.keys()
+        name.upper(): _get_paths(key_attr(name), _builtins_path)
+        for name in [_get_name(g) for g in (
+            BUILTINS_SRCS_FILEGROUPS + BUILTINS_TEXTUAL_SRCS_FILEGROUPS
+        )]
     } | {
         # Other runtimes are installed under separate directories named the
         # same as their key.
-        k.upper() + "_SRCS": _get_paths(
-            key_attr(k),
+        name.upper(): _get_paths(
+            key_attr(name),
             _runtimes_path,
-            RUNTIMES_PREFIXES[k],
+            RUNTIMES_PREFIXES[name],
         )
-        for k in RUNTIMES_FILEGROUPS.keys()
+        for name in [_get_name(g) for g in (
+            RUNTIMES_HDRS_FILEGROUPS + RUNTIMES_SRCS_FILEGROUPS +
+            RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
+        )]
     }
+
+_common_runtimes_rule_attrs = {
+    "_" + k: attr.label(default = v, allow_single_file = True)
+    for k, v in CRT_FILES.items()
+} | {
+    "_" + _get_name(g): attr.label_list(default = [g], allow_files = True)
+    for g in (
+        BUILTINS_SRCS_FILEGROUPS +
+        BUILTINS_TEXTUAL_SRCS_FILEGROUPS +
+        RUNTIMES_HDRS_FILEGROUPS +
+        RUNTIMES_SRCS_FILEGROUPS +
+        RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
+    )
+}
 
 def _generate_runtimes_build_info_h_rule(ctx):
     h_file = ctx.actions.declare_file(ctx.label.name)
@@ -128,13 +173,7 @@ def _generate_runtimes_build_info_h_rule(ctx):
 
 generate_runtimes_build_info_h = rule(
     implementation = _generate_runtimes_build_info_h_rule,
-    attrs = {
-        "_" + k: attr.label(default = v, allow_single_file = True)
-        for k, v in CRT_FILES.items()
-    } | {
-        "_" + k: attr.label_list(default = [v], allow_files = True)
-        for k, v in BUILTINS_FILEGROUPS.items() + RUNTIMES_FILEGROUPS.items()
-    } | {
+    attrs = _common_runtimes_rule_attrs | {
         "_template_file": attr.label(
             default = "runtimes_build_info.tpl.h",
             allow_single_file = True,
@@ -162,3 +201,22 @@ def generate_runtimes_build_info_cc_library(name, deps = [], **kwargs):
         ] + deps,
         **kwargs
     )
+
+def _generate_runtimes_build_vars_rule(ctx):
+    file = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.expand_template(
+        template = ctx.file._template_file,
+        output = file,
+        substitutions = _get_substitutions(ctx),
+    )
+    return [DefaultInfo(files = depset([file]))]
+
+generate_runtimes_build_vars = rule(
+    implementation = _generate_runtimes_build_vars_rule,
+    attrs = _common_runtimes_rule_attrs | {
+        "_template_file": attr.label(
+            default = "runtimes_build_vars.tpl.bzl",
+            allow_single_file = True,
+        ),
+    },
+)
