@@ -39,7 +39,7 @@ interface I {
 // CHECK:STDERR:
 impl {} as I where .T = ({} as C) {}
 
-// --- fail_incomplete_type_usage.carbon
+// --- incomplete_type_usage.carbon
 library "[[@TEST_NAME]]";
 
 class C;
@@ -49,13 +49,7 @@ interface I {
 }
 
 fn F[U:! I](a: U) {
-  // CHECK:STDERR: fail_incomplete_type_usage.carbon:[[@LINE+7]]:3: error: invalid use of incomplete type `C` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   a.T;
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_incomplete_type_usage.carbon:[[@LINE-10]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR:
+  // TODO: Should this be diagnosed as having an incomplete type?
   a.T;
 }
 
@@ -221,7 +215,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_type_usage.carbon
+// CHECK:STDOUT: --- incomplete_type_usage.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -299,13 +293,13 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc9_6.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc17_4.2: %C = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc17_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc11_4.2: %C = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%U.binding.as_type (%U.binding.as_type) = name_ref a, %a
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc17_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc17_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc11_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

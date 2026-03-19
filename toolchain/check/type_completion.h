@@ -36,6 +36,10 @@ auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
 // the completeness of the type will be enforced during monomorphization, and
 // `loc_id` is used as the location for a diagnostic produced at that time.
+//
+// Note that in general, the code that creates an inst is responsible for
+// enforcing any type completeness requirements associated with that inst; it
+// should not rely on its downstream consumers to do so.
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id,
                          DiagnosticContextFn diagnostic_context) -> bool;
