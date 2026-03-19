@@ -57,8 +57,9 @@ struct DeclInfo {
 };
 }  // namespace
 
-// Given a DeclInfo of the C++ function to call that will act as an impl for a
-// specific interface, construct a custom witness for that function.
+// Finds the InstId for the C++ function that is called by a specific interface.
+// Returns SemIR::InstId::None if a C++ function is not found, and
+// SemIR::ErrorInst::InstId if an error occurs.
 static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
                           DeclInfo decl_info,
                           const TypeStructure* best_impl_type_structure,
@@ -169,16 +170,17 @@ static auto BuildCppUnsafeDerefWitness(
       DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
   auto fn_id = GetFunctionId(context, loc_id, decl_info,
                              best_impl_type_structure, best_impl_loc_id);
-  if (fn_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
   }
 
   auto result_type_id =
       context.functions()
           .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
           .return_type_inst_id;
-  if (result_type_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (result_type_id == SemIR::ErrorInst::InstId ||
+      result_type_id == SemIR::InstId::None) {
+    return result_type_id;
   }
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
