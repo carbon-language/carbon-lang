@@ -41,10 +41,10 @@
 // - Each type passed to `CARBON_KIND_ANY` must have a macro of the form:
 //   ```
 //   #define AnyKind_CARBON_KIND_ANY_EXPAND   \
-//     CARBON_KIND_ANY_EXPAND_BEGIN CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
-//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
+//     CARBON_KIND_ANY_EXPAND_BEGIN() CARBON_KIND_ANY_EXPAND_CASE(Kind1) \
+//     CARBON_KIND_ANY_EXPAND_SEP()   CARBON_KIND_ANY_EXPAND_CASE(Kind2) \
 //     ...
-//     CARBON_KIND_ANY_EXPAND_SEP   CARBON_KIND_ANY_EXPAND_CASE(KindN)
+//     CARBON_KIND_ANY_EXPAND_SEP()   CARBON_KIND_ANY_EXPAND_CASE(KindN)
 //   ```
 //   Note the prefix `,` is required.
 //
@@ -71,10 +71,10 @@
       : CARBON_KIND_INTERNAL_DECLARE(typed_variable_decl)
 
 // Macros for clients to add support for `Type_CARBON_KIND_ANY_EXPAND` (see
-// example above).
+// example above). Empty parameters are used to allow delaying macro expansion.
 #define CARBON_KIND_ANY_EXPAND_CASE(X) CARBON_KIND_INTERNAL_CASE_VALUE(X)
-#define CARBON_KIND_ANY_EXPAND_BEGIN ,
-#define CARBON_KIND_ANY_EXPAND_SEP : case
+#define CARBON_KIND_ANY_EXPAND_BEGIN() ,
+#define CARBON_KIND_ANY_EXPAND_SEP() : case
 
 // Produces a case-compatible block of code that also instantiates a local typed
 // variable. Versus `CARBON_KIND(int i)`, note this requires a comma after the
