@@ -80,14 +80,14 @@ class C {}
 impl C as NeedsY(C) {}
 
 fn G(w:! W) {
-  // The witness of Z(Self) monomorphized by `w` must be the same as the witness
-  // of `Z(w)` constructed directly here in order for this to find `Z(w)` in the
-  // facet type `W`.
+  // The witness of NeedsY(Self) monomorphized by `w` must be the same as the
+  // witness of `NeedsY(w)` constructed directly here in order for this to find
+  // `NeedsY(w)` in the facet type `W`.
   w as NeedsY(w);
 }
 
 fn F() {
-  // Further monomorphize `Z(w)` to `Z(C)`.
+  // Further monomorphize `NeedsY(w)` to `NeedsY(C)`.
   G(C);
 }
 
@@ -137,9 +137,9 @@ interface NeedsY(T:! Y) {}
 interface NeedsNeedsY(T:! Y, U:! NeedsY(T)) {}
 constraint W {
   require impls Y;
-  // The idenfified facet type of Self is {Y}.
+  // The identified facet type of Self is {Y}.
   extend require impls NeedsY(Self);
-  // The idenfified facet type of Self is {Y, NeedsY}. Ensure we don't keep
+  // The identified facet type of Self is {Y, NeedsY}. Ensure we don't keep
   // seeing the previous identified facet type of Self.
   extend require impls NeedsNeedsY(Self, Self);
 }
