@@ -312,8 +312,8 @@ static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
       continue;
     }
 
-    // Validate that the parameter pattern is an AtBindingPattern wrapping a
-    // ValueParamPattern.
+    // Validate that this is a by-value parameter, which is represented as an
+    // AtBindingPattern wrapping a ValueParamPattern.
     auto type_id = SemIR::TypeId::None;
     if (auto binding = context.insts().TryGetAs<SemIR::AtBindingPattern>(
             param_pattern_id)) {

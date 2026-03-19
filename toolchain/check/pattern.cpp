@@ -68,7 +68,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::InstKind::AtBindingPattern: {
+    case SemIR::AtBindingPattern::Kind: {
       auto subpattern = context.insts().Get(pattern.subpattern_id);
       CARBON_KIND_SWITCH(subpattern) {
         case SemIR::FormParamPattern::Kind:
@@ -76,10 +76,10 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
           break;
         case SemIR::RefParamPattern::Kind:
         case SemIR::VarPattern::Kind:
-          bind_name_kind = SemIR::InstKind::RefBinding;
+          bind_name_kind = SemIR::RefBinding::Kind;
           break;
         case SemIR::ValueParamPattern::Kind:
-          bind_name_kind = SemIR::InstKind::ValueBinding;
+          bind_name_kind = SemIR::ValueBinding::Kind;
           break;
         default:
           CARBON_FATAL("Unexpected subpattern kind for at_binding_pattern: {0}",
@@ -87,17 +87,17 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       }
       break;
     }
-    case SemIR::InstKind::FormBindingPattern:
-      bind_name_kind = SemIR::InstKind::FormBinding;
+    case SemIR::FormBindingPattern::Kind:
+      bind_name_kind = SemIR::FormBinding::Kind;
       break;
-    case SemIR::InstKind::RefBindingPattern:
-      bind_name_kind = SemIR::InstKind::RefBinding;
+    case SemIR::RefBindingPattern::Kind:
+      bind_name_kind = SemIR::RefBinding::Kind;
       break;
-    case SemIR::InstKind::SymbolicBindingPattern:
-      bind_name_kind = SemIR::InstKind::SymbolicBinding;
+    case SemIR::SymbolicBindingPattern::Kind:
+      bind_name_kind = SemIR::SymbolicBinding::Kind;
       break;
-    case SemIR::InstKind::ValueBindingPattern:
-      bind_name_kind = SemIR::InstKind::ValueBinding;
+    case SemIR::ValueBindingPattern::Kind:
+      bind_name_kind = SemIR::ValueBinding::Kind;
       break;
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",

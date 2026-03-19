@@ -311,10 +311,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
           pattern_stack.push_back(
               {.prev_id = prev_any_binding_pattern.subpattern_id,
                .new_id = new_any_binding_pattern.subpattern_id});
-        } else {
-          if (!check_for_type_mismatch()) {
-            return false;
-          }
+        } else if (!check_for_type_mismatch()) {
+          return false;
         }
 
         if (check_syntax && new_name_id != prev_name_id) {

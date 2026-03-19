@@ -390,12 +390,10 @@ auto MatchContext::DoPreWork(Context& /*context*/,
     AddWork({.pattern_id = binding_pattern.subpattern_id,
              .work = PreWork{.scrutinee_id = scrutinee_id},
              .allow_unmarked_ref = entry.allow_unmarked_ref});
-  }
-  // PostWork expects a result to bind the name to. If we scheduled PostWork,
-  // but didn't schedule PreWork for a subpattern, the name should be bound to
-  // the scrutinee.
-  if (scheduled_post_work &&
-      binding_pattern.kind != SemIR::AtBindingPattern::Kind) {
+  } else if (scheduled_post_work) {
+    // PostWork expects a result to bind the name to. If we scheduled PostWork,
+    // but didn't schedule PreWork for a subpattern, the name should be bound to
+    // the scrutinee.
     results_stack_.AppendToTop(scrutinee_id);
   }
 }
@@ -526,16 +524,29 @@ auto MatchContext::DoPreWork(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      SemIR::AnyParam param = {
-          .kind = ParamKindFor(context, param_pattern, entry),
-          .type_id =
-              ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
-          .index = SemIR::CallParamIndex(call_params_.size()),
-          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-              context.sem_ir(), entry.pattern_id)};
-      auto param_id =
-          AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-                               SemIR::LocId(entry.pattern_id), param));
+      SemIR::Inst param =
+          SemIR::AnyParam{.kind = ParamKindFor(context, param_pattern, entry),
+                          .type_id = ExtractScrutineeType(
+                              context.sem_ir(), param_pattern.type_id),
+                          .index = SemIR::CallParamIndex(call_params_.size()),
+                          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
+                              context.sem_ir(), entry.pattern_id)};
+      auto loc_id = SemIR::LocId(entry.pattern_id);
+      auto param_id = SemIR::InstId::None;
+      // TODO: find a way to avoid this boilerplate.
+      switch (param.kind()) {
+        case SemIR::OutParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::OutParam>());
+          break;
+        case SemIR::RefParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::RefParam>());
+          break;
+        case SemIR::ValueParam::Kind:
+          param_id = AddInst(context, loc_id, param.As<SemIR::ValueParam>());
+          break;
+        default:
+          CARBON_FATAL("Unexpected parameter kind");
+      }
       if (auto var_param_pattern =
               context.insts().TryGetAs<SemIR::VarParamPattern>(
                   entry.pattern_id)) {
