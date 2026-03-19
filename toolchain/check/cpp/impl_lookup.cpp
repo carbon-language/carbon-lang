@@ -111,8 +111,8 @@ static auto BuildCopyWitness(
                             .signature = {.num_params = 1}};
   auto fn_id = GetFunctionId(context, loc_id, decl_info,
                              best_impl_type_structure, best_impl_loc_id);
-  if (fn_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {fn_id});
@@ -136,8 +136,8 @@ static auto BuildDestroyWitness(
                             .signature = {.num_params = 0}};
   auto fn_id = GetFunctionId(context, loc_id, decl_info,
                              best_impl_type_structure, best_impl_loc_id);
-  if (fn_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {fn_id});
