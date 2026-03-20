@@ -93,6 +93,36 @@ static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
   return fn_id;
 }
 
+static auto BuildDefaultWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    const TypeStructure* best_impl_type_structure,
+    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+  auto& clang_sema = context.clang_sema();
+
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
+  }
+  // Clang would produce a warning for classes with uninitialized
+  // [[clang::requires_init]] fields for which default initialization is
+  // performed, and we don't have a good place to produce that warning.
+  // That happens if class_decl->hasUninitializedExplicitInitFields() is true.
+  //
+  // TODO: Consider treating such types as not implementing `Default`.
+  auto decl_info =
+      DeclInfo{.decl = clang_sema.LookupDefaultConstructor(class_decl),
+               .signature = {.num_params = 0}};
+  auto fn_id = GetFunctionId(context, loc_id, decl_info,
+                             best_impl_type_structure, best_impl_loc_id);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
+}
+
 static auto BuildCopyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -194,6 +224,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   switch (core_interface) {
+    case CoreInterface::Default:
+      return BuildDefaultWitness(context, loc_id, query_self_const_id,
+                                 query_specific_interface_id,
+                                 best_impl_type_structure, best_impl_loc_id);
     case CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
                               query_specific_interface_id,

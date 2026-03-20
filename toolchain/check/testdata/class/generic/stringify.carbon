@@ -103,10 +103,10 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %EmptyParams: type = class_type @EmptyParams [concrete]
 // CHECK:STDOUT:   %pattern_type.8ec: type = pattern_type %NoParams [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T) [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.d7c: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%NoParams) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.d7c: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.349, @T.as.DefaultOrUnformed.impl(%NoParams) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.51c: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%NoParams) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5bb: %T.as.DefaultOrUnformed.impl.Op.type.51c = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %NoParams, (%DefaultOrUnformed.impl_witness.d7c) [concrete]
@@ -125,7 +125,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.349 = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,14 +197,14 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Outer.387: type = class_type @Outer, @Outer(%T) [symbolic]
+// CHECK:STDOUT:   %Outer.387: type = class_type @Outer, @Outer(%T.67d) [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %Inner.type.e0d: type = generic_class_type @Inner, @Outer(%T) [symbolic]
+// CHECK:STDOUT:   %Inner.type.e0d: type = generic_class_type @Inner, @Outer(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Inner.generic.ada: %Inner.type.e0d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Inner.e21: type = class_type @Inner, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Inner.e21: type = class_type @Inner, @Inner(%T.67d, %U) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -214,9 +214,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %Inner.generic.0f6: %Inner.type.cd9 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.acf: type = pattern_type %Outer.b7c [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8e7: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%Outer.b7c) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8e7: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.349, @T.as.DefaultOrUnformed.impl(%Outer.b7c) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.e70: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Outer.b7c) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.3a0: %T.as.DefaultOrUnformed.impl.Op.type.e70 = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Outer.b7c, (%DefaultOrUnformed.impl_witness.8e7) [concrete]
@@ -243,7 +243,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.349 = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
@@ -263,7 +263,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.acf = ref_binding_pattern v [concrete]
@@ -300,7 +300,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.2: type) {
-// CHECK:STDOUT:   %T.loc4_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc4_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type: type = generic_class_type @Inner, @Outer(%T.loc4_13.1) [symbolic = %Inner.type (constants.%Inner.type.e0d)]
@@ -355,11 +355,11 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
+// CHECK:STDOUT: specific @Outer(constants.%T.67d) {
+// CHECK:STDOUT:   %T.loc4_13.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific @Inner(constants.%T.67d, constants.%U) {
 // CHECK:STDOUT:   %U.loc5_15.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

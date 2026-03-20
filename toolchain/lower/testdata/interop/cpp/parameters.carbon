@@ -302,8 +302,17 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %struct.X = type { i32, i32, i32 }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
+// CHECK:STDOUT: define dso_local void @_ZN1XC1Ev.carbon_thunk(ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local void @_Z11pass_struct1X.carbon_thunk(ptr noundef %0) #0 {
+// CHECK:STDOUT: define dso_local void @_Z11pass_struct1X.carbon_thunk(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.X, align 4
@@ -320,16 +329,17 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_struct1X(i64, i32) #1
+// CHECK:STDOUT: declare void @_Z11pass_struct1X(i64, i32) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTest.Main() #3 !dbg !15 {
+// CHECK:STDOUT: define void @_CTest.Main() #4 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca [12 x i8], align 1, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr %x.var), !dbg !18
 // CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 0, !dbg !19
 // CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !19
 // CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 4, !dbg !20
@@ -340,17 +350,32 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_COp:thunk.X.Cpp"(ptr sret([12 x i8]) %return) #5 !dbg !24 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk(ptr %return), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #6
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @"_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4"(ptr sret([12 x i8]) %return) #4 !dbg !30 {
+// CHECK:STDOUT:   call void @"_COp:thunk.X.Cpp"(ptr %return), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !33
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #3 = { nounwind }
-// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #4 = { nounwind }
+// CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #6 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -380,6 +405,16 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !21 = !DILocation(line: 10, column: 3, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 3, scope: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 6, column: 1, scope: !15)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.X.Cpp", scope: null, file: !25, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !25 = !DIFile(filename: "./struct.h", directory: "")
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !27 = !{!28}
+// CHECK:STDOUT: !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !29 = !DILocation(line: 2, column: 8, scope: !24)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9b0a46309e124f8a:DefaultOrUnformed.Core.64f6b96556a8f2d4", scope: null, file: !31, line: 9, type: !26, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !32 = !DILocation(line: 9, column: 28, scope: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 9, column: 21, scope: !30)
 // CHECK:STDOUT: ; ModuleID = 'import_class_with_nontrivial_copy.carbon'
 // CHECK:STDOUT: source_filename = "import_class_with_nontrivial_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
