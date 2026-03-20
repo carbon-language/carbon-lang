@@ -373,8 +373,20 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     return definition_info(*this).has_cleanup;
   }
 
-  // Returns true if the passed NodeKind is allowed.
+  // Returns true if the passed `NodeKind` is allowed.
   auto IsAllowedNodeKind(Parse::NodeKind node_kind) const -> bool;
+
+  // Returns true if all `NodeKind`s are allowed.
+  auto allow_all_node_kinds() const -> bool {
+    return definition_info(*this).internal_allow_all_node_kinds;
+  }
+
+  // Returns true if no `NodeKind`s are allowed.
+  auto disallow_node_kinds() const -> bool {
+    const auto& def = definition_info(*this);
+    return !def.internal_allow_all_node_kinds &&
+           def.internal_allowed_node_kinds.empty();
+  }
 
  private:
   // Returns the DefinitionInfo for the kind.

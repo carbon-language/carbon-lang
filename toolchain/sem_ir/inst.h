@@ -418,14 +418,9 @@ struct LocIdAndInst {
   }
 
   // Unsafely form a pair of a location and an instruction. Most code should use
-  // a constructor, and there's also helpers:
+  // a constructor. For runtime validation, use `MakeVerifiedLocIdAndInst`.
   //
-  // - For `ImportIRInstId` locations, use `MakeImportedLocIdAndInst` in
-  //   `import.h`.
-  // - For `LocId` locations, use `MakeVerifiedLocIdAndInst` in `inst.cpp`.
-  //
-  // Those specific helpers and `GetWithLocId` are the only places that should
-  // ever call this constructor.
+  // The only other caller should be `InstStore::GetWithLocId`.
   template <typename LocT>
   // Disallow implicit LocId construction.
     requires(std::same_as<LocT, LocId>)
@@ -445,7 +440,7 @@ struct LocIdAndInst {
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  // For `ImportIRInstId`, use `MakeImportedLocIdAndInst` in `import.h`.
+  // For `ImportIRInstId`, use `MakeVerifiedLocIdAndInst`.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
 
