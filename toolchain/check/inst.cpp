@@ -15,8 +15,9 @@
 
 namespace Carbon::Check {
 
-auto MakeVerifiedLocIdAndInst(Context& context, SemIR::LocId loc_id,
-                              SemIR::Inst inst) -> SemIR::LocIdAndInst {
+auto MakeVerifiedLocIdAndInst([[maybe_unused]] Context& context,
+                              SemIR::LocId loc_id, SemIR::Inst inst)
+    -> SemIR::LocIdAndInst {
 #ifndef NDEBUG
   switch (loc_id.kind()) {
     case SemIR::LocId::Kind::ImportIRInstId:
