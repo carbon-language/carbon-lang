@@ -76,7 +76,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   pattern.entity_name_id = AddBindingEntityName(
       context, entity_name.name_id, /*form_id=*/SemIR::ConstantId::None,
       entity_name.is_unused, phase);
-  if (pattern.kind == SemIR::AtBindingPattern::Kind) {
+  if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     auto subpattern = context.insts().GetAs<SemIR::AnyLeafParamPattern>(
         pattern.subpattern_id);
     if (subpattern.kind == SemIR::FormParamPattern::Kind) {
@@ -291,7 +291,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // param_pattern_id in that call.
   auto build_syntactic_arg = [&](SemIR::InstId param_pattern_id) {
     if (auto at_binding_pattern =
-            context.insts().TryGetAs<SemIR::AtBindingPattern>(
+            context.insts().TryGetAs<SemIR::WrapperBindingPattern>(
                 param_pattern_id)) {
       param_pattern_id = at_binding_pattern->subpattern_id;
     }

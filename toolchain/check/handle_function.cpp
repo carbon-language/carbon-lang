@@ -313,9 +313,9 @@ static auto IsValidEntryPointParamList(Context& context, Parse::NodeId node_id,
     }
 
     // Validate that this is a by-value parameter, which is represented as an
-    // AtBindingPattern wrapping a ValueParamPattern.
+    // WrapperBindingPattern wrapping a ValueParamPattern.
     auto type_id = SemIR::TypeId::None;
-    if (auto binding = context.insts().TryGetAs<SemIR::AtBindingPattern>(
+    if (auto binding = context.insts().TryGetAs<SemIR::WrapperBindingPattern>(
             param_pattern_id)) {
       if (auto param_pattern =
               context.insts().TryGetAs<SemIR::ValueParamPattern>(
@@ -635,7 +635,7 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                             "`unused` modifier on declaration");
           context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
         }
-        if (bind.kind == SemIR::AtBindingPattern::Kind) {
+        if (bind.kind == SemIR::WrapperBindingPattern::Kind) {
           work_list.push_back(bind.subpattern_id);
         }
         break;

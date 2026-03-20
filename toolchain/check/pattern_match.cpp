@@ -313,8 +313,8 @@ static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
     case SemIR::OutParamPattern::Kind:
       // OutParamPattern conversion is handled by the enclosing
       // ReturnSlotPattern.
-    case SemIR::AtBindingPattern::Kind:
-      // AtBindingPattern conversion is handled by its subpattern.
+    case SemIR::WrapperBindingPattern::Kind:
+      // WrapperBindingPattern conversion is handled by its subpattern.
       return ConversionTarget::NoOp;
     case SemIR::RefBindingPattern::Kind:
       return ConversionTarget::DurableRef;
@@ -386,7 +386,7 @@ auto MatchContext::DoPreWork(Context& /*context*/,
   } else {
     CARBON_CHECK(!need_subpattern_results());
   }
-  if (binding_pattern.kind == SemIR::AtBindingPattern::Kind) {
+  if (binding_pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     AddWork({.pattern_id = binding_pattern.subpattern_id,
              .work = PreWork{.scrutinee_id = scrutinee_id},
              .allow_unmarked_ref = entry.allow_unmarked_ref});

@@ -155,7 +155,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000017:    {kind: PatternType, arg0: inst50000015, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000018:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000017)}
 // CHECK:STDOUT:     inst50000019:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst5000001B, type: type(inst50000015)}
-// CHECK:STDOUT:     inst5000001A:    {kind: AtBindingPattern, arg0: entity_name50000000, arg1: inst50000018, type: type(inst50000017)}
+// CHECK:STDOUT:     inst5000001A:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000018, type: type(inst50000017)}
 // CHECK:STDOUT:     inst5000001B:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000015)}
 // CHECK:STDOUT:     inst5000001C:    {kind: SpliceBlock, arg0: inst_block50000005, arg1: inst50000016, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000001D:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block5000000A, type: type(inst5000001E)}
@@ -186,7 +186,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst50000036:    {kind: NameRef, arg0: name1, arg1: inst50000019, type: type(inst50000015)}
 // CHECK:STDOUT:     inst50000037:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000017)}
 // CHECK:STDOUT:     inst50000038:    {kind: ValueBinding, arg0: entity_name50000001, arg1: inst5000003A, type: type(inst50000015)}
-// CHECK:STDOUT:     inst50000039:    {kind: AtBindingPattern, arg0: entity_name50000001, arg1: inst50000037, type: type(inst50000017)}
+// CHECK:STDOUT:     inst50000039:    {kind: WrapperBindingPattern, arg0: entity_name50000001, arg1: inst50000037, type: type(inst50000017)}
 // CHECK:STDOUT:     inst5000003A:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000015)}
 // CHECK:STDOUT:     inst5000003B:    {kind: FunctionDecl, arg0: function50000003, arg1: inst_block50000012, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst5000003C:    {kind: FunctionType, arg0: function50000003, arg1: specific<none>, type: type(TypeType)}
@@ -194,7 +194,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst5000003E:    {kind: PatternType, arg0: inst50000020, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003F:    {kind: ValueParamPattern, arg0: name1, type: type(inst5000003E)}
 // CHECK:STDOUT:     inst50000040:    {kind: ValueBinding, arg0: entity_name50000002, arg1: inst50000042, type: type(inst50000020)}
-// CHECK:STDOUT:     inst50000041:    {kind: AtBindingPattern, arg0: entity_name50000002, arg1: inst5000003F, type: type(inst5000003E)}
+// CHECK:STDOUT:     inst50000041:    {kind: WrapperBindingPattern, arg0: entity_name50000002, arg1: inst5000003F, type: type(inst5000003E)}
 // CHECK:STDOUT:     inst50000042:    {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst50000020)}
 // CHECK:STDOUT:     inst50000043:    {kind: FunctionDecl, arg0: function50000004, arg1: inst_block50000018, type: type(inst50000044)}
 // CHECK:STDOUT:     inst50000044:    {kind: FunctionType, arg0: function50000004, arg1: specific<none>, type: type(TypeType)}

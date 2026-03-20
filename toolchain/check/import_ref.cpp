@@ -1745,7 +1745,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_entity_name.parent_scope_id);
   auto subpattern_id = SemIR::InstId::None;
-  if constexpr (std::is_same_v<BindingPatternT, SemIR::AtBindingPattern>) {
+  if constexpr (std::is_same_v<BindingPatternT, SemIR::WrapperBindingPattern>) {
     subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
   }
   if (resolver.HasNewWork()) {
@@ -4086,9 +4086,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::AssociatedEntityType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::AtBindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, constant_inst_id);
-    }
     case CARBON_KIND(SemIR::BaseDecl inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
@@ -4283,6 +4280,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::VtablePtr inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::WrapperBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     default:
       // Found a canonical instruction which needs to be resolved, but which is

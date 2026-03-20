@@ -71,7 +71,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000014:    {kind: PatternType, arg0: inst50000010, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000015:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000016:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst50000026, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000017:    {kind: AtBindingPattern, arg0: entity_name50000000, arg1: inst50000015, type: type(inst50000014)}
+// CHECK:STDOUT:     inst50000017:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000015, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000018:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000019:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001A:    {kind: TupleType, arg0: inst_block50000008, type: type(TypeType)}

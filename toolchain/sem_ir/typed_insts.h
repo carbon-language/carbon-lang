@@ -262,23 +262,6 @@ struct AssociatedEntityType {
   }
 };
 
-// A binding pattern that binds a name to the result of matching
-// `subpattern_id` against this pattern's scrutinee. Currently there is no
-// explicit syntax for such a pattern, but it arises implicitly when handling
-// function parameters, and particularly `:?` form bindings. The name comes from
-// Rust, which has a `<name> @ <pattern>` binding syntax with these semantics.
-struct AtBindingPattern {
-  static constexpr auto Kind = InstKind::AtBindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "at_binding_pattern",
-       .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId subpattern_id;
-};
-
 // Used for the type of patterns that do not match a fixed type.
 using AutoType = SingletonTypeInst<InstKind::AutoType, "auto">;
 
@@ -2310,6 +2293,23 @@ struct WhereExpr {
 // This is a singleton instruction. However, it may still evolve into a more
 // standard type and be removed.
 using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
+
+// A binding pattern that binds a name to the result of matching
+// `subpattern_id` against this pattern's scrutinee. Currently there is no
+// explicit syntax for such a pattern, but it arises implicitly when handling
+// function parameters, and particularly `:?` form bindings.
+struct WrapperBindingPattern {
+  static constexpr auto Kind =
+      InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "at_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId subpattern_id;
+};
 
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {

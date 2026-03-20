@@ -106,11 +106,11 @@ struct AnyAggregateValue {
 
 // clang-format off
 #define AnyBindingPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::AtBindingPattern) Sep             \
   X(::Carbon::SemIR::FormBindingPattern) Sep           \
   X(::Carbon::SemIR::RefBindingPattern) Sep            \
   X(::Carbon::SemIR::SymbolicBindingPattern) Sep       \
-  X(::Carbon::SemIR::ValueBindingPattern)
+  X(::Carbon::SemIR::ValueBindingPattern) Sep          \
+  X(::Carbon::SemIR::WrapperBindingPattern)
 // clang-format on
 
 #define AnyBindingPattern_CARBON_KIND_ANY_EXPAND                       \
@@ -133,7 +133,7 @@ struct AnyBindingPattern {
   // a name.
   EntityNameId entity_name_id;
 
-  // None unless this is an AtBindingPattern.
+  // None unless this is an WrapperBindingPattern.
   InstId subpattern_id;
 };
 

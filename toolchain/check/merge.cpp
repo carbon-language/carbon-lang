@@ -305,7 +305,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
           check_type = false;
         }
 
-        if (new_any_binding_pattern.kind == SemIR::AtBindingPattern::Kind) {
+        if (new_any_binding_pattern.kind ==
+            SemIR::WrapperBindingPattern::Kind) {
           // The subpattern handling will take care of checking for type
           // mismatch.
           pattern_stack.push_back(

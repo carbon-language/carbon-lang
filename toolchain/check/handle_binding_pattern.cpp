@@ -311,8 +311,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           }
-          result_inst_id = make_binding_pattern(SemIR::AtBindingPattern::Kind,
-                                                param_pattern_id);
+          result_inst_id = make_binding_pattern(
+              SemIR::WrapperBindingPattern::Kind, param_pattern_id);
           break;
         }
         case Parse::NodeKind::VarBindingPattern:

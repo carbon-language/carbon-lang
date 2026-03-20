@@ -264,7 +264,7 @@ in `FunctionFields`. The SemIR that matches these patterns consists of a
 the `OutParam` instruction representing the storage passed by the caller.
 
 This structure is analogous to the handling of an ordinary by-value parameter,
-which is represented in the `Call` parameters as an `AtBindingPattern`
+which is represented in the `Call` parameters as an `WrapperBindingPattern`
 instruction with a `ValueParamPattern` subpattern, and in the pattern-matching
 SemIR as a `ValueBinding` instruction that binds the parameter name to the
 `ValueParam` instruction representing the argument passed by the caller.

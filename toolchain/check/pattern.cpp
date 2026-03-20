@@ -68,7 +68,19 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::AtBindingPattern::Kind: {
+    case SemIR::FormBindingPattern::Kind:
+      bind_name_kind = SemIR::FormBinding::Kind;
+      break;
+    case SemIR::RefBindingPattern::Kind:
+      bind_name_kind = SemIR::RefBinding::Kind;
+      break;
+    case SemIR::SymbolicBindingPattern::Kind:
+      bind_name_kind = SemIR::SymbolicBinding::Kind;
+      break;
+    case SemIR::ValueBindingPattern::Kind:
+      bind_name_kind = SemIR::ValueBinding::Kind;
+      break;
+    case SemIR::WrapperBindingPattern::Kind: {
       auto subpattern = context.insts().Get(pattern.subpattern_id);
       CARBON_KIND_SWITCH(subpattern) {
         case SemIR::FormParamPattern::Kind:
@@ -87,18 +99,6 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       }
       break;
     }
-    case SemIR::FormBindingPattern::Kind:
-      bind_name_kind = SemIR::FormBinding::Kind;
-      break;
-    case SemIR::RefBindingPattern::Kind:
-      bind_name_kind = SemIR::RefBinding::Kind;
-      break;
-    case SemIR::SymbolicBindingPattern::Kind:
-      bind_name_kind = SemIR::SymbolicBinding::Kind;
-      break;
-    case SemIR::ValueBindingPattern::Kind:
-      bind_name_kind = SemIR::ValueBinding::Kind;
-      break;
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
                    pattern.kind);
@@ -185,7 +185,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                            /*is_unused=*/false,
                            /*phase=*/BindingPhase::Runtime);
   return AddBindingPattern(context, loc_id, type_expr_region_id,
-                           {.kind = SemIR::AtBindingPattern::Kind,
+                           {.kind = SemIR::WrapperBindingPattern::Kind,
                             .type_id = GetPatternType(context, type_id),
                             .entity_name_id = entity_name_id,
                             .subpattern_id = pattern_id})
