@@ -971,19 +971,31 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
+    if (QueryIsConcrete(context, req_impl.self_facet_value,
+                        req_impl.specific_interface)) {
+      // Failed to find a final witness for a concrete query. There won't be a
+      // non-final witness, as any witness would have been treated as final.
+      break;
+    }
+
     // Did not find a final witness. If we find a non-final witness, then we use
     // the `LookupImplWitness` as our witness so that monomorphization can
     // produce a final witness later.
-    if (FindNonFinalWitness(context, loc_id, req_impl.self_facet_value,
-                            *req_self_type_identified_id,
-                            req_impl.specific_interface)) {
-      result_witness_ids.push_back(result_witness_id);
-      continue;
+    if (!FindNonFinalWitness(context, loc_id, req_impl.self_facet_value,
+                             *req_self_type_identified_id,
+                             req_impl.specific_interface)) {
+      // At least one queried interface in the facet type has no witness for the
+      // given type, we can stop looking for more.
+      //
+      // TODO: The LookupImplWitness won't be used. We should find a way to
+      // discard it, which would remove it from the generic eval block if the
+      // lookup is within a generic context.
+      break;
     }
 
-    // At least one queried interface in the facet type has no witness for the
-    // given type, we can stop looking for more.
-    break;
+    // Save the non-final witness, which will eventually resolve to a final
+    // witness as specifics are applied to make the query more concrete.
+    result_witness_ids.push_back(result_witness_id);
   }
   auto pop = stack.pop_back_val();
   if (pop.diagnosed_cycle && !stack.empty()) {

@@ -1187,7 +1187,7 @@ struct IntValue {
 // witness.
 //
 // When a final impl becomes available, or once the query and specific interface
-// are monomorphized to be concrete, the result can become a final witness.
+// are monomorphized to be concrete, this evaluates to that final witness.
 struct LookupImplWitness {
   static constexpr auto Kind =
       InstKind::LookupImplWitness.Define<Parse::NodeId>(
