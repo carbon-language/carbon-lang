@@ -263,6 +263,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         }
 
         auto type_id = context.insts().Get(value_id).type_id();
+        CARBON_CHECK(type_id == SemIR::TypeType::TypeId || type_id == SemIR::ErrorInst::TypeId);
         auto impl_witness_associated_constant =
             AddInst<SemIR::ImplWitnessAssociatedConstant>(
                 context, loc_id, {.type_id = type_id, .inst_id = value_id});
