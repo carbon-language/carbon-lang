@@ -291,6 +291,9 @@ struct AnyParamPattern {
   // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
+
+  // None unless this is a FormParamPattern.
+  ConstantId form_id;
 };
 
 // clang-format off

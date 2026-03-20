@@ -11,6 +11,8 @@ import Core library "range";
 import library "io_utils";
 
 class Grid {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Grid {
     returned var me: Grid;
     for (y: i32 in Core.Range(50)) {

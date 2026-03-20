@@ -26,10 +26,10 @@ fn M() {
   var val_f64 : f64;
   var val_bool : bool;
 
-  var ptr_i16 : i16*;
-  var ptr_i32 : i32*;
-  var ptr_i64 : i64*;
-  var ptr_bool : bool*;
+  var ptr_i16 : i16* = &val_i16;
+  var ptr_i32 : i32* = &val_i32;
+  var ptr_i64 : i64* = &val_i64;
+  var ptr_bool : bool* = &val_bool;
 
   // Insert noise: non equivalent with the second set of calls.
   // (4*2 + 1 functions generated; first 3 coalesce with each other - self
@@ -68,14 +68,23 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i64.var = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   %ptr_bool.var = alloca ptr, align 8, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i16.var), !dbg !7
+// CHECK:STDOUT:   store i16 poison, ptr %val_i16.var, align 2, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i32.var), !dbg !8
+// CHECK:STDOUT:   store i32 poison, ptr %val_i32.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i64.var), !dbg !9
+// CHECK:STDOUT:   store i64 poison, ptr %val_i64.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_f64.var), !dbg !10
+// CHECK:STDOUT:   store double poison, ptr %val_f64.var, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_bool.var), !dbg !11
+// CHECK:STDOUT:   store i8 poison, ptr %val_bool.var, align 1, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i16.var), !dbg !12
+// CHECK:STDOUT:   store ptr %val_i16.var, ptr %ptr_i16.var, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !13
+// CHECK:STDOUT:   store ptr %val_i32.var, ptr %ptr_i32.var, align 8, !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i64.var), !dbg !14
+// CHECK:STDOUT:   store ptr %val_i64.var, ptr %ptr_i64.var, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_bool.var), !dbg !15
+// CHECK:STDOUT:   store ptr %val_bool.var, ptr %ptr_bool.var, align 8, !dbg !15
 // CHECK:STDOUT:   %.loc38_5 = load i16, ptr %val_i16.var, align 2, !dbg !16
 // CHECK:STDOUT:   %.loc38_14 = load ptr, ptr %ptr_i32.var, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc38_23 = load ptr, ptr %ptr_bool.var, align 8, !dbg !18

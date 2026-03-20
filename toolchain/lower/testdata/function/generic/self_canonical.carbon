@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/generic/self_canonical.carbon
@@ -90,6 +90,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !7
+// CHECK:STDOUT:   store ptr poison, ptr %local1.var, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc82 = load ptr, ptr %local1.var, align 8, !dbg !8
 // CHECK:STDOUT:   call void @_Cfirst_function.Main.cf543a2f19840c22(ptr %.loc82), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -104,7 +105,9 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !17
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !17
+// CHECK:STDOUT:   store ptr poison, ptr %local1.var, align 8, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local2.var), !dbg !18
+// CHECK:STDOUT:   store ptr poison, ptr %local2.var, align 8, !dbg !18
 // CHECK:STDOUT:   %.loc53 = load ptr, ptr %local1.var, align 8, !dbg !19
 // CHECK:STDOUT:   call void @_Cfirst_function.Main.cf543a2f19840c22(ptr %.loc53), !dbg !20
 // CHECK:STDOUT:   %.loc54 = load ptr, ptr %local2.var, align 8, !dbg !21
@@ -118,7 +121,9 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !27
+// CHECK:STDOUT:   store ptr poison, ptr %local1.var, align 8, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local2.var), !dbg !28
+// CHECK:STDOUT:   store ptr poison, ptr %local2.var, align 8, !dbg !28
 // CHECK:STDOUT:   %.loc61_19 = load ptr, ptr %local2.var, align 8, !dbg !29
 // CHECK:STDOUT:   %.loc61_27 = load ptr, ptr %local1.var, align 8, !dbg !30
 // CHECK:STDOUT:   call void @_Csecond_function.Main.fa07ebc2c86fcc7a(ptr %.loc61_19, ptr %.loc61_27, ptr %arg), !dbg !31
@@ -132,8 +137,11 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !41
 // CHECK:STDOUT:   %local3.var = alloca ptr, align 8, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !40
+// CHECK:STDOUT:   store ptr poison, ptr %local1.var, align 8, !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local2.var), !dbg !41
+// CHECK:STDOUT:   store ptr poison, ptr %local2.var, align 8, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local3.var), !dbg !42
+// CHECK:STDOUT:   store ptr poison, ptr %local3.var, align 8, !dbg !42
 // CHECK:STDOUT:   %.loc75_25 = load ptr, ptr %local3.var, align 8, !dbg !43
 // CHECK:STDOUT:   %.loc75_33 = load ptr, ptr %local2.var, align 8, !dbg !44
 // CHECK:STDOUT:   call void @_Csecond_function.Main.fa07ebc2c86fcc7a(ptr %arg3, ptr %.loc75_25, ptr %.loc75_33), !dbg !45
@@ -148,7 +156,9 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !54
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !55
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !54
+// CHECK:STDOUT:   store ptr poison, ptr %local1.var, align 8, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local2.var), !dbg !55
+// CHECK:STDOUT:   store ptr poison, ptr %local2.var, align 8, !dbg !55
 // CHECK:STDOUT:   %.loc39 = load ptr, ptr %local2.var, align 8, !dbg !56
 // CHECK:STDOUT:   call void @_Cthird_function.Main.4704114ae40540d8(ptr %arg1, ptr %arg2, ptr %.loc39), !dbg !57
 // CHECK:STDOUT:   %.loc40 = load ptr, ptr %local1.var, align 8, !dbg !58

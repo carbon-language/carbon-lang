@@ -1837,6 +1837,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           SemIR::IntValue{.type_id = call.type_id, .int_id = int_id}, phase);
     }
 
+    case SemIR::BuiltinFunctionKind::MakeUninitialized:
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:

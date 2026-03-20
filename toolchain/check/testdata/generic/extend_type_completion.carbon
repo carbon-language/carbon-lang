@@ -20,7 +20,7 @@ class C(N:! i32) {
 }
 
 // C does not extend K so the type of K is not completed. No error.
-var v: C(-1);
+fn F(unused v: C(-1)) {}
 
 // --- fail_class_extend_impl_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -32,14 +32,14 @@ class C(N:! i32) {
 }
 
 // C extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `C(-1)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var v: C(-1);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR: fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `C(-1)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(unused v: C(-1)) {}
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE-7]]:18: note: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR:   extend impl as K(array(i32, N)) {}
 // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var v: C(-1);
+fn F(unused v: C(-1)) {}
 
 // --- interface_require_impls_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -50,7 +50,7 @@ interface J(N:! i32) {
 }
 
 // J does not extend K so the type of K is not completed. No error.
-var v: J(-1);
+fn F(unused v: J(-1)) {}
 
 // --- fail_interface_extend_require_impls_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -69,9 +69,9 @@ interface I(N:! i32) {
 // need a location for the type in context.bind_name_map() to use as the
 // location to Convert().
 //
-// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+10]]:8: error: binding pattern has incomplete type `I(-1)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var v: I(-1);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+10]]:13: error: parameter has incomplete type `I(-1)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(unused v: I(-1)) {}
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-12]]:24: note: `J(N)` evaluates to incomplete type `J(-1)` [IncompleteTypeInMonomorphization]
 // CHECK:STDERR:   extend require impls J(N);
 // CHECK:STDERR:                        ^~~~
@@ -79,7 +79,7 @@ interface I(N:! i32) {
 // CHECK:STDERR:   extend require impls K(array(i32, N));
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var v: I(-1);
+fn F(unused v: I(-1)) {}
 
 // --- constraint_require_impls_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -90,7 +90,7 @@ constraint J(N:! i32) {
 }
 
 // J does not extend K so the type of K is not completed. No error.
-var v: J(-1);
+fn F(unused v: J(-1)) {}
 
 // --- fail_constraint_extend_require_impls_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -104,9 +104,9 @@ constraint I(N:! i32) {
 }
 
 // I extends J extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+10]]:8: error: binding pattern has incomplete type `I(-1)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var v: I(-1);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+10]]:13: error: parameter has incomplete type `I(-1)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(unused v: I(-1)) {}
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-7]]:24: note: `J(N)` evaluates to incomplete type `J(-1)` [IncompleteTypeInMonomorphization]
 // CHECK:STDERR:   extend require impls J(N);
 // CHECK:STDERR:                        ^~~~
@@ -114,7 +114,7 @@ constraint I(N:! i32) {
 // CHECK:STDERR:   extend require impls K(array(i32, N));
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var v: I(-1);
+fn F(unused v: I(-1)) {}
 
 // --- interface_require_impls_doesnt_need_complete_self.carbon
 library "[[@TEST_NAME]]";
@@ -125,7 +125,7 @@ interface J(N:! i32) {
 }
 
 // J does not extend K so the type of Self impling K is not completed. No error.
-var v: J(-1);
+fn F(unused v: J(-1)) {}
 
 // --- constraint_require_impls_doesnt_need_complete_self.carbon
 library "[[@TEST_NAME]]";
@@ -136,4 +136,4 @@ constraint J(N:! i32) {
 }
 
 // J does not extend K so the type of Self impling K is not completed. No error.
-var v: J(-1);
+fn F(unused v: J(-1)) {}

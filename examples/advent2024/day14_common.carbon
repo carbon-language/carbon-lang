@@ -23,6 +23,8 @@ fn Mod(a: i32, d: i32) -> i32 {
 }
 
 class Robot {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Robot {
     returned var me: Robot;
     SkipString("p=");

@@ -32,12 +32,12 @@ fn G[T:! type](x: T) {
   F(x);
   //@dump-sem-ir-end
 
-  var c: C;
+  var c: C = {};
   c.Cfn(x);
 }
 
 fn M() {
-  var n: C;
+  var n: C = {};
 
   //@dump-sem-ir-begin
   F(n);

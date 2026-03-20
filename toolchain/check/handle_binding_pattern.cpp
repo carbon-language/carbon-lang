@@ -177,12 +177,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
 
+  auto form_id = pattern_inst_kind == SemIR::FormBindingPattern::Kind
+                     ? context.constant_values().Get(type_expr.inst_id)
+                     : SemIR::ConstantId::None;
+
   auto make_binding_pattern = [&]() -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto form_id = pattern_inst_kind == SemIR::FormBindingPattern::Kind
-                       ? context.constant_values().Get(type_expr.inst_id)
-                       : SemIR::ConstantId::None;
     auto phase = BindingPhase::Runtime;
     if (pattern_inst_kind == SemIR::SymbolicBindingPattern::Kind) {
       phase = is_template ? BindingPhase::Template : BindingPhase::Symbolic;
@@ -296,7 +297,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
           result_inst_id = AddPatternInst<SemIR::FormParamPattern>(
               context, node_id,
-              {.type_id = type_id, .subpattern_id = result_inst_id});
+              {.type_id = type_id,
+               .subpattern_id = result_inst_id,
+               .form_id = form_id});
         } else {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
