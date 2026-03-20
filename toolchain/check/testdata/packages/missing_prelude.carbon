@@ -139,6 +139,12 @@ let n: type = i32;
 // CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%n.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -167,6 +173,12 @@ let n: type = i32;
 // CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%n.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_fake_int.carbon

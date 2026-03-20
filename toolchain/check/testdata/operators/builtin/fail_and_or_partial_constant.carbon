@@ -97,6 +97,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   br !.loc9_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_20:
@@ -132,6 +133,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   br !.loc14_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_20:
@@ -215,6 +217,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   br !.loc11_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_20:
@@ -250,6 +253,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var %d.var_patt [concrete = <error>]
+// CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT:   br !.loc16_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_20:

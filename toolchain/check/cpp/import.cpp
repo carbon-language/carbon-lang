@@ -80,7 +80,7 @@ static auto AddNameToScope(Context& context, SemIR::NameScopeId scope_id,
 }
 
 // Maps a Clang name to a Carbon `NameId`.
-static auto AddIdentifierName(Context& context, llvm::StringRef name)
+auto AddIdentifierName(Context& context, llvm::StringRef name)
     -> SemIR::NameId {
   return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
 }

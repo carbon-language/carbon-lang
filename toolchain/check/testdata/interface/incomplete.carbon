@@ -49,6 +49,7 @@ interface I {
 }
 
 fn F[U:! I](a: U) {
+  // TODO: Should this be diagnosed as having an incomplete type?
   a.T;
 }
 
@@ -292,13 +293,13 @@ interface A(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc9_6.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc10_4.2: %C = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc11_4.2: %C = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%U.binding.as_type (%U.binding.as_type) = name_ref a, %a
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc10_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc11_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -125,15 +125,19 @@ fn M() {
 // CHECK:STDOUT:   %H.call.loc31 = call i32 @_CH.Main.64ccbb8e5d9a0b8e(i32 %.loc31_8.4), !dbg !39
 // CHECK:STDOUT:   store i32 %H.call.loc31, ptr %.loc31_9.2.temp, align 4, !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !40
+// CHECK:STDOUT:   store double poison, ptr %var_f64.var, align 8, !dbg !40
 // CHECK:STDOUT:   %.loc35_5 = load double, ptr %var_f64.var, align 8, !dbg !47
 // CHECK:STDOUT:   %H.call.loc35 = call double @_CH.Main.de5b400758c39a65(double %.loc35_5), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !41
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !41
 // CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !49
 // CHECK:STDOUT:   %H.call.loc37 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc37_5), !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !42
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_f64.var, align 8, !dbg !42
 // CHECK:STDOUT:   %.loc39_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !51
 // CHECK:STDOUT:   %H.call.loc39 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc39_5), !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !43
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_i8.var, align 8, !dbg !43
 // CHECK:STDOUT:   %.loc41_5 = load ptr, ptr %ptr_i8.var, align 8, !dbg !53
 // CHECK:STDOUT:   %H.call.loc41 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc41_5), !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !44
@@ -172,15 +176,19 @@ fn M() {
 // CHECK:STDOUT:   %H.call.loc31 = call double @_CH.Main.de5b400758c39a65(double %.loc31_8.4), !dbg !67
 // CHECK:STDOUT:   store double %H.call.loc31, ptr %.loc31_9.2.temp, align 8, !dbg !67
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !68
+// CHECK:STDOUT:   store double poison, ptr %var_f64.var, align 8, !dbg !68
 // CHECK:STDOUT:   %.loc35_5 = load double, ptr %var_f64.var, align 8, !dbg !75
 // CHECK:STDOUT:   %H.call.loc35 = call double @_CH.Main.de5b400758c39a65(double %.loc35_5), !dbg !76
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !69
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !69
 // CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !77
 // CHECK:STDOUT:   %H.call.loc37 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc37_5), !dbg !78
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !70
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_f64.var, align 8, !dbg !70
 // CHECK:STDOUT:   %.loc39_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !79
 // CHECK:STDOUT:   %H.call.loc39 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc39_5), !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !71
+// CHECK:STDOUT:   store ptr poison, ptr %ptr_i8.var, align 8, !dbg !71
 // CHECK:STDOUT:   %.loc41_5 = load ptr, ptr %ptr_i8.var, align 8, !dbg !81
 // CHECK:STDOUT:   %H.call.loc41 = call ptr @_CH.Main.779b9c0f3b54a7f8(ptr %.loc41_5), !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !72

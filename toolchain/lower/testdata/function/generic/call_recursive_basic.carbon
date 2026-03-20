@@ -28,15 +28,15 @@ fn F[T:! Core.Copy](x: T, count: i32) -> T {
 fn M() {
   var n: i32 = 0;
   var m: f64 = 1.0;
-  var ptr_i32 : i32*;
-  var ptr_f64 : f64*;
+  var ptr_i32 : i32* = &n;
+  var ptr_f64 : f64* = &m;
 
   F(n, 0);
   F(m, 0);
   F(ptr_i32, 0);
   F(ptr_f64, 0);
 
-  var c: C;
+  var c: C = {};
   F(c, 0);
 }
 
@@ -66,7 +66,9 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !15
 // CHECK:STDOUT:   store double 1.000000e+00, ptr %m.var, align 8, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !16
+// CHECK:STDOUT:   store ptr %n.var, ptr %ptr_i32.var, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !17
+// CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc34_5 = load i32, ptr %n.var, align 4, !dbg !20
 // CHECK:STDOUT:   %F.call.loc34 = call i32 @_CF.Main.64ccbb8e5d9a0b8e(i32 %.loc34_5, i32 0), !dbg !21
 // CHECK:STDOUT:   %.loc35_5 = load double, ptr %m.var, align 8, !dbg !22
@@ -76,6 +78,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !26
 // CHECK:STDOUT:   %F.call.loc37 = call ptr @_CF.Main.779b9c0f3b54a7f8(ptr %.loc37_5, i32 0), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !18
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.4.temp), !dbg !19
 // CHECK:STDOUT:   call void @_CF.Main.706e9f413f1bae3d(ptr %.loc40_9.4.temp, ptr %c.var, i32 0), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !28
@@ -149,6 +152,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.779b9c0f3b54a7f8, { 1, 2, 0 }
 // CHECK:STDOUT:

@@ -380,11 +380,19 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.6b7: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%S) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.d8f: %DefaultOrUnformed.type = facet_value %S, (%DefaultOrUnformed.impl_witness.6b7) [concrete]
 // CHECK:STDOUT:   %TakesLValue.cpp_overload_set.type: type = cpp_overload_set_type @TakesLValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesLValue.cpp_overload_set.value: %TakesLValue.cpp_overload_set.type = cpp_overload_set_value @TakesLValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const: type = const_type %S [concrete]
-// CHECK:STDOUT:   %T: type = class_type @T [concrete]
-// CHECK:STDOUT:   %pattern_type.e6b: type = pattern_type %T [concrete]
+// CHECK:STDOUT:   %T.e15: type = class_type @T [concrete]
+// CHECK:STDOUT:   %pattern_type.e6b: type = pattern_type %T.e15 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a11: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%T.e15) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.5fe: %DefaultOrUnformed.type = facet_value %T.e15, (%DefaultOrUnformed.impl_witness.a11) [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.cpp_destructor.type: type = fn_type @T.cpp_destructor [concrete]
@@ -399,8 +407,10 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %TakesLValue.cpp_overload_set.value: %TakesLValue.cpp_overload_set.type = cpp_overload_set_value @TakesLValue.cpp_overload_set [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T] {} {}
+// CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T.e15] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -410,7 +420,15 @@ fn F() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7da = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %S = var %v.var_patt
-// CHECK:STDOUT:   %.loc8: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc8_15.2: type = converted %.loc8_15.1, %as_type.loc8 [concrete = constants.%S]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc8_3: ref %S = splice_block %v.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc8: init %S to %.loc8_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign %v.var, %T.as.DefaultOrUnformed.impl.Op.call.loc8
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
@@ -440,21 +458,37 @@ fn F() {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = ref_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.var: ref %T = var %t.var_patt
-// CHECK:STDOUT:   %.loc30: type = splice_block %T.ref [concrete = constants.%T] {
+// CHECK:STDOUT:   %t.var: ref %T.e15 = var %t.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %.loc30_15.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_15.1 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %.loc30_15.2: type = converted %.loc30_15.1, %as_type.loc30 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc30_3: ref %T.e15 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc30: init %T.e15 to %.loc30_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc30
+// CHECK:STDOUT:   %.loc30_13: type = splice_block %T.ref [concrete = constants.%T.e15] {
 // CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.e15]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T = ref_binding t, %t.var
+// CHECK:STDOUT:   %t: ref %T.e15 = ref_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc39: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
+// CHECK:STDOUT:   %t.ref: ref %T.e15 = name_ref t, %t
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type.7da = ref_binding_pattern u [concrete]
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.7da = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %S = var %u.var_patt
-// CHECK:STDOUT:   %.loc41: type = splice_block %S.ref.loc41 [concrete = constants.%S] {
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc41: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc41_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc41 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc41: type = facet_access_type %.loc41_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc41_15.2: type = converted %.loc41_15.1, %as_type.loc41 [concrete = constants.%S]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc41_3: ref %S = splice_block %u.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc41: init %S to %.loc41_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign %u.var, %T.as.DefaultOrUnformed.impl.Op.call.loc41
+// CHECK:STDOUT:   %.loc41_13: type = splice_block %S.ref.loc41 [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc41: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc41: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
@@ -535,10 +569,18 @@ fn F() {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.6b7: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%S) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.d8f: %DefaultOrUnformed.type = facet_value %S, (%DefaultOrUnformed.impl_witness.6b7) [concrete]
 // CHECK:STDOUT:   %TakesRValue.cpp_overload_set.type: type = cpp_overload_set_type @TakesRValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %T: type = class_type @T [concrete]
-// CHECK:STDOUT:   %pattern_type.e6b: type = pattern_type %T [concrete]
+// CHECK:STDOUT:   %T.e15: type = class_type @T [concrete]
+// CHECK:STDOUT:   %pattern_type.e6b: type = pattern_type %T.e15 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a11: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%T.e15) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.5fe: %DefaultOrUnformed.type = facet_value %T.e15, (%DefaultOrUnformed.impl_witness.a11) [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
 // CHECK:STDOUT:   %const: type = const_type %S [concrete]
@@ -557,8 +599,10 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %TakesRValue.cpp_overload_set.value: %TakesRValue.cpp_overload_set.type = cpp_overload_set_value @TakesRValue.cpp_overload_set [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T] {} {}
+// CHECK:STDOUT:   %T.decl: type = class_decl @T [concrete = constants.%T.e15] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -568,7 +612,15 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %.loc8: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6b7) [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.d8f]
+// CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc8_15.2: type = converted %.loc8_15.1, %as_type.loc8 [concrete = constants.%S]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc8_3: ref %S = splice_block %s.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc8: init %S to %.loc8_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   assign %s.var, %T.as.DefaultOrUnformed.impl.Op.call.loc8
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
@@ -580,15 +632,23 @@ fn F() {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = ref_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.var: ref %T = var %t.var_patt
-// CHECK:STDOUT:   %.loc19: type = splice_block %T.ref [concrete = constants.%T] {
+// CHECK:STDOUT:   %t.var: ref %T.e15 = var %t.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.e15, (constants.%DefaultOrUnformed.impl_witness.a11) [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.e15, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.5fe]
+// CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_15.1 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   %.loc19_15.2: type = converted %.loc19_15.1, %as_type.loc19 [concrete = constants.%T.e15]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc19_3: ref %T.e15 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc19: init %T.e15 to %.loc19_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as.DefaultOrUnformed.impl.Op.call.loc19
+// CHECK:STDOUT:   %.loc19_13: type = splice_block %T.ref [concrete = constants.%T.e15] {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.e15]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T = ref_binding t, %t.var
+// CHECK:STDOUT:   %t: ref %T.e15 = ref_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc28: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
+// CHECK:STDOUT:   %t.ref: ref %T.e15 = name_ref t, %t
 // CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc38: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc38_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]

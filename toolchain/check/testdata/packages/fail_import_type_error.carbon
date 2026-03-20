@@ -106,6 +106,15 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %d_ref: ref <error> = ref_binding d_ref, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%a_ref.var, <error>
+// CHECK:STDOUT:   assign file.%b_ref.var, <error>
+// CHECK:STDOUT:   assign file.%c_ref.var, <error>
+// CHECK:STDOUT:   assign file.%d_ref.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

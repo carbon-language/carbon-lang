@@ -5,6 +5,7 @@
 package Core library "prelude/types/cpp/nullptr";
 
 import library "prelude/copy";
+import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators/as";
 import library "prelude/types/cpp/void";
@@ -29,9 +30,13 @@ class CppCompat.NullptrT {
   // TODO: Give this type a custom empty value representation.
   adapt MaybeUnformed(VoidBase*);
 
+  // TODO: This should be just
+  //   fn Make() -> Self = "make_uninitialized";
+  // but we don't yet delay processing builtin function definitions until the
+  // end of the enclosing class.
   fn Make() -> Self {
-    returned var s: Self;
-    return var;
+    fn MakeImpl() -> Self = "make_uninitialized";
+    return MakeImpl();
   }
 
   impl as Copy {
@@ -48,3 +53,5 @@ class CppCompat.NullptrT {
     }
   }
 }
+
+impl CppCompat.NullptrT as UnformedInit {}

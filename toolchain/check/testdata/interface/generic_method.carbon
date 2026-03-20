@@ -154,6 +154,14 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.bdb: type = pattern_type %Z [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.6c6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.ae1: %T.as.DefaultOrUnformed.impl.Op.type.6c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.263: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table, @T.as.DefaultOrUnformed.impl(%Z) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.b84: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Z) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.4f1: %T.as.DefaultOrUnformed.impl.Op.type.b84 = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Z, (%DefaultOrUnformed.impl_witness.263) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.4f1, @T.as.DefaultOrUnformed.impl.Op(%Z) [concrete]
 // CHECK:STDOUT:   %.de2: type = fn_type_with_self_type %A.WithSelf.F.type.12f, %A.facet [concrete]
 // CHECK:STDOUT:   %ptr.2a0: type = ptr_type %Z [concrete]
 // CHECK:STDOUT:   %pattern_type.771: type = pattern_type %ptr.2a0 [concrete]
@@ -213,6 +221,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
+// CHECK:STDOUT:     .DefaultOrUnformed = %Core.DefaultOrUnformed
 // CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -220,6 +229,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4455.1) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e93b.1)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -457,6 +469,14 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.bdb = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %Z = var %u.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Z, (constants.%DefaultOrUnformed.impl_witness.263) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc22_11.1: %DefaultOrUnformed.type = converted constants.%Z, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type.loc22: type = facet_access_type %.loc22_11.1 [concrete = constants.%Z]
+// CHECK:STDOUT:   %.loc22_11.2: type = converted %.loc22_11.1, %as_type.loc22 [concrete = constants.%Z]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.4f1, @T.as.DefaultOrUnformed.impl.Op(constants.%Z) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
+// CHECK:STDOUT:   %.loc22_3: ref %Z = splice_block %u.var {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Z to %.loc22_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign %u.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Z.ref.loc22: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:   %u: ref %Z = ref_binding u, %u.var
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
@@ -465,8 +485,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.ab6]
 // CHECK:STDOUT:   %A.facet: %A.type.ab6 = facet_value %Y.ref, (constants.%A.impl_witness) [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %.loc23_6: %A.type.ab6 = converted %Y.ref, %A.facet [concrete = constants.%A.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc23_6 [concrete = constants.%Y]
-// CHECK:STDOUT:   %.loc23_14.1: type = converted %.loc23_6, %as_type [concrete = constants.%Y]
+// CHECK:STDOUT:   %as_type.loc23: type = facet_access_type %.loc23_6 [concrete = constants.%Y]
+// CHECK:STDOUT:   %.loc23_14.1: type = converted %.loc23_6, %as_type.loc23 [concrete = constants.%Y]
 // CHECK:STDOUT:   %.loc23_14.2: %A.assoc_type.f05 = specific_constant @A.WithSelf.%assoc0.loc6_41.1, @A.WithSelf(constants.%X, constants.%A.facet) [concrete = constants.%assoc0.368]
 // CHECK:STDOUT:   %F.ref: %A.assoc_type.f05 = name_ref F, %.loc23_14.2 [concrete = constants.%assoc0.368]
 // CHECK:STDOUT:   %impl.elem0: %.de2 = impl_witness_access constants.%A.impl_witness, element0 [concrete = constants.%Y.as.A.impl.F]
@@ -514,6 +534,14 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %u.var_patt: %pattern_type.bdb = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.var: ref %Z = var %u.var_patt
+// CHECK:STDOUT:     %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Z, (constants.%DefaultOrUnformed.impl_witness.263) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:     %.loc27_11.1: %DefaultOrUnformed.type = converted constants.%Z, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:     %as_type: type = facet_access_type %.loc27_11.1 [concrete = constants.%Z]
+// CHECK:STDOUT:     %.loc27_11.2: type = converted %.loc27_11.1, %as_type [concrete = constants.%Z]
+// CHECK:STDOUT:     %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.4f1, @T.as.DefaultOrUnformed.impl.Op(constants.%Z) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
+// CHECK:STDOUT:     %.loc27_3: ref %Z = splice_block %u.var {}
+// CHECK:STDOUT:     %T.as.DefaultOrUnformed.impl.Op.call: init %Z to %.loc27_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:     assign %u.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:     %Z.ref.loc27: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:     %u: ref %Z = ref_binding u, %u.var
 // CHECK:STDOUT:     %T.ref: %A.type.ab6 = name_ref T, %T.loc26_16.2 [symbolic = %T.loc26_16.1 (constants.%T.2bc)]

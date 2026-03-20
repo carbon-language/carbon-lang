@@ -24,7 +24,7 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.ConstDeref) -> ref i32 {
-  // CHECK:STDERR: fail_todo_const_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `Unsupported definition of interface CppUnsafeDeref` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_const_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `Associated constant in interface with synthesized impl` [SemanticsTodo]
   // CHECK:STDERR:   return int_ptr.(Core.CppUnsafeDeref.Op)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -43,7 +43,7 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.MutableDeref) -> ref i32 {
-  // CHECK:STDERR: fail_todo_mutable_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `Unsupported definition of interface CppUnsafeDeref` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_mutable_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `Associated constant in interface with synthesized impl` [SemanticsTodo]
   // CHECK:STDERR:   return int_ptr.(Core.CppUnsafeDeref.Op)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
