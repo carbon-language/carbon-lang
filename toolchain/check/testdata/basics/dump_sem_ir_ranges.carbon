@@ -20,11 +20,11 @@
 library "[[@TEST_NAME]]";
 
 fn A() {
-  var unused a: ();
+  var unused a: () = ();
 }
 
 fn B() -> () {
-  var b: ();
+  var b: () = ();
   //@dump-sem-ir-begin
   b = A();
   //@dump-sem-ir-end
@@ -33,7 +33,7 @@ fn B() -> () {
 
 //@dump-sem-ir-begin
 fn C() -> () {
-  var c: ();
+  var c: () = ();
   c = B();
   return c;
 }
@@ -144,6 +144,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
+// CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_3: init %empty_tuple.type = converted %.loc18_16.1, %.loc18_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %c.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_11.1: type = splice_block %.loc18_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc18_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_11.3: type = converted %.loc18_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

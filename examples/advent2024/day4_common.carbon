@@ -9,6 +9,8 @@ library "day4_common";
 import library "io_utils";
 
 class Wordsearch {
+  impl as Core.UnformedInit {}
+
   fn Read() -> Wordsearch {
     returned var s: Wordsearch;
     // TODO: Use for loops once they're implemented.

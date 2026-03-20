@@ -53,6 +53,7 @@ fn H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
+// CHECK:STDOUT:   store ptr poison, ptr %_.var, align 8, !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,6 +62,7 @@ fn H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   store ptr poison, ptr %_.var, align 8, !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
