@@ -91,7 +91,7 @@ fn F() {
   G(C);
 }
 
-// --- todo_fail_facet_access_type_of_self_meets_constraint.carbon
+// --- fail_todo_facet_access_type_of_self_meets_constraint.carbon
 library "[[@TEST_NAME]]";
 
 class C(T:! type) {}
@@ -100,10 +100,10 @@ interface Y {}
 interface NeedsY(T:! Y) {}
 constraint W {
   require C(Self) impls Y;
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:17: error: cannot convert type `C(Self)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:17: error: cannot convert type `C(Self)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   require impls NeedsY(C(Self));
   // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-6]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-6]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface NeedsY(T:! Y) {}
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
@@ -114,15 +114,15 @@ fn F(w:! W) {
   // TODO: Lookups for `C(w) as <something>` need to look into the facet types
   // of any facet value in the type `C(w)`, so that it can find a witness from
   // the constraint `W`.
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(w) as Y;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   C(w) as Y;
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:11: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_facet_access_type_of_self_meets_constraint.carbon:[[@LINE+7]]:11: error: cannot convert type `C(w)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(w) as NeedsY(C(w));
   // CHECK:STDERR:           ^~~~~~~~~~~~
-  // CHECK:STDERR: todo_fail_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-25]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_facet_access_type_of_self_meets_constraint.carbon:[[@LINE-25]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface NeedsY(T:! Y) {}
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
