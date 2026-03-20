@@ -421,8 +421,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
               context.sem_ir(), entry.pattern_id)};
       auto param_id =
-          AddInst(context, SemIR::LocIdAndInst::UncheckedLoc(
-                               SemIR::LocId(entry.pattern_id), param));
+          AddInst(context, MakeVerifiedLocIdAndInst(
+                               context, SemIR::LocId(entry.pattern_id), param));
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id});
       call_params_.push_back(param_id);

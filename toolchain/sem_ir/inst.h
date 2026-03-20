@@ -417,12 +417,18 @@ struct LocIdAndInst {
     return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
-  // Unsafely form a pair of a location and an instruction. Used in the cases
-  // where we can't statically enforce the type matches. For `ImportIRInstId`,
-  // use `MakeImportedLocIdAndInst` in `import.h`.
+  // Unsafely form a pair of a location and an instruction. Most code should use
+  // a constructor, and there's also helpers:
+  //
+  // - For `ImportIRInstId` locations, use `MakeImportedLocIdAndInst` in
+  //   `import.h`.
+  // - For `LocId` locations, use `MakeVerifiedLocIdAndInst` in `inst.cpp`.
+  //
+  // Those specific helpers and `GetWithLocId` are the only places that should
+  // ever call this constructor.
   template <typename LocT>
-    requires(std::convertible_to<LocT, LocId> &&
-             !std::same_as<LocT, ImportIRInstId>)
+  // Disallow implicit LocId construction.
+    requires(std::same_as<LocT, LocId>)
   static auto UncheckedLoc(LocT loc_id, Inst inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }

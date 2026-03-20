@@ -13,6 +13,14 @@
 
 namespace Carbon::Check {
 
+// Returns a `LocIdAndInst`. This is allowed to do runtime validation in non-opt
+// builds.
+//
+// Prefer `SemIR::LocIdAndInst` constructors with compile-time validation, or
+// `AddInst` overloads which make use of those constructors.
+auto MakeVerifiedLocIdAndInst(Context& context, SemIR::LocId loc_id,
+                              SemIR::Inst inst) -> SemIR::LocIdAndInst;
+
 // Adds an instruction to the current block, returning the produced ID.
 auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;

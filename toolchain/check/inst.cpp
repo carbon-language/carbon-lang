@@ -8,11 +8,35 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
+
+auto MakeVerifiedLocIdAndInst(Context& context, SemIR::LocId loc_id,
+                              SemIR::Inst inst) -> SemIR::LocIdAndInst {
+#ifndef NDEBUG
+  switch (loc_id.kind()) {
+    case SemIR::LocId::Kind::ImportIRInstId:
+      // TODO: Verify with something like `MakeImportedLocIdAndInst`.
+      break;
+    case SemIR::LocId::Kind::InstId:
+      // TODO: Figure out right verification.
+      break;
+    case SemIR::LocId::Kind::NodeId: {
+      auto node_kind = context.parse_tree().node_kind(loc_id.node_id());
+      CARBON_CHECK(inst.kind().IsAllowedNodeKind(node_kind),
+                   "Unexpected loc_id node_kind {0} for {1}", node_kind, inst);
+      break;
+    }
+    case SemIR::LocId::Kind::None:
+      break;
+  }
+#endif
+  return SemIR::LocIdAndInst::UncheckedLoc(loc_id, inst);
+}
 
 // Finish producing an instruction. Set its constant value, and register it in
 // any applicable instruction lists.

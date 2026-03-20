@@ -1207,10 +1207,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
       auto tuple_pattern_type_id =
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddPatternInst(
-          context,
-          SemIR::LocIdAndInst::UncheckedLoc(
-              loc_id, SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
-                                          .elements_id = param_block_id}));
+          context, MakeVerifiedLocIdAndInst(
+                       context, loc_id,
+                       SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
+                                           .elements_id = param_block_id}));
       param_ids = {pattern_id};
       break;
     }
