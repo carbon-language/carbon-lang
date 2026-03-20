@@ -257,13 +257,14 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         // Special-case the ones we want to support in this if-statement, until
         // we're able to account for everything.
         if (decl.type_id != SemIR::TypeType::TypeId) {
-          context.TODO(
-              loc_id, "Associated constant in interface with synthesized impl");
+          context.TODO(loc_id,
+                       "Associated constant of type other than `TypeType`");
           return SemIR::ErrorInst::InstId;
         }
 
         auto type_id = context.insts().Get(value_id).type_id();
-        CARBON_CHECK(type_id == SemIR::TypeType::TypeId || type_id == SemIR::ErrorInst::TypeId);
+        CARBON_CHECK(type_id == SemIR::TypeType::TypeId ||
+                     type_id == SemIR::ErrorInst::TypeId);
         auto impl_witness_associated_constant =
             AddInst<SemIR::ImplWitnessAssociatedConstant>(
                 context, loc_id, {.type_id = type_id, .inst_id = value_id});
