@@ -190,8 +190,8 @@ fn MyF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !16
+// CHECK:STDOUT:   %.loc18 = load i32, ptr @foo, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc18, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

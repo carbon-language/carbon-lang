@@ -25,10 +25,10 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Foo = %Foo.decl.loc15
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc5
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc17: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc5: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc10: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

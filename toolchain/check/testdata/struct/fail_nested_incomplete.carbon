@@ -46,8 +46,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref <error> = var %s.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc24: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
-// CHECK:STDOUT:     %Incomplete.ref.loc24: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc12: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:     %Incomplete.ref.loc11: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref <error> = ref_binding s, <error> [concrete = <error>]
@@ -56,9 +56,9 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt [concrete]
-// CHECK:STDOUT:   %.loc26: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Incomplete.ref.loc26: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc26 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc18: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Incomplete.ref.loc17: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc17 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = ref_binding p, %p.var [concrete = %p.var]
 // CHECK:STDOUT: }

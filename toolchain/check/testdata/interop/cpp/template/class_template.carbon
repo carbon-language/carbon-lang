@@ -74,7 +74,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9de = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc7: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:   %.loc13: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   }
@@ -83,28 +83,28 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc7_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref: %X.type = name_ref X, imports.%X.template [concrete = constants.%X.template]
-// CHECK:STDOUT:   %Cpp.ref.loc7_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc7_32: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %f.ref: %X.f.cpp_overload_set.type = name_ref f, imports.%X.f.cpp_overload_set.value [concrete = constants.%X.f.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_39.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc7_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc7_47: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc7_39.2: ref %B = temporary_storage
-// CHECK:STDOUT:   %.loc7_39.3: init %B to %.loc7_39.2 = class_init () [concrete = constants.%B.val]
-// CHECK:STDOUT:   %.loc7_41.1: init %B = converted %.loc7_39.1, %.loc7_39.3 [concrete = constants.%B.val]
-// CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %.loc7_41.2: ref %B = temporary %.loc7_39.2, %.loc7_41.1
-// CHECK:STDOUT:   %.loc7_41.3: %B = acquire_value %.loc7_41.2
-// CHECK:STDOUT:   %.loc7_41.4: ref %B = value_as_ref %.loc7_41.3
-// CHECK:STDOUT:   %addr.loc7_49.1: %ptr.a04 = addr_of %.loc7_41.4
-// CHECK:STDOUT:   %addr.loc7_49.2: %ptr.270 = addr_of %.loc7_1
-// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%addr.loc7_49.1, %addr.loc7_49.2)
-// CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = mark_in_place_init %f__carbon_thunk.call
-// CHECK:STDOUT:   assign file.%a.var, %.loc7_49
+// CHECK:STDOUT:   %.loc32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc35: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc32.2: ref %B = temporary_storage
+// CHECK:STDOUT:   %.loc32.3: init %B to %.loc32.2 = class_init () [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc33.1: init %B = converted %.loc32.1, %.loc32.3 [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc9: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %.loc33.2: ref %B = temporary %.loc32.2, %.loc33.1
+// CHECK:STDOUT:   %.loc33.3: %B = acquire_value %.loc33.2
+// CHECK:STDOUT:   %.loc33.4: ref %B = value_as_ref %.loc33.3
+// CHECK:STDOUT:   %addr.loc37.1: %ptr.a04 = addr_of %.loc33.4
+// CHECK:STDOUT:   %addr.loc37.2: %ptr.270 = addr_of %.loc9
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%addr.loc37.1, %addr.loc37.2)
+// CHECK:STDOUT:   %.loc37: init %A to %.loc9 = mark_in_place_init %f__carbon_thunk.call
+// CHECK:STDOUT:   assign file.%a.var, %.loc37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

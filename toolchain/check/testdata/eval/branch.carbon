@@ -92,12 +92,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.1ab = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc14_14.1: type = splice_block %.loc14_14.3 [concrete = constants.%A] {
-// CHECK:STDOUT:     %F.ref.loc14: %F.type = name_ref F, %F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc41.1: type = splice_block %.loc41.3 [concrete = constants.%A] {
+// CHECK:STDOUT:     %F.ref.loc38: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %F.call.loc14: init type = call %F.ref.loc14(%true) [concrete = constants.%A]
-// CHECK:STDOUT:     %.loc14_14.2: type = value_of_initializer %F.call.loc14 [concrete = constants.%A]
-// CHECK:STDOUT:     %.loc14_14.3: type = converted %F.call.loc14, %.loc14_14.2 [concrete = constants.%A]
+// CHECK:STDOUT:     %F.call.loc41: init type = call %F.ref.loc38(%true) [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc41.2: type = value_of_initializer %F.call.loc41 [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc41.3: type = converted %F.call.loc41, %.loc41.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -105,12 +105,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1f4 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15_15.1: type = splice_block %.loc15_15.3 [concrete = constants.%B] {
-// CHECK:STDOUT:     %F.ref.loc15: %F.type = name_ref F, %F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc53.1: type = splice_block %.loc53.3 [concrete = constants.%B] {
+// CHECK:STDOUT:     %F.ref.loc50: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %F.call.loc15: init type = call %F.ref.loc15(%false) [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc15_15.2: type = value_of_initializer %F.call.loc15 [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc15_15.3: type = converted %F.call.loc15, %.loc15_15.2 [concrete = constants.%B]
+// CHECK:STDOUT:     %F.call.loc53: init type = call %F.ref.loc50(%false) [concrete = constants.%B]
+// CHECK:STDOUT:     %.loc53.2: type = value_of_initializer %F.call.loc53 [concrete = constants.%B]
+// CHECK:STDOUT:     %.loc53.3: type = converted %F.call.loc53, %.loc53.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
@@ -118,12 +118,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeA.ref: %MakeA.type = name_ref MakeA, imports.%Main.MakeA [concrete = constants.%MakeA]
-// CHECK:STDOUT:   %.loc14: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %MakeA.call: init %A to %.loc14 = call %MakeA.ref()
+// CHECK:STDOUT:   %.loc35: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %MakeA.call: init %A to %.loc35 = call %MakeA.ref()
 // CHECK:STDOUT:   assign file.%a.var, %MakeA.call
 // CHECK:STDOUT:   %MakeB.ref: %MakeB.type = name_ref MakeB, imports.%Main.MakeB [concrete = constants.%MakeB]
-// CHECK:STDOUT:   %.loc15: ref %B = splice_block file.%b.var [concrete = file.%b.var] {}
-// CHECK:STDOUT:   %MakeB.call: init %B to %.loc15 = call %MakeB.ref()
+// CHECK:STDOUT:   %.loc47: ref %B = splice_block file.%b.var [concrete = file.%b.var] {}
+// CHECK:STDOUT:   %MakeB.call: init %B to %.loc47 = call %MakeB.ref()
 // CHECK:STDOUT:   assign file.%b.var, %MakeB.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -156,12 +156,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.1ab = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc10_14.1: type = splice_block %.loc10_14.3 [concrete = constants.%A] {
-// CHECK:STDOUT:     %F.ref.loc10: %F.type = name_ref F, %F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc34.1: type = splice_block %.loc34.3 [concrete = constants.%A] {
+// CHECK:STDOUT:     %F.ref.loc31: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %F.call.loc10: init type = call %F.ref.loc10(%true) [concrete = constants.%A]
-// CHECK:STDOUT:     %.loc10_14.2: type = value_of_initializer %F.call.loc10 [concrete = constants.%A]
-// CHECK:STDOUT:     %.loc10_14.3: type = converted %F.call.loc10, %.loc10_14.2 [concrete = constants.%A]
+// CHECK:STDOUT:     %F.call.loc34: init type = call %F.ref.loc31(%true) [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc34.2: type = value_of_initializer %F.call.loc34 [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc34.3: type = converted %F.call.loc34, %.loc34.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -169,12 +169,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1f4 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc11_15.1: type = splice_block %.loc11_15.3 [concrete = constants.%B] {
-// CHECK:STDOUT:     %F.ref.loc11: %F.type = name_ref F, %F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc46.1: type = splice_block %.loc46.3 [concrete = constants.%B] {
+// CHECK:STDOUT:     %F.ref.loc43: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %F.call.loc11: init type = call %F.ref.loc11(%false) [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc11_15.2: type = value_of_initializer %F.call.loc11 [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc11_15.3: type = converted %F.call.loc11, %.loc11_15.2 [concrete = constants.%B]
+// CHECK:STDOUT:     %F.call.loc46: init type = call %F.ref.loc43(%false) [concrete = constants.%B]
+// CHECK:STDOUT:     %.loc46.2: type = value_of_initializer %F.call.loc46 [concrete = constants.%B]
+// CHECK:STDOUT:     %.loc46.3: type = converted %F.call.loc46, %.loc46.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
@@ -182,12 +182,12 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeA.ref: %MakeA.type = name_ref MakeA, imports.%Main.MakeA [concrete = constants.%MakeA]
-// CHECK:STDOUT:   %.loc10: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %MakeA.call: init %A to %.loc10 = call %MakeA.ref()
+// CHECK:STDOUT:   %.loc28: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %MakeA.call: init %A to %.loc28 = call %MakeA.ref()
 // CHECK:STDOUT:   assign file.%a.var, %MakeA.call
 // CHECK:STDOUT:   %MakeB.ref: %MakeB.type = name_ref MakeB, imports.%Main.MakeB [concrete = constants.%MakeB]
-// CHECK:STDOUT:   %.loc11: ref %B = splice_block file.%b.var [concrete = file.%b.var] {}
-// CHECK:STDOUT:   %MakeB.call: init %B to %.loc11 = call %MakeB.ref()
+// CHECK:STDOUT:   %.loc40: ref %B = splice_block file.%b.var [concrete = file.%b.var] {}
+// CHECK:STDOUT:   %MakeB.call: init %B to %.loc40 = call %MakeB.ref()
 // CHECK:STDOUT:   assign file.%b.var, %MakeB.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

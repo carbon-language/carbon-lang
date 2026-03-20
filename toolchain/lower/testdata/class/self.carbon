@@ -31,16 +31,16 @@ fn C.Set[ref self: C]() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc21_14.2 = load i32, ptr %.loc21_14.1.a, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc21_14.2, !dbg !12
+// CHECK:STDOUT:   %.loc49.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc49.2 = load i32, ptr %.loc49.1.a, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc49.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc25_7.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   store i32 1, ptr %.loc25_7.a, align 4, !dbg !18
+// CHECK:STDOUT:   %.loc67.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   store i32 1, ptr %.loc67.a, align 4, !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

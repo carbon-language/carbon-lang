@@ -184,17 +184,17 @@ extern alias C = Class;
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc10_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc10_13.2: init %C to %.loc10_13.1 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.3: init %C = converted @__global_init.%.loc10, %.loc10_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3
-// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4
-// CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
+// CHECK:STDOUT:   %.loc29.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc29.2: init %C to %.loc29.1 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc29.3: init %C = converted @__global_init.%.loc29, %.loc29.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc29.4: ref %C = temporary %.loc29.1, %.loc29.3
+// CHECK:STDOUT:   %.loc29.5: %C = acquire_value %.loc29.4
+// CHECK:STDOUT:   %d: %C = value_binding d, %.loc29.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc29: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

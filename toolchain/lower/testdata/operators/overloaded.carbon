@@ -36,68 +36,68 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc19_36.2 = load i8, ptr %.loc19_36.1.is_positive, align 1, !dbg !10
-// CHECK:STDOUT:   %.loc19_36.21 = trunc i8 %.loc19_36.2 to i1, !dbg !10
-// CHECK:STDOUT:   %.loc19_28 = xor i1 %.loc19_36.21, true, !dbg !11
-// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !12
-// CHECK:STDOUT:   %.loc19_48.3 = zext i1 %.loc19_28 to i8, !dbg !12
-// CHECK:STDOUT:   store i8 %.loc19_48.3, ptr %.loc19_48.2.is_positive, align 1, !dbg !12
+// CHECK:STDOUT:   %.loc41.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc41.2 = load i8, ptr %.loc41.1.is_positive, align 1, !dbg !10
+// CHECK:STDOUT:   %.loc41.21 = trunc i8 %.loc41.2 to i1, !dbg !10
+// CHECK:STDOUT:   %.loc39 = xor i1 %.loc41.21, true, !dbg !11
+// CHECK:STDOUT:   %.loc43.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc43.3 = zext i1 %.loc39 to i8, !dbg !12
+// CHECK:STDOUT:   store i8 %.loc43.3, ptr %.loc43.2.is_positive, align 1, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !20
-// CHECK:STDOUT:   %.loc24_33.2 = load i8, ptr %.loc24_33.1.is_positive, align 1, !dbg !20
-// CHECK:STDOUT:   %.loc24_33.21 = trunc i8 %.loc24_33.2 to i1, !dbg !20
-// CHECK:STDOUT:   br i1 %.loc24_33.21, label %and.rhs.loc24, label %and.result.loc24, !dbg !20
+// CHECK:STDOUT:   %.loc84.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc84.2 = load i8, ptr %.loc84.1.is_positive, align 1, !dbg !20
+// CHECK:STDOUT:   %.loc84.21 = trunc i8 %.loc84.2 to i1, !dbg !20
+// CHECK:STDOUT:   br i1 %.loc84.21, label %and.rhs.loc86, label %and.result.loc86, !dbg !20
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc24:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !21
-// CHECK:STDOUT:   %.loc24_55.2 = load i8, ptr %.loc24_55.1.is_positive, align 1, !dbg !21
-// CHECK:STDOUT:   %.loc24_55.22 = trunc i8 %.loc24_55.2 to i1, !dbg !21
-// CHECK:STDOUT:   br label %and.result.loc24, !dbg !20
+// CHECK:STDOUT: and.rhs.loc86:                                    ; preds = %entry
+// CHECK:STDOUT:   %.loc88.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !21
+// CHECK:STDOUT:   %.loc88.2 = load i8, ptr %.loc88.1.is_positive, align 1, !dbg !21
+// CHECK:STDOUT:   %.loc88.22 = trunc i8 %.loc88.2 to i1, !dbg !21
+// CHECK:STDOUT:   br label %and.result.loc86, !dbg !20
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc24:                                 ; preds = %and.rhs.loc24, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc24_55.22, %and.rhs.loc24 ]
-// CHECK:STDOUT:   %.loc24_69.1 = xor i1 %0, true, !dbg !22
-// CHECK:STDOUT:   br i1 %.loc24_69.1, label %or.rhs, label %or.result, !dbg !22
+// CHECK:STDOUT: and.result.loc86:                                 ; preds = %and.rhs.loc86, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc88.22, %and.rhs.loc86 ]
+// CHECK:STDOUT:   %.loc91.1 = xor i1 %0, true, !dbg !22
+// CHECK:STDOUT:   br i1 %.loc91.1, label %or.rhs, label %or.result, !dbg !22
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc24
-// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   %.loc25_38.2 = load i8, ptr %.loc25_38.1.is_positive, align 1, !dbg !23
-// CHECK:STDOUT:   %.loc25_38.23 = trunc i8 %.loc25_38.2 to i1, !dbg !23
-// CHECK:STDOUT:   %.loc25_30 = xor i1 %.loc25_38.23, true, !dbg !24
-// CHECK:STDOUT:   br i1 %.loc25_30, label %and.rhs.loc25, label %and.result.loc25, !dbg !24
+// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc86
+// CHECK:STDOUT:   %.loc95.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   %.loc95.2 = load i8, ptr %.loc95.1.is_positive, align 1, !dbg !23
+// CHECK:STDOUT:   %.loc95.23 = trunc i8 %.loc95.2 to i1, !dbg !23
+// CHECK:STDOUT:   %.loc93 = xor i1 %.loc95.23, true, !dbg !24
+// CHECK:STDOUT:   br i1 %.loc93, label %and.rhs.loc97, label %and.result.loc97, !dbg !24
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc25:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !25
-// CHECK:STDOUT:   %.loc25_64.2 = load i8, ptr %.loc25_64.1.is_positive, align 1, !dbg !25
-// CHECK:STDOUT:   %.loc25_64.24 = trunc i8 %.loc25_64.2 to i1, !dbg !25
-// CHECK:STDOUT:   %.loc25_55 = xor i1 %.loc25_64.24, true, !dbg !26
-// CHECK:STDOUT:   br label %and.result.loc25, !dbg !24
+// CHECK:STDOUT: and.rhs.loc97:                                    ; preds = %or.rhs
+// CHECK:STDOUT:   %.loc100.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !25
+// CHECK:STDOUT:   %.loc100.2 = load i8, ptr %.loc100.1.is_positive, align 1, !dbg !25
+// CHECK:STDOUT:   %.loc100.24 = trunc i8 %.loc100.2 to i1, !dbg !25
+// CHECK:STDOUT:   %.loc98 = xor i1 %.loc100.24, true, !dbg !26
+// CHECK:STDOUT:   br label %and.result.loc97, !dbg !24
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc25:                                 ; preds = %and.rhs.loc25, %or.rhs
-// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc25_55, %and.rhs.loc25 ]
+// CHECK:STDOUT: and.result.loc97:                                 ; preds = %and.rhs.loc97, %or.rhs
+// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc98, %and.rhs.loc97 ]
 // CHECK:STDOUT:   br label %or.result, !dbg !22
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc25, %and.result.loc24
-// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc24 ], [ %1, %and.result.loc25 ]
-// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !27
-// CHECK:STDOUT:   %.loc25_77.3 = zext i1 %2 to i8, !dbg !27
-// CHECK:STDOUT:   store i8 %.loc25_77.3, ptr %.loc25_77.2.is_positive, align 1, !dbg !27
+// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc97, %and.result.loc86
+// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc86 ], [ %1, %and.result.loc97 ]
+// CHECK:STDOUT:   %.loc103.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !27
+// CHECK:STDOUT:   %.loc103.3 = zext i1 %2 to i8, !dbg !27
+// CHECK:STDOUT:   store i8 %.loc103.3, ptr %.loc103.2.is_positive, align 1, !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !33
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !33
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !33
-// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
+// CHECK:STDOUT:   %.loc122.1.temp = alloca { i1 }, align 8, !dbg !33
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc122.1.temp), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc122.1.temp, ptr %a), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr %return, ptr %.loc122.1.temp, ptr %b), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -137,41 +137,41 @@ fn MyF() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local.patt: %pattern_type.217 = value_binding_pattern local [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global.ref: ref %C = name_ref global, imports.%global.var [concrete = imports.%global.var]
-// CHECK:STDOUT:   %.loc7_24: type = splice_block %C.ref.loc7 [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc19: type = splice_block %C.ref.loc19 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_32: %C = acquire_value %global.ref
-// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_32
+// CHECK:STDOUT:   %.loc23: %C = acquire_value %global.ref
+// CHECK:STDOUT:   %local: %C = value_binding local, %.loc23
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ptr.patt: %pattern_type.a31 = value_binding_pattern local_ptr [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ptr.ref: ref %ptr.d9e = name_ref global_ptr, imports.%global_ptr.var [concrete = imports.%global_ptr.var]
-// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.d9e] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.d9e]
+// CHECK:STDOUT:   %.loc33: type = splice_block %ptr.loc33 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc33: type = ptr_type %C.ref.loc31 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37: %ptr.d9e = acquire_value %global_ptr.ref
-// CHECK:STDOUT:   %local_ptr: %ptr.d9e = value_binding local_ptr, %.loc8_37
+// CHECK:STDOUT:   %.loc36: %ptr.d9e = acquire_value %global_ptr.ref
+// CHECK:STDOUT:   %local_ptr: %ptr.d9e = value_binding local_ptr, %.loc36
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.a31 = value_binding_pattern local_ref [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc9_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc48: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ref.ref: ref %const = name_ref global_ref, imports.%global_ref.var [concrete = imports.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_30: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.d9e]
+// CHECK:STDOUT:   %.loc46: type = splice_block %ptr.loc46 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:     %Cpp.ref.loc43: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc44: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc46: type = ptr_type %C.ref.loc44 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_37.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_37.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_37.1 [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %.loc49.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
+// CHECK:STDOUT:   %.loc49.2: ref %ptr.d9e = converted %global_ref.ref, %.loc49.1 [concrete = constants.%global_ref.var]
 // CHECK:STDOUT:   %addr: %ptr.d9e = addr_of imports.%global.var [concrete = constants.%addr]
-// CHECK:STDOUT:   %.loc9_37.3: %ptr.d9e = acquire_value %.loc9_37.2 [concrete = constants.%addr]
-// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   %.loc49.3: %ptr.d9e = acquire_value %.loc49.2 [concrete = constants.%addr]
+// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc49.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,10 +212,10 @@ fn MyF() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local.patt: <error> = value_binding_pattern local [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc22_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global.ref: <error> = name_ref global, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %Cpp.ref.loc22_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UnusupportedType.ref: <error> = name_ref UnusupportedType, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %local: <error> = value_binding local, <error> [concrete = <error>]

@@ -60,19 +60,19 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %p.patt: %pattern_type.db0 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern %return.param_patt, %const.loc15_35 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern %return.param_patt, %const.loc12 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_43: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc15_44: type = converted %.loc15_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc15_44: type = ptr_type %.loc15_44 [concrete = constants.%ptr.c28]
-// CHECK:STDOUT:     %const.loc15_35: type = const_type %ptr.loc15_44 [concrete = constants.%const.987]
-// CHECK:STDOUT:     %.loc15_35: Core.Form = init_form %const.loc15_35 [concrete = constants.%.45c]
+// CHECK:STDOUT:     %.loc15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc16: type = converted %.loc15, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %.loc16 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %const.loc12: type = const_type %ptr.loc16 [concrete = constants.%const.987]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %const.loc12 [concrete = constants.%.45c]
 // CHECK:STDOUT:     %p.param: %ptr.bf9 = value_param call_param0
-// CHECK:STDOUT:     %.loc15_29: type = splice_block %ptr.loc15_29 [concrete = constants.%ptr.bf9] {
-// CHECK:STDOUT:       %.loc15_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc15_21: type = converted %.loc15_28, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
-// CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]
+// CHECK:STDOUT:     %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.bf9] {
+// CHECK:STDOUT:       %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc6: type = converted %.loc8, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %const.loc6: type = const_type %.loc6 [concrete = constants.%const.c48]
+// CHECK:STDOUT:       %ptr.loc9: type = ptr_type %const.loc6 [concrete = constants.%ptr.bf9]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.bf9 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.987 = out_param call_param1
@@ -83,7 +83,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9) -> out %return.param: %const.987 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc23: %const.987 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: %const.987 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

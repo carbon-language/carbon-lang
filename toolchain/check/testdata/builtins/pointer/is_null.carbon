@@ -116,19 +116,19 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc11_45.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc66.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_45.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc11_45.2: Core.Form = init_form %.loc11_45.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc66.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc66.2: Core.Form = init_form %.loc66.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %s.param: %.b2d = value_param call_param0
-// CHECK:STDOUT:     %.loc11_39.1: type = splice_block %.loc11_39.3 [concrete = constants.%.b2d] {
+// CHECK:STDOUT:     %.loc63.1: type = splice_block %.loc63.3 [concrete = constants.%.b2d] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:       %.loc11_37: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc11_38: type = converted %.loc11_37, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %ptr: type = ptr_type %.loc11_38 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:       %.loc61: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc62: type = converted %.loc61, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %ptr: type = ptr_type %.loc62 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.b2d]
-// CHECK:STDOUT:       %.loc11_39.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.b2d]
-// CHECK:STDOUT:       %.loc11_39.3: type = converted %MakeUnformed.call, %.loc11_39.2 [concrete = constants.%.b2d]
+// CHECK:STDOUT:       %.loc63.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.b2d]
+// CHECK:STDOUT:       %.loc63.3: type = converted %MakeUnformed.call, %.loc63.2 [concrete = constants.%.b2d]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %.b2d = value_binding s, %s.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
@@ -138,18 +138,18 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %c.patt: %pattern_type.b78 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_34.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc87.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_34.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc15_34.2: Core.Form = init_form %.loc15_34.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc87.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc87.2: Core.Form = init_form %.loc87.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %c.param: %.edf = value_param call_param0
-// CHECK:STDOUT:     %.loc15_28.1: type = splice_block %.loc15_28.3 [concrete = constants.%.edf] {
+// CHECK:STDOUT:     %.loc84.1: type = splice_block %.loc84.3 [concrete = constants.%.edf] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.edf]
-// CHECK:STDOUT:       %.loc15_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
-// CHECK:STDOUT:       %.loc15_28.3: type = converted %MakeUnformed.call, %.loc15_28.2 [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc84.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc84.3: type = converted %MakeUnformed.call, %.loc84.2 [concrete = constants.%.edf]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %.edf = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
@@ -204,19 +204,19 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc10_45.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc54.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_45.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc10_45.2: Core.Form = init_form %.loc10_45.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc54.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc54.2: Core.Form = init_form %.loc54.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %s.param: %.b2d = value_param call_param0
-// CHECK:STDOUT:     %.loc10_39.1: type = splice_block %.loc10_39.3 [concrete = constants.%.b2d] {
+// CHECK:STDOUT:     %.loc51.1: type = splice_block %.loc51.3 [concrete = constants.%.b2d] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:       %.loc10_37: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc10_38: type = converted %.loc10_37, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %ptr: type = ptr_type %.loc10_38 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:       %.loc49: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc50: type = converted %.loc49, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %ptr: type = ptr_type %.loc50 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.b2d]
-// CHECK:STDOUT:       %.loc10_39.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.b2d]
-// CHECK:STDOUT:       %.loc10_39.3: type = converted %MakeUnformed.call, %.loc10_39.2 [concrete = constants.%.b2d]
+// CHECK:STDOUT:       %.loc51.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.b2d]
+// CHECK:STDOUT:       %.loc51.3: type = converted %MakeUnformed.call, %.loc51.2 [concrete = constants.%.b2d]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %.b2d = value_binding s, %s.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
@@ -226,18 +226,18 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %c.patt: %pattern_type.b78 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_34.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc75.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_34.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc14_34.2: Core.Form = init_form %.loc14_34.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc75.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc75.2: Core.Form = init_form %.loc75.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %c.param: %.edf = value_param call_param0
-// CHECK:STDOUT:     %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%.edf] {
+// CHECK:STDOUT:     %.loc72.1: type = splice_block %.loc72.3 [concrete = constants.%.edf] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.edf]
-// CHECK:STDOUT:       %.loc14_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
-// CHECK:STDOUT:       %.loc14_28.3: type = converted %MakeUnformed.call, %.loc14_28.2 [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc72.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc72.3: type = converted %MakeUnformed.call, %.loc72.2 [concrete = constants.%.edf]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %.edf = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1

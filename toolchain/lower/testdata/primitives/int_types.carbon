@@ -115,19 +115,19 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i24 @_CLoadStore_Bytes.Main(ptr %p, i24 %n) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc5_25.2 = load i24, ptr %p, align 4, !dbg !12
+// CHECK:STDOUT:   %.loc44.2 = load i24, ptr %p, align 4, !dbg !12
 // CHECK:STDOUT:   store i24 %n, ptr %p, align 4, !dbg !13
-// CHECK:STDOUT:   ret i24 %.loc5_25.2, !dbg !14
+// CHECK:STDOUT:   ret i24 %.loc44.2, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i13 @_CLoadStore_NotBytes.Main(ptr %p, i13 %n) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_25.2 = load i16, ptr %p, align 2, !dbg !22
-// CHECK:STDOUT:   %.loc11_25.21 = trunc i16 %.loc11_25.2 to i13, !dbg !22
+// CHECK:STDOUT:   %.loc96.2 = load i16, ptr %p, align 2, !dbg !22
+// CHECK:STDOUT:   %.loc96.21 = trunc i16 %.loc96.2 to i13, !dbg !22
 // CHECK:STDOUT:   %0 = zext i13 %n to i16, !dbg !23
 // CHECK:STDOUT:   store i16 %0, ptr %p, align 2, !dbg !23
-// CHECK:STDOUT:   ret i13 %.loc11_25.21, !dbg !24
+// CHECK:STDOUT:   ret i13 %.loc96.21, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

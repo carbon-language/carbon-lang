@@ -56,7 +56,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: --- bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc5: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc7: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: type = alias_binding b, bool [concrete = bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -122,7 +122,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl.loc5
+// CHECK:STDOUT:     .D = %D.decl.loc9
 // CHECK:STDOUT:     .ReturnCUnused = %ReturnCUnused.decl
 // CHECK:STDOUT:     .ReturnCUsed = %ReturnCUsed.decl
 // CHECK:STDOUT:     .ReturnDUnused = %ReturnDUnused.decl
@@ -131,13 +131,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc9: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [concrete = constants.%ReturnCUnused] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.a69]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -146,7 +146,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref [concrete = constants.%.a69]
+// CHECK:STDOUT:     %.loc22: Core.Form = init_form %C.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -154,8 +154,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc9 [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc29: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -163,13 +163,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc9 [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc36: Core.Form = init_form %D.ref [concrete = constants.%.9a5]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {} {}
-// CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc54: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -234,7 +234,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc55, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.1d5 = import_ref Main//incomplete_return, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -272,17 +272,17 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%Main.ReturnCUsed [concrete = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%Main.ReturnDUnused [concrete = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %.loc33_17.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init %D to %.loc33_17.1 = call %ReturnDUnused.ref()
-// CHECK:STDOUT:   %.loc33_17.2: ref %D = temporary %.loc33_17.1, %ReturnDUnused.call
+// CHECK:STDOUT:   %.loc23.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D to %.loc23.1 = call %ReturnDUnused.ref()
+// CHECK:STDOUT:   %.loc23.2: ref %D = temporary %.loc23.1, %ReturnDUnused.call
 // CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%Main.ReturnDUsed [concrete = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc34_15.1 = call %ReturnDUsed.ref()
-// CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call
-// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_15.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%.loc33_17.2)
+// CHECK:STDOUT:   %.loc27.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc27.1 = call %ReturnDUsed.ref()
+// CHECK:STDOUT:   %.loc27.2: ref %D = temporary %.loc27.1, %ReturnDUsed.call
+// CHECK:STDOUT:   %Destroy.Op.bound.loc27: <bound method> = bound_method %.loc27.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc27: init %empty_tuple.type = call %Destroy.Op.bound.loc27(%.loc27.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %.loc23.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%.loc23.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

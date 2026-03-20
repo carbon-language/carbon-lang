@@ -29,14 +29,14 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
 // CHECK:STDOUT:   store ptr %p, ptr %_.var, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
-// CHECK:STDOUT:   %.loc15_17.2 = load ptr, ptr %p, align 8, !dbg !14
-// CHECK:STDOUT:   store ptr %.loc15_17.2, ptr %b.var, align 8, !dbg !12
+// CHECK:STDOUT:   %.loc28.2 = load ptr, ptr %p, align 8, !dbg !14
+// CHECK:STDOUT:   store ptr %.loc28.2, ptr %b.var, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !13
 // CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !13
-// CHECK:STDOUT:   %.loc17_12 = load ptr, ptr %c.var, align 8, !dbg !15
-// CHECK:STDOUT:   %.loc17_11.2 = load ptr, ptr %.loc17_12, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc17_10.2 = load i32, ptr %.loc17_11.2, align 4, !dbg !17
-// CHECK:STDOUT:   ret i32 %.loc17_10.2, !dbg !18
+// CHECK:STDOUT:   %.loc44 = load ptr, ptr %c.var, align 8, !dbg !15
+// CHECK:STDOUT:   %.loc43.2 = load ptr, ptr %.loc44, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc42.2 = load i32, ptr %.loc43.2, align 4, !dbg !17
+// CHECK:STDOUT:   ret i32 %.loc42.2, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

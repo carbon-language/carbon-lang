@@ -45,13 +45,13 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @i32.as.Simple.impl.%Simple.impl_witness_table [concrete]
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.1: type = fn_type @i32.as.Simple.impl.G.loc24_27.1 [concrete]
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.1: type = fn_type @i32.as.Simple.impl.G.loc29.1 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.4f6260.1: %i32.as.Simple.impl.G.type.32ad7a.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.G.type.9d9: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Simple.facet) [concrete]
 // CHECK:STDOUT:   %Simple.WithSelf.G.26c: %Simple.WithSelf.G.type.9d9 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.2: type = fn_type @i32.as.Simple.impl.G.loc24_27.2 [concrete]
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.type.32ad7a.2: type = fn_type @i32.as.Simple.impl.G.loc29.2 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.4f6260.2: %i32.as.Simple.impl.G.type.32ad7a.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
@@ -100,10 +100,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.patt: @Simple.WithSelf.G.%pattern_type (%pattern_type.5e9) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Simple.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
+// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc9.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @Simple.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
@@ -118,7 +118,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.Simple.impl: %i32 as %Simple.ref {
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_27.1: %i32.as.Simple.impl.G.type.32ad7a.1 = fn_decl @i32.as.Simple.impl.G.loc24_27.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1] {
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc29.1: %i32.as.Simple.impl.G.type.32ad7a.1 = fn_decl @i32.as.Simple.impl.G.loc29.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1] {
 // CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: <error> = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -126,19 +126,19 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:     %self: <error> = value_binding self, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_27.2: %i32.as.Simple.impl.G.type.32ad7a.2 = fn_decl @i32.as.Simple.impl.G.loc24_27.2 [concrete = constants.%i32.as.Simple.impl.G.4f6260.2] {
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc29.2: %i32.as.Simple.impl.G.type.32ad7a.2 = fn_decl @i32.as.Simple.impl.G.loc29.2 [concrete = constants.%i32.as.Simple.impl.G.4f6260.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%i32.as.Simple.impl.G.decl.loc24_27.2), @i32.as.Simple.impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%i32.as.Simple.impl.G.decl.loc29.2), @i32.as.Simple.impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Undeclared = <poisoned>
-// CHECK:STDOUT:   .G = %i32.as.Simple.impl.G.decl.loc24_27.1
+// CHECK:STDOUT:   .G = %i32.as.Simple.impl.G.decl.loc29.1
 // CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -150,11 +150,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   fn(%self.param: @Simple.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.1(%self.param: <error>);
+// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc29.1(%self.param: <error>);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc24_27.2(%self.param: %i32) [thunk @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1] {
+// CHECK:STDOUT: fn @i32.as.Simple.impl.G.loc29.2(%self.param: %i32) [thunk @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc29.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
+// CHECK:STDOUT:   %G.ref: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc29.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self.param
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %self.ref, %G.ref
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
@@ -165,11 +165,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref.loc28_12: %Simple.assoc_type = name_ref G, @Simple.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %G.ref.loc43: %Simple.assoc_type = name_ref G, @Simple.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.a46 = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = constants.%i32.as.Simple.impl.G.4f6260.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
-// CHECK:STDOUT:   %G.ref.loc28_16: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
-// CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %n.ref, %G.ref.loc28_16
+// CHECK:STDOUT:   %G.ref.loc47: %i32.as.Simple.impl.G.type.32ad7a.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc29.1 [concrete = constants.%i32.as.Simple.impl.G.4f6260.1]
+// CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %n.ref, %G.ref.loc47
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -113,12 +113,12 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat.ref, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc14_14: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc14_28: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc14_14 [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc14_25: type = converted %.loc14_14, %as_type [concrete = constants.%Goat]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %.loc14_25, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
-// CHECK:STDOUT:   %.loc14_32: %Eats.type = converted %.loc14_25, %Eats.facet [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %.loc47: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc51: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc47 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc50: type = converted %.loc47, %as_type [concrete = constants.%Goat]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %.loc50, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %.loc52: %Eats.type = converted %.loc50, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [concrete = constants.%Feed.specific_fn]
 // CHECK:STDOUT:   %Feed.call: init %empty_tuple.type = call %Feed.specific_fn()
 // CHECK:STDOUT:   <elided>
@@ -156,64 +156,64 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.234 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Goat.ref.loc22_33: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc22_28.2: ref %Goat = temporary_storage
-// CHECK:STDOUT:   %.loc22_28.3: init %Goat to %.loc22_28.2 = class_init () [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc22_30.1: init %Goat = converted %.loc22_28.1, %.loc22_28.3 [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc22_15.1: type = splice_block %.loc22_15.3 [concrete = constants.%Goat] {
-// CHECK:STDOUT:     %Goat.ref.loc22_10: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:     %Animal.ref.loc22: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %Animal.facet.loc22: %Animal.type = facet_value %Goat.ref.loc22_10, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:     %.loc22_15.2: %Animal.type = converted %Goat.ref.loc22_10, %Animal.facet.loc22 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:     %as_type.loc22: type = facet_access_type %.loc22_15.2 [concrete = constants.%Goat]
-// CHECK:STDOUT:     %.loc22_15.3: type = converted %.loc22_15.2, %as_type.loc22 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc57.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Goat.ref.loc59: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc57.2: ref %Goat = temporary_storage
+// CHECK:STDOUT:   %.loc57.3: init %Goat to %.loc57.2 = class_init () [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc58.1: init %Goat = converted %.loc57.1, %.loc57.3 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc53.1: type = splice_block %.loc53.3 [concrete = constants.%Goat] {
+// CHECK:STDOUT:     %Goat.ref.loc52: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:     %Animal.ref.loc54: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:     %Animal.facet.loc53: %Animal.type = facet_value %Goat.ref.loc52, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:     %.loc53.2: %Animal.type = converted %Goat.ref.loc52, %Animal.facet.loc53 [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:     %as_type.loc53: type = facet_access_type %.loc53.2 [concrete = constants.%Goat]
+// CHECK:STDOUT:     %.loc53.3: type = converted %.loc53.2, %as_type.loc53 [concrete = constants.%Goat]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_30.2: ref %Goat = temporary %.loc22_28.2, %.loc22_30.1
-// CHECK:STDOUT:   %.loc22_30.3: %Goat = acquire_value %.loc22_30.2
-// CHECK:STDOUT:   %x: %Goat = value_binding x, %.loc22_30.3
-// CHECK:STDOUT:   %x.ref.loc23: %Goat = name_ref x, %x
-// CHECK:STDOUT:   %Bleet.ref.loc23: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
-// CHECK:STDOUT:   %Goat.Bleet.call.loc23: init %empty_tuple.type = call %Bleet.ref.loc23()
-// CHECK:STDOUT:   %x.ref.loc24: %Goat = name_ref x, %x
-// CHECK:STDOUT:   %Eat.ref.loc24: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.083]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.35f = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
-// CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
-// CHECK:STDOUT:   %.loc26_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Goat.ref.loc26_11: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc26_6.2: ref %Goat = temporary_storage
-// CHECK:STDOUT:   %.loc26_6.3: init %Goat to %.loc26_6.2 = class_init () [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc26_8.1: init %Goat = converted %.loc26_6.1, %.loc26_6.3 [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %Goat.ref.loc26_21: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %Animal.ref.loc26: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet.loc26: %Animal.type = facet_value %Goat.ref.loc26_21, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc26_26: %Animal.type = converted %Goat.ref.loc26_21, %Animal.facet.loc26 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %as_type.loc26: type = facet_access_type %.loc26_26 [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc26_35: type = converted %.loc26_26, %as_type.loc26 [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc26_8.2: ref %Goat = temporary %.loc26_6.2, %.loc26_8.1
-// CHECK:STDOUT:   %Bleet.ref.loc26: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
-// CHECK:STDOUT:   %Goat.Bleet.call.loc26: init %empty_tuple.type = call %Bleet.ref.loc26()
-// CHECK:STDOUT:   %.loc27_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Goat.ref.loc27_11: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc27_6.2: ref %Goat = temporary_storage
-// CHECK:STDOUT:   %.loc27_6.3: init %Goat to %.loc27_6.2 = class_init () [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %.loc27_8.1: init %Goat = converted %.loc27_6.1, %.loc27_6.3 [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %Goat.ref.loc27_21: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %Animal.ref.loc27: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet.loc27: %Animal.type = facet_value %Goat.ref.loc27_21, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc27_26: %Animal.type = converted %Goat.ref.loc27_21, %Animal.facet.loc27 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %as_type.loc27: type = facet_access_type %.loc27_26 [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc27_35: type = converted %.loc27_26, %as_type.loc27 [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.loc27_8.2: ref %Goat = temporary %.loc27_6.2, %.loc27_8.1
-// CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.083]
-// CHECK:STDOUT:   %impl.elem0.loc27: %.35f = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
-// CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
-// CHECK:STDOUT:   %Destroy.Op.bound.loc27: <bound method> = bound_method %.loc27_8.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc27: init %empty_tuple.type = call %Destroy.Op.bound.loc27(%.loc27_8.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %.loc26_8.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%.loc26_8.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc22: <bound method> = bound_method %.loc22_30.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call %Destroy.Op.bound.loc22(%.loc22_30.2)
+// CHECK:STDOUT:   %.loc58.2: ref %Goat = temporary %.loc57.2, %.loc58.1
+// CHECK:STDOUT:   %.loc58.3: %Goat = acquire_value %.loc58.2
+// CHECK:STDOUT:   %x: %Goat = value_binding x, %.loc58.3
+// CHECK:STDOUT:   %x.ref.loc61: %Goat = name_ref x, %x
+// CHECK:STDOUT:   %Bleet.ref.loc62: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
+// CHECK:STDOUT:   %Goat.Bleet.call.loc65: init %empty_tuple.type = call %Bleet.ref.loc62()
+// CHECK:STDOUT:   %x.ref.loc67: %Goat = name_ref x, %x
+// CHECK:STDOUT:   %Eat.ref.loc68: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.083]
+// CHECK:STDOUT:   %impl.elem0.loc68: %.35f = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
+// CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc71: init %empty_tuple.type = call %impl.elem0.loc68()
+// CHECK:STDOUT:   %.loc76.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Goat.ref.loc78: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc76.2: ref %Goat = temporary_storage
+// CHECK:STDOUT:   %.loc76.3: init %Goat to %.loc76.2 = class_init () [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc77.1: init %Goat = converted %.loc76.1, %.loc76.3 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %Goat.ref.loc82: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:   %Animal.ref.loc84: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:   %Animal.facet.loc83: %Animal.type = facet_value %Goat.ref.loc82, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc83: %Animal.type = converted %Goat.ref.loc82, %Animal.facet.loc83 [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %as_type.loc85: type = facet_access_type %.loc83 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc85: type = converted %.loc83, %as_type.loc85 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc77.2: ref %Goat = temporary %.loc76.2, %.loc77.1
+// CHECK:STDOUT:   %Bleet.ref.loc87: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
+// CHECK:STDOUT:   %Goat.Bleet.call.loc90: init %empty_tuple.type = call %Bleet.ref.loc87()
+// CHECK:STDOUT:   %.loc95.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Goat.ref.loc97: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc95.2: ref %Goat = temporary_storage
+// CHECK:STDOUT:   %.loc95.3: init %Goat to %.loc95.2 = class_init () [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc96.1: init %Goat = converted %.loc95.1, %.loc95.3 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %Goat.ref.loc101: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
+// CHECK:STDOUT:   %Animal.ref.loc103: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:   %Animal.facet.loc102: %Animal.type = facet_value %Goat.ref.loc101, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc102: %Animal.type = converted %Goat.ref.loc101, %Animal.facet.loc102 [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %as_type.loc104: type = facet_access_type %.loc102 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc104: type = converted %.loc102, %as_type.loc104 [concrete = constants.%Goat]
+// CHECK:STDOUT:   %.loc96.2: ref %Goat = temporary %.loc95.2, %.loc96.1
+// CHECK:STDOUT:   %Eat.ref.loc106: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.083]
+// CHECK:STDOUT:   %impl.elem0.loc106: %.35f = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
+// CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc109: init %empty_tuple.type = call %impl.elem0.loc106()
+// CHECK:STDOUT:   %Destroy.Op.bound.loc96: <bound method> = bound_method %.loc96.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc96: init %empty_tuple.type = call %Destroy.Op.bound.loc96(%.loc96.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc77: <bound method> = bound_method %.loc77.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc77: init %empty_tuple.type = call %Destroy.Op.bound.loc77(%.loc77.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc58: <bound method> = bound_method %.loc58.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc58: init %empty_tuple.type = call %Destroy.Op.bound.loc58(%.loc58.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,30 +235,30 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%A.loc25_6.2: %J.type, %B.loc25_13.2: @F.%A.binding.as_type (%A.binding.as_type)) {
+// CHECK:STDOUT: generic fn @F(%A.loc48.2: %J.type, %B.loc52.2: @F.%A.binding.as_type (%A.binding.as_type)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %G.specific_fn.loc27_3.2: <specific function> = specific_function constants.%G, @G(%A.loc25_6.1, %B.loc25_13.1) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
+// CHECK:STDOUT:   %G.specific_fn.loc67.2: <specific function> = specific_function constants.%G, @G(%A.loc48.1, %B.loc52.1) [symbolic = %G.specific_fn.loc67.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%C.loc25_29.1 (%C)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%C.loc64.1 (%C)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:     %x.ref: @F.%C.loc25_29.1 (%C) = name_ref x, %x
-// CHECK:STDOUT:     %.loc27: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
-// CHECK:STDOUT:     %G.specific_fn.loc27_3.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
-// CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc27_3.1(%x.ref)
+// CHECK:STDOUT:     %x.ref: @F.%C.loc64.1 (%C) = name_ref x, %x
+// CHECK:STDOUT:     %.loc70: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc48.1 (constants.%A)]
+// CHECK:STDOUT:     %G.specific_fn.loc67.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc67.2 (constants.%G.specific_fn)]
+// CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc67.1(%x.ref)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
-// CHECK:STDOUT:   %A.loc25_6.1 => constants.%A
+// CHECK:STDOUT:   %A.loc48.1 => constants.%A
 // CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
-// CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
-// CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.14f
-// CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
-// CHECK:STDOUT:   %pattern_type.loc25_21 => constants.%pattern_type.e04
+// CHECK:STDOUT:   %B.loc52.1 => constants.%B
+// CHECK:STDOUT:   %pattern_type.loc52 => constants.%pattern_type.14f
+// CHECK:STDOUT:   %C.loc64.1 => constants.%C
+// CHECK:STDOUT:   %pattern_type.loc58 => constants.%pattern_type.e04
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

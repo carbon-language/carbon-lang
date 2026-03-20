@@ -75,7 +75,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'let_param.carbon'
 // CHECK:STDOUT: source_filename = "let_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc12_6.4 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc30.4 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
@@ -88,10 +88,10 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_6.2.temp, ptr align 1 @C.val.loc12_6.4, i64 0, i1 false), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc12_6.2.temp), !dbg !15
+// CHECK:STDOUT:   %.loc30.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30.2.temp), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc30.2.temp, ptr align 1 @C.val.loc30.4, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc30.2.temp), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -130,7 +130,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc6_6.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc11.2 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
@@ -143,10 +143,10 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !14
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc6_6.1.temp, ptr align 1 @C.val.loc6_6.2, i64 0, i1 false), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc6_6.1.temp), !dbg !15
+// CHECK:STDOUT:   %.loc11.1.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc11.1.temp, ptr align 1 @C.val.loc11.2, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc11.1.temp), !dbg !15
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -185,12 +185,12 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'return_slot.carbon'
 // CHECK:STDOUT: source_filename = "return_slot.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc7_12 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc18 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({}) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc7_12, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc18, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,9 +216,9 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 8, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_16.1.temp), !dbg !20
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_16.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc69.1.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc69.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc69.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }

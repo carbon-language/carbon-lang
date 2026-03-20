@@ -49,11 +49,11 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT: fn @G() -> out %return.param: %struct_type.v {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, imports.%Main.x [concrete = imports.%x.var]
-// CHECK:STDOUT:   %.loc8_10.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
-// CHECK:STDOUT:   %.loc8_10.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_10.3: init %empty_tuple.type = converted %.loc8_10.1, %.loc8_10.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_10.4: init %struct_type.v = struct_init (%.loc8_10.3) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc8_11: init %struct_type.v = converted %x.ref, %.loc8_10.4 [concrete = constants.%struct]
-// CHECK:STDOUT:   return %.loc8_11
+// CHECK:STDOUT:   %.loc22.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
+// CHECK:STDOUT:   %.loc22.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc22.3: init %empty_tuple.type = converted %.loc22.1, %.loc22.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc22.4: init %struct_type.v = struct_init (%.loc22.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc23: init %struct_type.v = converted %x.ref, %.loc22.4 [concrete = constants.%struct]
+// CHECK:STDOUT:   return %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

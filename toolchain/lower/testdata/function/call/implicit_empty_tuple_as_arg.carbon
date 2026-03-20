@@ -38,10 +38,10 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   %.loc38.1.temp = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
 // CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.1.temp), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc38.1.temp), !dbg !12
 // CHECK:STDOUT:   call void @_CBar.Main(), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }

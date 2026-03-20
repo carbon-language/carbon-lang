@@ -72,12 +72,12 @@ class A {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.decl: @DefaultConstructible.WithSelf.%DefaultConstructible.WithSelf.Make.type (%DefaultConstructible.WithSelf.Make.type.17e) = fn_decl @DefaultConstructible.WithSelf.Make [symbolic = @DefaultConstructible.WithSelf.%DefaultConstructible.WithSelf.Make (constants.%DefaultConstructible.WithSelf.Make.cfb)] {
 // CHECK:STDOUT:     %return.param_patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = return_slot_pattern %return.param_patt, %.loc16_16.2 [concrete]
+// CHECK:STDOUT:     %return.patt: @DefaultConstructible.WithSelf.Make.%pattern_type (%pattern_type.b09) = return_slot_pattern %return.param_patt, %.loc9.2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %.loc16_16.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %.loc16_16.3: Core.Form = init_form %.loc16_16.2 [symbolic = %.loc16_16.1 (constants.%.eaa)]
+// CHECK:STDOUT:     %.loc9.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %.loc9.3: Core.Form = init_form %.loc9.2 [symbolic = %.loc9.1 (constants.%.eaa)]
 // CHECK:STDOUT:     %return.param: ref @DefaultConstructible.WithSelf.Make.%Self.binding.as_type (%Self.binding.as_type) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @DefaultConstructible.WithSelf.Make.%Self.binding.as_type (%Self.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -97,7 +97,7 @@ class A {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %Self.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.DefaultConstructible.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc25_18: Core.Form = init_form %Self.ref [concrete = constants.%.a69]
+// CHECK:STDOUT:     %.loc29: Core.Form = init_form %Self.ref [concrete = constants.%.a69]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -134,7 +134,7 @@ class A {
 // CHECK:STDOUT: generic fn @DefaultConstructible.WithSelf.Make(@DefaultConstructible.%Self: %DefaultConstructible.type) {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %.loc16_16.1: Core.Form = init_form %Self.binding.as_type [symbolic = %.loc16_16.1 (constants.%.eaa)]
+// CHECK:STDOUT:   %.loc9.1: Core.Form = init_form %Self.binding.as_type [symbolic = %.loc9.1 (constants.%.eaa)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.b09)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @DefaultConstructible.WithSelf.Make.%Self.binding.as_type (%Self.binding.as_type);
@@ -142,10 +142,10 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc25_33.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc25_34: init %C = converted %.loc25_33.1, %.loc25_33.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc25_34 to %return.param
+// CHECK:STDOUT:   %.loc33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc33.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc34: init %C = converted %.loc33.1, %.loc33.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   return %.loc34 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf(constants.%Self) {
@@ -158,7 +158,7 @@ class A {
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf.Make(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %.loc16_16.1 => constants.%.eaa
+// CHECK:STDOUT:   %.loc9.1 => constants.%.eaa
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b09
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ class A {
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf.Make(constants.%DefaultConstructible.facet) {
 // CHECK:STDOUT:   %Self => constants.%DefaultConstructible.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
-// CHECK:STDOUT:   %.loc16_16.1 => constants.%.a69
+// CHECK:STDOUT:   %.loc9.1 => constants.%.a69
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7c7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -20,36 +20,36 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CSelect.Main(i1 %b, i1 %c, i1 %d) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc14_10, label %if.expr.else.loc14_10, !dbg !13
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc20, label %if.expr.else.loc20, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.then.loc14_10:                            ; preds = %entry
-// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc14_20, label %if.expr.else.loc14_20, !dbg !14
+// CHECK:STDOUT: if.expr.then.loc20:                               ; preds = %entry
+// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc23, label %if.expr.else.loc23, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.then.loc14_20:                            ; preds = %if.expr.then.loc14_10
-// CHECK:STDOUT:   br label %if.expr.result.loc14_20, !dbg !14
+// CHECK:STDOUT: if.expr.then.loc23:                               ; preds = %if.expr.then.loc20
+// CHECK:STDOUT:   br label %if.expr.result.loc23, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.else.loc14_20:                            ; preds = %if.expr.then.loc14_10
-// CHECK:STDOUT:   br label %if.expr.result.loc14_20, !dbg !14
+// CHECK:STDOUT: if.expr.else.loc23:                               ; preds = %if.expr.then.loc20
+// CHECK:STDOUT:   br label %if.expr.result.loc23, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result.loc14_20:                          ; preds = %if.expr.else.loc14_20, %if.expr.then.loc14_20
-// CHECK:STDOUT:   %0 = phi i32 [ 1, %if.expr.then.loc14_20 ], [ 2, %if.expr.else.loc14_20 ]
-// CHECK:STDOUT:   br label %if.expr.result.loc14_10, !dbg !13
+// CHECK:STDOUT: if.expr.result.loc23:                             ; preds = %if.expr.else.loc23, %if.expr.then.loc23
+// CHECK:STDOUT:   %0 = phi i32 [ 1, %if.expr.then.loc23 ], [ 2, %if.expr.else.loc23 ]
+// CHECK:STDOUT:   br label %if.expr.result.loc20, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.else.loc14_10:                            ; preds = %entry
-// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc14_51, label %if.expr.else.loc14_51, !dbg !15
+// CHECK:STDOUT: if.expr.else.loc20:                               ; preds = %entry
+// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc32, label %if.expr.else.loc32, !dbg !15
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.then.loc14_51:                            ; preds = %if.expr.else.loc14_10
-// CHECK:STDOUT:   br label %if.expr.result.loc14_51, !dbg !15
+// CHECK:STDOUT: if.expr.then.loc32:                               ; preds = %if.expr.else.loc20
+// CHECK:STDOUT:   br label %if.expr.result.loc32, !dbg !15
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.else.loc14_51:                            ; preds = %if.expr.else.loc14_10
-// CHECK:STDOUT:   br label %if.expr.result.loc14_51, !dbg !15
+// CHECK:STDOUT: if.expr.else.loc32:                               ; preds = %if.expr.else.loc20
+// CHECK:STDOUT:   br label %if.expr.result.loc32, !dbg !15
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result.loc14_51:                          ; preds = %if.expr.else.loc14_51, %if.expr.then.loc14_51
-// CHECK:STDOUT:   %1 = phi i32 [ 3, %if.expr.then.loc14_51 ], [ 4, %if.expr.else.loc14_51 ]
-// CHECK:STDOUT:   br label %if.expr.result.loc14_10, !dbg !13
+// CHECK:STDOUT: if.expr.result.loc32:                             ; preds = %if.expr.else.loc32, %if.expr.then.loc32
+// CHECK:STDOUT:   %1 = phi i32 [ 3, %if.expr.then.loc32 ], [ 4, %if.expr.else.loc32 ]
+// CHECK:STDOUT:   br label %if.expr.result.loc20, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result.loc14_10:                          ; preds = %if.expr.result.loc14_51, %if.expr.result.loc14_20
-// CHECK:STDOUT:   %2 = phi i32 [ %0, %if.expr.result.loc14_20 ], [ %1, %if.expr.result.loc14_51 ]
+// CHECK:STDOUT: if.expr.result.loc20:                             ; preds = %if.expr.result.loc32, %if.expr.result.loc23
+// CHECK:STDOUT:   %2 = phi i32 [ %0, %if.expr.result.loc23 ], [ %1, %if.expr.result.loc32 ]
 // CHECK:STDOUT:   ret i32 %2, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

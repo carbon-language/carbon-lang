@@ -32,21 +32,21 @@ fn F(T:! type);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_10.1: type = splice_block %.loc15_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6.1: type = splice_block %.loc6.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc15_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4.2: type = symbolic_binding T, 0 [symbolic = %T.loc4.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc15_6.2: type) {
-// CHECK:STDOUT:   %T.loc15_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_6.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc4.2: type) {
+// CHECK:STDOUT:   %T.loc4.1: type = symbolic_binding T, 0 [symbolic = %T.loc4.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_6.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

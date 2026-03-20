@@ -62,26 +62,26 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc8_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc25: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a.ref: %E = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc8: type = splice_block %E.ref.loc8 [concrete = constants.%E] {
-// CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc8_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %E.ref.loc8: type = name_ref E, imports.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %.loc21: type = splice_block %E.ref.loc21 [concrete = constants.%E] {
+// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc19: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %E.ref.loc21: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %E = value_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc9_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc9_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %E.ref.loc9_32: type = name_ref E, imports.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %Cpp.ref.loc40: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc41: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %E.ref.loc43: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %b.ref: %E = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc9: type = splice_block %E.ref.loc9_22 [concrete = constants.%E] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %A.ref.loc9_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %E.ref.loc9_22: type = name_ref E, imports.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %.loc37: type = splice_block %E.ref.loc37 [concrete = constants.%E] {
+// CHECK:STDOUT:     %Cpp.ref.loc34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %A.ref.loc35: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %E.ref.loc37: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %E = value_binding b, %b.ref
 // CHECK:STDOUT:   return

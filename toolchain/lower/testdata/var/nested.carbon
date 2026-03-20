@@ -36,15 +36,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !9
-// CHECK:STDOUT:   %.loc16 = load i32, ptr %a.var, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16, ptr %b.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc17 = load i32, ptr %b.var, align 4, !dbg !12
-// CHECK:STDOUT:   store i32 %.loc17, ptr %a.var, align 4, !dbg !13
+// CHECK:STDOUT:   %.loc25 = load i32, ptr %a.var, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc25, ptr %b.var, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc29 = load i32, ptr %b.var, align 4, !dbg !12
+// CHECK:STDOUT:   store i32 %.loc29, ptr %a.var, align 4, !dbg !13
 // CHECK:STDOUT:   br label %while.cond, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %.loc19 = load i32, ptr %a.var, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc19, !dbg !16
+// CHECK:STDOUT:   %.loc33 = load i32, ptr %a.var, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc33, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

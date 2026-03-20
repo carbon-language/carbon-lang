@@ -43,18 +43,18 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() local_unnamed_addr #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15 = tail call i32 @_CRand.Main() #0, !dbg !8
-// CHECK:STDOUT:   %Rand.call.loc7_24 = tail call i32 @_CRand.Main() #0, !dbg !9
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc7_24, %Rand.call.loc7_15, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc23 = tail call i32 @_CRand.Main() #0, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc27 = tail call i32 @_CRand.Main() #0, !dbg !9
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc27, %Rand.call.loc23, !dbg !8
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15.i = tail call i32 @_CRand.Main() #0, !dbg !12
-// CHECK:STDOUT:   %Rand.call.loc7_24.i = tail call i32 @_CRand.Main() #0, !dbg !14
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc7_24.i, %Rand.call.loc7_15.i, !dbg !12
+// CHECK:STDOUT:   %Rand.call.loc23.i = tail call i32 @_CRand.Main() #0, !dbg !12
+// CHECK:STDOUT:   %Rand.call.loc27.i = tail call i32 @_CRand.Main() #0, !dbg !14
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc27.i, %Rand.call.loc23.i, !dbg !12
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

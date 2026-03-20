@@ -242,92 +242,92 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.3a5: @Optional.%Optional.Get.type (%Optional.Get.type.c63) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.a4b)]
-// CHECK:STDOUT:   %Core.import_ref.6af: type = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%MaybeUnformed (constants.%MaybeUnformed.2e9)]
-// CHECK:STDOUT:   %Core.import_ref.33a = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.7cb = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.433 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.ee0: @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get.type (%ptr.as.OptionalStorage.impl.Get.type.a01) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get (constants.%ptr.as.OptionalStorage.impl.Get.5ca)]
+// CHECK:STDOUT:   %Core.import_ref.3a5: @Optional.%Optional.Get.type (%Optional.Get.type.c63) = import_ref Core//prelude/types/optional, loc164, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.a4b)]
+// CHECK:STDOUT:   %Core.import_ref.6af: type = import_ref Core//prelude/types/optional, loc706, loaded [symbolic = @ptr.as.OptionalStorage.impl.%MaybeUnformed (constants.%MaybeUnformed.2e9)]
+// CHECK:STDOUT:   %Core.import_ref.33a = import_ref Core//prelude/types/optional, loc717, unloaded
+// CHECK:STDOUT:   %Core.import_ref.7cb = import_ref Core//prelude/types/optional, loc735, unloaded
+// CHECK:STDOUT:   %Core.import_ref.433 = import_ref Core//prelude/types/optional, loc776, unloaded
+// CHECK:STDOUT:   %Core.import_ref.ee0: @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get.type (%ptr.as.OptionalStorage.impl.Get.type.a01) = import_ref Core//prelude/types/optional, loc799, loaded [symbolic = @ptr.as.OptionalStorage.impl.%ptr.as.OptionalStorage.impl.Get (constants.%ptr.as.OptionalStorage.impl.Get.5ca)]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.abc = impl_witness_table (%Core.import_ref.6af, %Core.import_ref.33a, %Core.import_ref.7cb, %Core.import_ref.433, %Core.import_ref.ee0), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc102, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%s.param: %Struct) -> out %return.param: %tuple.type.a78 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref.loc8_11: %Struct = name_ref s, %s
+// CHECK:STDOUT:   %s.ref.loc33: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %a.ref: %Struct.elem.86b = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
-// CHECK:STDOUT:   %.loc8_12.1: ref %i32 = class_element_access %s.ref.loc8_11, element0
-// CHECK:STDOUT:   %.loc8_12.2: %i32 = acquire_value %.loc8_12.1
-// CHECK:STDOUT:   %s.ref.loc8_16: %Struct = name_ref s, %s
+// CHECK:STDOUT:   %.loc34.1: ref %i32 = class_element_access %s.ref.loc33, element0
+// CHECK:STDOUT:   %.loc34.2: %i32 = acquire_value %.loc34.1
+// CHECK:STDOUT:   %s.ref.loc37: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %b.ref: %Struct.elem.86b = name_ref b, @Struct.%.2 [concrete = @Struct.%.2]
-// CHECK:STDOUT:   %.loc8_17.1: ref %i32 = class_element_access %s.ref.loc8_16, element1
-// CHECK:STDOUT:   %.loc8_17.2: %i32 = acquire_value %.loc8_17.1
-// CHECK:STDOUT:   %s.ref.loc8_22: %Struct = name_ref s, %s
+// CHECK:STDOUT:   %.loc38.1: ref %i32 = class_element_access %s.ref.loc37, element1
+// CHECK:STDOUT:   %.loc38.2: %i32 = acquire_value %.loc38.1
+// CHECK:STDOUT:   %s.ref.loc42: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %p.ref: %Struct.elem.765 = name_ref p, @Struct.%.3 [concrete = @Struct.%.3]
-// CHECK:STDOUT:   %.loc8_23.1: ref %ptr.235 = class_element_access %s.ref.loc8_22, element2
-// CHECK:STDOUT:   %.loc8_23.2: %ptr.235 = acquire_value %.loc8_23.1
-// CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
-// CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
+// CHECK:STDOUT:   %.loc43.1: ref %ptr.235 = class_element_access %s.ref.loc42, element2
+// CHECK:STDOUT:   %.loc43.2: %ptr.235 = acquire_value %.loc43.1
+// CHECK:STDOUT:   %.loc41.1: ref %i32 = deref %.loc43.2
+// CHECK:STDOUT:   %s.ref.loc47: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %q.ref: %Struct.elem.bb4 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
-// CHECK:STDOUT:   %.loc8_29.1: ref %Optional.07d = class_element_access %s.ref.loc8_28, element3
-// CHECK:STDOUT:   %.loc8_29.2: %Optional.07d = acquire_value %.loc8_29.1
-// CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.ea6 = specific_constant imports.%Core.import_ref.3a5, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.0dd]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.ea6 = name_ref Get, %.loc8_31 [concrete = constants.%Optional.Get.0dd]
-// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc8_29.2, %Get.ref
+// CHECK:STDOUT:   %.loc48.1: ref %Optional.07d = class_element_access %s.ref.loc47, element3
+// CHECK:STDOUT:   %.loc48.2: %Optional.07d = acquire_value %.loc48.1
+// CHECK:STDOUT:   %.loc50: %Optional.Get.type.ea6 = specific_constant imports.%Core.import_ref.3a5, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.0dd]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.ea6 = name_ref Get, %.loc50 [concrete = constants.%Optional.Get.0dd]
+// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc48.2, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_36: <bound method> = bound_method %.loc8_29.2, %Optional.Get.specific_fn
-// CHECK:STDOUT:   %Optional.Get.call: init %ptr.235 = call %bound_method.loc8_36(%.loc8_29.2)
-// CHECK:STDOUT:   %.loc8_36.1: %ptr.235 = value_of_initializer %Optional.Get.call
-// CHECK:STDOUT:   %.loc8_36.2: %ptr.235 = converted %Optional.Get.call, %.loc8_36.1
-// CHECK:STDOUT:   %.loc8_27.1: ref %i32 = deref %.loc8_36.2
-// CHECK:STDOUT:   %s.ref.loc8_40: %Struct = name_ref s, %s
+// CHECK:STDOUT:   %bound_method.loc53: <bound method> = bound_method %.loc48.2, %Optional.Get.specific_fn
+// CHECK:STDOUT:   %Optional.Get.call: init %ptr.235 = call %bound_method.loc53(%.loc48.2)
+// CHECK:STDOUT:   %.loc53.1: %ptr.235 = value_of_initializer %Optional.Get.call
+// CHECK:STDOUT:   %.loc53.2: %ptr.235 = converted %Optional.Get.call, %.loc53.1
+// CHECK:STDOUT:   %.loc46.1: ref %i32 = deref %.loc53.2
+// CHECK:STDOUT:   %s.ref.loc56: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %r.ref: %Struct.elem.93e = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
-// CHECK:STDOUT:   %.loc8_41.1: ref %const.12f = class_element_access %s.ref.loc8_40, element4
-// CHECK:STDOUT:   %.loc8_41.2: %const.12f = acquire_value %.loc8_41.1
-// CHECK:STDOUT:   %.loc8_39.1: ref %i32 = deref %.loc8_41.2
-// CHECK:STDOUT:   %.loc8_43.1: %tuple.type.a78 = tuple_literal (%.loc8_12.2, %.loc8_17.2, %.loc8_21.1, %.loc8_27.1, %.loc8_39.1)
-// CHECK:STDOUT:   %impl.elem0.loc8_12: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_12.1: <bound method> = bound_method %.loc8_12.2, %impl.elem0.loc8_12
-// CHECK:STDOUT:   %specific_fn.loc8_12: <specific function> = specific_function %impl.elem0.loc8_12, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_12.2: <bound method> = bound_method %.loc8_12.2, %specific_fn.loc8_12
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_12: init %i32 = call %bound_method.loc8_12.2(%.loc8_12.2)
+// CHECK:STDOUT:   %.loc57.1: ref %const.12f = class_element_access %s.ref.loc56, element4
+// CHECK:STDOUT:   %.loc57.2: %const.12f = acquire_value %.loc57.1
+// CHECK:STDOUT:   %.loc55.1: ref %i32 = deref %.loc57.2
+// CHECK:STDOUT:   %.loc59.1: %tuple.type.a78 = tuple_literal (%.loc34.2, %.loc38.2, %.loc41.1, %.loc46.1, %.loc55.1)
+// CHECK:STDOUT:   %impl.elem0.loc34: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc34.1: <bound method> = bound_method %.loc34.2, %impl.elem0.loc34
+// CHECK:STDOUT:   %specific_fn.loc34: <specific function> = specific_function %impl.elem0.loc34, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc34.2: <bound method> = bound_method %.loc34.2, %specific_fn.loc34
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc34: init %i32 = call %bound_method.loc34.2(%.loc34.2)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param, element0
-// CHECK:STDOUT:   %.loc8_43.2: init %i32 to %tuple.elem0 = in_place_init %Int.as.Copy.impl.Op.call.loc8_12
-// CHECK:STDOUT:   %impl.elem0.loc8_17: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_17.1: <bound method> = bound_method %.loc8_17.2, %impl.elem0.loc8_17
-// CHECK:STDOUT:   %specific_fn.loc8_17: <specific function> = specific_function %impl.elem0.loc8_17, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_17.2: <bound method> = bound_method %.loc8_17.2, %specific_fn.loc8_17
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_17: init %i32 = call %bound_method.loc8_17.2(%.loc8_17.2)
+// CHECK:STDOUT:   %.loc59.2: init %i32 to %tuple.elem0 = in_place_init %Int.as.Copy.impl.Op.call.loc34
+// CHECK:STDOUT:   %impl.elem0.loc38: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc38.1: <bound method> = bound_method %.loc38.2, %impl.elem0.loc38
+// CHECK:STDOUT:   %specific_fn.loc38: <specific function> = specific_function %impl.elem0.loc38, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc38.2: <bound method> = bound_method %.loc38.2, %specific_fn.loc38
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc38: init %i32 = call %bound_method.loc38.2(%.loc38.2)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
-// CHECK:STDOUT:   %.loc8_43.3: init %i32 to %tuple.elem1 = in_place_init %Int.as.Copy.impl.Op.call.loc8_17
-// CHECK:STDOUT:   %.loc8_21.2: %i32 = acquire_value %.loc8_21.1
-// CHECK:STDOUT:   %impl.elem0.loc8_21: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_21.1: <bound method> = bound_method %.loc8_21.2, %impl.elem0.loc8_21
-// CHECK:STDOUT:   %specific_fn.loc8_21: <specific function> = specific_function %impl.elem0.loc8_21, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_21.2: <bound method> = bound_method %.loc8_21.2, %specific_fn.loc8_21
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_21: init %i32 = call %bound_method.loc8_21.2(%.loc8_21.2)
+// CHECK:STDOUT:   %.loc59.3: init %i32 to %tuple.elem1 = in_place_init %Int.as.Copy.impl.Op.call.loc38
+// CHECK:STDOUT:   %.loc41.2: %i32 = acquire_value %.loc41.1
+// CHECK:STDOUT:   %impl.elem0.loc41: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc41.1: <bound method> = bound_method %.loc41.2, %impl.elem0.loc41
+// CHECK:STDOUT:   %specific_fn.loc41: <specific function> = specific_function %impl.elem0.loc41, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc41.2: <bound method> = bound_method %.loc41.2, %specific_fn.loc41
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc41: init %i32 = call %bound_method.loc41.2(%.loc41.2)
 // CHECK:STDOUT:   %tuple.elem2: ref %i32 = tuple_access %return.param, element2
-// CHECK:STDOUT:   %.loc8_43.4: init %i32 to %tuple.elem2 = in_place_init %Int.as.Copy.impl.Op.call.loc8_21
-// CHECK:STDOUT:   %.loc8_27.2: %i32 = acquire_value %.loc8_27.1
-// CHECK:STDOUT:   %impl.elem0.loc8_27: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_27.1: <bound method> = bound_method %.loc8_27.2, %impl.elem0.loc8_27
-// CHECK:STDOUT:   %specific_fn.loc8_27: <specific function> = specific_function %impl.elem0.loc8_27, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_27.2: <bound method> = bound_method %.loc8_27.2, %specific_fn.loc8_27
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_27: init %i32 = call %bound_method.loc8_27.2(%.loc8_27.2)
+// CHECK:STDOUT:   %.loc59.4: init %i32 to %tuple.elem2 = in_place_init %Int.as.Copy.impl.Op.call.loc41
+// CHECK:STDOUT:   %.loc46.2: %i32 = acquire_value %.loc46.1
+// CHECK:STDOUT:   %impl.elem0.loc46: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc46.1: <bound method> = bound_method %.loc46.2, %impl.elem0.loc46
+// CHECK:STDOUT:   %specific_fn.loc46: <specific function> = specific_function %impl.elem0.loc46, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc46.2: <bound method> = bound_method %.loc46.2, %specific_fn.loc46
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc46: init %i32 = call %bound_method.loc46.2(%.loc46.2)
 // CHECK:STDOUT:   %tuple.elem3: ref %i32 = tuple_access %return.param, element3
-// CHECK:STDOUT:   %.loc8_43.5: init %i32 to %tuple.elem3 = in_place_init %Int.as.Copy.impl.Op.call.loc8_27
-// CHECK:STDOUT:   %.loc8_39.2: %i32 = acquire_value %.loc8_39.1
-// CHECK:STDOUT:   %impl.elem0.loc8_39: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_39.1: <bound method> = bound_method %.loc8_39.2, %impl.elem0.loc8_39
-// CHECK:STDOUT:   %specific_fn.loc8_39: <specific function> = specific_function %impl.elem0.loc8_39, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_39.2: <bound method> = bound_method %.loc8_39.2, %specific_fn.loc8_39
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc8_39: init %i32 = call %bound_method.loc8_39.2(%.loc8_39.2)
+// CHECK:STDOUT:   %.loc59.5: init %i32 to %tuple.elem3 = in_place_init %Int.as.Copy.impl.Op.call.loc46
+// CHECK:STDOUT:   %.loc55.2: %i32 = acquire_value %.loc55.1
+// CHECK:STDOUT:   %impl.elem0.loc55: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc55.1: <bound method> = bound_method %.loc55.2, %impl.elem0.loc55
+// CHECK:STDOUT:   %specific_fn.loc55: <specific function> = specific_function %impl.elem0.loc55, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc55.2: <bound method> = bound_method %.loc55.2, %specific_fn.loc55
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc55: init %i32 = call %bound_method.loc55.2(%.loc55.2)
 // CHECK:STDOUT:   %tuple.elem4: ref %i32 = tuple_access %return.param, element4
-// CHECK:STDOUT:   %.loc8_43.6: init %i32 to %tuple.elem4 = in_place_init %Int.as.Copy.impl.Op.call.loc8_39
-// CHECK:STDOUT:   %.loc8_43.7: init %tuple.type.a78 to %return.param = tuple_init (%.loc8_43.2, %.loc8_43.3, %.loc8_43.4, %.loc8_43.5, %.loc8_43.6)
-// CHECK:STDOUT:   %.loc8_44: init %tuple.type.a78 = converted %.loc8_43.1, %.loc8_43.7
-// CHECK:STDOUT:   return %.loc8_44 to %return.param
+// CHECK:STDOUT:   %.loc59.6: init %i32 to %tuple.elem4 = in_place_init %Int.as.Copy.impl.Op.call.loc55
+// CHECK:STDOUT:   %.loc59.7: init %tuple.type.a78 to %return.param = tuple_init (%.loc59.2, %.loc59.3, %.loc59.4, %.loc59.5, %.loc59.6)
+// CHECK:STDOUT:   %.loc60: init %tuple.type.a78 = converted %.loc59.1, %.loc59.7
+// CHECK:STDOUT:   return %.loc60 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_union_fields.carbon
@@ -353,7 +353,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc102, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -361,13 +361,13 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
 // CHECK:STDOUT:   %a.ref: %Union.elem.041 = name_ref a, @Union.%.1 [concrete = @Union.%.1]
-// CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %u.ref, element0
-// CHECK:STDOUT:   %.loc8_11.2: %i32 = acquire_value %.loc8_11.1
+// CHECK:STDOUT:   %.loc23.1: ref %i32 = class_element_access %u.ref, element0
+// CHECK:STDOUT:   %.loc23.2: %i32 = acquire_value %.loc23.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %.loc8_11.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc23.1: <bound method> = bound_method %.loc23.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_11.2(%.loc8_11.2)
+// CHECK:STDOUT:   %bound_method.loc23.2: <bound method> = bound_method %.loc23.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23.2(%.loc23.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -375,13 +375,13 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
 // CHECK:STDOUT:   %b.ref: %Union.elem.041 = name_ref b, @Union.%.2 [concrete = @Union.%.2]
-// CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %u.ref, element1
-// CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
+// CHECK:STDOUT:   %.loc41.1: ref %i32 = class_element_access %u.ref, element1
+// CHECK:STDOUT:   %.loc41.2: %i32 = acquire_value %.loc41.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc41.1: <bound method> = bound_method %.loc41.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_11.2(%.loc14_11.2)
+// CHECK:STDOUT:   %bound_method.loc41.2: <bound method> = bound_method %.loc41.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc41.2(%.loc41.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -389,15 +389,15 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
 // CHECK:STDOUT:   %p.ref: %Union.elem.92a = name_ref p, @Union.%.3 [concrete = @Union.%.3]
-// CHECK:STDOUT:   %.loc20_12.1: ref %ptr.235 = class_element_access %u.ref, element2
-// CHECK:STDOUT:   %.loc20_12.2: %ptr.235 = acquire_value %.loc20_12.1
-// CHECK:STDOUT:   %.loc20_10.1: ref %i32 = deref %.loc20_12.2
-// CHECK:STDOUT:   %.loc20_10.2: %i32 = acquire_value %.loc20_10.1
+// CHECK:STDOUT:   %.loc60.1: ref %ptr.235 = class_element_access %u.ref, element2
+// CHECK:STDOUT:   %.loc60.2: %ptr.235 = acquire_value %.loc60.1
+// CHECK:STDOUT:   %.loc58.1: ref %i32 = deref %.loc60.2
+// CHECK:STDOUT:   %.loc58.2: %i32 = acquire_value %.loc58.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %.loc20_10.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc58.1: <bound method> = bound_method %.loc58.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %.loc20_10.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_10.2(%.loc20_10.2)
+// CHECK:STDOUT:   %bound_method.loc58.2: <bound method> = bound_method %.loc58.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc58.2(%.loc58.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -424,7 +424,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/types/int, loc102, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -432,13 +432,13 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Struct = name_ref s, %s
 // CHECK:STDOUT:   %a.ref: %Struct.elem = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
-// CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %s.ref, element0
-// CHECK:STDOUT:   %.loc8_11.2: %i32 = acquire_value %.loc8_11.1
+// CHECK:STDOUT:   %.loc23.1: ref %i32 = class_element_access %s.ref, element0
+// CHECK:STDOUT:   %.loc23.2: %i32 = acquire_value %.loc23.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %.loc8_11.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc23.1: <bound method> = bound_method %.loc23.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_11.2(%.loc8_11.2)
+// CHECK:STDOUT:   %bound_method.loc23.2: <bound method> = bound_method %.loc23.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23.2(%.loc23.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,13 +446,13 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Union = name_ref s, %s
 // CHECK:STDOUT:   %c.ref: %Union.elem = name_ref c, @Union.%.1 [concrete = @Union.%.1]
-// CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %s.ref, element0
-// CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
+// CHECK:STDOUT:   %.loc41.1: ref %i32 = class_element_access %s.ref, element0
+// CHECK:STDOUT:   %.loc41.2: %i32 = acquire_value %.loc41.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc41.1: <bound method> = bound_method %.loc41.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_11.2(%.loc14_11.2)
+// CHECK:STDOUT:   %bound_method.loc41.2: <bound method> = bound_method %.loc41.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc41.2(%.loc41.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

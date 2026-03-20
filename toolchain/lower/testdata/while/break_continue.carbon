@@ -35,28 +35,28 @@ fn While() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc20, %if.then.loc19
+// CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc49, %if.then.loc39
 // CHECK:STDOUT:   %A.call = call i1 @_CA.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %B.call = call i1 @_CB.Main(), !dbg !9
-// CHECK:STDOUT:   br i1 %B.call, label %if.then.loc19, label %if.else.loc19, !dbg !10
+// CHECK:STDOUT:   br i1 %B.call, label %if.then.loc39, label %if.else.loc39, !dbg !10
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc19:                                    ; preds = %while.body
+// CHECK:STDOUT: if.then.loc39:                                    ; preds = %while.body
 // CHECK:STDOUT:   br label %while.cond, !dbg !11
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc19:                                    ; preds = %while.body
+// CHECK:STDOUT: if.else.loc39:                                    ; preds = %while.body
 // CHECK:STDOUT:   %C.call = call i1 @_CC.Main(), !dbg !12
-// CHECK:STDOUT:   br i1 %C.call, label %if.then.loc20, label %if.else.loc20, !dbg !13
+// CHECK:STDOUT:   br i1 %C.call, label %if.then.loc49, label %if.else.loc49, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc20:                                    ; preds = %if.else.loc19
+// CHECK:STDOUT: if.then.loc49:                                    ; preds = %if.else.loc39
 // CHECK:STDOUT:   br label %while.done, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc20:                                    ; preds = %if.else.loc19
+// CHECK:STDOUT: if.else.loc49:                                    ; preds = %if.else.loc39
 // CHECK:STDOUT:   br label %while.cond, !dbg !15
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.done:                                       ; preds = %if.then.loc20, %while.cond
+// CHECK:STDOUT: while.done:                                       ; preds = %if.then.loc49, %while.cond
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

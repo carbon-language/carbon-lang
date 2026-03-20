@@ -41,8 +41,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.impl.carbon
@@ -55,17 +55,17 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.33f = import_ref Main//b, loc2_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Main.import_ref.9f2: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
+// CHECK:STDOUT:   %Main.import_ref.33f = import_ref Main//b, loc6, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc10, loaded [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Main.import_ref.9f2: type = import_ref Main//b, loc12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {

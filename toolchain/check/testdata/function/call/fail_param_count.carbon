@@ -123,10 +123,10 @@ fn Main() {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc17_19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc17_34: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
@@ -149,18 +149,18 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run0.ref.loc27: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
-// CHECK:STDOUT:   %int_1.loc27: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run0.ref.loc35: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
-// CHECK:STDOUT:   %int_0.loc35: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc35: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run1.ref.loc44: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
-// CHECK:STDOUT:   %Run1.ref.loc52: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
-// CHECK:STDOUT:   %int_0.loc52: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc52: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run2.ref.loc61: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
-// CHECK:STDOUT:   %Run2.ref.loc69: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
-// CHECK:STDOUT:   %int_0.loc69: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %Run0.ref.loc37: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_1.loc39: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run0.ref.loc42: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_0.loc44: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc46: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run1.ref.loc49: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %Run1.ref.loc53: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %int_0.loc55: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc57: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run2.ref.loc60: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %Run2.ref.loc64: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %int_0.loc66: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

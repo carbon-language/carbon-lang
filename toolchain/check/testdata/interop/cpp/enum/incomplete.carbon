@@ -80,7 +80,7 @@ fn MyF() {
 // CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %UnsizedEnum = value_param call_param0
-// CHECK:STDOUT:     %.loc12: type = splice_block %UnsizedEnum.ref [concrete = constants.%UnsizedEnum] {
+// CHECK:STDOUT:     %.loc15: type = splice_block %UnsizedEnum.ref [concrete = constants.%UnsizedEnum] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %UnsizedEnum.ref: type = name_ref UnsizedEnum, imports.%UnsizedEnum.decl [concrete = constants.%UnsizedEnum]
 // CHECK:STDOUT:     }

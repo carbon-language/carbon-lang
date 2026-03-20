@@ -115,7 +115,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]
-// CHECK:STDOUT:     %.loc11_14.2: Core.Form = init_form %AbstractFinal.ref [concrete = constants.%.3ee]
+// CHECK:STDOUT:     %.loc15.2: Core.Form = init_form %AbstractFinal.ref [concrete = constants.%.3ee]
 // CHECK:STDOUT:     %return.param: ref %AbstractFinal = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AbstractFinal = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -124,8 +124,8 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT: fn @F() -> out %return.param: %AbstractFinal {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc11_14.1: ref %AbstractFinal = splice_block %return.param {}
-// CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc11_14.1 = call %F.ref()
+// CHECK:STDOUT:   %.loc15.1: ref %AbstractFinal = splice_block %return.param {}
+// CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc15.1 = call %F.ref()
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -91,7 +91,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +112,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %f_ref.var_patt: %pattern_type.afe = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
-// CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
+// CHECK:STDOUT:   %.loc44: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
@@ -135,7 +135,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.WithSelf.decl = interface_with_self_decl @Basic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc8 [concrete] {
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc13 [concrete] {
 // CHECK:STDOUT:     %assoc0: %Basic.assoc_type = assoc_entity element0, @Basic.WithSelf.%T [concrete = constants.%assoc0.590]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.WithSelf.F.decl: @Basic.WithSelf.%Basic.WithSelf.F.type (%Basic.WithSelf.F.type) = fn_decl @Basic.WithSelf.F [symbolic = @Basic.WithSelf.%Basic.WithSelf.F (constants.%Basic.WithSelf.F)] {} {}
@@ -143,7 +143,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = @T.loc8.%assoc0
+// CHECK:STDOUT:   .T = @T.loc13.%assoc0
 // CHECK:STDOUT:   .F = @Basic.WithSelf.%assoc1
 // CHECK:STDOUT:   witness = (@Basic.WithSelf.%T, @Basic.WithSelf.%Basic.WithSelf.F.decl)
 // CHECK:STDOUT:
@@ -155,7 +155,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.decl = interface_with_self_decl @ForwardDeclared [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc16 [concrete] {
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc27 [concrete] {
 // CHECK:STDOUT:     %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.WithSelf.%T [concrete = constants.%assoc0.e70]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.decl: @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.type (%ForwardDeclared.WithSelf.F.type) = fn_decl @ForwardDeclared.WithSelf.F [symbolic = @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F (constants.%ForwardDeclared.WithSelf.F)] {} {}
@@ -163,7 +163,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = @T.loc16.%assoc0
+// CHECK:STDOUT:   .T = @T.loc27.%assoc0
 // CHECK:STDOUT:   .F = @ForwardDeclared.WithSelf.%assoc1
 // CHECK:STDOUT:   witness = (@ForwardDeclared.WithSelf.%T, @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.decl)
 // CHECK:STDOUT:
@@ -181,9 +181,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%struct_type.f, (constants.%DefaultOrUnformed.impl_witness.527) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc20_33.1: %DefaultOrUnformed.type = converted constants.%struct_type.f, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc20_33.1 [concrete = constants.%struct_type.f]
-// CHECK:STDOUT:   %.loc20_33.2: type = converted %.loc20_33.1, %as_type [concrete = constants.%struct_type.f]
+// CHECK:STDOUT:   %.loc45.1: %DefaultOrUnformed.type = converted constants.%struct_type.f, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc45.1 [concrete = constants.%struct_type.f]
+// CHECK:STDOUT:   %.loc45.2: type = converted %.loc45.1, %as_type [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.100, @T.as.DefaultOrUnformed.impl.Op(constants.%struct_type.f) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %struct_type.f = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%f_ref.var, %T.as.DefaultOrUnformed.impl.Op.call
@@ -264,28 +264,28 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.69f = import_ref Main//a, loc4_17, unloaded
-// CHECK:STDOUT:   %Main.import_ref.736: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.a68]
-// CHECK:STDOUT:   %Main.import_ref.c83: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.448]
+// CHECK:STDOUT:   %Main.import_ref.69f = import_ref Main//a, loc6, unloaded
+// CHECK:STDOUT:   %Main.import_ref.736: %Basic.assoc_type = import_ref Main//a, loc13, loaded [concrete = constants.%assoc0.a68]
+// CHECK:STDOUT:   %Main.import_ref.c83: %Basic.assoc_type = import_ref Main//a, loc20, loaded [concrete = constants.%assoc1.448]
 // CHECK:STDOUT:   %Main.T.85a = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.95b = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ba7f95.2: %Basic.type = import_ref Main//a, loc7_17, loaded [symbolic = constants.%Self.685]
-// CHECK:STDOUT:   %Main.import_ref.1e4 = import_ref Main//a, loc7_17, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fa6: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.c28]
-// CHECK:STDOUT:   %Main.import_ref.9f2: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.e73]
+// CHECK:STDOUT:   %Main.import_ref.ba7f95.2: %Basic.type = import_ref Main//a, loc10, loaded [symbolic = constants.%Self.685]
+// CHECK:STDOUT:   %Main.import_ref.1e4 = import_ref Main//a, loc10, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fa6: %ForwardDeclared.assoc_type = import_ref Main//a, loc27, loaded [concrete = constants.%assoc0.c28]
+// CHECK:STDOUT:   %Main.import_ref.9f2: %ForwardDeclared.assoc_type = import_ref Main//a, loc34, loaded [concrete = constants.%assoc1.e73]
 // CHECK:STDOUT:   %Main.T.9f8 = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.204 = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.319eb9.2: %ForwardDeclared.type = import_ref Main//a, loc15_27, loaded [symbolic = constants.%Self.332]
-// CHECK:STDOUT:   %Main.import_ref.952 = import_ref Main//a, loc15_27, unloaded
-// CHECK:STDOUT:   %Main.import_ref.6c4 = import_ref Main//a, loc8_8, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f48 = import_ref Main//a, loc9_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.614 = import_ref Main//a, loc16_8, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e6e = import_ref Main//a, loc17_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.319eb9.2: %ForwardDeclared.type = import_ref Main//a, loc24, loaded [symbolic = constants.%Self.332]
+// CHECK:STDOUT:   %Main.import_ref.952 = import_ref Main//a, loc24, unloaded
+// CHECK:STDOUT:   %Main.import_ref.6c4 = import_ref Main//a, loc13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f48 = import_ref Main//a, loc20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.614 = import_ref Main//a, loc27, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e6e = import_ref Main//a, loc34, unloaded
 // CHECK:STDOUT:   %f_ref.patt: %pattern_type.afe = ref_binding_pattern f_ref [concrete]
 // CHECK:STDOUT:   %f_ref.var_patt: %pattern_type.afe = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc217, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -331,26 +331,26 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %f: %ForwardDeclared.type = value_binding f, %f.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %T.ref.loc10: %Basic.assoc_type = name_ref T, imports.%Main.import_ref.736 [concrete = constants.%assoc0.a68]
+// CHECK:STDOUT:   %Basic.ref.loc41: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
+// CHECK:STDOUT:   %T.ref.loc42: %Basic.assoc_type = name_ref T, imports.%Main.import_ref.736 [concrete = constants.%assoc0.a68]
 // CHECK:STDOUT:   %UseBasicT: %Basic.assoc_type = alias_binding UseBasicT, imports.%Main.import_ref.736 [concrete = constants.%assoc0.a68]
-// CHECK:STDOUT:   %Basic.ref.loc11: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %F.ref.loc11: %Basic.assoc_type = name_ref F, imports.%Main.import_ref.c83 [concrete = constants.%assoc1.448]
+// CHECK:STDOUT:   %Basic.ref.loc48: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
+// CHECK:STDOUT:   %F.ref.loc49: %Basic.assoc_type = name_ref F, imports.%Main.import_ref.c83 [concrete = constants.%assoc1.448]
 // CHECK:STDOUT:   %UseBasicF: %Basic.assoc_type = alias_binding UseBasicF, imports.%Main.import_ref.c83 [concrete = constants.%assoc1.448]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc13: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %T.ref.loc13: %ForwardDeclared.assoc_type = name_ref T, imports.%Main.import_ref.fa6 [concrete = constants.%assoc0.c28]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc55: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %T.ref.loc56: %ForwardDeclared.assoc_type = name_ref T, imports.%Main.import_ref.fa6 [concrete = constants.%assoc0.c28]
 // CHECK:STDOUT:   %UseForwardDeclaredT: %ForwardDeclared.assoc_type = alias_binding UseForwardDeclaredT, imports.%Main.import_ref.fa6 [concrete = constants.%assoc0.c28]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %F.ref.loc14: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.9f2 [concrete = constants.%assoc1.e73]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc62: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %F.ref.loc63: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.9f2 [concrete = constants.%assoc1.e73]
 // CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = alias_binding UseForwardDeclaredF, imports.%Main.import_ref.9f2 [concrete = constants.%assoc1.e73]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.063 = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type.063 = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %ptr.c31 = var %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr.c31] {
-// CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.c31]
+// CHECK:STDOUT:   %.loc70: type = splice_block %ptr [concrete = constants.%ptr.c31] {
+// CHECK:STDOUT:     %ForwardDeclared.ref.loc69: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc69 [concrete = constants.%ptr.c31]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %ptr.c31 = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
@@ -409,13 +409,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref [concrete = imports.%f_ref.var]
-// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.816]
-// CHECK:STDOUT:   %addr: %ptr.c31 = addr_of %.loc16 [concrete = constants.%addr]
+// CHECK:STDOUT:   %.loc74: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.816]
+// CHECK:STDOUT:   %addr: %ptr.c31 = addr_of %.loc74 [concrete = constants.%addr]
 // CHECK:STDOUT:   %impl.elem0: %.092 = impl_witness_access constants.%Copy.impl_witness.e5d, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a2e]
-// CHECK:STDOUT:   %bound_method.loc16_27.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %bound_method.loc72.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ForwardDeclared.type) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc16_27.2: <bound method> = bound_method %addr, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.c31 = call %bound_method.loc16_27.2(%addr) [concrete = constants.%addr]
+// CHECK:STDOUT:   %bound_method.loc72.2: <bound method> = bound_method %addr, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.c31 = call %bound_method.loc72.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%f.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

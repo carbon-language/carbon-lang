@@ -43,18 +43,18 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() local_unnamed_addr #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15 = tail call i32 @_CRand.Main() #0, !dbg !8
-// CHECK:STDOUT:   %Rand.call.loc7_24 = tail call i32 @_CRand.Main() #0, !dbg !9
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc7_24, %Rand.call.loc7_15, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc23 = tail call i32 @_CRand.Main() #0, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc27 = tail call i32 @_CRand.Main() #0, !dbg !9
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc27, %Rand.call.loc23, !dbg !8
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15.i = tail call i32 @_CRand.Main() #0, !dbg !12
-// CHECK:STDOUT:   %Rand.call.loc7_24.i = tail call i32 @_CRand.Main() #0, !dbg !14
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc7_24.i, %Rand.call.loc7_15.i, !dbg !12
+// CHECK:STDOUT:   %Rand.call.loc23.i = tail call i32 @_CRand.Main() #0, !dbg !12
+// CHECK:STDOUT:   %Rand.call.loc27.i = tail call i32 @_CRand.Main() #0, !dbg !14
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc27.i, %Rand.call.loc23.i, !dbg !12
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,10 +66,10 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
 // CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
 // CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !23
-// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !23
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc77.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !23
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc77.array.index, align 4, !dbg !23
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !23
-// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !23
+// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc77.array.index, align 4, !dbg !23
 // CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !24
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !39
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !22
@@ -80,7 +80,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder label %while.body, { 1, 0 }
 // CHECK:STDOUT:   uselistorder i32 %n.var.03, { 0, 2, 1 }
-// CHECK:STDOUT:   uselistorder ptr %.loc19_11.array.index, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %.loc77.array.index, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

@@ -22,8 +22,8 @@ fn Or(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_COr.Main(i1 %b, i1 %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_12.1 = xor i1 %b, true, !dbg !11
-// CHECK:STDOUT:   br i1 %.loc16_12.1, label %or.rhs, label %or.result, !dbg !11
+// CHECK:STDOUT:   %.loc17.1 = xor i1 %b, true, !dbg !11
+// CHECK:STDOUT:   br i1 %.loc17.1, label %or.rhs, label %or.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %entry
 // CHECK:STDOUT:   br label %or.result, !dbg !11

@@ -48,17 +48,17 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0, template [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc11.1: type = splice_block %.loc11.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc4_26.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0, template [template = %T.loc4_22.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9.2: type = symbolic_binding T, 0, template [template = %T.loc9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_22.2: type) {
-// CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0, template [template = %T.loc4_22.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc9.2: type) {
+// CHECK:STDOUT:   %T.loc9.1: type = symbolic_binding T, 0, template [template = %T.loc9.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -71,19 +71,19 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc8_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_7: type = converted %.loc8_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc24: type = converted %.loc23, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
+// CHECK:STDOUT:   %T.loc9.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T.loc4_22.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.loc9.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

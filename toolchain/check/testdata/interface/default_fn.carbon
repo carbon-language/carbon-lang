@@ -86,10 +86,10 @@ class C {
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.b59) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_23.1: type = splice_block %.loc18_23.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)] {
+// CHECK:STDOUT:     %.loc13.1: type = splice_block %.loc13.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.849)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
-// CHECK:STDOUT:       %.loc18_23.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
+// CHECK:STDOUT:       %.loc13.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5c6)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.5c6) = value_binding self, %self.param
 // CHECK:STDOUT:   }
@@ -154,10 +154,10 @@ class C {
 // CHECK:STDOUT:       %c.var_patt: %pattern_type.7c7 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:     %.loc20_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc20_19.2: init %C to %c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:     %.loc20_7: init %C = converted %.loc20_19.1, %.loc20_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:     assign %c.var, %.loc20_7
+// CHECK:STDOUT:     %.loc24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc24.2: init %C to %c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:     %.loc18: init %C = converted %.loc24.1, %.loc24.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:     assign %c.var, %.loc18
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
@@ -165,8 +165,8 @@ class C {
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0.1f8]
 // CHECK:STDOUT:     %impl.elem0: %.fae = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:     %.loc21: %C = acquire_value %c.ref
-// CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc21)
+// CHECK:STDOUT:     %.loc26: %C = acquire_value %c.ref
+// CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc26)
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
 // CHECK:STDOUT:     return

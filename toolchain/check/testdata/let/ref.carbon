@@ -64,20 +64,20 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7ce = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.ref.loc7: ref %i32 = name_ref b, %b
-// CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %c: ref %i32 = ref_binding c, %b.ref.loc7
+// CHECK:STDOUT:   %b.ref.loc25: ref %i32 = name_ref b, %b
+// CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %c: ref %i32 = ref_binding c, %b.ref.loc25
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.7ce = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %e.patt: %pattern_type.7ce = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc8_44: %pattern_type.511 = tuple_pattern (%d.patt, %e.patt) [concrete]
+// CHECK:STDOUT:     %.loc40: %pattern_type.511 = tuple_pattern (%d.patt, %e.patt) [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.ref.loc8: ref %i32 = name_ref b, %b
+// CHECK:STDOUT:   %b.ref.loc43: ref %i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: ref %i32 = name_ref c, %c
-// CHECK:STDOUT:   %.loc8_53: %tuple.type.d07 = tuple_literal (%b.ref.loc8, %c.ref)
-// CHECK:STDOUT:   %i32.loc8_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %d: ref %i32 = ref_binding d, %b.ref.loc8
-// CHECK:STDOUT:   %i32.loc8_41: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc46: %tuple.type.d07 = tuple_literal (%b.ref.loc43, %c.ref)
+// CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %d: ref %i32 = ref_binding d, %b.ref.loc43
+// CHECK:STDOUT:   %i32.loc39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %e: ref %i32 = ref_binding e, %c.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

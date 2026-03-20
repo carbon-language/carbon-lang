@@ -103,10 +103,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
+// CHECK:STDOUT:   %Core.import_ref.42d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.4e6) = import_ref Core//prelude/parts/int, loc119, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3c2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,23 +124,23 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.101 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.101 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc26 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc55 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc26: Core.Form = init_form %i32.loc26 [concrete = constants.%.ff5]
-// CHECK:STDOUT:     %self.param.loc26: %Base = value_param call_param0
-// CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc26: %Base = value_binding self, %self.param.loc26
-// CHECK:STDOUT:     %return.param.loc26: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc26: ref %i32 = return_slot %return.param.loc26
+// CHECK:STDOUT:     %i32.loc55: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc55: Core.Form = init_form %i32.loc55 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %self.param.loc49: %Base = value_param call_param0
+// CHECK:STDOUT:     %Base.ref.loc50: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:     %self.loc48: %Base = value_binding self, %self.param.loc49
+// CHECK:STDOUT:     %return.param.loc55: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc55: ref %i32 = return_slot %return.param.loc55
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.RefSelfBase.decl: %Derived.RefSelfBase.type = fn_decl @Derived.RefSelfBase [concrete = constants.%Derived.RefSelfBase] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.101 = ref_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.101 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc30: ref %Base = ref_param call_param0
-// CHECK:STDOUT:     %Base.ref.loc30: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc30: ref %Base = ref_binding self, %self.param.loc30
+// CHECK:STDOUT:     %self.param.loc70: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %Base.ref.loc71: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:     %self.loc69: ref %Base = ref_binding self, %self.param.loc70
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.0dd = value_param_pattern [concrete]
@@ -149,9 +149,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc34_25: Core.Form = init_form %i32 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %.loc92: Core.Form = init_form %i32 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %p.param: %ptr.f74 = value_param call_param0
-// CHECK:STDOUT:     %.loc34_19: type = splice_block %ptr [concrete = constants.%ptr.f74] {
+// CHECK:STDOUT:     %.loc89: type = splice_block %ptr [concrete = constants.%ptr.f74] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.f74]
 // CHECK:STDOUT:     }
@@ -163,40 +163,40 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc16: %Base.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc7: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc16
+// CHECK:STDOUT:   .a = %.loc7
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc20: %Derived.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc18: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %Derived.SelfBase.decl: %Derived.SelfBase.type = fn_decl @Derived.SelfBase [concrete = constants.%Derived.SelfBase] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.101 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.101 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc26 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc55 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc22: Core.Form = init_form %i32.loc22 [concrete = constants.%.ff5]
-// CHECK:STDOUT:     %self.param.loc22: %Base = value_param call_param0
-// CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc22: %Base = value_binding self, %self.param.loc22
-// CHECK:STDOUT:     %return.param.loc22: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc22: ref %i32 = return_slot %return.param.loc22
+// CHECK:STDOUT:     %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc29: Core.Form = init_form %i32.loc29 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %self.param.loc23: %Base = value_param call_param0
+// CHECK:STDOUT:     %Base.ref.loc24: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:     %self.loc22: %Base = value_binding self, %self.param.loc23
+// CHECK:STDOUT:     %return.param.loc29: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc29: ref %i32 = return_slot %return.param.loc29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.RefSelfBase.decl: %Derived.RefSelfBase.type = fn_decl @Derived.RefSelfBase [concrete = constants.%Derived.RefSelfBase] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.101 = ref_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.101 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc23: ref %Base = ref_param call_param0
-// CHECK:STDOUT:     %Base.ref.loc23: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc23: ref %Base = ref_binding self, %self.param.loc23
+// CHECK:STDOUT:     %self.param.loc36: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %Base.ref.loc37: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:     %self.loc35: ref %Base = ref_binding self, %self.param.loc36
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.27a [concrete = constants.%complete_type.5a1]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -204,59 +204,59 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc20
+// CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   .SelfBase = %Derived.SelfBase.decl
 // CHECK:STDOUT:   .RefSelfBase = %Derived.RefSelfBase.decl
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base) -> out %return.param.loc26: %i32 {
+// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc49: %Base) -> out %return.param.loc55: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc26
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
-// CHECK:STDOUT:   %.loc27_14.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc27_14.2: %i32 = acquire_value %.loc27_14.1
+// CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc48
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc7 [concrete = @Base.%.loc7]
+// CHECK:STDOUT:   %.loc59.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc59.2: %i32 = acquire_value %.loc59.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc27_14.1: <bound method> = bound_method %.loc27_14.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc59.1: <bound method> = bound_method %.loc59.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %.loc27_14.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_14.2(%.loc27_14.2)
+// CHECK:STDOUT:   %bound_method.loc59.2: <bound method> = bound_method %.loc59.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc59.2(%.loc59.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: ref %Base) {
+// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc70: ref %Base) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc30
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
-// CHECK:STDOUT:   %.loc31_7: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc69
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc7 [concrete = @Base.%.loc7]
+// CHECK:STDOUT:   %.loc77: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.545 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
-// CHECK:STDOUT:   %bound_method.loc31_10.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc79.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc31_10.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc31_10.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc31_10: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %.loc31_7, %.loc31_10
+// CHECK:STDOUT:   %bound_method.loc79.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc79.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc79: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %.loc77, %.loc79
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param: %ptr.f74) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref.loc35: %ptr.f74 = name_ref p, %p
-// CHECK:STDOUT:   %.loc35_4.1: ref %Derived = deref %p.ref.loc35
+// CHECK:STDOUT:   %p.ref.loc96: %ptr.f74 = name_ref p, %p
+// CHECK:STDOUT:   %.loc95.1: ref %Derived = deref %p.ref.loc96
 // CHECK:STDOUT:   %RefSelfBase.ref: %Derived.RefSelfBase.type = name_ref RefSelfBase, @Derived.%Derived.RefSelfBase.decl [concrete = constants.%Derived.RefSelfBase]
-// CHECK:STDOUT:   %Derived.RefSelfBase.bound: <bound method> = bound_method %.loc35_4.1, %RefSelfBase.ref
-// CHECK:STDOUT:   %.loc35_4.2: ref %Base = class_element_access %.loc35_4.1, element0
-// CHECK:STDOUT:   %.loc35_4.3: ref %Base = converted %.loc35_4.1, %.loc35_4.2
-// CHECK:STDOUT:   %Derived.RefSelfBase.call: init %empty_tuple.type = call %Derived.RefSelfBase.bound(%.loc35_4.3)
-// CHECK:STDOUT:   %p.ref.loc36: %ptr.f74 = name_ref p, %p
-// CHECK:STDOUT:   %.loc36_11.1: ref %Derived = deref %p.ref.loc36
+// CHECK:STDOUT:   %Derived.RefSelfBase.bound: <bound method> = bound_method %.loc95.1, %RefSelfBase.ref
+// CHECK:STDOUT:   %.loc95.2: ref %Base = class_element_access %.loc95.1, element0
+// CHECK:STDOUT:   %.loc95.3: ref %Base = converted %.loc95.1, %.loc95.2
+// CHECK:STDOUT:   %Derived.RefSelfBase.call: init %empty_tuple.type = call %Derived.RefSelfBase.bound(%.loc95.3)
+// CHECK:STDOUT:   %p.ref.loc106: %ptr.f74 = name_ref p, %p
+// CHECK:STDOUT:   %.loc105.1: ref %Derived = deref %p.ref.loc106
 // CHECK:STDOUT:   %SelfBase.ref: %Derived.SelfBase.type = name_ref SelfBase, @Derived.%Derived.SelfBase.decl [concrete = constants.%Derived.SelfBase]
-// CHECK:STDOUT:   %Derived.SelfBase.bound: <bound method> = bound_method %.loc36_11.1, %SelfBase.ref
-// CHECK:STDOUT:   %.loc36_11.2: ref %Base = class_element_access %.loc36_11.1, element0
-// CHECK:STDOUT:   %.loc36_11.3: ref %Base = converted %.loc36_11.1, %.loc36_11.2
-// CHECK:STDOUT:   %.loc36_11.4: %Base = acquire_value %.loc36_11.3
-// CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.4)
+// CHECK:STDOUT:   %Derived.SelfBase.bound: <bound method> = bound_method %.loc105.1, %SelfBase.ref
+// CHECK:STDOUT:   %.loc105.2: ref %Base = class_element_access %.loc105.1, element0
+// CHECK:STDOUT:   %.loc105.3: ref %Base = converted %.loc105.1, %.loc105.2
+// CHECK:STDOUT:   %.loc105.4: %Base = acquire_value %.loc105.3
+// CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc105.4)
 // CHECK:STDOUT:   return %Derived.SelfBase.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

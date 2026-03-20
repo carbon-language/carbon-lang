@@ -55,11 +55,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc20: <error> = addr_of %undeclared.ref.loc20 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc29: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_5: <error> = addr_of %undeclared.ref.loc29 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_3: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc7: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc6: <error> = addr_of %undeclared.ref.loc7 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc12: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc11: <error> = addr_of %undeclared.ref.loc12 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc9: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -48,13 +48,13 @@ fn M() -> i32 {
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !9
 // CHECK:STDOUT:   store i32 poison, ptr %m.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc34 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc34), !dbg !11
-// CHECK:STDOUT:   %.loc35_9 = load i32, ptr %n.var, align 4, !dbg !12
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.bfb441135f07cbe1(i32 %.loc35_9), !dbg !13
+// CHECK:STDOUT:   %.loc97 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc97), !dbg !11
+// CHECK:STDOUT:   %.loc104 = load i32, ptr %n.var, align 4, !dbg !12
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.bfb441135f07cbe1(i32 %.loc104), !dbg !13
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc36 = load i32, ptr %m.var, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc36, !dbg !16
+// CHECK:STDOUT:   %.loc108 = load i32, ptr %m.var, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc108, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -69,10 +69,10 @@ fn M() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.bfb441135f07cbe1(i32 %x) #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc25_6.2.temp = alloca i32, align 4, !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.2.temp), !dbg !28
+// CHECK:STDOUT:   %.loc65.2.temp = alloca i32, align 4, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc65.2.temp), !dbg !28
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.64ccbb8e5d9a0b8e(i32 %x), !dbg !28
-// CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.2.temp, align 4, !dbg !28
+// CHECK:STDOUT:   store i32 %H.call, ptr %.loc65.2.temp, align 4, !dbg !28
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !29
 // CHECK:STDOUT:   ret i32 %x, !dbg !30
 // CHECK:STDOUT: }

@@ -25,26 +25,26 @@ fn F() {}
 // CHECK:STDOUT: --- fail_redef.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.117dbc.1: type = fn_type @F.loc15 [concrete]
+// CHECK:STDOUT:   %F.type.117dbc.1: type = fn_type @F.loc5 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.1: %F.type.117dbc.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.117dbc.2: type = fn_type @F.loc23 [concrete]
+// CHECK:STDOUT:   %F.type.117dbc.2: type = fn_type @F.loc11 [concrete]
 // CHECK:STDOUT:   %F.d98bd5.2: %F.type.117dbc.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F = %F.decl.loc15
+// CHECK:STDOUT:     .F = %F.decl.loc5
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc15: %F.type.117dbc.1 = fn_decl @F.loc15 [concrete = constants.%F.d98bd5.1] {} {}
-// CHECK:STDOUT:   %F.decl.loc23: %F.type.117dbc.2 = fn_decl @F.loc23 [concrete = constants.%F.d98bd5.2] {} {}
+// CHECK:STDOUT:   %F.decl.loc5: %F.type.117dbc.1 = fn_decl @F.loc5 [concrete = constants.%F.d98bd5.1] {} {}
+// CHECK:STDOUT:   %F.decl.loc11: %F.type.117dbc.2 = fn_decl @F.loc11 [concrete = constants.%F.d98bd5.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc15() {
+// CHECK:STDOUT: fn @F.loc5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc23() {
+// CHECK:STDOUT: fn @F.loc11() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

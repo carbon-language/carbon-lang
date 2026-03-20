@@ -43,9 +43,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: noinline nounwind optnone
 // CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15 = call i32 @_CRand.Main(), !dbg !8
-// CHECK:STDOUT:   %Rand.call.loc7_24 = call i32 @_CRand.Main(), !dbg !9
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc7_15, %Rand.call.loc7_24, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc23 = call i32 @_CRand.Main(), !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc27 = call i32 @_CRand.Main(), !dbg !9
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc23, %Rand.call.loc27, !dbg !8
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,16 +65,16 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %while.cond, !dbg !21
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
-// CHECK:STDOUT:   %.loc18_10 = load i32, ptr %n.var, align 4, !dbg !22
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp slt i32 %.loc18_10, 65536, !dbg !22
+// CHECK:STDOUT:   %.loc66 = load i32, ptr %n.var, align 4, !dbg !22
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp slt i32 %.loc66, 65536, !dbg !22
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !21
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %.loc19_10 = load i32, ptr %n.var, align 4, !dbg !23
-// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc19_10, !dbg !24
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc76 = load i32, ptr %n.var, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc77.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc76, !dbg !24
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc77.array.index, align 4, !dbg !24
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = mul i32 %Int.as.MulAssignWith.impl.Op.call, 2, !dbg !24
-// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !24
+// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc77.array.index, align 4, !dbg !24
 // CHECK:STDOUT:   call void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %n.var), !dbg !25
 // CHECK:STDOUT:   br label %while.cond, !dbg !26
 // CHECK:STDOUT:

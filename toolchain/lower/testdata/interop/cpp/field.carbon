@@ -116,17 +116,17 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_11.1.n = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   %.loc9_11.2 = load i32, ptr %.loc9_11.1.n, align 4, !dbg !18
-// CHECK:STDOUT:   ret i32 %.loc9_11.2, !dbg !19
+// CHECK:STDOUT:   %.loc23.1.n = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc23.2 = load i32, ptr %.loc23.1.n, align 4, !dbg !18
+// CHECK:STDOUT:   ret i32 %.loc23.2, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_11.1.m = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 16, !dbg !23
-// CHECK:STDOUT:   %.loc13_11.2 = load i32, ptr %.loc13_11.1.m, align 4, !dbg !23
-// CHECK:STDOUT:   ret i32 %.loc13_11.2, !dbg !24
+// CHECK:STDOUT:   %.loc41.1.m = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 16, !dbg !23
+// CHECK:STDOUT:   %.loc41.2 = load i32, ptr %.loc41.1.m, align 4, !dbg !23
+// CHECK:STDOUT:   ret i32 %.loc41.2, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -168,16 +168,16 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_4.2.n = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   store i32 1, ptr %.loc9_4.2.n, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc21.2.n = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   store i32 1, ptr %.loc21.2.n, align 4, !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_4.2.m = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 16, !dbg !22
-// CHECK:STDOUT:   store i32 1, ptr %.loc13_4.2.m, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc39.2.m = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 16, !dbg !22
+// CHECK:STDOUT:   store i32 1, ptr %.loc39.2.m, align 4, !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,17 +219,17 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !18
-// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !19
+// CHECK:STDOUT:   %.loc23.1.n = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc23.2 = load i32, ptr %.loc23.1.n, align 4, !dbg !18
+// CHECK:STDOUT:   ret i32 %.loc23.2, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_11.1.m = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   %.loc11_11.2 = load i32, ptr %.loc11_11.1.m, align 4, !dbg !23
-// CHECK:STDOUT:   ret i32 %.loc11_11.2, !dbg !24
+// CHECK:STDOUT:   %.loc41.1.m = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   %.loc41.2 = load i32, ptr %.loc41.1.m, align 4, !dbg !23
+// CHECK:STDOUT:   ret i32 %.loc41.2, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -271,16 +271,16 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.n = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   store i32 1, ptr %.loc7_4.2.n, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc21.2.n = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   store i32 1, ptr %.loc21.2.n, align 4, !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_4.2.m = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !22
-// CHECK:STDOUT:   store i32 1, ptr %.loc11_4.2.m, align 4, !dbg !22
+// CHECK:STDOUT:   %.loc39.2.m = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !22
+// CHECK:STDOUT:   store i32 1, ptr %.loc39.2.m, align 4, !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -322,18 +322,18 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !18
-// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !18
-// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !19
+// CHECK:STDOUT:   %.loc23.1.n = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !18
+// CHECK:STDOUT:   %.loc23.2 = load i32, ptr %.loc23.1.n, align 4, !dbg !18
+// CHECK:STDOUT:   ret i32 %.loc23.2, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessP.Main(ptr %a) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_12.1.p = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !23
-// CHECK:STDOUT:   %.loc11_12.2 = load ptr, ptr %.loc11_12.1.p, align 8, !dbg !23
-// CHECK:STDOUT:   %.loc11_10.2 = load i32, ptr %.loc11_12.2, align 4, !dbg !24
-// CHECK:STDOUT:   ret i32 %.loc11_10.2, !dbg !25
+// CHECK:STDOUT:   %.loc42.1.p = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !23
+// CHECK:STDOUT:   %.loc42.2 = load ptr, ptr %.loc42.1.p, align 8, !dbg !23
+// CHECK:STDOUT:   %.loc40.2 = load i32, ptr %.loc42.2, align 4, !dbg !24
+// CHECK:STDOUT:   ret i32 %.loc40.2, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

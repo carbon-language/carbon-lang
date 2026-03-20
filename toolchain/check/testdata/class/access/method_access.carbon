@@ -78,11 +78,11 @@ fn G(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref.loc12_3: %X = name_ref x, %x
-// CHECK:STDOUT:   %x.ref.loc12_6: %X = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc23: %X = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc26: %X = name_ref x, %x
 // CHECK:STDOUT:   %F.ref: %X.F.type = name_ref F, @X.%X.F.decl [concrete = constants.%X.F]
-// CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc12_6, %F.ref
-// CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc12_6)
+// CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc26, %F.ref
+// CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc26)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

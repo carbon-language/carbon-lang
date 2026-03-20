@@ -28,8 +28,8 @@ fn Example() -> char {
 // CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !8
-// CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !9
-// CHECK:STDOUT:   ret i8 %.loc6, !dbg !10
+// CHECK:STDOUT:   %.loc19 = load i8, ptr %c.var, align 1, !dbg !9
+// CHECK:STDOUT:   ret i8 %.loc19, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

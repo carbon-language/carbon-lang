@@ -144,11 +144,11 @@ fn F(T: Z) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.9d9 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
-// CHECK:STDOUT:   %.loc13_22.1: ref %I.type = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc13_22.2: %I.type = acquire_value %.loc13_22.1
+// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc13 [concrete = @C.%.loc13]
+// CHECK:STDOUT:   %.loc32.1: ref %I.type = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc32.2: %I.type = acquire_value %.loc32.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = value_binding a, %.loc13_22.2
+// CHECK:STDOUT:   %a: %I.type = value_binding a, %.loc32.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,9 +168,9 @@ fn F(T: Z) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.9d9 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7_9 [concrete = @C.%.loc7_9]
-// CHECK:STDOUT:   %.loc21_22.1: ref %facet_type = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc21_22.2: %facet_type = acquire_value %.loc21_22.1
+// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %.loc38.1: ref %facet_type = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc38.2: %facet_type = acquire_value %.loc38.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = value_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>

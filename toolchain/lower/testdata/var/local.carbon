@@ -24,8 +24,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   store i32 1, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc15 = load i32, ptr %x.var, align 4, !dbg !9
-// CHECK:STDOUT:   ret i32 %.loc15, !dbg !10
+// CHECK:STDOUT:   %.loc16 = load i32, ptr %x.var, align 4, !dbg !9
+// CHECK:STDOUT:   ret i32 %.loc16, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

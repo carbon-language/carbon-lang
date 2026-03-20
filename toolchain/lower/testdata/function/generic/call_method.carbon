@@ -25,7 +25,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc20_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc38 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallF.Main() #0 !dbg !4 {
@@ -33,11 +33,11 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !8
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc38, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.64ccbb8e5d9a0b8e(ptr %c.var, i32 %.loc22_14), !dbg !11
+// CHECK:STDOUT:   %.loc58 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.64ccbb8e5d9a0b8e(ptr %c.var, i32 %.loc58), !dbg !11
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

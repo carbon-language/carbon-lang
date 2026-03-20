@@ -27,16 +27,16 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17 = load i32, ptr @_Ca.Main, align 4, !dbg !8
-// CHECK:STDOUT:   ret i32 %.loc17, !dbg !9
+// CHECK:STDOUT:   %.loc23 = load i32, ptr @_Ca.Main, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc23, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 5, ptr @_Ca.Main, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc14 = load i32, ptr @_Ca.Main, align 4, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc14, ptr @_Cb.Main, align 4, !dbg !15
+// CHECK:STDOUT:   %.loc13 = load i32, ptr @_Ca.Main, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc13, ptr @_Cb.Main, align 4, !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

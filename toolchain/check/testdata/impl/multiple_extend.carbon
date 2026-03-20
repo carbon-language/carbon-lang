@@ -223,7 +223,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc55: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -325,22 +325,22 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0.a7f]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.acd = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
-// CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc23: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0.a7f]
-// CHECK:STDOUT:   %impl.elem0.loc23: %.acd = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc24: %HasG.assoc_type = name_ref G, @HasG.WithSelf.%assoc0 [concrete = constants.%assoc0.035]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.892 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%C.as.HasG.impl.G]
-// CHECK:STDOUT:   %C.as.HasG.impl.G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
-// CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc25: %HasG.assoc_type = name_ref G, @HasG.WithSelf.%assoc0 [concrete = constants.%assoc0.035]
-// CHECK:STDOUT:   %impl.elem0.loc25: %.892 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%C.as.HasG.impl.G]
-// CHECK:STDOUT:   %C.as.HasG.impl.G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
+// CHECK:STDOUT:   %C.ref.loc58: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc59: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0.a7f]
+// CHECK:STDOUT:   %impl.elem0.loc59: %.acd = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc62: init %empty_tuple.type = call %impl.elem0.loc59()
+// CHECK:STDOUT:   %c.ref.loc64: %C = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc65: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0.a7f]
+// CHECK:STDOUT:   %impl.elem0.loc65: %.acd = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc68: init %empty_tuple.type = call %impl.elem0.loc65()
+// CHECK:STDOUT:   %C.ref.loc70: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc71: %HasG.assoc_type = name_ref G, @HasG.WithSelf.%assoc0 [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %impl.elem0.loc71: %.892 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%C.as.HasG.impl.G]
+// CHECK:STDOUT:   %C.as.HasG.impl.G.call.loc74: init %empty_tuple.type = call %impl.elem0.loc71()
+// CHECK:STDOUT:   %c.ref.loc76: %C = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc77: %HasG.assoc_type = name_ref G, @HasG.WithSelf.%assoc0 [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %impl.elem0.loc77: %.892 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%C.as.HasG.impl.G]
+// CHECK:STDOUT:   %C.as.HasG.impl.G.call.loc80: init %empty_tuple.type = call %impl.elem0.loc77()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -450,7 +450,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %d.patt: %pattern_type = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc55: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %d: %D = value_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -549,10 +549,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %D.ref.loc26: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %A.ref.loc26: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %D.ref.loc58: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %A.ref.loc59: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
-// CHECK:STDOUT:   %A.ref.loc31: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc65: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -656,7 +656,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %E = value_param call_param0
-// CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:     %E.ref.loc50: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:     %e: %E = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -702,7 +702,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc13: %E.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc31: %E.elem = base_decl %B.ref, element0 [concrete]
 // CHECK:STDOUT:   impl_decl @E.as.HasI.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [concrete = constants.%HasI.type]
@@ -713,7 +713,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .base = %.loc31
 // CHECK:STDOUT:   .HasI = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .J = <poisoned>
@@ -737,20 +737,20 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%e.param: %E) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [concrete = constants.%E]
-// CHECK:STDOUT:   %I.ref.loc20: %HasI.assoc_type = name_ref I, @HasI.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.170 = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%E.as.HasI.impl.I]
-// CHECK:STDOUT:   %E.as.HasI.impl.I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
-// CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
-// CHECK:STDOUT:   %I.ref.loc21: %HasI.assoc_type = name_ref I, @HasI.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc21: %.170 = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%E.as.HasI.impl.I]
-// CHECK:STDOUT:   %E.as.HasI.impl.I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
-// CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [concrete = constants.%E]
-// CHECK:STDOUT:   %J.ref.loc22: %B.J.type = name_ref J, @B.%B.J.decl [concrete = constants.%B.J]
-// CHECK:STDOUT:   %B.J.call.loc22: init %empty_tuple.type = call %J.ref.loc22()
-// CHECK:STDOUT:   %e.ref.loc23: %E = name_ref e, %e
-// CHECK:STDOUT:   %J.ref.loc23: %B.J.type = name_ref J, @B.%B.J.decl [concrete = constants.%B.J]
-// CHECK:STDOUT:   %B.J.call.loc23: init %empty_tuple.type = call %J.ref.loc23()
+// CHECK:STDOUT:   %E.ref.loc53: type = name_ref E, file.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %I.ref.loc54: %HasI.assoc_type = name_ref I, @HasI.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc54: %.170 = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%E.as.HasI.impl.I]
+// CHECK:STDOUT:   %E.as.HasI.impl.I.call.loc57: init %empty_tuple.type = call %impl.elem0.loc54()
+// CHECK:STDOUT:   %e.ref.loc59: %E = name_ref e, %e
+// CHECK:STDOUT:   %I.ref.loc60: %HasI.assoc_type = name_ref I, @HasI.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc60: %.170 = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%E.as.HasI.impl.I]
+// CHECK:STDOUT:   %E.as.HasI.impl.I.call.loc63: init %empty_tuple.type = call %impl.elem0.loc60()
+// CHECK:STDOUT:   %E.ref.loc65: type = name_ref E, file.%E.decl [concrete = constants.%E]
+// CHECK:STDOUT:   %J.ref.loc66: %B.J.type = name_ref J, @B.%B.J.decl [concrete = constants.%B.J]
+// CHECK:STDOUT:   %B.J.call.loc69: init %empty_tuple.type = call %J.ref.loc66()
+// CHECK:STDOUT:   %e.ref.loc71: %E = name_ref e, %e
+// CHECK:STDOUT:   %J.ref.loc72: %B.J.type = name_ref J, @B.%B.J.decl [concrete = constants.%B.J]
+// CHECK:STDOUT:   %B.J.call.loc75: init %empty_tuple.type = call %J.ref.loc72()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -827,7 +827,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %l.patt: %pattern_type = at_binding_pattern l, %l.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %l.param: %L = value_param call_param0
-// CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [concrete = constants.%L]
+// CHECK:STDOUT:     %L.ref.loc50: type = name_ref L, file.%L.decl [concrete = constants.%L]
 // CHECK:STDOUT:     %l: %L = value_binding l, %l.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -871,7 +871,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc13: %L.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc31: %L.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   impl_decl @L.as.HasK.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [concrete = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [concrete = constants.%HasK.type]
@@ -882,7 +882,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .base = %.loc31
 // CHECK:STDOUT:   .HasK = <poisoned>
 // CHECK:STDOUT:   .K = <poisoned>
 // CHECK:STDOUT:   extend %Base.ref
@@ -905,10 +905,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param: %L) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [concrete = constants.%L]
-// CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %L.ref.loc53: type = name_ref L, file.%L.decl [concrete = constants.%L]
+// CHECK:STDOUT:   %K.ref.loc54: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
-// CHECK:STDOUT:   %K.ref.loc29: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %K.ref.loc60: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -998,7 +998,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %o.patt: %pattern_type = at_binding_pattern o, %o.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %O = value_param call_param0
-// CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:     %O.ref.loc76: type = name_ref O, file.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %o: %O = value_binding o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1070,7 +1070,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
 // CHECK:STDOUT:   %NBase.ref: type = name_ref NBase, file.%NBase.decl [concrete = constants.%NBase]
-// CHECK:STDOUT:   %.loc17: %O.elem = base_decl %NBase.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc40: %O.elem = base_decl %NBase.ref, element0 [concrete]
 // CHECK:STDOUT:   impl_decl @O.as.HasN1.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [concrete = constants.%HasN1.type]
@@ -1086,7 +1086,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O
 // CHECK:STDOUT:   .NBase = <poisoned>
-// CHECK:STDOUT:   .base = %.loc17
+// CHECK:STDOUT:   .base = %.loc40
 // CHECK:STDOUT:   .HasN1 = <poisoned>
 // CHECK:STDOUT:   .HasN2 = <poisoned>
 // CHECK:STDOUT:   .N = %O.N.decl
@@ -1122,12 +1122,12 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @P(%o.param: %O) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %O.ref.loc28: type = name_ref O, file.%O.decl [concrete = constants.%O]
-// CHECK:STDOUT:   %N.ref.loc28: %O.N.type = name_ref N, @O.%O.N.decl [concrete = constants.%O.N]
-// CHECK:STDOUT:   %O.N.call.loc28: init %empty_tuple.type = call %N.ref.loc28()
+// CHECK:STDOUT:   %O.ref.loc79: type = name_ref O, file.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:   %N.ref.loc80: %O.N.type = name_ref N, @O.%O.N.decl [concrete = constants.%O.N]
+// CHECK:STDOUT:   %O.N.call.loc83: init %empty_tuple.type = call %N.ref.loc80()
 // CHECK:STDOUT:   %o.ref: %O = name_ref o, %o
-// CHECK:STDOUT:   %N.ref.loc29: %O.N.type = name_ref N, @O.%O.N.decl [concrete = constants.%O.N]
-// CHECK:STDOUT:   %O.N.call.loc29: init %empty_tuple.type = call %N.ref.loc29()
+// CHECK:STDOUT:   %N.ref.loc86: %O.N.type = name_ref N, @O.%O.N.decl [concrete = constants.%O.N]
+// CHECK:STDOUT:   %O.N.call.loc89: init %empty_tuple.type = call %N.ref.loc86()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

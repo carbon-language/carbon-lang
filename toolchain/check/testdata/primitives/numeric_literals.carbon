@@ -150,19 +150,19 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %int_8.loc9: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
+// CHECK:STDOUT:   %int_8.loc21: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
-// CHECK:STDOUT:   %int_8.loc11: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
-// CHECK:STDOUT:   %int_8.loc12: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
-// CHECK:STDOUT:   %int_2147483647.loc13: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
-// CHECK:STDOUT:   %int_2147483647.loc14: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
+// CHECK:STDOUT:   %int_8.loc25: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
+// CHECK:STDOUT:   %int_8.loc27: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
+// CHECK:STDOUT:   %int_2147483647.loc29: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
+// CHECK:STDOUT:   %int_2147483647.loc31: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %float.loc19: Core.FloatLiteral = float_literal_value 9e-1 [concrete = constants.%float.b06]
-// CHECK:STDOUT:   %float.loc20: Core.FloatLiteral = float_literal_value 80e-1 [concrete = constants.%float.025]
-// CHECK:STDOUT:   %float.loc21: Core.FloatLiteral = float_literal_value 800e-1 [concrete = constants.%float.3b0]
-// CHECK:STDOUT:   %float.loc22: Core.FloatLiteral = float_literal_value 10e6 [concrete = constants.%float.d22]
-// CHECK:STDOUT:   %float.loc23: Core.FloatLiteral = float_literal_value 10e7 [concrete = constants.%float.8d2]
-// CHECK:STDOUT:   %float.loc24: Core.FloatLiteral = float_literal_value 10e-9 [concrete = constants.%float.48b]
+// CHECK:STDOUT:   %float.loc47: Core.FloatLiteral = float_literal_value 9e-1 [concrete = constants.%float.b06]
+// CHECK:STDOUT:   %float.loc49: Core.FloatLiteral = float_literal_value 80e-1 [concrete = constants.%float.025]
+// CHECK:STDOUT:   %float.loc51: Core.FloatLiteral = float_literal_value 800e-1 [concrete = constants.%float.3b0]
+// CHECK:STDOUT:   %float.loc53: Core.FloatLiteral = float_literal_value 10e6 [concrete = constants.%float.d22]
+// CHECK:STDOUT:   %float.loc55: Core.FloatLiteral = float_literal_value 10e7 [concrete = constants.%float.8d2]
+// CHECK:STDOUT:   %float.loc57: Core.FloatLiteral = float_literal_value 10e-9 [concrete = constants.%float.48b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

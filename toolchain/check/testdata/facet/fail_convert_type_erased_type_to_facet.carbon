@@ -36,7 +36,7 @@ fn F() {
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc13 [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -52,12 +52,12 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc18_6 as <unexpected>.inst{{[0-9A-F]+}}.loc18_14 {
+// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc10 as <unexpected>.inst{{[0-9A-F]+}}.loc12 {
 // CHECK:STDOUT:   impl_witness_table (), @<null name> [concrete]
-// CHECK:STDOUT:   <unexpected>.inst{{[0-9A-F]+}}.loc18_21: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete = constants.%Animal.impl_witness]
+// CHECK:STDOUT:   <unexpected>.inst{{[0-9A-F]+}}.loc13: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc13 [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst{{[0-9A-F]+}}.loc18_21
+// CHECK:STDOUT:   witness = <unexpected>.inst{{[0-9A-F]+}}.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
@@ -68,7 +68,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_22: %Animal.type) {
+// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc19: %Animal.type) {
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

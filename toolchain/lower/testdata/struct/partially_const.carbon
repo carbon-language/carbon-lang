@@ -20,12 +20,12 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, i32, i32 }) %return, i32 %n) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_33.3.a = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc14_33.5.b = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   store i32 %n, ptr %.loc14_33.5.b, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc14_33.8.c = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !11
-// CHECK:STDOUT:   store i32 0, ptr %.loc14_33.3.a, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 0, ptr %.loc14_33.8.c, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc42.3.a = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc42.5.b = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   store i32 %n, ptr %.loc42.5.b, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc42.8.c = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !11
+// CHECK:STDOUT:   store i32 0, ptr %.loc42.3.a, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 0, ptr %.loc42.8.c, align 4, !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

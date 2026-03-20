@@ -32,8 +32,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc17 = load i32, ptr %a.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc17), !dbg !16
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %a.var, align 4, !dbg !15
+// CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc24), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

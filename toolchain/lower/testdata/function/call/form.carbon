@@ -107,10 +107,10 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc3_7.1.temp = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc3_7.1.temp), !dbg !7
-// CHECK:STDOUT:   store i32 0, ptr %.loc3_7.1.temp, align 4, !dbg !7
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc3_7.1.temp), !dbg !8
+// CHECK:STDOUT:   %.loc8.1.temp = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8.1.temp), !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %.loc8.1.temp, align 4, !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc8.1.temp), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

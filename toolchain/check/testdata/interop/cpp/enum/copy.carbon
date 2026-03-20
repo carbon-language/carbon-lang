@@ -64,20 +64,20 @@ fn F() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.ebf = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Enum = var %a.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc12_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
-// CHECK:STDOUT:   %a.ref.loc12: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   assign %a.var, %a.ref.loc12
-// CHECK:STDOUT:   %.loc12: type = splice_block %Enum.ref.loc12_13 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc12_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc22: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %a.ref.loc24: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   assign %a.var, %a.ref.loc24
+// CHECK:STDOUT:   %.loc18: type = splice_block %Enum.ref.loc18 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc18: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %Enum = ref_binding a, %a.var
-// CHECK:STDOUT:   %a.ref.loc14: ref %Enum = name_ref a, %a
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc14: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %a.ref.loc27: ref %Enum = name_ref a, %a
+// CHECK:STDOUT:   %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc30: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   assign %a.ref.loc14, %b.ref
+// CHECK:STDOUT:   assign %a.ref.loc27, %b.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

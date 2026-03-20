@@ -115,7 +115,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc4.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

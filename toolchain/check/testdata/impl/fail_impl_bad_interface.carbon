@@ -85,7 +85,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
 // CHECK:STDOUT:   impl_decl @i32.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -119,12 +119,12 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @bool.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc8_6: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc8_14: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc5: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc7: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc8_6 as %.loc8_14 {
+// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc5 as %.loc7 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -156,18 +156,18 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @f64.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64 [concrete = constants.%f64]
-// CHECK:STDOUT:     %.loc8_13: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc7: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc8_36: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc8_18: type = where_expr %.Self [concrete = constants.%type] {
+// CHECK:STDOUT:     %.loc12: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_base_facet_type type
-// CHECK:STDOUT:       requirement_impls %.Self.ref, %.loc8_36
+// CHECK:STDOUT:       requirement_impls %.Self.ref, %.loc12
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @f64.as.<error>.impl: %f64 as %.loc8_18 {
+// CHECK:STDOUT: impl @f64.as.<error>.impl: %f64 as %.loc8 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -201,13 +201,13 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @struct_type.a.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc10_11: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc13: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: bool} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:     %.loc10_20: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc16: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.loc10_25: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc17: type = where_expr %.Self [concrete = constants.%type_where] {
 // CHECK:STDOUT:       requirement_base_facet_type type
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
@@ -225,7 +225,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as %.loc10_25 {
+// CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as %.loc17 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

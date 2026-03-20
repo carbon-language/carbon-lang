@@ -42,8 +42,8 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   %Optional.Get.call = call ptr @_CGet.Optional.Core.03e3348579103d79(ptr %o), !dbg !12
-// CHECK:STDOUT:   %.loc18_12.2 = load i32, ptr %Optional.Get.call, align 4, !dbg !13
-// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %return, i32 %.loc18_12.2), !dbg !14
+// CHECK:STDOUT:   %.loc32.2 = load i32, ptr %Optional.Get.call, align 4, !dbg !13
+// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %return, i32 %.loc32.2), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
@@ -54,30 +54,30 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAddOrRemoveConst.Main(i32 %a, i32 %b) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc24 = alloca { i32, i1 }, align 8, !dbg !24
-// CHECK:STDOUT:   %_.var.loc25 = alloca { i32, i1 }, align 8, !dbg !25
-// CHECK:STDOUT:   %_.var.loc26 = alloca { i32, i1 }, align 8, !dbg !26
-// CHECK:STDOUT:   %_.var.loc27 = alloca { i32, i1 }, align 8, !dbg !27
-// CHECK:STDOUT:   %_.var.loc28 = alloca { i32, i1 }, align 8, !dbg !28
-// CHECK:STDOUT:   %_.var.loc29 = alloca { i32, i1 }, align 8, !dbg !29
-// CHECK:STDOUT:   %_.var.loc30 = alloca { i32, i1 }, align 8, !dbg !30
-// CHECK:STDOUT:   %_.var.loc31 = alloca { i32, i1 }, align 8, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc24), !dbg !24
-// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %_.var.loc24, i32 %a), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc25), !dbg !25
-// CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.77b263a5fd240ddf"(ptr %_.var.loc25, i32 %a), !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc26), !dbg !26
-// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr %_.var.loc26, i32 %a), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc27), !dbg !27
-// CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.25fb32d66f981ccd"(ptr %_.var.loc27, i32 %a), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc28), !dbg !28
-// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.77b263a5fd240ddf"(ptr %_.var.loc28, i32 %b), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc29), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.693532dcb04bf6dc"(ptr %_.var.loc29, i32 %b), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc30), !dbg !30
-// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.25fb32d66f981ccd"(ptr %_.var.loc30, i32 %b), !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc31), !dbg !31
-// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.1c991c9fdfba671f"(ptr %_.var.loc31, i32 %b), !dbg !31
+// CHECK:STDOUT:   %_.var.loc66 = alloca { i32, i1 }, align 8, !dbg !24
+// CHECK:STDOUT:   %_.var.loc78 = alloca { i32, i1 }, align 8, !dbg !25
+// CHECK:STDOUT:   %_.var.loc91 = alloca { i32, i1 }, align 8, !dbg !26
+// CHECK:STDOUT:   %_.var.loc104 = alloca { i32, i1 }, align 8, !dbg !27
+// CHECK:STDOUT:   %_.var.loc118 = alloca { i32, i1 }, align 8, !dbg !28
+// CHECK:STDOUT:   %_.var.loc130 = alloca { i32, i1 }, align 8, !dbg !29
+// CHECK:STDOUT:   %_.var.loc143 = alloca { i32, i1 }, align 8, !dbg !30
+// CHECK:STDOUT:   %_.var.loc156 = alloca { i32, i1 }, align 8, !dbg !31
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc66), !dbg !24
+// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.6b1f19368d09e579"(ptr %_.var.loc66, i32 %a), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc78), !dbg !25
+// CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.77b263a5fd240ddf"(ptr %_.var.loc78, i32 %a), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc91), !dbg !26
+// CHECK:STDOUT:   call void @"_CConvert.e5cf8fcbb4feaae2:ImplicitAs.0f95c9e18c91e00a.Core.787d589b54a95071"(ptr %_.var.loc91, i32 %a), !dbg !26
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc104), !dbg !27
+// CHECK:STDOUT:   call void @"_CConvert.a44fce96e16342e7:ImplicitAs.ad22d1bbc0605210.Core.25fb32d66f981ccd"(ptr %_.var.loc104, i32 %a), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc118), !dbg !28
+// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.77b263a5fd240ddf"(ptr %_.var.loc118, i32 %b), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc130), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.693532dcb04bf6dc"(ptr %_.var.loc130, i32 %b), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc143), !dbg !30
+// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.25fb32d66f981ccd"(ptr %_.var.loc143, i32 %b), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc156), !dbg !31
+// CHECK:STDOUT:   call void @"_CConvert.17f42c13d842b71d:ImplicitAs.eb057aa32837c84e.Core.1c991c9fdfba671f"(ptr %_.var.loc156, i32 %b), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -80,7 +80,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.904 = return_slot_pattern %return.param_patt, %Class.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %.loc19: Core.Form = init_form %Class.ref [concrete = constants.%.cff]
+// CHECK:STDOUT:     %.loc21: Core.Form = init_form %Class.ref [concrete = constants.%.cff]
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -91,12 +91,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.018 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
-// CHECK:STDOUT:     %Class.ref.loc21_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc28: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = value_binding c, %c.param
 // CHECK:STDOUT:     %p.param: %ptr.8e5 = value_param call_param1
-// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [concrete = constants.%ptr.8e5] {
-// CHECK:STDOUT:       %Class.ref.loc21_19: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc21_19 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:     %.loc33: type = splice_block %ptr [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:       %Class.ref.loc32: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc32 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.8e5 = value_binding p, %p.param
 // CHECK:STDOUT:   }
@@ -126,23 +126,23 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: fn @F(%c.param: %Class, %p.param: %ptr.8e5) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc29: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc29: <bound method> = bound_method %c.ref, %F.ref.loc29
-// CHECK:STDOUT:   %Class.F.call.loc29: init %empty_tuple.type = call %Class.F.bound.loc29(<error>)
+// CHECK:STDOUT:   %F.ref.loc37: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc37: <bound method> = bound_method %c.ref, %F.ref.loc37
+// CHECK:STDOUT:   %Class.F.call.loc40: init %empty_tuple.type = call %Class.F.bound.loc37(<error>)
 // CHECK:STDOUT:   %p.ref: %ptr.8e5 = name_ref p, %p
-// CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %F.ref.loc32: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
-// CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%.loc32)
+// CHECK:STDOUT:   %.loc43: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %F.ref.loc46: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc46: <bound method> = bound_method %.loc43, %F.ref.loc46
+// CHECK:STDOUT:   %Class.F.call.loc49: init %empty_tuple.type = call %Class.F.bound.loc46(%.loc43)
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc35_8.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class to %.loc35_8.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc35_8.2: ref %Class = temporary %.loc35_8.1, %Make.call
-// CHECK:STDOUT:   %F.ref.loc35: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc35: <bound method> = bound_method %.loc35_8.2, %F.ref.loc35
-// CHECK:STDOUT:   %Class.F.call.loc35: init %empty_tuple.type = call %Class.F.bound.loc35(%.loc35_8.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc35_8.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc35_8.2)
+// CHECK:STDOUT:   %.loc53.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class to %.loc53.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc53.2: ref %Class = temporary %.loc53.1, %Make.call
+// CHECK:STDOUT:   %F.ref.loc54: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc54: <bound method> = bound_method %.loc53.2, %F.ref.loc54
+// CHECK:STDOUT:   %Class.F.call.loc57: init %empty_tuple.type = call %Class.F.bound.loc54(%.loc53.2)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc53.2, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc53.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

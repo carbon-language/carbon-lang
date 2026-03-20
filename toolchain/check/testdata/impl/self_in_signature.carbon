@@ -154,24 +154,24 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param_patt: @UseSelf.WithSelf.F.%pattern_type (%pattern_type.431) = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: @UseSelf.WithSelf.F.%pattern_type (%pattern_type.431) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: @UseSelf.WithSelf.F.%pattern_type (%pattern_type.431) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @UseSelf.WithSelf.F.%pattern_type (%pattern_type.431) = return_slot_pattern %return.param_patt, %.loc16_32.2 [concrete]
+// CHECK:STDOUT:     %return.patt: @UseSelf.WithSelf.F.%pattern_type (%pattern_type.431) = return_slot_pattern %return.param_patt, %.loc17.2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc16_32: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
-// CHECK:STDOUT:     %Self.as_type.loc16_32: type = facet_access_type %Self.ref.loc16_32 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
-// CHECK:STDOUT:     %.loc16_32.2: type = converted %Self.ref.loc16_32, %Self.as_type.loc16_32 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
-// CHECK:STDOUT:     %.loc16_32.3: Core.Form = init_form %.loc16_32.2 [symbolic = %.loc16_32.1 (constants.%.85e)]
+// CHECK:STDOUT:     %Self.ref.loc17: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
+// CHECK:STDOUT:     %Self.as_type.loc17: type = facet_access_type %Self.ref.loc17 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:     %.loc17.2: type = converted %Self.ref.loc17, %Self.as_type.loc17 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:     %.loc17.3: Core.Form = init_form %.loc17.2 [symbolic = %.loc17.1 (constants.%.85e)]
 // CHECK:STDOUT:     %self.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d) = value_param call_param0
-// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)] {
-// CHECK:STDOUT:       %Self.ref.loc16_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
-// CHECK:STDOUT:       %Self.as_type.loc16_14: type = facet_access_type %Self.ref.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
-// CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref.loc16_14, %Self.as_type.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:     %.loc9.1: type = splice_block %.loc9.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)] {
+// CHECK:STDOUT:       %Self.ref.loc9: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
+// CHECK:STDOUT:       %Self.as_type.loc9: type = facet_access_type %Self.ref.loc9 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:       %.loc9.2: type = converted %Self.ref.loc9, %Self.as_type.loc9 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d) = value_binding self, %self.param
 // CHECK:STDOUT:     %x.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d) = value_param call_param1
-// CHECK:STDOUT:     %.loc16_23.1: type = splice_block %.loc16_23.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)] {
-// CHECK:STDOUT:       %Self.ref.loc16_23: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
-// CHECK:STDOUT:       %Self.as_type.loc16_23: type = facet_access_type %Self.ref.loc16_23 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
-// CHECK:STDOUT:       %.loc16_23.2: type = converted %Self.ref.loc16_23, %Self.as_type.loc16_23 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:     %.loc14.1: type = splice_block %.loc14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)] {
+// CHECK:STDOUT:       %Self.ref.loc14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.f7b)]
+// CHECK:STDOUT:       %Self.as_type.loc14: type = facet_access_type %Self.ref.loc14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
+// CHECK:STDOUT:       %.loc14.2: type = converted %Self.ref.loc14, %Self.as_type.loc14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d) = out_param call_param2
@@ -197,19 +197,19 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.patt: @SelfNested.WithSelf.F.%pattern_type (%pattern_type.fb7) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.cbf) = value_param call_param0
-// CHECK:STDOUT:     %.loc32_37.1: type = splice_block %.loc32_37.3 [symbolic = %tuple.type (constants.%tuple.type.cbf)] {
-// CHECK:STDOUT:       %Self.ref.loc32_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.aed)]
-// CHECK:STDOUT:       %Self.as_type.loc32_16: type = facet_access_type %Self.ref.loc32_12 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
-// CHECK:STDOUT:       %.loc32_16: type = converted %Self.ref.loc32_12, %Self.as_type.loc32_16 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
-// CHECK:STDOUT:       %ptr.loc32_16.2: type = ptr_type %.loc32_16 [symbolic = %ptr.loc32_16.1 (constants.%ptr.d99)]
-// CHECK:STDOUT:       %Self.ref.loc32_24: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.aed)]
-// CHECK:STDOUT:       %Self.as_type.loc32_24: type = facet_access_type %Self.ref.loc32_24 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
-// CHECK:STDOUT:       %.loc32_24: type = converted %Self.ref.loc32_24, %Self.as_type.loc32_24 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
-// CHECK:STDOUT:       %.loc32_35.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc32_35.2: type = converted %.loc32_35.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %struct_type.x.y.loc32_36.2: type = struct_type {.x: @SelfNested.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.07b), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc32_36.1 (constants.%struct_type.x.y.b54)]
-// CHECK:STDOUT:       %.loc32_37.2: %tuple.type.24b = tuple_literal (%ptr.loc32_16.2, %struct_type.x.y.loc32_36.2) [symbolic = %tuple (constants.%tuple.ceb)]
-// CHECK:STDOUT:       %.loc32_37.3: type = converted %.loc32_37.2, constants.%tuple.type.cbf [symbolic = %tuple.type (constants.%tuple.type.cbf)]
+// CHECK:STDOUT:     %.loc108.1: type = splice_block %.loc108.3 [symbolic = %tuple.type (constants.%tuple.type.cbf)] {
+// CHECK:STDOUT:       %Self.ref.loc93: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.aed)]
+// CHECK:STDOUT:       %Self.as_type.loc94: type = facet_access_type %Self.ref.loc93 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
+// CHECK:STDOUT:       %.loc94: type = converted %Self.ref.loc93, %Self.as_type.loc94 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
+// CHECK:STDOUT:       %ptr.loc94.2: type = ptr_type %.loc94 [symbolic = %ptr.loc94.1 (constants.%ptr.d99)]
+// CHECK:STDOUT:       %Self.ref.loc100: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.aed)]
+// CHECK:STDOUT:       %Self.as_type.loc100: type = facet_access_type %Self.ref.loc100 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
+// CHECK:STDOUT:       %.loc100: type = converted %Self.ref.loc100, %Self.as_type.loc100 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
+// CHECK:STDOUT:       %.loc106.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc106.2: type = converted %.loc106.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %struct_type.x.y.loc107.2: type = struct_type {.x: @SelfNested.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.07b), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc107.1 (constants.%struct_type.x.y.b54)]
+// CHECK:STDOUT:       %.loc108.2: %tuple.type.24b = tuple_literal (%ptr.loc94.2, %struct_type.x.y.loc107.2) [symbolic = %tuple (constants.%tuple.ceb)]
+// CHECK:STDOUT:       %.loc108.3: type = converted %.loc108.2, constants.%tuple.type.cbf [symbolic = %tuple.type (constants.%tuple.type.cbf)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.cbf) = value_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -230,15 +230,15 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.7c7 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: %pattern_type.7c7 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref.loc24_40 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7c7 = return_slot_pattern %return.param_patt, %C.ref.loc48 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc24_40: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc24_40: Core.Form = init_form %C.ref.loc24_40 [concrete = constants.%.a69]
+// CHECK:STDOUT:     %C.ref.loc48: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc48: Core.Form = init_form %C.ref.loc48 [concrete = constants.%.a69]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc24_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc39: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:     %x.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc24_34: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc45: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %x: %C = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -259,15 +259,15 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.9c8 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: %pattern_type.9c8 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %Self.ref.loc28_46 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9c8 = return_slot_pattern %return.param_patt, %Self.ref.loc76 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc28_46: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc28_46: Core.Form = init_form %Self.ref.loc28_46 [concrete = constants.%.9a5]
+// CHECK:STDOUT:     %Self.ref.loc76: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc76: Core.Form = init_form %Self.ref.loc76 [concrete = constants.%.9a5]
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc28_21: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc67: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
 // CHECK:STDOUT:     %self: %D = value_binding self, %self.param
 // CHECK:STDOUT:     %x.param: %D = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc28_37: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc73: type = name_ref Self, @D.as.UseSelf.impl.%D.ref [concrete = constants.%D]
 // CHECK:STDOUT:     %x: %D = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param2
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -286,15 +286,15 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.patt: %pattern_type.137 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.2f1 = value_param call_param0
-// CHECK:STDOUT:     %.loc36_31.1: type = splice_block %.loc36_31.3 [concrete = constants.%tuple.type.2f1] {
-// CHECK:STDOUT:       %C.ref.loc36_12: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc36_12 [concrete = constants.%ptr.31e]
-// CHECK:STDOUT:       %C.ref.loc36_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc36_29.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc36_29.2: type = converted %.loc36_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc138.1: type = splice_block %.loc138.3 [concrete = constants.%tuple.type.2f1] {
+// CHECK:STDOUT:       %C.ref.loc123: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc123 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:       %C.ref.loc130: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %.loc136.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc136.2: type = converted %.loc136.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %struct_type.x.y: type = struct_type {.x: %C, .y: %empty_tuple.type} [concrete = constants.%struct_type.x.y.710]
-// CHECK:STDOUT:       %.loc36_31.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.509]
-// CHECK:STDOUT:       %.loc36_31.3: type = converted %.loc36_31.2, constants.%tuple.type.2f1 [concrete = constants.%tuple.type.2f1]
+// CHECK:STDOUT:       %.loc138.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.509]
+// CHECK:STDOUT:       %.loc138.3: type = converted %.loc138.2, constants.%tuple.type.2f1 [concrete = constants.%tuple.type.2f1]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.2f1 = value_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -313,15 +313,15 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d05 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.e0d = value_param call_param0
-// CHECK:STDOUT:     %.loc40_37.1: type = splice_block %.loc40_37.3 [concrete = constants.%tuple.type.e0d] {
-// CHECK:STDOUT:       %Self.ref.loc40_12: type = name_ref Self, @D.as.SelfNested.impl.%D.ref [concrete = constants.%D]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref.loc40_12 [concrete = constants.%ptr.805]
-// CHECK:STDOUT:       %Self.ref.loc40_24: type = name_ref Self, @D.as.SelfNested.impl.%D.ref [concrete = constants.%D]
-// CHECK:STDOUT:       %.loc40_35.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc40_35.2: type = converted %.loc40_35.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc168.1: type = splice_block %.loc168.3 [concrete = constants.%tuple.type.e0d] {
+// CHECK:STDOUT:       %Self.ref.loc153: type = name_ref Self, @D.as.SelfNested.impl.%D.ref [concrete = constants.%D]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref.loc153 [concrete = constants.%ptr.805]
+// CHECK:STDOUT:       %Self.ref.loc160: type = name_ref Self, @D.as.SelfNested.impl.%D.ref [concrete = constants.%D]
+// CHECK:STDOUT:       %.loc166.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc166.2: type = converted %.loc166.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %struct_type.x.y: type = struct_type {.x: %D, .y: %empty_tuple.type} [concrete = constants.%struct_type.x.y.3e1]
-// CHECK:STDOUT:       %.loc40_37.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.21a]
-// CHECK:STDOUT:       %.loc40_37.3: type = converted %.loc40_37.2, constants.%tuple.type.e0d [concrete = constants.%tuple.type.e0d]
+// CHECK:STDOUT:       %.loc168.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.21a]
+// CHECK:STDOUT:       %.loc168.3: type = converted %.loc168.2, constants.%tuple.type.e0d [concrete = constants.%tuple.type.e0d]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.e0d = value_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -353,34 +353,34 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f7b)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.431)]
-// CHECK:STDOUT:   %.loc16_32.1: Core.Form = init_form %Self.binding.as_type [symbolic = %.loc16_32.1 (constants.%.85e)]
+// CHECK:STDOUT:   %.loc17.1: Core.Form = init_form %Self.binding.as_type [symbolic = %.loc17.1 (constants.%.85e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %x.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d)) -> out %return.param: @UseSelf.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.UseSelf.impl.F(%self.param: %C, %x.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_52.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc24_52.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc24_53: init %C = converted %.loc24_52.1, %.loc24_52.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc24_53 to %return.param
+// CHECK:STDOUT:   %.loc52.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc52.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc53: init %C = converted %.loc52.1, %.loc52.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   return %.loc53 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc28_61.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc28_61.2: init %D to %return.param = class_init () [concrete = constants.%D.val]
-// CHECK:STDOUT:   %.loc28_62: init %D = converted %.loc28_61.1, %.loc28_61.2 [concrete = constants.%D.val]
-// CHECK:STDOUT:   return %.loc28_62 to %return.param
+// CHECK:STDOUT:   %.loc80.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc80.2: init %D to %return.param = class_init () [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc81: init %D = converted %.loc80.1, %.loc80.2 [concrete = constants.%D.val]
+// CHECK:STDOUT:   return %.loc81 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @SelfNested.WithSelf.F(@SelfNested.%Self: %SelfNested.type) {
 // CHECK:STDOUT:   %Self: %SelfNested.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.aed)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.07b)]
-// CHECK:STDOUT:   %ptr.loc32_16.1: type = ptr_type %Self.binding.as_type [symbolic = %ptr.loc32_16.1 (constants.%ptr.d99)]
-// CHECK:STDOUT:   %struct_type.x.y.loc32_36.1: type = struct_type {.x: @SelfNested.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.07b), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc32_36.1 (constants.%struct_type.x.y.b54)]
-// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%ptr.loc32_16.1, %struct_type.x.y.loc32_36.1) [symbolic = %tuple (constants.%tuple.ceb)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc32_16.1, %struct_type.x.y.loc32_36.1) [symbolic = %tuple.type (constants.%tuple.type.cbf)]
+// CHECK:STDOUT:   %ptr.loc94.1: type = ptr_type %Self.binding.as_type [symbolic = %ptr.loc94.1 (constants.%ptr.d99)]
+// CHECK:STDOUT:   %struct_type.x.y.loc107.1: type = struct_type {.x: @SelfNested.WithSelf.F.%Self.binding.as_type (%Self.binding.as_type.07b), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc107.1 (constants.%struct_type.x.y.b54)]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%ptr.loc94.1, %struct_type.x.y.loc107.1) [symbolic = %tuple (constants.%tuple.ceb)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc94.1, %struct_type.x.y.loc107.1) [symbolic = %tuple.type (constants.%tuple.type.cbf)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [symbolic = %pattern_type (constants.%pattern_type.fb7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.cbf));
@@ -401,7 +401,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self => constants.%Self.f7b
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.e3d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.431
-// CHECK:STDOUT:   %.loc16_32.1 => constants.%.85e
+// CHECK:STDOUT:   %.loc17.1 => constants.%.85e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.WithSelf(constants.%UseSelf.facet.d4d) {
@@ -415,7 +415,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self => constants.%UseSelf.facet.d4d
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7c7
-// CHECK:STDOUT:   %.loc16_32.1 => constants.%.a69
+// CHECK:STDOUT:   %.loc17.1 => constants.%.a69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.WithSelf(constants.%UseSelf.facet.6f8) {
@@ -429,7 +429,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self => constants.%UseSelf.facet.6f8
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%D
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9c8
-// CHECK:STDOUT:   %.loc16_32.1 => constants.%.9a5
+// CHECK:STDOUT:   %.loc17.1 => constants.%.9a5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SelfNested.WithSelf(constants.%Self.aed) {
@@ -442,8 +442,8 @@ impl D as SelfNested {
 // CHECK:STDOUT: specific @SelfNested.WithSelf.F(constants.%Self.aed) {
 // CHECK:STDOUT:   %Self => constants.%Self.aed
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.07b
-// CHECK:STDOUT:   %ptr.loc32_16.1 => constants.%ptr.d99
-// CHECK:STDOUT:   %struct_type.x.y.loc32_36.1 => constants.%struct_type.x.y.b54
+// CHECK:STDOUT:   %ptr.loc94.1 => constants.%ptr.d99
+// CHECK:STDOUT:   %struct_type.x.y.loc107.1 => constants.%struct_type.x.y.b54
 // CHECK:STDOUT:   %tuple => constants.%tuple.ceb
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.cbf
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fb7
@@ -459,8 +459,8 @@ impl D as SelfNested {
 // CHECK:STDOUT: specific @SelfNested.WithSelf.F(constants.%SelfNested.facet.f22) {
 // CHECK:STDOUT:   %Self => constants.%SelfNested.facet.f22
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
-// CHECK:STDOUT:   %ptr.loc32_16.1 => constants.%ptr.31e
-// CHECK:STDOUT:   %struct_type.x.y.loc32_36.1 => constants.%struct_type.x.y.710
+// CHECK:STDOUT:   %ptr.loc94.1 => constants.%ptr.31e
+// CHECK:STDOUT:   %struct_type.x.y.loc107.1 => constants.%struct_type.x.y.710
 // CHECK:STDOUT:   %tuple => constants.%tuple.509
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2f1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.137
@@ -476,8 +476,8 @@ impl D as SelfNested {
 // CHECK:STDOUT: specific @SelfNested.WithSelf.F(constants.%SelfNested.facet.372) {
 // CHECK:STDOUT:   %Self => constants.%SelfNested.facet.372
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%D
-// CHECK:STDOUT:   %ptr.loc32_16.1 => constants.%ptr.805
-// CHECK:STDOUT:   %struct_type.x.y.loc32_36.1 => constants.%struct_type.x.y.3e1
+// CHECK:STDOUT:   %ptr.loc94.1 => constants.%ptr.805
+// CHECK:STDOUT:   %struct_type.x.y.loc107.1 => constants.%struct_type.x.y.3e1
 // CHECK:STDOUT:   %tuple => constants.%tuple.21a
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.e0d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d05

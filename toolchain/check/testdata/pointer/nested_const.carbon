@@ -61,9 +61,9 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.ae5: @const.as.Copy.impl.%const.as.Copy.impl.Op.type (%const.as.Copy.impl.Op.type.5eb) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @const.as.Copy.impl.%const.as.Copy.impl.Op (constants.%const.as.Copy.impl.Op.cc6)]
+// CHECK:STDOUT:   %Core.import_ref.ae5: @const.as.Copy.impl.%const.as.Copy.impl.Op.type (%const.as.Copy.impl.Op.type.5eb) = import_ref Core//prelude/parts/copy, loc85, loaded [symbolic = @const.as.Copy.impl.%const.as.Copy.impl.Op (constants.%const.as.Copy.impl.Op.cc6)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a26 = impl_witness_table (%Core.import_ref.ae5), @const.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,19 +77,19 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.800 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %p.patt: %pattern_type.800 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern %return.param_patt, %const.loc16_41 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern %return.param_patt, %const.loc18 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc16_47: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc16_41: type = const_type %i32.loc16_47 [concrete = constants.%const.20a]
-// CHECK:STDOUT:     %.loc16_41: Core.Form = init_form %const.loc16_41 [concrete = constants.%.121]
+// CHECK:STDOUT:     %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %const.loc18: type = const_type %i32.loc19 [concrete = constants.%const.20a]
+// CHECK:STDOUT:     %.loc18: Core.Form = init_form %const.loc18 [concrete = constants.%.121]
 // CHECK:STDOUT:     %p.param: %const.fa2 = value_param call_param0
-// CHECK:STDOUT:     %.loc16_9: type = splice_block %const.loc16_9 [concrete = constants.%const.fa2] {
-// CHECK:STDOUT:       %i32.loc16_29: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc16_23: type = const_type %i32.loc16_29 [concrete = constants.%const.20a]
-// CHECK:STDOUT:       %ptr.loc16_32: type = ptr_type %const.loc16_23 [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %const.loc16_16: type = const_type %ptr.loc16_32 [concrete = constants.%const.58f]
-// CHECK:STDOUT:       %ptr.loc16_34: type = ptr_type %const.loc16_16 [concrete = constants.%ptr.6e8]
-// CHECK:STDOUT:       %const.loc16_9: type = const_type %ptr.loc16_34 [concrete = constants.%const.fa2]
+// CHECK:STDOUT:     %.loc6: type = splice_block %const.loc6 [concrete = constants.%const.fa2] {
+// CHECK:STDOUT:       %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %const.loc10: type = const_type %i32.loc11 [concrete = constants.%const.20a]
+// CHECK:STDOUT:       %ptr.loc12: type = ptr_type %const.loc10 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %const.loc8: type = const_type %ptr.loc12 [concrete = constants.%const.58f]
+// CHECK:STDOUT:       %ptr.loc14: type = ptr_type %const.loc8 [concrete = constants.%ptr.6e8]
+// CHECK:STDOUT:       %const.loc6: type = const_type %ptr.loc14 [concrete = constants.%const.fa2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %const.fa2 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.20a = out_param call_param1
@@ -100,15 +100,15 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: fn @F(%p.param: %const.fa2) -> out %return.param: %const.20a {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.fa2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc17_11.1: ref %const.58f = deref %p.ref
-// CHECK:STDOUT:   %.loc17_11.2: %const.58f = acquire_value %.loc17_11.1
-// CHECK:STDOUT:   %.loc17_10.1: ref %const.20a = deref %.loc17_11.2
-// CHECK:STDOUT:   %.loc17_10.2: %const.20a = acquire_value %.loc17_10.1
+// CHECK:STDOUT:   %.loc23.1: ref %const.58f = deref %p.ref
+// CHECK:STDOUT:   %.loc23.2: %const.58f = acquire_value %.loc23.1
+// CHECK:STDOUT:   %.loc22.1: ref %const.20a = deref %.loc23.2
+// CHECK:STDOUT:   %.loc22.2: %const.20a = acquire_value %.loc22.1
 // CHECK:STDOUT:   %impl.elem0: %.2d3 = impl_witness_access constants.%Copy.impl_witness.286, element0 [concrete = constants.%const.as.Copy.impl.Op.686]
-// CHECK:STDOUT:   %bound_method.loc17_10.1: <bound method> = bound_method %.loc17_10.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc22.1: <bound method> = bound_method %.loc22.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.de4) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.20a = call %bound_method.loc17_10.2(%.loc17_10.2)
+// CHECK:STDOUT:   %bound_method.loc22.2: <bound method> = bound_method %.loc22.2, %specific_fn
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.20a = call %bound_method.loc22.2(%.loc22.2)
 // CHECK:STDOUT:   return %const.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

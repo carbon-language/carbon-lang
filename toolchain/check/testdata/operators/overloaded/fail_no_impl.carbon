@@ -105,12 +105,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern %return.param_patt, %C.ref.loc19_23 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern %return.param_patt, %C.ref.loc17 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc19_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc19: Core.Form = init_form %C.ref.loc19_23 [concrete = constants.%.bdd]
+// CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc17: Core.Form = init_form %C.ref.loc17 [concrete = constants.%.bdd]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc19_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -121,15 +121,15 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.476 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern %return.param_patt, %C.ref.loc27_30 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern %return.param_patt, %C.ref.loc36 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc27: Core.Form = init_form %C.ref.loc27_30 [concrete = constants.%.bdd]
+// CHECK:STDOUT:     %C.ref.loc36: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc36: Core.Form = init_form %C.ref.loc36 [concrete = constants.%.bdd]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc27_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc27_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc33: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -139,7 +139,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.patt: %pattern_type.476 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc35: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc49: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -172,15 +172,15 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.476 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
-// CHECK:STDOUT:   %.loc36_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc36_15.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc36_3: init %C = converted %.loc36_15.1, %.loc36_15.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc36_3
-// CHECK:STDOUT:   %C.ref.loc36: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc58.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc58.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc52: init %C = converted %.loc58.1, %.loc58.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc52
+// CHECK:STDOUT:   %C.ref.loc55: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: ref %C = ref_binding a, %a.var
-// CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc60: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %a.ref.loc46: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc65: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return

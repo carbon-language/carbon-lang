@@ -127,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Enum.decl: type = class_decl @Enum [concrete = constants.%Enum] {} {}
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete = constants.%int_0.420]
-// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
+// CHECK:STDOUT:   %Core.import_ref.ca0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.09e) = import_ref Core//prelude/parts/int, loc197, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.dbe)]
 // CHECK:STDOUT:   %As.impl_witness_table.9fc = impl_witness_table (%Core.import_ref.ca0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %Other.decl: type = class_decl @Other [concrete = constants.%Other] {} {}
 // CHECK:STDOUT: }
@@ -141,49 +141,49 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.2f8 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc8: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
-// CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.420]
-// CHECK:STDOUT:   %i16.loc8_37: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %.loc8_34.1: %i16 = as_compatible %a.ref.loc8 [concrete = constants.%int_0.320]
-// CHECK:STDOUT:   %.loc8_34.2: %i16 = converted %a.ref.loc8, %.loc8_34.1 [concrete = constants.%int_0.320]
-// CHECK:STDOUT:   %i16.loc8_17: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %a: %i16 = value_binding a, %.loc8_34.2
+// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc21: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %a.ref.loc23: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.420]
+// CHECK:STDOUT:   %i16.loc26: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %.loc25.1: %i16 = as_compatible %a.ref.loc23 [concrete = constants.%int_0.320]
+// CHECK:STDOUT:   %.loc25.2: %i16 = converted %a.ref.loc23, %.loc25.1 [concrete = constants.%int_0.320]
+// CHECK:STDOUT:   %i16.loc18: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %a: %i16 = value_binding a, %.loc25.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.ebf = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
-// CHECK:STDOUT:   %i16.loc9: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %i16.loc39: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %impl.elem0: %.70c = impl_witness_access constants.%As.impl_witness.b61, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.a42]
-// CHECK:STDOUT:   %bound_method.loc9_32.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc38.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_32.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc9_32.2(%int_42) [concrete = constants.%int_42.a0e]
-// CHECK:STDOUT:   %.loc9_32.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_42.a0e]
-// CHECK:STDOUT:   %.loc9_32.2: %i16 = converted %int_42, %.loc9_32.1 [concrete = constants.%int_42.a0e]
-// CHECK:STDOUT:   %Cpp.ref.loc9_43: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Enum.ref.loc9_46: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
-// CHECK:STDOUT:   %.loc9_40.1: %Enum = as_compatible %.loc9_32.2 [concrete = constants.%int_42.c3a]
-// CHECK:STDOUT:   %.loc9_40.2: %Enum = converted %.loc9_32.2, %.loc9_40.1 [concrete = constants.%int_42.c3a]
-// CHECK:STDOUT:   %.loc9_20: type = splice_block %Enum.ref.loc9_20 [concrete = constants.%Enum] {
-// CHECK:STDOUT:     %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Enum.ref.loc9_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %bound_method.loc38.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc38.2(%int_42) [concrete = constants.%int_42.a0e]
+// CHECK:STDOUT:   %.loc38.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_42.a0e]
+// CHECK:STDOUT:   %.loc38.2: %i16 = converted %int_42, %.loc38.1 [concrete = constants.%int_42.a0e]
+// CHECK:STDOUT:   %Cpp.ref.loc42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Enum.ref.loc43: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
+// CHECK:STDOUT:   %.loc41.1: %Enum = as_compatible %.loc38.2 [concrete = constants.%int_42.c3a]
+// CHECK:STDOUT:   %.loc41.2: %Enum = converted %.loc38.2, %.loc41.1 [concrete = constants.%int_42.c3a]
+// CHECK:STDOUT:   %.loc33: type = splice_block %Enum.ref.loc33 [concrete = constants.%Enum] {
+// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Enum.ref.loc33: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %Enum = value_binding b, %.loc9_40.2
+// CHECK:STDOUT:   %b: %Enum = value_binding b, %.loc41.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c06 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc10_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %a.ref.loc10: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.420]
-// CHECK:STDOUT:   %Cpp.ref.loc10_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Other.ref.loc10_41: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
-// CHECK:STDOUT:   %.loc10_35.1: %Other = as_compatible %a.ref.loc10 [concrete = constants.%int_0.fa2]
-// CHECK:STDOUT:   %.loc10_35.2: %Other = converted %a.ref.loc10, %.loc10_35.1 [concrete = constants.%int_0.fa2]
-// CHECK:STDOUT:   %.loc10_20: type = splice_block %Other.ref.loc10_20 [concrete = constants.%Other] {
-// CHECK:STDOUT:     %Cpp.ref.loc10_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Other.ref.loc10_20: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
+// CHECK:STDOUT:   %Cpp.ref.loc54: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %a.ref.loc55: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.420]
+// CHECK:STDOUT:   %Cpp.ref.loc58: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Other.ref.loc59: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
+// CHECK:STDOUT:   %.loc57.1: %Other = as_compatible %a.ref.loc55 [concrete = constants.%int_0.fa2]
+// CHECK:STDOUT:   %.loc57.2: %Other = converted %a.ref.loc55, %.loc57.1 [concrete = constants.%int_0.fa2]
+// CHECK:STDOUT:   %.loc51: type = splice_block %Other.ref.loc51 [concrete = constants.%Other] {
+// CHECK:STDOUT:     %Cpp.ref.loc50: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Other.ref.loc51: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %Other = value_binding c, %.loc10_35.2
+// CHECK:STDOUT:   %c: %Other = value_binding c, %.loc57.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

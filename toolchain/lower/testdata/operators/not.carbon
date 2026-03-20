@@ -20,8 +20,8 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CNot.Main(i1 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14 = xor i1 %b, true, !dbg !10
-// CHECK:STDOUT:   ret i1 %.loc14, !dbg !11
+// CHECK:STDOUT:   %.loc12 = xor i1 %b, true, !dbg !10
+// CHECK:STDOUT:   ret i1 %.loc12, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

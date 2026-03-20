@@ -71,7 +71,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc38: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -126,14 +126,14 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc28: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc28: %.ff7 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc28: init %empty_tuple.type = call %impl.elem0.loc28()
+// CHECK:STDOUT:   %C.ref.loc41: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc42: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc42: %.ff7 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc45: init %empty_tuple.type = call %impl.elem0.loc42()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc29: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc29: %.ff7 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc29: init %empty_tuple.type = call %impl.elem0.loc29()
+// CHECK:STDOUT:   %G.ref.loc48: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc48: %.ff7 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc51: init %empty_tuple.type = call %impl.elem0.loc48()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -45,7 +45,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc217, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,15 +61,15 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.018 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %p.patt: %pattern_type.018 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.018 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.018 = return_slot_pattern %return.param_patt, %ptr.loc17_25 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.018 = return_slot_pattern %return.param_patt, %ptr.loc14 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc17_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc17_25: type = ptr_type %Class.ref.loc17_20 [concrete = constants.%ptr.8e5]
-// CHECK:STDOUT:     %.loc17_25: Core.Form = init_form %ptr.loc17_25 [concrete = constants.%.c69]
+// CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Class.ref.loc13 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:     %.loc14: Core.Form = init_form %ptr.loc14 [concrete = constants.%.c69]
 // CHECK:STDOUT:     %p.param: %ptr.8e5 = value_param call_param0
-// CHECK:STDOUT:     %.loc17_14: type = splice_block %ptr.loc17_14 [concrete = constants.%ptr.8e5] {
-// CHECK:STDOUT:       %Class.ref.loc17_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc17_14: type = ptr_type %Class.ref.loc17_9 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:     %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:       %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:       %ptr.loc10: type = ptr_type %Class.ref.loc9 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.8e5 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.8e5 = out_param call_param1
@@ -83,10 +83,10 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.8e5 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.370 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
-// CHECK:STDOUT:   %bound_method.loc17_36.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc17.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_36.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc17_36.2(%p.ref)
+// CHECK:STDOUT:   %bound_method.loc17.2: <bound method> = bound_method %p.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc17.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

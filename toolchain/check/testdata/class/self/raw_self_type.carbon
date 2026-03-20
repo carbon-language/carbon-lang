@@ -77,10 +77,10 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
-// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
+// CHECK:STDOUT:   %Core.import_ref.01d: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.6c6) = import_ref Core//prelude/parts/default, loc34, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.ae1)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table = impl_witness_table (%Core.import_ref.01d), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
+// CHECK:STDOUT:   %Core.import_ref.203: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.2d4) = import_ref Core//prelude/parts/copy, loc217, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.74e)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -100,12 +100,12 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.f56 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.f56 = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc28: %MemberNamedSelf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc28_32: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc28: %MemberNamedSelf = value_binding x, %x.param.loc28
-// CHECK:STDOUT:     %y.param.loc28: %Self.0d4 = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc28_48: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
-// CHECK:STDOUT:     %y.loc28: %Self.0d4 = value_binding y, %y.param.loc28
+// CHECK:STDOUT:     %x.param.loc53: %MemberNamedSelf = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc54: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc52: %MemberNamedSelf = value_binding x, %x.param.loc53
+// CHECK:STDOUT:     %y.param.loc58: %Self.0d4 = value_param call_param1
+// CHECK:STDOUT:     %Self.ref.loc59: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
+// CHECK:STDOUT:     %y.loc57: %Self.0d4 = value_binding y, %y.param.loc58
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,12 +127,12 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.f56 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.f56 = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc25: %MemberNamedSelf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc25_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc25: %MemberNamedSelf = value_binding x, %x.param.loc25
-// CHECK:STDOUT:     %y.param.loc25: %Self.0d4 = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc25_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
-// CHECK:STDOUT:     %y.loc25: %Self.0d4 = value_binding y, %y.param.loc25
+// CHECK:STDOUT:     %x.param.loc37: %MemberNamedSelf = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc38: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc36: %MemberNamedSelf = value_binding x, %x.param.loc37
+// CHECK:STDOUT:     %y.param.loc41: %Self.0d4 = value_param call_param1
+// CHECK:STDOUT:     %Self.ref.loc42: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.0d4]
+// CHECK:STDOUT:     %y.loc40: %Self.0d4 = value_binding y, %y.param.loc41
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -159,15 +159,15 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.8e5 = var %Self.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr.8e5, (constants.%DefaultOrUnformed.impl_witness.5ad) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc17_22.1: %DefaultOrUnformed.type = converted constants.%ptr.8e5, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc17_22.1 [concrete = constants.%ptr.8e5]
-// CHECK:STDOUT:   %.loc17_22.2: type = converted %.loc17_22.1, %as_type [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:   %.loc14.1: %DefaultOrUnformed.type = converted constants.%ptr.8e5, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc14.1 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:   %.loc14.2: type = converted %.loc14.1, %as_type [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.d9e, @T.as.DefaultOrUnformed.impl.Op(constants.%ptr.8e5) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %ptr.8e5 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %Self.var, %T.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc17_21: type = splice_block %ptr.loc17 [concrete = constants.%ptr.8e5] {
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc17: type = ptr_type %Self.ref.loc17 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:   %.loc13: type = splice_block %ptr.loc13 [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Self.ref.loc12 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.8e5 = ref_binding r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -175,29 +175,29 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.018 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.8e5 = var %p.var_patt
-// CHECK:STDOUT:   %Self.ref.loc18_27: ref %ptr.8e5 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc18_27: %ptr.8e5 = acquire_value %Self.ref.loc18_27
+// CHECK:STDOUT:   %Self.ref.loc22: ref %ptr.8e5 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc22: %ptr.8e5 = acquire_value %Self.ref.loc22
 // CHECK:STDOUT:   %impl.elem0: %.370 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
-// CHECK:STDOUT:   %bound_method.loc18_27.1: <bound method> = bound_method %.loc18_27, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc22.1: <bound method> = bound_method %.loc22, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_27.2: <bound method> = bound_method %.loc18_27, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc18_27.2(%.loc18_27)
+// CHECK:STDOUT:   %bound_method.loc22.2: <bound method> = bound_method %.loc22, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc22.2(%.loc22)
 // CHECK:STDOUT:   assign %p.var, %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %.loc18_23: type = splice_block %ptr.loc18 [concrete = constants.%ptr.8e5] {
-// CHECK:STDOUT:     %Self.ref.loc18_19: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_19 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:   %.loc20: type = splice_block %ptr.loc20 [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:     %Self.ref.loc19: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %Self.ref.loc19 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.8e5 = ref_binding p, %p.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%p.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%Self.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %p.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%p.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %Self.var, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%Self.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.8e5) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MemberNamedSelf.F(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.0d4) {
+// CHECK:STDOUT: fn @MemberNamedSelf.F(%x.param.loc53: %MemberNamedSelf, %y.param.loc58: %Self.0d4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

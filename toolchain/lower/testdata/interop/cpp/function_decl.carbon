@@ -427,14 +427,14 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk1(i32 3), !dbg !17
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 3, i32 4), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %value.var), !dbg !15
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc11 = call i32 @_Z17SimpleReturnValueii.carbon_thunk0(), !dbg !19
-// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc11, ptr %value.var, align 4, !dbg !15
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc12 = call i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 3), !dbg !20
-// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc12, ptr %value.var, align 4, !dbg !21
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc47 = call i32 @_Z17SimpleReturnValueii.carbon_thunk0(), !dbg !19
+// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc47, ptr %value.var, align 4, !dbg !15
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc56 = call i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 3), !dbg !20
+// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc56, ptr %value.var, align 4, !dbg !21
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !22
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !23
-// CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !24
-// CHECK:STDOUT:   ret i32 %.loc14, !dbg !25
+// CHECK:STDOUT:   %.loc70 = load i32, ptr %value.var, align 4, !dbg !24
+// CHECK:STDOUT:   ret i32 %.loc70, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

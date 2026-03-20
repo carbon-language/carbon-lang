@@ -68,18 +68,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %impl.elem1: %.492 = impl_witness_access constants.%AddWith.impl_witness, element1 [concrete = constants.%C.as.AddWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.AddWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
+// CHECK:STDOUT:   %C.as.AddWith.impl.Op.call: init %C to %.loc87.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.AddWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.872, %b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.872 = name_ref a, %a
-// CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
+// CHECK:STDOUT:   %.loc108: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.168 = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
-// CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc108, %impl.elem0
+// CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc108, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

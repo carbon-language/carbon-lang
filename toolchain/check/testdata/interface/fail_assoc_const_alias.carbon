@@ -95,7 +95,7 @@ interface C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %J2.decl.loc12: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
+// CHECK:STDOUT:   %J2.decl.loc36: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
@@ -111,13 +111,13 @@ interface C {
 // CHECK:STDOUT:     %return.patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.a14) = return_slot_pattern %return.param_patt, %U2.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @J2.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %I2.facet.loc14_14.2: %I2.type = facet_value %Self.as_type, (constants.%I2.lookup_impl_witness.d97) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.7a5)]
-// CHECK:STDOUT:     %.loc14_14.3: %I2.type = converted @J2.%Self, %I2.facet.loc14_14.2 [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.7a5)]
-// CHECK:STDOUT:     %impl.elem0.loc14_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness.d97, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.006)]
-// CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc14_14.2 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.006)]
-// CHECK:STDOUT:     %.loc14_14.4: Core.Form = init_form %U2.ref [symbolic = %.loc14_14.2 (constants.%.805)]
-// CHECK:STDOUT:     %return.param: ref @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.006) = out_param call_param0
-// CHECK:STDOUT:     %return: ref @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.006) = return_slot %return.param
+// CHECK:STDOUT:     %I2.facet.loc49.2: %I2.type = facet_value %Self.as_type, (constants.%I2.lookup_impl_witness.d97) [symbolic = %I2.facet.loc49.1 (constants.%I2.facet.7a5)]
+// CHECK:STDOUT:     %.loc49.3: %I2.type = converted @J2.%Self, %I2.facet.loc49.2 [symbolic = %I2.facet.loc49.1 (constants.%I2.facet.7a5)]
+// CHECK:STDOUT:     %impl.elem0.loc49.2: type = impl_witness_access constants.%I2.lookup_impl_witness.d97, element0 [symbolic = %impl.elem0.loc49.1 (constants.%impl.elem0.006)]
+// CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc49.2 [symbolic = %impl.elem0.loc49.1 (constants.%impl.elem0.006)]
+// CHECK:STDOUT:     %.loc49.4: Core.Form = init_form %U2.ref [symbolic = %.loc49.2 (constants.%.805)]
+// CHECK:STDOUT:     %return.param: ref @J2.WithSelf.F2.%impl.elem0.loc49.1 (%impl.elem0.006) = out_param call_param0
+// CHECK:STDOUT:     %return: ref @J2.WithSelf.F2.%impl.elem0.loc49.1 (%impl.elem0.006) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %J2.assoc_type = assoc_entity element0, %J2.WithSelf.F2.decl [concrete = constants.%assoc0.41c]
 // CHECK:STDOUT:
@@ -135,14 +135,14 @@ interface C {
 // CHECK:STDOUT: generic fn @J2.WithSelf.F2(@J2.%Self: %J2.type) {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.4a7)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %.loc14_14.1: require_specific_def_type = require_specific_def @V.binding.as_type.as.I2.impl(%Self) [symbolic = %.loc14_14.1 (constants.%.ef7)]
+// CHECK:STDOUT:   %.loc49.1: require_specific_def_type = require_specific_def @V.binding.as_type.as.I2.impl(%Self) [symbolic = %.loc49.1 (constants.%.ef7)]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness.d97)]
-// CHECK:STDOUT:   %I2.facet.loc14_14.1: %I2.type = facet_value %Self.binding.as_type, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.7a5)]
-// CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.006)]
-// CHECK:STDOUT:   %.loc14_14.2: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.2 (constants.%.805)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc14_14.1 [symbolic = %pattern_type (constants.%pattern_type.a14)]
+// CHECK:STDOUT:   %I2.facet.loc49.1: %I2.type = facet_value %Self.binding.as_type, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc49.1 (constants.%I2.facet.7a5)]
+// CHECK:STDOUT:   %impl.elem0.loc49.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc49.1 (constants.%impl.elem0.006)]
+// CHECK:STDOUT:   %.loc49.2: Core.Form = init_form %impl.elem0.loc49.1 [symbolic = %.loc49.2 (constants.%.805)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc49.1 [symbolic = %pattern_type (constants.%pattern_type.a14)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> out %return.param: @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.006);
+// CHECK:STDOUT:   fn() -> out %return.param: @J2.WithSelf.F2.%impl.elem0.loc49.1 (%impl.elem0.006);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J2.WithSelf(constants.%Self.4a7) {}
@@ -150,11 +150,11 @@ interface C {
 // CHECK:STDOUT: specific @J2.WithSelf.F2(constants.%Self.4a7) {
 // CHECK:STDOUT:   %Self => constants.%Self.4a7
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %.loc14_14.1 => constants.%.ef7
+// CHECK:STDOUT:   %.loc49.1 => constants.%.ef7
 // CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness.d97
-// CHECK:STDOUT:   %I2.facet.loc14_14.1 => constants.%I2.facet.7a5
-// CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.006
-// CHECK:STDOUT:   %.loc14_14.2 => constants.%.805
+// CHECK:STDOUT:   %I2.facet.loc49.1 => constants.%I2.facet.7a5
+// CHECK:STDOUT:   %impl.elem0.loc49.1 => constants.%impl.elem0.006
+// CHECK:STDOUT:   %.loc49.2 => constants.%.805
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -200,26 +200,26 @@ interface C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @C [symbolic = %C.lookup_impl_witness (constants.%C.lookup_impl_witness)]
 // CHECK:STDOUT:   %C.WithSelf.F.type: type = fn_type @C.WithSelf.F, @C.WithSelf(%Self) [symbolic = %C.WithSelf.F.type (constants.%C.WithSelf.F.type)]
-// CHECK:STDOUT:   %.loc8: type = fn_type_with_self_type %C.WithSelf.F.type, %Self [symbolic = %.loc8 (constants.%.018)]
-// CHECK:STDOUT:   %impl.elem0.loc8_9.2: @C.WithSelf.G.%.loc8 (%.018) = impl_witness_access %C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc8_9.2: <specific function> = specific_impl_function %impl.elem0.loc8_9.2, @C.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %.loc28: type = fn_type_with_self_type %C.WithSelf.F.type, %Self [symbolic = %.loc28 (constants.%.018)]
+// CHECK:STDOUT:   %impl.elem0.loc28.2: @C.WithSelf.G.%.loc28 (%.018) = impl_witness_access %C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc28.2: <specific function> = specific_impl_function %impl.elem0.loc28.2, @C.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc28.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref.loc8: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = name_ref self, %self
-// CHECK:STDOUT:     %F.ref.loc8: %C.assoc_type = name_ref F, @C.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc8_9.1: @C.WithSelf.G.%.loc8 (%.018) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %bound_method.loc8_9: <bound method> = bound_method %self.ref.loc8, %impl.elem0.loc8_9.1
-// CHECK:STDOUT:     %specific_impl_fn.loc8_9.1: <specific function> = specific_impl_function %impl.elem0.loc8_9.1, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %bound_method.loc8_12: <bound method> = bound_method %self.ref.loc8, %specific_impl_fn.loc8_9.1
-// CHECK:STDOUT:     %C.WithSelf.F.call.loc8: init %empty_tuple.type = call %bound_method.loc8_12(%self.ref.loc8)
-// CHECK:STDOUT:     %self.ref.loc9: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = name_ref self, %self
-// CHECK:STDOUT:     %impl.elem0.loc9: @C.WithSelf.G.%.loc8 (%.018) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %F.ref.loc9: @C.WithSelf.G.%.loc8 (%.018) = name_ref F, %impl.elem0.loc9 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %bound_method.loc9_9: <bound method> = bound_method %self.ref.loc9, %F.ref.loc9
-// CHECK:STDOUT:     %specific_impl_fn.loc9: <specific function> = specific_impl_function %F.ref.loc9, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %bound_method.loc9_14: <bound method> = bound_method %self.ref.loc9, %specific_impl_fn.loc9
-// CHECK:STDOUT:     %C.WithSelf.F.call.loc9: init %empty_tuple.type = call %bound_method.loc9_14(%self.ref.loc9)
+// CHECK:STDOUT:     %self.ref.loc27: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = name_ref self, %self
+// CHECK:STDOUT:     %F.ref.loc28: %C.assoc_type = name_ref F, @C.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %impl.elem0.loc28.1: @C.WithSelf.G.%.loc28 (%.018) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc28: <bound method> = bound_method %self.ref.loc27, %impl.elem0.loc28.1
+// CHECK:STDOUT:     %specific_impl_fn.loc28.1: <specific function> = specific_impl_function %impl.elem0.loc28.1, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc28.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc31: <bound method> = bound_method %self.ref.loc27, %specific_impl_fn.loc28.1
+// CHECK:STDOUT:     %C.WithSelf.F.call.loc31: init %empty_tuple.type = call %bound_method.loc31(%self.ref.loc27)
+// CHECK:STDOUT:     %self.ref.loc33: @C.WithSelf.G.%Self.binding.as_type (%Self.binding.as_type) = name_ref self, %self
+// CHECK:STDOUT:     %impl.elem0.loc36: @C.WithSelf.G.%.loc28 (%.018) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %F.ref.loc36: @C.WithSelf.G.%.loc28 (%.018) = name_ref F, %impl.elem0.loc36 [symbolic = %impl.elem0.loc28.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc34: <bound method> = bound_method %self.ref.loc33, %F.ref.loc36
+// CHECK:STDOUT:     %specific_impl_fn.loc36: <specific function> = specific_impl_function %F.ref.loc36, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc28.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc39: <bound method> = bound_method %self.ref.loc33, %specific_impl_fn.loc36
+// CHECK:STDOUT:     %C.WithSelf.F.call.loc39: init %empty_tuple.type = call %bound_method.loc39(%self.ref.loc33)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -54,10 +54,10 @@ fn M() {
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_f64.var, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc39_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !9
-// CHECK:STDOUT:   call void @_CF.Main.bfb441135f07cbe1(ptr %.loc39_5), !dbg !10
-// CHECK:STDOUT:   %.loc40_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main.29cf1dfeccef7249(ptr %.loc40_5), !dbg !12
+// CHECK:STDOUT:   %.loc120 = load ptr, ptr %ptr_i32.var, align 8, !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main.bfb441135f07cbe1(ptr %.loc120), !dbg !10
+// CHECK:STDOUT:   %.loc125 = load ptr, ptr %ptr_f64.var, align 8, !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main.29cf1dfeccef7249(ptr %.loc125), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,22 +89,22 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.bfb441135f07cbe1(ptr %x) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_7.2.temp = alloca i32, align 4, !dbg !38
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !38
-// CHECK:STDOUT:   %.loc27_5.2 = load i32, ptr %x, align 4, !dbg !39
-// CHECK:STDOUT:   %D.call = call i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %.loc27_5.2), !dbg !38
-// CHECK:STDOUT:   store i32 %D.call, ptr %.loc27_7.2.temp, align 4, !dbg !38
+// CHECK:STDOUT:   %.loc67.2.temp = alloca i32, align 4, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.2.temp), !dbg !38
+// CHECK:STDOUT:   %.loc65.2 = load i32, ptr %x, align 4, !dbg !39
+// CHECK:STDOUT:   %D.call = call i32 @_CD.Main.64ccbb8e5d9a0b8e(i32 %.loc65.2), !dbg !38
+// CHECK:STDOUT:   store i32 %D.call, ptr %.loc67.2.temp, align 4, !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.29cf1dfeccef7249(ptr %x) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_7.2.temp = alloca double, align 8, !dbg !44
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !44
-// CHECK:STDOUT:   %.loc27_5.2 = load double, ptr %x, align 8, !dbg !45
-// CHECK:STDOUT:   %D.call = call double @_CD.Main.de5b400758c39a65(double %.loc27_5.2), !dbg !44
-// CHECK:STDOUT:   store double %D.call, ptr %.loc27_7.2.temp, align 8, !dbg !44
+// CHECK:STDOUT:   %.loc67.2.temp = alloca double, align 8, !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc67.2.temp), !dbg !44
+// CHECK:STDOUT:   %.loc65.2 = load double, ptr %x, align 8, !dbg !45
+// CHECK:STDOUT:   %D.call = call double @_CD.Main.de5b400758c39a65(double %.loc65.2), !dbg !44
+// CHECK:STDOUT:   store double %D.call, ptr %.loc67.2.temp, align 8, !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

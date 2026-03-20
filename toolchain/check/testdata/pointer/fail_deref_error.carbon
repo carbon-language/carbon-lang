@@ -53,21 +53,21 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n: %i32 = value_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n2.patt: %pattern_type.7ce = value_binding_pattern n2 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n2: %i32 = value_binding n2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc19: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc24: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc24: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc7: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc6: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc14: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -25,20 +25,20 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'copy_value_rep.carbon'
 // CHECK:STDOUT: source_filename = "copy_value_rep.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc18_3 = internal constant { i32 } { i32 1 }
+// CHECK:STDOUT: @X.val.loc17 = internal constant { i32 } { i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
-// CHECK:STDOUT:   %.loc18_21.3.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3, i64 4, i1 false), !dbg !8
-// CHECK:STDOUT:   %.loc19_17.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc19_17.2 = load i32, ptr %.loc19_17.1.a, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc20_4.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   store i32 2, ptr %.loc20_4.a, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc19_17.2, !dbg !12
+// CHECK:STDOUT:   %.loc27.3.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc17, i64 4, i1 false), !dbg !8
+// CHECK:STDOUT:   %.loc35.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc35.2 = load i32, ptr %.loc35.1.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc39.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   store i32 2, ptr %.loc39.a, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc35.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

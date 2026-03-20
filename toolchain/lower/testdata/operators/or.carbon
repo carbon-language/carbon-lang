@@ -36,8 +36,8 @@ fn Or() -> bool {
 // CHECK:STDOUT: define i1 @_COr.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !12
-// CHECK:STDOUT:   %.loc17_14.3 = xor i1 %F.call, true, !dbg !12
-// CHECK:STDOUT:   br i1 %.loc17_14.3, label %or.rhs, label %or.result, !dbg !12
+// CHECK:STDOUT:   %.loc34.3 = xor i1 %F.call, true, !dbg !12
+// CHECK:STDOUT:   br i1 %.loc34.3, label %or.rhs, label %or.result, !dbg !12
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %entry
 // CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !13

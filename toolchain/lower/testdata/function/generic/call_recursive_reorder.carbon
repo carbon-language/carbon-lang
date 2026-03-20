@@ -55,12 +55,12 @@ fn M() {
 // CHECK:STDOUT:   store ptr %m.var, ptr %ptr_f64.var, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_bool.var), !dbg !12
 // CHECK:STDOUT:   store ptr %b.var, ptr %ptr_bool.var, align 8, !dbg !12
-// CHECK:STDOUT:   %.loc30_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
-// CHECK:STDOUT:   %.loc30_14 = load ptr, ptr %ptr_bool.var, align 8, !dbg !14
-// CHECK:STDOUT:   %F.call.loc30 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc30_5, ptr %.loc30_14, i32 0), !dbg !15
-// CHECK:STDOUT:   %.loc31_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc31_14 = load ptr, ptr %ptr_bool.var, align 8, !dbg !17
-// CHECK:STDOUT:   %F.call.loc31 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc31_5, ptr %.loc31_14, i32 0), !dbg !18
+// CHECK:STDOUT:   %.loc107 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
+// CHECK:STDOUT:   %.loc109 = load ptr, ptr %ptr_bool.var, align 8, !dbg !14
+// CHECK:STDOUT:   %F.call.loc112 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc107, ptr %.loc109, i32 0), !dbg !15
+// CHECK:STDOUT:   %.loc116 = load ptr, ptr %ptr_f64.var, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc118 = load ptr, ptr %ptr_bool.var, align 8, !dbg !17
+// CHECK:STDOUT:   %F.call.loc121 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc116, ptr %.loc118, i32 0), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

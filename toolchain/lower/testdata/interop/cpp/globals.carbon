@@ -345,8 +345,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CThreadLocalTriggerInit.Main() #3 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14 = load i32, ptr @thread_local_global_with_init, align 4, !dbg !20
-// CHECK:STDOUT:   ret i32 %.loc14, !dbg !21
+// CHECK:STDOUT:   %.loc30 = load i32, ptr @thread_local_global_with_init, align 4, !dbg !20
+// CHECK:STDOUT:   ret i32 %.loc30, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: uwtable
@@ -428,8 +428,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadStatic.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN1X1nE, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !16
+// CHECK:STDOUT:   %.loc20 = load i32, ptr @_ZN1X1nE, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc20, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -468,8 +468,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadVarTemplate.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_Z4tmplIiE, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !16
+// CHECK:STDOUT:   %.loc22 = load i32, ptr @_Z4tmplIiE, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc22, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -519,8 +519,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadStaticVarTemplate.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN1X11static_tmplIiEE, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !16
+// CHECK:STDOUT:   %.loc24 = load i32, ptr @_ZN1X11static_tmplIiEE, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc24, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

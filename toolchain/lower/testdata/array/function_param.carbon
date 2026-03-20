@@ -21,26 +21,26 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'function_param.carbon'
 // CHECK:STDOUT: source_filename = "function_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.loc18_20.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc43.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !12
-// CHECK:STDOUT:   %.loc14_15.3 = load i32, ptr %.loc14_15.2.array.index, align 4, !dbg !12
-// CHECK:STDOUT:   ret i32 %.loc14_15.3, !dbg !13
+// CHECK:STDOUT:   %.loc24.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !12
+// CHECK:STDOUT:   %.loc24.3 = load i32, ptr %.loc24.2.array.index, align 4, !dbg !12
+// CHECK:STDOUT:   ret i32 %.loc24.3, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CG.Main() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_20.3.temp = alloca [3 x i32], align 4, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_20.3.temp), !dbg !17
-// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 0, !dbg !17
-// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !17
-// CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc18_20.3.temp, ptr align 4 @array.loc18_20.13, i64 12, i1 false), !dbg !17
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc18_20.3.temp, i32 1), !dbg !18
+// CHECK:STDOUT:   %.loc43.3.temp = alloca [3 x i32], align 4, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc43.3.temp), !dbg !17
+// CHECK:STDOUT:   %.loc43.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc43.3.temp, i32 0, i64 0, !dbg !17
+// CHECK:STDOUT:   %.loc43.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc43.3.temp, i32 0, i64 1, !dbg !17
+// CHECK:STDOUT:   %.loc43.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc43.3.temp, i32 0, i64 2, !dbg !17
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc43.3.temp, ptr align 4 @array.loc43.13, i64 12, i1 false), !dbg !17
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc43.3.temp, i32 1), !dbg !18
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

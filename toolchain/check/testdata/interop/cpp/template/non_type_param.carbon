@@ -199,10 +199,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_32.2: init %TwoNonType to file.%x.var = class_init () [concrete = constants.%TwoNonType.val]
-// CHECK:STDOUT:   %.loc7_1: init %TwoNonType = converted %.loc7_32.1, %.loc7_32.2 [concrete = constants.%TwoNonType.val]
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_1
+// CHECK:STDOUT:   %.loc22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc22.2: init %TwoNonType to file.%x.var = class_init () [concrete = constants.%TwoNonType.val]
+// CHECK:STDOUT:   %.loc9: init %TwoNonType = converted %.loc22.1, %.loc22.2 [concrete = constants.%TwoNonType.val]
+// CHECK:STDOUT:   assign file.%x.var, %.loc9
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,15 +267,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MakeDependentNonType123.ref: %MakeDependentNonType123.cpp_overload_set.type = name_ref MakeDependentNonType123, imports.%MakeDependentNonType123.cpp_overload_set.value [concrete = constants.%MakeDependentNonType123.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_1: ref %DependentNonType.794fcf.1 = splice_block file.%x.var [concrete = file.%x.var] {}
-// CHECK:STDOUT:   %addr: %ptr.5b4 = addr_of %.loc7_1
+// CHECK:STDOUT:   %.loc9: ref %DependentNonType.794fcf.1 = splice_block file.%x.var [concrete = file.%x.var] {}
+// CHECK:STDOUT:   %addr: %ptr.5b4 = addr_of %.loc9
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeDependentNonType123__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc7_69: init %DependentNonType.794fcf.1 to %.loc7_1 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_69
-// CHECK:STDOUT:   %.loc8_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_54.2: init %DependentNonType.794fcf.2 to file.%y.var = class_init () [concrete = constants.%DependentNonType.val]
-// CHECK:STDOUT:   %.loc8_1: init %DependentNonType.794fcf.2 = converted %.loc8_54.1, %.loc8_54.2 [concrete = constants.%DependentNonType.val]
-// CHECK:STDOUT:   assign file.%y.var, %.loc8_1
+// CHECK:STDOUT:   %.loc25: init %DependentNonType.794fcf.1 to %.loc9 = mark_in_place_init %MakeDependentNonType123__carbon_thunk.call
+// CHECK:STDOUT:   assign file.%x.var, %.loc25
+// CHECK:STDOUT:   %.loc44.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc44.2: init %DependentNonType.794fcf.2 to file.%y.var = class_init () [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   %.loc27: init %DependentNonType.794fcf.2 = converted %.loc44.1, %.loc44.2 [concrete = constants.%DependentNonType.val]
+// CHECK:STDOUT:   assign file.%y.var, %.loc27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

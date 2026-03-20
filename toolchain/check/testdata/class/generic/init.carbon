@@ -117,33 +117,33 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [concrete = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.ce2 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.param_patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.9b9f0c.2) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.9b9f0c.2) = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc9_50.3 [concrete]
+// CHECK:STDOUT:     %x.param_patt: @InitFromStructGeneric.%pattern_type.loc28 (%pattern_type.9b9f0c.2) = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%pattern_type.loc28 (%pattern_type.9b9f0c.2) = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %return.param_patt: @InitFromStructGeneric.%pattern_type.loc28 (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: @InitFromStructGeneric.%pattern_type.loc28 (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc32.3 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc9_50: %Copy.type = name_ref T, %T.loc9_26.2 [symbolic = %T.loc9_26.1 (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc9_50: type = facet_access_type %T.ref.loc9_50 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc9_50.3: type = converted %T.ref.loc9_50, %T.as_type.loc9_50 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc9_50.4: Core.Form = init_form %.loc9_50.3 [symbolic = %.loc9_50.2 (constants.%.076a48.2)]
-// CHECK:STDOUT:     %.loc9_34: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
+// CHECK:STDOUT:     %T.ref.loc32: %Copy.type = name_ref T, %T.loc21.2 [symbolic = %T.loc21.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.as_type.loc32: type = facet_access_type %T.ref.loc32 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc32.3: type = converted %T.ref.loc32, %T.as_type.loc32 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc32.4: Core.Form = init_form %.loc32.3 [symbolic = %.loc32.2 (constants.%.076a48.2)]
+// CHECK:STDOUT:     %.loc24: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_26.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc9_26.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.loc21.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc21.1 (constants.%T.035)]
 // CHECK:STDOUT:     %x.param: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc9_44.1: type = splice_block %.loc9_44.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
-// CHECK:STDOUT:       %T.ref.loc9_44: %Copy.type = name_ref T, %T.loc9_26.2 [symbolic = %T.loc9_26.1 (constants.%T.035)]
-// CHECK:STDOUT:       %T.as_type.loc9_44: type = facet_access_type %T.ref.loc9_44 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc9_44.2: type = converted %T.ref.loc9_44, %T.as_type.loc9_44 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc29.1: type = splice_block %.loc29.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
+// CHECK:STDOUT:       %T.ref.loc29: %Copy.type = name_ref T, %T.loc21.2 [symbolic = %T.loc21.1 (constants.%T.035)]
+// CHECK:STDOUT:       %T.as_type.loc29: type = facet_access_type %T.ref.loc29 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc29.2: type = converted %T.ref.loc29, %T.as_type.loc29 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
@@ -153,86 +153,86 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc14_38 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc63 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc14_38: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc14: Core.Form = init_form %i32.loc14_38 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc63: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc63: Core.Form = init_form %i32.loc63 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc14_30: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc60: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %x: %i32 = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @InitFromStructGeneric(%T.loc9_26.2: %Copy.type) {
-// CHECK:STDOUT:   %T.loc9_26.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc9_26.1 (constants.%T.035)]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc9_26.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc9: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc9 (constants.%pattern_type.9b9f0c.2)]
-// CHECK:STDOUT:   %.loc9_50.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc9_50.2 (constants.%.076a48.2)]
+// CHECK:STDOUT: generic fn @InitFromStructGeneric(%T.loc21.2: %Copy.type) {
+// CHECK:STDOUT:   %T.loc21.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc21.1 (constants.%T.035)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc21.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %pattern_type.loc28: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc28 (constants.%pattern_type.9b9f0c.2)]
+// CHECK:STDOUT:   %.loc32.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc32.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9 (constants.%require_complete.67c)]
-// CHECK:STDOUT:   %Class.loc10_17.2: type = class_type @Class, @Class(%T.binding.as_type) [symbolic = %Class.loc10_17.2 (constants.%Class.316)]
-// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class.loc10_17.2 [symbolic = %require_complete.loc10 (constants.%require_complete.ae7)]
-// CHECK:STDOUT:   %pattern_type.loc10: type = pattern_type %Class.loc10_17.2 [symbolic = %pattern_type.loc10 (constants.%pattern_type.c54)]
+// CHECK:STDOUT:   %require_complete.loc28: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc28 (constants.%require_complete.67c)]
+// CHECK:STDOUT:   %Class.loc40.2: type = class_type @Class, @Class(%T.binding.as_type) [symbolic = %Class.loc40.2 (constants.%Class.316)]
+// CHECK:STDOUT:   %require_complete.loc40: <witness> = require_complete_type %Class.loc40.2 [symbolic = %require_complete.loc40 (constants.%require_complete.ae7)]
+// CHECK:STDOUT:   %pattern_type.loc35: type = pattern_type %Class.loc40.2 [symbolic = %pattern_type.loc35 (constants.%pattern_type.c54)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.k (constants.%struct_type.k.436)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_26.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc9_26.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
-// CHECK:STDOUT:   %.loc10_27: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc9_26.1 [symbolic = %.loc10_27 (constants.%.023)]
-// CHECK:STDOUT:   %impl.elem0.loc10_27.2: @InitFromStructGeneric.%.loc10_27 (%.023) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_27.2 (constants.%impl.elem0.594)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_27.2: <specific function> = specific_impl_function %impl.elem0.loc10_27.2, @Copy.WithSelf.Op(%T.loc9_26.1) [symbolic = %specific_impl_fn.loc10_27.2 (constants.%specific_impl_fn.bdc)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc10_17.2, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.765)]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.loc10_17.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc10_17.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.88b)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc21.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc21.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
+// CHECK:STDOUT:   %.loc46: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc21.1 [symbolic = %.loc46 (constants.%.023)]
+// CHECK:STDOUT:   %impl.elem0.loc46.2: @InitFromStructGeneric.%.loc46 (%.023) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc46.2 (constants.%impl.elem0.594)]
+// CHECK:STDOUT:   %specific_impl_fn.loc46.2: <specific function> = specific_impl_function %impl.elem0.loc46.2, @Copy.WithSelf.Op(%T.loc21.1) [symbolic = %specific_impl_fn.loc46.2 (constants.%specific_impl_fn.bdc)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc40.2, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.765)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.loc40.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc40.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.88b)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.5c9)]
-// CHECK:STDOUT:   %.loc10_3.2: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc10_3.2 (constants.%.0dd)]
-// CHECK:STDOUT:   %impl.elem0.loc10_3.2: @InitFromStructGeneric.%.loc10_3.2 (%.0dd) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_3.2 (constants.%impl.elem0.799)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_3.2: <specific function> = specific_impl_function %impl.elem0.loc10_3.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc10_3.2 (constants.%specific_impl_fn.d17)]
+// CHECK:STDOUT:   %.loc34.2: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc34.2 (constants.%.0dd)]
+// CHECK:STDOUT:   %impl.elem0.loc34.2: @InitFromStructGeneric.%.loc34.2 (%.0dd) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34.2 (constants.%impl.elem0.799)]
+// CHECK:STDOUT:   %specific_impl_fn.loc34.2: <specific function> = specific_impl_function %impl.elem0.loc34.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc34.2 (constants.%specific_impl_fn.d17)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.c54) = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:       %v.var_patt: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.c54) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%pattern_type.loc35 (%pattern_type.c54) = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.var_patt: @InitFromStructGeneric.%pattern_type.loc35 (%pattern_type.c54) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) = var %v.var_patt
+// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc40.2 (%Class.316) = var %v.var_patt
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = name_ref x, %x
-// CHECK:STDOUT:     %.loc10_28.1: @InitFromStructGeneric.%struct_type.k (%struct_type.k.436) = struct_literal (%x.ref)
-// CHECK:STDOUT:     %impl.elem0.loc10_27.1: @InitFromStructGeneric.%.loc10_27 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc10_27.2 (constants.%impl.elem0.594)]
-// CHECK:STDOUT:     %bound_method.loc10_27.1: <bound method> = bound_method %x.ref, %impl.elem0.loc10_27.1
-// CHECK:STDOUT:     %specific_impl_fn.loc10_27.1: <specific function> = specific_impl_function %impl.elem0.loc10_27.1, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc10_27.2 (constants.%specific_impl_fn.bdc)]
-// CHECK:STDOUT:     %bound_method.loc10_27.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_27.1
-// CHECK:STDOUT:     %.loc10_28.2: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.var, element0
-// CHECK:STDOUT:     %Copy.WithSelf.Op.call.loc10: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc10_28.2 = call %bound_method.loc10_27.2(%x.ref)
-// CHECK:STDOUT:     %.loc10_28.3: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc10_28.2 = in_place_init %Copy.WithSelf.Op.call.loc10
-// CHECK:STDOUT:     %.loc10_28.4: init @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) to %v.var = class_init (%.loc10_28.3)
-// CHECK:STDOUT:     %.loc10_3.1: init @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) = converted %.loc10_28.1, %.loc10_28.4
-// CHECK:STDOUT:     assign %v.var, %.loc10_3.1
-// CHECK:STDOUT:     %.loc10_17.1: type = splice_block %Class.loc10_17.1 [symbolic = %Class.loc10_17.2 (constants.%Class.316)] {
+// CHECK:STDOUT:     %.loc47.1: @InitFromStructGeneric.%struct_type.k (%struct_type.k.436) = struct_literal (%x.ref)
+// CHECK:STDOUT:     %impl.elem0.loc46.1: @InitFromStructGeneric.%.loc46 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc46.2 (constants.%impl.elem0.594)]
+// CHECK:STDOUT:     %bound_method.loc46.1: <bound method> = bound_method %x.ref, %impl.elem0.loc46.1
+// CHECK:STDOUT:     %specific_impl_fn.loc46.1: <specific function> = specific_impl_function %impl.elem0.loc46.1, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc46.2 (constants.%specific_impl_fn.bdc)]
+// CHECK:STDOUT:     %bound_method.loc46.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc46.1
+// CHECK:STDOUT:     %.loc47.2: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.var, element0
+// CHECK:STDOUT:     %Copy.WithSelf.Op.call.loc46: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc47.2 = call %bound_method.loc46.2(%x.ref)
+// CHECK:STDOUT:     %.loc47.3: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc47.2 = in_place_init %Copy.WithSelf.Op.call.loc46
+// CHECK:STDOUT:     %.loc47.4: init @InitFromStructGeneric.%Class.loc40.2 (%Class.316) to %v.var = class_init (%.loc47.3)
+// CHECK:STDOUT:     %.loc34.1: init @InitFromStructGeneric.%Class.loc40.2 (%Class.316) = converted %.loc47.1, %.loc47.4
+// CHECK:STDOUT:     assign %v.var, %.loc34.1
+// CHECK:STDOUT:     %.loc40.1: type = splice_block %Class.loc40.1 [symbolic = %Class.loc40.2 (constants.%Class.316)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:       %T.ref.loc10: %Copy.type = name_ref T, %T.loc9_26.2 [symbolic = %T.loc9_26.1 (constants.%T.035)]
-// CHECK:STDOUT:       %T.as_type.loc10: type = facet_access_type %T.ref.loc10 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc10_17.2: type = converted %T.ref.loc10, %T.as_type.loc10 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %Class.loc10_17.1: type = class_type @Class, @Class(constants.%T.binding.as_type) [symbolic = %Class.loc10_17.2 (constants.%Class.316)]
+// CHECK:STDOUT:       %T.ref.loc39: %Copy.type = name_ref T, %T.loc21.2 [symbolic = %T.loc21.1 (constants.%T.035)]
+// CHECK:STDOUT:       %T.as_type.loc40: type = facet_access_type %T.ref.loc39 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc40.2: type = converted %T.ref.loc39, %T.as_type.loc40 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %Class.loc40.1: type = class_type @Class, @Class(constants.%T.binding.as_type) [symbolic = %Class.loc40.2 (constants.%Class.316)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) = ref_binding v, %v.var
-// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.316) = name_ref v, %v
-// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.765) = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
-// CHECK:STDOUT:     %.loc11_11.1: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.ref, element0
-// CHECK:STDOUT:     %.loc11_11.2: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = acquire_value %.loc11_11.1
-// CHECK:STDOUT:     %impl.elem0.loc11: @InitFromStructGeneric.%.loc10_27 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc10_27.2 (constants.%impl.elem0.594)]
-// CHECK:STDOUT:     %bound_method.loc11_11.1: <bound method> = bound_method %.loc11_11.2, %impl.elem0.loc11
-// CHECK:STDOUT:     %specific_impl_fn.loc11: <specific function> = specific_impl_function %impl.elem0.loc11, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc10_27.2 (constants.%specific_impl_fn.bdc)]
-// CHECK:STDOUT:     %bound_method.loc11_11.2: <bound method> = bound_method %.loc11_11.2, %specific_impl_fn.loc11
-// CHECK:STDOUT:     %.loc9_50.1: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.WithSelf.Op.call.loc11: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc9_50.1 = call %bound_method.loc11_11.2(%.loc11_11.2)
-// CHECK:STDOUT:     %impl.elem0.loc10_3.1: @InitFromStructGeneric.%.loc10_3.2 (%.0dd) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_3.2 (constants.%impl.elem0.799)]
-// CHECK:STDOUT:     %bound_method.loc10_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc10_3.1
-// CHECK:STDOUT:     %specific_impl_fn.loc10_3.1: <specific function> = specific_impl_function %impl.elem0.loc10_3.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.88b) [symbolic = %specific_impl_fn.loc10_3.2 (constants.%specific_impl_fn.d17)]
-// CHECK:STDOUT:     %bound_method.loc10_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc10_3.1
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc10_3.2(%v.var)
-// CHECK:STDOUT:     return %Copy.WithSelf.Op.call.loc11 to %return.param
+// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc40.2 (%Class.316) = ref_binding v, %v.var
+// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc40.2 (%Class.316) = name_ref v, %v
+// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.765) = name_ref k, @Class.%.loc14 [concrete = @Class.%.loc14]
+// CHECK:STDOUT:     %.loc51.1: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.ref, element0
+// CHECK:STDOUT:     %.loc51.2: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = acquire_value %.loc51.1
+// CHECK:STDOUT:     %impl.elem0.loc51: @InitFromStructGeneric.%.loc46 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc46.2 (constants.%impl.elem0.594)]
+// CHECK:STDOUT:     %bound_method.loc51.1: <bound method> = bound_method %.loc51.2, %impl.elem0.loc51
+// CHECK:STDOUT:     %specific_impl_fn.loc51: <specific function> = specific_impl_function %impl.elem0.loc51, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc46.2 (constants.%specific_impl_fn.bdc)]
+// CHECK:STDOUT:     %bound_method.loc51.2: <bound method> = bound_method %.loc51.2, %specific_impl_fn.loc51
+// CHECK:STDOUT:     %.loc32.1: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
+// CHECK:STDOUT:     %Copy.WithSelf.Op.call.loc51: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc32.1 = call %bound_method.loc51.2(%.loc51.2)
+// CHECK:STDOUT:     %impl.elem0.loc34.1: @InitFromStructGeneric.%.loc34.2 (%.0dd) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34.2 (constants.%impl.elem0.799)]
+// CHECK:STDOUT:     %bound_method.loc34.1: <bound method> = bound_method %v.var, %impl.elem0.loc34.1
+// CHECK:STDOUT:     %specific_impl_fn.loc34.1: <specific function> = specific_impl_function %impl.elem0.loc34.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.88b) [symbolic = %specific_impl_fn.loc34.2 (constants.%specific_impl_fn.d17)]
+// CHECK:STDOUT:     %bound_method.loc34.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc34.1
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc34.2(%v.var)
+// CHECK:STDOUT:     return %Copy.WithSelf.Op.call.loc51 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,44 +244,44 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Class.805 = var %v.var_patt
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
-// CHECK:STDOUT:   %.loc15_30.1: %struct_type.k.0bf = struct_literal (%x.ref)
-// CHECK:STDOUT:   %impl.elem0.loc15: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %x.ref, %impl.elem0.loc15
-// CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %x.ref, %specific_fn.loc15
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc15: init %i32 = call %bound_method.loc15_29.2(%x.ref)
-// CHECK:STDOUT:   %.loc15_30.2: ref %i32 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc15_30.3: init %i32 to %.loc15_30.2 = in_place_init %Int.as.Copy.impl.Op.call.loc15
-// CHECK:STDOUT:   %.loc15_30.4: init %Class.805 to %v.var = class_init (%.loc15_30.3)
-// CHECK:STDOUT:   %.loc15_3: init %Class.805 = converted %.loc15_30.1, %.loc15_30.4
-// CHECK:STDOUT:   assign %v.var, %.loc15_3
-// CHECK:STDOUT:   %.loc15_19: type = splice_block %Class [concrete = constants.%Class.805] {
+// CHECK:STDOUT:   %.loc78.1: %struct_type.k.0bf = struct_literal (%x.ref)
+// CHECK:STDOUT:   %impl.elem0.loc77: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc77.1: <bound method> = bound_method %x.ref, %impl.elem0.loc77
+// CHECK:STDOUT:   %specific_fn.loc77: <specific function> = specific_function %impl.elem0.loc77, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc77.2: <bound method> = bound_method %x.ref, %specific_fn.loc77
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc77: init %i32 = call %bound_method.loc77.2(%x.ref)
+// CHECK:STDOUT:   %.loc78.2: ref %i32 = class_element_access %v.var, element0
+// CHECK:STDOUT:   %.loc78.3: init %i32 to %.loc78.2 = in_place_init %Int.as.Copy.impl.Op.call.loc77
+// CHECK:STDOUT:   %.loc78.4: init %Class.805 to %v.var = class_init (%.loc78.3)
+// CHECK:STDOUT:   %.loc65: init %Class.805 = converted %.loc78.1, %.loc78.4
+// CHECK:STDOUT:   assign %v.var, %.loc65
+// CHECK:STDOUT:   %.loc71: type = splice_block %Class [concrete = constants.%Class.805] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc70: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.805]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %Class.805 = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %Class.805 = name_ref v, %v
-// CHECK:STDOUT:   %k.ref: %Class.elem.927 = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
-// CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %v.ref, element0
-// CHECK:STDOUT:   %.loc16_11.2: %i32 = acquire_value %.loc16_11.1
-// CHECK:STDOUT:   %impl.elem0.loc16: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc16_11.1: <bound method> = bound_method %.loc16_11.2, %impl.elem0.loc16
-// CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc16_11.2: <bound method> = bound_method %.loc16_11.2, %specific_fn.loc16
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc16: init %i32 = call %bound_method.loc16_11.2(%.loc16_11.2)
+// CHECK:STDOUT:   %k.ref: %Class.elem.927 = name_ref k, @Class.%.loc14 [concrete = @Class.%.loc14]
+// CHECK:STDOUT:   %.loc82.1: ref %i32 = class_element_access %v.ref, element0
+// CHECK:STDOUT:   %.loc82.2: %i32 = acquire_value %.loc82.1
+// CHECK:STDOUT:   %impl.elem0.loc82: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
+// CHECK:STDOUT:   %bound_method.loc82.1: <bound method> = bound_method %.loc82.2, %impl.elem0.loc82
+// CHECK:STDOUT:   %specific_fn.loc82: <specific function> = specific_function %impl.elem0.loc82, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc82.2: <bound method> = bound_method %.loc82.2, %specific_fn.loc82
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc82: init %i32 = call %bound_method.loc82.2(%.loc82.2)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call.loc16
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call.loc82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Class.805) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromStructGeneric(constants.%T.035) {
-// CHECK:STDOUT:   %T.loc9_26.1 => constants.%T.035
+// CHECK:STDOUT:   %T.loc21.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %pattern_type.loc9 => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc9_50.2 => constants.%.076a48.2
+// CHECK:STDOUT:   %pattern_type.loc28 => constants.%pattern_type.9b9f0c.2
+// CHECK:STDOUT:   %.loc32.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt.carbon
@@ -335,7 +335,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
+// CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc80, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,23 +345,23 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %x.param_patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.9b9f0c.2) = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.9b9f0c.2) = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.9b9f0c.2) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc9_51.3 [concrete]
+// CHECK:STDOUT:     %return.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.9b9f0c.2) = return_slot_pattern %return.param_patt, %.loc30.3 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc9_51: %Copy.type = name_ref T, %T.loc9_27.2 [symbolic = %T.loc9_27.1 (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc9_51: type = facet_access_type %T.ref.loc9_51 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc9_51.3: type = converted %T.ref.loc9_51, %T.as_type.loc9_51 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc9_51.4: Core.Form = init_form %.loc9_51.3 [symbolic = %.loc9_51.2 (constants.%.076a48.2)]
-// CHECK:STDOUT:     %.loc9_35: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
+// CHECK:STDOUT:     %T.ref.loc30: %Copy.type = name_ref T, %T.loc19.2 [symbolic = %T.loc19.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.as_type.loc30: type = facet_access_type %T.ref.loc30 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc30.3: type = converted %T.ref.loc30, %T.as_type.loc30 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc30.4: Core.Form = init_form %.loc30.3 [symbolic = %.loc30.2 (constants.%.076a48.2)]
+// CHECK:STDOUT:     %.loc22: type = splice_block %Copy.ref [concrete = constants.%Copy.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_27.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc9_27.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.loc19.2: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc19.1 (constants.%T.035)]
 // CHECK:STDOUT:     %x.param: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc9_45.1: type = splice_block %.loc9_45.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
-// CHECK:STDOUT:       %T.ref.loc9_45: %Copy.type = name_ref T, %T.loc9_27.2 [symbolic = %T.loc9_27.1 (constants.%T.035)]
-// CHECK:STDOUT:       %T.as_type.loc9_45: type = facet_access_type %T.ref.loc9_45 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc9_45.2: type = converted %T.ref.loc9_45, %T.as_type.loc9_45 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc27.1: type = splice_block %.loc27.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
+// CHECK:STDOUT:       %T.ref.loc27: %Copy.type = name_ref T, %T.loc19.2 [symbolic = %T.loc19.1 (constants.%T.035)]
+// CHECK:STDOUT:       %T.as_type.loc27: type = facet_access_type %T.ref.loc27 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc27.2: type = converted %T.ref.loc27, %T.as_type.loc27 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
@@ -371,55 +371,55 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.7ce = value_param_pattern [concrete]
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc13_39 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern %return.param_patt, %i32.loc53 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc13_39: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_39 [concrete = constants.%.ff5]
+// CHECK:STDOUT:     %i32.loc53: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc53: Core.Form = init_form %i32.loc53 [concrete = constants.%.ff5]
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc13_31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc50: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %x: %i32 = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @InitFromAdaptedGeneric(%T.loc9_27.2: %Copy.type) {
-// CHECK:STDOUT:   %T.loc9_27.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc9_27.1 (constants.%T.035)]
-// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc9_27.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT: generic fn @InitFromAdaptedGeneric(%T.loc19.2: %Copy.type) {
+// CHECK:STDOUT:   %T.loc19.1: %Copy.type = symbolic_binding T, 0 [symbolic = %T.loc19.1 (constants.%T.035)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc19.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.2)]
-// CHECK:STDOUT:   %.loc9_51.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc9_51.2 (constants.%.076a48.2)]
+// CHECK:STDOUT:   %.loc30.2: Core.Form = init_form %T.binding.as_type [symbolic = %.loc30.2 (constants.%.076a48.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9 (constants.%require_complete.67c)]
-// CHECK:STDOUT:   %Adapt.loc10_23.2: type = class_type @Adapt, @Adapt(%T.binding.as_type) [symbolic = %Adapt.loc10_23.2 (constants.%Adapt.f64)]
-// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Adapt.loc10_23.2 [symbolic = %require_complete.loc10 (constants.%require_complete.888)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_27.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc9_27.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
-// CHECK:STDOUT:   %.loc10_26.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc9_27.1 [symbolic = %.loc10_26.3 (constants.%.023)]
-// CHECK:STDOUT:   %impl.elem0.loc10_26.2: @InitFromAdaptedGeneric.%.loc10_26.3 (%.023) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_26.2 (constants.%impl.elem0.594)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_26.2: <specific function> = specific_impl_function %impl.elem0.loc10_26.2, @Copy.WithSelf.Op(%T.loc9_27.1) [symbolic = %specific_impl_fn.loc10_26.2 (constants.%specific_impl_fn.bdc)]
+// CHECK:STDOUT:   %require_complete.loc26: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc26 (constants.%require_complete.67c)]
+// CHECK:STDOUT:   %Adapt.loc39.2: type = class_type @Adapt, @Adapt(%T.binding.as_type) [symbolic = %Adapt.loc39.2 (constants.%Adapt.f64)]
+// CHECK:STDOUT:   %require_complete.loc35: <witness> = require_complete_type %Adapt.loc39.2 [symbolic = %require_complete.loc35 (constants.%require_complete.888)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc19.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.58d)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc19.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.735e75.2)]
+// CHECK:STDOUT:   %.loc41.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc19.1 [symbolic = %.loc41.3 (constants.%.023)]
+// CHECK:STDOUT:   %impl.elem0.loc41.2: @InitFromAdaptedGeneric.%.loc41.3 (%.023) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc41.2 (constants.%impl.elem0.594)]
+// CHECK:STDOUT:   %specific_impl_fn.loc41.2: <specific function> = specific_impl_function %impl.elem0.loc41.2, @Copy.WithSelf.Op(%T.loc19.1) [symbolic = %specific_impl_fn.loc41.2 (constants.%specific_impl_fn.bdc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [concrete = constants.%Adapt.generic]
-// CHECK:STDOUT:     %T.ref.loc10_22: %Copy.type = name_ref T, %T.loc9_27.2 [symbolic = %T.loc9_27.1 (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc10_23: type = facet_access_type %T.ref.loc10_22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc10_23: type = converted %T.ref.loc10_22, %T.as_type.loc10_23 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %Adapt.loc10_23.1: type = class_type @Adapt, @Adapt(constants.%T.binding.as_type) [symbolic = %Adapt.loc10_23.2 (constants.%Adapt.f64)]
-// CHECK:STDOUT:     %.loc10_13.1: @InitFromAdaptedGeneric.%Adapt.loc10_23.2 (%Adapt.f64) = as_compatible %x.ref
-// CHECK:STDOUT:     %.loc10_13.2: @InitFromAdaptedGeneric.%Adapt.loc10_23.2 (%Adapt.f64) = converted %x.ref, %.loc10_13.1
-// CHECK:STDOUT:     %T.ref.loc10_29: %Copy.type = name_ref T, %T.loc9_27.2 [symbolic = %T.loc9_27.1 (constants.%T.035)]
-// CHECK:STDOUT:     %T.as_type.loc10_29: type = facet_access_type %T.ref.loc10_29 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc10_29: type = converted %T.ref.loc10_29, %T.as_type.loc10_29 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc10_26.1: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = as_compatible %.loc10_13.2
-// CHECK:STDOUT:     %.loc10_26.2: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = converted %.loc10_13.2, %.loc10_26.1
-// CHECK:STDOUT:     %impl.elem0.loc10_26.1: @InitFromAdaptedGeneric.%.loc10_26.3 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc10_26.2 (constants.%impl.elem0.594)]
-// CHECK:STDOUT:     %bound_method.loc10_26.1: <bound method> = bound_method %.loc10_26.2, %impl.elem0.loc10_26.1
-// CHECK:STDOUT:     %specific_impl_fn.loc10_26.1: <specific function> = specific_impl_function %impl.elem0.loc10_26.1, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc10_26.2 (constants.%specific_impl_fn.bdc)]
-// CHECK:STDOUT:     %bound_method.loc10_26.2: <bound method> = bound_method %.loc10_26.2, %specific_impl_fn.loc10_26.1
-// CHECK:STDOUT:     %.loc9_51.1: ref @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
-// CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc9_51.1 = call %bound_method.loc10_26.2(%.loc10_26.2)
+// CHECK:STDOUT:     %T.ref.loc38: %Copy.type = name_ref T, %T.loc19.2 [symbolic = %T.loc19.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.as_type.loc39: type = facet_access_type %T.ref.loc38 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc39: type = converted %T.ref.loc38, %T.as_type.loc39 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %Adapt.loc39.1: type = class_type @Adapt, @Adapt(constants.%T.binding.as_type) [symbolic = %Adapt.loc39.2 (constants.%Adapt.f64)]
+// CHECK:STDOUT:     %.loc35.1: @InitFromAdaptedGeneric.%Adapt.loc39.2 (%Adapt.f64) = as_compatible %x.ref
+// CHECK:STDOUT:     %.loc35.2: @InitFromAdaptedGeneric.%Adapt.loc39.2 (%Adapt.f64) = converted %x.ref, %.loc35.1
+// CHECK:STDOUT:     %T.ref.loc42: %Copy.type = name_ref T, %T.loc19.2 [symbolic = %T.loc19.1 (constants.%T.035)]
+// CHECK:STDOUT:     %T.as_type.loc42: type = facet_access_type %T.ref.loc42 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc42: type = converted %T.ref.loc42, %T.as_type.loc42 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc41.1: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = as_compatible %.loc35.2
+// CHECK:STDOUT:     %.loc41.2: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = converted %.loc35.2, %.loc41.1
+// CHECK:STDOUT:     %impl.elem0.loc41.1: @InitFromAdaptedGeneric.%.loc41.3 (%.023) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc41.2 (constants.%impl.elem0.594)]
+// CHECK:STDOUT:     %bound_method.loc41.1: <bound method> = bound_method %.loc41.2, %impl.elem0.loc41.1
+// CHECK:STDOUT:     %specific_impl_fn.loc41.1: <specific function> = specific_impl_function %impl.elem0.loc41.1, @Copy.WithSelf.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc41.2 (constants.%specific_impl_fn.bdc)]
+// CHECK:STDOUT:     %bound_method.loc41.2: <bound method> = bound_method %.loc41.2, %specific_impl_fn.loc41.1
+// CHECK:STDOUT:     %.loc30.1: ref @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
+// CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) to %.loc30.1 = call %bound_method.loc41.2(%.loc41.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -428,25 +428,25 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [concrete = constants.%Adapt.generic]
-// CHECK:STDOUT:   %i32.loc14_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc61: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %Adapt: type = class_type @Adapt, @Adapt(constants.%i32) [concrete = constants.%Adapt.808]
-// CHECK:STDOUT:   %.loc14_13.1: %Adapt.808 = as_compatible %x.ref
-// CHECK:STDOUT:   %.loc14_13.2: %Adapt.808 = converted %x.ref, %.loc14_13.1
-// CHECK:STDOUT:   %i32.loc14_31: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc14_28.1: %i32 = as_compatible %.loc14_13.2
-// CHECK:STDOUT:   %.loc14_28.2: %i32 = converted %.loc14_13.2, %.loc14_28.1
+// CHECK:STDOUT:   %.loc58.1: %Adapt.808 = as_compatible %x.ref
+// CHECK:STDOUT:   %.loc58.2: %Adapt.808 = converted %x.ref, %.loc58.1
+// CHECK:STDOUT:   %i32.loc65: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc64.1: %i32 = as_compatible %.loc58.2
+// CHECK:STDOUT:   %.loc64.2: %i32 = converted %.loc58.2, %.loc64.1
 // CHECK:STDOUT:   %impl.elem0: %.8e2 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
-// CHECK:STDOUT:   %bound_method.loc14_28.1: <bound method> = bound_method %.loc14_28.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc64.1: <bound method> = bound_method %.loc64.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_28.2: <bound method> = bound_method %.loc14_28.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_28.2(%.loc14_28.2)
+// CHECK:STDOUT:   %bound_method.loc64.2: <bound method> = bound_method %.loc64.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc64.2(%.loc64.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromAdaptedGeneric(constants.%T.035) {
-// CHECK:STDOUT:   %T.loc9_27.1 => constants.%T.035
+// CHECK:STDOUT:   %T.loc19.1 => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.2
-// CHECK:STDOUT:   %.loc9_51.2 => constants.%.076a48.2
+// CHECK:STDOUT:   %.loc30.2 => constants.%.076a48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

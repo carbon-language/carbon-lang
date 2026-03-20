@@ -100,15 +100,15 @@ fn Run() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .NS = %NS.loc4
+// CHECK:STDOUT:     .NS = %NS.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %NS.loc4: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B1.decl: %B1.type = fn_decl @B1 [concrete = constants.%B1] {} {}
-// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:   %NS.loc19: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
@@ -183,16 +183,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %NS.ref.loc30: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%Example.A [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
-// CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %NS.ref.loc36: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:   %B1.ref: %B1.type = name_ref B1, imports.%Example.B1 [concrete = constants.%B1]
 // CHECK:STDOUT:   %B1.call: init %empty_tuple.type = call %B1.ref()
-// CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %NS.ref.loc42: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:   %B2.ref: %B2.type = name_ref B2, imports.%Example.B2 [concrete = constants.%B2]
 // CHECK:STDOUT:   %B2.call: init %empty_tuple.type = call %B2.ref()
-// CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
+// CHECK:STDOUT:   %NS.ref.loc48: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.call: init %empty_tuple.type = call %C.ref()
 // CHECK:STDOUT:   return

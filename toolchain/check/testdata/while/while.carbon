@@ -149,9 +149,9 @@ fn While() {
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %Cond.ref: %Cond.type = name_ref Cond, file.%Cond.decl [concrete = constants.%Cond]
 // CHECK:STDOUT:   %Cond.call: init bool = call %Cond.ref()
-// CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Cond.call
-// CHECK:STDOUT:   %.loc12_16.2: bool = converted %Cond.call, %.loc12_16.1
-// CHECK:STDOUT:   if %.loc12_16.2 br !while.body else br !while.done
+// CHECK:STDOUT:   %.loc40.1: bool = value_of_initializer %Cond.call
+// CHECK:STDOUT:   %.loc40.2: bool = converted %Cond.call, %.loc40.1
+// CHECK:STDOUT:   if %.loc40.2 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
@@ -193,9 +193,9 @@ fn While() {
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %Cond.ref: %Cond.type = name_ref Cond, file.%Cond.decl [concrete = constants.%Cond]
 // CHECK:STDOUT:   %Cond.call: init bool = call %Cond.ref()
-// CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Cond.call
-// CHECK:STDOUT:   %.loc12_16.2: bool = converted %Cond.call, %.loc12_16.1
-// CHECK:STDOUT:   if %.loc12_16.2 br !while.body else br !while.done
+// CHECK:STDOUT:   %.loc40.1: bool = value_of_initializer %Cond.call
+// CHECK:STDOUT:   %.loc40.2: bool = converted %Cond.call, %.loc40.1
+// CHECK:STDOUT:   if %.loc40.2 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
@@ -237,92 +237,92 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   br !while.cond.loc14
+// CHECK:STDOUT:   br !while.cond.loc66
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.cond.loc14:
+// CHECK:STDOUT: !while.cond.loc66:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init bool = call %A.ref()
-// CHECK:STDOUT:   %.loc14_13.1: bool = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc14_13.2: bool = converted %A.call, %.loc14_13.1
-// CHECK:STDOUT:   if %.loc14_13.2 br !while.body.loc14 else br !while.done.loc14
+// CHECK:STDOUT:   %.loc70.1: bool = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc70.2: bool = converted %A.call, %.loc70.1
+// CHECK:STDOUT:   if %.loc70.2 br !while.body.loc70 else br !while.done.loc70
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.body.loc14:
+// CHECK:STDOUT: !while.body.loc70:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.call: init bool = call %B.ref()
-// CHECK:STDOUT:   %.loc15_12.1: bool = value_of_initializer %B.call
-// CHECK:STDOUT:   %.loc15_12.2: bool = converted %B.call, %.loc15_12.1
-// CHECK:STDOUT:   if %.loc15_12.2 br !if.then.loc15 else br !if.else.loc15
+// CHECK:STDOUT:   %.loc77.1: bool = value_of_initializer %B.call
+// CHECK:STDOUT:   %.loc77.2: bool = converted %B.call, %.loc77.1
+// CHECK:STDOUT:   if %.loc77.2 br !if.then.loc77 else br !if.else.loc77
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc15:
-// CHECK:STDOUT:   br !while.cond.loc14
+// CHECK:STDOUT: !if.then.loc77:
+// CHECK:STDOUT:   br !while.cond.loc66
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc15:
+// CHECK:STDOUT: !if.else.loc77:
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.call: init bool = call %C.ref()
-// CHECK:STDOUT:   %.loc16_12.1: bool = value_of_initializer %C.call
-// CHECK:STDOUT:   %.loc16_12.2: bool = converted %C.call, %.loc16_12.1
-// CHECK:STDOUT:   if %.loc16_12.2 br !if.then.loc16 else br !if.else.loc16
+// CHECK:STDOUT:   %.loc87.1: bool = value_of_initializer %C.call
+// CHECK:STDOUT:   %.loc87.2: bool = converted %C.call, %.loc87.1
+// CHECK:STDOUT:   if %.loc87.2 br !if.then.loc87 else br !if.else.loc87
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc16:
-// CHECK:STDOUT:   br !while.done.loc14
+// CHECK:STDOUT: !if.then.loc87:
+// CHECK:STDOUT:   br !while.done.loc70
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc16:
-// CHECK:STDOUT:   br !while.cond.loc17
+// CHECK:STDOUT: !if.else.loc87:
+// CHECK:STDOUT:   br !while.cond.loc93
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.cond.loc17:
+// CHECK:STDOUT: !while.cond.loc93:
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %D.call: init bool = call %D.ref()
-// CHECK:STDOUT:   %.loc17_15.1: bool = value_of_initializer %D.call
-// CHECK:STDOUT:   %.loc17_15.2: bool = converted %D.call, %.loc17_15.1
-// CHECK:STDOUT:   if %.loc17_15.2 br !while.body.loc17 else br !while.done.loc17
+// CHECK:STDOUT:   %.loc97.1: bool = value_of_initializer %D.call
+// CHECK:STDOUT:   %.loc97.2: bool = converted %D.call, %.loc97.1
+// CHECK:STDOUT:   if %.loc97.2 br !while.body.loc97 else br !while.done.loc97
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.body.loc17:
+// CHECK:STDOUT: !while.body.loc97:
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %E.call: init bool = call %E.ref()
-// CHECK:STDOUT:   %.loc18_14.1: bool = value_of_initializer %E.call
-// CHECK:STDOUT:   %.loc18_14.2: bool = converted %E.call, %.loc18_14.1
-// CHECK:STDOUT:   if %.loc18_14.2 br !if.then.loc18 else br !if.else.loc18
+// CHECK:STDOUT:   %.loc104.1: bool = value_of_initializer %E.call
+// CHECK:STDOUT:   %.loc104.2: bool = converted %E.call, %.loc104.1
+// CHECK:STDOUT:   if %.loc104.2 br !if.then.loc104 else br !if.else.loc104
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc18:
-// CHECK:STDOUT:   br !while.cond.loc17
+// CHECK:STDOUT: !if.then.loc104:
+// CHECK:STDOUT:   br !while.cond.loc93
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc18:
+// CHECK:STDOUT: !if.else.loc104:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc19_14.1: bool = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc19_14.2: bool = converted %F.call, %.loc19_14.1
-// CHECK:STDOUT:   if %.loc19_14.2 br !if.then.loc19 else br !if.else.loc19
+// CHECK:STDOUT:   %.loc114.1: bool = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc114.2: bool = converted %F.call, %.loc114.1
+// CHECK:STDOUT:   if %.loc114.2 br !if.then.loc114 else br !if.else.loc114
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc19:
-// CHECK:STDOUT:   br !while.done.loc17
+// CHECK:STDOUT: !if.then.loc114:
+// CHECK:STDOUT:   br !while.done.loc97
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc19:
-// CHECK:STDOUT:   br !while.cond.loc17
+// CHECK:STDOUT: !if.else.loc114:
+// CHECK:STDOUT:   br !while.cond.loc93
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.done.loc17:
+// CHECK:STDOUT: !while.done.loc97:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc21_12.1: bool = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc21_12.2: bool = converted %G.call, %.loc21_12.1
-// CHECK:STDOUT:   if %.loc21_12.2 br !if.then.loc21 else br !if.else.loc21
+// CHECK:STDOUT:   %.loc125.1: bool = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc125.2: bool = converted %G.call, %.loc125.1
+// CHECK:STDOUT:   if %.loc125.2 br !if.then.loc125 else br !if.else.loc125
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc21:
-// CHECK:STDOUT:   br !while.cond.loc14
+// CHECK:STDOUT: !if.then.loc125:
+// CHECK:STDOUT:   br !while.cond.loc66
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc21:
+// CHECK:STDOUT: !if.else.loc125:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %H.call: init bool = call %H.ref()
-// CHECK:STDOUT:   %.loc22_12.1: bool = value_of_initializer %H.call
-// CHECK:STDOUT:   %.loc22_12.2: bool = converted %H.call, %.loc22_12.1
-// CHECK:STDOUT:   if %.loc22_12.2 br !if.then.loc22 else br !if.else.loc22
+// CHECK:STDOUT:   %.loc135.1: bool = value_of_initializer %H.call
+// CHECK:STDOUT:   %.loc135.2: bool = converted %H.call, %.loc135.1
+// CHECK:STDOUT:   if %.loc135.2 br !if.then.loc135 else br !if.else.loc135
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc22:
-// CHECK:STDOUT:   br !while.done.loc14
+// CHECK:STDOUT: !if.then.loc135:
+// CHECK:STDOUT:   br !while.done.loc70
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc22:
-// CHECK:STDOUT:   br !while.cond.loc14
+// CHECK:STDOUT: !if.else.loc135:
+// CHECK:STDOUT:   br !while.cond.loc66
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.done.loc14:
+// CHECK:STDOUT: !while.done.loc70:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
