@@ -320,6 +320,7 @@ static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
           context.TODO(entry.pattern_id, "Support symbolic form bindings");
           [[fallthrough]];
         case SemIR::ValueForm::Kind:
+        case SemIR::ErrorInst::Kind:
           return ConversionTarget::Value;
         default:
           CARBON_FATAL("Unexpected form {0}", form_inst);
