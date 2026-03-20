@@ -691,10 +691,13 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
+auto EvalConstantInst(Context& context, SemIR::Temporary inst)
     -> ConstantEvalResult {
-  // TODO: Handle this. Can we just return the value of `init_id`?
-  return ConstantEvalResult::TODO;
+  auto const_id = context.constant_values().Get(inst.init_id);
+  if (const_id.has_value() && const_id.is_constant()) {
+    return ConstantEvalResult::Existing(const_id);
+  }
+  return ConstantEvalResult::NotConstant;
 }
 
 auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)

@@ -1903,7 +1903,7 @@ struct Temporary {
        .has_cleanup = true});
 
   TypeId type_id;
-  InstId storage_id;
+  DestInstId storage_id;
   InstId init_id;
 };
 
