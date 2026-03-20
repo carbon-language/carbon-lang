@@ -273,31 +273,6 @@ struct AnyParam {
 };
 
 // clang-format off
-#define AnyParamPattern_CARBON_INST_CATEGORY(X, Sep) \
-  X(::Carbon::SemIR::FormParamPattern) Sep()         \
-  X(::Carbon::SemIR::OutParamPattern) Sep()          \
-  X(::Carbon::SemIR::RefParamPattern) Sep()          \
-  X(::Carbon::SemIR::ValueParamPattern) Sep()        \
-  X(::Carbon::SemIR::VarParamPattern)
-// clang-format on
-
-#define AnyParamPattern_CARBON_KIND_ANY_EXPAND \
-  CARBON_INST_CATEGORY_ANY_EXPAND(AnyParamPattern)
-
-// A pattern that represents a `Call` parameter.
-struct AnyParamPattern {
-  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyParamPattern);
-
-  InstKind kind;
-
-  // Always a PatternType.
-  TypeId type_id;
-
-  AnyRawId arg0;
-  AnyRawId arg1;
-};
-
-// clang-format off
 #define AnyLeafParamPattern_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::FormParamPattern) Sep()             \
   X(::Carbon::SemIR::OutParamPattern) Sep()              \
@@ -323,6 +298,28 @@ struct AnyLeafParamPattern {
   NameId pretty_name_id;
 
   AnyRawId arg1 = AnyRawId(AnyIdBase::NoneIndex);
+};
+
+// clang-format off
+#define AnyParamPattern_CARBON_INST_CATEGORY(X, Sep)     \
+  AnyLeafParamPattern_CARBON_INST_CATEGORY(X, Sep) Sep() \
+  X(::Carbon::SemIR::VarParamPattern)
+// clang-format on
+
+#define AnyParamPattern_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyParamPattern)
+
+// A pattern that represents a `Call` parameter.
+struct AnyParamPattern {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyParamPattern);
+
+  InstKind kind;
+
+  // Always a PatternType.
+  TypeId type_id;
+
+  AnyRawId arg0;
+  AnyRawId arg1;
 };
 
 // clang-format off
