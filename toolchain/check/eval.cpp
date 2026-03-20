@@ -2197,21 +2197,21 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
 
 // Convert a ConstantEvalResult to a ConstantId. Factored out of
 // TryEvalTypedInst to avoid repeated instantiation of common code.
-template <typename InstT>
 static auto ConvertEvalResultToConstantId(Context& context,
                                           ConstantEvalResult result,
+                                          SemIR::InstKind orig_inst_kind,
                                           Phase orig_phase)
     -> SemIR::ConstantId {
   if (result.is_new()) {
     auto is_symbolic_only =
-        InstT::Kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
+        orig_inst_kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
     auto new_phase = result.same_phase_as_inst()
                          ? orig_phase
                          : ComputeInstPhase(context, result.new_inst());
     CARBON_CHECK(!is_symbolic_only || new_phase > Phase::Concrete ||
-                     result.new_inst().kind() != InstT::Kind,
+                     result.new_inst().kind() != orig_inst_kind,
                  "SymbolicOnly instruction `{0}` has a concrete value",
-                 InstT::Kind);
+                 orig_inst_kind);
     return MakeConstantResult(context, result.new_inst(), new_phase);
   }
   return result.existing();
@@ -2290,14 +2290,15 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     } else if constexpr (InstT::Kind.constant_needs_inst_id() !=
                          SemIR::InstConstantNeedsInstIdKind::No) {
       CARBON_CHECK(inst_id.has_value());
-      return ConvertEvalResultToConstantId<InstT>(
+      return ConvertEvalResultToConstantId(
           eval_context.context(),
           EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
-          phase);
+          InstT::Kind, phase);
     } else {
-      return ConvertEvalResultToConstantId<InstT>(
+      return ConvertEvalResultToConstantId(
           eval_context.context(),
-          EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
+          EvalConstantInst(eval_context.context(), inst.As<InstT>()),
+          InstT::Kind, phase);
     }
   }
 }
@@ -2391,9 +2392,10 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
           .type_id = SemIR::TypeType::TypeId,
           .facet_value_inst_id = value_inst_id,
       };
-      return ConvertEvalResultToConstantId<SemIR::SymbolicBindingType>(
+      return ConvertEvalResultToConstantId(
           eval_context.context(),
           EvalConstantInst(eval_context.context(), access),
+          SemIR::SymbolicBindingType::Kind,
           ComputeInstPhase(eval_context.context(), access));
     }
   }
