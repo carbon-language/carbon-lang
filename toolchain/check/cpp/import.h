@@ -87,6 +87,8 @@ auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
 auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl*;
 
+// Maps a Clang name to a Carbon `NameId`.
+auto AddIdentifierName(Context& context, llvm::StringRef name) -> SemIR::NameId;
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
