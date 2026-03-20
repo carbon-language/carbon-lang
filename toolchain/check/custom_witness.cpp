@@ -258,7 +258,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         // we're able to account for everything.
         if (decl.type_id != SemIR::TypeType::TypeId) {
           context.TODO(loc_id,
-                       "Associated constant of type other than `TypeType`");
+                       "Associated constant of type other than `TypeType` in "
+                       "synthesized impl");
           return SemIR::ErrorInst::InstId;
         }
 
