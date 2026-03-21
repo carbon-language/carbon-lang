@@ -103,10 +103,11 @@ auto ScopeStack::PushForSameRegion() -> void {
        /*lexical_lookup_has_load_error=*/false);
 }
 
-auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id,
-                                     SemIR::FunctionId function_id) -> void {
+auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   CARBON_DCHECK(sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
-  const auto& function = sem_ir().functions().Get(function_id);
+  const auto& function_decl =
+      sem_ir().insts().GetAs<SemIR::FunctionDecl>(scope_inst_id);
+  const auto& function = sem_ir().functions().Get(function_decl.function_id);
   auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
   Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
        /*lexical_lookup_has_load_error=*/false);

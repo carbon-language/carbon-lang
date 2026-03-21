@@ -476,7 +476,7 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
 auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                              SemIR::FunctionId function_id) -> void {
   // Create the function scope and the entry block.
-  context.scope_stack().PushForFunctionBody(decl_id, function_id);
+  context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context,
