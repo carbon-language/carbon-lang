@@ -383,8 +383,9 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
     auto* namespace_decl = clang::NamespaceDecl::Create(
         *ast_context_, &decl_context, false, clang::SourceLocation(),
         clang::SourceLocation(), identifier_info, nullptr, false);
-    scope_mapping.Insert(static_cast<clang::DeclContext*>(namespace_decl),
-                         target_inst_id);
+    auto result = scope_mapping.Insert(
+        static_cast<clang::DeclContext*>(namespace_decl), target_inst_id);
+    CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     namespace_decl->setHasExternalVisibleStorage();
     return namespace_decl;
   }
@@ -416,8 +417,10 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
         clang::SourceLocation(), &ast_context.Idents.get(carbon_namespace_name),
         nullptr, false);
     carbon_cpp_namespace->setHasExternalVisibleStorage();
-    scope_mapping.Insert(static_cast<clang::DeclContext*>(carbon_cpp_namespace),
-                         SemIR::Namespace::PackageInstId);
+    auto result = scope_mapping.Insert(
+        static_cast<clang::DeclContext*>(carbon_cpp_namespace),
+        SemIR::Namespace::PackageInstId);
+    CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     SetExternalVisibleDeclsForName(decl_context, decl_name,
                                    {carbon_cpp_namespace});
     return true;
