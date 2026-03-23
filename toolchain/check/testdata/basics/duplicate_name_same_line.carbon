@@ -15,7 +15,7 @@ fn A() {
     // This declares `n` in two different scopes, it's just showing the IR
     // behavior of having both on the same line.
     //@dump-sem-ir-begin
-    var unused n: (); } else { var unused n: ();
+    var unused n: () = (); } else { var unused n: () = ();
     //@dump-sem-ir-end
   }
 }
@@ -40,6 +40,10 @@ fn A() {
 // CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_16 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var %n.var_patt.loc18_5
+// CHECK:STDOUT:   %.loc18_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_5: init %empty_tuple.type = converted %.loc18_25.1, %.loc18_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %n.var.loc18_5, %.loc18_5
 // CHECK:STDOUT:   %.loc18_20.1: type = splice_block %.loc18_20.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc18_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_20.3: type = converted %.loc18_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -49,20 +53,24 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_43: %pattern_type.cb1 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt.loc18_32: %pattern_type.cb1 = var_pattern %n.patt.loc18_43 [concrete]
+// CHECK:STDOUT:     %n.patt.loc18_48: %pattern_type.cb1 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_48 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc18_32: ref %empty_tuple.type = var %n.var_patt.loc18_32
-// CHECK:STDOUT:   %.loc18_47.1: type = splice_block %.loc18_47.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc18_47.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc18_47.3: type = converted %.loc18_47.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %n.var.loc18_37: ref %empty_tuple.type = var %n.var_patt.loc18_37
+// CHECK:STDOUT:   %.loc18_57.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_57.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_37: init %empty_tuple.type = converted %.loc18_57.1, %.loc18_57.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %n.var.loc18_37, %.loc18_37
+// CHECK:STDOUT:   %.loc18_52.1: type = splice_block %.loc18_52.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc18_52.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc18_52.3: type = converted %.loc18_52.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_43: ref %empty_tuple.type = ref_binding n, %n.var.loc18_32
+// CHECK:STDOUT:   %n.loc18_48: ref %empty_tuple.type = ref_binding n, %n.var.loc18_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_32: <bound method> = bound_method %n.var.loc18_32, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_32: init %empty_tuple.type = call %Destroy.Op.bound.loc18_32(%n.var.loc18_32)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_37: <bound method> = bound_method %n.var.loc18_37, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_37: init %empty_tuple.type = call %Destroy.Op.bound.loc18_37(%n.var.loc18_37)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>

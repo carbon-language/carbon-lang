@@ -57,14 +57,13 @@ struct DeclInfo {
 };
 }  // namespace
 
-// Given a DeclInfo of the C++ function to call that will act as an impl for a
-// specific interface, construct a custom witness for that function.
-static auto BuildWitnessForDeclInfo(
-    Context& context, SemIR::LocId loc_id, DeclInfo decl_info,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    const TypeStructure* best_impl_type_structure,
-    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
+// Finds the InstId for the C++ function that is called by a specific interface.
+// Returns SemIR::InstId::None if a C++ function is not found, and
+// SemIR::ErrorInst::InstId if an error occurs.
+static auto GetFunctionId(Context& context, SemIR::LocId loc_id,
+                          DeclInfo decl_info,
+                          const TypeStructure* best_impl_type_structure,
+                          SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   if (!decl_info.decl) {
     // The C++ type is not able to implement the interface.
     return SemIR::InstId::None;
@@ -91,8 +90,7 @@ static auto BuildWitnessForDeclInfo(
   static_cast<void>(best_impl_type_structure);
   static_cast<void>(best_impl_loc_id);
 
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+  return fn_id;
 }
 
 static auto BuildCopyWitness(
@@ -112,9 +110,13 @@ static auto BuildCopyWitness(
   auto decl_info = DeclInfo{.decl = clang_sema.LookupCopyingConstructor(
                                 class_decl, clang::Qualifiers::Const),
                             .signature = {.num_params = 1}};
-  return BuildWitnessForDeclInfo(
-      context, loc_id, decl_info, query_self_const_id,
-      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info,
+                             best_impl_type_structure, best_impl_loc_id);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
 }
 
 static auto BuildDestroyWitness(
@@ -133,9 +135,13 @@ static auto BuildDestroyWitness(
   }
   auto decl_info = DeclInfo{.decl = clang_sema.LookupDestructor(class_decl),
                             .signature = {.num_params = 0}};
-  return BuildWitnessForDeclInfo(
-      context, loc_id, decl_info, query_self_const_id,
-      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info,
+                             best_impl_type_structure, best_impl_loc_id);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {fn_id});
 }
 
 static auto BuildCppUnsafeDerefWitness(
@@ -162,9 +168,23 @@ static auto BuildCppUnsafeDerefWitness(
   }
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature = {.num_params = 0}};
-  return BuildWitnessForDeclInfo(
-      context, loc_id, decl_info, query_self_const_id,
-      query_specific_interface_id, best_impl_type_structure, best_impl_loc_id);
+  auto fn_id = GetFunctionId(context, loc_id, decl_info,
+                             best_impl_type_structure, best_impl_loc_id);
+  if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
+    return fn_id;
+  }
+
+  auto result_type_id =
+      context.functions()
+          .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
+          .return_type_inst_id;
+  if (result_type_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id,
+                            {result_type_id, fn_id});
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
