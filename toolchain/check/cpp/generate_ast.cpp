@@ -399,6 +399,10 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
       scope_mapping.Lookup(const_cast<clang::DeclContext*>(decl_context));
 
   if (!decl_context_inst_id) {
+    // If the context doesn't already have a mapping between C++ and Carbon,
+    // check if this is the root mapping (for the "Carbon" namespace in the
+    // translation unit scope) and if so, create that mapping.
+
     if (decl_context->getDeclKind() != clang::Decl::Kind::TranslationUnit) {
       return false;
     }
