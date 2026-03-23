@@ -99,7 +99,6 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %assoc0.3d8: %ImplicitAs.assoc_type.d88 = assoc_entity element0, imports.%Core.import_ref.201 [symbolic]
 // CHECK:STDOUT:   %require_complete.cc6: <witness> = require_complete_type %ImplicitAs.type.1e5 [symbolic]
 // CHECK:STDOUT:   %assoc0.843: %ImplicitAs.assoc_type.ff3 = assoc_entity element0, imports.%Core.import_ref.cc1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %empty_struct_type, @ImplicitAs, @ImplicitAs(%V) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -201,7 +200,6 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %require_complete.loc19_16.2: <witness> = require_complete_type %ImplicitAs.type.loc19_16.2 [symbolic = %require_complete.loc19_16.2 (constants.%require_complete.cc6)]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.loc8_24.1) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.d88)]
 // CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.d88) = assoc_entity element0, imports.%Core.import_ref.201 [symbolic = %assoc0 (constants.%assoc0.3d8)]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness constants.%empty_struct_type, @ImplicitAs, @ImplicitAs(%V.loc8_24.1) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -302,7 +300,6 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %assoc0.a1c: %ImplicitAs.assoc_type.f30 = assoc_entity element0, imports.%Core.import_ref.201 [symbolic]
 // CHECK:STDOUT:   %require_complete.24c: <witness> = require_complete_type %ImplicitAs.type.ee4 [symbolic]
 // CHECK:STDOUT:   %assoc0.843: %ImplicitAs.assoc_type.ff3 = assoc_entity element0, imports.%Core.import_ref.cc1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %empty_struct_type, @ImplicitAs, @ImplicitAs(%V.binding.as_type) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -416,7 +413,6 @@ fn F(unused U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %require_complete.loc20_16.2: <witness> = require_complete_type %ImplicitAs.type.loc20_16.2 [symbolic = %require_complete.loc20_16.2 (constants.%require_complete.24c)]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.binding.as_type) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.f30)]
 // CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.f30) = assoc_entity element0, imports.%Core.import_ref.201 [symbolic = %assoc0 (constants.%assoc0.a1c)]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness constants.%empty_struct_type, @ImplicitAs, @ImplicitAs(%V.binding.as_type) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:

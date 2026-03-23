@@ -359,8 +359,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %MyInt.loc19_39.1 [symbolic = %require_complete (constants.%require_complete.9fa)]
-// CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt.loc19_39.1, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %.loc20_11.1: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N.loc19_12.1) [symbolic = %.loc20_11.1 (constants.%.c60)]
+// CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt.loc19_39.1, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %Add.facet.loc20_11: %Add.type = facet_value %MyInt.loc19_39.1, (%Add.lookup_impl_witness) [symbolic = %Add.facet.loc20_11 (constants.%Add.facet.9ab)]
 // CHECK:STDOUT:   %Add.WithSelf.Op.type: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Add.facet.loc20_11) [symbolic = %Add.WithSelf.Op.type (constants.%Add.WithSelf.Op.type.3e8)]
 // CHECK:STDOUT:   %.loc20_11.2: type = fn_type_with_self_type %Add.WithSelf.Op.type, %Add.facet.loc20_11 [symbolic = %.loc20_11.2 (constants.%.d02)]
@@ -625,8 +625,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %MyInt [symbolic = %require_complete (constants.%require_complete.9fa)]
-// CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %.2: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N) [symbolic = %.2 (constants.%.c60)]
+// CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %MyInt, (%Add.lookup_impl_witness) [symbolic = %Add.facet (constants.%Add.facet.9ab)]
 // CHECK:STDOUT:   %Add.WithSelf.Op.type: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Add.facet) [symbolic = %Add.WithSelf.Op.type (constants.%Add.WithSelf.Op.type.3e8)]
 // CHECK:STDOUT:   %.3: type = fn_type_with_self_type %Add.WithSelf.Op.type, %Add.facet [symbolic = %.3 (constants.%.d02)]
@@ -735,8 +735,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
-// CHECK:STDOUT:   %Add.lookup_impl_witness => constants.%Add.impl_witness.868
 // CHECK:STDOUT:   %.2 => constants.%.3de
+// CHECK:STDOUT:   %Add.lookup_impl_witness => constants.%Add.impl_witness.868
 // CHECK:STDOUT:   %Add.facet => constants.%Add.facet.1f9
 // CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.626
 // CHECK:STDOUT:   %.3 => constants.%.166

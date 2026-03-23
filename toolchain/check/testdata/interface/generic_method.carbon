@@ -429,8 +429,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.loc16_19: <witness> = require_complete_type %ptr.loc16_22.1 [symbolic = %require_complete.loc16_19 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %require_complete.loc16_37: <witness> = require_complete_type %tuple.type.loc16 [symbolic = %require_complete.loc16_37 (constants.%require_complete.034)]
 // CHECK:STDOUT:   %tuple.type.loc17: type = tuple_type (constants.%empty_struct_type, constants.%empty_struct_type, %ptr.loc16_22.1) [symbolic = %tuple.type.loc17 (constants.%tuple.type.dd2)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc16_22.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %.loc17_21.1: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc16_9.1) [symbolic = %.loc17_21.1 (constants.%.2f2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc16_22.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc16_22.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.c25)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d82)]
 // CHECK:STDOUT:   %.loc17_21.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc17_21.2 (constants.%.299)]
@@ -668,8 +668,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.loc16_19 => constants.%complete_type.543
 // CHECK:STDOUT:   %require_complete.loc16_37 => constants.%complete_type.28e
 // CHECK:STDOUT:   %tuple.type.loc17 => constants.%tuple.type.0dd
-// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.425
 // CHECK:STDOUT:   %.loc17_21.1 => constants.%.157
+// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.425
 // CHECK:STDOUT:   %Copy.facet => constants.%Copy.facet.26e
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.a8b
 // CHECK:STDOUT:   %.loc17_21.2 => constants.%.2ef

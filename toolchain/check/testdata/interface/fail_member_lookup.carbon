@@ -68,7 +68,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %pattern_type.cb4: type = pattern_type %Different.type [concrete]
 // CHECK:STDOUT:   %U: %Different.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U [symbolic]
-// CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %U, @Interface [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -168,7 +167,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: generic fn @G(%U.loc32_7.2: %Different.type) {
 // CHECK:STDOUT:   %U.loc32_7.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_7.1 (constants.%U)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc32_7.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
-// CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc32_7.1, @Interface [symbolic = %Interface.lookup_impl_witness (constants.%Interface.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
@@ -189,6 +187,5 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.loc32_7.1 => constants.%U
 // CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type
-// CHECK:STDOUT:   %Interface.lookup_impl_witness => constants.%Interface.lookup_impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

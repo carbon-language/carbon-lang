@@ -135,8 +135,8 @@ interface C {
 // CHECK:STDOUT: generic fn @J2.WithSelf.F2(@J2.%Self: %J2.type) {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.4a7)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness.d97)]
 // CHECK:STDOUT:   %.loc14_14.1: require_specific_def_type = require_specific_def @V.binding.as_type.as.I2.impl(%Self) [symbolic = %.loc14_14.1 (constants.%.ef7)]
+// CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness.d97)]
 // CHECK:STDOUT:   %I2.facet.loc14_14.1: %I2.type = facet_value %Self.binding.as_type, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.7a5)]
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.006)]
 // CHECK:STDOUT:   %.loc14_14.2: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.2 (constants.%.805)]
@@ -150,8 +150,8 @@ interface C {
 // CHECK:STDOUT: specific @J2.WithSelf.F2(constants.%Self.4a7) {
 // CHECK:STDOUT:   %Self => constants.%Self.4a7
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness.d97
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%.ef7
+// CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness.d97
 // CHECK:STDOUT:   %I2.facet.loc14_14.1 => constants.%I2.facet.7a5
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.006
 // CHECK:STDOUT:   %.loc14_14.2 => constants.%.805

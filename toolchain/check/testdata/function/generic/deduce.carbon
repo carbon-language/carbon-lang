@@ -1801,8 +1801,8 @@ fn F() {
 // CHECK:STDOUT: generic impl @CC.as.Z.impl(%E.loc12_15.1: type) {
 // CHECK:STDOUT:   %E.loc12_15.2: type = symbolic_binding E, 0 [symbolic = %E.loc12_15.2 (constants.%E)]
 // CHECK:STDOUT:   %DD.loc12_31.2: type = class_type @DD, @DD(%E.loc12_15.2) [symbolic = %DD.loc12_31.2 (constants.%DD.a29)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.loc12_31.2, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %.loc12_32.2: require_specific_def_type = require_specific_def @DD.as.Z.impl(%E.loc12_15.2) [symbolic = %.loc12_32.2 (constants.%.bf4)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.loc12_31.2, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc12_32.2: %Z.type = facet_value %DD.loc12_31.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.892)]
 // CHECK:STDOUT:   %CC.loc12_32.2: type = class_type @CC, @CC(%Z.facet.loc12_32.2) [symbolic = %CC.loc12_32.2 (constants.%CC.4e1)]
 // CHECK:STDOUT:   %Z.impl_witness.loc12_39.2: <witness> = impl_witness %Z.impl_witness_table, @CC.as.Z.impl(%E.loc12_15.2) [symbolic = %Z.impl_witness.loc12_39.2 (constants.%Z.impl_witness.40e)]
@@ -1904,8 +1904,8 @@ fn F() {
 // CHECK:STDOUT: specific @CC.as.Z.impl(constants.%E) {
 // CHECK:STDOUT:   %E.loc12_15.2 => constants.%E
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.a29
-// CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %.loc12_32.2 => constants.%.bf4
+// CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.892
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.4e1
 // CHECK:STDOUT:   %Z.impl_witness.loc12_39.2 => constants.%Z.impl_witness.40e
@@ -1934,8 +1934,8 @@ fn F() {
 // CHECK:STDOUT: specific @CC.as.Z.impl(constants.%EE) {
 // CHECK:STDOUT:   %E.loc12_15.2 => constants.%EE
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.2e1
-// CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.impl_witness.8a3
 // CHECK:STDOUT:   %.loc12_32.2 => constants.%.36d
+// CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.impl_witness.8a3
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.74c
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.b19
 // CHECK:STDOUT:   %Z.impl_witness.loc12_39.2 => constants.%Z.impl_witness.cb4

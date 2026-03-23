@@ -298,8 +298,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.265)]
 // CHECK:STDOUT:   %Int.loc9_54.1: type = class_type @Int, @Int(%N) [symbolic = %Int.loc9_54.1 (constants.%Int.fc6021.1)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.93c)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %.loc9_85.1: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc9_85.1 (constants.%.4f8)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %facet_value.loc9_85.1: %facet_type.7e2 = facet_value %Int.loc9_54.1, (%Destroy.lookup_impl_witness, %Copy.lookup_impl_witness) [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.49e = %Int.loc9_54.1 and constants.%impl.elem0.3b1 = %facet_value.loc9_85.1> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
 // CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness.loc9_87.2 (constants.%Iterate.impl_witness)]
@@ -490,8 +490,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %require_complete.loc5_16: <witness> = require_complete_type %Int.loc5_28.1 [symbolic = %require_complete.loc5_16 (constants.%require_complete.9019d7.1)]
 // CHECK:STDOUT:   %require_complete.loc5_52: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc5_52 (constants.%require_complete.8a1)]
 // CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1), .end: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.ff1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc5_28.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %.loc6_22.1: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc6_22.1 (constants.%.4f8)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc5_28.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Int.loc5_28.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.3b9)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e13)]
 // CHECK:STDOUT:   %.loc6_22.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc6_22.2 (constants.%.e29)]
@@ -535,8 +535,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %require_complete.loc10_22: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc10_22 (constants.%require_complete.8a1)]
 // CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int.loc10_45.1 [symbolic = %IntRange.elem (constants.%IntRange.elem.541)]
 // CHECK:STDOUT:   %require_complete.loc10_60: <witness> = require_complete_type %Int.loc10_45.1 [symbolic = %require_complete.loc10_60 (constants.%require_complete.9019d7.1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc10_45.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %.loc10_60.3: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc10_60.3 (constants.%.4f8)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc10_45.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Int.loc10_45.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.3b9)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e13)]
 // CHECK:STDOUT:   %.loc10_60.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc10_60.4 (constants.%.e29)]
@@ -565,11 +565,11 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Int.loc11_43.1: type = class_type @Int, @Int(%N) [symbolic = %Int.loc11_43.1 (constants.%Int.fc6021.1)]
 // CHECK:STDOUT:   %ptr.loc11_44.1: type = ptr_type %Int.loc11_43.1 [symbolic = %ptr.loc11_44.1 (constants.%ptr.c9c)]
 // CHECK:STDOUT:   %pattern_type.loc11_31: type = pattern_type %ptr.loc11_44.1 [symbolic = %pattern_type.loc11_31 (constants.%pattern_type.bda)]
-// CHECK:STDOUT:   %OptionalStorage.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @OptionalStorage [symbolic = %OptionalStorage.lookup_impl_witness (constants.%OptionalStorage.lookup_impl_witness.b62)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.93c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %facet_value: %facet_type.7e2 = facet_value %Int.loc11_43.1, (%Destroy.lookup_impl_witness, %Copy.lookup_impl_witness) [symbolic = %facet_value (constants.%facet_value)]
 // CHECK:STDOUT:   %.loc11_75.3: require_specific_def_type = require_specific_def @T.binding.as_type.as.OptionalStorage.impl(%facet_value) [symbolic = %.loc11_75.3 (constants.%.63c)]
+// CHECK:STDOUT:   %OptionalStorage.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @OptionalStorage [symbolic = %OptionalStorage.lookup_impl_witness (constants.%OptionalStorage.lookup_impl_witness.b62)]
 // CHECK:STDOUT:   %OptionalStorage.facet.loc11_75.1: %OptionalStorage.type = facet_value %Int.loc11_43.1, (%OptionalStorage.lookup_impl_witness) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.01e)]
 // CHECK:STDOUT:   %Optional.loc11_75.1: type = class_type @Optional, @Optional(%OptionalStorage.facet.loc11_75.1) [symbolic = %Optional.loc11_75.1 (constants.%Optional.e48)]
 // CHECK:STDOUT:   %.loc11_75.4: Core.Form = init_form %Optional.loc11_75.1 [symbolic = %.loc11_75.4 (constants.%.949)]
@@ -600,8 +600,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type: type = fn_type @Int.as.OrderedWith.impl.Less.1, @Int.as.OrderedWith.impl.2e6(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.type (constants.%Int.as.OrderedWith.impl.Less.type.3f1)]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less: @IntRange.as.Iterate.impl.Next.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.3f1) = struct_value () [symbolic = %Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.4cf)]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn: <specific function> = specific_function %Int.as.OrderedWith.impl.Less, @Int.as.OrderedWith.impl.Less.1(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.specific_fn (constants.%Int.as.OrderedWith.impl.Less.specific_fn.4c2)]
-// CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
 // CHECK:STDOUT:   %.loc14_9.1: require_specific_def_type = require_specific_def @Int.as.Inc.impl(%N) [symbolic = %.loc14_9.1 (constants.%.53b)]
+// CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %Int.loc11_43.1, (%Inc.lookup_impl_witness) [symbolic = %Inc.facet (constants.%Inc.facet)]
 // CHECK:STDOUT:   %Inc.WithSelf.Op.type: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%Inc.facet) [symbolic = %Inc.WithSelf.Op.type (constants.%Inc.WithSelf.Op.type.17b)]
 // CHECK:STDOUT:   %.loc14_9.2: type = fn_type_with_self_type %Inc.WithSelf.Op.type, %Inc.facet [symbolic = %.loc14_9.2 (constants.%.9a6)]
@@ -767,8 +767,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.265
 // CHECK:STDOUT:   %Int.loc9_54.1 => constants.%Int.fc6021.1
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.lookup_impl_witness.93c
-// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.7a8
 // CHECK:STDOUT:   %.loc9_85.1 => constants.%.4f8
+// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.7a8
 // CHECK:STDOUT:   %facet_value.loc9_85.1 => constants.%facet_value
 // CHECK:STDOUT:   %Iterate_where.type => constants.%Iterate_where.type
 // CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2 => constants.%Iterate.impl_witness
@@ -797,11 +797,11 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Int.loc11_43.1 => constants.%Int.fc6021.1
 // CHECK:STDOUT:   %ptr.loc11_44.1 => constants.%ptr.c9c
 // CHECK:STDOUT:   %pattern_type.loc11_31 => constants.%pattern_type.bda
-// CHECK:STDOUT:   %OptionalStorage.lookup_impl_witness => constants.%OptionalStorage.lookup_impl_witness.b62
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.lookup_impl_witness.93c
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.7a8
 // CHECK:STDOUT:   %facet_value => constants.%facet_value
 // CHECK:STDOUT:   %.loc11_75.3 => constants.%.63c
+// CHECK:STDOUT:   %OptionalStorage.lookup_impl_witness => constants.%OptionalStorage.lookup_impl_witness.b62
 // CHECK:STDOUT:   %OptionalStorage.facet.loc11_75.1 => constants.%OptionalStorage.facet.01e
 // CHECK:STDOUT:   %Optional.loc11_75.1 => constants.%Optional.e48
 // CHECK:STDOUT:   %.loc11_75.4 => constants.%.949
@@ -834,8 +834,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %require_complete.loc5_16 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %require_complete.loc5_52 => constants.%complete_type.c45
 // CHECK:STDOUT:   %struct_type.start.end => constants.%struct_type.start.end.d0a
-// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.f17
 // CHECK:STDOUT:   %.loc6_22.1 => constants.%.14e
+// CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.f17
 // CHECK:STDOUT:   %Copy.facet => constants.%Copy.facet.de4
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.081
 // CHECK:STDOUT:   %.loc6_22.2 => constants.%.8e2
@@ -1035,8 +1035,8 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Int [symbolic = %require_complete.1 (constants.%require_complete.2ded7d.1)]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %IntRange [symbolic = %require_complete.2 (constants.%require_complete.8a1)]
 // CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.Make.%Int (%Int.b6d943.1), .end: @IntRange.Make.%Int (%Int.b6d943.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.79a)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.4c7)]
 // CHECK:STDOUT:   %.2: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.2 (constants.%.b26)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.4c7)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Int, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.2e7)]
 // CHECK:STDOUT:   %.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.3 (constants.%.cf8)]

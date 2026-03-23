@@ -962,26 +962,27 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // use that and avoid any further work. This is strictly an optimization,
     // since that same final witness should be found by evaluating a
     // LookupImplWitness instruction for the required self+interface pair.
-    auto result_witness_id = FindFinalWitnessFromSelfFacetValue(
+    auto self_witness_id = FindFinalWitnessFromSelfFacetValue(
         context, req_impl.self_facet_value, req_self_type_identified_id,
         req_impl.specific_interface);
-    if (result_witness_id.has_value()) {
+    if (self_witness_id.has_value()) {
       // Found a final witness, use it.
-      result_witness_ids.push_back(result_witness_id);
+      result_witness_ids.push_back(self_witness_id);
       continue;
     }
 
-    auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
+    auto partial_witness = AddPartialInstForEval<SemIR::LookupImplWitness>(
         context, context.insts().GetLocIdForDesugaring(loc_id),
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .query_self_inst_id =
              context.constant_values().GetInstId(req_impl.self_facet_value),
          .query_specific_interface_id =
              context.specific_interfaces().Add(req_impl.specific_interface)});
-    result_witness_id = context.constant_values().GetInstId(witness_const_id);
-    if (!context.insts().Is<SemIR::LookupImplWitness>(result_witness_id)) {
+    if (!partial_witness.Is<SemIR::LookupImplWitness>(context)) {
+      auto const_id = KeepPartialConstant(context, partial_witness);
       // Found a final witness, use it.
-      result_witness_ids.push_back(result_witness_id);
+      result_witness_ids.push_back(
+          context.constant_values().GetInstId(const_id));
       continue;
     }
 
@@ -1009,7 +1010,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 
     // Save the non-final witness, which will eventually resolve to a final
     // witness as specifics are applied to make the query more concrete.
-    result_witness_ids.push_back(result_witness_id);
+    auto const_id = KeepPartialConstant(context, partial_witness);
+    result_witness_ids.push_back(context.constant_values().GetInstId(const_id));
   }
   auto pop = stack.pop_back_val();
   if (pop.diagnosed_cycle && !stack.empty()) {

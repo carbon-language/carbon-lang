@@ -184,8 +184,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.72f)]
-// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc22_18.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %.loc22_43.2: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%T.loc22_18.1) [symbolic = %.loc22_43.2 (constants.%.860)]
+// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc22_18.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Eats.facet.loc22_43.2: %Eats.type = facet_value %T.binding.as_type, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc22_43.2 (constants.%Eats.facet.a05)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc22_37.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc22_43.2) [symbolic = %Feed.specific_fn.loc22_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:

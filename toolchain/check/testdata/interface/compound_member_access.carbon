@@ -552,7 +552,6 @@ fn Works() {
 // CHECK:STDOUT:   %require_complete.57854f.2: <witness> = require_complete_type %V.binding.as_type [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %V, @ImplicitAs, @ImplicitAs(%K2.type) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -662,7 +661,6 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %V.binding.as_type [symbolic = %require_complete (constants.%require_complete.57854f.2)]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness %V.loc14_15.1, @ImplicitAs, @ImplicitAs(constants.%K2.type) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @Compound3.%V.binding.as_type (%V.binding.as_type)) {
 // CHECK:STDOUT:   !entry:

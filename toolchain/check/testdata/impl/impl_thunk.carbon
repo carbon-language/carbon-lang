@@ -923,8 +923,8 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %.loc10_34.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_9.1) [symbolic = %.loc10_34.2 (constants.%.2f2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet.loc10_34.2: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc10_34.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.2: <specific function> = specific_function constants.%empty_tuple.type.as.I.impl.F.8be29b.1, @empty_tuple.type.as.I.impl.F.loc10_34.1(%Copy.facet.loc10_34.2) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:
@@ -1095,8 +1095,8 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %.loc10_51.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_21.1) [symbolic = %.loc10_51.2 (constants.%.2f2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet.loc10_51.2: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc10_51.2 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.2: <specific function> = specific_function constants.%empty_tuple.type.as.I.impl.F.8be29b.1, @empty_tuple.type.as.I.impl.F.loc10_51.1(%Copy.facet.loc10_51.2) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:
