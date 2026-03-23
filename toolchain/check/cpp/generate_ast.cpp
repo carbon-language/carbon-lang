@@ -355,6 +355,11 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
 
   Check::Context* context_;
   clang::ASTContext* ast_context_;
+  // The association between clang DeclContexts and the corresponding
+  // SemIR::Namespaces in Carbon.
+  // TODO: reuse the SemIR::File::ClangDeclStore to avoid duplicates, and to
+  // enable roundtripping through forward and reverse interop (once we have
+  // syntax/support for that).
   Map<clang::DeclContext*, SemIR::InstId> scope_map_;
 };
 
