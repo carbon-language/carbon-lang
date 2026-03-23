@@ -355,7 +355,7 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
 
   Check::Context* context_;
   clang::ASTContext* ast_context_;
-  Map<clang::DeclContext*, SemIR::InstId> scope_mapping;
+  Map<clang::DeclContext*, SemIR::InstId> scope_map_;
 };
 
 void CarbonExternalASTSource::StartTranslationUnit(
@@ -383,8 +383,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
     auto* namespace_decl = clang::NamespaceDecl::Create(
         *ast_context_, &decl_context, false, clang::SourceLocation(),
         clang::SourceLocation(), identifier_info, nullptr, false);
-    auto result = scope_mapping.Insert(namespace_decl->getPrimaryContext(),
-                                       target_inst_id);
+    auto result =
+        scope_map_.Insert(namespace_decl->getPrimaryContext(), target_inst_id);
     CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     namespace_decl->setHasExternalVisibleStorage();
     return namespace_decl;
@@ -396,7 +396,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
   auto decl_context_inst_id =
-      scope_mapping.Lookup(decl_context->getPrimaryContext());
+      scope_map_.Lookup(decl_context->getPrimaryContext());
 
   if (!decl_context_inst_id) {
     // If the context doesn't already have a mapping between C++ and Carbon,
@@ -421,9 +421,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
         clang::SourceLocation(), &ast_context.Idents.get(carbon_namespace_name),
         nullptr, false);
     carbon_cpp_namespace->setHasExternalVisibleStorage();
-    auto result =
-        scope_mapping.Insert(carbon_cpp_namespace->getPrimaryContext(),
-                             SemIR::Namespace::PackageInstId);
+    auto result = scope_map_.Insert(carbon_cpp_namespace->getPrimaryContext(),
+                                    SemIR::Namespace::PackageInstId);
     CARBON_CHECK(result.is_inserted(), "Inserting over an existing entry.");
     SetExternalVisibleDeclsForName(decl_context, decl_name,
                                    {carbon_cpp_namespace});
