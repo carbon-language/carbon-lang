@@ -419,9 +419,9 @@ struct LocIdAndInst {
     return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
-  // Returns a `LocIdAndInst`. This is allowed to do runtime verification.
+  // Constructs a `LocIdAndInst` with a runtime verification of the location.
   //
-  // Prefer `SemIR::LocIdAndInst` constructors with compile-time verification,
+  // Prefer `LocIdAndInst` constructors with compile-time verification,
   // or `AddInst` overloads which make use of those constructors.
   static auto RuntimeVerified(const File& file, LocId loc_id, Inst inst)
       -> LocIdAndInst;
