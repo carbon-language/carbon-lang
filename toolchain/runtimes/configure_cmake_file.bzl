@@ -50,7 +50,7 @@ configure_cmake_file = rule(
             doc = "The input '.in' template file.",
         ),
         "_impl_script": attr.label(
-            default = Label("//toolchain/install:configure_cmake_file_impl"),
+            default = Label("//toolchain/runtimes:configure_cmake_file_impl"),
             allow_files = True,
             executable = True,
             cfg = "exec",

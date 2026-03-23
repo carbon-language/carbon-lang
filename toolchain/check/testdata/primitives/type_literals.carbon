@@ -82,6 +82,16 @@ var test_i1: i1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_i15: i15;
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(4)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: var test_i4: i4;
+// CHECK:STDERR:              ^~
+// CHECK:STDERR:
+var test_i4: i4;
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(12)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: var test_i12: i12;
+// CHECK:STDERR:               ^~~
+// CHECK:STDERR:
+var test_i12: i12;
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `i1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
@@ -119,6 +129,16 @@ var test_u1: u1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_u15: u15;
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(4)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: var test_u4: u4;
+// CHECK:STDERR:              ^~
+// CHECK:STDERR:
+var test_u4: u4;
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(12)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: var test_u12: u12;
+// CHECK:STDERR:               ^~~
+// CHECK:STDERR:
+var test_u12: u12;
 // CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `u1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
