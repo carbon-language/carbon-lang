@@ -482,11 +482,19 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
   CARBON_DCHECK(entry, "Should always result in a valid index.");
 
   if (LLVM_LIKELY(!inserted)) {
+    CARBON_DCHECK(
+        key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
+            key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
+        "Heterogeneous keys should hash to the same value.");
     return InsertKVResult(false, *entry);
   }
 
   insert_cb(lookup_key, static_cast<void*>(&entry->key_storage),
             static_cast<void*>(&entry->value_storage));
+  CARBON_DCHECK(
+      key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
+          key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
+      "Heterogeneous keys should hash to the same value.");
   return InsertKVResult(true, *entry);
 }
 
@@ -549,11 +557,19 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
 
   if (LLVM_LIKELY(!inserted)) {
     update_cb(entry->key(), entry->value());
+    CARBON_DCHECK(
+        key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
+            key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
+        "Heterogeneous keys should hash to the same value.");
     return InsertKVResult(false, *entry);
   }
 
   insert_cb(lookup_key, static_cast<void*>(&entry->key_storage),
             static_cast<void*>(&entry->value_storage));
+  CARBON_DCHECK(
+      key_context.HashKey(entry->key(), RawHashtable::ComputeSeed()) ==
+          key_context.HashKey(lookup_key, RawHashtable::ComputeSeed()),
+      "Heterogeneous keys should hash to the same value.");
   return InsertKVResult(true, *entry);
 }
 
