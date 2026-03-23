@@ -277,8 +277,8 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
   clang::FunctionDecl* function_decl = nullptr;
   SemIR::InstId thunk_callee_inst_id = SemIR::InstId::None;
 
-  // Check if the callee is a C++ thunk. If so, fill in `function_decl`
-  // and `thunk_callee_inst_id`.
+  // Check if the callee is a C++ thunk for a constexpr function. If so,
+  // fill in `function_decl` and `thunk_callee_inst_id`.
   auto callee = SemIR::GetCallee(context.sem_ir(), call->callee_id);
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
     auto function = context.functions().Get(callee_function->function_id);
@@ -297,6 +297,10 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
                                       .Get(thunk_callee_function.clang_decl_id)
                                       .GetAsKey()
                                       .decl);
+
+    if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
+      return;
+    }
   } else {
     return;
   }
