@@ -105,7 +105,7 @@ impl C6 as I where .T = {};
 // CHECK:STDERR: impl C6 as I { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: interface.carbon:3:19: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: interface.carbon:18:19: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR: interface I { let T:! type; }
 // CHECK:STDERR:                   ^~~~~~~~
 // CHECK:STDERR:

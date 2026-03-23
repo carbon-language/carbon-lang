@@ -22,8 +22,8 @@ enum UnsizedEnum;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: import_declaration.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
-// CHECK:STDERR:     4 | enum UnsizedEnum;
+// CHECK:STDERR: ./declaration.h:18:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
+// CHECK:STDERR:    18 | enum UnsizedEnum;
 // CHECK:STDERR:       |      ^
 // CHECK:STDERR:
 import Cpp library "declaration.h";
@@ -37,8 +37,8 @@ fn F(e: Cpp.UnsizedEnum);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
-// CHECK:STDERR:     4 | enum UnsizedEnum;
+// CHECK:STDERR: ./declaration.h:18:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
+// CHECK:STDERR:    18 | enum UnsizedEnum;
 // CHECK:STDERR:       |      ^
 // CHECK:STDERR:
 import Cpp library "declaration.h";
@@ -50,7 +50,7 @@ fn MyF() {
   // CHECK:STDERR:   var unused e: Cpp.UnsizedEnum;
   // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./declaration.h:4:6: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./declaration.h:18:6: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: enum UnsizedEnum;
   // CHECK:STDERR:      ^
   // CHECK:STDERR:

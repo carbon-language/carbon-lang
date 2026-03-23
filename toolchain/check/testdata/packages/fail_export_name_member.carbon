@@ -32,7 +32,7 @@ import library "a";
 // CHECK:STDERR: export C.n;
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_b.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR: a.carbon:19:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

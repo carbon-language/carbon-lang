@@ -31,7 +31,7 @@ fn CallNegative() {
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE-7]]:17: note: `Core.Int(N)` evaluates to incomplete type `i0` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var unused v: Core.Int(N);
   // CHECK:STDERR:                 ^~~~~~~~~~~
-  // CHECK:STDERR: min_prelude/parts/int.carbon:11:9: note: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR: min_prelude/parts/int.carbon:20:9: note: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   adapt MakeInt(N);
   // CHECK:STDERR:         ^~~~~~~~~~
   // CHECK:STDERR:

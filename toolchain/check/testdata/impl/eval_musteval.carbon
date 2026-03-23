@@ -165,7 +165,7 @@ impl B as Runtime {
   // CHECK:STDERR:   musteval fn F[unused self: Self]() -> type { return B; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE-11]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:5:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: interface.carbon:18:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F[self: Self]() -> type;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -180,7 +180,7 @@ impl B as Eval {
   // CHECK:STDERR:   musteval fn F[unused self: Self]() -> type { return B; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE-26]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:9:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: interface.carbon:22:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   eval fn F[self: Self]() -> type;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -224,7 +224,7 @@ impl B as MustEval {
   // CHECK:STDERR:   musteval fn F[unused self: BView]() -> type { return B; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE-16]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:13:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: interface.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   musteval fn F[self: Self]() -> type;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

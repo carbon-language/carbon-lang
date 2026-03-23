@@ -66,7 +66,7 @@ import library "api";
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: api.carbon:23:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -75,7 +75,7 @@ extern fn A();
 // CHECK:STDERR: extern fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: api.carbon:24:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -84,7 +84,7 @@ extern fn B(b: i32) -> i32;
 // CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-23]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: api.carbon:25:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -93,7 +93,7 @@ extern fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-32]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: api.carbon:26:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -102,7 +102,7 @@ extern fn D();
 // CHECK:STDERR: extern fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-41]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: api.carbon:29:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
@@ -137,47 +137,47 @@ var e: () = NS.E();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+45]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_api.carbon:35:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "redecl_extern_api" fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+41]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: api.carbon:23:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+36]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:5:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_api.carbon:36:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+32]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: api.carbon:24:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+27]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:6:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_api.carbon:37:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+23]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: api.carbon:25:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:7:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_api.carbon:38:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "redecl_extern_api" fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: api.carbon:26:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:10:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_api.carbon:41:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: api.carbon:29:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
@@ -195,47 +195,47 @@ var e: () = NS.E();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+45]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: api.carbon:23:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+41]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_api.carbon:35:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "redecl_extern_api" fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+36]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: api.carbon:24:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+32]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:5:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_api.carbon:36:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+27]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: api.carbon:25:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+23]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_api.carbon:37:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: api.carbon:26:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_api.carbon:38:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "redecl_extern_api" fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: api.carbon:29:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:10:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_api.carbon:41:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

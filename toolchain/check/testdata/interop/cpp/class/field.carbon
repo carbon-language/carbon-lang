@@ -126,7 +126,7 @@ fn G(s: Cpp.Union) -> i32 {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./with_bitfields.h:4:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+// CHECK:STDERR: ./with_bitfields.h:98:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
 // CHECK:STDERR:   int b : 2;
 // CHECK:STDERR:       ^
 import Cpp library "with_bitfields.h";
@@ -138,7 +138,7 @@ fn F(s: Cpp.Struct) -> i32 {
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./with_bitfields.h:9:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+  // CHECK:STDERR: ./with_bitfields.h:103:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
   // CHECK:STDERR:   int d : 3;
   // CHECK:STDERR:       ^
   return s.b;
@@ -184,7 +184,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./unsupported_members.h:4:16: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+// CHECK:STDERR: ./unsupported_members.h:162:16: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
 // CHECK:STDERR:   volatile int is_volatile;
 // CHECK:STDERR:                ^
 import Cpp library "unsupported_members.h";

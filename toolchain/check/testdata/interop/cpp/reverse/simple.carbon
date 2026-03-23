@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''
 // CHECK:STDERR: fail_simple.carbon:[[@LINE+4]]:9: error: no type named 'NonExistent' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    11 | Carbon::NonExistent v;
+// CHECK:STDERR:    24 | Carbon::NonExistent v;
 // CHECK:STDERR:       | ~~~~~~~~^
 // CHECK:STDERR:
 Carbon::NonExistent v;

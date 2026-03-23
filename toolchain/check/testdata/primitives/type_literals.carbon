@@ -95,7 +95,7 @@ var test_i12: i12;
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `i1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/int.carbon:11:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: min_prelude/parts/int.carbon:20:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:
@@ -142,7 +142,7 @@ var test_u12: u12;
 // CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `u1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/uint.carbon:11:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: min_prelude/parts/uint.carbon:20:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeUInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -169,7 +169,7 @@ var test_f0: f0;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:14: error: binding pattern has incomplete type `f1` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1: f1;
 // CHECK:STDERR:              ^~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 1 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -177,7 +177,7 @@ var test_f1: f1;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:15: error: binding pattern has incomplete type `f15` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f15: f15;
 // CHECK:STDERR:               ^~~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 15 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 15 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -186,7 +186,7 @@ var test_f15: f15;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:15: error: binding pattern has incomplete type `f80` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f80: f80;
 // CHECK:STDERR:               ^~~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 80 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 80 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -194,7 +194,7 @@ var test_f80: f80;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:16: error: binding pattern has incomplete type `f100` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f100: f100;
 // CHECK:STDERR:                ^~~~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 100 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 100 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -202,7 +202,7 @@ var test_f100: f100;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `f1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1000000000: f1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1000000000 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 1000000000 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -210,7 +210,7 @@ var test_f1000000000: f1000000000;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:26: error: binding pattern has incomplete type `f1000000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_f1000000000000: f1000000000000;
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/float.carbon:12:9: note: unsupported floating-point bit width 1000000000000 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:22:9: note: unsupported floating-point bit width 1000000000000 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:

@@ -23,8 +23,8 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_file_with_one_error.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./one_error.h:19:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:    19 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "one_error.h";
@@ -43,13 +43,13 @@ import Cpp library "one_error.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./multiple_errors.h:38:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:    38 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors.h:3:2: error: "error2" [CppInteropParseError]
-// CHECK:STDERR:     3 | #error "error2"
+// CHECK:STDERR: ./multiple_errors.h:39:2: error: "error2" [CppInteropParseError]
+// CHECK:STDERR:    39 | #error "error2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "multiple_errors.h";
@@ -68,8 +68,8 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 // CHECK:STDERR: import_cpp_file_with_one_warning.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./one_warning.h:63:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    63 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
@@ -91,18 +91,18 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 // CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./multiple_warnings.h:84:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    84 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2" [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #warning "warning2"
+// CHECK:STDERR: ./multiple_warnings.h:85:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:    85 | #warning "warning2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3" [CppInteropParseWarning]
-// CHECK:STDERR:     4 | #warning "warning3"
+// CHECK:STDERR: ./multiple_warnings.h:86:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:    86 | #warning "warning3"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
@@ -122,13 +122,13 @@ import Cpp library "multiple_warnings.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./one_error_and_one_warning.h:117:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:   117 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #warning "warning1"
+// CHECK:STDERR: ./one_error_and_one_warning.h:118:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:   118 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "one_error_and_one_warning.h";
@@ -150,28 +150,28 @@ import Cpp library "one_error_and_one_warning.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+25]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:142:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:   142 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+20]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2" [CppInteropParseError]
-// CHECK:STDERR:     3 | #error "error2"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:143:2: error: "error2" [CppInteropParseError]
+// CHECK:STDERR:   143 | #error "error2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     4 | #warning "warning1"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:144:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:   144 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2" [CppInteropParseWarning]
-// CHECK:STDERR:     5 | #warning "warning2"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:145:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:   145 | #warning "warning2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3" [CppInteropParseWarning]
-// CHECK:STDERR:     6 | #warning "warning3"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:146:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:   146 | #warning "warning3"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
@@ -186,24 +186,24 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 // CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./one_warning.h:63:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    63 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
 // CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./multiple_warnings.h:84:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    84 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2" [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #warning "warning2"
+// CHECK:STDERR: ./multiple_warnings.h:85:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:    85 | #warning "warning2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3" [CppInteropParseWarning]
-// CHECK:STDERR:     4 | #warning "warning3"
+// CHECK:STDERR: ./multiple_warnings.h:86:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:    86 | #warning "warning3"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
@@ -218,39 +218,39 @@ import Cpp library "multiple_warnings.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./one_error_and_one_warning.h:117:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:   117 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #warning "warning1"
+// CHECK:STDERR: ./one_error_and_one_warning.h:118:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:   118 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "one_error_and_one_warning.h";
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+25]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:142:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:   142 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+20]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2" [CppInteropParseError]
-// CHECK:STDERR:     3 | #error "error2"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:143:2: error: "error2" [CppInteropParseError]
+// CHECK:STDERR:   143 | #error "error2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     4 | #warning "warning1"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:144:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:   144 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2" [CppInteropParseWarning]
-// CHECK:STDERR:     5 | #warning "warning2"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:145:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:   145 | #warning "warning2"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3" [CppInteropParseWarning]
-// CHECK:STDERR:     6 | #warning "warning3"
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:146:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:   146 | #warning "warning3"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
@@ -268,9 +268,9 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./indirect_error.h:2:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_error.h:2:2: error: "error1" [CppInteropParseError]
-// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR: ./indirect_error.h:264:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error.h:19:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:    19 | #error "error1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "indirect_error.h";
@@ -289,9 +289,9 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 // CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./indirect_warning.h:2:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./indirect_warning.h:284:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_warning.h:63:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    63 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 import Cpp library "indirect_warning.h";
@@ -307,8 +307,8 @@ library "[[@TEST_NAME]]";  // Trailing comment
 
 // TODO: Move this warning to be after the lexer trailing comment error.
 // CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR: ./one_warning.h:63:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:    63 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-8]]:44: error: trailing comments are not permitted [TrailingComment]
@@ -330,8 +330,8 @@ double score = 0.1
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./fix_it_hints.h:2:19: error: expected ';' after top level declarator [CppInteropParseError]
-// CHECK:STDERR:     2 | double score = 0.1
+// CHECK:STDERR: ./fix_it_hints.h:326:19: error: expected ';' after top level declarator [CppInteropParseError]
+// CHECK:STDERR:   326 | double score = 0.1
 // CHECK:STDERR:       |                   ^
 // CHECK:STDERR:       |                   ;
 // CHECK:STDERR:
@@ -362,12 +362,12 @@ inline void call_foobar() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_with_notes.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./with_notes.h:5:3: error: no matching function for call to 'foobar' [CppInteropParseError]
-// CHECK:STDERR:     5 |   foobar(1, 2);
+// CHECK:STDERR: ./with_notes.h:357:3: error: no matching function for call to 'foobar' [CppInteropParseError]
+// CHECK:STDERR:   357 |   foobar(1, 2);
 // CHECK:STDERR:       |   ^~~~~~
 // CHECK:STDERR: fail_with_notes.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./with_notes.h:2:6: note: candidate function not viable: requires 1 argument, but 2 were provided [CppInteropParseNote]
-// CHECK:STDERR:     2 | void foobar(int);
+// CHECK:STDERR: ./with_notes.h:354:6: note: candidate function not viable: requires 1 argument, but 2 were provided [CppInteropParseNote]
+// CHECK:STDERR:   354 | void foobar(int);
 // CHECK:STDERR:       |      ^      ~~~
 // CHECK:STDERR:
 import Cpp library "with_notes.h";
@@ -398,18 +398,18 @@ FOO
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_use_context_stack.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./direct_include.h:4:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./indirect_include.h:2:13: in expansion of macro defined here [InCppMacroExpansion]
-// CHECK:STDERR: ./direct_include.h:2:13: in expansion of macro defined here [InCppMacroExpansion]
-// CHECK:STDERR: ./indirect_include.h:3:20: in expansion of macro defined here [InCppMacroExpansion]
-// CHECK:STDERR: ./indirect_include.h:5:1: error: unknown type name 'error' [CppInteropParseError]
-// CHECK:STDERR:     5 | FOO
+// CHECK:STDERR: ./direct_include.h:394:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./indirect_include.h:385:13: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./direct_include.h:392:13: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./indirect_include.h:386:20: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./indirect_include.h:388:1: error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR:   388 | FOO
 // CHECK:STDERR:       | ^
-// CHECK:STDERR:     2 | #define FOO BAR
+// CHECK:STDERR:   385 | #define FOO BAR
 // CHECK:STDERR:       |             ^
-// CHECK:STDERR:     2 | #define BAR BAZ
+// CHECK:STDERR:   392 | #define BAR BAZ
 // CHECK:STDERR:       |             ^
-// CHECK:STDERR:     3 | #define BAZ void f(error);
+// CHECK:STDERR:   386 | #define BAZ void f(error);
 // CHECK:STDERR:       |                    ^
 // CHECK:STDERR:
 import Cpp library "direct_include.h";
@@ -423,7 +423,7 @@ import Cpp library "direct_include.h";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_loc_in_inline_simple.carbon:[[@LINE+4]]:9: error: use of undeclared identifier 'banana' [CppInteropParseError]
-// CHECK:STDERR:     8 | int n = banana;
+// CHECK:STDERR:   429 | int n = banana;
 // CHECK:STDERR:       |         ^~~~~~
 // CHECK:STDERR:
 import Cpp inline "int n = banana;";
@@ -433,10 +433,10 @@ import Cpp inline "int n = banana;";
 import Cpp inline '''c++
 void f(const int n) {
   // CHECK:STDERR: fail_loc_in_inline_block.carbon:[[@LINE+7]]:3: error: cannot assign to variable 'n' with const-qualified type 'const int' [CppInteropParseError]
-  // CHECK:STDERR:    11 |   ++n;
+  // CHECK:STDERR:   442 |   ++n;
   // CHECK:STDERR:       |   ^ ~
   // CHECK:STDERR: fail_loc_in_inline_block.carbon:[[@LINE-4]]:18: note: variable 'n' declared const here [CppInteropParseNote]
-  // CHECK:STDERR:     3 | void f(const int n) {
+  // CHECK:STDERR:   434 | void f(const int n) {
   // CHECK:STDERR:       |        ~~~~~~~~~~^
   // CHECK:STDERR:
   ++n;

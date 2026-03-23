@@ -29,7 +29,7 @@ import library "a";
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: a.carbon:17:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,7 +40,7 @@ class Empty {
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: a.carbon:20:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

@@ -56,7 +56,7 @@ import Other library "other_extern";
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: other_extern.carbon:29:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -67,11 +67,11 @@ var c: Other.C = {};
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_extern.carbon:29:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: other_define.carbon:23:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";
@@ -88,11 +88,11 @@ var c: Other.C = {};
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_conflict.carbon:35:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: other_define.carbon:23:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";

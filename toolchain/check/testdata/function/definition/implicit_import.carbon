@@ -38,7 +38,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_api.carbon:31:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -58,7 +58,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: extern fn A() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_impl.carbon:51:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -78,7 +78,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: redecl_after_def.carbon:71:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -98,7 +98,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
+// CHECK:STDERR: redef_after_def.carbon:91:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -119,7 +119,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn B() {}
 // CHECK:STDERR:    ^
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: def_alias.carbon:112:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = A;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:

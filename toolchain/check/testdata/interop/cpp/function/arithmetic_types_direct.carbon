@@ -57,7 +57,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(0x8000_0000);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_int_param_overflow_max.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_param.h:2:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_param.h:23:14: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(int a) -> void;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -87,7 +87,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(-0x8000_0001);
   // CHECK:STDERR:           ^~~~~~~~~~~~
   // CHECK:STDERR: fail_import_int_param_overflow_min.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_param.h:2:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_param.h:23:14: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(int a) -> void;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -167,7 +167,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(-1);
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./unsigned_int_param.h:2:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./unsigned_int_param.h:143:23: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(unsigned int a) -> void;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
@@ -179,7 +179,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(0x1_0000_0000);
   // CHECK:STDERR:           ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./unsigned_int_param.h:2:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./unsigned_int_param.h:143:23: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(unsigned int a) -> void;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:

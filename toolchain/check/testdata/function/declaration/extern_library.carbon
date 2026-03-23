@@ -36,7 +36,7 @@ import library "extern_library";
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_nonowner.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: extern_library.carbon:19:1: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ import library "extern_library";
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_extern_library_nonextern.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_library.carbon:19:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -68,7 +68,7 @@ import library "extern_library";
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: extern_library.carbon:19:1: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -85,11 +85,11 @@ extern library "extern_library_owner" fn F();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_library_collision.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_library_copy.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: extern_library_copy.carbon:81:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_collision.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_library.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: extern_library.carbon:19:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -144,7 +144,7 @@ import library "extern_of_import";
 // CHECK:STDERR: extern library "extern_of_import" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_of_import.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_of_import.carbon:135:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:

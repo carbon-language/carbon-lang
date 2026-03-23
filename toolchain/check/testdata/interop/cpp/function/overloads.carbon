@@ -183,7 +183,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(-1);
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./negative_literal_passed_to_unsigned.h:2:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./negative_literal_passed_to_unsigned.h:173:23: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(unsigned int a) -> void;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
@@ -216,7 +216,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(1.8e+308);
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR: fail_import_large_floating_point_literal.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./floating_point_literal.h:3:17: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./floating_point_literal.h:196:17: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(double a) -> double;
   // CHECK:STDERR:                 ^
   // CHECK:STDERR:
@@ -269,7 +269,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -282,7 +282,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:   Cpp.PassThreeFields(value);
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -295,7 +295,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:                       ^~~~~~~~~
   // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -308,7 +308,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-50]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -321,7 +321,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:   Cpp.PassThreeFields({.b = 1, .c = 2, .a = 3});
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_struct_init_nonempty.carbon:[[@LINE-63]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -336,21 +336,21 @@ import Cpp library "struct_init.h";
 
 fn F() {
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE+8]]:55: error: no matching function for call to 'PassThreeFields' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3, .d = 4});
+  // CHECK:STDERR:   346 |   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3, .d = 4});
   // CHECK:STDERR:       |                                                       ^
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:6: note: candidate function not viable: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNote]
-  // CHECK:STDERR:    10 | auto PassThreeFields(ThreeFields t) -> void;
+  // CHECK:STDERR: ./struct_init.h:236:6: note: candidate function not viable: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNote]
+  // CHECK:STDERR:   236 | auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:       |      ^               ~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3, .d = 4});
 
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE+8]]:47: error: no matching function for call to 'PassThreeFields' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   Cpp.PassThreeFields({.a = 1, .x = 2, .c = 3});
+  // CHECK:STDERR:   356 |   Cpp.PassThreeFields({.a = 1, .x = 2, .c = 3});
   // CHECK:STDERR:       |                                               ^
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:6: note: candidate function not viable: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNote]
-  // CHECK:STDERR:    10 | auto PassThreeFields(ThreeFields t) -> void;
+  // CHECK:STDERR: ./struct_init.h:236:6: note: candidate function not viable: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNote]
+  // CHECK:STDERR:   236 | auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:       |      ^               ~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .x = 2, .c = 3});
@@ -389,7 +389,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:   Cpp.PassNoFields(());
   // CHECK:STDERR:                    ^~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:230:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
@@ -402,7 +402,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:   Cpp.PassNoFields(value);
   // CHECK:STDERR:                    ^~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:230:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
@@ -415,7 +415,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:   Cpp.PassNoFields(reference);
   // CHECK:STDERR:                    ^~~~~~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-40]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:230:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
@@ -428,7 +428,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:   Cpp.PassNoFields(MakeEmpty());
   // CHECK:STDERR:                    ^~~~~~~~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-53]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:4:28: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:230:28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassNoFields(NoFields s) -> void;
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
@@ -445,7 +445,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:   Cpp.PassThreeFields((1, 2, 3));
   // CHECK:STDERR:                       ^~~~~~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-70]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -458,7 +458,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:   Cpp.PassThreeFields(value);
   // CHECK:STDERR:                       ^~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-83]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -471,7 +471,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:                       ^~~~~~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-96]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -484,7 +484,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_struct_init_from_tuple.carbon:[[@LINE-109]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./struct_init.h:236:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassThreeFields(ThreeFields t) -> void;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
@@ -516,7 +516,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.PassInt({});
   // CHECK:STDERR:               ^~
   // CHECK:STDERR: fail_int_from_struct.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_from_struct.h:2:18: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_from_struct.h:496:18: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassInt(int n) -> void;
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
@@ -529,7 +529,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.PassInt(());
   // CHECK:STDERR:               ^~
   // CHECK:STDERR: fail_int_from_struct.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_from_struct.h:2:18: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_from_struct.h:496:18: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassInt(int n) -> void;
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
@@ -553,7 +553,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.PassOverloaded({});
   // CHECK:STDERR:                      ^~
   // CHECK:STDERR: fail_int_from_struct_overloaded.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_from_struct.h:6:25: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_from_struct.h:500:25: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassOverloaded(int n) -> void;
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:
@@ -566,7 +566,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.PassOverloaded(());
   // CHECK:STDERR:                      ^~
   // CHECK:STDERR: fail_int_from_struct_overloaded.carbon:[[@LINE-25]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_from_struct.h:6:25: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./int_from_struct.h:500:25: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto PassOverloaded(int n) -> void;
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:
@@ -594,11 +594,11 @@ import Cpp library "nested_structs.h";
 
 fn F() {
   // CHECK:STDERR: fail_pass_nested_structs_inner_field_mismatch.carbon:[[@LINE+8]]:44: error: no matching function for call to 'TakeB' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Cpp.TakeB({.a = {.x = 1, .z = 2}, .n = 3});
+  // CHECK:STDERR:   604 |   Cpp.TakeB({.a = {.x = 1, .z = 2}, .n = 3});
   // CHECK:STDERR:       |                                            ^
   // CHECK:STDERR: fail_pass_nested_structs_inner_field_mismatch.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./nested_structs.h:11:6: note: candidate function not viable: cannot convert initializer list argument to 'B' [CppInteropParseNote]
-  // CHECK:STDERR:    11 | void TakeB(B);
+  // CHECK:STDERR: ./nested_structs.h:587:6: note: candidate function not viable: cannot convert initializer list argument to 'B' [CppInteropParseNote]
+  // CHECK:STDERR:   587 | void TakeB(B);
   // CHECK:STDERR:       |      ^     ~
   // CHECK:STDERR:
   Cpp.TakeB({.a = {.x = 1, .z = 2}, .n = 3});
@@ -618,7 +618,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.TakeB({.a = {.x = 1, .y = 2}, .n = 3});
   // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_nested_structs.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./nested_structs.h:11:13: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./nested_structs.h:587:13: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: void TakeB(B);
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -647,7 +647,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(1 as i16);
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./upsizing_rejected.h:2:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./upsizing_rejected.h:634:14: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(int a) -> void;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -672,7 +672,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./downsizing_rejected.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./downsizing_rejected.h:659:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(short a) -> void;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -695,11 +695,11 @@ import Cpp library "no_viable_function.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+8]]:19: error: no matching function for call to 'foo' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Cpp.foo(1 as i64);
+  // CHECK:STDERR:   705 |   Cpp.foo(1 as i64);
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./no_viable_function.h:2:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a, int b) -> void;
+  // CHECK:STDERR: ./no_viable_function.h:688:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:   688 | auto foo(short a, int b) -> void;
   // CHECK:STDERR:       |      ^   ~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1 as i64);
@@ -722,15 +722,15 @@ import Cpp library "ambiguous_overload.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+12]]:19: error: call to 'foo' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Cpp.foo(1 as i64);
+  // CHECK:STDERR:   736 |   Cpp.foo(1 as i64);
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./ambiguous_overload.h:2:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR: ./ambiguous_overload.h:714:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:   714 | auto foo(short a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./ambiguous_overload.h:3:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto foo(int a) -> void;
+  // CHECK:STDERR: ./ambiguous_overload.h:715:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:   715 | auto foo(int a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   Cpp.foo(1 as i64);
@@ -753,15 +753,15 @@ import Cpp library "deleted_function.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+12]]:19: error: call to deleted function 'foo' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Cpp.foo(1 as i32);
+  // CHECK:STDERR:   767 |   Cpp.foo(1 as i32);
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted_function.h:3:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto foo(int a) -> void = delete;
+  // CHECK:STDERR: ./deleted_function.h:746:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:   746 | auto foo(int a) -> void = delete;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted_function.h:2:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR: ./deleted_function.h:745:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:   745 | auto foo(short a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   Cpp.foo(1 as i32);

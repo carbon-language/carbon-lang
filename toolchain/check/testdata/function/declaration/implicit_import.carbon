@@ -38,7 +38,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_api.carbon:31:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -62,7 +62,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern_impl.carbon:55:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:

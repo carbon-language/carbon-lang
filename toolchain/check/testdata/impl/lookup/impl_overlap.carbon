@@ -191,7 +191,7 @@ class C {}
 // CHECK:STDERR: final impl C as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:31:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -211,7 +211,7 @@ class C {}
 // CHECK:STDERR: final impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_overlaps_final_from_other_file.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:31:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -230,7 +230,7 @@ class C {}
 // CHECK:STDERR: impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE-9]]:1: in import [InImport]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: interface_z_with_impl.carbon:31:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

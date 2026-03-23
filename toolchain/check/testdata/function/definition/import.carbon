@@ -55,7 +55,7 @@ import library "fns";
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: fns.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fns.carbon:23:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -64,7 +64,7 @@ fn A() {};
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: fns.carbon:5:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fns.carbon:24:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn B(b: i32) -> i32 { return b; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -80,7 +80,7 @@ import library "extern";
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern.carbon:32:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ fn A();
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-15]]:1: in import [InImport]
-// CHECK:STDERR: extern.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern.carbon:32:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -106,7 +106,7 @@ import library "fns";
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: fns.carbon:7:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fns.carbon:26:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:

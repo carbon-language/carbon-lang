@@ -127,7 +127,7 @@ fn Calls() {
   // CHECK:STDERR:   Equal(bool);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: equal_constraint.carbon:9:10: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: equal_constraint.carbon:22:10: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Equal(T:! N where .P = {});
   // CHECK:STDERR:          ^
   // CHECK:STDERR:
@@ -137,7 +137,7 @@ fn Calls() {
   // CHECK:STDERR:   NestedRewrite(i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: nested_rewrites.carbon:10:18: note: initializing generic parameter `D` declared here [InitializingGenericParam]
+  // CHECK:STDERR: nested_rewrites.carbon:35:18: note: initializing generic parameter `D` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn NestedRewrite(D:! (A where .B = bool) where .C = ());
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:

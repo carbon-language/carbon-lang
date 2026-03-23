@@ -75,11 +75,11 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_fn_extern.carbon:29:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: other_fn.carbon:23:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
@@ -105,11 +105,11 @@ import Other library "other_fn_conflict";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: other_fn_conflict.carbon:35:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn F(unused x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: other_fn.carbon:23:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
@@ -132,7 +132,7 @@ import library "main_other_ns";
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import [InImport]
-// CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: main_other_ns.carbon:55:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -142,7 +142,7 @@ import Other library "other_fn";
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: other_fn.carbon:23:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:

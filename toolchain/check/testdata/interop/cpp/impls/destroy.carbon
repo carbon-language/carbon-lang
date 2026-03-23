@@ -109,20 +109,20 @@ fn AmbiguousDestroy() {
   // CHECK:STDERR:   var unused a: Cpp.AmbiguousDestructor = {};
   // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:13:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
+  // CHECK:STDERR: ./types.h:27:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR:    27 | class AmbiguousDestructorT {
   // CHECK:STDERR:       |       ^
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
+  // CHECK:STDERR: ./types.h:27:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
+  // CHECK:STDERR:    27 | class AmbiguousDestructorT {
   // CHECK:STDERR:       |       ^
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    15 |   ~AmbiguousDestructorT() requires (N != 1);
+  // CHECK:STDERR: ./types.h:29:3: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:    29 |   ~AmbiguousDestructorT() requires (N != 1);
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-18]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
+  // CHECK:STDERR: ./types.h:30:3: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:    30 |   ~AmbiguousDestructorT() requires (N != 2);
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.AmbiguousDestructor = {};
@@ -130,11 +130,11 @@ fn AmbiguousDestroy() {
 
 fn DeletedDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    39 |   var unused a: Cpp.DeletedDestructor = {};
+  // CHECK:STDERR:   140 |   var unused a: Cpp.DeletedDestructor = {};
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
+  // CHECK:STDERR: ./types.h:37:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR:    37 |   ~DeletedDestructor() = delete;
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.DeletedDestructor = {};
@@ -145,7 +145,7 @@ fn PrivateDestroy() {
   // CHECK:STDERR:   var unused a: Cpp.PrivateDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-42]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./types.h:42:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~PrivateDestructor();
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -157,7 +157,7 @@ fn ProtectedDestroy() {
   // CHECK:STDERR:   var unused a: Cpp.ProtectedDestructor = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-54]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./types.h:47:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   ~ProtectedDestructor();
   // CHECK:STDERR:   ^
   // CHECK:STDERR:

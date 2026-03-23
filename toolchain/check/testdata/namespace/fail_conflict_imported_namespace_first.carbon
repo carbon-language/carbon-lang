@@ -28,7 +28,7 @@ import library "namespace";
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: namespace.carbon:19:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:

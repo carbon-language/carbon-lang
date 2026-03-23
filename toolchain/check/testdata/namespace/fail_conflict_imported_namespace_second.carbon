@@ -28,7 +28,7 @@ import library "fn";
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR:           ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: fn.carbon:19:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -38,7 +38,7 @@ namespace NS;
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:    ^~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-15]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR: fn.carbon:19:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:

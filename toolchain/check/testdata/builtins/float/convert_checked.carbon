@@ -147,7 +147,7 @@ let not_constant_64: f64 = 0.0;
 // CHECK:STDERR: let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: f64.carbon:5:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: f64.carbon:36:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Float64ToFloat64(a: f64) -> f64 = "float.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

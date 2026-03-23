@@ -62,7 +62,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: two_file_impl_mismatch.carbon:55:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -83,7 +83,7 @@ impl library "no_decl_extern";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_no_decl.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: no_decl_extern.carbon:4:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
+// CHECK:STDERR: no_decl_extern.carbon:75:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
 // CHECK:STDERR: extern library "no_decl" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -100,7 +100,7 @@ extern library "indirect_two_file" fn F();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_indirect_two_file.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: indirect_two_file_extern.carbon:4:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
+// CHECK:STDERR: indirect_two_file_extern.carbon:96:1: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
 // CHECK:STDERR: extern library "indirect_two_file" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

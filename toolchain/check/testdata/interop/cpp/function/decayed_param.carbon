@@ -58,11 +58,11 @@ fn F() {
 
   var n: array(i32, 42);
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+8]]:26: error: no matching function for call to 'TakesFunction' [CppInteropParseError]
-  // CHECK:STDERR:    31 |   Cpp.TakesFunction(&n[0]);
+  // CHECK:STDERR:    68 |   Cpp.TakesFunction(&n[0]);
   // CHECK:STDERR:       |                          ^
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (*)(int)' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     3 | void TakesFunction(int f(int));
+  // CHECK:STDERR: ./params.h:16:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (*)(int)' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:    16 | void TakesFunction(int f(int));
   // CHECK:STDERR:       |      ^             ~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.TakesFunction(&n[0]);

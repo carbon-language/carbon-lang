@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''
 // CHECK:STDERR: fail_invalid_underlying_type.carbon:[[@LINE+4]]:20: error: unknown type name 'no_such_type' [CppInteropParseError]
-// CHECK:STDERR:     9 | enum InvalidEnum : no_such_type {};
+// CHECK:STDERR:    22 | enum InvalidEnum : no_such_type {};
 // CHECK:STDERR:       |                    ^
 // CHECK:STDERR:
 enum InvalidEnum : no_such_type {};

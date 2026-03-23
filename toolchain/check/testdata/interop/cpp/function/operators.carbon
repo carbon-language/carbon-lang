@@ -284,13 +284,13 @@ void operator+(C, short);
 
 fn Test(c: Cpp.C) {
   // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+10]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const C' and 'int') [CppInteropParseError]
-  // CHECK:STDERR:    21 |   c + 1;
+  // CHECK:STDERR:   296 |   c + 1;
   // CHECK:STDERR:       |     ^
   // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-8]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     6 | void operator+(C, char);
+  // CHECK:STDERR:   281 | void operator+(C, char);
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-10]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     7 | void operator+(C, short);
+  // CHECK:STDERR:   282 | void operator+(C, short);
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   c + 1;
@@ -308,13 +308,13 @@ void operator+(C, void*) = delete;
 
 fn Test(c: Cpp.C) {
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
-  // CHECK:STDERR:    21 |   c + 1;
+  // CHECK:STDERR:   320 |   c + 1;
   // CHECK:STDERR:       |     ^
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE-8]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     6 | void operator+(C, int) = delete;
+  // CHECK:STDERR:   305 | void operator+(C, int) = delete;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE-10]]:6: note: candidate function not viable: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNote]
-  // CHECK:STDERR:     7 | void operator+(C, void*) = delete;
+  // CHECK:STDERR:   306 | void operator+(C, void*) = delete;
   // CHECK:STDERR:       |      ^            ~~~~~
   // CHECK:STDERR:
   c + 1;
@@ -380,13 +380,13 @@ auto operator<(C lhs, B rhs) -> bool;
 fn F(c: Cpp.C) -> bool {
   // Note that we mention `operator '<=>'` in the diagnostic.
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+10]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   return c < c;
+  // CHECK:STDERR:   392 |   return c < c;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-9]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     9 | auto operator<=>(C lhs, C rhs) -> std::strong_ordering = delete;
+  // CHECK:STDERR:   376 | auto operator<=>(C lhs, C rhs) -> std::strong_ordering = delete;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-11]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    10 | auto operator<(C lhs, B rhs) -> bool;
+  // CHECK:STDERR:   377 | auto operator<(C lhs, B rhs) -> bool;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   return c < c;
@@ -898,7 +898,7 @@ fn F() {
   // CHECK:STDERR:   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
   // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./incomplete.h:885:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -917,7 +917,7 @@ fn F() {
   // CHECK:STDERR:   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
   // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./incomplete.h:885:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -983,7 +983,7 @@ import Cpp inline '''
 template<typename T> struct B {};
 template<typename T> struct A {
   // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+3]]:19: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
-  // CHECK:STDERR:    10 |   friend typename T::error operator+(B<A>, B<A>);
+  // CHECK:STDERR:   988 |   friend typename T::error operator+(B<A>, B<A>);
   // CHECK:STDERR:       |                   ^
   friend typename T::error operator+(B<A>, B<A>);
 };
@@ -993,7 +993,7 @@ using X = B<A<int>>;
 
 fn F(x: Cpp.X) -> i32 {
   // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+8]]:12: note: in instantiation of template class 'A<int>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    25 |   return x + x;
+  // CHECK:STDERR:  1003 |   return x + x;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(Cpp.B)` in type `Cpp.B` that does not implement that interface [MissingImplInMemberAccess]

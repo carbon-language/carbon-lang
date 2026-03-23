@@ -144,8 +144,8 @@ auto foo(char8_t c) -> void;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_import_char8_t_param.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./char8_t_param.h:2:10: error: unknown type name 'char8_t' [CppInteropParseError]
-// CHECK:STDERR:     2 | auto foo(char8_t c) -> void;
+// CHECK:STDERR: ./char8_t_param.h:140:10: error: unknown type name 'char8_t' [CppInteropParseError]
+// CHECK:STDERR:   140 | auto foo(char8_t c) -> void;
 // CHECK:STDERR:       |          ^
 // CHECK:STDERR:
 import Cpp library "char8_t_param.h";
@@ -246,7 +246,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(0x8000);
   // CHECK:STDERR:           ^~~~~~
   // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./short_param.h:212:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(short a) -> void;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -276,7 +276,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(-0x8001);
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./short_param.h:212:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(short a) -> void;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -297,7 +297,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./short_param.h:212:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo(short a) -> void;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:

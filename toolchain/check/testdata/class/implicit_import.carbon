@@ -38,7 +38,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: redecl_after_def.carbon:31:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -58,7 +58,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
+// CHECK:STDERR: redef_after_def.carbon:51:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -79,7 +79,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: class B {}
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: def_alias.carbon:72:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:

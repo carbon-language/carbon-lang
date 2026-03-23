@@ -20,7 +20,7 @@ auto [a, b] = X{};
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./structured_binding.h:3:7: error: semantics TODO: `Unsupported: Declaration type Binding` [SemanticsTodo]
+// CHECK:STDERR: ./structured_binding.h:16:7: error: semantics TODO: `Unsupported: Declaration type Binding` [SemanticsTodo]
 // CHECK:STDERR: auto [a, b] = X{};
 // CHECK:STDERR:       ^
 import Cpp library "structured_binding.h";

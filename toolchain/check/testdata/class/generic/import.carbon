@@ -77,7 +77,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
 // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: foo.carbon:4:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: foo.carbon:19:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class Class(T:! type);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:

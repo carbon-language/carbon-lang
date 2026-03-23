@@ -70,8 +70,8 @@ fn F() {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 8, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 29, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 27, column: 1, scope: !11)

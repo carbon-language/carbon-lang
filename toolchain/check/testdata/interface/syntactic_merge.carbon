@@ -77,7 +77,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface Foo(a:! C) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: two_file.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: two_file.carbon:69:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -86,7 +86,7 @@ interface Foo(a:! C) {}
 // CHECK:STDERR: interface Bar(a:! D) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: two_file.carbon:8:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: two_file.carbon:70:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Bar(a:! D);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -164,7 +164,7 @@ alias D = C;
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: alias_two_file.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: alias_two_file.carbon:152:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

@@ -49,7 +49,7 @@ UnusupportedType global;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./unsupported_type.h:2:7: error: semantics TODO: `Unsupported: Type declaration: UnusupportedType` [SemanticsTodo]
+// CHECK:STDERR: ./unsupported_type.h:44:7: error: semantics TODO: `Unsupported: Type declaration: UnusupportedType` [SemanticsTodo]
 // CHECK:STDERR: using UnusupportedType = _BitInt(23);
 // CHECK:STDERR:       ^
 import Cpp library "unsupported_type.h";

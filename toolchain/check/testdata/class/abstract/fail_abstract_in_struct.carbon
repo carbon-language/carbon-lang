@@ -116,7 +116,7 @@ import library "lib";
 // CHECK:STDERR: var v5: {.m: Abstract};
 // CHECK:STDERR:         ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: lib.carbon:3:1: note: uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR: lib.carbon:108:1: note: uses class that was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR: abstract class Abstract {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

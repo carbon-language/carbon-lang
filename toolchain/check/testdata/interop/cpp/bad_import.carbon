@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:10: error: empty filename [CppInteropParseError]
-// CHECK:STDERR:     8 | #include ""
+// CHECK:STDERR:    21 | #include ""
 // CHECK:STDERR:       |          ^
 // CHECK:STDERR:
 import Cpp library "";
@@ -25,7 +25,7 @@ import Cpp library "";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
-// CHECK:STDERR:     8 | #include "\"foo.h\""
+// CHECK:STDERR:    31 | #include "\"foo.h\""
 // CHECK:STDERR:       |          ^~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";

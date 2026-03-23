@@ -69,12 +69,12 @@ var x: Cpp.XY.r#type = 0;
 // CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
 // CHECK:STDERR:        ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./instantiation_error.h:3:25: note: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
-// CHECK:STDERR:     3 |   using type = typename T::member;
+// CHECK:STDERR: ./instantiation_error.h:49:25: note: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
+// CHECK:STDERR:    49 |   using type = typename T::member;
 // CHECK:STDERR:       |                         ^
 // CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./instantiation_error.h:2:29: note: in instantiation of template class 'X<int>' requested here [CppInteropParseNote]
-// CHECK:STDERR:     2 | template<typename T> struct X {
+// CHECK:STDERR: ./instantiation_error.h:48:29: note: in instantiation of template class 'X<int>' requested here [CppInteropParseNote]
+// CHECK:STDERR:    48 | template<typename T> struct X {
 // CHECK:STDERR:       |                             ^
 // CHECK:STDERR:
 var y: Cpp.Xint.r#type = 0;

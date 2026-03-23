@@ -47,8 +47,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./bad_suffix.h:1:24: error: invalid digit 'f' in decimal constant [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 42f
+// CHECK:STDERR: ./bad_suffix.h:43:24: error: invalid digit 'f' in decimal constant [CppInteropParseError]
+// CHECK:STDERR:    43 | #define CONFIG_VALUE 42f
 // CHECK:STDERR:       |                        ^
 import Cpp library "bad_suffix.h";
 
@@ -79,8 +79,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./integer_literal_too_big.h:1:22: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 18446744073709551616
+// CHECK:STDERR: ./integer_literal_too_big.h:75:22: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
+// CHECK:STDERR:    75 | #define CONFIG_VALUE 18446744073709551616
 // CHECK:STDERR:       |                      ^
 import Cpp library "integer_literal_too_big.h";
 
@@ -460,8 +460,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
+// CHECK:STDERR: ./multiple_characters.h:456:24: warning: multi-character character constant [CppInteropParseWarning]
+// CHECK:STDERR:   456 | #define MULTIPLE_CHARS 'AB'
 // CHECK:STDERR:       |                        ^
 import Cpp library "multiple_characters.h";
 
@@ -767,12 +767,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #define TWICE_DEF 2
+// CHECK:STDERR: ./macro_defined_twice.h:763:9: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
+// CHECK:STDERR:   763 | #define TWICE_DEF 2
 // CHECK:STDERR:       |         ^
 // CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:2:9: note: previous definition is here [CppInteropParseNote]
-// CHECK:STDERR:     2 | #define TWICE_DEF 1
+// CHECK:STDERR: ./macro_defined_twice.h:762:9: note: previous definition is here [CppInteropParseNote]
+// CHECK:STDERR:   762 | #define TWICE_DEF 1
 // CHECK:STDERR:       |         ^
 // CHECK:STDERR:
 import Cpp library "macro_defined_twice.h";

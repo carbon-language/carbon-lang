@@ -44,11 +44,11 @@ fn G() -> const Cpp.S;
 fn F() {
   var s: const Cpp.S = G();
   // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+8]]:13: error: no matching function for call to 'foo' [CppInteropParseError]
-  // CHECK:STDERR:    18 |   Cpp.foo(&s);
+  // CHECK:STDERR:    54 |   Cpp.foo(&s);
   // CHECK:STDERR:       |             ^
   // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6: note: candidate function not viable: 1st argument ('const S * _Nonnull') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     4 | auto foo(S* _Nonnull) -> void;
+  // CHECK:STDERR: ./non_nullable_pointer_param.h:21:6: note: candidate function not viable: 1st argument ('const S * _Nonnull') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR:    21 | auto foo(S* _Nonnull) -> void;
   // CHECK:STDERR:       |      ^   ~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(&s);

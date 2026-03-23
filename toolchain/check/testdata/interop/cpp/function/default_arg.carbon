@@ -64,71 +64,71 @@ import Cpp library "functions.h";
 fn Call() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:23: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Cpp.GlobalNoReturn(1);
+  // CHECK:STDERR:    74 |   Cpp.GlobalNoReturn(1);
   // CHECK:STDERR:       |                       ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable: requires at least 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
+  // CHECK:STDERR: ./functions.h:16:6: note: candidate function not viable: requires at least 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:    16 | auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
   // CHECK:STDERR:       |      ^              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.GlobalNoReturn(1);
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:22: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
-  // CHECK:STDERR:    26 |   Cpp.GlobalNoReturn();
+  // CHECK:STDERR:    84 |   Cpp.GlobalNoReturn();
   // CHECK:STDERR:       |                      ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable: requires at least 2 arguments, but 0 were provided [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
+  // CHECK:STDERR: ./functions.h:16:6: note: candidate function not viable: requires at least 2 arguments, but 0 were provided [CppInteropParseNote]
+  // CHECK:STDERR:    16 | auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
   // CHECK:STDERR:       |      ^              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.GlobalNoReturn();
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:24: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
-  // CHECK:STDERR:    36 |   Cpp.GlobalReturnInt(1);
+  // CHECK:STDERR:    94 |   Cpp.GlobalReturnInt(1);
   // CHECK:STDERR:       |                        ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable: requires at least 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
+  // CHECK:STDERR: ./functions.h:17:6: note: candidate function not viable: requires at least 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:    17 | auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
   // CHECK:STDERR:       |      ^               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.GlobalReturnInt(1);
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:23: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
-  // CHECK:STDERR:    46 |   Cpp.GlobalReturnInt();
+  // CHECK:STDERR:   104 |   Cpp.GlobalReturnInt();
   // CHECK:STDERR:       |                       ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable: requires at least 2 arguments, but 0 were provided [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
+  // CHECK:STDERR: ./functions.h:17:6: note: candidate function not viable: requires at least 2 arguments, but 0 were provided [CppInteropParseNote]
+  // CHECK:STDERR:    17 | auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
   // CHECK:STDERR:       |      ^               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.GlobalReturnInt();
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:19: error: no matching function for call to 'B' [CppInteropParseError]
-  // CHECK:STDERR:    56 |   ({} as Cpp.X).B();
+  // CHECK:STDERR:   114 |   ({} as Cpp.X).B();
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-47]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:6:8: note: candidate function not viable: requires at least argument 'a', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     6 |   void B(int a, int b = 1);
+  // CHECK:STDERR: ./functions.h:20:8: note: candidate function not viable: requires at least argument 'a', but no arguments were provided [CppInteropParseNote]
+  // CHECK:STDERR:    20 |   void B(int a, int b = 1);
   // CHECK:STDERR:       |        ^ ~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as Cpp.X).B();
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:11: error: no matching function for call to 'C' [CppInteropParseError]
-  // CHECK:STDERR:    66 |   Cpp.X.C();
+  // CHECK:STDERR:   124 |   Cpp.X.C();
   // CHECK:STDERR:       |           ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-57]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:7:15: note: candidate function not viable: requires at least argument 'a', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     7 |   static void C(int a, int b = 1);
+  // CHECK:STDERR: ./functions.h:21:15: note: candidate function not viable: requires at least argument 'a', but no arguments were provided [CppInteropParseNote]
+  // CHECK:STDERR:    21 |   static void C(int a, int b = 1);
   // CHECK:STDERR:       |               ^ ~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.X.C();
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+8]]:19: error: no matching function for call to 'D' [CppInteropParseError]
-  // CHECK:STDERR:    76 |   ({} as Cpp.X).D();
+  // CHECK:STDERR:   134 |   ({} as Cpp.X).D();
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-67]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./functions.h:8:8: note: candidate function not viable: requires at least non-object argument 'a', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     8 |   void D(this X, int a, int b = 1);
+  // CHECK:STDERR: ./functions.h:22:8: note: candidate function not viable: requires at least non-object argument 'a', but no arguments were provided [CppInteropParseNote]
+  // CHECK:STDERR:    22 |   void D(this X, int a, int b = 1);
   // CHECK:STDERR:       |        ^ ~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as Cpp.X).D();

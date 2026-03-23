@@ -27,7 +27,7 @@ import library "a";
 // CHECK:STDERR: interface I {}
 // CHECK:STDERR:           ^
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: a.carbon:19:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:

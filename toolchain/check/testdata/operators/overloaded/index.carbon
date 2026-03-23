@@ -68,7 +68,7 @@ fn F() {
   // CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to generic interface expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   c[()];
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: core_wrong_arg_count.carbon:4:1: note: calling generic interface declared here [InCallToEntity]
+  // CHECK:STDERR: core_wrong_arg_count.carbon:47:1: note: calling generic interface declared here [InCallToEntity]
   // CHECK:STDERR: interface IndexWith(SubscriptType:! type, ElementType:! type) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

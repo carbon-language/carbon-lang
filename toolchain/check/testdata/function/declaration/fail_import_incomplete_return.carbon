@@ -62,11 +62,11 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:   ReturnCUnused();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:19:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:7:23: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:22:23: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUnused() -> C;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
@@ -75,11 +75,11 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-19]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:19:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import [InImport]
-  // CHECK:STDERR: fail_incomplete_return.carbon:8:21: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:23:21: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                     ^
   // CHECK:STDERR:

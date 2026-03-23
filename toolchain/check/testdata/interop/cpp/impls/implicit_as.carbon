@@ -115,7 +115,7 @@ fn InaccessibleConstructorTest(s: Cpp.Source) {
   // CHECK:STDERR:   let _: Cpp.InaccessibleConstructor = s;
   // CHECK:STDERR:                                        ^
   // CHECK:STDERR: fail_access.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./implicit_conversions.h:21:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./implicit_conversions.h:35:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   InaccessibleConstructor(Source);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -129,7 +129,7 @@ fn InaccessibleConversionTest(s: Cpp.InaccessibleConversion) {
   // CHECK:STDERR:   let _: Cpp.Dest = s;
   // CHECK:STDERR:                     ^
   // CHECK:STDERR: fail_access.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./implicit_conversions.h:26:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./implicit_conversions.h:40:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   operator Dest() const;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -228,7 +228,7 @@ fn IntConstructorTest(u: u32) {
   // CHECK:STDERR:   let _: Cpp.IntConstructor = u;
   // CHECK:STDERR:                               ^
   // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./implicit_conversions.h:38:21: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./implicit_conversions.h:52:21: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   IntConstructor(int);
   // CHECK:STDERR:                     ^
   // CHECK:STDERR:

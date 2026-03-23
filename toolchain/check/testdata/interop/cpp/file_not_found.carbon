@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+4]]:10: error: 'not_found.h' file not found [CppInteropParseError]
-// CHECK:STDERR:     8 | #include "not_found.h"
+// CHECK:STDERR:    21 | #include "not_found.h"
 // CHECK:STDERR:       |          ^~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "not_found.h";

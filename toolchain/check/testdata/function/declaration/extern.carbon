@@ -79,7 +79,7 @@ import library "basic";
 // CHECK:STDERR: extern library "basic" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: basic.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: basic.carbon:19:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:

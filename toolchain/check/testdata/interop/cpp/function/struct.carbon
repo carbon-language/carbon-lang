@@ -26,12 +26,12 @@ auto foo2(S) -> void;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'S' is incomplete [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo1(S) -> void;
+// CHECK:STDERR: ./decl_value_param_type.h:21:6: error: argument type 'S' is incomplete [CppInteropParseError]
+// CHECK:STDERR:    21 | auto foo1(S) -> void;
 // CHECK:STDERR:       |      ^~~~
 // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
-// CHECK:STDERR:     2 | struct S;
+// CHECK:STDERR: ./decl_value_param_type.h:19:8: note: forward declaration of 'S' [CppInteropParseNote]
+// CHECK:STDERR:    19 | struct S;
 // CHECK:STDERR:       |        ^
 import Cpp library "decl_value_param_type.h";
 
@@ -41,12 +41,12 @@ fn F(p: Cpp.S*) {
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6: error: argument type 'S' is incomplete [CppInteropParseError]
-  // CHECK:STDERR:     5 | auto foo2(S) -> void;
+  // CHECK:STDERR: ./decl_value_param_type.h:22:6: error: argument type 'S' is incomplete [CppInteropParseError]
+  // CHECK:STDERR:    22 | auto foo2(S) -> void;
   // CHECK:STDERR:       |      ^~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | struct S;
+  // CHECK:STDERR: ./decl_value_param_type.h:19:8: note: forward declaration of 'S' [CppInteropParseNote]
+  // CHECK:STDERR:    19 | struct S;
   // CHECK:STDERR:       |        ^
   Cpp.foo1(*p);
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+28]]:3: note: in thunk for C++ function used here [InCppThunk]
@@ -57,11 +57,11 @@ fn F(p: Cpp.S*) {
   // CHECK:STDERR:   Cpp.foo1(*p);
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./decl_value_param_type.h:19:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:4:12: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./decl_value_param_type.h:21:12: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo1(S) -> void;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
@@ -69,11 +69,11 @@ fn F(p: Cpp.S*) {
   // CHECK:STDERR:   Cpp.foo2(*p);
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./decl_value_param_type.h:19:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:12: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: ./decl_value_param_type.h:22:12: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: auto foo2(S) -> void;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
@@ -119,16 +119,16 @@ auto foo(S) -> void;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:6: error: call to deleted constructor of 'S' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo(S) -> void;
+// CHECK:STDERR: ./non_copyable_param_type.h:115:6: error: call to deleted constructor of 'S' [CppInteropParseError]
+// CHECK:STDERR:   115 | auto foo(S) -> void;
 // CHECK:STDERR:       |      ^~~
 // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'S' has been explicitly marked deleted here [CppInteropParseNote]
-// CHECK:STDERR:     3 |   S(const S&) = delete;
+// CHECK:STDERR: ./non_copyable_param_type.h:112:3: note: 'S' has been explicitly marked deleted here [CppInteropParseNote]
+// CHECK:STDERR:   112 |   S(const S&) = delete;
 // CHECK:STDERR:       |   ^
 // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:11: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo(S) -> void;
+// CHECK:STDERR: ./non_copyable_param_type.h:115:11: note: passing argument to parameter here [CppInteropParseNote]
+// CHECK:STDERR:   115 | auto foo(S) -> void;
 // CHECK:STDERR:       |           ^
 import Cpp library "non_copyable_param_type.h";
 
@@ -325,7 +325,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.Incomplete.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./incomplete.h:315:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct Incomplete;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
@@ -392,16 +392,16 @@ library "[[@TEST_NAME]]";
 
 // TODO: We should only produce one error here.
 // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: error: calling 'foo' with incomplete return type 'S' [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo() -> S;
+// CHECK:STDERR: ./decl_value_return_type.h:387:6: error: calling 'foo' with incomplete return type 'S' [CppInteropParseError]
+// CHECK:STDERR:   387 | auto foo() -> S;
 // CHECK:STDERR:       |      ^~~
 // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo' declared here [CppInteropParseNote]
-// CHECK:STDERR:     4 | auto foo() -> S;
+// CHECK:STDERR: ./decl_value_return_type.h:387:6: note: 'foo' declared here [CppInteropParseNote]
+// CHECK:STDERR:   387 | auto foo() -> S;
 // CHECK:STDERR:       |      ^
 // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
-// CHECK:STDERR:     2 | struct S;
+// CHECK:STDERR: ./decl_value_return_type.h:385:8: note: forward declaration of 'S' [CppInteropParseNote]
+// CHECK:STDERR:   385 | struct S;
 // CHECK:STDERR:       |        ^
 import Cpp library "decl_value_return_type.h";
 
@@ -414,11 +414,11 @@ fn F() {
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./decl_value_return_type.h:385:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: ./decl_value_return_type.h:387:1: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: auto foo() -> S;
   // CHECK:STDERR: ^
   // CHECK:STDERR:

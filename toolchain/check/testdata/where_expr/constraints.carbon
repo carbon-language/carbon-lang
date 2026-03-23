@@ -128,7 +128,7 @@ fn DoesNotImplI() {
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: state_constraints.carbon:14:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
+  // CHECK:STDERR: state_constraints.carbon:60:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
   // CHECK:STDERR:          ^
   // CHECK:STDERR:

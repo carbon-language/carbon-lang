@@ -38,7 +38,7 @@ impl package Implicit;
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:1: in import [InImport]
-// CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
+// CHECK:STDERR: implicit.carbon:21:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:

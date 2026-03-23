@@ -54,7 +54,7 @@ class C {
 // CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
 // CHECK:STDERR:                     ^~~~~~
 // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-21]]:1: in import [InImport]
-// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToFunction]
+// CHECK:STDERR: fail_invalid_interface.carbon:29:3: note: calling function declared here [InCallToFunction]
 // CHECK:STDERR:   fn Op[self: Self]() -> ArgToI(Arg);
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -88,7 +88,7 @@ class C {
     // CHECK:STDERR:     fn Op[unused self: Self]() -> ArgToI(ArgC) {
     // CHECK:STDERR:                                   ^~~~~~~~~~~~
     // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-9]]:1: in import [InImport]
-    // CHECK:STDERR: fail_invalid_interface.carbon:5:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+    // CHECK:STDERR: fail_invalid_interface.carbon:18:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
     // CHECK:STDERR: class ArgToI(T:! I) {}
     // CHECK:STDERR:              ^
     // CHECK:STDERR:
@@ -102,7 +102,7 @@ class C {
 // CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
 // CHECK:STDERR:                     ^~~~~~
 // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-23]]:1: in import [InImport]
-// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToFunction]
+// CHECK:STDERR: fail_invalid_interface.carbon:29:3: note: calling function declared here [InCallToFunction]
 // CHECK:STDERR:   fn Op[self: Self]() -> ArgToI(Arg);
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

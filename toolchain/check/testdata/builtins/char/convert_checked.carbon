@@ -53,7 +53,7 @@ let c: CharLiteral() = 'a';
 // CHECK:STDERR: let d: UInt(8) = ToChar(c);
 // CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: builtin.carbon:8:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: builtin.carbon:21:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn ToChar(c: CharLiteral()) -> UInt(8) = "char.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

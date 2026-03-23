@@ -72,9 +72,9 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 12, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 25, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !15 = !DILocation(line: 13, column: 10, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 26, column: 10, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 26, column: 3, scope: !11)

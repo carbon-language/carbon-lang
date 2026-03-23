@@ -25,17 +25,17 @@ a
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: fail_indent_mismatch.carbon:3:1: error: indentation does not match that of the closing `'''` in multi-line string literal [MismatchedIndentInString]
+// CHECK:STDERR: fail_indent_mismatch.carbon:17:1: error: indentation does not match that of the closing `'''` in multi-line string literal [MismatchedIndentInString]
 // CHECK:STDERR: a
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_quotes.carbon:2:1: error: use `'''` delimiters for a multi-line string literal, not `"""` [MultiLineStringWithDoubleQuotes]
+// CHECK:STDERR: fail_quotes.carbon:22:1: error: use `'''` delimiters for a multi-line string literal, not `"""` [MultiLineStringWithDoubleQuotes]
 // CHECK:STDERR: """
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_indent_mismatch.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}2, column: 3, indent: 3, spelling: "'''\na\n  '''", value: "a\n", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}16, column: 3, indent: 3, spelling: "'''\na\n  '''", value: "a\n", has_leading_space: true }
 // CHECK:STDOUT: - filename: fail_quotes.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}2, column: 1, indent: 1, spelling: "\"\"\"\na\n\"\"\"", value: "a\n", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}22, column: 1, indent: 1, spelling: "\"\"\"\na\n\"\"\"", value: "a\n", has_leading_space: true }

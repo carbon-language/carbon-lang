@@ -156,25 +156,25 @@ import Cpp library "deleted.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+8]]:33: error: call to deleted function 'C' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   let unused c: Cpp.C = Cpp.C.C();
+  // CHECK:STDERR:   166 |   let unused c: Cpp.C = Cpp.C.C();
   // CHECK:STDERR:       |                                 ^
   // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:4:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     4 |   C() = delete;
+  // CHECK:STDERR: ./deleted.h:142:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:   142 |   C() = delete;
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   let unused c: Cpp.C = Cpp.C.C();
 
   // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+12]]:34: error: call to deleted function 'D' [CppInteropParseError]
-  // CHECK:STDERR:    29 |   let unused d: Cpp.D = Cpp.D.D(0);
+  // CHECK:STDERR:   180 |   let unused d: Cpp.D = Cpp.D.D(0);
   // CHECK:STDERR:       |                                  ^
   // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:9:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     9 |   D(int) = delete;
+  // CHECK:STDERR: ./deleted.h:147:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:   147 |   D(int) = delete;
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:10:3: note: candidate constructor [CppInteropParseNote]
-  // CHECK:STDERR:    10 |   D(short);
+  // CHECK:STDERR: ./deleted.h:148:3: note: candidate constructor [CppInteropParseNote]
+  // CHECK:STDERR:   148 |   D(short);
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   let unused d: Cpp.D = Cpp.D.D(0);
@@ -248,7 +248,7 @@ fn F() {
    // CHECK:STDERR:    Cpp.C.C();
    // CHECK:STDERR:    ^~~~~~~
    // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+   // CHECK:STDERR: ./incomplete.h:238:7: note: class was forward declared here [ClassForwardDeclaredHere]
    // CHECK:STDERR: class C;
    // CHECK:STDERR:       ^
    // CHECK:STDERR:

@@ -74,7 +74,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
   // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_protected.h:60:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -104,7 +104,7 @@ fn F(d: Derived) {
   // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
   // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_protected.h:60:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -159,7 +159,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
   // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_private.h:146:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -187,7 +187,7 @@ class Derived {
     // CHECK:STDERR:     let unused instance_data: i32 = self.instance_data;
     // CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: ./non_function_member_private.h:146:7: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR: class C {
     // CHECK:STDERR:       ^
     // CHECK:STDERR:
@@ -200,7 +200,7 @@ fn F(d: Derived) {
   // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
   // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_private.h:146:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -471,7 +471,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.C.C(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:11:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set.h:443:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   C(ProtectedCall x);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -481,7 +481,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.C.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set.h:444:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -533,7 +533,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.C.C(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set.h:446:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   C(PrivateCall x);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
@@ -543,7 +543,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.C.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set.h:447:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -564,7 +564,7 @@ class D {
     // CHECK:STDERR:     return {.base = C(Cpp.PrivateCall.PrivateCall())};
     // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: ./overload_set.h:446:3: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   C(PrivateCall x);
     // CHECK:STDERR:   ^
     // CHECK:STDERR:
@@ -576,7 +576,7 @@ class D {
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: ./overload_set.h:447:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
     // CHECK:STDERR:               ^
     // CHECK:STDERR:
@@ -615,8 +615,8 @@ fn F() {
   // CHECK:STDERR:   Cpp.Public.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set_base_class.h:589:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./overload_set.h:444:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -625,8 +625,8 @@ fn F() {
   // CHECK:STDERR:   Cpp.Public.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./overload_set_base_class.h:589:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./overload_set.h:447:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -664,8 +664,8 @@ class Derived {
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: ./overload_set_base_class.h:589:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set.h:447:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
     // CHECK:STDERR:               ^
     // CHECK:STDERR:
@@ -737,8 +737,8 @@ class Derived {
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: ./overload_set_base_class.h:589:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set.h:447:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
     // CHECK:STDERR:               ^
     // CHECK:STDERR:

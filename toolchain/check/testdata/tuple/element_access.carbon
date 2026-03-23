@@ -146,7 +146,7 @@ var b: i32 = 0;
 // CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+11]]:17: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: var c: i32 = a.(b);
 // CHECK:STDERR:                 ^
-// CHECK:STDERR: min_prelude/parts/int.carbon:27:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: min_prelude/parts/int.carbon:36:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

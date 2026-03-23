@@ -44,15 +44,15 @@ library "[[@TEST_NAME]]";
 
 // TODO: Promote this warning to an error by default.
 // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./without_definition.h:2:13: warning: inline function 'foo' is not defined [CppInteropParseWarning]
-// CHECK:STDERR:     2 | inline void foo();
+// CHECK:STDERR: ./without_definition.h:39:13: warning: inline function 'foo' is not defined [CppInteropParseWarning]
+// CHECK:STDERR:    39 | inline void foo();
 // CHECK:STDERR:       |             ^
 import Cpp library "without_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:11: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:    17 |   Cpp.foo();
+  // CHECK:STDERR:    58 |   Cpp.foo();
   // CHECK:STDERR:       |           ^
   // CHECK:STDERR:
   Cpp.foo();

@@ -36,7 +36,7 @@ import library default;
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: default.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: default.carbon:19:1: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR: extern library "expected" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

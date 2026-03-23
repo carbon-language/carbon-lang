@@ -60,12 +60,12 @@ import library "b";
 // CHECK:STDERR: fn G() { F(); }
 // CHECK:STDERR:          ^~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: b.carbon:26:1: in import [InImport]
+// CHECK:STDERR: a.carbon:21:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:30:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR:
@@ -81,12 +81,12 @@ import Same library "b";
 // CHECK:STDERR: fn G() { Same.F(); }
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: b.carbon:26:1: in import [InImport]
+// CHECK:STDERR: a.carbon:21:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:30:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR:

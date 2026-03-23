@@ -39,7 +39,7 @@ fn MyF() {
   // CHECK:STDERR:   var unused bar: Cpp.Bar;
   // CHECK:STDERR:                   ^~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./declaration.h:19:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Bar;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:

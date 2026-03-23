@@ -135,12 +135,12 @@ fn MyF() {
   // CHECK:STDERR:
   // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | namespace N { void foo(); }
+  // CHECK:STDERR: ./inline_ambiguity.h:117:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
+  // CHECK:STDERR:   117 | namespace N { void foo(); }
   // CHECK:STDERR:       |           ^
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
-  // CHECK:STDERR:     3 | inline namespace { namespace N {} }
+  // CHECK:STDERR: ./inline_ambiguity.h:118:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
+  // CHECK:STDERR:   118 | inline namespace { namespace N {} }
   // CHECK:STDERR:       |                              ^
   error;
 

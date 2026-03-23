@@ -125,7 +125,7 @@ fn Var5() {
   // CHECK:STDERR:   var unused v5: (Abstract,);
   // CHECK:STDERR:                  ^~~~~~~~~~~
   // CHECK:STDERR: fail_import.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: lib.carbon:3:1: note: uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: lib.carbon:116:1: note: uses class that was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

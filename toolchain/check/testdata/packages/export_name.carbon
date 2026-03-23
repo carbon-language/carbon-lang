@@ -95,7 +95,7 @@ import library "base";
 // CHECK:STDERR: export NS;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: base.carbon:8:1: note: name is declared here [ExportNotImportedEntitySource]
+// CHECK:STDERR: base.carbon:27:1: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -126,7 +126,7 @@ import library "base";
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: base.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR: base.carbon:23:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

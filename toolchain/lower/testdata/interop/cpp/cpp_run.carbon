@@ -58,8 +58,8 @@ fn Run() {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !6, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !6, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 9, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 8, column: 1, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 21, column: 1, scope: !11)

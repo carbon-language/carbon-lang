@@ -30,11 +30,11 @@ fn NS.Foo() {}
 package Example library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: namespace.carbon:25:1: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: fn.carbon:19:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn NS() {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
