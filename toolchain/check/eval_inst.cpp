@@ -131,8 +131,11 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   if (const auto* var_decl = GetAsClangVarDecl(context, inst.value_id)) {
     const_id =
         EvalCppVarDecl(context, SemIR::LocId(inst_id), var_decl, inst.type_id);
+  } else if (auto value_as_ref =
+                 context.insts().TryGetAs<SemIR::ValueAsRef>(inst.value_id)) {
+    const_id = context.constant_values().Get(value_as_ref->value_id);
   } else {
-    const_id = context.constant_values().Get(inst.value_id);
+    return ConstantEvalResult::TODO;
   }
 
   if (const_id.has_value() && const_id.is_constant()) {
@@ -695,6 +698,14 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
 
 auto EvalConstantInst(Context& context, SemIR::Temporary inst)
     -> ConstantEvalResult {
+  // TODO: limit to a few types for now to avoid a "Missing case in
+  // TryResolveInstCanonical" crash.
+  auto init_inst = context.insts().Get(inst.init_id);
+  if (!(init_inst.Is<SemIR::BoolLiteral>() ||
+        init_inst.Is<SemIR::FloatValue>())) {
+    return ConstantEvalResult::TODO;
+  }
+
   auto const_id = context.constant_values().Get(inst.init_id);
   if (const_id.has_value() && const_id.is_constant()) {
     return ConstantEvalResult::NewAnyPhase(SemIR::ValueAsRef{

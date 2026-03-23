@@ -25,9 +25,25 @@ library "[[@TEST_NAME]]";
 import Cpp library "alias_template.h";
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: use_alias_template.carbon:[[@LINE+4]]:35: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
+// CHECK:STDERR: var a1: Cpp.First(Cpp.A, Cpp.B) = Cpp.A.A();
+// CHECK:STDERR:                                   ^~~~~~~~~
+// CHECK:STDERR:
 var a1: Cpp.First(Cpp.A, Cpp.B) = Cpp.A.A();
+// CHECK:STDERR: use_alias_template.carbon:[[@LINE+4]]:35: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
+// CHECK:STDERR: var b1: Cpp.First(Cpp.B, Cpp.A) = Cpp.B.B();
+// CHECK:STDERR:                                   ^~~~~~~~~
+// CHECK:STDERR:
 var b1: Cpp.First(Cpp.B, Cpp.A) = Cpp.B.B();
+// CHECK:STDERR: use_alias_template.carbon:[[@LINE+4]]:36: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
+// CHECK:STDERR: var b2: Cpp.Second(Cpp.A, Cpp.B) = Cpp.B.B();
+// CHECK:STDERR:                                    ^~~~~~~~~
+// CHECK:STDERR:
 var b2: Cpp.Second(Cpp.A, Cpp.B) = Cpp.B.B();
+// CHECK:STDERR: use_alias_template.carbon:[[@LINE+4]]:36: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
+// CHECK:STDERR: var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
+// CHECK:STDERR:                                    ^~~~~~~~~
+// CHECK:STDERR:
 var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 //@dump-sem-ir-end
 
@@ -110,38 +126,38 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc7_38: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %A.ref.loc7_40: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
-// CHECK:STDOUT:   %addr.loc7: %ptr.270 = addr_of %.loc7_1
-// CHECK:STDOUT:   %A__carbon_thunk.call.loc7: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc7)
-// CHECK:STDOUT:   %.loc7_43: init %A to %.loc7_1 = mark_in_place_init %A__carbon_thunk.call.loc7
-// CHECK:STDOUT:   assign file.%a1.var, %.loc7_43
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc8_38: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc8_40: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_1: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
-// CHECK:STDOUT:   %addr.loc8: %ptr.a04 = addr_of %.loc8_1
-// CHECK:STDOUT:   %B__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc8)
-// CHECK:STDOUT:   %.loc8_43: init %B to %.loc8_1 = mark_in_place_init %B__carbon_thunk.call.loc8
-// CHECK:STDOUT:   assign file.%b1.var, %.loc8_43
-// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %B.ref.loc9_39: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc9_41: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc9_1: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
-// CHECK:STDOUT:   %addr.loc9: %ptr.a04 = addr_of %.loc9_1
-// CHECK:STDOUT:   %B__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc9)
-// CHECK:STDOUT:   %.loc9_44: init %B to %.loc9_1 = mark_in_place_init %B__carbon_thunk.call.loc9
-// CHECK:STDOUT:   assign file.%b2.var, %.loc9_44
-// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %A.ref.loc10_39: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %A.ref.loc10_41: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc10_1: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
-// CHECK:STDOUT:   %addr.loc10: %ptr.270 = addr_of %.loc10_1
-// CHECK:STDOUT:   %A__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc10)
-// CHECK:STDOUT:   %.loc10_44: init %A to %.loc10_1 = mark_in_place_init %A__carbon_thunk.call.loc10
-// CHECK:STDOUT:   assign file.%a2.var, %.loc10_44
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc11_38: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc11_40: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc11_1: ref %A = splice_block file.%a1.var [concrete = file.%a1.var] {}
+// CHECK:STDOUT:   %addr.loc11: %ptr.270 = addr_of %.loc11_1
+// CHECK:STDOUT:   %A__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc11) [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_43: init %A to %.loc11_1 = mark_in_place_init %A__carbon_thunk.call.loc11 [concrete = <error>]
+// CHECK:STDOUT:   assign file.%a1.var, %.loc11_43
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc16_38: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc16_40: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc16_1: ref %B = splice_block file.%b1.var [concrete = file.%b1.var] {}
+// CHECK:STDOUT:   %addr.loc16: %ptr.a04 = addr_of %.loc16_1
+// CHECK:STDOUT:   %B__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc16) [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_43: init %B to %.loc16_1 = mark_in_place_init %B__carbon_thunk.call.loc16 [concrete = <error>]
+// CHECK:STDOUT:   assign file.%b1.var, %.loc16_43
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc21_39: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc21_41: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc21_1: ref %B = splice_block file.%b2.var [concrete = file.%b2.var] {}
+// CHECK:STDOUT:   %addr.loc21: %ptr.a04 = addr_of %.loc21_1
+// CHECK:STDOUT:   %B__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc21) [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_44: init %B to %.loc21_1 = mark_in_place_init %B__carbon_thunk.call.loc21 [concrete = <error>]
+// CHECK:STDOUT:   assign file.%b2.var, %.loc21_44
+// CHECK:STDOUT:   %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %A.ref.loc26_39: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc26_41: %A.A.cpp_overload_set.type = name_ref A, imports.%A.A.cpp_overload_set.value [concrete = constants.%A.A.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc26_1: ref %A = splice_block file.%a2.var [concrete = file.%a2.var] {}
+// CHECK:STDOUT:   %addr.loc26: %ptr.270 = addr_of %.loc26_1
+// CHECK:STDOUT:   %A__carbon_thunk.call.loc26: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr.loc26) [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_44: init %A to %.loc26_1 = mark_in_place_init %A__carbon_thunk.call.loc26 [concrete = <error>]
+// CHECK:STDOUT:   assign file.%a2.var, %.loc26_44
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

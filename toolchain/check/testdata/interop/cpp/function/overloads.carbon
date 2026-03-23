@@ -2093,6 +2093,8 @@ fn F() {
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.bound: <bound method> = bound_method %float.d20, %Float.as.Copy.impl.Op.f05 [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.f05, @Float.as.Copy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method.9b6: <bound method> = bound_method %float.d20, %Float.as.Copy.impl.Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.ee0: ref %f64.d77 = value_as_ref %float.d20 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.bcc = addr_of %.ee0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -2177,8 +2179,8 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc7_31.2: <specific function> = specific_function %impl.elem0.loc7_31.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_31.4: <bound method> = bound_method %.loc7_31.2, %specific_fn.loc7_31.2 [concrete = constants.%bound_method.9b6]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc7_31.4(%.loc7_31.2) [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %.loc7_31.4: ref %f64.d77 = temporary %.loc7_31.3, %Float.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr.loc7_34.1: %ptr.bcc = addr_of %.loc7_31.4
+// CHECK:STDOUT:   %.loc7_31.4: ref %f64.d77 = temporary %.loc7_31.3, %Float.as.Copy.impl.Op.call [concrete = constants.%.ee0]
+// CHECK:STDOUT:   %addr.loc7_34.1: %ptr.bcc = addr_of %.loc7_31.4 [concrete = constants.%addr]
 // CHECK:STDOUT:   %.loc7_34.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc7_34.2: %ptr.bcc = addr_of %.loc7_34.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc7_34.1, %addr.loc7_34.2)
@@ -2187,10 +2189,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_34.3: ref %f64.d77 = temporary %.loc7_34.1, %.loc7_34.2
 // CHECK:STDOUT:   %.loc7_34.4: %f64.d77 = acquire_value %.loc7_34.3
 // CHECK:STDOUT:   %d: %f64.d77 = value_binding d, %.loc7_34.4
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7_34: <bound method> = bound_method %.loc7_34.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_34: init %empty_tuple.type = call %Destroy.Op.bound.loc7_34(%.loc7_34.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7_31: <bound method> = bound_method %.loc7_31.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_31: init %empty_tuple.type = call %Destroy.Op.bound.loc7_31(%.loc7_31.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_34.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_34.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2324,17 +2324,15 @@ fn F() {
 // CHECK:STDOUT:   %specific_fn.loc15_11.2: <specific function> = specific_function %impl.elem0.loc15_11.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_11.4: <bound method> = bound_method %.loc15_11.2, %specific_fn.loc15_11.2 [concrete = <error>]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc15_11.4(%.loc15_11.2) [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_11.4: ref %f64.d77 = temporary %.loc15_11.3, %Float.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr.loc15_19.1: %ptr.bcc = addr_of %.loc15_11.4
+// CHECK:STDOUT:   %.loc15_11.4: ref %f64.d77 = temporary %.loc15_11.3, %Float.as.Copy.impl.Op.call [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc15_19.1: %ptr.bcc = addr_of %.loc15_11.4 [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_19.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr.loc15_19.2: %ptr.bcc = addr_of %.loc15_19.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc15_19.1, %addr.loc15_19.2)
 // CHECK:STDOUT:   %.loc15_19.2: init %f64.d77 to %.loc15_19.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_19.3: ref %f64.d77 = temporary %.loc15_19.1, %.loc15_19.2
-// CHECK:STDOUT:   %Destroy.Op.bound.loc15_19: <bound method> = bound_method %.loc15_19.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc15_19: init %empty_tuple.type = call %Destroy.Op.bound.loc15_19(%.loc15_19.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc15_11: <bound method> = bound_method %.loc15_11.4, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc15_11: init %empty_tuple.type = call %Destroy.Op.bound.loc15_11(%.loc15_11.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc15_19.3, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc15_19.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
