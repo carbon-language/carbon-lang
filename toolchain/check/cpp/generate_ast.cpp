@@ -335,12 +335,15 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
+// Provides clang ASTs representing Carbon SemIR entities.
 class CarbonExternalASTSource : public clang::ExternalASTSource {
  public:
   explicit CarbonExternalASTSource(Context* context,
                                    clang::ASTContext* ast_context)
       : context_(context), ast_context_(ast_context) {}
 
+  // Look up decls for `decl_name` inside `decl_context`, adding the decls to
+  // `decl_context`. Returns true if any decls were added.
   auto FindExternalVisibleDeclsByName(
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
