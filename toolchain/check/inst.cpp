@@ -41,7 +41,7 @@ auto MakeVerifiedLocIdAndInst([[maybe_unused]] Context& context,
 #ifndef NDEBUG
   switch (loc_id.kind()) {
     case SemIR::LocId::Kind::ImportIRInstId: {
-      CARBON_CHECK(!inst.kind().disallow_node_kinds(),
+      CARBON_CHECK(!inst.kind().disallow_all_node_kinds(),
                    "Should never import builtins/singletons: {0}", inst);
 
       if (inst.kind().allow_all_node_kinds()) {

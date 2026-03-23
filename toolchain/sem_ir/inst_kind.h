@@ -382,7 +382,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   }
 
   // Returns true if no `NodeKind`s are allowed.
-  auto disallow_node_kinds() const -> bool {
+  auto disallow_all_node_kinds() const -> bool {
     const auto& def = definition_info(*this);
     return !def.internal_allow_all_node_kinds &&
            def.internal_allowed_node_kinds.empty();
