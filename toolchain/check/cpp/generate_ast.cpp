@@ -348,6 +348,7 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
   auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
 
  private:
+  // Map a Carbon entity to a Clang NamedDecl.
   auto MapInstIdToClangDecl(clang::DeclContext& decl_context,
                             LookupResult lookup) -> clang::NamedDecl*;
 
@@ -364,7 +365,6 @@ void CarbonExternalASTSource::StartTranslationUnit(
   translation_unit.setHasExternalVisibleStorage();
 }
 
-// Map a Carbon entity to a Clang NamedDecl.
 auto CarbonExternalASTSource::MapInstIdToClangDecl(
     clang::DeclContext& decl_context, LookupResult lookup)
     -> clang::NamedDecl* {
