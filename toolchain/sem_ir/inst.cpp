@@ -78,8 +78,8 @@ static auto HasCompatibleImportedNodeKind(InstKind imported_kind,
   return false;
 }
 
-auto LocIdAndInst::MakeRuntimeVerified(const File& file, LocId loc_id,
-                                       Inst inst) -> LocIdAndInst {
+auto LocIdAndInst::RuntimeVerified(const File& file, LocId loc_id, Inst inst)
+    -> LocIdAndInst {
   switch (loc_id.kind()) {
     case LocId::Kind::ImportIRInstId: {
       CARBON_CHECK(!inst.kind().disallow_all_node_kinds(),

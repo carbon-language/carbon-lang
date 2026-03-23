@@ -423,7 +423,7 @@ struct LocIdAndInst {
   //
   // Prefer `SemIR::LocIdAndInst` constructors with compile-time verification,
   // or `AddInst` overloads which make use of those constructors.
-  static auto MakeRuntimeVerified(const File& file, LocId loc_id, Inst inst)
+  static auto RuntimeVerified(const File& file, LocId loc_id, Inst inst)
       -> LocIdAndInst;
 
   // Construction for the common case with a typed node.
@@ -438,7 +438,7 @@ struct LocIdAndInst {
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  // For `ImportIRInstId`, use `MakeRuntimeVerified`.
+  // For `ImportIRInstId`, use `RuntimeVerified`.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
 

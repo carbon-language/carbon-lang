@@ -24,7 +24,7 @@ auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
                                         SemIR::Inst new_inst) const
     -> SemIR::InstId {
   auto const_id =
-      EvalOrAddInst(context(), SemIR::LocIdAndInst::MakeRuntimeVerified(
+      EvalOrAddInst(context(), SemIR::LocIdAndInst::RuntimeVerified(
                                    context().sem_ir(), loc_id, new_inst));
   CARBON_CHECK(const_id.has_value(),
                "Substitution into constant produced non-constant");

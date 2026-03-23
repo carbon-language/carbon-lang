@@ -453,8 +453,8 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None, decl_block_id};
   auto decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::MakeRuntimeVerified(context.sem_ir(),
-                                                        loc_id, function_decl));
+      context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(), loc_id,
+                                                    function_decl));
   function.first_owning_decl_id = decl_id;
   if (is_definition) {
     function.definition_id = decl_id;

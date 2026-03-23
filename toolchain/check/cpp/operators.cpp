@@ -248,7 +248,7 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                .int_id = context.ints().Add(size)}));
   auto array_type_inst_id = AddTypeInst(
       context,
-      SemIR::LocIdAndInst::MakeRuntimeVerified(
+      SemIR::LocIdAndInst::RuntimeVerified(
           context.sem_ir(), loc_id,
           SemIR::ArrayType{.type_id = SemIR::TypeType::TypeId,
                            .bound_id = bound_id,

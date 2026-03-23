@@ -42,7 +42,7 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
                "Rebuilt pattern with the wrong kind: {0} -> {1}",
                context.insts().Get(orig_inst_id), new_inst);
   return AddPatternInst(
-      context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
 }
 

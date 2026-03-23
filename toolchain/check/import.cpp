@@ -112,7 +112,7 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
   // If the import was itself imported, use its location.
   if (auto import_ir_inst_id = context.insts().GetImportSource(import_id);
       import_ir_inst_id.has_value()) {
-    return SemIR::LocIdAndInst::MakeRuntimeVerified(
+    return SemIR::LocIdAndInst::RuntimeVerified(
         context.sem_ir(), import_ir_inst_id, namespace_inst);
   }
 
@@ -239,7 +239,7 @@ static auto CopySingleNameScopeFromImportIR(
         SemIR::ImportIRInst(ir_id, import_inst_id));
     auto inst_id = AddInstInNoBlock(
         context,
-        SemIR::LocIdAndInst::MakeRuntimeVerified(
+        SemIR::LocIdAndInst::RuntimeVerified(
             context.sem_ir(), import_ir_inst_id,
             SemIR::ImportRefLoaded{.type_id = namespace_type_id,
                                    .import_ir_inst_id = import_ir_inst_id,

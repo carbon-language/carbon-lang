@@ -86,7 +86,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
 
   auto bind_id = AddInstInNoBlock(
-      context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), name_loc,
                    SemIR::AnyBinding{.kind = bind_name_kind,
                                      .type_id = type_id,
@@ -94,7 +94,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                                      .value_id = SemIR::InstId::None}));
 
   auto binding_pattern_id =
-      AddPatternInst(context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+      AddPatternInst(context, SemIR::LocIdAndInst::RuntimeVerified(
                                   context.sem_ir(), name_loc, pattern));
 
   if (pattern.kind == SemIR::SymbolicBindingPattern::Kind) {
@@ -167,7 +167,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
   const auto& param_pattern_kind =
       is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
   pattern_id = AddPatternInst(
-      context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), loc_id,
                    SemIR::AnyParamPattern{
                        .kind = param_pattern_kind,
