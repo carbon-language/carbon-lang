@@ -348,6 +348,7 @@ class CarbonExternalASTSource : public clang::ExternalASTSource {
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
+  // See clang::ExternalASTSource.
   auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
 
  private:
