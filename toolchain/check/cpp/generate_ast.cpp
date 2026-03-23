@@ -395,8 +395,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  auto decl_context_inst_id =
-      scope_mapping.Lookup(const_cast<clang::DeclContext*>(decl_context));
+  auto decl_context_inst_id = scope_mapping.Lookup(decl_context);
 
   if (!decl_context_inst_id) {
     // If the context doesn't already have a mapping between C++ and Carbon,
