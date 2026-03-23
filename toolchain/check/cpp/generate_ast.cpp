@@ -468,6 +468,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
+  // Use the key to reach the owned, mutable copy of decl_context.
   auto* clang_decl = MapInstIdToClangDecl(*decl_context_inst_id.key(), result);
   if (!clang_decl) {
     return false;
