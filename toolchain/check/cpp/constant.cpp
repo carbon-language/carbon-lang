@@ -195,6 +195,11 @@ auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
 
 static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
                              clang::QualType param_type) -> clang::Expr* {
+  if (auto value_as_ref =
+          context.insts().TryGetAs<SemIR::ValueAsRef>(arg_inst_id)) {
+    arg_inst_id = value_as_ref->value_id;
+  }
+
   auto const_inst_id = context.constant_values().GetConstantInstId(arg_inst_id);
   if (!const_inst_id.has_value()) {
     return nullptr;
