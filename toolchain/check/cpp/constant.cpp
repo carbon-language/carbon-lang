@@ -306,6 +306,10 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
       return;
     }
+
+    if (function_decl->isDefaulted()) {
+      return;
+    }
   } else {
     return;
   }

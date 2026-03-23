@@ -455,15 +455,7 @@ import Cpp library "overload_set.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_overload_set_public.carbon:[[@LINE+4]]:11: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.C(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.C.C(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR: import_overload_set_public.carbon:[[@LINE+4]]:18: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.C.Overload(Cpp.PublicCall.PublicCall());
   //@dump-sem-ir-end
 }
@@ -475,28 +467,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+12]]:11: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.C(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+8]]:3: error: cannot access protected member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.C(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:11:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   C(ProtectedCall x);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   Cpp.C.C(Cpp.ProtectedCall.ProtectedCall());
 
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+12]]:18: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+8]]:3: error: cannot access protected member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
   // CHECK:STDERR:               ^
@@ -515,40 +499,24 @@ class D {
 
   fn MakePublic() -> D {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_protected_base.carbon:[[@LINE+4]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     return {.base = C(Cpp.PublicCall.PublicCall())};
-    // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     return {.base = C(Cpp.PublicCall.PublicCall())};
     //@dump-sem-ir-end
   }
 
   fn MakeProtected() -> D {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_protected_base.carbon:[[@LINE+4]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     return {.base = C(Cpp.ProtectedCall.ProtectedCall())};
-    // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     return {.base = C(Cpp.ProtectedCall.ProtectedCall())};
     //@dump-sem-ir-end
   }
 
   fn CallPublic() {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_protected_base.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
     //@dump-sem-ir-end
   }
 
   fn CallProtected() {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_protected_base.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
     //@dump-sem-ir-end
   }
@@ -561,28 +529,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+12]]:11: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.C(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+8]]:3: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.C(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   C(PrivateCall x);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   Cpp.C.C(Cpp.PrivateCall.PrivateCall());
 
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+12]]:18: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.C.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+8]]:3: error: cannot access private member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
   // CHECK:STDERR:               ^
@@ -600,14 +560,10 @@ class D {
   extend base: Cpp.C;
 
   fn MakePrivate() -> D {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+12]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     return {.base = C(Cpp.PrivateCall.PrivateCall())};
-    // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+8]]:21: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     return {.base = C(Cpp.PrivateCall.PrivateCall())};
     // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   C(PrivateCall x);
     // CHECK:STDERR:   ^
@@ -616,14 +572,10 @@ class D {
   }
 
   fn CallPrivate() {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+12]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+8]]:5: error: cannot access private member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-29]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
     // CHECK:STDERR:               ^
@@ -648,10 +600,6 @@ import Cpp library "overload_set_base_class.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_overload_set_public_base_class_call_public.carbon:[[@LINE+4]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Public.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.Public.Overload(Cpp.PublicCall.PublicCall());
   //@dump-sem-ir-end
 }
@@ -663,28 +611,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+13]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Public.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+9]]:3: error: cannot access protected member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Public.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   Cpp.Public.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+13]]:23: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Public.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+9]]:3: error: cannot access private member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Public.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
@@ -704,15 +644,7 @@ class Derived {
 
   fn F() {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_public_base_class_derived_call_non_private.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR: import_overload_set_public_base_class_derived_call_non_private.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
     //@dump-sem-ir-end
   }
@@ -728,14 +660,10 @@ class Derived {
   extend base: Cpp.Public;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+13]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+9]]:5: error: cannot access private member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
@@ -752,40 +680,28 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+11]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+8]]:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+4]]:26: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+11]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+4]]:26: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.Protected.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+11]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-16]]:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-12]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+4]]:26: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Protected.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Protected.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -801,15 +717,7 @@ class Derived {
 
   fn F() {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: import_overload_set_protected_base_class_derived_call_non_private.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR: import_overload_set_protected_base_class_derived_call_non_private.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
     //@dump-sem-ir-end
   }
@@ -825,14 +733,10 @@ class Derived {
   extend base: Cpp.Protected;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+13]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+9]]:5: error: cannot access private member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
@@ -849,40 +753,28 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+11]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+8]]:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+4]]:24: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+11]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.ProtectedCall.ProtectedCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+4]]:24: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Private.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.Private.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+11]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PrivateCall.PrivateCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-16]]:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-12]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PublicCall.PublicCall());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+4]]:24: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-  // CHECK:STDERR:   Cpp.Private.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Private.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -897,40 +789,28 @@ class Derived {
   extend base: Cpp.Private;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+11]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+8]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+11]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
     // CHECK:STDERR:     ^~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
     // CHECK:STDERR:     ^~~~~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+11]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-16]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-12]]:5: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:14: error: failed to evaluate constexpr function call as a constant [CppConstexprEval]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }
@@ -2049,6 +1929,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %C.Overload.cpp_overload_set.value: %C.Overload.cpp_overload_set.type = cpp_overload_set_value @C.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type: type = fn_type @Overload__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk: %Overload__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2083,42 +1965,46 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc12_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref.loc12_6: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc12_8: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc12_14: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc12_25: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12_37.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_37: %ptr.dfa = addr_of %.loc12_37.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc12_37) [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_37.2: init %PublicCall to %.loc12_37.1 = mark_in_place_init %PublicCall__carbon_thunk.call.loc12 [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_38.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc12_37.3: ref %PublicCall = temporary %.loc12_37.1, %.loc12_37.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_37.4: %PublicCall = acquire_value %.loc12_37.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_37.5: ref %PublicCall = value_as_ref %.loc12_37.4
-// CHECK:STDOUT:   %addr.loc12_38.1: %ptr.dfa = addr_of %.loc12_37.5
-// CHECK:STDOUT:   %addr.loc12_38.2: %ptr.d9e = addr_of %.loc12_38.1
-// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc12_38.1, %addr.loc12_38.2)
-// CHECK:STDOUT:   %.loc12_38.2: init %C to %.loc12_38.1 = mark_in_place_init %C__carbon_thunk.call
-// CHECK:STDOUT:   %.loc12_38.3: ref %C = temporary %.loc12_38.1, %.loc12_38.2
-// CHECK:STDOUT:   %Cpp.ref.loc17_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc8_6: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc8_8: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PublicCall.ref.loc8_14: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc8_25: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc8_37.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_37: %ptr.dfa = addr_of %.loc8_37.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_37)
+// CHECK:STDOUT:   %.loc8_37.2: init %PublicCall to %.loc8_37.1 = mark_in_place_init %PublicCall__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_38.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc8_37.3: ref %PublicCall = temporary %.loc8_37.1, %.loc8_37.2
+// CHECK:STDOUT:   %.loc8_37.4: %PublicCall = acquire_value %.loc8_37.3
+// CHECK:STDOUT:   %.loc8_37.5: ref %PublicCall = value_as_ref %.loc8_37.4
+// CHECK:STDOUT:   %addr.loc8_38.1: %ptr.dfa = addr_of %.loc8_37.5
+// CHECK:STDOUT:   %addr.loc8_38.2: %ptr.d9e = addr_of %.loc8_38.1
+// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_38.1, %addr.loc8_38.2)
+// CHECK:STDOUT:   %.loc8_38.2: init %C to %.loc8_38.1 = mark_in_place_init %C__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_38.3: ref %C = temporary %.loc8_38.1, %.loc8_38.2
+// CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Overload.ref: %C.Overload.cpp_overload_set.type = name_ref Overload, imports.%C.Overload.cpp_overload_set.value [concrete = constants.%C.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc17_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc17_21: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc17_32: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc17_44.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc17_44: %ptr.dfa = addr_of %.loc17_44.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc17: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc17_44) [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_44.2: init %PublicCall to %.loc17_44.1 = mark_in_place_init %PublicCall__carbon_thunk.call.loc17 [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_44.3: ref %PublicCall = temporary %.loc17_44.1, %.loc17_44.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_44.4: %PublicCall = acquire_value %.loc17_44.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_44.5: ref %PublicCall = value_as_ref %.loc17_44.4
-// CHECK:STDOUT:   %addr.loc17_45: %ptr.dfa = addr_of %.loc17_44.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc17_45)
-// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc12_38.3, constants.%C.cpp_destructor
-// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc12_38.3)
+// CHECK:STDOUT:   %Cpp.ref.loc9_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PublicCall.ref.loc9_21: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc9_32: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc9_44.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc9_44: %ptr.dfa = addr_of %.loc9_44.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc9_44)
+// CHECK:STDOUT:   %.loc9_44.2: init %PublicCall to %.loc9_44.1 = mark_in_place_init %PublicCall__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_44.3: ref %PublicCall = temporary %.loc9_44.1, %.loc9_44.2
+// CHECK:STDOUT:   %.loc9_44.4: %PublicCall = acquire_value %.loc9_44.3
+// CHECK:STDOUT:   %.loc9_44.5: ref %PublicCall = value_as_ref %.loc9_44.4
+// CHECK:STDOUT:   %addr.loc9_45: %ptr.dfa = addr_of %.loc9_44.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc9_45)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_44.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call.loc9: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound.loc9(%.loc9_44.3)
+// CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_38.3, constants.%C.cpp_destructor
+// CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_38.3)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_37.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call.loc8: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound.loc8(%.loc8_37.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2141,6 +2027,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %C__carbon_thunk.type.65f120.1: type = fn_type @C__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.d98342.1: %C__carbon_thunk.type.65f120.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %.73a: type = partial_type %C [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ProtectedCall: type = class_type @ProtectedCall [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.type: type = cpp_overload_set_type @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.value: %ProtectedCall.ProtectedCall.cpp_overload_set.type = cpp_overload_set_value @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
@@ -2149,6 +2037,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall__carbon_thunk: %ProtectedCall__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type.65f120.2: type = fn_type @C__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.d98342.2: %C__carbon_thunk.type.65f120.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.type: type = fn_type @ProtectedCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor: %ProtectedCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.Overload.cpp_overload_set.type: type = cpp_overload_set_type @C.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.Overload.cpp_overload_set.value: %C.Overload.cpp_overload_set.type = cpp_overload_set_value @C.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type.9a101f.1: type = fn_type @Overload__carbon_thunk.1 [concrete]
@@ -2224,71 +2114,77 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc15_49.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc15_49: %ptr.dfa = addr_of %.loc15_49.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc15_49) [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_49.2: init %PublicCall to %.loc15_49.1 = mark_in_place_init %PublicCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_51.1: ref %.73a = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc15_49.3: ref %PublicCall = temporary %.loc15_49.1, %.loc15_49.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_49.4: %PublicCall = acquire_value %.loc15_49.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_49.5: ref %PublicCall = value_as_ref %.loc15_49.4
-// CHECK:STDOUT:   %addr.loc15_50.1: %ptr.dfa = addr_of %.loc15_49.5
-// CHECK:STDOUT:   %addr.loc15_50.2: %ptr.d9e = addr_of %.loc15_51.1
-// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.1(%addr.loc15_50.1, %addr.loc15_50.2)
-// CHECK:STDOUT:   %.loc15_50: init %C to %.loc15_51.1 = mark_in_place_init %C__carbon_thunk.call
-// CHECK:STDOUT:   %.loc15_51.2: %struct_type.base.7c3 = struct_literal (%.loc15_50)
-// CHECK:STDOUT:   %.loc15_51.3: init %.73a = as_compatible %.loc15_50
-// CHECK:STDOUT:   %.loc15_51.4: init %.73a = converted %.loc15_50, %.loc15_51.3
-// CHECK:STDOUT:   %.loc15_51.5: init %C = as_compatible %.loc15_51.4
-// CHECK:STDOUT:   %.loc15_51.6: init %D to %return.param = class_init (%.loc15_51.5)
-// CHECK:STDOUT:   %.loc15_52: init %D = converted %.loc15_51.2, %.loc15_51.6
-// CHECK:STDOUT:   return %.loc15_52 to %return.param
+// CHECK:STDOUT:   %PublicCall.ref.loc11_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc11_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc11_49.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc11_49: %ptr.dfa = addr_of %.loc11_49.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_49)
+// CHECK:STDOUT:   %.loc11_49.2: init %PublicCall to %.loc11_49.1 = mark_in_place_init %PublicCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_51.1: ref %.73a = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc11_49.3: ref %PublicCall = temporary %.loc11_49.1, %.loc11_49.2
+// CHECK:STDOUT:   %.loc11_49.4: %PublicCall = acquire_value %.loc11_49.3
+// CHECK:STDOUT:   %.loc11_49.5: ref %PublicCall = value_as_ref %.loc11_49.4
+// CHECK:STDOUT:   %addr.loc11_50.1: %ptr.dfa = addr_of %.loc11_49.5
+// CHECK:STDOUT:   %addr.loc11_50.2: %ptr.d9e = addr_of %.loc11_51.1
+// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.1(%addr.loc11_50.1, %addr.loc11_50.2)
+// CHECK:STDOUT:   %.loc11_50: init %C to %.loc11_51.1 = mark_in_place_init %C__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_51.2: %struct_type.base.7c3 = struct_literal (%.loc11_50)
+// CHECK:STDOUT:   %.loc11_51.3: init %.73a = as_compatible %.loc11_50
+// CHECK:STDOUT:   %.loc11_51.4: init %.73a = converted %.loc11_50, %.loc11_51.3
+// CHECK:STDOUT:   %.loc11_51.5: init %C = as_compatible %.loc11_51.4
+// CHECK:STDOUT:   %.loc11_51.6: init %D to %return.param = class_init (%.loc11_51.5)
+// CHECK:STDOUT:   %.loc11_52: init %D = converted %.loc11_51.2, %.loc11_51.6
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_49.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_49.3)
+// CHECK:STDOUT:   return %.loc11_52 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.MakeProtected() -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc25_26: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc25_40: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc25_55.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc25_55: %ptr.8e6 = addr_of %.loc25_55.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc25_55) [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_55.2: init %ProtectedCall to %.loc25_55.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_57.1: ref %.73a = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc25_55.3: ref %ProtectedCall = temporary %.loc25_55.1, %.loc25_55.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_55.4: %ProtectedCall = acquire_value %.loc25_55.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_55.5: ref %ProtectedCall = value_as_ref %.loc25_55.4
-// CHECK:STDOUT:   %addr.loc25_56.1: %ptr.8e6 = addr_of %.loc25_55.5
-// CHECK:STDOUT:   %addr.loc25_56.2: %ptr.d9e = addr_of %.loc25_57.1
-// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.2(%addr.loc25_56.1, %addr.loc25_56.2)
-// CHECK:STDOUT:   %.loc25_56: init %C to %.loc25_57.1 = mark_in_place_init %C__carbon_thunk.call
-// CHECK:STDOUT:   %.loc25_57.2: %struct_type.base.7c3 = struct_literal (%.loc25_56)
-// CHECK:STDOUT:   %.loc25_57.3: init %.73a = as_compatible %.loc25_56
-// CHECK:STDOUT:   %.loc25_57.4: init %.73a = converted %.loc25_56, %.loc25_57.3
-// CHECK:STDOUT:   %.loc25_57.5: init %C = as_compatible %.loc25_57.4
-// CHECK:STDOUT:   %.loc25_57.6: init %D to %return.param = class_init (%.loc25_57.5)
-// CHECK:STDOUT:   %.loc25_58: init %D = converted %.loc25_57.2, %.loc25_57.6
-// CHECK:STDOUT:   return %.loc25_58 to %return.param
+// CHECK:STDOUT:   %ProtectedCall.ref.loc17_26: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc17_40: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc17_55.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc17_55: %ptr.8e6 = addr_of %.loc17_55.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc17_55)
+// CHECK:STDOUT:   %.loc17_55.2: init %ProtectedCall to %.loc17_55.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc17_57.1: ref %.73a = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc17_55.3: ref %ProtectedCall = temporary %.loc17_55.1, %.loc17_55.2
+// CHECK:STDOUT:   %.loc17_55.4: %ProtectedCall = acquire_value %.loc17_55.3
+// CHECK:STDOUT:   %.loc17_55.5: ref %ProtectedCall = value_as_ref %.loc17_55.4
+// CHECK:STDOUT:   %addr.loc17_56.1: %ptr.8e6 = addr_of %.loc17_55.5
+// CHECK:STDOUT:   %addr.loc17_56.2: %ptr.d9e = addr_of %.loc17_57.1
+// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.2(%addr.loc17_56.1, %addr.loc17_56.2)
+// CHECK:STDOUT:   %.loc17_56: init %C to %.loc17_57.1 = mark_in_place_init %C__carbon_thunk.call
+// CHECK:STDOUT:   %.loc17_57.2: %struct_type.base.7c3 = struct_literal (%.loc17_56)
+// CHECK:STDOUT:   %.loc17_57.3: init %.73a = as_compatible %.loc17_56
+// CHECK:STDOUT:   %.loc17_57.4: init %.73a = converted %.loc17_56, %.loc17_57.3
+// CHECK:STDOUT:   %.loc17_57.5: init %C = as_compatible %.loc17_57.4
+// CHECK:STDOUT:   %.loc17_57.6: init %D to %return.param = class_init (%.loc17_57.5)
+// CHECK:STDOUT:   %.loc17_58: init %D = converted %.loc17_57.2, %.loc17_57.6
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc17_55.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc17_55.3)
+// CHECK:STDOUT:   return %.loc17_58 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.CallPublic() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Overload.ref: %C.Overload.cpp_overload_set.type = name_ref Overload, imports.%C.Overload.cpp_overload_set.value [concrete = constants.%C.Overload.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc35_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc35_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc35_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc35_40: %ptr.dfa = addr_of %.loc35_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc35_40) [concrete = <error>]
-// CHECK:STDOUT:   %.loc35_40.2: init %PublicCall to %.loc35_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc35_40.3: ref %PublicCall = temporary %.loc35_40.1, %.loc35_40.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc35_40.4: %PublicCall = acquire_value %.loc35_40.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc35_40.5: ref %PublicCall = value_as_ref %.loc35_40.4
-// CHECK:STDOUT:   %addr.loc35_41: %ptr.dfa = addr_of %.loc35_40.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc35_41)
+// CHECK:STDOUT:   %PublicCall.ref.loc23_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc23_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc23_40.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc23_40: %ptr.dfa = addr_of %.loc23_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc23_40)
+// CHECK:STDOUT:   %.loc23_40.2: init %PublicCall to %.loc23_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc23_40.3: ref %PublicCall = temporary %.loc23_40.1, %.loc23_40.2
+// CHECK:STDOUT:   %.loc23_40.4: %PublicCall = acquire_value %.loc23_40.3
+// CHECK:STDOUT:   %.loc23_40.5: ref %PublicCall = value_as_ref %.loc23_40.4
+// CHECK:STDOUT:   %addr.loc23_41: %ptr.dfa = addr_of %.loc23_40.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc23_41)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc23_40.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc23_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2296,17 +2192,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Overload.ref: %C.Overload.cpp_overload_set.type = name_ref Overload, imports.%C.Overload.cpp_overload_set.value [concrete = constants.%C.Overload.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc45_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc45_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc45_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc45_46: %ptr.8e6 = addr_of %.loc45_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc45_46) [concrete = <error>]
-// CHECK:STDOUT:   %.loc45_46.2: init %ProtectedCall to %.loc45_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc45_46.3: ref %ProtectedCall = temporary %.loc45_46.1, %.loc45_46.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc45_46.4: %ProtectedCall = acquire_value %.loc45_46.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc45_46.5: ref %ProtectedCall = value_as_ref %.loc45_46.4
-// CHECK:STDOUT:   %addr.loc45_47: %ptr.8e6 = addr_of %.loc45_46.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc45_47)
+// CHECK:STDOUT:   %ProtectedCall.ref.loc29_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc29_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc29_46.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc29_46: %ptr.8e6 = addr_of %.loc29_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc29_46)
+// CHECK:STDOUT:   %.loc29_46.2: init %ProtectedCall to %.loc29_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc29_46.3: ref %ProtectedCall = temporary %.loc29_46.1, %.loc29_46.2
+// CHECK:STDOUT:   %.loc29_46.4: %ProtectedCall = acquire_value %.loc29_46.3
+// CHECK:STDOUT:   %.loc29_46.5: ref %ProtectedCall = value_as_ref %.loc29_46.4
+// CHECK:STDOUT:   %addr.loc29_47: %ptr.8e6 = addr_of %.loc29_46.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc29_47)
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc29_46.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc29_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2325,6 +2223,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall__carbon_thunk: %PublicCall__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type: type = fn_type @Overload__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk: %Overload__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2351,21 +2251,23 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc12_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Public.ref: type = name_ref Public, imports.%Public.decl [concrete = constants.%Public]
 // CHECK:STDOUT:   %Overload.ref: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc12_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc12_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc12_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12_49.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_49: %ptr.dfa = addr_of %.loc12_49.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc12_49) [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_49.2: init %PublicCall to %.loc12_49.1 = mark_in_place_init %PublicCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_49.3: ref %PublicCall = temporary %.loc12_49.1, %.loc12_49.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_49.4: %PublicCall = acquire_value %.loc12_49.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_49.5: ref %PublicCall = value_as_ref %.loc12_49.4
-// CHECK:STDOUT:   %addr.loc12_50: %ptr.dfa = addr_of %.loc12_49.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc12_50)
+// CHECK:STDOUT:   %Cpp.ref.loc8_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PublicCall.ref.loc8_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc8_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc8_49.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_49: %ptr.dfa = addr_of %.loc8_49.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_49)
+// CHECK:STDOUT:   %.loc8_49.2: init %PublicCall to %.loc8_49.1 = mark_in_place_init %PublicCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_49.3: ref %PublicCall = temporary %.loc8_49.1, %.loc8_49.2
+// CHECK:STDOUT:   %.loc8_49.4: %PublicCall = acquire_value %.loc8_49.3
+// CHECK:STDOUT:   %.loc8_49.5: ref %PublicCall = value_as_ref %.loc8_49.4
+// CHECK:STDOUT:   %addr.loc8_50: %ptr.dfa = addr_of %.loc8_49.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc8_50)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc8_49.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc8_49.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2393,6 +2295,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall__carbon_thunk: %ProtectedCall__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type.9a101f.2: type = fn_type @Overload__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.794c5b.2: %Overload__carbon_thunk.type.9a101f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.type: type = fn_type @ProtectedCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor: %ProtectedCall.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2444,32 +2350,36 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Overload.ref.loc15: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc15_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc15_40: %ptr.dfa = addr_of %.loc15_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc15_40) [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.2: init %PublicCall to %.loc15_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.3: ref %PublicCall = temporary %.loc15_40.1, %.loc15_40.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.4: %PublicCall = acquire_value %.loc15_40.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.5: ref %PublicCall = value_as_ref %.loc15_40.4
-// CHECK:STDOUT:   %addr.loc15_41: %ptr.dfa = addr_of %.loc15_40.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc15_41)
-// CHECK:STDOUT:   %Overload.ref.loc20: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc20_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc20_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc20_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc20_46: %ptr.8e6 = addr_of %.loc20_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc20_46) [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.2: init %ProtectedCall to %.loc20_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.3: ref %ProtectedCall = temporary %.loc20_46.1, %.loc20_46.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.4: %ProtectedCall = acquire_value %.loc20_46.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.5: ref %ProtectedCall = value_as_ref %.loc20_46.4
-// CHECK:STDOUT:   %addr.loc20_47: %ptr.8e6 = addr_of %.loc20_46.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc20: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc20_47)
+// CHECK:STDOUT:   %Overload.ref.loc11: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PublicCall.ref.loc11_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc11_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc11_40.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc11_40: %ptr.dfa = addr_of %.loc11_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40)
+// CHECK:STDOUT:   %.loc11_40.2: init %PublicCall to %.loc11_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_40.3: ref %PublicCall = temporary %.loc11_40.1, %.loc11_40.2
+// CHECK:STDOUT:   %.loc11_40.4: %PublicCall = acquire_value %.loc11_40.3
+// CHECK:STDOUT:   %.loc11_40.5: ref %PublicCall = value_as_ref %.loc11_40.4
+// CHECK:STDOUT:   %addr.loc11_41: %ptr.dfa = addr_of %.loc11_40.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc11_41)
+// CHECK:STDOUT:   %Overload.ref.loc12: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc12_46: %ptr.8e6 = addr_of %.loc12_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
+// CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall to %.loc12_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
+// CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
+// CHECK:STDOUT:   %.loc12_46.5: ref %ProtectedCall = value_as_ref %.loc12_46.4
+// CHECK:STDOUT:   %addr.loc12_47: %ptr.8e6 = addr_of %.loc12_46.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc12_47)
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc12_46.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc12_46.3)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_40.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2497,6 +2407,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall__carbon_thunk: %ProtectedCall__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type.9a101f.2: type = fn_type @Overload__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.794c5b.2: %Overload__carbon_thunk.type.9a101f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.type: type = fn_type @ProtectedCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor: %ProtectedCall.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
+// CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2548,32 +2462,36 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Overload.ref.loc15: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
-// CHECK:STDOUT:   %PublicCall.ref.loc15_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc15_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc15_40: %ptr.dfa = addr_of %.loc15_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc15_40) [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.2: init %PublicCall to %.loc15_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.3: ref %PublicCall = temporary %.loc15_40.1, %.loc15_40.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.4: %PublicCall = acquire_value %.loc15_40.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_40.5: ref %PublicCall = value_as_ref %.loc15_40.4
-// CHECK:STDOUT:   %addr.loc15_41: %ptr.dfa = addr_of %.loc15_40.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc15: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc15_41)
-// CHECK:STDOUT:   %Overload.ref.loc20: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc20_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc20_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc20_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc20_46: %ptr.8e6 = addr_of %.loc20_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc20_46) [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.2: init %ProtectedCall to %.loc20_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.3: ref %ProtectedCall = temporary %.loc20_46.1, %.loc20_46.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.4: %ProtectedCall = acquire_value %.loc20_46.3 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_46.5: ref %ProtectedCall = value_as_ref %.loc20_46.4
-// CHECK:STDOUT:   %addr.loc20_47: %ptr.8e6 = addr_of %.loc20_46.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc20: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc20_47)
+// CHECK:STDOUT:   %Overload.ref.loc11: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %PublicCall.ref.loc11_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
+// CHECK:STDOUT:   %PublicCall.ref.loc11_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc11_40.1: ref %PublicCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc11_40: %ptr.dfa = addr_of %.loc11_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40)
+// CHECK:STDOUT:   %.loc11_40.2: init %PublicCall to %.loc11_40.1 = mark_in_place_init %PublicCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_40.3: ref %PublicCall = temporary %.loc11_40.1, %.loc11_40.2
+// CHECK:STDOUT:   %.loc11_40.4: %PublicCall = acquire_value %.loc11_40.3
+// CHECK:STDOUT:   %.loc11_40.5: ref %PublicCall = value_as_ref %.loc11_40.4
+// CHECK:STDOUT:   %addr.loc11_41: %ptr.dfa = addr_of %.loc11_40.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.1(%addr.loc11_41)
+// CHECK:STDOUT:   %Overload.ref.loc12: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc12_46: %ptr.8e6 = addr_of %.loc12_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
+// CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall to %.loc12_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
+// CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
+// CHECK:STDOUT:   %.loc12_46.5: ref %ProtectedCall = value_as_ref %.loc12_46.4
+// CHECK:STDOUT:   %addr.loc12_47: %ptr.8e6 = addr_of %.loc12_46.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.85994f.2(%addr.loc12_47)
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc12_46.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc12_46.3)
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_40.3, constants.%PublicCall.cpp_destructor
+// CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
