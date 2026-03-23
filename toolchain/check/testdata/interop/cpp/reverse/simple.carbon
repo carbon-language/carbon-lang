@@ -13,6 +13,7 @@
 // --- other.carbon
 package Other;
 namespace Nested;
+namespace Nested.Again;
 // --- namespace.carbon
 
 library "[[@TEST_NAME]]";
@@ -21,4 +22,5 @@ import Other;
 import Cpp inline '''
 namespace X = Carbon::Other;
 namespace Y = Carbon::Other::Nested;
+namespace Z = Carbon::Other::Nested::Again;
 ''';
