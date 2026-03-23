@@ -270,7 +270,6 @@ CARBON_DIAGNOSTIC_KIND(RefTagNoRefParam)
 CARBON_DIAGNOSTIC_KIND(RefTagNotDurableRef)
 CARBON_DIAGNOSTIC_KIND(SelfParameterNotAllowed)
 CARBON_DIAGNOSTIC_KIND(ValueForRefParam)
-CARBON_DIAGNOSTIC_KIND(CppConstexprEval)
 
 // Function declaration checking.
 CARBON_DIAGNOSTIC_KIND(DefinedAbstractFunction)
