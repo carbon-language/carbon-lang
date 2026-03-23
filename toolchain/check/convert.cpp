@@ -2276,8 +2276,8 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
     }
     form_inst_id = AddInst(
         context,
-        MakeVerifiedLocIdAndInst(
-            context, loc_id,
+        SemIR::LocIdAndInst::MakeRuntimeVerified(
+            context.sem_ir(), loc_id,
             SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
                            .type_component_inst_id =
                                context.types().GetAsTypeInstId(type_inst_id)}));
@@ -2292,8 +2292,8 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
       return Context::FormExpr::Error;
     }
     form_inst_id = AddInst(
-        context, MakeVerifiedLocIdAndInst(
-                     context, loc_id,
+        context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+                     context.sem_ir(), loc_id,
                      SemIR::InitForm{
                          .type_id = SemIR::FormType::TypeId,
                          .type_component_inst_id =

@@ -357,8 +357,8 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
                 SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
         import_decl_id = AddInst(
             context_,
-            MakeVerifiedLocIdAndInst(
-                context_, import_ir_inst_id,
+            SemIR::LocIdAndInst::MakeRuntimeVerified(
+                context_.sem_ir(), import_ir_inst_id,
                 SemIR::ImportDecl{.package_id = SemIR::NameId::ForPackageName(
                                       api_imports_entry.first)}));
         package_id = api_imports_entry.first;

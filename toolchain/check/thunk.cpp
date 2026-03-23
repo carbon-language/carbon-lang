@@ -42,8 +42,8 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
                "Rebuilt pattern with the wrong kind: {0} -> {1}",
                context.insts().Get(orig_inst_id), new_inst);
   return AddPatternInst(
-      context,
-      MakeVerifiedLocIdAndInst(context, SemIR::LocId(orig_inst_id), new_inst));
+      context, SemIR::LocIdAndInst::MakeRuntimeVerified(
+                   context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
 }
 
 // Wrapper to allow the type to be specified as a template argument for API

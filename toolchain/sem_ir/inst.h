@@ -28,6 +28,8 @@ namespace Carbon::SemIR {
 template <typename... TypedInsts>
 struct CategoryOf;
 
+class File;
+
 // InstLikeTypeInfo is an implementation detail, and not public API.
 namespace Internal {
 
@@ -417,16 +419,12 @@ struct LocIdAndInst {
     return LocIdAndInst(LocId::None, inst, /*is_unchecked=*/true);
   }
 
-  // Unsafely form a pair of a location and an instruction. Most code should use
-  // a constructor. For runtime validation, use `MakeVerifiedLocIdAndInst`.
+  // Returns a `LocIdAndInst`. This is allowed to do runtime verification.
   //
-  // The only other caller should be `InstStore::GetWithLocId`.
-  template <typename LocT>
-  // Disallow implicit LocId construction.
-    requires(std::same_as<LocT, LocId>)
-  static auto UncheckedLoc(LocT loc_id, Inst inst) -> LocIdAndInst {
-    return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
-  }
+  // Prefer `SemIR::LocIdAndInst` constructors with compile-time verification,
+  // or `AddInst` overloads which make use of those constructors.
+  static auto MakeRuntimeVerified(const File& file, LocId loc_id, Inst inst)
+      -> LocIdAndInst;
 
   // Construction for the common case with a typed node.
   template <typename InstT>
@@ -440,7 +438,7 @@ struct LocIdAndInst {
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  // For `ImportIRInstId`, use `MakeVerifiedLocIdAndInst`.
+  // For `ImportIRInstId`, use `MakeRuntimeVerified`.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
 
@@ -448,6 +446,9 @@ struct LocIdAndInst {
   Inst inst;
 
  private:
+  // For `InstStore::GetWithLocId` to construct unchecked values.
+  friend class InstStore;
+
   // Note `is_unchecked` serves to disambiguate from public constructors.
   explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
@@ -504,7 +505,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(LocId(inst_id), Get(inst_id));
+    return LocIdAndInst(LocId(inst_id), Get(inst_id), /*is_unchecked=*/true);
   }
 
   // Returns whether the requested instruction is the specified type.

@@ -94,8 +94,8 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
   auto import_ref_id = AddPlaceholderImportedInstInNoBlock(
       context,
-      MakeVerifiedLocIdAndInst(
-          context, import_ir_inst_id,
+      SemIR::LocIdAndInst::MakeRuntimeVerified(
+          context.sem_ir(), import_ir_inst_id,
           SemIR::ImportRefUnloaded{.import_ir_inst_id = import_ir_inst_id,
                                    .entity_name_id = entity_name_id}));
   return import_ref_id;
@@ -512,8 +512,8 @@ static auto AddLoadedImportRef(ImportContext& context,
                                  .entity_name_id = SemIR::EntityNameId::None};
   auto inst_id = AddPlaceholderImportedInstInNoBlock(
       context.local_context(),
-      MakeVerifiedLocIdAndInst(context.local_context(), import_ir_inst_id,
-                               inst));
+      SemIR::LocIdAndInst::MakeRuntimeVerified(context.local_context().sem_ir(),
+                                               import_ir_inst_id, inst));
 
   context.local_constant_values().Set(inst_id, local_const_id);
   context.local_constant_values_for_import_insts().Set(import_inst_id,
@@ -558,8 +558,8 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
   auto import_ir_inst_id = AddImportIRInst(context, import_inst_id);
   return AddPlaceholderImportedInstInNoBlock(
       context.local_context(),
-      MakeVerifiedLocIdAndInst(context.local_context(), import_ir_inst_id,
-                               inst));
+      SemIR::LocIdAndInst::MakeRuntimeVerified(context.local_context().sem_ir(),
+                                               import_ir_inst_id, inst));
 }
 
 // Replace an imported instruction that was added by
