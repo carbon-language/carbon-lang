@@ -335,7 +335,7 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
-// Provides clang ASTs representing Carbon SemIR entities.
+// Provides clang AST nodes representing Carbon SemIR entities.
 class CarbonExternalASTSource : public clang::ExternalASTSource {
  public:
   explicit CarbonExternalASTSource(Context* context,
