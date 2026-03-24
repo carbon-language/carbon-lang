@@ -800,7 +800,7 @@ struct FormParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
-  ConstantId form_id;
+  InstId form_id;
 };
 
 // The type `Core.Form`.

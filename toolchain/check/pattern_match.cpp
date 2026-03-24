@@ -300,8 +300,7 @@ static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
       auto form_id = context.entity_names()
                          .Get(form_binding_pattern.entity_name_id)
                          .form_id;
-      auto form_inst_id = context.constant_values().GetInstId(form_id);
-      auto form_inst = context.insts().Get(form_inst_id);
+      auto form_inst = context.insts().Get(form_id);
 
       switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
@@ -320,9 +319,7 @@ static auto ConversionKindFor(Context& context, SemIR::Inst pattern,
       }
     }
     case CARBON_KIND(SemIR::FormParamPattern form_param_pattern): {
-      auto form_inst_id =
-          context.constant_values().GetInstId(form_param_pattern.form_id);
-      auto form_inst = context.insts().Get(form_inst_id);
+      auto form_inst = context.insts().Get(form_param_pattern.form_id);
 
       switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
@@ -429,9 +426,7 @@ static auto ParamKindFor(Context& context, SemIR::Inst param_pattern,
     case SemIR::ValueParamPattern::Kind:
       return SemIR::ValueParam::Kind;
     case CARBON_KIND(SemIR::FormParamPattern form_param_pattern): {
-      auto form_inst_id =
-          context.constant_values().GetInstId(form_param_pattern.form_id);
-      auto form_inst = context.insts().Get(form_inst_id);
+      auto form_inst = context.insts().Get(form_param_pattern.form_id);
       switch (form_inst.kind()) {
         case SemIR::InitForm::Kind:
         case SemIR::RefForm::Kind:
@@ -480,8 +475,7 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
     case SemIR::FormParamPattern::Kind: {
       auto form_param_pattern =
           context_.insts().GetAs<SemIR::FormParamPattern>(entry.pattern_id);
-      if (!context_.constant_values().InstIs<SemIR::InitForm>(
-              form_param_pattern.form_id)) {
+      if (!context_.insts().Is<SemIR::InitForm>(form_param_pattern.form_id)) {
         break;
       }
       [[fallthrough]];

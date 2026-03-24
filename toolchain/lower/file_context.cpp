@@ -682,10 +682,7 @@ auto FileContext::FunctionTypeInfoBuilder::TryHandleParameter(
   // corresponds to its form.
   if (auto form_param_pattern =
           param_pattern.TryAs<SemIR::FormParamPattern>()) {
-    CARBON_CHECK(!form_param_pattern->form_id.is_symbolic(), "TODO");
-    auto form_inst_id =
-        sem_ir.constant_values().GetInstId(form_param_pattern->form_id);
-    auto form_kind = sem_ir.insts().Get(form_inst_id).kind();
+    auto form_kind = sem_ir.insts().Get(form_param_pattern->form_id).kind();
     switch (form_kind) {
       case SemIR::InitForm::Kind:
         param_kind = SemIR::VarParamPattern::Kind;

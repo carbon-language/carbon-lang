@@ -95,11 +95,7 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         }
       } else if constexpr (std::same_as<TypedInstT, FormBinding>) {
         auto form_id = ir->entity_names().Get(inst.entity_name_id).form_id;
-        if (form_id.is_symbolic()) {
-          return ExprCategory::Dependent;
-        }
-        auto form_inst_id = ir->constant_values().GetInstId(form_id);
-        auto form_inst = ir->insts().Get(form_inst_id);
+        auto form_inst = ir->insts().Get(form_id);
         CARBON_KIND_SWITCH(form_inst) {
           case InitForm::Kind:
             // A `var` binding pattern produces a `ref` binding.

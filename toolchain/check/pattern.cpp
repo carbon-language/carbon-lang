@@ -81,7 +81,7 @@ auto EndSubpattern(Context& context, NodeStack& node_stack) -> void {
 }
 
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::ConstantId form_id, bool is_unused,
+                          SemIR::InstId form_id, bool is_unused,
                           BindingPhase phase) -> SemIR::EntityNameId {
   SemIR::EntityName entity_name = {
       .name_id = name_id,
@@ -215,7 +215,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
 
   auto entity_name_id =
       AddBindingEntityName(context, name_id,
-                           /*form_id=*/SemIR::ConstantId::None,
+                           /*form_id=*/SemIR::InstId::None,
                            /*is_unused=*/false,
                            /*phase=*/BindingPhase::Runtime);
   return AddBindingPattern(context, loc_id, type_expr_region_id,

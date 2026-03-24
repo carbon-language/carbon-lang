@@ -64,7 +64,7 @@ struct EntityName : public Printable<EntityName> {
   //
   // TODO: Unify this with the previous three fields, which also represent form
   // information.
-  ConstantId form_id = ConstantId::None;
+  InstId form_id = InstId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore

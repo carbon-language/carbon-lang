@@ -176,8 +176,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto form_id = node_kind == Parse::FormBindingPattern::Kind
-                     ? context.constant_values().Get(type_expr.inst_id)
-                     : SemIR::ConstantId::None;
+                     ? type_expr.inst_id
+                     : SemIR::InstId::None;
 
   // Adds a binding pattern for `node_id`, with the given kind and subpattern,
   // and adds its name to the current context. The subpattern must not be
