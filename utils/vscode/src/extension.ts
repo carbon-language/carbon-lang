@@ -50,6 +50,20 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
     }
   }
 
+  // Find the maximum split length to ensure consistent width across all splits
+  let maxSplitLength = 0;
+  for (let s = 0; s < splitStarts.length; s++) {
+    const startLine = splitStarts[s];
+    const endLine = s + 1 < splitStarts.length ? splitStarts[s + 1] : document.lineCount;
+    const splitLength = endLine - startLine - 1;
+    if (splitLength > maxSplitLength) {
+      maxSplitLength = splitLength;
+    }
+  }
+
+  const maxDigits = maxSplitLength > 0 ? maxSplitLength.toString().length : 1;
+  const widthStr = `${maxDigits}ch`;
+
   // Iterate through each split
   for (let s = 0; s < splitStarts.length; s++) {
     const startLine = splitStarts[s];
@@ -58,9 +72,6 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
     if (splitLength <= 0) {
       continue;
     }
-
-    const maxDigits = splitLength.toString().length;
-    const widthStr = `${maxDigits}ch`;
 
     for (let i = startLine + 1; i < endLine; i++) {
       const splitLineNum = i - startLine;
