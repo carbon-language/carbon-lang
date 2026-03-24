@@ -836,11 +836,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000183:    {kind: Call, arg0: inst78000182, arg1: inst_block7800008F, type: type(symbolic_constant78000004)}
 // CHECK:STDOUT:     inst78000184:    {kind: InPlaceInit, arg0: inst78000183, arg1: inst7800004C, type: type(symbolic_constant78000004)}
 // CHECK:STDOUT:     inst78000185:    {kind: TupleAccess, arg0: inst7800003C, arg1: element1, type: type(inst78000026)}
-// CHECK:STDOUT:     inst78000186:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst<none>, type: type(inst78000026)}
+// CHECK:STDOUT:     inst78000186:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst78000185, type: type(inst78000026)}
 // CHECK:STDOUT:     inst78000187:    {kind: Converted, arg0: inst78000049, arg1: inst78000186, type: type(inst78000026)}
-// CHECK:STDOUT:     inst78000188:    {kind: TupleInit, arg0: inst_block78000090, arg1: inst7800003C, type: type(symbolic_constant7800000A)}
-// CHECK:STDOUT:     inst78000189:    {kind: Converted, arg0: inst7800004A, arg1: inst78000188, type: type(symbolic_constant7800000A)}
-// CHECK:STDOUT:     inst7800018A:    {kind: ReturnExpr, arg0: inst78000189, arg1: inst7800003C}
+// CHECK:STDOUT:     inst78000188:    {kind: InPlaceInit, arg0: inst78000187, arg1: inst78000185, type: type(inst78000026)}
+// CHECK:STDOUT:     inst78000189:    {kind: TupleInit, arg0: inst_block78000090, arg1: inst7800003C, type: type(symbolic_constant7800000A)}
+// CHECK:STDOUT:     inst7800018A:    {kind: Converted, arg0: inst7800004A, arg1: inst78000189, type: type(symbolic_constant7800000A)}
+// CHECK:STDOUT:     inst7800018B:    {kind: ReturnExpr, arg0: inst7800018A, arg1: inst7800003C}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -1206,6 +1207,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst78000181:    symbolic_constant7800014D
 // CHECK:STDOUT:       inst78000186:    concrete_constant(inst78000028)
 // CHECK:STDOUT:       inst78000187:    concrete_constant(inst78000028)
+// CHECK:STDOUT:       inst78000188:    concrete_constant(inst78000028)
 // CHECK:STDOUT:     symbolic_constants:
 // CHECK:STDOUT:       symbolic_constant78000000: {inst: inst78000014, kind: self, attached: null}
 // CHECK:STDOUT:       symbolic_constant78000001: {inst: inst78000018, kind: checked, attached: null}
@@ -1759,6 +1761,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       13:              inst78000188
 // CHECK:STDOUT:       14:              inst78000189
 // CHECK:STDOUT:       15:              inst7800018A
+// CHECK:STDOUT:       16:              inst7800018B
 // CHECK:STDOUT:     inst_block7800001A:
 // CHECK:STDOUT:       0:               inst78000048
 // CHECK:STDOUT:       1:               inst78000049
@@ -2192,7 +2195,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               inst78000048
 // CHECK:STDOUT:     inst_block78000090:
 // CHECK:STDOUT:       0:               inst78000184
-// CHECK:STDOUT:       1:               inst78000187
+// CHECK:STDOUT:       1:               inst78000188
 // CHECK:STDOUT:     inst_block78000091:
 // CHECK:STDOUT:       0:               inst78000043
 // CHECK:STDOUT:       1:               inst78000047

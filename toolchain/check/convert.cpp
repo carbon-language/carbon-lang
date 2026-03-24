@@ -497,15 +497,19 @@ static auto CreateVtablePtrRef(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns whether the given expression performs in-place initialization (or is
-// invalid).
-static auto IsInPlaceInitializing(Context& context, SemIR::InstId result_id) {
-  auto category = SemIR::GetExprCategory(context.sem_ir(), result_id);
+// invalid). The category can be passed if known, otherwise it will be computed.
+static auto IsInPlaceInitializing(Context& context, SemIR::InstId result_id,
+                                  SemIR::ExprCategory category) {
   return category == SemIR::ExprCategory::InPlaceInitializing ||
          (category == SemIR::ExprCategory::ReprInitializing &&
           SemIR::InitRepr::ForType(context.sem_ir(),
                                    context.insts().Get(result_id).type_id())
                   .kind == SemIR::InitRepr::InPlace) ||
          category == SemIR::ExprCategory::Error;
+}
+static auto IsInPlaceInitializing(Context& context, SemIR::InstId result_id) {
+  auto category = SemIR::GetExprCategory(context.sem_ir(), result_id);
+  return IsInPlaceInitializing(context, result_id, category);
 }
 
 // Returns the index of the vptr field in the given struct type fields, or
@@ -831,6 +835,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target,
                                  bool is_partial = false) -> SemIR::InstId {
+  CARBON_CHECK(target.kind != ConversionTarget::InPlaceInitializing ||
+               target.storage_id.has_value());
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
   CARBON_CHECK(is_partial ||
@@ -1702,10 +1708,9 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         // If in-place initialization was requested, and it hasn't already
         // happened, ensure it happens now.
         if (target_.kind == ConversionTarget::InPlaceInitializing &&
-            category != SemIR::ExprCategory::InPlaceInitializing &&
-            SemIR::InitRepr::ForType(sem_ir_, target_.type_id)
-                .MightBeByCopy()) {
+            !IsInPlaceInitializing(context_, expr_id, category)) {
           target_.storage_access_block->InsertHere();
+          CARBON_CHECK(new_storage_id.has_value());
           return Done{AddInst<SemIR::InPlaceInit>(context_, loc_id_,
                                                   {.type_id = target_.type_id,
                                                    .src_id = expr_id,
@@ -1798,6 +1803,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         }
         return Done{SemIR::ErrorInst::InstId};
       }
+
       if (target_.kind == ConversionTarget::RefParam ||
           target_.kind == ConversionTarget::UnmarkedRefParam) {
         if (target_.diagnose) {
@@ -1938,8 +1944,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // Clear storage_id in cases where it's clearly meaningless, to avoid misuse
   // and simplify the resulting SemIR.
   if (!target.is_initializer() ||
-      SemIR::InitRepr::ForType(context.sem_ir(), target.type_id).kind ==
-          SemIR::InitRepr::None) {
+      (target.kind == ConversionTarget::Initializing &&
+       SemIR::InitRepr::ForType(context.sem_ir(), target.type_id).kind ==
+           SemIR::InitRepr::None)) {
     target.storage_id = SemIR::InstId::None;
   }
 

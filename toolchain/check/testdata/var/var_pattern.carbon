@@ -314,13 +314,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_45.1: %tuple.type = tuple_literal (%.loc5_40.1, %.loc5_44.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %tuple.elem0.loc5_45: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc5_40.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_40.2: init %empty_tuple.type to %tuple.elem0.loc5_45 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_45.2: init %empty_tuple.type = converted %.loc5_40.1, %.loc5_40.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.3: init %empty_tuple.type to %tuple.elem0.loc5_45 = in_place_init %.loc5_45.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc5_45: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_45.3: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_45.4: init %tuple.type to %.var = tuple_init (%.loc5_45.2, %.loc5_45.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc5_3: init %tuple.type = converted %.loc5_45.1, %.loc5_45.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type to %tuple.elem1.loc5_45 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.4: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.5: init %empty_tuple.type to %tuple.elem1.loc5_45 = in_place_init %.loc5_45.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_45.6: init %tuple.type to %.var = tuple_init (%.loc5_45.3, %.loc5_45.5) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_3: init %tuple.type = converted %.loc5_45.1, %.loc5_45.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign %.var, %.loc5_3
 // CHECK:STDOUT:   %tuple.elem0.loc5_3: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc5_3: ref %empty_tuple.type = tuple_access %.var, element1
@@ -388,13 +390,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc5_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49.1: %tuple.type = tuple_literal (%.loc5_44.1, %.loc5_48.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %tuple.elem0.loc5_49: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.2: init %empty_tuple.type to %tuple.elem0.loc5_49 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49.2: init %empty_tuple.type = converted %.loc5_44.1, %.loc5_44.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.3: init %empty_tuple.type to %tuple.elem0.loc5_49 = in_place_init %.loc5_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc5_49: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc5_48.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_49.3: init %empty_tuple.type = converted %.loc5_48.1, %.loc5_48.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_49.4: init %tuple.type to %.var = tuple_init (%.loc5_49.2, %.loc5_49.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc5_7: init %tuple.type = converted %.loc5_49.1, %.loc5_49.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_48.2: init %empty_tuple.type to %tuple.elem1.loc5_49 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.4: init %empty_tuple.type = converted %.loc5_48.1, %.loc5_48.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.5: init %empty_tuple.type to %tuple.elem1.loc5_49 = in_place_init %.loc5_49.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.6: init %tuple.type to %.var = tuple_init (%.loc5_49.3, %.loc5_49.5) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_7: init %tuple.type = converted %.loc5_49.1, %.loc5_49.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign %.var, %.loc5_7
 // CHECK:STDOUT:   %tuple.elem0.loc5_7: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc5_7: ref %empty_tuple.type = tuple_access %.var, element1
@@ -742,13 +746,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_64.2: %empty_tuple.type = converted %.loc9_64.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_64.2
 // CHECK:STDOUT:   %tuple.elem0.loc9_74: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc9_69.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_69.2: init %empty_tuple.type to %tuple.elem0.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_74.2: init %empty_tuple.type = converted %.loc9_69.1, %.loc9_69.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.3: init %empty_tuple.type to %tuple.elem0.loc9_74 = in_place_init %.loc9_74.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1.loc9_74: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc9_73.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.3: init %empty_tuple.type = converted %.loc9_73.1, %.loc9_73.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.4: init %tuple.type.bcd to %.var = tuple_init (%.loc9_74.2, %.loc9_74.3) [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:   %.loc9_22.1: init %tuple.type.bcd = converted %.loc9_74.1, %.loc9_74.4 [concrete = constants.%tuple.d8f]
+// CHECK:STDOUT:   %.loc9_73.2: init %empty_tuple.type to %tuple.elem1.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.4: init %empty_tuple.type = converted %.loc9_73.1, %.loc9_73.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.5: init %empty_tuple.type to %tuple.elem1.loc9_74 = in_place_init %.loc9_74.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_74.6: init %tuple.type.bcd to %.var = tuple_init (%.loc9_74.3, %.loc9_74.5) [concrete = constants.%tuple.d8f]
+// CHECK:STDOUT:   %.loc9_22.1: init %tuple.type.bcd = converted %.loc9_74.1, %.loc9_74.6 [concrete = constants.%tuple.d8f]
 // CHECK:STDOUT:   assign %.var, %.loc9_22.1
 // CHECK:STDOUT:   %tuple.elem0.loc9_22: ref %empty_tuple.type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc9_22: ref %empty_tuple.type = tuple_access %.var, element1

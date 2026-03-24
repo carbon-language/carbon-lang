@@ -395,17 +395,19 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc10_48.2: ref %struct_type.d.c.b36 = temporary %.loc10_48.1, %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   %.loc10_48.3: ref %empty_tuple.type = struct_access %.loc10_48.2, element1
 // CHECK:STDOUT:   %.loc10_48.4: ref %empty_tuple.type = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc10_48.5: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_48.5: init %empty_tuple.type to %.loc10_48.4 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_48.6: init %empty_tuple.type = converted %.loc10_48.3, %.loc10_48.5 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_48.7: ref %empty_struct_type = struct_access %.loc10_48.2, element0
-// CHECK:STDOUT:   %.loc10_48.8: ref %empty_struct_type = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc10_48.9: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_48.10: init %empty_struct_type = converted %.loc10_48.7, %.loc10_48.9 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_48.11: init %struct_type.c.d.15a to %return.param = struct_init (%.loc10_48.6, %.loc10_48.10) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc10_48.12: init %struct_type.c.d.15a = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_48.11 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc10_48.7: init %empty_tuple.type to %.loc10_48.4 = in_place_init %.loc10_48.6 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_48.8: ref %empty_struct_type = struct_access %.loc10_48.2, element0
+// CHECK:STDOUT:   %.loc10_48.9: ref %empty_struct_type = struct_access %return.param, element0
+// CHECK:STDOUT:   %.loc10_48.10: init %empty_struct_type to %.loc10_48.9 = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.11: init %empty_struct_type = converted %.loc10_48.8, %.loc10_48.10 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.12: init %empty_struct_type to %.loc10_48.9 = in_place_init %.loc10_48.11 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.13: init %struct_type.c.d.15a to %return.param = struct_init (%.loc10_48.7, %.loc10_48.12) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc10_48.14: init %struct_type.c.d.15a = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_48.13 [concrete = constants.%struct]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc10_48.2)
-// CHECK:STDOUT:   return %.loc10_48.12 to %return.param
+// CHECK:STDOUT:   return %.loc10_48.14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %struct_type.d.c.b36) = "no_op";
@@ -1198,17 +1200,19 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc10_29.2: ref %struct_type.b.a.1b0 = temporary %.loc10_29.1, %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   %.loc10_29.3: ref %empty_struct_type = struct_access %.loc10_29.2, element1
 // CHECK:STDOUT:   %.loc10_29.4: ref %empty_struct_type = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc10_29.5: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_29.5: init %empty_struct_type to %.loc10_29.4 = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_29.6: init %empty_struct_type = converted %.loc10_29.3, %.loc10_29.5 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_29.7: ref %empty_struct_type = struct_access %.loc10_29.2, element0
-// CHECK:STDOUT:   %.loc10_29.8: ref %empty_struct_type = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc10_29.9: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_29.10: init %empty_struct_type = converted %.loc10_29.7, %.loc10_29.9 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_29.11: init %struct_type.a.b.f95 to %return.param = struct_init (%.loc10_29.6, %.loc10_29.10) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc10_29.12: init %struct_type.a.b.f95 = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_29.11 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc10_29.7: init %empty_struct_type to %.loc10_29.4 = in_place_init %.loc10_29.6 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_29.8: ref %empty_struct_type = struct_access %.loc10_29.2, element0
+// CHECK:STDOUT:   %.loc10_29.9: ref %empty_struct_type = struct_access %return.param, element0
+// CHECK:STDOUT:   %.loc10_29.10: init %empty_struct_type to %.loc10_29.9 = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_29.11: init %empty_struct_type = converted %.loc10_29.8, %.loc10_29.10 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_29.12: init %empty_struct_type to %.loc10_29.9 = in_place_init %.loc10_29.11 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_29.13: init %struct_type.a.b.f95 to %return.param = struct_init (%.loc10_29.7, %.loc10_29.12) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc10_29.14: init %struct_type.a.b.f95 = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_29.13 [concrete = constants.%struct]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc10_29.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc10_29.2)
-// CHECK:STDOUT:   return %.loc10_29.12 to %return.param
+// CHECK:STDOUT:   return %.loc10_29.14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %struct_type.b.a.1b0) = "no_op";

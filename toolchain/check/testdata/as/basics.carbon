@@ -157,14 +157,16 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc6_29.1: %struct_type.x.y = converted %.loc6_27.1, %struct [concrete = constants.%struct.005]
 // CHECK:STDOUT:   %.loc6_29.2: %empty_tuple.type = struct_access %.loc6_29.1, element0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_29.3: ref %empty_tuple.type = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc6_29.4: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.4: init %empty_tuple.type to %.loc6_29.3 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_29.5: init %empty_tuple.type = converted %.loc6_29.2, %.loc6_29.4 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_29.6: %empty_tuple.type = struct_access %.loc6_29.1, element1 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_29.7: ref %empty_tuple.type = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc6_29.8: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_29.9: init %empty_tuple.type = converted %.loc6_29.6, %.loc6_29.8 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_29.10: init %struct_type.x.y to %return.param = struct_init (%.loc6_29.5, %.loc6_29.9) [concrete = constants.%struct.005]
-// CHECK:STDOUT:   %.loc6_48: init %struct_type.x.y = converted %.loc6_29.1, %.loc6_29.10 [concrete = constants.%struct.005]
+// CHECK:STDOUT:   %.loc6_29.6: init %empty_tuple.type to %.loc6_29.3 = in_place_init %.loc6_29.5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.7: %empty_tuple.type = struct_access %.loc6_29.1, element1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.8: ref %empty_tuple.type = struct_access %return.param, element1
+// CHECK:STDOUT:   %.loc6_29.9: init %empty_tuple.type to %.loc6_29.8 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.10: init %empty_tuple.type = converted %.loc6_29.7, %.loc6_29.9 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.11: init %empty_tuple.type to %.loc6_29.8 = in_place_init %.loc6_29.10 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.12: init %struct_type.x.y to %return.param = struct_init (%.loc6_29.6, %.loc6_29.11) [concrete = constants.%struct.005]
+// CHECK:STDOUT:   %.loc6_48: init %struct_type.x.y = converted %.loc6_29.1, %.loc6_29.12 [concrete = constants.%struct.005]
 // CHECK:STDOUT:   return %.loc6_48 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -391,10 +393,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc19_21.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc19_21.3: ref %empty_tuple.type = class_element_access %.loc19_21.2, element0
-// CHECK:STDOUT:   %.loc19_20.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc19_20.2: init %empty_tuple.type to %.loc19_21.3 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_21.4: init %empty_tuple.type = converted %.loc19_20.1, %.loc19_20.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_21.5: init %X to %.loc19_21.2 = class_init (%.loc19_21.4) [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.5 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc19_21.5: init %empty_tuple.type to %.loc19_21.3 = in_place_init %.loc19_21.4 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc19_21.6: init %X to %.loc19_21.2 = class_init (%.loc19_21.5) [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.6 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %impl.elem0: %.84a = impl_witness_access constants.%As.impl_witness.e92, element0 [concrete = constants.%X.as.As.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
