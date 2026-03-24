@@ -588,12 +588,11 @@ static auto GetConstantValue(EvalContext& eval_context,
                              Phase* phase) -> SemIR::InstBlockId = delete;
 
 // If the given instruction block contains only constants, returns a
-// corresponding block of those values. Ignores the instructions in the specified
-// range of indexes, replacing those elements with `None`.
+// corresponding block of those values. Ignores the instructions in the
+// specified range of indexes, replacing those elements with `None`.
 static auto GetConstantBlockValueIgnoringIndexRange(
     EvalContext& eval_context, SemIR::InstBlockId inst_block_id, Phase* phase,
-    std::pair<size_t, size_t> ignored_range)
-    -> SemIR::InstBlockId {
+    std::pair<size_t, size_t> ignored_range) -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
@@ -628,8 +627,8 @@ static auto GetConstantBlockValueIgnoringIndexRange(
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::InstBlockId inst_block_id, Phase* phase)
     -> SemIR::InstBlockId {
-  return GetConstantBlockValueIgnoringIndexRange(
-      eval_context, inst_block_id, phase, {0, 0});
+  return GetConstantBlockValueIgnoringIndexRange(eval_context, inst_block_id,
+                                                 phase, {0, 0});
 }
 
 // Compute the constant value of a type block. This may be different from the
@@ -2112,8 +2111,9 @@ static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
           std::get_if<SemIR::CalleeFunction>(&callee)) {
     const auto& function =
         eval_context.functions().Get(callee_function->function_id);
-    return {static_cast<size_t>(function.call_param_ranges.return_begin().index),
-            static_cast<size_t>(function.call_param_ranges.return_end().index)};
+    return {
+        static_cast<size_t>(function.call_param_ranges.return_begin().index),
+        static_cast<size_t>(function.call_param_ranges.return_end().index)};
   }
 
   return {0, 0};
