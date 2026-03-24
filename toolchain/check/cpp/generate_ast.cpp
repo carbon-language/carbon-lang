@@ -389,6 +389,50 @@ auto CarbonExternalASTSource::MapInstIdToClangDecl(
           *ast_context_, clang::TagTypeKind::Class, &decl_context,
           clang::SourceLocation(), clang::SourceLocation(), identifier_info);
     }
+    case CARBON_KIND(SemIR::StructValue struct_value): {
+      (void)struct_value;
+
+      auto callee = GetCallee(context_->sem_ir(), target_constant);
+      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
+      if (!callee_function) {
+        return nullptr;
+      }
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function->function_id);
+      auto* identifier_info =
+          GetClangIdentifierInfo(*context_, function.name_id);
+
+      if (function.call_param_ranges.explicit_size() != 0) {
+        context_->TODO(target_inst_id,
+                       "unsupported: C++ calling a Carbon function with "
+                       "parameters");
+        return nullptr;
+      }
+
+      if (function.return_type_inst_id != SemIR::TypeInstId::None) {
+        context_->TODO(target_inst_id,
+                       "unsupported: C++ calling a Carbon function with "
+                       "return type other than `()`");
+        return nullptr;
+      }
+
+      // TODO: support non-empty parameter lists.
+      llvm::SmallVector<clang::QualType> cpp_param_types;
+
+      // TODO: support non-void return types.
+      auto cpp_return_type = ast_context_->VoidTy;
+
+      auto cpp_function_type = ast_context_->getFunctionType(
+          cpp_return_type, cpp_param_types,
+          clang::FunctionProtoType::ExtProtoInfo());
+
+      return clang::FunctionDecl::Create(
+          *ast_context_, &decl_context,
+          /*StartLoc=*/clang::SourceLocation(),
+          /*NLoc=*/clang::SourceLocation(),
+          clang::DeclarationName(identifier_info), cpp_function_type,
+          /*TInfo=*/nullptr, clang::SC_Extern);
+    }
     default:
       return nullptr;
   }
