@@ -111,12 +111,12 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ExplicitParamList:
     case FullPatternStack::Kind::ImplicitParamList:
-      pattern_id = AddPatternInst<SemIR::VarParamPattern>(
+      pattern_id = AddInst<SemIR::VarParamPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
-      pattern_id = AddPatternInst<SemIR::VarPattern>(
+      pattern_id = AddInst<SemIR::VarPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;

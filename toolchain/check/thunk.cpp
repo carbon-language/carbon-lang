@@ -41,9 +41,9 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
   CARBON_CHECK(context.insts().Get(orig_inst_id).kind() == new_inst.kind(),
                "Rebuilt pattern with the wrong kind: {0} -> {1}",
                context.insts().Get(orig_inst_id), new_inst);
-  return AddPatternInst(
-      context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
+  return AddInst(context,
+                 SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
 }
 
 // Wrapper to allow the type to be specified as a template argument for API

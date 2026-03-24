@@ -1216,7 +1216,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
       auto param_block_id = context.inst_blocks().Add(param_ids);
       auto tuple_pattern_type_id =
           GetPatternType(context, GetTupleType(context, param_type_ids));
-      SemIR::InstId pattern_id = AddPatternInst(
+      SemIR::InstId pattern_id = AddInst(
           context, SemIR::LocIdAndInst::RuntimeVerified(
                        context.sem_ir(), loc_id,
                        SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
@@ -1329,19 +1329,19 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   auto return_patterns_id = SemIR::InstBlockId::Empty;
   if (auto init_form =
           context.insts().TryGetAs<SemIR::InitForm>(form_inst_id)) {
-    auto param_pattern_id = AddPatternInst(
+    auto param_pattern_id = AddInst(
         context, SemIR::LocIdAndInst::RuntimeVerified(
                      context.sem_ir(), return_type_import_ir_inst_id,
                      SemIR::OutParamPattern(
                          {.type_id = pattern_type_id,
                           .pretty_name_id = SemIR::NameId::ReturnSlot})));
-    SemIR::InstId return_slot_pattern_id = AddPatternInst(
-        context,
-        SemIR::LocIdAndInst::RuntimeVerified(
-            context.sem_ir(), return_type_import_ir_inst_id,
-            SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
-                                      .subpattern_id = param_pattern_id,
-                                      .type_inst_id = type_inst_id})));
+    SemIR::InstId return_slot_pattern_id =
+        AddInst(context,
+                SemIR::LocIdAndInst::RuntimeVerified(
+                    context.sem_ir(), return_type_import_ir_inst_id,
+                    SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
+                                              .subpattern_id = param_pattern_id,
+                                              .type_inst_id = type_inst_id})));
     return_patterns_id = context.inst_blocks().Add({return_slot_pattern_id});
   }
   return {.return_type_inst_id = type_inst_id,

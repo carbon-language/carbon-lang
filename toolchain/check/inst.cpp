@@ -10,6 +10,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
@@ -58,7 +59,15 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
 auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
-  context.inst_block_stack().AddInstId(inst_id);
+  if (SemIR::GetExprCategory(context.sem_ir(), inst_id) ==
+      SemIR::ExprCategory::Pattern) {
+    auto type_id = loc_id_and_inst.inst.type_id();
+    CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
+                 context.types().Is<SemIR::PatternType>(type_id));
+    context.pattern_block_stack().AddInstId(inst_id);
+  } else {
+    context.inst_block_stack().AddInstId(inst_id);
+  }
   return inst_id;
 }
 
@@ -88,16 +97,6 @@ auto AddDependentActionInst(Context& context,
   // Register the instruction to be added to the eval block.
   AttachDependentInstToCurrentGeneric(
       context, {.inst_id = inst_id, .kind = DependentInstKind::Template});
-  return inst_id;
-}
-
-auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto type_id = loc_id_and_inst.inst.type_id();
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
-               context.types().Is<SemIR::PatternType>(type_id));
-  auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
-  context.pattern_block_stack().AddInstId(inst_id);
   return inst_id;
 }
 

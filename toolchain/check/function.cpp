@@ -45,11 +45,11 @@ auto AddReturnPatterns(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::InitForm _): {
       auto pattern_type_id =
           GetPatternType(context, form_expr.type_component_id);
-      auto out_param_id = AddPatternInst<SemIR::OutParamPattern>(
+      auto out_param_id = AddInst<SemIR::OutParamPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
            .pretty_name_id = SemIR::NameId::ReturnSlot});
-      return_patterns.push_back(AddPatternInst<SemIR::ReturnSlotPattern>(
+      return_patterns.push_back(AddInst<SemIR::ReturnSlotPattern>(
           context, SemIR::LocId(form_expr.form_inst_id),
           {.type_id = pattern_type_id,
            .subpattern_id = out_param_id,

@@ -297,17 +297,17 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           auto pattern_type_id =
               GetPatternType(context, type_expr.type_component_id);
           if (is_ref) {
-            param_pattern_id = AddPatternInst<SemIR::RefParamPattern>(
+            param_pattern_id = AddInst<SemIR::RefParamPattern>(
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           } else if (node_kind == Parse::NodeKind::FormBindingPattern) {
-            param_pattern_id = AddPatternInst<SemIR::FormParamPattern>(
-                context, node_id,
-                {.type_id = pattern_type_id,
-                 .pretty_name_id = name_id,
-                 .form_id = form_id});
+            param_pattern_id =
+                AddInst<SemIR::FormParamPattern>(context, node_id,
+                                                 {.type_id = pattern_type_id,
+                                                  .pretty_name_id = name_id,
+                                                  .form_id = form_id});
           } else {
-            param_pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+            param_pattern_id = AddInst<SemIR::ValueParamPattern>(
                 context, node_id,
                 {.type_id = pattern_type_id, .pretty_name_id = name_id});
           }
