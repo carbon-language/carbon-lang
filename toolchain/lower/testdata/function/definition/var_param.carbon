@@ -31,9 +31,8 @@ fn Call() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @int_1.5d2 = internal constant i32 1
 // CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @X.val.loc27_18.6 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc16 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %_) #0 !dbg !4 {
@@ -68,32 +67,38 @@ fn Call() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main() #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_15.1.temp = alloca i32, align 4, !dbg !38
-// CHECK:STDOUT:   %.loc16_13.1.temp = alloca {}, align 8, !dbg !39
-// CHECK:STDOUT:   %.loc18_12.1.temp = alloca i32, align 4, !dbg !40
-// CHECK:STDOUT:   %.loc18_24.1.temp = alloca {}, align 8, !dbg !41
-// CHECK:STDOUT:   %.loc20_15.1.temp = alloca i32, align 4, !dbg !42
+// CHECK:STDOUT:   %_.var.loc15 = alloca i32, align 4, !dbg !38
+// CHECK:STDOUT:   %_.var.loc16 = alloca {}, align 8, !dbg !39
+// CHECK:STDOUT:   %_.var.loc18_12 = alloca i32, align 4, !dbg !40
+// CHECK:STDOUT:   %_.var.loc18_24 = alloca {}, align 8, !dbg !41
+// CHECK:STDOUT:   %_.var.loc20 = alloca i32, align 4, !dbg !42
 // CHECK:STDOUT:   %.loc27_18.2.temp = alloca {}, align 8, !dbg !43
-// CHECK:STDOUT:   %.loc21_23.1.temp = alloca {}, align 8, !dbg !44
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_15.1.temp), !dbg !38
-// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr @int_1.5d2), !dbg !45
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_13.1.temp), !dbg !39
-// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr @X.val), !dbg !46
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.1.temp), !dbg !40
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_24.1.temp), !dbg !41
-// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr @int_1.5d2, ptr @X.val), !dbg !47
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_15.1.temp), !dbg !42
+// CHECK:STDOUT:   %_.var.loc21 = alloca {}, align 8, !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc15), !dbg !38
+// CHECK:STDOUT:   store i32 1, ptr %_.var.loc15, align 4, !dbg !38
+// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %_.var.loc15), !dbg !45
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !39
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc16, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !39
+// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr %_.var.loc16), !dbg !46
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18_12), !dbg !40
+// CHECK:STDOUT:   store i32 1, ptr %_.var.loc18_12, align 4, !dbg !40
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18_24), !dbg !41
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc18_24, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !41
+// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr %_.var.loc18_12, ptr %_.var.loc18_24), !dbg !47
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !42
+// CHECK:STDOUT:   store i32 1, ptr %_.var.loc20, align 4, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_18.2.temp), !dbg !43
-// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr @int_1.5d2, ptr @X.val.loc27_18.6), !dbg !48
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_23.1.temp), !dbg !44
-// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr @X.val), !dbg !49
-// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !44
+// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %_.var.loc20, ptr @X.val.loc16), !dbg !48
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc21), !dbg !44
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc21, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !44
+// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr %_.var.loc21), !dbg !49
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr %_.var.loc21), !dbg !44
 // CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !43
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !42
-// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !41
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !40
-// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr @X.val), !dbg !39
-// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr @int_1.5d2), !dbg !38
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.loc20), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr %_.var.loc18_24), !dbg !41
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.loc18_12), !dbg !40
+// CHECK:STDOUT:   call void @"_COp.607f187990247af9:core.Destroy.Core"(ptr %_.var.loc16), !dbg !39
+// CHECK:STDOUT:   call void @"_COp.7e389eab4a7e5487:core.Destroy.Core"(ptr %_.var.loc15), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,13 +117,18 @@ fn Call() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_COp.607f187990247af9:core.Destroy.Core", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @"_COp.7e389eab4a7e5487:core.Destroy.Core", { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

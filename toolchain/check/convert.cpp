@@ -24,6 +24,7 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/pending_block.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -2051,8 +2052,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
-                SemIR::InstId value_id, bool for_return) -> SemIR::InstId {
+auto ConvertInitializer(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId storage_id, SemIR::InstId value_id,
+                        bool for_return) -> SemIR::InstId {
   auto type_id = context.insts().Get(storage_id).type_id();
   if (for_return &&
       !SemIR::InitRepr::ForType(context.sem_ir(), type_id).MightBeInPlace()) {
@@ -2067,6 +2069,33 @@ auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
                   .type_id = type_id,
                   .storage_id = storage_id,
                   .storage_access_block = &target_block});
+}
+
+auto Initialize(Context& context, SemIR::LocId loc_id,
+                SemIR::InstId&& storage_id, PendingBlock&& storage_access_block,
+                SemIR::InstId value_id) -> InitializeResult {
+  CARBON_CHECK(storage_id.has_value());
+  auto type_id = context.insts().Get(storage_id).type_id();
+  auto result_id = Convert(context, loc_id, value_id,
+                           {.kind = ConversionTarget::Initializing,
+                            .type_id = type_id,
+                            .storage_id = storage_id,
+                            .storage_access_block = &storage_access_block});
+
+  // Insert the storage block now, in case it wasn't used by the initializer.
+  storage_access_block.InsertHere();
+  if (result_id == SemIR::ErrorInst::InstId) {
+    return {.storage_id = SemIR::ErrorInst::InstId,
+            .init_id = SemIR::ErrorInst::InstId};
+  }
+
+  // If the initializer doesn't have a storage argument, the storage access
+  // block will have been inserted above, and we can use `storage_id` unchanged.
+  auto storage_arg_id =
+      SemIR::FindStorageArgForInitializer(context.sem_ir(), result_id);
+  return {
+      .storage_id = storage_arg_id.has_value() ? storage_arg_id : storage_id,
+      .init_id = result_id};
 }
 
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
