@@ -1558,9 +1558,10 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
   return copy_id;
 }
 
-// Convert a value expression so that it can be used to initialize a C++ thunk
-// parameter.
-static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id)
+// Tries to form a `ValueAsRef` conversion that extracts the pointer value from
+// a value expression with a pointer value representation. Returns the converted
+// expression, or None if the conversion was not applicable.
+static auto TryMakeValueAsRef(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.insts().Get(expr_id);
 
@@ -1573,15 +1574,7 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id)
         {.type_id = expr.type_id(), .value_id = expr_id});
   }
 
-  // Otherwise, we need a temporary to pass as the thunk argument. Create a copy
-  // and initialize a temporary from it.
-  auto temporary_id = AddInst<SemIR::TemporaryStorage>(
-      context, SemIR::LocId(expr_id), {.type_id = expr.type_id()});
-  expr_id = Initialize(context, SemIR::LocId(expr_id), temporary_id, expr_id);
-  return AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(expr_id),
-                                              {.type_id = expr.type_id(),
-                                               .storage_id = temporary_id,
-                                               .init_id = expr_id});
+  return SemIR::InstId::None;
 }
 
 // Returns the Core interface name to use for a given kind of conversion.
@@ -1808,20 +1801,25 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         return Done{SemIR::ErrorInst::InstId};
       }
 
+      // When initializing a C++ thunk parameter, try to pass a value "by
+      // reference".
+      if (target_.kind == ConversionTarget::CppThunkRef) {
+        if (auto result_id = TryMakeValueAsRef(context_, expr_id);
+            result_id.has_value()) {
+          return Done{result_id};
+        }
+        // Otherwise, fall through to make a copy.
+      }
+
       // When initializing from a value, perform a copy.
-      if (target_.is_initializer()) {
+      if (target_.is_initializer() ||
+          target_.kind == ConversionTarget::CppThunkRef) {
         auto copy_id = PerformCopy(context_, expr_id, target_);
         if (copy_id == SemIR::ErrorInst::InstId) {
           return Done{SemIR::ErrorInst::InstId};
         }
         return NextStep{.expr_id = copy_id,
                         .category = SemIR::GetExprCategory(sem_ir_, copy_id)};
-      }
-
-      // When initializing a C++ thunk parameter, form a reference, creating a
-      // temporary if needed.
-      if (target_.kind == ConversionTarget::CppThunkRef) {
-        return Done{ConvertValueForCppThunkRef(context_, expr_id)};
       }
 
       return Done{expr_id};
